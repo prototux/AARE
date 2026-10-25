@@ -1,18 +1,18 @@
 [versions]
 agp = "9.4.1"
-kotlin = "2.2.10"
-composeBom = "2026.02.01"
-coreKtx = "1.16.0"
+kotlin = "2.4.21"
+composeBom = "2026.09.00"
+coreKtx = "1.19.1"
 lifecycle = "2.9.4"
 activityCompose = "1.8.2"
-carApp = "1.8.0-rc01"
+carApp = "1.9.0-alpha03"
 media3 = "1.11.1"
 protobuf = "4.36.2"
 protobufPlugin = "0.10.0"
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 junit = "4.13.2"
 shizuku = "13.1.5"
-hiddenApiBypass = "6.1"
+hiddenApiBypass = "6.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
