@@ -44,6 +44,7 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
     }
 
     override fun onVideoFocus(projected: Boolean) {
+        Log.i(TAG, "cluster focus: ${if (projected) "projected" else "native"} ch=${channel?.id}")
         main.post {
             encoder?.setSuspended(!projected)
             if (projected) encoder?.requestKeyFrame()
@@ -62,9 +63,19 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         val dpi = if (config.density > 0) config.density else CarSession.defaultDensity(minOf(w, h))
         Log.i(TAG, "cluster video ${w}x$h@$fps ${dpi}dpi")
         val enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
+            private var frames = 0
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) = ch.sendCodecConfig(data, offset, length)
-            override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) =
+            override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) {
+                frames++
+                if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
+                    Log.i(TAG, "cluster frame $frames ch=${ch.id}, focused=${ch.focused} dropped=${ch.droppedFrames} " +
+                        "queued=${ch.diagnosticDataQueued} written=${ch.diagnosticDataWritten} " +
+                        "ackMsgs=${ch.diagnosticAckMessages} ackUnits=${ch.diagnosticAckUnits} " +
+                        "inFlight=${ch.diagnosticInFlight}/${ch.maxUnacked} " +
+                        "waiting=${ch.pendingFrames} ackless=${ch.ackless}")
+                }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
+            }
             override fun onError(e: Exception) {
                 Log.e(TAG, "cluster encoder failed, restarting", e)
                 main.post { start(config) }

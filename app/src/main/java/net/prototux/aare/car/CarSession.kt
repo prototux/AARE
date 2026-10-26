@@ -272,7 +272,8 @@ class CarSession(
         }
 
         override fun onVideoFocus(projected: Boolean) {
-            Log.i(TAG, "video focus: ${if (projected) "projected" else "native"}")
+            Log.i(TAG, "video focus: ${if (projected) "projected" else "native"} " +
+                "ch=${video?.id} started=${video?.started}")
             main.post {
                 encoder?.setSuspended(!projected)
                 if (projected) encoder?.requestKeyFrame()
@@ -330,7 +331,12 @@ class CarSession(
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) {
                 frames++
                 if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
-                    Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
+                    Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), " +
+                        "ch=${ch.id} focused=${ch.focused} dropped=${ch.droppedFrames} " +
+                        "queued=${ch.diagnosticDataQueued} written=${ch.diagnosticDataWritten} " +
+                        "ackMsgs=${ch.diagnosticAckMessages} ackUnits=${ch.diagnosticAckUnits} " +
+                        "inFlight=${ch.diagnosticInFlight}/${ch.maxUnacked} " +
+                        "waiting=${ch.pendingFrames} ackless=${ch.ackless}")
                 }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
                 abr.onFrame(ch)
