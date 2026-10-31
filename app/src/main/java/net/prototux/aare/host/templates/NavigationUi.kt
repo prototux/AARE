@@ -60,10 +60,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
 import java.time.ZoneOffset
 import java.util.Date
@@ -176,7 +178,7 @@ private fun NextStepStrip(next: Step, fg: Color, bg: Color) {
         Modifier.fillMaxWidth().background(bg).heightIn(min = 56.dp).padding(horizontal = 20.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Then", style = MaterialTheme.typography.labelLarge, color = fg.copy(alpha = 0.8f))
+        Text(stringResource(R.string.nav_next_step_then), style = MaterialTheme.typography.labelLarge, color = fg.copy(alpha = 0.8f))
         Spacer(Modifier.width(12.dp))
         ManeuverIcon(next.maneuver, 32.dp, fg)
         Spacer(Modifier.width(12.dp))

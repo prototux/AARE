@@ -63,9 +63,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import net.prototux.aare.R
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -181,8 +183,8 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
         settings?.takeIf { !tighterBar }?.let { RailApp(it, Icons.Rounded.Settings, on(it)) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
-        if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, "Apps", selected = false) { actions.openLauncher() }
-        else RailButton(Icons.Rounded.Home, "Home", selected = false) { actions.goHome() }
+        if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), selected = false) { actions.openLauncher() }
+        else RailButton(Icons.Rounded.Home, stringResource(R.string.dash_menu_home), selected = false) { actions.goHome() }
     }
     val mic: @Composable () -> Unit = { MicButton(state.listening) { actions.assistant() } }
     val bell = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
@@ -282,7 +284,7 @@ private fun MicButton(listening: Boolean, onClick: () -> Unit) {
         Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Mic, contentDescription = "Assistant", tint = fg, modifier = Modifier.size(d.iconSize))
+        Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(d.iconSize))
     }
 }
 
@@ -374,10 +376,10 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
             Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(16.dp))
-                Text(if (navApps.isEmpty()) "No navigation app" else "Where to?", style = MaterialTheme.typography.headlineSmall)
+                Text(if (navApps.isEmpty()) stringResource(R.string.nav_dashboard_no_app_title) else stringResource(R.string.nav_dashboard_where_to), style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    if (navApps.isEmpty()) "Install a navigation app that supports Android Auto on the phone" else "Choose your maps app",
+                    if (navApps.isEmpty()) stringResource(R.string.nav_dashboard_install_hint) else stringResource(R.string.nav_dashboard_choose_app),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -413,7 +415,7 @@ private fun GuidanceCard(g: PhoneGuidance) {
             Text(g.detail, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
         Spacer(Modifier.height(16.dp))
-        Text("${g.appLabel}, on the phone", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.nav_guidance_on_phone, g.appLabel), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -456,8 +458,8 @@ private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, 
                 Text(np.subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
             } else {
-                Text(media?.label ?: "Music", style = MaterialTheme.typography.titleMedium)
-                Text("Nothing playing", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(media?.label ?: stringResource(R.string.media_fallback_label), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.media_nothing_playing), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         if (compact) {
@@ -504,9 +506,9 @@ private fun Art(np: NowPlaying?, sizeDp: Int) {
 
 @Composable
 private fun MediaButtons(np: NowPlaying?, actions: CarActions) {
-    RoundIcon(Icons.Rounded.SkipPrevious, "Previous", filled = false) { actions.mediaPrevious() }
-    RoundIcon(if (np?.playing == true) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, "Play/pause", filled = true) { actions.mediaPlayPause() }
-    RoundIcon(Icons.Rounded.SkipNext, "Next", filled = false) { actions.mediaNext() }
+    RoundIcon(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), filled = false) { actions.mediaPrevious() }
+    RoundIcon(if (np?.playing == true) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(R.string.media_action_play_pause), filled = true) { actions.mediaPlayPause() }
+    RoundIcon(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), filled = false) { actions.mediaNext() }
 }
 
 @Composable
@@ -565,7 +567,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         Column(Modifier.weight(1f)) {
             Text(notice.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             // While driving a message shows who wrote, not what: it can be read aloud instead.
-            Text(if (state.drivingRestricted && notice.isMessage) "New message" else notice.text,
+            Text(if (state.drivingRestricted && notice.isMessage) stringResource(R.string.notif_new_message_placeholder) else notice.text,
                 style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -573,6 +575,6 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
-        RoundIcon(Icons.Rounded.Close, "Dismiss", filled = false) { actions.dismissNotice(notice) }
+        RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }
 }

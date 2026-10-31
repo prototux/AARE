@@ -32,10 +32,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import net.prototux.aare.R
 
 /** The phone's network and battery, as its status bar would show them. */
 data class PhoneStatusInfo(
@@ -83,10 +85,10 @@ fun PhoneStatusIcons() {
     val fg = MaterialTheme.colorScheme.onSurface
     val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (s.wifi) Icon(Icons.Rounded.Wifi, "Wi-Fi", tint = fg, modifier = Modifier.size(16.dp))
+        if (s.wifi) Icon(Icons.Rounded.Wifi, stringResource(R.string.phone_status_wifi), tint = fg, modifier = Modifier.size(16.dp))
         SignalBars(s.signal, fg, dim)
         BatteryGauge(s.battery, s.charging, fg, dim)
-        if (s.charging) Icon(Icons.Rounded.Bolt, "Charging", tint = fg, modifier = Modifier.size(14.dp))
+        if (s.charging) Icon(Icons.Rounded.Bolt, stringResource(R.string.phone_status_charging), tint = fg, modifier = Modifier.size(14.dp))
         else Text("${s.battery}", style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 1)
     }
 }

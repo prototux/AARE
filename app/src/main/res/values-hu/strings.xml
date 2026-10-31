@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Lehetővé teszi, hogy a telefon képernyőjét az autóból használd: az AARE továbbítja a telefonnak az autó képernyőjén végzett érintéseket, és figyeli, melyik alkalmazás van előtérben, így a telefon képernyője vezetés közben szünetel, kivéve ha navigációs alkalmazást mutat. Az AARE mást nem olvas.</string>
+    <string name="mirror_locked_placeholder">A telefon képernyője szünetel, amíg a telefon zárolva van. Oldd fel a telefont a megjelenítéséhez.</string>
+    <string name="mirror_driving_no_accessibility">A telefon képernyője szünetel vezetés közben. Ahhoz, hogy navigációs alkalmazásokat vezetés közben is megjeleníthess, kapcsold be az AARE-t a telefon kezelési segítség beállításaiban: ez jelzi az AARE-nak, melyik alkalmazás van megnyitva.</string>
+    <string name="mirror_driving_nav_only">A telefon képernyője szünetel vezetés közben. Csak navigációs alkalmazásokat jelenít meg.</string>
+    <string name="mirror_need_car_audio">Kapcsold be az Autó hangját az AARE-ban a telefonon, és az Android kérésekor válaszd a Teljes képernyőt: a telefon képernyője ugyanezt a jogosultságot használja.</string>
+    <string name="mirror_need_accessibility">A telefon autóból történő használatához kapcsold be az AARE-t a telefon kezelési segítség beállításaiban.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Vissza</string>
+    <string name="common_up">Fel</string>
+    <string name="common_down">Le</string>
+    <string name="common_cancel">Mégse</string>
+    <string name="common_clear">Törlés</string>
+    <string name="common_call">Hívás</string>
+    <string name="common_dismiss">Elvetés</string>
+    <string name="common_close">Bezárás</string>
+    <string name="common_nothing_to_show">Nincs mit megjeleníteni</string>
+    <string name="common_no_items">Nincs elem</string>
+    <string name="common_unsupported_screen">Ez a képernyő még nem támogatott</string>
+    <string name="common_loading">Betöltés</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Autó képernyő</string>
+    <string name="setup_page_car_screen_subtitle">Színek, sáv elhelyezése, telefon képernyője</string>
+    <string name="setup_page_apps_title">Alkalmazások</string>
+    <string name="setup_page_apps_subtitle">Mely alkalmazások jelenjenek meg az autóban</string>
+    <string name="setup_page_connection_title">Kapcsolat</string>
+    <string name="setup_page_connection_subtitle">Vezeték nélküli kapcsolat, videóminőség, autóid</string>
+    <string name="setup_page_advanced_title">Speciális</string>
+    <string name="setup_page_advanced_subtitle">Fejegység-szerver, tanúsítványok, napló</string>
+    <string name="setup_tagline">Nyílt forráskódú autós kijelzés</string>
+    <string name="setup_status_certificate">tanúsítvány: %1$s</string>
+    <string name="setup_status_disconnected_hint">Csatlakoztasd a telefont az autó Android Auto USB-portjára, vagy kapcsolódj vezeték nélkül egy párosított autóhoz.</string>
+    <string name="setup_status_last_error">Legutóbbi hiba: %1$s</string>
+    <string name="setup_trust_new_cert">Megbízom e fejegység új tanúsítványában</string>
+    <string name="setup_trust_head_unit">Megbízom ebben a fejegységben</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Autó képernyőjének előnézete</string>
+    <string name="setup_disconnect">Kapcsolat bontása</string>
+    <string name="setup_finish_title">Beállítás befejezése</string>
+    <string name="setup_check_permissions_title">Engedélyek</string>
+    <string name="setup_check_permissions_subtitle">Mikrofon, helyadatok, Bluetooth, közeli Wi-Fi, értesítések, hívások, névjegyek és naptár</string>
+    <string name="setup_check_notification_access_title">Értesítés-hozzáférés</string>
+    <string name="setup_check_notification_access_subtitle">Üzenetek, útirányok a Google Maps és a Waze alkalmazásból, épp lejátszott szám</string>
+    <string name="setup_check_audio_subtitle">Engedd, hogy a telefon hangja elérje az autót</string>
+    <string name="setup_action_set_up">Beállítás</string>
+    <string name="setup_section_connecting">Kapcsolódás</string>
+    <string name="setup_toggle_wireless_title">Vezeték nélküli</string>
+    <string name="setup_toggle_wireless_subtitle">Kapcsolódás a párosított autókhoz Wi-Fi-n keresztül, amint Bluetooth-hatótávolságba kerülnek</string>
+    <string name="setup_toggle_resume_music_title">Zene folytatása</string>
+    <string name="setup_toggle_resume_music_subtitle">Az utoljára játszott zenealkalmazás elindítása, amikor az autó csatlakozik</string>
+    <string name="setup_section_location">Helyadatok</string>
+    <string name="setup_toggle_car_gps_title">Az autó GPS-ének használata</string>
+    <string name="setup_toggle_car_gps_subtitle">Csatlakoztatva a telefon alkalmazásai az autó pozícióját látják a telefon saját helyzete helyett, így a navigációs alkalmazások nem keverik össze a kettőt</string>
+    <string name="setup_check_mock_location_title">Engedélyezd, hogy az AARE beállítsa a helyet</string>
+    <string name="setup_check_mock_location_subtitle">Fejlesztői beállítások &gt; Látszatpozíció-alkalmazás kiválasztása &gt; AARE</string>
+    <string name="setup_section_video">Videó</string>
+    <string name="setup_toggle_60fps_title">60 fps előnyben részesítése</string>
+    <string name="setup_toggle_60fps_subtitle">Simább, ha az autó támogatja</string>
+    <string name="setup_choice_max_resolution">Maximális felbontás</string>
+    <string name="setup_hint_lower_resolution">Az alacsonyabb kevesebb akkumulátort és sávszélességet használ.</string>
+    <string name="setup_section_your_cars">Autóid</string>
+    <string name="setup_cars_empty">Az autók az első csatlakozás után jelennek meg itt.</string>
+    <string name="setup_car_last_connected">Utoljára csatlakozva: %1$s</string>
+    <string name="setup_action_forget">Elfelejtés</string>
+    <string name="setup_section_trusted_head_units">Megbízható fejegységek</string>
+    <string name="setup_trusted_head_units_hint">Egy párosított vezeték nélküli autó már az első csatlakozáskor megbízhatóvá válik; egy új USB-s vagy fejlesztői fejegység csak azután, hogy megérinted a Megbízom gombot (az értesítésében vagy a kezdőképernyőn). Csak olyan fejegységben bízz meg, amelyhez éppen most csatlakozol. Ha egy fejegység később más tanúsítványt mutat, újra rákérdezünk: csak akkor bízz meg benne, ha a szoftvere frissült.</string>
+    <string name="setup_trusted_head_units_empty">Még nincs.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Megjelenés</string>
+    <string name="setup_choice_colors">Színek</string>
+    <string name="setup_choice_colors_auto">Autó nappal/éjszaka módja</string>
+    <string name="setup_choice_dark">Sötét</string>
+    <string name="setup_choice_light">Világos</string>
+    <string name="setup_choice_bar">Sáv</string>
+    <string name="setup_choice_bar_auto">Vezető oldala</string>
+    <string name="setup_choice_left">Bal</string>
+    <string name="setup_choice_right">Jobb</string>
+    <string name="setup_choice_bottom">Alul</string>
+    <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
+    <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_section_dashboard">Műszerfal</string>
+    <string name="setup_choice_wallpaper">Háttérkép</string>
+    <string name="setup_wallpaper_none">Nincs</string>
+    <string name="setup_wallpaper_photo">Fénykép</string>
+    <string name="setup_toggle_weather_title">Időjárás</string>
+    <string name="setup_toggle_weather_subtitle">Az óra mellett, az Open-Meteo-tól (hozzávetőleges, kb. 10 km pontosságú pozíciót kap)</string>
+    <string name="setup_toggle_calendar_title">Következő naptáresemény</string>
+    <string name="setup_toggle_calendar_subtitle">A zene alatt, gyorsgombbal a helyszínéhez navigáláshoz</string>
+    <string name="setup_section_driving">Vezetés</string>
+    <string name="setup_toggle_passenger_title">Utas mód</string>
+    <string name="setup_toggle_passenger_subtitle">Az autó vezetési állapotának figyelmen kívül hagyása: a gépelés, a hosszú listák és a telefon képernyője mozgás közben is elérhető marad, az utas számára. A vezető vezetés közben nem használhatja a képernyőt.</string>
+    <string name="setup_section_app_list">Az autó alkalmazáslistájában</string>
+    <string name="setup_app_list_hint">Kapcsold ki azokat az alkalmazásokat, amelyeket nem akarsz az autóban.</string>
+    <string name="setup_app_list_loading">Alkalmazások keresése…</string>
+    <string name="setup_app_group_nav">Navigációs és autós alkalmazások</string>
+    <string name="setup_app_list_no_nav">Még nincs: telepítsd a CoMaps, az Organic Maps vagy egy másik Android Auto alkalmazást.</string>
+    <string name="setup_app_kind_navigation">Navigáció</string>
+    <string name="setup_app_kind_generic">Autós alkalmazás</string>
+    <string name="setup_app_group_media">Média</string>
+    <string name="setup_app_kind_media">Zene, podcastok, rádió</string>
+    <string name="setup_app_group_messaging">Üzenetek</string>
+    <string name="setup_app_kind_messaging">Üzenetek az értesítéseiből</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Android Auto alkalmazások, amelyeket az AARE nem tud megjeleníteni</string>
+    <string name="setup_hint_allowlist">A Google autós könyvtárának újabb verzióival készült alkalmazások csak az engedélyezési listájukon lévő hosztokat fogadják el; lásd a README-t.</string>
+    <string name="setup_app_entry_phone">Telefon</string>
+    <string name="setup_app_entry_settings">Beállítások</string>
+    <string name="setup_app_entry_notifications">Értesítések</string>
+    <string name="setup_section_app_order">Sorrend az autóban</string>
+    <string name="setup_section_connection_log">Kapcsolati napló</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nem áll kapcsolatban a Google-lel. Az Android Auto a Google LLC védjegye.</string>
+    <string name="setup_choice_style">Stílus</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Sötét sáv, nappali színeknél is</string>
+    <string name="setup_switch_passenger">Utas mód: nincs vezetési korlátozás (a vezető nem használhatja a képernyőt)</string>
+    <string name="setup_switch_message_notifications">Üzenetértesítések</string>
+    <string name="setup_switch_audio_next_connection">Telefon hangja az autóban (következő csatlakozásnál)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Telefon tanúsítványai</string>
+    <string name="cert_hint">A fejegységek ellenőrzik a telefon tanúsítványát. A nyílt forráskódú fejegységek elfogadják a generáltat; a Google fejegység-szoftverét használó autók csak a Google által kiadott tanúsítványt fogadják el, amelyet az AARE nem tartalmazhat. Importálhatsz olyat, amelynek használatára jogosultsággal rendelkezel (PEM tanúsítvány + PKCS#8 kulcs, vagy PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · eddig: %2$s</string>
+    <string name="cert_action_remove">Eltávolítás</string>
+    <string name="cert_action_import">Tanúsítvány importálása…</string>
+    <string name="cert_p12_dialog_title">PKCS#12 jelszó</string>
+    <string name="cert_action_import_confirm">Importálás</string>
+    <string name="cert_imported_fallback">importált</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Fejegység-szerver</string>
+    <string name="huserver_toggle_subtitle">Mint az Android Auto fejlesztői módja, az asztali fejegységhez, a DHU, openauto, Headunit Revived számára. Csak adb-n keresztül elérhető: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Fogadás a hálózatról</string>
+    <string name="huserver_toggle_network_subtitle">Figyelés a TCP 5277-es porton minden hálózaton, jelszó nélkül is. Bárki, aki azonos Wi-Fi-n van, csatlakozhat, láthatja az autó képernyőjét, és használhatja a mikrofont.</string>
+    <string name="huserver_toggle_lanonce_title">Hálózati mód kikapcsolása a munkamenet után</string>
+    <string name="huserver_toggle_lanonce_subtitle">Biztonságosabb: a hálózatot minden munkamenethez újra engedélyezni kell. Kapcsold ki ezt olyan fejegységeknél, amelyek önállóan újra csatlakoznak, mint az openauto vagy a Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Telefon képernyője a szerveren</string>
+    <string name="huserver_toggle_mirror_subtitle">A „Telefon képernyője” funkció felkínálása is mindenkinek, aki itt csatlakozik. Kockázatos: látják a telefon képernyőjét, és érinthetik is, ezért hagyd kikapcsolva, kivéve ha megbízol a fejegységben.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Üzenetek</string>
+    <string name="msg_page_subtitle">Felugró értesítések és felolvasás</string>
+    <string name="msg_check_notification_access_subtitle">Szükséges az üzenetek megjelenítéséhez az autóban</string>
+    <string name="msg_toggle_banners_title">Üzenetértesítések megjelenítése</string>
+    <string name="msg_toggle_banners_subtitle">Felugró értesítés az autó képernyőjén minden új üzenetnél</string>
+    <string name="msg_toggle_group_title">Csoportos üzenetek</string>
+    <string name="msg_toggle_group_subtitle">A csoportos beszélgetések üzeneteinek megjelenítése is</string>
+    <string name="msg_toggle_read_aloud_title">Üzenetek felolvasása</string>
+    <string name="msg_toggle_read_aloud_subtitle">Minden új üzenet felolvasása, amint megérkezik</string>
+    <string name="msg_hint_apps">Az üzenetküldő alkalmazásoknak (WhatsApp, Signal, SMS…) is van saját lapjuk az autó alkalmazáslistájában.</string>
+    <string name="msg_section_while_driving">Vezetés közben</string>
+    <string name="msg_toggle_dnd_title">Ne zavarjanak</string>
+    <string name="msg_toggle_dnd_subtitle">A telefon elnémítása csatlakozás közben; a hívások és a kiemelt beszélgetések továbbra is átjutnak</string>
+    <string name="msg_check_dnd_access_title">Engedélyezd, hogy az AARE bekapcsolja a Ne zavarjanak módot</string>
+    <string name="msg_check_dnd_access_subtitle">Az Android egyszer kérdezi</string>
+    <string name="msg_toggle_autoreply_title">Automatikus válasz</string>
+    <string name="msg_toggle_autoreply_subtitle">Válasz az íróknak, utazásonként egyszer beszélgetésenként (csoportoknál nem)</string>
+    <string name="msg_autoreply_field_label">Válasz</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Autó hangja</string>
+    <string name="audio_page_subtitle">Hogyan jut el a telefon hangja az autóba</string>
+    <string name="audio_toggle_enable_title">Telefon hangja az autóban</string>
+    <string name="audio_toggle_enable_subtitle">Zene, podcastok, az asszisztens, és a módtól függően a navigációs hang</string>
+    <string name="audio_using_method">Használatban: %1$s</string>
+    <string name="audio_no_method">Még nincs beállított mód: válassz egyet alább.</string>
+    <string name="audio_section_methods">Módok, a legjobbal kezdve</string>
+    <string name="audio_policy_ready">Kész. A zene és a navigációs hang külön jut el az autóba, a telefon néma marad.</string>
+    <string name="audio_policy_not_ready">Mint az Android Auto: a zene és a navigációs hang külön, a telefon hangszórója kikapcsolva. Rootolt telefon szükséges: telepítsd az AARE-t rendszeralkalmazásként a Magisk modullal (lásd a README-t).</string>
+    <string name="audio_shizuku_ready">Kész. Minden, amit a telefon lejátszik, eljut az autóba, a navigációs hangot is beleértve; a telefon néma marad.</string>
+    <string name="audio_shizuku_needs_android12">Android 12 vagy újabb szükséges.</string>
+    <string name="audio_shizuku_tap_allow">A Shizuku fut: koppints az AARE engedélyezéséhez.</string>
+    <string name="audio_shizuku_install_hint">Root nem szükséges. Telepítsd a Shizukut, indítsd el (vezeték nélküli hibakeresés, újraindításonként egyszer), majd gyere vissza ide.</string>
+    <string name="audio_playback_ready">Kész. Csak média: navigációs hang nélkül, néhány alkalmazás kimaradhat, és a telefon is tovább játssza a hangot.</string>
+    <string name="audio_playback_not_ready">Mindenhol működik, korlátokkal: csak média, navigációs hang nélkül. Az Android a képernyő rögzítését kéri: válaszd a Teljes képernyőt (ezt használja a telefon képernyője is).</string>
+    <string name="audio_notice_setup_hint">Nyisd meg az AARE-t a telefonon, és állítsd be az autó hangját, hogy halld a telefont az autóban</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Telefon képernyője</string>
+    <string name="phone_toggle_enable_title">Telefon képernyője az autóban</string>
+    <string name="phone_toggle_enable_subtitle">A telefon saját képernyője, azoknak az alkalmazásoknak, amelyeket az AARE nem tud megjeleníteni (Google Maps, Waze). Szünetel, amíg a telefon zárolva van, és vezetés közben, kivéve ha egy navigációs alkalmazás útvonalat ad. A fejegység-szerveren nem elérhető, kivéve ha ott engedélyezve van</string>
+    <string name="phone_check_touch_title">Érintés a telefon képernyőjén</string>
+    <string name="phone_check_touch_subtitle">Kapcsold be az AARE-t a Kezelési segítségben. A nem a Play Store-ból telepített alkalmazásoknak előbb szükségük lehet a „Korlátozott beállítások engedélyezése” opcióra az AARE alkalmazásinfójában</string>
+    <string name="phone_hint_touch_capture">A kép a képernyőrögzítési jogosultságot használja (Autó hangja lap, válaszd a Teljes képernyőt).</string>
+    <string name="phone_app_row_subtitle">A telefon saját képernyője, azoknak az alkalmazásoknak, amelyeket az AARE nem tud megjeleníteni</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Hangalapú asszisztens</string>
+    <string name="assistant_page_subtitle">Mit nyit meg a hanggomb</string>
+    <string name="assistant_same_as_phone">Ugyanaz, mint a telefonon</string>
+    <string name="assistant_no_default">Nincs alapértelmezett asszisztens beállítva a telefonon</string>
+    <string name="assistant_has_car_app_subtitle">Az autó képernyőjén, az autó mikrofonjával</string>
+    <string name="assistant_opens_on_phone">A telefonon nyílik meg</string>
+    <string name="assistant_hint">A kormánykeréken lévő hanggomb és a sáv mikrofonja ezt az asszisztenst nyitja meg. A saját autós alkalmazással rendelkező asszisztensek, mint a Lapin, működnek a legjobban.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Autókapcsolat</string>
+    <string name="notif_action_stop">Leállítás</string>
+    <string name="notif_action_trust">Megbízom</string>
+    <string name="notif_status_connecting_wirelessly">Vezeték nélküli csatlakozás…</string>
+    <string name="notif_status_not_connected">Nincs csatlakozva</string>
+    <string name="notif_keeping_consent_suffix">%1$s · a képernyőrögzítési hozzájárulás megtartása az autó hangjához (a Leállítás felszabadítja)</string>
+    <string name="notif_cert_changed_title">A fejegység tanúsítványa megváltozott</string>
+    <string name="notif_new_head_unit_title">Új fejegység</string>
+    <string name="notif_trust_warning">Csak olyan fejegységben bízz meg, amelyhez éppen most csatlakozol</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, majd csatlakozz újra.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, majd csatlakozz újra.</string>
+    <string name="notif_cert_changed_message">a fejegység tanúsítványa megváltozott: koppints a Megbízom gombra az értesítésben vagy az AARE-ban, de csak ha a szoftvere frissült, majd csatlakozz újra</string>
+    <string name="notif_cert_untrusted_message">a fejegység tanúsítványa még nem megbízható: koppints a Megbízom gombra az értesítésben vagy az AARE-ban, majd csatlakozz újra</string>
+    <string name="notif_car_nearby_title">Autó a közelben</string>
+    <string name="notif_car_nearby_text">Koppints a vezeték nélküli csatlakozáshoz</string>
+    <string name="notif_status_connecting_to">Csatlakozás ehhez: %1$s</string>
+    <string name="notif_status_connected_to">Csatlakozva ehhez: %1$s</string>
+    <string name="notif_status_projecting_to">Kijelzés ide: %1$s</string>
+    <string name="notif_status_cant_start_video">A videó nem indítható: %1$s</string>
+    <string name="notif_not_calling_title">Nincs hívás</string>
+    <string name="notif_not_calling_text">%1$s csillagot vagy kettőskeresztet tartalmazó kódot kért hívni, nem telefonszámot</string>
+    <string name="notif_calling_title">Hívás: %1$s</string>
+    <string name="notif_asked_by">Kérte: %1$s</string>
+    <string name="notif_call_confirm_title">Hívás indítása: %1$s?</string>
+    <string name="notif_no_nav_app">Nincs navigációs alkalmazás a telefonon</string>
+    <string name="notif_cant_open">Ez nem nyitható meg az autóból</string>
+    <string name="notif_navigation_title">Navigáció</string>
+    <string name="notif_navigation_no_app_text">Nincs navigációs alkalmazás az autóban</string>
+    <string name="notif_assistant_title">Asszisztens</string>
+    <string name="notif_assistant_choose_text">Válassz hangalapú asszisztenst az AARE beállításaiban a telefonon</string>
+    <string name="notif_assistant_no_car_screen">%1$s: nincs autós képernyője, a telefonon nyílt meg</string>
+    <string name="notif_assistant_cant_open">%1$s nem nyitható meg. Válassz másik asszisztenst az AARE beállításaiban</string>
+    <string name="notif_parked_only_title">Vezetés közben nem elérhető</string>
+    <string name="notif_parked_only_text">Állj meg a használatához</string>
+    <string name="notif_empty">Nincs értesítés</string>
+    <string name="notif_title">Értesítések</string>
+    <string name="notif_clear_all">Összes törlése</string>
+    <string name="notif_new_message_placeholder">Új üzenet</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Alkalmazások</string>
+    <string name="dash_menu_home">Kezdőlap</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Nincs navigációs alkalmazás</string>
+    <string name="nav_dashboard_where_to">Hová?</string>
+    <string name="nav_dashboard_install_hint">Telepíts a telefonra egy Android Autót támogató navigációs alkalmazást</string>
+    <string name="nav_dashboard_choose_app">Válassz térképalkalmazást</string>
+    <string name="nav_guidance_on_phone">%1$s, a telefonon</string>
+    <string name="nav_next_step_then">Majd</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Zene</string>
+    <string name="media_nothing_playing">Nincs lejátszás</string>
+    <string name="media_action_previous">Előző</string>
+    <string name="media_action_play_pause">Lejátszás/szünet</string>
+    <string name="media_action_next">Következő</string>
+    <string name="media_playing_from">Lejátszás innen: %1$s</string>
+    <string name="media_connecting_to">Csatlakozás ehhez: %1$s</string>
+    <string name="media_queue_title">Lejátszási lista</string>
+    <string name="media_search_app">%1$s keresése</string>
+    <string name="media_action_search">Keresés</string>
+    <string name="media_action_browse">Böngészés</string>
+    <string name="media_now_playing_label">Most szól</string>
+    <string name="media_nothing_here">Itt nincs semmi</string>
+    <string name="media_couldnt_load_more">Nem lehetett többet betölteni</string>
+    <string name="media_starting">Indítás…</string>
+    <string name="media_action_pause">Szünet</string>
+    <string name="media_action_play">Lejátszás</string>
+    <string name="media_queue_empty">A lejátszási lista üres</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Adj az AARE-nak értesítés-hozzáférést a telefonon, hogy itt láthasd az üzeneteket</string>
+    <string name="msg_listener_not_ready">Itt még nincs mit megjeleníteni</string>
+    <string name="msg_reply_sent">Válasz elküldve</string>
+    <string name="msg_reply_rejected">%1$s nem fogadta el a választ</string>
+    <string name="msg_no_new_messages">Nincs új üzenet tőle: %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Az üzenetek vezetés közben felolvasásra kerülnek.</string>
+    <string name="msg_action_read_aloud">Felolvasás</string>
+    <string name="msg_action_mark_read">Megjelölés olvasottként</string>
+    <string name="msg_action_reply">Válasz</string>
+    <string name="msg_reply_hint">Címzett: %1$s</string>
+    <string name="msg_message_count_one">1 üzenet</string>
+    <string name="msg_message_count_many">%1$d üzenet</string>
+
+    <string name="assistant_mic_label">Asszisztens</string>
+    <string name="assistant_listening">Figyel…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Legutóbbiak</string>
+    <string name="phone_tab_contacts">Névjegyek</string>
+    <string name="phone_tab_keypad">Billentyűzet</string>
+    <string name="phone_permissions_placeholder">Engedélyezd a hívásokat, a híváselőzményeket és a névjegyeket az AARE-ban a telefonon (Beállítás befejezése).</string>
+    <string name="phone_notice_calling_title">Hívás</string>
+    <string name="phone_no_recent_calls">Nincs legutóbbi hívás</string>
+    <string name="phone_no_contacts">Nincs telefonszámmal rendelkező névjegy</string>
+    <string name="phone_call_in_progress">Folyamatban lévő hívás</string>
+    <string name="phone_action_hang_up">Hívás befejezése</string>
+    <string name="phone_keypad_delete">Törlés</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Töltés</string>
+    <string name="phone_incoming_call">Bejövő hívás</string>
+    <string name="phone_action_decline">Elutasítás</string>
+    <string name="phone_action_answer">Felvétel</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Ma</string>
+    <string name="dash_latest_label">Legutóbbi</string>
+    <string name="cluster_arrival_time">Érkezés: %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">A keresés csak álló autóban elérhető</string>
+</resources>

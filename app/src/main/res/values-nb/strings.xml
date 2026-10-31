@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Lar deg bruke telefonskjermen fra bilen: AARE gjengir berøringene som gjøres på bilskjermen, på telefonen, og kontrollerer hvilken app som er i forgrunnen, slik at telefonskjermen forblir pauset under kjøring med mindre den viser en navigasjonsapp. AARE leser ingenting annet.</string>
+    <string name="mirror_locked_placeholder">Telefonskjermen er pauset mens telefonen er låst. Lås opp telefonen for å vise den.</string>
+    <string name="mirror_driving_no_accessibility">Telefonskjermen er pauset under kjøring. For å vise navigasjonsapper under kjøring, slå på AARE i telefonens tilgjengelighetsinnstillinger: det forteller AARE hvilken app som er åpen.</string>
+    <string name="mirror_driving_nav_only">Telefonskjermen er pauset under kjøring. Den viser bare navigasjonsapper.</string>
+    <string name="mirror_need_car_audio">Slå på Bilaudio i AARE på telefonen, og velg Hele skjermen når Android spør: telefonskjermen bruker samme tillatelse.</string>
+    <string name="mirror_need_accessibility">For å bruke telefonen fra bilen, slå på AARE i telefonens tilgjengelighetsinnstillinger.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Tilbake</string>
+    <string name="common_up">Opp</string>
+    <string name="common_down">Ned</string>
+    <string name="common_cancel">Avbryt</string>
+    <string name="common_clear">Fjern</string>
+    <string name="common_call">Ring</string>
+    <string name="common_dismiss">Avvis</string>
+    <string name="common_close">Lukk</string>
+    <string name="common_nothing_to_show">Ingenting å vise</string>
+    <string name="common_no_items">Ingen elementer</string>
+    <string name="common_unsupported_screen">Denne skjermen støttes ikke ennå</string>
+    <string name="common_loading">Laster</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Bilskjerm</string>
+    <string name="setup_page_car_screen_subtitle">Farger, plassering av stolpen, telefonskjerm</string>
+    <string name="setup_page_apps_title">Apper</string>
+    <string name="setup_page_apps_subtitle">Hvilke apper som vises i bilen</string>
+    <string name="setup_page_connection_title">Tilkobling</string>
+    <string name="setup_page_connection_subtitle">Trådløst, videokvalitet, dine biler</string>
+    <string name="setup_page_advanced_title">Avansert</string>
+    <string name="setup_page_advanced_subtitle">Head unit-server, sertifikater, logg</string>
+    <string name="setup_tagline">Åpen kildekode bilprojisering</string>
+    <string name="setup_status_certificate">sertifikat: %1$s</string>
+    <string name="setup_status_disconnected_hint">Koble telefonen til bilens Android Auto USB-port, eller koble trådløst til en tilkoblet bil.</string>
+    <string name="setup_status_last_error">Siste feil: %1$s</string>
+    <string name="setup_trust_new_cert">Stol på denne head units nye sertifikat</string>
+    <string name="setup_trust_head_unit">Stol på denne head unit</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Forhåndsvis bilskjerm</string>
+    <string name="setup_disconnect">Koble fra</string>
+    <string name="setup_finish_title">Fullfør oppsettet</string>
+    <string name="setup_check_permissions_title">Tillatelser</string>
+    <string name="setup_check_permissions_subtitle">Mikrofon, posisjon, Bluetooth, Wi-Fi i nærheten, varsler, samtaler, kontakter og kalender</string>
+    <string name="setup_check_notification_access_title">Varseltilgang</string>
+    <string name="setup_check_notification_access_subtitle">Meldinger, veibeskrivelser fra Google Maps og Waze, spilles nå</string>
+    <string name="setup_check_audio_subtitle">Lar telefonens lyd nå bilen</string>
+    <string name="setup_action_set_up">Sett opp</string>
+    <string name="setup_section_connecting">Kobler til</string>
+    <string name="setup_toggle_wireless_title">Trådløst</string>
+    <string name="setup_toggle_wireless_subtitle">Kobler til tilkoblede biler via Wi-Fi når de kommer innenfor Bluetooth-rekkevidde</string>
+    <string name="setup_toggle_resume_music_title">Gjenoppta musikk</string>
+    <string name="setup_toggle_resume_music_subtitle">Starter den sist brukte musikkappen når bilen kobler til</string>
+    <string name="setup_section_location">Posisjon</string>
+    <string name="setup_toggle_car_gps_title">Bruk bilens GPS</string>
+    <string name="setup_toggle_car_gps_subtitle">Mens tilkoblet ser apper på telefonen bilens posisjon i stedet for telefonens egen, slik at navigasjonsapper ikke blander de to</string>
+    <string name="setup_check_mock_location_title">Tillat AARE å angi posisjonen</string>
+    <string name="setup_check_mock_location_subtitle">Utvikleralternativer &gt; Velg app for simulert posisjon &gt; AARE</string>
+    <string name="setup_section_video">Video</string>
+    <string name="setup_toggle_60fps_title">Foretrekk 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Jevnere når bilen støtter det</string>
+    <string name="setup_choice_max_resolution">Maksimal oppløsning</string>
+    <string name="setup_hint_lower_resolution">Lavere bruker mindre batteri og båndbredde.</string>
+    <string name="setup_section_your_cars">Dine biler</string>
+    <string name="setup_cars_empty">Biler vises her etter den første tilkoblingen.</string>
+    <string name="setup_car_last_connected">Sist tilkoblet %1$s</string>
+    <string name="setup_action_forget">Glem</string>
+    <string name="setup_section_trusted_head_units">Betrodde head units</string>
+    <string name="setup_trusted_head_units_hint">En tilkoblet trådløs bil blir betrodd ved første tilkobling; en ny USB- eller utvikler-head unit først etter at du trykker på Stol på (i varselet eller på hjemskjermen). Stol bare på en head unit du er tilkoblet akkurat nå. Hvis en head unit senere viser et annet sertifikat, blir du spurt igjen: stol bare på den hvis programvaren er oppdatert.</string>
+    <string name="setup_trusted_head_units_empty">Ingen ennå.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Utseende</string>
+    <string name="setup_choice_colors">Farger</string>
+    <string name="setup_choice_colors_auto">Bilens dag/natt</string>
+    <string name="setup_choice_dark">Mørk</string>
+    <string name="setup_choice_light">Lys</string>
+    <string name="setup_choice_bar">Stolpe</string>
+    <string name="setup_choice_bar_auto">Førerside</string>
+    <string name="setup_choice_left">Venstre</string>
+    <string name="setup_choice_right">Høyre</string>
+    <string name="setup_choice_bottom">Nederst</string>
+    <string name="setup_toggle_dark_bar_title">Mørk stolpe</string>
+    <string name="setup_toggle_dark_bar_subtitle">Hold stolpen mørk selv med dagfarger</string>
+    <string name="setup_section_dashboard">Dashbord</string>
+    <string name="setup_choice_wallpaper">Bakgrunnsbilde</string>
+    <string name="setup_wallpaper_none">Ingen</string>
+    <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_toggle_weather_title">Vær</string>
+    <string name="setup_toggle_weather_subtitle">Ved siden av klokken, fra Open-Meteo (den henter en omtrentlig posisjon, ca. 10 km)</string>
+    <string name="setup_toggle_calendar_title">Neste kalenderhendelse</string>
+    <string name="setup_toggle_calendar_subtitle">Under musikken, med en snarvei for å navigere til stedet</string>
+    <string name="setup_section_driving">Kjøring</string>
+    <string name="setup_toggle_passenger_title">Passasjermodus</string>
+    <string name="setup_toggle_passenger_subtitle">Ignorerer bilens kjørestatus: skriving, lange lister og telefonskjermen forblir tilgjengelige under kjøring, for en passasjer. Føreren må ikke bruke skjermen under kjøring.</string>
+    <string name="setup_section_app_list">I bilens appliste</string>
+    <string name="setup_app_list_hint">Slå av appene du ikke vil ha i bilen.</string>
+    <string name="setup_app_list_loading">Søker etter apper…</string>
+    <string name="setup_app_group_nav">Navigasjons- og bilapper</string>
+    <string name="setup_app_list_no_nav">Ingen ennå: installer CoMaps, Organic Maps eller en annen Android Auto-app.</string>
+    <string name="setup_app_kind_navigation">Navigasjon</string>
+    <string name="setup_app_kind_generic">Bilapp</string>
+    <string name="setup_app_group_media">Media</string>
+    <string name="setup_app_kind_media">Musikk, podkaster, radio</string>
+    <string name="setup_app_group_messaging">Meldinger</string>
+    <string name="setup_app_kind_messaging">Meldinger fra sine varsler</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Android Auto-apper AARE ikke kan vise</string>
+    <string name="setup_hint_allowlist">Apper bygget med nyere versjoner av Googles bilbibliotek godtar bare verter på sin tillatelsesliste; se README.</string>
+    <string name="setup_app_entry_phone">Telefon</string>
+    <string name="setup_app_entry_settings">Innstillinger</string>
+    <string name="setup_app_entry_notifications">Varsler</string>
+    <string name="setup_section_app_order">Rekkefølge i bilen</string>
+    <string name="setup_section_connection_log">Tilkoblingslogg</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemerke som tilhører Google LLC.</string>
+    <string name="setup_choice_style">Stil</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Mørk stolpe, selv med dagfarger</string>
+    <string name="setup_switch_passenger">Passasjermodus: ingen kjørebegrensninger (føreren må ikke bruke skjermen)</string>
+    <string name="setup_switch_message_notifications">Meldingsvarsler</string>
+    <string name="setup_switch_audio_next_connection">Telefonaudio i bilen (neste tilkobling)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Telefonsertifikater</string>
+    <string name="cert_hint">Head units kontrollerer telefonens sertifikat. Head units med åpen kildekode godtar det genererte; biler som bruker Googles head unit-programvare godtar bare et sertifikat utstedt av Google, som AARE ikke kan inkludere. Du kan importere et du har rett til å bruke (PEM-sertifikat + PKCS#8-nøkkel, eller PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · til %2$s</string>
+    <string name="cert_action_remove">Fjern</string>
+    <string name="cert_action_import">Importer sertifikat…</string>
+    <string name="cert_p12_dialog_title">PKCS#12-passord</string>
+    <string name="cert_action_import_confirm">Importer</string>
+    <string name="cert_imported_fallback">importert</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Head unit-server</string>
+    <string name="huserver_toggle_subtitle">Som Android Autos utviklermodus, for skrivebords-head unit, DHU, openauto, Headunit Revived. Kun tilgjengelig via adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Godta fra nettverket</string>
+    <string name="huserver_toggle_network_subtitle">Lytt også på TCP-port 5277 på alle nettverk, uten passord. Alle på samme Wi-Fi kan koble til og se bilskjermen og bruke mikrofonen.</string>
+    <string name="huserver_toggle_lanonce_title">Slå av nettverksmodus etter en sesjon</string>
+    <string name="huserver_toggle_lanonce_subtitle">Tryggere: nettverket må tillates igjen for hver sesjon. Slå dette av for head units som kobler til igjen selv, som openauto eller Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Telefonskjerm på serveren</string>
+    <string name="huserver_toggle_mirror_subtitle">Tilbyr også "Telefonskjerm" til alle som kobler til her. Risikabelt: de ser telefonens skjerm og kan trykke på den, så la den stå av med mindre du stoler på head unit-en.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Meldinger</string>
+    <string name="msg_page_subtitle">Bannere og opplesing</string>
+    <string name="msg_check_notification_access_subtitle">Nødvendig for å se meldinger i bilen</string>
+    <string name="msg_toggle_banners_title">Vis meldingsvarsler</string>
+    <string name="msg_toggle_banners_subtitle">Et banner på bilskjermen for hver ny melding</string>
+    <string name="msg_toggle_group_title">Gruppemeldinger</string>
+    <string name="msg_toggle_group_subtitle">Vis også meldinger fra gruppesamtaler</string>
+    <string name="msg_toggle_read_aloud_title">Les meldinger høyt</string>
+    <string name="msg_toggle_read_aloud_subtitle">Les hver ny melding høyt når den kommer inn</string>
+    <string name="msg_hint_apps">Meldingsapper (WhatsApp, Signal, SMS…) har også sin egen side i bilens appliste.</string>
+    <string name="msg_section_while_driving">Under kjøring</string>
+    <string name="msg_toggle_dnd_title">Ikke forstyrr</string>
+    <string name="msg_toggle_dnd_subtitle">Setter telefonen på lydløs mens tilkoblet; samtaler og prioriterte samtaler kommer fortsatt gjennom</string>
+    <string name="msg_check_dnd_access_title">Tillat AARE å slå på Ikke forstyrr</string>
+    <string name="msg_check_dnd_access_subtitle">Android spør én gang</string>
+    <string name="msg_toggle_autoreply_title">Autosvar</string>
+    <string name="msg_toggle_autoreply_subtitle">Svarer personer som skriver, én gang per samtale per kjøretur (ikke grupper)</string>
+    <string name="msg_autoreply_field_label">Svar</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Bilaudio</string>
+    <string name="audio_page_subtitle">Hvordan telefonens lyd når bilen</string>
+    <string name="audio_toggle_enable_title">Telefonaudio i bilen</string>
+    <string name="audio_toggle_enable_subtitle">Musikk, podkaster, assistenten og, avhengig av metoden, navigasjonsstemmen</string>
+    <string name="audio_using_method">Bruker: %1$s</string>
+    <string name="audio_no_method">Ingen metode er satt opp ennå: velg en nedenfor.</string>
+    <string name="audio_section_methods">Metoder, beste først</string>
+    <string name="audio_policy_ready">Klar. Musikk og navigasjonsstemme går separat til bilen, telefonen forblir stille.</string>
+    <string name="audio_policy_not_ready">Som Android Auto: musikk og navigasjonsstemme separat, telefonhøyttaler av. Krever en rootet telefon: installer AARE som systemapp med Magisk-modulen (se README).</string>
+    <string name="audio_shizuku_ready">Klar. Alt telefonen spiller går til bilen, inkludert navigasjonsstemme; telefonen forblir stille.</string>
+    <string name="audio_shizuku_needs_android12">Krever Android 12 eller nyere.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku kjører: trykk for å tillate AARE.</string>
+    <string name="audio_shizuku_install_hint">Ingen root nødvendig. Installer Shizuku, start det (trådløs feilsøking, én gang per omstart), og kom så tilbake hit.</string>
+    <string name="audio_playback_ready">Klar. Bare media: ingen navigasjonsstemme, noen apper deltar ikke, og telefonen fortsetter også å spille.</string>
+    <string name="audio_playback_not_ready">Fungerer overalt, med begrensninger: bare media, ingen navigasjonsstemme. Android spør om å ta opp skjermen: velg Hele skjermen (brukes også av telefonskjermen).</string>
+    <string name="audio_notice_setup_hint">Åpne AARE på telefonen og sett opp Bilaudio for å høre telefonen i bilen</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Telefonskjerm</string>
+    <string name="phone_toggle_enable_title">Telefonskjerm i bilen</string>
+    <string name="phone_toggle_enable_subtitle">Telefonens egen skjerm, for apper AARE ikke kan være vert for (Google Maps, Waze). Pauset mens telefonen er låst, og under kjøring med mindre en navigasjonsapp veileder. Tilbys ikke på head unit-serveren med mindre aktivert der</string>
+    <string name="phone_check_touch_title">Berøring på telefonskjermen</string>
+    <string name="phone_check_touch_subtitle">Slå på AARE i Tilgjengelighet. Sideinnlastede apper kan først trenge "Tillat begrensede innstillinger" i AAREs appinfo</string>
+    <string name="phone_hint_touch_capture">Bildet bruker skjermopptak-tillatelsen (siden Bilaudio, velg Hele skjermen).</string>
+    <string name="phone_app_row_subtitle">Telefonens egen skjerm, for apper AARE ikke kan være vert for</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Taleassistent</string>
+    <string name="assistant_page_subtitle">Hva taleknappen åpner</string>
+    <string name="assistant_same_as_phone">Samme som telefonen</string>
+    <string name="assistant_no_default">Ingen standardassistent angitt på telefonen</string>
+    <string name="assistant_has_car_app_subtitle">På bilskjermen, med bilens mikrofon</string>
+    <string name="assistant_opens_on_phone">Åpner på telefonen</string>
+    <string name="assistant_hint">Taleknappen på rattet og mikrofonen på stolpen åpner denne assistenten. Assistenter med en bilapp, som Lapin, fungerer best.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Biltilkobling</string>
+    <string name="notif_action_stop">Stopp</string>
+    <string name="notif_action_trust">Stol på</string>
+    <string name="notif_status_connecting_wirelessly">Kobler til trådløst…</string>
+    <string name="notif_status_not_connected">Ikke tilkoblet</string>
+    <string name="notif_keeping_consent_suffix">%1$s · beholder samtykket til skjermopptak for bilaudio (Stopp frigir det)</string>
+    <string name="notif_cert_changed_title">Head unit-sertifikat endret</string>
+    <string name="notif_new_head_unit_title">Ny head unit</string>
+    <string name="notif_trust_warning">Stol bare på en head unit du er tilkoblet akkurat nå</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, koble deretter til igjen.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, koble deretter til igjen.</string>
+    <string name="notif_cert_changed_message">head unit-sertifikat endret: trykk på Stol på i varselet eller i AARE bare hvis programvaren er oppdatert, koble deretter til igjen</string>
+    <string name="notif_cert_untrusted_message">head unit-sertifikat ikke betrodd ennå: trykk på Stol på i varselet eller i AARE, koble deretter til igjen</string>
+    <string name="notif_car_nearby_title">Bil i nærheten</string>
+    <string name="notif_car_nearby_text">Trykk for å koble til trådløst</string>
+    <string name="notif_status_connecting_to">Kobler til %1$s</string>
+    <string name="notif_status_connected_to">Tilkoblet %1$s</string>
+    <string name="notif_status_projecting_to">Projiserer til %1$s</string>
+    <string name="notif_status_cant_start_video">Kan ikke starte video: %1$s</string>
+    <string name="notif_not_calling_title">Ringer ikke</string>
+    <string name="notif_not_calling_text">%1$s ba om å ringe en kode med * eller #, ikke et telefonnummer</string>
+    <string name="notif_calling_title">Ringer %1$s</string>
+    <string name="notif_asked_by">Forespurt av %1$s</string>
+    <string name="notif_call_confirm_title">Ring %1$s?</string>
+    <string name="notif_no_nav_app">Ingen navigasjonsapp på telefonen</string>
+    <string name="notif_cant_open">Kan ikke åpne det fra bilen</string>
+    <string name="notif_navigation_title">Navigasjon</string>
+    <string name="notif_navigation_no_app_text">Ingen navigasjonsapp i bilen</string>
+    <string name="notif_assistant_title">Assistent</string>
+    <string name="notif_assistant_choose_text">Velg en taleassistent i AAREs innstillinger på telefonen</string>
+    <string name="notif_assistant_no_car_screen">%1$s har ingen bilskjerm: den ble åpnet på telefonen</string>
+    <string name="notif_assistant_cant_open">%1$s kan ikke åpnes. Velg en annen assistent i AAREs innstillinger</string>
+    <string name="notif_parked_only_title">Ikke tilgjengelig under kjøring</string>
+    <string name="notif_parked_only_text">Parker for å bruke dette</string>
+    <string name="notif_empty">Ingen varsler</string>
+    <string name="notif_title">Varsler</string>
+    <string name="notif_clear_all">Fjern alle</string>
+    <string name="notif_new_message_placeholder">Ny melding</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Apper</string>
+    <string name="dash_menu_home">Hjem</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Ingen navigasjonsapp</string>
+    <string name="nav_dashboard_where_to">Hvor til?</string>
+    <string name="nav_dashboard_install_hint">Installer en navigasjonsapp som støtter Android Auto på telefonen</string>
+    <string name="nav_dashboard_choose_app">Velg din kartapp</string>
+    <string name="nav_guidance_on_phone">%1$s, på telefonen</string>
+    <string name="nav_next_step_then">Deretter</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Musikk</string>
+    <string name="media_nothing_playing">Ingenting spilles</string>
+    <string name="media_action_previous">Forrige</string>
+    <string name="media_action_play_pause">Spill/pause</string>
+    <string name="media_action_next">Neste</string>
+    <string name="media_playing_from">Spiller fra %1$s</string>
+    <string name="media_connecting_to">Kobler til %1$s</string>
+    <string name="media_queue_title">Kø</string>
+    <string name="media_search_app">Søk i %1$s</string>
+    <string name="media_action_search">Søk</string>
+    <string name="media_action_browse">Bla gjennom</string>
+    <string name="media_now_playing_label">Spiller nå</string>
+    <string name="media_nothing_here">Ingenting her</string>
+    <string name="media_couldnt_load_more">Kunne ikke laste mer</string>
+    <string name="media_starting">Starter…</string>
+    <string name="media_action_pause">Pause</string>
+    <string name="media_action_play">Spill</string>
+    <string name="media_queue_empty">Køen er tom</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Gi AARE varseltilgang på telefonen for å se meldinger her</string>
+    <string name="msg_listener_not_ready">Ingenting å se her ennå</string>
+    <string name="msg_reply_sent">Svar sendt</string>
+    <string name="msg_reply_rejected">%1$s godtok ikke svaret</string>
+    <string name="msg_no_new_messages">Ingen nye meldinger fra %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Meldinger leses høyt under kjøring.</string>
+    <string name="msg_action_read_aloud">Les høyt</string>
+    <string name="msg_action_mark_read">Merk som lest</string>
+    <string name="msg_action_reply">Svar</string>
+    <string name="msg_reply_hint">Melding til %1$s</string>
+    <string name="msg_message_count_one">1 melding</string>
+    <string name="msg_message_count_many">%1$d meldinger</string>
+
+    <string name="assistant_mic_label">Assistent</string>
+    <string name="assistant_listening">Lytter…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Nylige</string>
+    <string name="phone_tab_contacts">Kontakter</string>
+    <string name="phone_tab_keypad">Tastatur</string>
+    <string name="phone_permissions_placeholder">Tillat samtaler, samtalehistorikk og kontakter i AARE på telefonen (Fullfør oppsettet).</string>
+    <string name="phone_notice_calling_title">Ringer</string>
+    <string name="phone_no_recent_calls">Ingen nylige samtaler</string>
+    <string name="phone_no_contacts">Ingen kontakter med et telefonnummer</string>
+    <string name="phone_call_in_progress">Samtale i gang</string>
+    <string name="phone_action_hang_up">Legg på</string>
+    <string name="phone_keypad_delete">Slett</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Lader</string>
+    <string name="phone_incoming_call">Innkommende samtale</string>
+    <string name="phone_action_decline">Avslå</string>
+    <string name="phone_action_answer">Svar</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">I dag</string>
+    <string name="dash_latest_label">Nyeste</string>
+    <string name="cluster_arrival_time">Ankomst %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Søk er tilgjengelig når bilen er parkert</string>
+</resources>

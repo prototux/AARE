@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import net.prototux.aare.R
 import net.prototux.aare.host.templates.RenderTemplate
 import net.prototux.aare.host.templates.TemplateHost
 
@@ -181,7 +182,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         val scale = sizePx.toFloat() / maxOf(b.width, b.height)
         return Bitmap.createScaledBitmap(b, maxOf(1, (b.width * scale).toInt()), maxOf(1, (b.height * scale).toInt()), true).asImageBitmap()
     }
-    override fun showParkedOnlyMessage() = runtime.notice("Not available while driving", "Park to use this")
+    override fun showParkedOnlyMessage() = runtime.notice(runtime.context.getString(R.string.notif_parked_only_title), runtime.context.getString(R.string.notif_parked_only_text))
 
     @Composable
     override fun MapSurface(modifier: Modifier) {

@@ -68,6 +68,7 @@ import net.prototux.aare.audio.PcmSource
 import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuSource
 import net.prototux.aare.audio.MicRouter
+import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.video.BitrateController
@@ -146,7 +147,7 @@ class CarSession(
             navBridge?.updatePhone(g)
         }
         runtime.start()
-        listener.onStatus(this, "Connecting to ${transport.name}")
+        listener.onStatus(this, context.getString(R.string.notif_status_connecting_to, transport.name))
     }
 
     fun stop() = aap.stop()
@@ -161,7 +162,7 @@ class CarSession(
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
         main.post {
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
-            listener.onStatus(this, "Connected to $headUnitName")
+            listener.onStatus(this, context.getString(R.string.notif_status_connected_to, headUnitName))
             settings.rememberCar(runtime.ui.headUnitName)
         }
         val channels = ArrayList<ServiceChannel>()
@@ -197,7 +198,7 @@ class CarSession(
 
     override fun onRunning(session: AapSession) {
         main.post {
-            listener.onStatus(this, "Projecting to $headUnitName")
+            listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
             navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png) }
             navBridge?.updatePhone(runtime.ui.phoneGuidance)
             drivingMode.start()
@@ -265,7 +266,7 @@ class CarSession(
                 } catch (e: Exception) {
                     // Never crash the app over one car: end this session and say why.
                     Log.e(TAG, "can't start the projection", e)
-                    listener.onStatus(this@CarSession, "Can't start video: ${e.message}")
+                    listener.onStatus(this@CarSession, context.getString(R.string.notif_status_cant_start_video, e.message))
                     aap.stop()
                 }
             }
@@ -491,7 +492,7 @@ class CarSession(
             CaptureMethod.SHIZUKU -> if (guidance) return else ShizukuSource(context, rate, ch)
             CaptureMethod.PLAYBACK_CAPTURE -> if (guidance || p == null) return else PlaybackCaptureSource(p, rate, ch)
             null -> {
-                if (!guidance) runtime.notice("Car audio", "Open AARE on the phone and set up car audio to hear the phone in the car")
+                if (!guidance) runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))
                 return
             }
         }

@@ -171,7 +171,7 @@ class ProjectionService : Service() {
             return
         }
         log("wireless: connecting to ${runCatching { device.name }.getOrNull() ?: address}")
-        _state.update { it.copy(status = "Connecting wirelessly…") }
+        _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
             try {
                 val transport = connector.connect(device)
@@ -180,7 +180,7 @@ class ProjectionService : Service() {
                 throw e
             } catch (e: Exception) {
                 log("wireless: ${e.message}")
-                _state.update { it.copy(status = "Not connected", lastError = e.message) }
+                _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = e.message) }
             }
         }
     }
@@ -245,8 +245,8 @@ class ProjectionService : Service() {
             // A changed certificate gets the same Trust prompt as a new head unit, saying it changed.
             val why = when {
                 pinRefusal == null -> reason
-                pinRefusal.changed -> "head unit certificate changed: tap Trust in the notification or in AARE only if its software was updated, then reconnect"
-                else -> "head unit certificate not trusted yet: tap Trust in the notification or in AARE, then reconnect"
+                pinRefusal.changed -> getString(R.string.notif_cert_changed_message)
+                else -> getString(R.string.notif_cert_untrusted_message)
             }
             pinRefusal?.let { notifyUntrusted(it) }
             if (certificateRejected) {
@@ -256,8 +256,8 @@ class ProjectionService : Service() {
             }
             pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
-            _state.update { it.copy(connected = false, status = "Not connected", video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r }, pendingTrust = pinRefusal) }
-            updateNotification("Not connected")
+            _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r }, pendingTrust = pinRefusal) }
+            updateNotification(getString(R.string.notif_status_not_connected))
             // A USB link that dropped while still plugged in usually comes back: retry a few times.
             // Not a refused certificate: it would be refused again until the user trusts it.
             val acc = usbAccessory
@@ -324,12 +324,12 @@ class ProjectionService : Service() {
 
     private fun createChannel() {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, "Car connection", NotificationManager.IMPORTANCE_LOW))
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
     }
 
     private fun notification(text: String): Notification {
         // Screen-capture consent only lives as long as the service: say why it stays without a car.
-        val shown = if (session == null && projection != null) "$text · keeping the screen-capture consent for car audio (Stop releases it)" else text
+        val shown = if (session == null && projection != null) getString(R.string.notif_keeping_consent_suffix, text) else text
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1, Intent(this, ProjectionService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, CHANNEL)
@@ -339,25 +339,29 @@ class ProjectionService : Service() {
             .setStyle(Notification.BigTextStyle().bigText(shown))
             .setContentIntent(open)
             .setOngoing(true)
-            .addAction(Notification.Action.Builder(null, "Stop", stop).build())
+            .addAction(Notification.Action.Builder(null, getString(R.string.notif_action_stop), stop).build())
             .build()
     }
 
-    /** Asks the user to trust a head unit certificate the phone refused; they reconnect after. */
+    /**
+     * Asks the user to trust a head unit certificate the phone refused; they reconnect after.
+     * Open-source and Google's desktop head units ship certificates whose private keys are
+     * public: once trusted, anyone holding that key can pose as that head unit (notif_trust_warning).
+     */
     private fun notifyUntrusted(refusal: PinRefusal) {
         val trust = PendingIntent.getBroadcast(this, TrustReceiver.NOTIFICATION_ID,
             Intent(this, TrustReceiver::class.java)
                 .putExtra(TrustReceiver.EXTRA_PEER_KEY, refusal.peerKey)
                 .putExtra(TrustReceiver.EXTRA_SHA256, refusal.fingerprint),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val text = "SHA-256 ${refusal.fingerprint.take(16)}... $TRUST_WARNING, then reconnect."
+        val text = getString(R.string.notif_untrusted_message, refusal.fingerprint.take(16), getString(R.string.notif_trust_warning))
         getSystemService(NotificationManager::class.java).notify(TrustReceiver.NOTIFICATION_ID, Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(if (refusal.changed) "Head unit certificate changed" else "New head unit")
+            .setContentTitle(if (refusal.changed) getString(R.string.notif_cert_changed_title) else getString(R.string.notif_new_head_unit_title))
             .setContentText(text)
             .setStyle(Notification.BigTextStyle().bigText(text))
             .setAutoCancel(true)
-            .addAction(Notification.Action.Builder(null, "Trust", trust).build())
+            .addAction(Notification.Action.Builder(null, getString(R.string.notif_action_trust), trust).build())
             .build())
     }
 
@@ -409,12 +413,6 @@ class ProjectionService : Service() {
         val state: StateFlow<State> = _state
 
         /**
-         * Open-source and Google's desktop head units ship certificates whose private keys are
-         * public: once trusted, anyone holding that key can pose as that head unit.
-         */
-        const val TRUST_WARNING = "Only trust a head unit you are connected to right now"
-
-        /**
          * Trusts a refused head unit certificate, from the notification's Trust action or the app's
          * Trust button; the next connection to that head unit goes through.
          */
@@ -449,10 +447,10 @@ class ProjectionService : Service() {
                 Log.w(TAG, "can't start from background, asking the user", e)
                 DiagLog.add("wireless: Android didn't let AARE start in the background; tap the notification to connect")
                 val nm = context.getSystemService(NotificationManager::class.java)
-                nm.createNotificationChannel(NotificationChannel(CHANNEL, "Car connection", NotificationManager.IMPORTANCE_LOW))
+                nm.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
                 val pi = PendingIntent.getForegroundService(context, 2, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                 nm.notify(2, Notification.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification)
-                    .setContentTitle("Car nearby").setContentText("Tap to connect wirelessly").setContentIntent(pi).setAutoCancel(true).build())
+                    .setContentTitle(context.getString(R.string.notif_car_nearby_title)).setContentText(context.getString(R.string.notif_car_nearby_text)).setContentIntent(pi).setAutoCancel(true).build())
             }
         }
 

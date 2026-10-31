@@ -135,16 +135,16 @@ class CarRuntime(
             val onScreen = id != null && ((ui.screen as? CarScreen.App)?.appId == id || ui.assistantAppId == id)
             when {
                 code -> {
-                    notice("Not calling", "${from.info.label} asked to dial a code with * or #, not a phone number")
+                    notice(context.getString(R.string.notif_not_calling_title), context.getString(R.string.notif_not_calling_text, from.info.label))
                     if (onScreen) ui.screen = CarScreen.App(PHONE_ID)
                 }
                 number.isBlank() -> if (onScreen) ui.screen = CarScreen.App(PHONE_ID)
                 onScreen -> {
                     Calls.place(context, number)
-                    notice("Calling $number", "Asked by ${from.info.label}")
+                    notice(context.getString(R.string.notif_calling_title, number), context.getString(R.string.notif_asked_by, from.info.label))
                     ui.screen = CarScreen.App(PHONE_ID)
                 }
-                else -> notice("Call $number?", "Asked by ${from.info.label}", durationMs = 10_000, actions = listOf("Call" to {
+                else -> notice(context.getString(R.string.notif_call_confirm_title, number), context.getString(R.string.notif_asked_by, from.info.label), durationMs = 10_000, actions = listOf(context.getString(R.string.common_call) to {
                     Calls.place(context, number)
                     ui.screen = CarScreen.App(PHONE_ID)
                 }))
@@ -159,7 +159,7 @@ class CarRuntime(
             else -> null
         }
         if (target == null) {
-            notice(from.info.label, if (isNavigate) "No navigation app on the phone" else "Can't open that from the car")
+            notice(from.info.label, if (isNavigate) context.getString(R.string.notif_no_nav_app) else context.getString(R.string.notif_cant_open))
             return
         }
         val navIntent = if (isNavigate && intent.action != CarContext.ACTION_NAVIGATE) Intent(CarContext.ACTION_NAVIGATE, intent.data) else intent
@@ -558,7 +558,7 @@ class CarRuntime(
         override fun answerCall() = Calls.answer(context)
         override fun endCall() = Calls.end(context)
         override fun navigateTo(place: String) {
-            if (!this@CarRuntime.navigateTo(place)) notice("Navigation", "No navigation app in the car")
+            if (!this@CarRuntime.navigateTo(place)) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
         }
     }
 
@@ -574,7 +574,7 @@ class CarRuntime(
         onAssistant?.invoke()
         val pkg = assistantPackage()
         if (pkg == null) {
-            notice("Assistant", "Choose a voice assistant in AARE's settings on the phone")
+            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_choose_text))
             return
         }
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
@@ -587,9 +587,9 @@ class CarRuntime(
         }
         val label = Assistants.label(context, pkg) ?: pkg
         if (Assistants.startOnPhone(context, pkg)) {
-            notice("Assistant", "$label has no car screen: it opened on the phone")
+            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_no_car_screen, label))
         } else {
-            notice("Assistant", "$label can't be opened. Choose another assistant in AARE's settings")
+            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_cant_open, label))
         }
     }
 

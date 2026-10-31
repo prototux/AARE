@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Cho phép bạn dùng màn hình điện thoại từ xe: AARE lặp lại các lần chạm trên màn hình xe sang điện thoại, và kiểm tra ứng dụng nào đang hiển thị để màn hình điện thoại tạm dừng khi lái xe, trừ khi đó là ứng dụng điều hướng. AARE không đọc gì khác.</string>
+    <string name="mirror_locked_placeholder">Màn hình điện thoại tạm dừng khi điện thoại đang khóa. Mở khóa điện thoại để hiển thị.</string>
+    <string name="mirror_driving_no_accessibility">Màn hình điện thoại tạm dừng khi đang lái xe. Để hiển thị ứng dụng điều hướng khi lái xe, hãy bật AARE trong cài đặt trợ năng của điện thoại: điều này giúp AARE biết ứng dụng nào đang mở.</string>
+    <string name="mirror_driving_nav_only">Màn hình điện thoại tạm dừng khi đang lái xe. Nó chỉ hiển thị ứng dụng điều hướng.</string>
+    <string name="mirror_need_car_audio">Bật Âm thanh xe hơi trong AARE trên điện thoại, và chọn Toàn bộ màn hình khi Android hỏi: màn hình điện thoại dùng chung quyền này.</string>
+    <string name="mirror_need_accessibility">Để dùng điện thoại từ xe, hãy bật AARE trong cài đặt trợ năng của điện thoại.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Quay lại</string>
+    <string name="common_up">Lên</string>
+    <string name="common_down">Xuống</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="common_clear">Xóa</string>
+    <string name="common_call">Gọi</string>
+    <string name="common_dismiss">Bỏ qua</string>
+    <string name="common_close">Đóng</string>
+    <string name="common_nothing_to_show">Không có gì để hiển thị</string>
+    <string name="common_no_items">Không có mục nào</string>
+    <string name="common_unsupported_screen">Màn hình này chưa được hỗ trợ</string>
+    <string name="common_loading">Đang tải</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Màn hình xe</string>
+    <string name="setup_page_car_screen_subtitle">Màu sắc, vị trí thanh, màn hình điện thoại</string>
+    <string name="setup_page_apps_title">Ứng dụng</string>
+    <string name="setup_page_apps_subtitle">Ứng dụng nào hiển thị trên xe</string>
+    <string name="setup_page_connection_title">Kết nối</string>
+    <string name="setup_page_connection_subtitle">Không dây, chất lượng video, xe của bạn</string>
+    <string name="setup_page_advanced_title">Nâng cao</string>
+    <string name="setup_page_advanced_subtitle">Máy chủ đầu đĩa, chứng chỉ, nhật ký</string>
+    <string name="setup_tagline">Trình chiếu màn hình xe mã nguồn mở</string>
+    <string name="setup_status_certificate">chứng chỉ: %1$s</string>
+    <string name="setup_status_disconnected_hint">Cắm điện thoại vào cổng USB Android Auto của xe, hoặc kết nối không dây với xe đã ghép đôi.</string>
+    <string name="setup_status_last_error">Lỗi gần nhất: %1$s</string>
+    <string name="setup_trust_new_cert">Tin tưởng chứng chỉ mới của đầu đĩa này</string>
+    <string name="setup_trust_head_unit">Tin tưởng đầu đĩa này</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Xem trước màn hình xe</string>
+    <string name="setup_disconnect">Ngắt kết nối</string>
+    <string name="setup_finish_title">Hoàn tất thiết lập</string>
+    <string name="setup_check_permissions_title">Quyền truy cập</string>
+    <string name="setup_check_permissions_subtitle">Micro, vị trí, Bluetooth, Wi-Fi lân cận, thông báo, cuộc gọi, danh bạ và lịch</string>
+    <string name="setup_check_notification_access_title">Quyền truy cập thông báo</string>
+    <string name="setup_check_notification_access_subtitle">Tin nhắn, chỉ đường từ Google Maps và Waze, nhạc đang phát</string>
+    <string name="setup_check_audio_subtitle">Cho phép âm thanh của điện thoại truyền đến xe</string>
+    <string name="setup_action_set_up">Thiết lập</string>
+    <string name="setup_section_connecting">Đang kết nối</string>
+    <string name="setup_toggle_wireless_title">Không dây</string>
+    <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
+    <string name="setup_toggle_resume_music_title">Tiếp tục nhạc</string>
+    <string name="setup_toggle_resume_music_subtitle">Bật lại ứng dụng nhạc vừa phát khi xe kết nối</string>
+    <string name="setup_section_location">Vị trí</string>
+    <string name="setup_toggle_car_gps_title">Dùng GPS của xe</string>
+    <string name="setup_toggle_car_gps_subtitle">Khi đang kết nối, các ứng dụng trên điện thoại sẽ thấy vị trí của xe thay vì vị trí của điện thoại, để ứng dụng điều hướng không lẫn hai vị trí này</string>
+    <string name="setup_check_mock_location_title">Cho phép AARE đặt vị trí</string>
+    <string name="setup_check_mock_location_subtitle">Tùy chọn nhà phát triển &gt; Chọn ứng dụng vị trí giả &gt; AARE</string>
+    <string name="setup_section_video">Video</string>
+    <string name="setup_toggle_60fps_title">Ưu tiên 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Mượt hơn khi xe hỗ trợ</string>
+    <string name="setup_choice_max_resolution">Độ phân giải tối đa</string>
+    <string name="setup_hint_lower_resolution">Độ phân giải thấp hơn tiết kiệm pin và băng thông hơn.</string>
+    <string name="setup_section_your_cars">Xe của bạn</string>
+    <string name="setup_cars_empty">Xe sẽ xuất hiện ở đây sau lần kết nối đầu tiên.</string>
+    <string name="setup_car_last_connected">Kết nối lần cuối %1$s</string>
+    <string name="setup_action_forget">Quên</string>
+    <string name="setup_section_trusted_head_units">Đầu đĩa được tin tưởng</string>
+    <string name="setup_trusted_head_units_hint">Xe không dây đã ghép đôi được tin tưởng ngay từ lần kết nối đầu tiên; đầu đĩa USB hoặc đầu đĩa dành cho nhà phát triển mới chỉ được tin tưởng sau khi bạn nhấn Tin tưởng (trong thông báo hoặc trên màn hình chính). Chỉ nên tin tưởng đầu đĩa mà bạn đang kết nối ngay lúc này. Nếu sau đó đầu đĩa hiển thị chứng chỉ khác, bạn sẽ được hỏi lại: chỉ tin tưởng nếu phần mềm của nó đã được cập nhật.</string>
+    <string name="setup_trusted_head_units_empty">Chưa có.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Giao diện</string>
+    <string name="setup_choice_colors">Màu sắc</string>
+    <string name="setup_choice_colors_auto">Ngày/đêm theo xe</string>
+    <string name="setup_choice_dark">Tối</string>
+    <string name="setup_choice_light">Sáng</string>
+    <string name="setup_choice_bar">Thanh</string>
+    <string name="setup_choice_bar_auto">Phía người lái</string>
+    <string name="setup_choice_left">Trái</string>
+    <string name="setup_choice_right">Phải</string>
+    <string name="setup_choice_bottom">Dưới</string>
+    <string name="setup_toggle_dark_bar_title">Thanh tối</string>
+    <string name="setup_toggle_dark_bar_subtitle">Giữ thanh màu tối ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_section_dashboard">Bảng điều khiển</string>
+    <string name="setup_choice_wallpaper">Hình nền</string>
+    <string name="setup_wallpaper_none">Không có</string>
+    <string name="setup_wallpaper_photo">Ảnh</string>
+    <string name="setup_toggle_weather_title">Thời tiết</string>
+    <string name="setup_toggle_weather_subtitle">Bên cạnh đồng hồ, từ Open-Meteo (lấy vị trí gần đúng, khoảng 10 km)</string>
+    <string name="setup_toggle_calendar_title">Sự kiện lịch kế tiếp</string>
+    <string name="setup_toggle_calendar_subtitle">Dưới phần nhạc, có lối tắt để điều hướng đến địa điểm đó</string>
+    <string name="setup_section_driving">Lái xe</string>
+    <string name="setup_toggle_passenger_title">Chế độ hành khách</string>
+    <string name="setup_toggle_passenger_subtitle">Bỏ qua trạng thái lái xe của ô tô: nhập văn bản, danh sách dài và màn hình điện thoại vẫn khả dụng khi xe đang di chuyển, dành cho hành khách. Người lái không được dùng màn hình khi đang lái xe.</string>
+    <string name="setup_section_app_list">Trong danh sách ứng dụng của xe</string>
+    <string name="setup_app_list_hint">Tắt các ứng dụng bạn không muốn hiển thị trên xe.</string>
+    <string name="setup_app_list_loading">Đang tìm ứng dụng…</string>
+    <string name="setup_app_group_nav">Ứng dụng điều hướng và ứng dụng xe</string>
+    <string name="setup_app_list_no_nav">Chưa có: hãy cài CoMaps, Organic Maps hoặc một ứng dụng Android Auto khác.</string>
+    <string name="setup_app_kind_navigation">Điều hướng</string>
+    <string name="setup_app_kind_generic">Ứng dụng xe</string>
+    <string name="setup_app_group_media">Phương tiện</string>
+    <string name="setup_app_kind_media">Nhạc, podcast, radio</string>
+    <string name="setup_app_group_messaging">Tin nhắn</string>
+    <string name="setup_app_kind_messaging">Tin nhắn từ thông báo của ứng dụng</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Ứng dụng Android Auto mà AARE không thể hiển thị</string>
+    <string name="setup_hint_allowlist">Các ứng dụng được xây dựng với phiên bản mới của thư viện xe hơi của Google chỉ chấp nhận các host trong danh sách cho phép của họ; xem README.</string>
+    <string name="setup_app_entry_phone">Điện thoại</string>
+    <string name="setup_app_entry_settings">Cài đặt</string>
+    <string name="setup_app_entry_notifications">Thông báo</string>
+    <string name="setup_section_app_order">Thứ tự trên xe</string>
+    <string name="setup_section_connection_log">Nhật ký kết nối</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Không liên kết với Google. Android Auto là thương hiệu của Google LLC.</string>
+    <string name="setup_choice_style">Kiểu</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Thanh tối, ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_switch_passenger">Chế độ hành khách: không có hạn chế khi lái xe (người lái không được dùng màn hình)</string>
+    <string name="setup_switch_message_notifications">Thông báo tin nhắn</string>
+    <string name="setup_switch_audio_next_connection">Âm thanh điện thoại trên xe (lần kết nối tiếp theo)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Chứng chỉ điện thoại</string>
+    <string name="cert_hint">Đầu đĩa kiểm tra chứng chỉ của điện thoại. Đầu đĩa mã nguồn mở chấp nhận chứng chỉ được tạo tự động; xe dùng phần mềm đầu đĩa của Google chỉ chấp nhận chứng chỉ do Google cấp, mà AARE không thể kèm theo. Bạn có thể nhập chứng chỉ mà bạn có quyền sử dụng (chứng chỉ PEM + khóa PKCS#8, hoặc PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · đến %2$s</string>
+    <string name="cert_action_remove">Xóa</string>
+    <string name="cert_action_import">Nhập chứng chỉ…</string>
+    <string name="cert_p12_dialog_title">Mật khẩu PKCS#12</string>
+    <string name="cert_action_import_confirm">Nhập</string>
+    <string name="cert_imported_fallback">đã nhập</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Máy chủ đầu đĩa</string>
+    <string name="huserver_toggle_subtitle">Giống chế độ nhà phát triển của Android Auto, dùng cho đầu đĩa desktop, DHU, openauto, Headunit Revived. Chỉ truy cập được qua adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Chấp nhận từ mạng</string>
+    <string name="huserver_toggle_network_subtitle">Cũng lắng nghe trên cổng TCP 5277 trên mọi mạng, không cần mật khẩu. Bất kỳ ai dùng chung Wi-Fi đều có thể kết nối, xem màn hình xe và dùng micro.</string>
+    <string name="huserver_toggle_lanonce_title">Tắt chế độ mạng sau mỗi phiên</string>
+    <string name="huserver_toggle_lanonce_subtitle">An toàn hơn: mạng phải được cho phép lại ở mỗi phiên. Hãy tắt tùy chọn này cho các đầu đĩa tự kết nối lại, như openauto hoặc Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Màn hình điện thoại trên máy chủ</string>
+    <string name="huserver_toggle_mirror_subtitle">Cũng cung cấp "Màn hình điện thoại" cho bất kỳ ai kết nối vào đây. Rủi ro: họ có thể thấy màn hình điện thoại và chạm vào nó, vì vậy hãy để tắt trừ khi bạn tin tưởng đầu đĩa này.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Tin nhắn</string>
+    <string name="msg_page_subtitle">Thông báo nổi và đọc to</string>
+    <string name="msg_check_notification_access_subtitle">Cần để xem tin nhắn trên xe</string>
+    <string name="msg_toggle_banners_title">Hiện thông báo tin nhắn</string>
+    <string name="msg_toggle_banners_subtitle">Hiện thông báo nổi trên màn hình xe cho mỗi tin nhắn mới</string>
+    <string name="msg_toggle_group_title">Tin nhắn nhóm</string>
+    <string name="msg_toggle_group_subtitle">Cũng hiện tin nhắn từ các cuộc trò chuyện nhóm</string>
+    <string name="msg_toggle_read_aloud_title">Đọc to tin nhắn</string>
+    <string name="msg_toggle_read_aloud_subtitle">Đọc to mỗi tin nhắn mới ngay khi nhận được</string>
+    <string name="msg_hint_apps">Các ứng dụng nhắn tin (WhatsApp, Signal, SMS…) cũng có trang riêng trong danh sách ứng dụng của xe.</string>
+    <string name="msg_section_while_driving">Khi đang lái xe</string>
+    <string name="msg_toggle_dnd_title">Không làm phiền</string>
+    <string name="msg_toggle_dnd_subtitle">Im lặng điện thoại khi đang kết nối; cuộc gọi và cuộc trò chuyện ưu tiên vẫn được thông báo</string>
+    <string name="msg_check_dnd_access_title">Cho phép AARE bật Không làm phiền</string>
+    <string name="msg_check_dnd_access_subtitle">Android chỉ hỏi một lần</string>
+    <string name="msg_toggle_autoreply_title">Tự động trả lời</string>
+    <string name="msg_toggle_autoreply_subtitle">Tự động trả lời người gửi tin, một lần cho mỗi cuộc trò chuyện trong mỗi chuyến đi (không áp dụng cho nhóm)</string>
+    <string name="msg_autoreply_field_label">Trả lời</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Âm thanh xe hơi</string>
+    <string name="audio_page_subtitle">Cách âm thanh điện thoại truyền đến xe</string>
+    <string name="audio_toggle_enable_title">Âm thanh điện thoại trên xe</string>
+    <string name="audio_toggle_enable_subtitle">Nhạc, podcast, trợ lý ảo và, tùy phương thức, giọng điều hướng</string>
+    <string name="audio_using_method">Đang dùng: %1$s</string>
+    <string name="audio_no_method">Chưa thiết lập phương thức nào: hãy chọn một phương thức dưới đây.</string>
+    <string name="audio_section_methods">Các phương thức, tốt nhất trước</string>
+    <string name="audio_policy_ready">Đã sẵn sàng. Nhạc và giọng điều hướng truyền riêng đến xe, điện thoại vẫn im lặng.</string>
+    <string name="audio_policy_not_ready">Giống Android Auto: nhạc và giọng điều hướng tách riêng, loa điện thoại tắt. Cần điện thoại đã root: cài AARE như ứng dụng hệ thống bằng module Magisk (xem README).</string>
+    <string name="audio_shizuku_ready">Đã sẵn sàng. Mọi âm thanh điện thoại phát ra đều truyền đến xe, kể cả giọng điều hướng; điện thoại vẫn im lặng.</string>
+    <string name="audio_shizuku_needs_android12">Cần Android 12 hoặc mới hơn.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku đang chạy: nhấn để cho phép AARE.</string>
+    <string name="audio_shizuku_install_hint">Không cần root. Cài Shizuku, khởi động nó (gỡ lỗi không dây, một lần mỗi khi khởi động lại máy), rồi trở lại đây.</string>
+    <string name="audio_playback_ready">Đã sẵn sàng. Chỉ phương tiện: không có giọng điều hướng, một số ứng dụng không hỗ trợ, và điện thoại vẫn tiếp tục phát.</string>
+    <string name="audio_playback_not_ready">Hoạt động ở mọi nơi, nhưng có hạn chế: chỉ phương tiện, không có giọng điều hướng. Android sẽ hỏi quyền ghi màn hình: chọn Toàn bộ màn hình (cũng được dùng cho màn hình điện thoại).</string>
+    <string name="audio_notice_setup_hint">Mở AARE trên điện thoại và thiết lập âm thanh xe hơi để nghe điện thoại trên xe</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Màn hình điện thoại</string>
+    <string name="phone_toggle_enable_title">Màn hình điện thoại trên xe</string>
+    <string name="phone_toggle_enable_subtitle">Màn hình riêng của điện thoại, dùng cho các ứng dụng mà AARE không thể hiển thị (Google Maps, Waze). Tạm dừng khi điện thoại đang khóa, và khi đang lái xe trừ khi có ứng dụng điều hướng đang dẫn đường. Không khả dụng trên máy chủ đầu đĩa trừ khi được bật ở đó</string>
+    <string name="phone_check_touch_title">Chạm trên màn hình điện thoại</string>
+    <string name="phone_check_touch_subtitle">Bật AARE trong Trợ năng. Ứng dụng cài từ bên ngoài có thể cần bật "Cho phép cài đặt bị hạn chế" trong thông tin ứng dụng AARE trước</string>
+    <string name="phone_hint_touch_capture">Hình ảnh sử dụng quyền ghi màn hình (trang Âm thanh xe hơi, chọn Toàn bộ màn hình).</string>
+    <string name="phone_app_row_subtitle">Màn hình riêng của điện thoại, dùng cho các ứng dụng mà AARE không thể hiển thị</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Trợ lý giọng nói</string>
+    <string name="assistant_page_subtitle">Nút trợ lý giọng nói mở ứng dụng nào</string>
+    <string name="assistant_same_as_phone">Giống như trên điện thoại</string>
+    <string name="assistant_no_default">Chưa đặt trợ lý mặc định trên điện thoại</string>
+    <string name="assistant_has_car_app_subtitle">Trên màn hình xe, dùng micro của xe</string>
+    <string name="assistant_opens_on_phone">Mở trên điện thoại</string>
+    <string name="assistant_hint">Nút giọng nói trên vô lăng và micro trên thanh công cụ sẽ mở trợ lý này. Các trợ lý có ứng dụng dành cho xe, như Lapin, hoạt động tốt nhất.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Kết nối xe</string>
+    <string name="notif_action_stop">Dừng</string>
+    <string name="notif_action_trust">Tin tưởng</string>
+    <string name="notif_status_connecting_wirelessly">Đang kết nối không dây…</string>
+    <string name="notif_status_not_connected">Chưa kết nối</string>
+    <string name="notif_keeping_consent_suffix">%1$s · đang giữ quyền ghi màn hình cho âm thanh xe hơi (nhấn Dừng để giải phóng)</string>
+    <string name="notif_cert_changed_title">Chứng chỉ đầu đĩa đã thay đổi</string>
+    <string name="notif_new_head_unit_title">Đầu đĩa mới</string>
+    <string name="notif_trust_warning">Chỉ tin tưởng đầu đĩa mà bạn đang kết nối ngay lúc này</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, rồi kết nối lại.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, rồi kết nối lại.</string>
+    <string name="notif_cert_changed_message">chứng chỉ đầu đĩa đã thay đổi: chỉ nhấn Tin tưởng trong thông báo hoặc trong AARE nếu phần mềm của nó đã được cập nhật, rồi kết nối lại</string>
+    <string name="notif_cert_untrusted_message">chứng chỉ đầu đĩa chưa được tin tưởng: nhấn Tin tưởng trong thông báo hoặc trong AARE, rồi kết nối lại</string>
+    <string name="notif_car_nearby_title">Xe ở gần</string>
+    <string name="notif_car_nearby_text">Nhấn để kết nối không dây</string>
+    <string name="notif_status_connecting_to">Đang kết nối đến %1$s</string>
+    <string name="notif_status_connected_to">Đã kết nối đến %1$s</string>
+    <string name="notif_status_projecting_to">Đang chiếu đến %1$s</string>
+    <string name="notif_status_cant_start_video">Không thể bắt đầu video: %1$s</string>
+    <string name="notif_not_calling_title">Không gọi</string>
+    <string name="notif_not_calling_text">%1$s yêu cầu bấm một mã có * hoặc #, không phải số điện thoại</string>
+    <string name="notif_calling_title">Đang gọi %1$s</string>
+    <string name="notif_asked_by">Được yêu cầu bởi %1$s</string>
+    <string name="notif_call_confirm_title">Gọi %1$s?</string>
+    <string name="notif_no_nav_app">Không có ứng dụng điều hướng trên điện thoại</string>
+    <string name="notif_cant_open">Không thể mở mục đó từ xe</string>
+    <string name="notif_navigation_title">Điều hướng</string>
+    <string name="notif_navigation_no_app_text">Không có ứng dụng điều hướng trên xe</string>
+    <string name="notif_assistant_title">Trợ lý</string>
+    <string name="notif_assistant_choose_text">Chọn một trợ lý giọng nói trong cài đặt AARE trên điện thoại</string>
+    <string name="notif_assistant_no_car_screen">%1$s không có màn hình dành cho xe: đã mở trên điện thoại</string>
+    <string name="notif_assistant_cant_open">Không thể mở %1$s. Hãy chọn trợ lý khác trong cài đặt AARE</string>
+    <string name="notif_parked_only_title">Không khả dụng khi đang lái xe</string>
+    <string name="notif_parked_only_text">Đỗ xe để dùng tính năng này</string>
+    <string name="notif_empty">Không có thông báo</string>
+    <string name="notif_title">Thông báo</string>
+    <string name="notif_clear_all">Xóa tất cả</string>
+    <string name="notif_new_message_placeholder">Tin nhắn mới</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Ứng dụng</string>
+    <string name="dash_menu_home">Trang chủ</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Không có ứng dụng điều hướng</string>
+    <string name="nav_dashboard_where_to">Đi đâu?</string>
+    <string name="nav_dashboard_install_hint">Cài một ứng dụng điều hướng hỗ trợ Android Auto trên điện thoại</string>
+    <string name="nav_dashboard_choose_app">Chọn ứng dụng bản đồ của bạn</string>
+    <string name="nav_guidance_on_phone">%1$s, trên điện thoại</string>
+    <string name="nav_next_step_then">Tiếp theo</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Nhạc</string>
+    <string name="media_nothing_playing">Không có gì đang phát</string>
+    <string name="media_action_previous">Trước</string>
+    <string name="media_action_play_pause">Phát/tạm dừng</string>
+    <string name="media_action_next">Tiếp</string>
+    <string name="media_playing_from">Đang phát từ %1$s</string>
+    <string name="media_connecting_to">Đang kết nối đến %1$s</string>
+    <string name="media_queue_title">Hàng chờ</string>
+    <string name="media_search_app">Tìm trong %1$s</string>
+    <string name="media_action_search">Tìm kiếm</string>
+    <string name="media_action_browse">Duyệt</string>
+    <string name="media_now_playing_label">Đang phát</string>
+    <string name="media_nothing_here">Không có gì ở đây</string>
+    <string name="media_couldnt_load_more">Không thể tải thêm</string>
+    <string name="media_starting">Đang khởi động…</string>
+    <string name="media_action_pause">Tạm dừng</string>
+    <string name="media_action_play">Phát</string>
+    <string name="media_queue_empty">Hàng chờ đang trống</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Cấp quyền truy cập thông báo cho AARE trên điện thoại để xem tin nhắn ở đây</string>
+    <string name="msg_listener_not_ready">Chưa có gì để xem ở đây</string>
+    <string name="msg_reply_sent">Đã gửi trả lời</string>
+    <string name="msg_reply_rejected">%1$s không chấp nhận trả lời</string>
+    <string name="msg_no_new_messages">Không có tin nhắn mới từ %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Tin nhắn được đọc to khi đang lái xe.</string>
+    <string name="msg_action_read_aloud">Đọc to</string>
+    <string name="msg_action_mark_read">Đánh dấu đã đọc</string>
+    <string name="msg_action_reply">Trả lời</string>
+    <string name="msg_reply_hint">Tin nhắn gửi %1$s</string>
+    <string name="msg_message_count_one">1 tin nhắn</string>
+    <string name="msg_message_count_many">%1$d tin nhắn</string>
+
+    <string name="assistant_mic_label">Trợ lý</string>
+    <string name="assistant_listening">Đang nghe…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Gần đây</string>
+    <string name="phone_tab_contacts">Danh bạ</string>
+    <string name="phone_tab_keypad">Bàn phím số</string>
+    <string name="phone_permissions_placeholder">Cho phép quyền gọi điện, lịch sử gọi và danh bạ trong AARE trên điện thoại (Hoàn tất thiết lập).</string>
+    <string name="phone_notice_calling_title">Đang gọi</string>
+    <string name="phone_no_recent_calls">Không có cuộc gọi gần đây</string>
+    <string name="phone_no_contacts">Không có danh bạ có số điện thoại</string>
+    <string name="phone_call_in_progress">Đang trong cuộc gọi</string>
+    <string name="phone_action_hang_up">Kết thúc gọi</string>
+    <string name="phone_keypad_delete">Xóa</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Đang sạc</string>
+    <string name="phone_incoming_call">Cuộc gọi đến</string>
+    <string name="phone_action_decline">Từ chối</string>
+    <string name="phone_action_answer">Trả lời</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Hôm nay</string>
+    <string name="dash_latest_label">Mới nhất</string>
+    <string name="cluster_arrival_time">Đến %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Tìm kiếm chỉ khả dụng khi đã đỗ xe</string>
+</resources>

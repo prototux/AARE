@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Umožňuje používat obrazovku telefonu z auta: AARE na telefonu přehrává dotyky provedené na obrazovce auta a zjišťuje, která aplikace je v popředí, takže obrazovka telefonu zůstává při jízdě pozastavena, pokud nezobrazuje navigační aplikaci. AARE nečte nic jiného.</string>
+    <string name="mirror_locked_placeholder">Obrazovka telefonu je pozastavena, když je telefon uzamčen. Odemkněte telefon, aby se zobrazila.</string>
+    <string name="mirror_driving_no_accessibility">Obrazovka telefonu je při jízdě pozastavena. Chcete-li zobrazovat navigační aplikace při jízdě, zapněte AARE v nastavení přístupnosti telefonu: řekne AARE, která aplikace je otevřená.</string>
+    <string name="mirror_driving_nav_only">Obrazovka telefonu je při jízdě pozastavena. Zobrazuje pouze navigační aplikace.</string>
+    <string name="mirror_need_car_audio">Zapněte Zvuk v autě v AARE na telefonu a při dotazu Androidu zvolte Celou obrazovku: obrazovka telefonu používá stejné oprávnění.</string>
+    <string name="mirror_need_accessibility">Chcete-li používat telefon z auta, zapněte AARE v nastavení přístupnosti telefonu.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Zpět</string>
+    <string name="common_up">Nahoru</string>
+    <string name="common_down">Dolů</string>
+    <string name="common_cancel">Zrušit</string>
+    <string name="common_clear">Vymazat</string>
+    <string name="common_call">Zavolat</string>
+    <string name="common_dismiss">Zahodit</string>
+    <string name="common_close">Zavřít</string>
+    <string name="common_nothing_to_show">Nic k zobrazení</string>
+    <string name="common_no_items">Žádné položky</string>
+    <string name="common_unsupported_screen">Tato obrazovka ještě není podporována</string>
+    <string name="common_loading">Načítání</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Obrazovka auta</string>
+    <string name="setup_page_car_screen_subtitle">Barvy, pozice lišty, obrazovka telefonu</string>
+    <string name="setup_page_apps_title">Aplikace</string>
+    <string name="setup_page_apps_subtitle">Které aplikace se zobrazují v autě</string>
+    <string name="setup_page_connection_title">Připojení</string>
+    <string name="setup_page_connection_subtitle">Bezdrátové připojení, kvalita videa, vaše auta</string>
+    <string name="setup_page_advanced_title">Pokročilé</string>
+    <string name="setup_page_advanced_subtitle">Server hlavní jednotky, certifikáty, protokol</string>
+    <string name="setup_tagline">Open-source projekce do auta</string>
+    <string name="setup_status_certificate">certifikát: %1$s</string>
+    <string name="setup_status_disconnected_hint">Připojte telefon k portu USB Android Auto v autě, nebo se bezdrátově připojte k párovanému autu.</string>
+    <string name="setup_status_last_error">Poslední chyba: %1$s</string>
+    <string name="setup_trust_new_cert">Důvěřovat novému certifikátu této hlavní jednotky</string>
+    <string name="setup_trust_head_unit">Důvěřovat této hlavní jednotce</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Náhled obrazovky auta</string>
+    <string name="setup_disconnect">Odpojit</string>
+    <string name="setup_finish_title">Dokončit nastavení</string>
+    <string name="setup_check_permissions_title">Oprávnění</string>
+    <string name="setup_check_permissions_subtitle">Mikrofon, poloha, Bluetooth, Wi-Fi v okolí, oznámení, hovory, kontakty a kalendář</string>
+    <string name="setup_check_notification_access_title">Přístup k oznámením</string>
+    <string name="setup_check_notification_access_subtitle">Zprávy, navigace z Google Maps a Waze, právě přehrávané</string>
+    <string name="setup_check_audio_subtitle">Umožnit, aby zvuk telefonu doputoval do auta</string>
+    <string name="setup_action_set_up">Nastavit</string>
+    <string name="setup_section_connecting">Připojování</string>
+    <string name="setup_toggle_wireless_title">Bezdrátově</string>
+    <string name="setup_toggle_wireless_subtitle">Připojit se k párovaným autům přes Wi-Fi, jakmile se dostanou do dosahu Bluetooth</string>
+    <string name="setup_toggle_resume_music_title">Obnovit hudbu</string>
+    <string name="setup_toggle_resume_music_subtitle">Spustit poslední přehrávanou hudební aplikaci při připojení auta</string>
+    <string name="setup_section_location">Poloha</string>
+    <string name="setup_toggle_car_gps_title">Použít GPS auta</string>
+    <string name="setup_toggle_car_gps_subtitle">Při připojení aplikace v telefonu vidí polohu auta místo polohy telefonu, takže navigační aplikace obě polohy nemíchají</string>
+    <string name="setup_check_mock_location_title">Povolit AARE nastavovat polohu</string>
+    <string name="setup_check_mock_location_subtitle">Možnosti pro vývojáře &gt; Vybrat aplikaci pro simulovanou polohu &gt; AARE</string>
+    <string name="setup_section_video">Video</string>
+    <string name="setup_toggle_60fps_title">Preferovat 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Plynnější, pokud to auto podporuje</string>
+    <string name="setup_choice_max_resolution">Maximální rozlišení</string>
+    <string name="setup_hint_lower_resolution">Nižší spotřebovává méně baterie a dat.</string>
+    <string name="setup_section_your_cars">Vaše auta</string>
+    <string name="setup_cars_empty">Auta se zde zobrazí po prvním připojení.</string>
+    <string name="setup_car_last_connected">Poslední připojení %1$s</string>
+    <string name="setup_action_forget">Zapomenout</string>
+    <string name="setup_section_trusted_head_units">Důvěryhodné hlavní jednotky</string>
+    <string name="setup_trusted_head_units_hint">Párované bezdrátové auto je důvěryhodné po prvním připojení; nová USB nebo vývojářská hlavní jednotka až po dotyku na Důvěřovat (v jejím oznámení nebo na domovské obrazovce). Důvěřujte pouze hlavní jednotce, ke které jste právě připojeni. Pokud hlavní jednotka později zobrazí jiný certifikát, budete znovu dotázáni: důvěřujte jí pouze pokud byl její software aktualizován.</string>
+    <string name="setup_trusted_head_units_empty">Zatím žádné.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Vzhled</string>
+    <string name="setup_choice_colors">Barvy</string>
+    <string name="setup_choice_colors_auto">Den/noc auta</string>
+    <string name="setup_choice_dark">Tmavý</string>
+    <string name="setup_choice_light">Světlý</string>
+    <string name="setup_choice_bar">Lišta</string>
+    <string name="setup_choice_bar_auto">Strana řidiče</string>
+    <string name="setup_choice_left">Vlevo</string>
+    <string name="setup_choice_right">Vpravo</string>
+    <string name="setup_choice_bottom">Dole</string>
+    <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
+    <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_section_dashboard">Nástěnka</string>
+    <string name="setup_choice_wallpaper">Tapeta</string>
+    <string name="setup_wallpaper_none">Žádná</string>
+    <string name="setup_wallpaper_photo">Fotka</string>
+    <string name="setup_toggle_weather_title">Počasí</string>
+    <string name="setup_toggle_weather_subtitle">U hodin, ze služby Open-Meteo (získává přibližnou polohu, asi 10 km)</string>
+    <string name="setup_toggle_calendar_title">Nejbližší událost v kalendáři</string>
+    <string name="setup_toggle_calendar_subtitle">Pod hudbou, se zkratkou k navigaci na její místo</string>
+    <string name="setup_section_driving">Jízda</string>
+    <string name="setup_toggle_passenger_title">Režim spolujezdce</string>
+    <string name="setup_toggle_passenger_subtitle">Ignorovat stav jízdy auta: psaní, dlouhé seznamy a obrazovka telefonu zůstávají dostupné za jízdy, pro spolujezdce. Řidič nesmí obrazovku používat za jízdy.</string>
+    <string name="setup_section_app_list">V seznamu aplikací auta</string>
+    <string name="setup_app_list_hint">Vypněte aplikace, které v autě nechcete.</string>
+    <string name="setup_app_list_loading">Vyhledávání aplikací…</string>
+    <string name="setup_app_group_nav">Navigace a aplikace pro auto</string>
+    <string name="setup_app_list_no_nav">Zatím žádné: nainstalujte CoMaps, Organic Maps nebo jinou aplikaci Android Auto.</string>
+    <string name="setup_app_kind_navigation">Navigace</string>
+    <string name="setup_app_kind_generic">Aplikace pro auto</string>
+    <string name="setup_app_group_media">Média</string>
+    <string name="setup_app_kind_media">Hudba, podcasty, rádio</string>
+    <string name="setup_app_group_messaging">Zprávy</string>
+    <string name="setup_app_kind_messaging">Zprávy z jejích oznámení</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Aplikace Android Auto, které AARE nemůže zobrazit</string>
+    <string name="setup_hint_allowlist">Aplikace vytvořené s novějšími verzemi knihovny Google pro auta akceptují jen hostitele na seznamu povolených; viz README.</string>
+    <string name="setup_app_entry_phone">Telefon</string>
+    <string name="setup_app_entry_settings">Nastavení</string>
+    <string name="setup_app_entry_notifications">Oznámení</string>
+    <string name="setup_section_app_order">Pořadí v autě</string>
+    <string name="setup_section_connection_log">Protokol připojení</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nesouvisí s Google. Android Auto je ochranná známka společnosti Google LLC.</string>
+    <string name="setup_choice_style">Styl</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Tmavá lišta, i se světlými barvami</string>
+    <string name="setup_switch_passenger">Režim spolujezdce: žádná omezení za jízdy (řidič nesmí obrazovku používat)</string>
+    <string name="setup_switch_message_notifications">Oznámení o zprávách</string>
+    <string name="setup_switch_audio_next_connection">Zvuk telefonu v autě (příští připojení)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Certifikáty telefonu</string>
+    <string name="cert_hint">Hlavní jednotky kontrolují certifikát telefonu. Open-source hlavní jednotky přijímají vygenerovaný certifikát; auta se softwarem hlavní jednotky Google přijímají pouze certifikát vydaný Google, který AARE nemůže zahrnout. Můžete importovat certifikát, ke kterému máte právo použití (certifikát PEM + klíč PKCS#8, nebo PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · do %2$s</string>
+    <string name="cert_action_remove">Odstranit</string>
+    <string name="cert_action_import">Importovat certifikát…</string>
+    <string name="cert_p12_dialog_title">Heslo PKCS#12</string>
+    <string name="cert_action_import_confirm">Importovat</string>
+    <string name="cert_imported_fallback">importovaný</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Server hlavní jednotky</string>
+    <string name="huserver_toggle_subtitle">Jako vývojářský režim Android Auto, pro stolní hlavní jednotku, DHU, openauto, Headunit Revived. Dostupný pouze přes adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Přijímat ze sítě</string>
+    <string name="huserver_toggle_network_subtitle">Poslouchat také na portu TCP 5277 v každé síti, bez hesla. Kdokoli ve stejné síti Wi-Fi se může připojit, vidět obrazovku auta a používat mikrofon.</string>
+    <string name="huserver_toggle_lanonce_title">Po relaci vypnout síťový režim</string>
+    <string name="huserver_toggle_lanonce_subtitle">Bezpečnější: síť musí být pro každou relaci znovu povolena. Vypněte to pro hlavní jednotky, které se znovu připojují samy, jako openauto nebo Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Obrazovka telefonu na serveru</string>
+    <string name="huserver_toggle_mirror_subtitle">Nabídnout "Obrazovku telefonu" i tomu, kdo se zde připojí. Rizikové: uvidí obrazovku telefonu a mohou na ni klepat, nechte to tedy vypnuté, pokud hlavní jednotce nedůvěřujete.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Zprávy</string>
+    <string name="msg_page_subtitle">Bannery a předčítání</string>
+    <string name="msg_check_notification_access_subtitle">Nutné pro zobrazení zpráv v autě</string>
+    <string name="msg_toggle_banners_title">Zobrazovat oznámení o zprávách</string>
+    <string name="msg_toggle_banners_subtitle">Banner na obrazovce auta pro každou novou zprávu</string>
+    <string name="msg_toggle_group_title">Skupinové zprávy</string>
+    <string name="msg_toggle_group_subtitle">Zobrazovat i zprávy ze skupinových konverzací</string>
+    <string name="msg_toggle_read_aloud_title">Předčítat zprávy</string>
+    <string name="msg_toggle_read_aloud_subtitle">Předčítat každou novou zprávu při doručení</string>
+    <string name="msg_hint_apps">Aplikace pro zprávy (WhatsApp, Signal, SMS…) mají v seznamu aplikací auta i svou vlastní stránku.</string>
+    <string name="msg_section_while_driving">Za jízdy</string>
+    <string name="msg_toggle_dnd_title">Nerušit</string>
+    <string name="msg_toggle_dnd_subtitle">Při připojení ztlumit telefon; hovory a prioritní konverzace stále procházejí</string>
+    <string name="msg_check_dnd_access_title">Povolit AARE zapínat Nerušit</string>
+    <string name="msg_check_dnd_access_subtitle">Android se zeptá jednou</string>
+    <string name="msg_toggle_autoreply_title">Automatická odpověď</string>
+    <string name="msg_toggle_autoreply_subtitle">Odpovídá lidem, kteří píšou, jednou na konverzaci za jízdu (ne skupinám)</string>
+    <string name="msg_autoreply_field_label">Odpověď</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Zvuk v autě</string>
+    <string name="audio_page_subtitle">Jak zvuk telefonu doputuje do auta</string>
+    <string name="audio_toggle_enable_title">Zvuk telefonu v autě</string>
+    <string name="audio_toggle_enable_subtitle">Hudba, podcasty, asistent a, podle metody, hlas navigace</string>
+    <string name="audio_using_method">Používá se: %1$s</string>
+    <string name="audio_no_method">Ještě není nastavena žádná metoda: vyberte jednu níže.</string>
+    <string name="audio_section_methods">Metody, nejlepší první</string>
+    <string name="audio_policy_ready">Připraveno. Hudba a hlas navigace jdou do auta samostatně, telefon zůstává tichý.</string>
+    <string name="audio_policy_not_ready">Jako Android Auto: hudba a hlas navigace samostatně, reproduktor telefonu vypnutý. Vyžaduje telefon s rootem: nainstalujte AARE jako systémovou aplikaci pomocí modulu Magisk (viz README).</string>
+    <string name="audio_shizuku_ready">Připraveno. Vše, co telefon přehrává, jde do auta, včetně hlasu navigace; telefon zůstává tichý.</string>
+    <string name="audio_shizuku_needs_android12">Vyžaduje Android 12 nebo novější.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku běží: klepnutím povolte AARE.</string>
+    <string name="audio_shizuku_install_hint">Root není potřeba. Nainstalujte Shizuku, spusťte ho (bezdrátové ladění, jednou po restartu), a pak se vraťte sem.</string>
+    <string name="audio_playback_ready">Připraveno. Pouze média: bez hlasu navigace, některé aplikace se odhlásí, a telefon přehrává i nadále.</string>
+    <string name="audio_playback_not_ready">Funguje všude, s omezeními: pouze média, bez hlasu navigace. Android požádá o snímání obrazovky: zvolte Celou obrazovku (používá i obrazovka telefonu).</string>
+    <string name="audio_notice_setup_hint">Otevřete AARE na telefonu a nastavte zvuk v autě, abyste slyšeli telefon v autě</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Obrazovka telefonu</string>
+    <string name="phone_toggle_enable_title">Obrazovka telefonu v autě</string>
+    <string name="phone_toggle_enable_subtitle">Vlastní obrazovka telefonu, pro aplikace, které AARE nemůže hostovat (Google Maps, Waze). Pozastavena, když je telefon uzamčen, a za jízdy, pokud nenavádí navigační aplikace. Nenabízena na serveru hlavní jednotky, pokud tam není povolena</string>
+    <string name="phone_check_touch_title">Dotyk na obrazovce telefonu</string>
+    <string name="phone_check_touch_subtitle">Zapněte AARE v Přístupnosti. Nahrané aplikace mohou nejprve potřebovat "Povolit omezená nastavení" v informacích o aplikaci AARE</string>
+    <string name="phone_hint_touch_capture">Obraz používá oprávnění ke snímání obrazovky (stránka Zvuk v autě, zvolte Celou obrazovku).</string>
+    <string name="phone_app_row_subtitle">Vlastní obrazovka telefonu, pro aplikace, které AARE nemůže hostovat</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Hlasový asistent</string>
+    <string name="assistant_page_subtitle">Co otevírá tlačítko hlasu</string>
+    <string name="assistant_same_as_phone">Stejně jako telefon</string>
+    <string name="assistant_no_default">V telefonu není nastaven výchozí asistent</string>
+    <string name="assistant_has_car_app_subtitle">Na obrazovce auta, s mikrofonem auta</string>
+    <string name="assistant_opens_on_phone">Otevírá se na telefonu</string>
+    <string name="assistant_hint">Tlačítko hlasu na volantu a mikrofon na liště otevírají tohoto asistenta. Nejlépe funguje asistent s aplikací pro auto, jako je Lapin.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Připojení k autu</string>
+    <string name="notif_action_stop">Zastavit</string>
+    <string name="notif_action_trust">Důvěřovat</string>
+    <string name="notif_status_connecting_wirelessly">Bezdrátové připojování…</string>
+    <string name="notif_status_not_connected">Nepřipojeno</string>
+    <string name="notif_keeping_consent_suffix">%1$s · udržuje souhlas se snímáním obrazovky pro zvuk v autě (Zastavit ho uvolní)</string>
+    <string name="notif_cert_changed_title">Certifikát hlavní jednotky se změnil</string>
+    <string name="notif_new_head_unit_title">Nová hlavní jednotka</string>
+    <string name="notif_trust_warning">Důvěřujte pouze hlavní jednotce, ke které jste právě připojeni</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, pak se znovu připojte.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, pak se znovu připojte.</string>
+    <string name="notif_cert_changed_message">certifikát hlavní jednotky se změnil: klepněte na Důvěřovat v oznámení nebo v AARE pouze pokud byl její software aktualizován, pak se znovu připojte</string>
+    <string name="notif_cert_untrusted_message">certifikát hlavní jednotky ještě není důvěryhodný: klepněte na Důvěřovat v oznámení nebo v AARE, pak se znovu připojte</string>
+    <string name="notif_car_nearby_title">Auto v okolí</string>
+    <string name="notif_car_nearby_text">Klepnutím se bezdrátově připojíte</string>
+    <string name="notif_status_connecting_to">Připojování k %1$s</string>
+    <string name="notif_status_connected_to">Připojeno k %1$s</string>
+    <string name="notif_status_projecting_to">Promítání na %1$s</string>
+    <string name="notif_status_cant_start_video">Video nelze spustit: %1$s</string>
+    <string name="notif_not_calling_title">Nevolá se</string>
+    <string name="notif_not_calling_text">%1$s požádal o vytočení kódu s * nebo #, ne telefonního čísla</string>
+    <string name="notif_calling_title">Volání %1$s</string>
+    <string name="notif_asked_by">Vyžádáno %1$s</string>
+    <string name="notif_call_confirm_title">Zavolat %1$s?</string>
+    <string name="notif_no_nav_app">V telefonu není navigační aplikace</string>
+    <string name="notif_cant_open">Toto nelze z auta otevřít</string>
+    <string name="notif_navigation_title">Navigace</string>
+    <string name="notif_navigation_no_app_text">V autě není navigační aplikace</string>
+    <string name="notif_assistant_title">Asistent</string>
+    <string name="notif_assistant_choose_text">Vyberte hlasového asistenta v nastavení AARE na telefonu</string>
+    <string name="notif_assistant_no_car_screen">%1$s nemá obrazovku pro auto: otevřel se na telefonu</string>
+    <string name="notif_assistant_cant_open">%1$s nelze otevřít. Vyberte jiného asistenta v nastavení AARE</string>
+    <string name="notif_parked_only_title">Nedostupné za jízdy</string>
+    <string name="notif_parked_only_text">Zaparkujte, abyste to mohli použít</string>
+    <string name="notif_empty">Žádná oznámení</string>
+    <string name="notif_title">Oznámení</string>
+    <string name="notif_clear_all">Vymazat vše</string>
+    <string name="notif_new_message_placeholder">Nová zpráva</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Aplikace</string>
+    <string name="dash_menu_home">Domů</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Žádná navigační aplikace</string>
+    <string name="nav_dashboard_where_to">Kam?</string>
+    <string name="nav_dashboard_install_hint">Nainstalujte do telefonu navigační aplikaci podporující Android Auto</string>
+    <string name="nav_dashboard_choose_app">Vyberte si mapovou aplikaci</string>
+    <string name="nav_guidance_on_phone">%1$s, na telefonu</string>
+    <string name="nav_next_step_then">Pak</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Hudba</string>
+    <string name="media_nothing_playing">Nic se nepřehrává</string>
+    <string name="media_action_previous">Předchozí</string>
+    <string name="media_action_play_pause">Přehrát/pauza</string>
+    <string name="media_action_next">Další</string>
+    <string name="media_playing_from">Přehrává se z %1$s</string>
+    <string name="media_connecting_to">Připojování k %1$s</string>
+    <string name="media_queue_title">Fronta</string>
+    <string name="media_search_app">Hledat v %1$s</string>
+    <string name="media_action_search">Hledat</string>
+    <string name="media_action_browse">Procházet</string>
+    <string name="media_now_playing_label">Nyní se přehrává</string>
+    <string name="media_nothing_here">Nic tady není</string>
+    <string name="media_couldnt_load_more">Nepodařilo se načíst další</string>
+    <string name="media_starting">Spouštění…</string>
+    <string name="media_action_pause">Pauza</string>
+    <string name="media_action_play">Přehrát</string>
+    <string name="media_queue_empty">Fronta je prázdná</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Udělte AARE přístup k oznámením v telefonu, abyste zde viděli zprávy</string>
+    <string name="msg_listener_not_ready">Zatím tu nic není</string>
+    <string name="msg_reply_sent">Odpověď odeslána</string>
+    <string name="msg_reply_rejected">%1$s odpověď nepřijal</string>
+    <string name="msg_no_new_messages">Žádné nové zprávy od %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Zprávy se za jízdy předčítají.</string>
+    <string name="msg_action_read_aloud">Předčítat</string>
+    <string name="msg_action_mark_read">Označit jako přečtené</string>
+    <string name="msg_action_reply">Odpovědět</string>
+    <string name="msg_reply_hint">Zpráva pro %1$s</string>
+    <string name="msg_message_count_one">1 zpráva</string>
+    <string name="msg_message_count_many">%1$d zpráv</string>
+
+    <string name="assistant_mic_label">Asistent</string>
+    <string name="assistant_listening">Poslouchání…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Poslední</string>
+    <string name="phone_tab_contacts">Kontakty</string>
+    <string name="phone_tab_keypad">Klávesnice</string>
+    <string name="phone_permissions_placeholder">Povolte hovory, historii hovorů a kontakty v AARE na telefonu (Dokončit nastavení).</string>
+    <string name="phone_notice_calling_title">Volání</string>
+    <string name="phone_no_recent_calls">Žádné nedávné hovory</string>
+    <string name="phone_no_contacts">Žádné kontakty s telefonním číslem</string>
+    <string name="phone_call_in_progress">Probíhá hovor</string>
+    <string name="phone_action_hang_up">Zavěsit</string>
+    <string name="phone_keypad_delete">Smazat</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Nabíjení</string>
+    <string name="phone_incoming_call">Příchozí hovor</string>
+    <string name="phone_action_decline">Odmítnout</string>
+    <string name="phone_action_answer">Přijmout</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Dnes</string>
+    <string name="dash_latest_label">Nejnovější</string>
+    <string name="cluster_arrival_time">Příjezd %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Vyhledávání je dostupné po zaparkování</string>
+</resources>

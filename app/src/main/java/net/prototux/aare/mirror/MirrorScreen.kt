@@ -29,8 +29,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.Placeholder
 import net.prototux.aare.notify.CarNotificationListener
@@ -102,15 +104,15 @@ internal fun MirrorScreen(runtime: CarRuntime, driving: Boolean, modifier: Modif
             })
         }
         when {
-            locked -> Placeholder("The phone screen is paused while the phone is locked. Unlock the phone to show it.",
+            locked -> Placeholder(stringResource(R.string.mirror_locked_placeholder),
                 loading = false, icon = Icons.Rounded.Lock)
             !allowed -> Placeholder(
-                if (MirrorTouchService.instance == null) "The phone screen is paused while driving. To show navigation apps while driving, turn on AARE in the phone's accessibility settings: it tells AARE which app is open."
-                else "The phone screen is paused while driving. It shows navigation apps only.",
+                if (MirrorTouchService.instance == null) stringResource(R.string.mirror_driving_no_accessibility)
+                else stringResource(R.string.mirror_driving_nav_only),
                 loading = false, icon = Icons.Rounded.PauseCircle)
-            !mirroring -> Placeholder("Turn on Car audio in AARE on the phone, and choose Entire screen when Android asks: the phone screen uses the same permission.",
+            !mirroring -> Placeholder(stringResource(R.string.mirror_need_car_audio),
                 loading = false, icon = Icons.Rounded.PhoneAndroid, modifier = Modifier.background(Color.Black))
-            MirrorTouchService.instance == null -> Placeholder("To use the phone from the car, turn on AARE in the phone's accessibility settings.",
+            MirrorTouchService.instance == null -> Placeholder(stringResource(R.string.mirror_need_accessibility),
                 loading = false, icon = Icons.Rounded.TouchApp, modifier = Modifier.fillMaxSize())
         }
     }

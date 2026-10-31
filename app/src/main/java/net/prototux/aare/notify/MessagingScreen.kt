@@ -44,10 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
@@ -98,16 +100,16 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 !CarNotificationListener.accessGranted(context) ->
-                    Placeholder("Give AARE notification access on the phone to see messages here", loading = false, icon = Icons.Rounded.Forum)
+                    Placeholder(stringResource(R.string.msg_no_access), loading = false, icon = Icons.Rounded.Forum)
                 // Access granted, listener not bound (yet): nothing to show, it reconnects.
-                listener == null -> Placeholder("Nothing to see here yet", loading = false, icon = Icons.Rounded.Forum)
-                conversations == null -> Placeholder("Loading", loading = true)
+                listener == null -> Placeholder(stringResource(R.string.msg_listener_not_ready), loading = false, icon = Icons.Rounded.Forum)
+                conversations == null -> Placeholder(stringResource(R.string.common_loading), loading = true)
                 open != null && replying -> ReplyView(open, onSent = { ok ->
                     replying = false
-                    runtime.notice(open.title, if (ok) "Reply sent" else "${app.label} didn't accept the reply")
+                    runtime.notice(open.title, if (ok) context.getString(R.string.msg_reply_sent) else context.getString(R.string.msg_reply_rejected, app.label))
                 }, onCancel = { replying = false })
                 open != null -> ConversationView(open, driving, onReply = { replying = true }, onMarkedRead = { openKey = null })
-                conversations!!.isEmpty() -> Placeholder("No new messages from ${app.label}", loading = false, icon = Icons.Rounded.Forum)
+                conversations!!.isEmpty() -> Placeholder(stringResource(R.string.msg_no_new_messages, app.label), loading = false, icon = Icons.Rounded.Forum)
                 else -> ConversationList(conversations!!, app, driving) { openKey = it.key }
             }
         }
@@ -121,7 +123,7 @@ private fun TopBar(app: CarAppEntry, title: String?, onBack: (() -> Unit)?) {
         Modifier.fillMaxWidth().height(d.touchTarget + 16.dp).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (onBack != null) CircleButton(Icons.AutoMirrored.Rounded.ArrowBack, "Back", onClick = onBack)
+        if (onBack != null) CircleButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), onClick = onBack)
         else Box(Modifier.size(d.touchTarget), contentAlignment = Alignment.Center) { AppIcon(app, 48) }
         Spacer(Modifier.width(12.dp))
         Text(title ?: app.label, style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -158,7 +160,7 @@ private fun ConversationView(c: Conversation, driving: Boolean, onReply: () -> U
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             if (driving) {
-                Placeholder("${messageCount(c.messages.size)}. Messages are read aloud while driving.", loading = false, icon = Icons.Rounded.RecordVoiceOver)
+                Placeholder(stringResource(R.string.msg_reading_aloud_hint, messageCount(c.messages.size)), loading = false, icon = Icons.Rounded.RecordVoiceOver)
             } else {
                 LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
                     items(c.messages) { m ->
@@ -173,9 +175,9 @@ private fun ConversationView(c: Conversation, driving: Boolean, onReply: () -> U
             }
         }
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Pill("Read aloud", selected = true, icon = Icons.Rounded.RecordVoiceOver, onClick = { listener?.readAloud(c) })
-            c.markRead?.let { pi -> Pill("Mark as read", selected = false, icon = Icons.Rounded.DoneAll, onClick = { runCatching { pi.send() }; onMarkedRead() }) }
-            if (c.canReply && !driving) Pill("Reply", selected = false, icon = Icons.AutoMirrored.Rounded.Reply, onClick = onReply)
+            Pill(stringResource(R.string.msg_action_read_aloud), selected = true, icon = Icons.Rounded.RecordVoiceOver, onClick = { listener?.readAloud(c) })
+            c.markRead?.let { pi -> Pill(stringResource(R.string.msg_action_mark_read), selected = false, icon = Icons.Rounded.DoneAll, onClick = { runCatching { pi.send() }; onMarkedRead() }) }
+            if (c.canReply && !driving) Pill(stringResource(R.string.msg_action_reply), selected = false, icon = Icons.AutoMirrored.Rounded.Reply, onClick = onReply)
         }
     }
 }
@@ -195,7 +197,7 @@ private fun ReplyView(c: Conversation, onSent: (Boolean) -> Unit, onCancel: () -
         }
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-        CarTextField(draft, "Message to ${c.title}", editing = true, onFocus = {}, onClear = { draft = "" }, leadingIcon = null)
+        CarTextField(draft, stringResource(R.string.msg_reply_hint, c.title), editing = true, onFocus = {}, onClear = { draft = "" }, leadingIcon = null)
         Spacer(Modifier.weight(1f))
         CarKeyboard(KeyboardMode.Text, sink, Icons.AutoMirrored.Rounded.Send, Modifier.padding(bottom = 8.dp))
     }
@@ -208,7 +210,8 @@ private fun Avatar(c: Conversation, app: CarAppEntry) {
     else Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) { AppIcon(app, 48) }
 }
 
-private fun messageCount(n: Int) = if (n == 1) "1 message" else "$n messages"
+@Composable
+private fun messageCount(n: Int) = if (n == 1) stringResource(R.string.msg_message_count_one) else stringResource(R.string.msg_message_count_many, n)
 
 private fun ago(timeMs: Long): String =
     DateUtils.getRelativeTimeSpanString(timeMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS, DateUtils.FORMAT_ABBREV_RELATIVE).toString()
