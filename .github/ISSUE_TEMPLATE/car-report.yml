@@ -1,0 +1,77 @@
+name: Car / head unit report
+description: Report whether AARE works with a real car or head unit (working or not — both help).
+title: "[Car] <make> <model> <year>"
+labels: ["car report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing AARE in a real car. Reports of failures are as useful as successes:
+        most "doesn't work" cases are the head unit refusing AARE's certificate, which we track.
+
+        Please don't paste an unredacted connection log if it shows your home location or exact
+        GPS: a couple of lines around the connection and the `status` are usually enough.
+  - type: input
+    id: car
+    attributes:
+      label: Car
+      description: Make, model and year (or "aftermarket head unit" if it isn't a factory one).
+      placeholder: 2023 Skoda Octavia V
+    validations:
+      required: true
+  - type: input
+    id: head-unit
+    attributes:
+      label: Head unit
+      description: Brand and model if known, and the software/firmware version (often in the unit's About screen).
+      placeholder: Denso Ten E-DA2, software 1989
+  - type: input
+    id: phone
+    attributes:
+      label: Phone
+      description: Model, Android version, and whether it's rooted / uses Shizuku / has no Google services.
+      placeholder: Pixel 10, Android 16, GrapheneOS, no Google services
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection
+      options:
+        - USB
+        - Wireless (Bluetooth + Wi-Fi)
+        - Wireless dongle (AAWireless, Carlinkit…)
+        - Both USB and wireless
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Works
+        - Works with issues (describe below)
+        - Certificate rejected (status -3, or TLS hangs up)
+        - Fails before the certificate step (USB / Bluetooth / Wi-Fi)
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: aare-version
+    attributes:
+      label: AARE version
+      description: From the app, or the release/APK you installed.
+      placeholder: v1.1.1
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened
+      description: What worked, what didn't — video, touch, audio, navigation, calls, the cluster, screen edges cut off, lag…
+  - type: textarea
+    id: log
+    attributes:
+      label: Connection log
+      description: AARE on the phone → Advanced → Connection log, the lines around the connection. Redact your location first.
+      render: text
