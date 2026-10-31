@@ -216,6 +216,7 @@ private fun Home() {
                         Page.CONNECTION -> item { ConnectionSettings(settings) }
                         Page.ADVANCED -> {
                             item { HeadUnitServerSettings(settings) }
+                            if (net.prototux.aare.BuildConfig.DEBUG) item { NavigationDiagnosticsSettings(settings) }
                             item { CertificatesCard(certs, state) }
                             item { LogCard() }
                         }
@@ -427,6 +428,18 @@ private fun headUnitLabel(ctx: android.content.Context, key: String): String = w
     key == "tcp" -> "Head unit server"
     key.startsWith("usb:") -> key.removePrefix("usb:").replace('|', ' ').trim().ifBlank { key }
     else -> runCatching { ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.getRemoteDevice(key)?.name }.getOrNull() ?: key
+}
+
+/** Explicit consent for developer-only AndroidX Trip / host NavigationTemplate diagnostics. */
+@Composable
+private fun NavigationDiagnosticsSettings(settings: Settings) {
+    var enabled by remember { mutableStateOf(settings.navigationDiagnostics) }
+    Section("Navigation diagnostics (debug)") {
+        Toggle("Record navigation events",
+            "Off by default. Saves navigation start/end, turns, distances and lane flags to a private rotating JSONL file. Road names and cue text may identify places; only share a redacted file.",
+            enabled,
+        ) { enabled = it; settings.navigationDiagnostics = it }
+    }
 }
 
 /** Android Auto's developer "head unit server": for the desktop head unit and other test tools. */

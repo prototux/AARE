@@ -295,6 +295,9 @@ class CarAppConnection(
             val stack = runCatching { wrapper.templateInfosForScreenStack }.getOrNull().orEmpty()
             val refresh = templateId != null && isRefresh(screenStack, stack)
             screenStack = stack
+            // Record only the accepted template; older, out-of-order callbacks were rejected above.
+            (wrapper.template as? androidx.car.app.navigation.model.NavigationTemplate)
+                ?.let { AareTbtProbe.routing(context, info.packageName, it) }
             template = wrapper.template
             // A refresh of the same screen (search results while typing, a navigation update, a
             // toggled row) keeps the on-screen state: what's typed, pan mode, the scroll position.
@@ -472,16 +475,29 @@ class CarAppConnection(
         override fun getInterfaceVersion(): Int = INavigationHost.VERSION
 
         override fun navigationStarted() {
-            main.post { navigating = true; env.navigationStarted(this@CarAppConnection) }
+            main.post {
+                AareTbtProbe.lifecycle(context, info.packageName, "started")
+                navigating = true
+                env.navigationStarted(this@CarAppConnection)
+            }
         }
 
         override fun navigationEnded() {
-            main.post { navigating = false; trip = null; env.navigationEnded(this@CarAppConnection) }
+            main.post {
+                AareTbtProbe.lifecycle(context, info.packageName, "ended")
+                navigating = false
+                trip = null
+                env.navigationEnded(this@CarAppConnection)
+            }
         }
 
         override fun updateTrip(tripBundle: Bundleable) {
             val t = runCatching { tripBundle.get() as Trip }.getOrNull() ?: return
-            main.post { trip = t; env.tripUpdated(this@CarAppConnection, t) }
+            main.post {
+                AareTbtProbe.trip(context, info.packageName, t)
+                trip = t
+                env.tripUpdated(this@CarAppConnection, t)
+            }
         }
     }
 

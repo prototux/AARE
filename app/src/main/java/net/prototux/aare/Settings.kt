@@ -9,6 +9,13 @@ import java.util.UUID
 class Settings(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
+    /** User-opt-in route diagnostics, disabled by default and effective only in debug builds.
+     * Records road and cue text into a bounded, app-private JSONL file.
+     */
+    var navigationDiagnostics: Boolean
+        get() = prefs.getBoolean("navigation_diagnostics", false)
+        set(v) = prefs.edit { putBoolean("navigation_diagnostics", v) }
+
     /** Serve the developer "head unit server" like Android Auto does, through adb (for DHU/openauto/headunit-revived). */
     var headUnitServer: Boolean
         get() = prefs.getBoolean("hu_server", false)
