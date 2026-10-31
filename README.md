@@ -98,6 +98,21 @@ Releases are signed with AARE's release key, SHA-256
 Builds you make yourself are signed with your own debug key, so switching between the two needs
 an uninstall first.
 
+## AA Key extraction
+
+As head units based on the official Google's host implementation checks the certificate/key of AARE,
+in order to use those, key extraction is needed:
+
+1. Download the APKm of Android Auto/com.google.android.projection.gearhead, for example from
+   [APKPure](https://apkpure.com/fr/android-auto/com.google.android.projection.gearhead) or
+   [APKMirror](https://www.apkmirror.com/apk/google-inc/android-auto/)
+
+2. Run the extract_key.py on the apkm: `./extract_key.py com.google.android.projection.gearhead.apkm`
+
+3. The key and certificate are the `carservice_key.pem` and `carservice_cert.pem`. Copy them on your phone.
+
+4. Open those two files with AARE. It should now work with the head unit.
+
 ## Using it
 
 1. Open AARE on the phone and finish *Finish setting up*: permissions, notification access (for
