@@ -309,7 +309,7 @@
     <string name="cluster_arrival_time">Arrival %1$s</string>
 
     <!-- kbd: on-screen car keyboard -->
-    <string name="kbd_symbols_label">?123</string>
+    <string name="kbd_symbols_label">\?123</string>
     <string name="kbd_letters_label">ABC</string>
 
     <!-- search: media search view -->

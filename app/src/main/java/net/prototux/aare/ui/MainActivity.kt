@@ -417,7 +417,9 @@ private fun ConnectionSettings(settings: Settings) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(headUnitLabel(ctx, key), style = MaterialTheme.typography.bodyLarge)
-                        Text(shas.joinToString { stringResource(R.string.setup_sha256_fingerprint, it.take(16)) }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        // stringResource can't run inside joinToString's lambda: get the template once, format each.
+                        val fpTemplate = stringResource(R.string.setup_sha256_fingerprint)
+                        Text(shas.joinToString { fpTemplate.format(it.take(16)) }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     TextButton(onClick = { pinned.forget(key); pins = pinned.all }) { Text(stringResource(R.string.setup_action_forget)) }
                 }
