@@ -55,9 +55,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -76,10 +78,10 @@ internal fun NowPlayingView(hub: DefaultMediaHub, source: PlaybackSource, state:
         }
         Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
             state.error?.let { ErrorCard(it, Modifier.fillMaxWidth().padding(16.dp)) }
-            Placeholder(if (waited) "Nothing playing" else "Starting…", loading = !waited && state.error == null,
+            Placeholder(if (waited) stringResource(R.string.media_nothing_playing) else stringResource(R.string.media_starting), loading = !waited && state.error == null,
                 modifier = Modifier.weight(1f), icon = Icons.Rounded.MusicNote)
             if (waited) {
-                Pill("Browse", selected = true, onClick = { setView(MediaView.BROWSE) }, icon = Icons.Rounded.LibraryMusic)
+                Pill(stringResource(R.string.media_action_browse), selected = true, onClick = { setView(MediaView.BROWSE) }, icon = Icons.Rounded.LibraryMusic)
                 Spacer(Modifier.height(32.dp))
             }
         }
@@ -145,14 +147,14 @@ private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: Source
         val left = actions.take((actions.size + 1) / 2)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
             left.forEach { ActionButton(hub, it) }
-            CircleButton(Icons.Rounded.SkipPrevious, "Previous", onClick = source::previous, enabled = state.canPrevious)
+            CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
             CircleButton(
-                if (state.showPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (state.showPause) "Pause" else "Play",
+                if (state.showPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (state.showPause) R.string.media_action_pause else R.string.media_action_play),
                 onClick = source::playPause, filled = true, size = PLAY_SIZE,
             )
-            CircleButton(Icons.Rounded.SkipNext, "Next", onClick = source::next, enabled = state.canNext)
+            CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
             actions.drop(left.size).forEach { ActionButton(hub, it) }
-            if (hasQueue) CircleButton(Icons.AutoMirrored.Rounded.QueueMusic, "Queue", onClick = { setView(MediaView.QUEUE) })
+            if (hasQueue) CircleButton(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.media_queue_title), onClick = { setView(MediaView.QUEUE) })
         }
     }
 }
@@ -219,7 +221,7 @@ private fun ActionButton(hub: DefaultMediaHub, action: CustomAction) {
 @Composable
 internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> Unit) {
     if (state.queue.isEmpty()) {
-        Placeholder("The queue is empty", loading = false, icon = Icons.Rounded.LibraryMusic)
+        Placeholder(stringResource(R.string.media_queue_empty), loading = false, icon = Icons.Rounded.LibraryMusic)
         return
     }
     val list = rememberLazyListState(initialFirstVisibleItemIndex = state.queue.indexOfFirst { it.current }.coerceAtLeast(0))

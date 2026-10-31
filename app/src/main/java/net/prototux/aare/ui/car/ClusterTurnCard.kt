@@ -17,9 +17,11 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.templates.CarFormat
 
@@ -47,7 +49,7 @@ internal fun ClusterTurnCard(ui: CarUiState, runtime: CarRuntime, modifier: Modi
                 if (road.isNotBlank()) Text(road, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                 trip.destinationTravelEstimates.firstOrNull()?.arrivalTimeAtDestination?.let { eta ->
                     Spacer(Modifier.height(8.dp))
-                    Text("Arrival ${DateFormat.getTimeFormat(context).format(eta.timeSinceEpochMillis)}",
+                    Text(stringResource(R.string.cluster_arrival_time, DateFormat.getTimeFormat(context).format(eta.timeSinceEpochMillis)),
                         style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 }
             }

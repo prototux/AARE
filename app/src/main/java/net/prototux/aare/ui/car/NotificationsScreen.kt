@@ -30,9 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 import net.prototux.aare.media.Pill
 import net.prototux.aare.media.Placeholder
 
@@ -42,7 +44,7 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
     LaunchedEffect(Unit) { ui.unseen = 0 }
     val driving = ui.drivingRestricted
     if (ui.history.isEmpty()) {
-        Placeholder("No notifications", loading = false, icon = Icons.Rounded.Notifications,
+        Placeholder(stringResource(R.string.notif_empty), loading = false, icon = Icons.Rounded.Notifications,
             modifier = modifier.background(MaterialTheme.colorScheme.background))
         return
     }
@@ -53,8 +55,8 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Notifications", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-                Pill("Clear all", selected = false, onClick = { ui.history.clear() })
+                Text(stringResource(R.string.notif_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+                Pill(stringResource(R.string.notif_clear_all), selected = false, onClick = { ui.history.clear() })
             }
         }
         items(ui.history, key = { it.key }) { n ->
@@ -67,7 +69,7 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
                     Column(Modifier.weight(1f)) {
                         Text(n.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         // While driving the text stays hidden: it can be read aloud.
-                        Text(if (driving) "New message" else n.text, style = MaterialTheme.typography.bodyMedium,
+                        Text(if (driving) stringResource(R.string.notif_new_message_placeholder) else n.text, style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     Text(DateUtils.getRelativeTimeSpanString(n.timeMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
@@ -88,11 +90,11 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
 @Composable
 internal fun NotificationBell(ui: CarUiState, onClick: () -> Unit) {
     Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(Icons.Rounded.Notifications, "Notifications", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
+        Icon(Icons.Rounded.Notifications, stringResource(R.string.notif_title), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         if (ui.unseen > 0) {
             Box(Modifier.align(Alignment.TopEnd).size(18.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error),
                 contentAlignment = Alignment.Center) {
-                Text(if (ui.unseen > 9) "9+" else "${ui.unseen}", color = Color.White, fontSize = 10.sp)
+                Text(if (ui.unseen > 9) stringResource(R.string.notif_unseen_overflow) else "${ui.unseen}", color = Color.White, fontSize = 10.sp)
             }
         }
     }
