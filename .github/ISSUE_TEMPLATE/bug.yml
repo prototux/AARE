@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in AARE doesn't work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For "does my car work?" use the **Car / head unit report** instead, and for
+        "will app X work?" or general questions use **Discussions**.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+      placeholder: Pixel 10, Android 16 (GrapheneOS)
+    validations:
+      required: true
+  - type: input
+    id: aare-version
+    attributes:
+      label: AARE version
+      placeholder: v1.1.1
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Where it happens
+      options:
+        - In the phone app (not connected to a car)
+        - In the car preview on the phone
+        - Connected to the desktop head unit
+        - Connected to a real car or head unit
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Logs
+      description: |
+        The connection log (Advanced → Connection log), and if you can, `adb logcat | grep -iE 'aare|AareAap'`
+        around the problem. Redact anything private first.
+      render: text
