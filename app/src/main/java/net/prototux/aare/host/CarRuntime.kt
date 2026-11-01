@@ -645,6 +645,7 @@ class CarRuntime(
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
                         }
                     },
+                    modifier = modifier,
                 )
             }
         }
