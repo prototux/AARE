@@ -6,6 +6,7 @@ import android.os.ParcelFileDescriptor
 import net.prototux.aare.aap.AapException
 import net.prototux.aare.aap.Transport
 import java.io.FileInputStream
+import java.io.BufferedOutputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,7 +24,10 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     // Reads from an accessory must use buffers of at least one USB bulk transfer (16 kB),
     // otherwise the kernel drops the rest of the transfer. FrameReader buffers 64 kB.
     override val input: InputStream = FileInputStream(fd.fileDescriptor)
-    override val output: OutputStream = FileOutputStream(fd.fileDescriptor)
+    // The accessory fd has no kernel send buffer (unlike a TCP socket), so an unbuffered write
+    // blocks per fragment on the USB bulk endpoint. Buffer so FrameWriter's per-fragment writes
+    // coalesce into one write per message at its flush() — fewer blocking syscalls on the pipe.
+    override val output: OutputStream = BufferedOutputStream(FileOutputStream(fd.fileDescriptor), 64 * 1024)
 
     @Volatile private var closed = false
 
