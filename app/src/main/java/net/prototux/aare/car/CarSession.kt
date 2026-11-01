@@ -385,12 +385,15 @@ class CarSession(
                 for (k in report.keyEvent.keysList) main.post { onKey(k.keycode, k.down, k.longpress) }
             }
             if (report.hasRelativeEvent()) {
-                // Rotary controller: each detent moves the focus.
+                // Rotary controller: each detent moves focus to the next/previous element in layout
+                // order, like Android Auto. Compose maps Tab to "focus next" and Shift+Tab to
+                // "focus previous" (not D-pad up/down, which is 2D spatial and wrong for a knob).
                 for (r in report.relativeEvent.dataList) {
-                    val code = if (r.delta > 0) KeyEvent.KEYCODE_DPAD_DOWN else KeyEvent.KEYCODE_DPAD_UP
+                    val meta = if (r.delta < 0) KeyEvent.META_SHIFT_ON else 0
                     repeat(kotlin.math.abs(r.delta)) {
-                        display?.dispatchKey(KeyEvent(KeyEvent.ACTION_DOWN, code))
-                        display?.dispatchKey(KeyEvent(KeyEvent.ACTION_UP, code))
+                        val t = SystemClock.uptimeMillis()
+                        display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB, 0, meta))
+                        display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_TAB, 0, meta))
                     }
                 }
             }

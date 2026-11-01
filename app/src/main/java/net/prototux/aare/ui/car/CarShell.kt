@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -55,6 +56,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -120,10 +123,14 @@ private fun ContentArea(
     modifier: Modifier,
 ) {
     val gutter = LocalCarDimens.current.gutter
+    // Give rotary / D-pad head units a starting point: focus lands on the first focusable of each
+    // screen when it opens, so the highlight is visible without a touch. Harmless on touch units.
+    val focusEntry = remember { FocusRequester() }
+    LaunchedEffect(state.screen) { runCatching { focusEntry.requestFocus() } }
     AnimatedContent(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.fillMaxHeight().focusRequester(focusEntry).focusGroup(),
         label = "screen",
     ) { screen ->
         when (screen) {
@@ -250,7 +257,7 @@ private fun RailButton(icon: ImageVector, label: String, selected: Boolean, onCl
     val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(bg).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(bg).carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(d.iconSize))
@@ -266,7 +273,7 @@ private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(ring).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(ring).carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(CircleShape))
@@ -279,7 +286,7 @@ private fun MicButton(listening: Boolean, onClick: () -> Unit) {
     val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     Box(
-        Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(CircleShape).background(bg).carFocusHighlight(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Mic, contentDescription = "Assistant", tint = fg, modifier = Modifier.size(d.iconSize))
@@ -356,7 +363,7 @@ private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Co
         modifier
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it },
+            .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
     ) { content() }
 }
 
@@ -421,7 +428,7 @@ private fun GuidanceCard(g: PhoneGuidance) {
 private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
     Row(
         Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
+            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(app, 44)
