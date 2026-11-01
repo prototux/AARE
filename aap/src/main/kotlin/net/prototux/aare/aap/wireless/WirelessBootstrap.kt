@@ -259,12 +259,15 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
         }
-        // Gearhead echoes the head unit's version. Head units only log this answer.
+        // Gearhead's answer: echo the version, the device serial, and the Wi-Fi channel type the
+        // head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold the
+        // WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
         val response = WifiVersionResponse.newBuilder()
             .setMajor(request?.takeIf { it.hasMajor() }?.major ?: 1)
             .setMinor(request?.takeIf { it.hasMinor() }?.minor ?: 0)
             .setStatus(WppStatus.SUCCESS)
         options.deviceSerial?.let { response.setDeviceSerial(it) }
+        request?.takeIf { it.hasSupportedWifiChannelType() }?.let { response.setSelectedWifiChannelType(it.supportedWifiChannelType) }
         send(WppMessageId.VERSION_RESPONSE, response.build().toByteArray())
     }
 

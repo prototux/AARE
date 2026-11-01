@@ -164,7 +164,10 @@ class ProjectionService : Service() {
         if (session != null || wirelessJob?.isActive == true) return
         val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: return
-        val connector = WirelessConnector(this, DiagAapLog)
+        // Pass the phone's stable id as the WPP device serial: strict head units (#46) want it in
+        // the version response before they send the WifiStartRequest.
+        val connector = WirelessConnector(this, DiagAapLog,
+            WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(deviceSerial = settings.instanceId)))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
