@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.ui.car.carFocusHighlight
 
 /** GridTemplate: tiles of GridItems (icons or large images), with header and floating actions. */
 @Composable
@@ -114,7 +115,7 @@ internal fun GridItemCell(item: GridItem, circle: Boolean, cell: Dp, modifier: M
     val shape: Shape = if (circle) CircleShape else RoundedCornerShape(24.dp)
     Column(
         modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-            .then(if (delegate != null) Modifier.clickable { host.click(delegate) } else Modifier)
+            .then(if (delegate != null) Modifier.carFocusHighlight(RoundedCornerShape(24.dp)).clickable { host.click(delegate) } else Modifier)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

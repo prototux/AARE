@@ -66,6 +66,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -369,6 +370,7 @@ private fun MapListCard(
             {
                 Box(
                     Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape)
+                        .carFocusHighlight(CircleShape)
                         .clickable { safeCall("onContentRefreshRequested") { d.sendContentRefreshRequested(host.done) } },
                     contentAlignment = Alignment.Center,
                 ) {

@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.suspendCancellableCoroutine
+import net.prototux.aare.ui.car.carFocusHighlight
 import kotlin.coroutines.resume
 import androidx.annotation.OptIn as AndroidXOptIn
 
@@ -158,7 +159,7 @@ private fun ChipSectionView(chips: List<Chip>) {
             Row(
                 Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(bg)
                     .border(2.dp, outline, RoundedCornerShape(32.dp))
-                    .then(if (delegate != null) Modifier.clickable { host.click(delegate) } else Modifier)
+                    .then(if (delegate != null) Modifier.carFocusHighlight(RoundedCornerShape(32.dp)).clickable { host.click(delegate) } else Modifier)
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -190,7 +191,12 @@ private fun SpotlightView(section: SpotlightSection, items: List<CondensedItem>)
             CarIconView(
                 image,
                 120.dp,
-                if (imageClick != null) Modifier.clip(RoundedCornerShape(18.dp)).clickable { host.click(imageClick) } else Modifier,
+                if (imageClick != null) {
+                    Modifier.clip(RoundedCornerShape(18.dp))
+                        .carFocusHighlight(RoundedCornerShape(18.dp)).clickable { host.click(imageClick) }
+                } else {
+                    Modifier
+                },
                 shape = RoundedCornerShape(18.dp),
                 contentScale = ContentScale.Crop,
             )

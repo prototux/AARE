@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.car.carFocusHighlight
 
 /**
  * Search entry. The car screen is a virtual display where the phone's IME does not appear, so
@@ -93,7 +94,8 @@ private fun Key(
     val bg = if (primary && enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (primary && enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Box(
-        modifier.fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(bg).clickable(enabled = enabled, onClick = onClick),
+        modifier.fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(bg)
+            .carFocusHighlight(RoundedCornerShape(16.dp)).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
