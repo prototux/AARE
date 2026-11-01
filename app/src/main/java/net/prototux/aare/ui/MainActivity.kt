@@ -170,7 +170,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeWireless(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -376,7 +376,7 @@ private fun ConnectionSettings(settings: Settings) {
     DisposableEffect(pinned) { onDispose(pinned.listen { pins = pinned.all }) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
-            Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it }
+            Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
         }
         Section(stringResource(R.string.setup_section_location)) {
