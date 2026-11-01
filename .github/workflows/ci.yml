@@ -19,7 +19,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6
       - name: Protocol tests, app unit tests, debug APK, desktop head unit
         run: ./gradlew --no-daemon :aap:test :app:testDebugUnitTest :app:assembleDebug :headunit:installDist
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
