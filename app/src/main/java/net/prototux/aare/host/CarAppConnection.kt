@@ -175,6 +175,9 @@ class CarAppConnection(
         visible = false
         if (status == Status.READY) applyVisibility()
         surfaceOwner?.let { surfaceDestroyed(it) }
+        // cleanup() is what removes the CarData listener (and clears hardware subs); without it a
+        // finished nav app leaks its listener and this whole connection for the process's life.
+        cleanup()
         unbind()
         status = Status.IDLE
     }
@@ -341,6 +344,9 @@ class CarAppConnection(
         // It won't send navigationEnded any more: don't leave its trip on the dashboard and cluster.
         if (navigating) { navigating = false; trip = null; env.navigationEnded(this) }
         cleanup()
+        // Unbind the dead/failed binding before any reconnect: rebinding a live ServiceConnection
+        // (onBindingDied especially) leaks bindings and keeps the service alive.
+        unbind()
         status = Status.FAILED
         error = "${info.label} stopped"
         // Reconnect while it's on screen, a few times: apps get killed and restarted by the OS.
@@ -519,7 +525,8 @@ class CarAppConnection(
         }
 
         override fun unsubscribeCarHardwareResult(resultType: Int, params: Bundleable?) {
-            synchronized(hardwareSubscriptions) { hardwareSubscriptions.remove(resultType) }
+            val empty = synchronized(hardwareSubscriptions) { hardwareSubscriptions.remove(resultType); hardwareSubscriptions.isEmpty() }
+            if (empty) CarData.removeListener(carDataListener)
         }
     }
 

@@ -123,9 +123,11 @@ class CarSession(
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
     private val audio = ArrayList<AudioChannel>()
 
-    private var encoder: VideoEncoder? = null
-    private var display: ProjectionDisplay? = null
-    private var touch: TouchMapper? = null
+    // @Volatile: written on main (startProjection), read on the AAP reader thread (input) and the
+    // encoder callback thread; without it a restart can leave them seeing a stale display/mapper.
+    @Volatile private var encoder: VideoEncoder? = null
+    @Volatile private var display: ProjectionDisplay? = null
+    @Volatile private var touch: TouchMapper? = null
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
     @Volatile private var mediaFocus = false

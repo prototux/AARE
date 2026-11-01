@@ -154,7 +154,7 @@ class AapSession(
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { r ->
         Thread(r, "aap-timer").apply { isDaemon = true }
     }
-    private val channels = HashMap<Int, ServiceChannel>()
+    private val channels = java.util.concurrent.ConcurrentHashMap<Int, ServiceChannel>()
     private var pendingOpens = 0
 
     @Volatile private var lastInboundMs = now()
@@ -289,7 +289,8 @@ class AapSession(
                     } else {
                         log.w("head unit refused channel ${ch.id} (${ch.name}): $status")
                     }
-                    if (--pendingOpens == 0) enterRunning()
+                    // <= 0 and state guard: a duplicate open-response must not wedge OPENING forever.
+                    if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
                 }
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
                     ch.opened = false
@@ -409,6 +410,9 @@ class AapSession(
             state = State.AUTH
             log.i("TLS up: ${cryptor.protocol} ${cryptor.cipherSuite}; head unit cert: " +
                 (cryptor.peerCertificates.firstOrNull()?.subjectX500Principal?.name ?: "none"))
+            // A head unit that goes silent after TLS (no AUTH_COMPLETE) would otherwise hang the
+            // reader forever: the version/handshake timers don't cover the AUTH state.
+            schedule({ if (state == State.AUTH) fail("no AUTH_COMPLETE after the TLS handshake", null) }, 10, TimeUnit.SECONDS)
         }
     }
 

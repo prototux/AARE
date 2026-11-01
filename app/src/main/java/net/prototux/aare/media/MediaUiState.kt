@@ -162,8 +162,10 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
         get() {
             val t = tabs ?: return rootLevel
             if (t.isEmpty()) return rootLevel
-            val item = t[tab.coerceIn(t.indices)]
-            return tabLevels.getOrPut(item.mediaId) { childLevel(item) }
+            val i = tab.coerceIn(t.indices)
+            val item = t[i]
+            // Key by tab index too: two tabs with the same (buggy) mediaId must not share a level.
+            return tabLevels.getOrPut("$i:${item.mediaId}") { childLevel(item) }
         }
 
     /**
@@ -174,7 +176,7 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
         get() = buildSet {
             rootLevel?.let { add(it.id) }
             base?.let { add(it.id) } // first, as it creates the current tab's level
-            addAll(tabLevels.keys)
+            tabLevels.values.forEach { add(it.id) }
             stack.forEach { if (it.isNode) add(it.id) }
         }
 
@@ -205,6 +207,8 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
     fun search(q: String) {
         val text = q.trim()
         if (text.isEmpty()) return
+        // One search level at a time, else Back re-shows a stale result and each search leaks a level.
+        stack.removeAll { it.id.startsWith("search:") }
         stack += Level("search:$text", "“$text”", NodeLoader(scope) { page, size ->
             if (page == 0) connection.search(text, size) else emptyList()
         }, StyleHints(), isNode = false)

@@ -90,6 +90,7 @@ class CarAudioOut(
                 while (got < chunk && running) {
                     val n = source.read(buf, 10 + got, chunk - got)
                     if (n < 0) { running = false; break }
+                    if (n == 0) { Thread.sleep(2); continue } // no data yet: yield, don't busy-spin
                     got += n
                 }
                 if (got < chunk) continue

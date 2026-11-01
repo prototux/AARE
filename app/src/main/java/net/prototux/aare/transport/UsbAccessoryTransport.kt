@@ -25,11 +25,10 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     override val input: InputStream = FileInputStream(fd.fileDescriptor)
     override val output: OutputStream = FileOutputStream(fd.fileDescriptor)
 
-    @Volatile private var closed = false
+    private val closed = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun close() {
-        if (closed) return
-        closed = true
+        if (!closed.compareAndSet(false, true)) return
         // Closing the fd makes a blocked read() return with an error.
         runCatching { fd.close() }
         runCatching { input.close() }
