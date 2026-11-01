@@ -73,9 +73,11 @@ internal fun CarPlayShell(
     appContent: @Composable (CarAppEntry, Modifier) -> Unit,
     navMap: @Composable (CarAppEntry, Modifier) -> Unit,
     overlay: @Composable (Modifier) -> Unit,
+    /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
+    modifier: Modifier = Modifier,
 ) {
     MaterialTheme(colorScheme = CarPlayColors, typography = MaterialTheme.typography) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
+        BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black).then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
                     when (val screen = state.screen) {

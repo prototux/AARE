@@ -86,13 +86,15 @@ fun CarShell(
     navMap: @Composable (CarAppEntry, Modifier) -> Unit,
     /** Drawn over everything but notices: the voice assistant's bar. */
     overlay: @Composable (Modifier) -> Unit = {},
+    /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
+    modifier: Modifier = Modifier,
 ) {
     if (state.carPlayStyle) {
-        CarPlayShell(state, actions, appContent, navMap, overlay)
+        CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
         return
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             if (portrait || state.railBottom) {
                 Column(Modifier.fillMaxSize()) {
