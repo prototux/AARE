@@ -39,8 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import androidx.annotation.OptIn as AndroidXOptIn
 
 /**
@@ -107,7 +109,7 @@ private fun MediaPlaybackTemplateView(t: MediaPlaybackTemplate) {
         ) {
             AppIconView(96.dp)
             Spacer(Modifier.height(20.dp))
-            Text("Playing from ${host.appLabel}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(stringResource(R.string.media_playing_from, host.appLabel), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -122,7 +124,7 @@ internal fun UnsupportedTemplate(template: Template) {
                 Icon(Icons.Rounded.Construction, null, tint = scheme.tertiary, modifier = Modifier.size(56.dp))
                 Spacer(Modifier.height(16.dp))
                 Text(
-                    "This screen isn't supported yet",
+                    stringResource(R.string.common_unsupported_screen),
                     style = MaterialTheme.typography.titleLarge,
                     color = scheme.onSurface,
                     textAlign = TextAlign.Center,

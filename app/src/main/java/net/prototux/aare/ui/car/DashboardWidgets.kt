@@ -37,8 +37,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 
@@ -65,7 +67,7 @@ internal fun WeatherChip(weather: Weather?) {
 @Composable
 internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier) {
     val context = LocalContext.current
-    val time = if (event.allDay) "Today" else DateFormat.getTimeFormat(context).format(event.startMs)
+    val time = if (event.allDay) stringResource(R.string.dash_event_today) else DateFormat.getTimeFormat(context).format(event.startMs)
     Column(modifier.padding(24.dp), verticalArrangement = Arrangement.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Event, null, tint = MaterialTheme.colorScheme.primary)
@@ -116,11 +118,11 @@ internal fun LatestNotification(n: CarNotice, driving: Boolean) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Notifications, null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(10.dp))
-            Text("Latest", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.dash_latest_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         }
         Spacer(Modifier.height(6.dp))
         Text(n.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(if (driving) "New message" else n.text, style = MaterialTheme.typography.bodyMedium,
+        Text(if (driving) stringResource(R.string.notif_new_message_placeholder) else n.text, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
     }
 }

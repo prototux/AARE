@@ -27,7 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 
 /**
@@ -37,7 +39,7 @@ import net.prototux.aare.ui.car.carFocusHighlight
 @Composable
 internal fun SearchView(ui: MediaUi, driving: Boolean) {
     if (driving) {
-        Placeholder("Search is available when parked", loading = false, icon = Icons.Rounded.Search)
+        Placeholder(stringResource(R.string.search_parked_only), loading = false, icon = Icons.Rounded.Search)
         return
     }
     CarKeyboard(
@@ -72,7 +74,7 @@ internal fun CarKeyboard(
         KeyRow(Modifier.weight(1f)) {
             Key(null, Modifier.weight(1.5f), Icons.Rounded.Clear, onClick = onClear)
             Key(null, Modifier.weight(5f), Icons.Rounded.SpaceBar) { onText(" ") }
-            Key("Search", Modifier.weight(3f), Icons.Rounded.Search, primary = true, enabled = searchEnabled, onClick = onSearch)
+            Key(stringResource(R.string.media_action_search), Modifier.weight(3f), Icons.Rounded.Search, primary = true, enabled = searchEnabled, onClick = onSearch)
         }
     }
 }

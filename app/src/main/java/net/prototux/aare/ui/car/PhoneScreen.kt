@@ -50,11 +50,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import net.prototux.aare.R
 import net.prototux.aare.car.Calls
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.Pill
@@ -64,7 +66,7 @@ import net.prototux.aare.ui.theme.LocalCarDimens
 /** One number to call: a recent call or a contact. */
 private class Callee(val name: String, val number: String, val detail: String, val type: Int = 0)
 
-private enum class PhoneTab(val label: String) { RECENTS("Recents"), CONTACTS("Contacts"), KEYPAD("Keypad") }
+private enum class PhoneTab(val labelRes: Int) { RECENTS(R.string.phone_tab_recents), CONTACTS(R.string.phone_tab_contacts), KEYPAD(R.string.phone_tab_keypad) }
 
 private val PERMISSIONS = listOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_CALL_LOG,
     Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE)
@@ -79,7 +81,7 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
     val context = LocalContext.current
     val driving = runtime.ui.drivingRestricted
     if (PERMISSIONS.any { context.checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }) {
-        Placeholder("Allow calls, call history and contacts in AARE on the phone (Finish setting up).", loading = false,
+        Placeholder(stringResource(R.string.phone_permissions_placeholder), loading = false,
             icon = Icons.Rounded.Call, modifier = modifier.background(MaterialTheme.colorScheme.background))
         return
     }
@@ -90,15 +92,16 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
         while (true) { value = Calls.state(context) != TelephonyManager.CALL_STATE_IDLE; delay(1_500) }
     }
     LaunchedEffect(inCall) { if (!inCall) reload++ }
+    val callingTitle = context.getString(R.string.phone_notice_calling_title)
     val call: (Callee) -> Unit = { c ->
         Calls.place(context, c.number)
-        runtime.notice("Calling", c.name.ifBlank { c.number })
+        runtime.notice(callingTitle, c.name.ifBlank { c.number })
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background).padding(horizontal = 24.dp)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             PhoneTab.entries.forEach { t ->
-                if (t != PhoneTab.KEYPAD || !driving) Pill(t.label, selected = tab == t, onClick = { tab = t })
+                if (t != PhoneTab.KEYPAD || !driving) Pill(stringResource(t.labelRes), selected = tab == t, onClick = { tab = t })
             }
         }
         if (inCall && Calls.canEnd) InCallCard { Calls.end(context) }
@@ -106,11 +109,11 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
             when (if (driving && tab == PhoneTab.KEYPAD) PhoneTab.RECENTS else tab) {
                 PhoneTab.RECENTS -> {
                     val recents by produceState<List<Callee>?>(null, reload) { value = withContext(Dispatchers.IO) { recents(context) } }
-                    CalleeList(recents, "No recent calls", call)
+                    CalleeList(recents, stringResource(R.string.phone_no_recent_calls), call)
                 }
                 PhoneTab.CONTACTS -> {
                     val contacts by produceState<List<Callee>?>(null, reload) { value = withContext(Dispatchers.IO) { contacts(context) } }
-                    CalleeList(contacts, "No contacts with a phone number", call)
+                    CalleeList(contacts, stringResource(R.string.phone_no_contacts), call)
                 }
                 PhoneTab.KEYPAD -> Keypad { number -> call(Callee("", number, "")) }
             }
@@ -127,10 +130,10 @@ private fun InCallCard(onHangUp: () -> Unit) {
     ) {
         Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(14.dp))
-        Text("Call in progress", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.phone_call_in_progress), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
         Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(Color(0xFFD32F2F)).clickable(onClick = onHangUp),
             contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.CallEnd, "Hang up", tint = Color.White)
+            Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = Color.White)
         }
     }
 }
@@ -138,7 +141,7 @@ private fun InCallCard(onHangUp: () -> Unit) {
 @Composable
 private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> Unit) {
     when {
-        list == null -> Placeholder("Loading", loading = true)
+        list == null -> Placeholder(stringResource(R.string.common_loading), loading = true)
         list.isEmpty() -> Placeholder(empty, loading = false, icon = Icons.Rounded.Person)
         else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(list) { c ->
@@ -163,7 +166,7 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
                             color = if (missed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface)
                         if (c.detail.isNotBlank()) Text(c.detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
-                    Icon(Icons.Rounded.Call, "Call", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 12.dp))
+                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 12.dp))
                 }
             }
         }
@@ -180,11 +183,11 @@ private fun Keypad(onCall: (String) -> Unit) {
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.AutoMirrored.Rounded.Backspace, "Delete")
+                    Icon(Icons.AutoMirrored.Rounded.Backspace, stringResource(R.string.phone_keypad_delete))
                 }
                 Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(Color(0xFF2E7D32))
                     .clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Call, "Call", tint = Color.White)
+                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = Color.White)
                 }
             }
         }

@@ -24,7 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.media.Pill
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -48,27 +50,27 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
         contentPadding = PaddingValues(horizontal = 32.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item { Text("Settings", style = MaterialTheme.typography.headlineSmall) }
+        item { Text(stringResource(R.string.setup_app_entry_settings), style = MaterialTheme.typography.headlineSmall) }
         item {
-            Choice("Colors", listOf(Settings.THEME_AUTO to "Car's day/night", Settings.THEME_DARK to "Dark", Settings.THEME_LIGHT to "Light"), theme) {
+            Choice(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
                 theme = it; settings.carTheme = it
             }
         }
         item {
-            Choice("Bar", listOf(Settings.RAIL_AUTO to "Driver's side", Settings.RAIL_LEFT to "Left", Settings.RAIL_RIGHT to "Right", Settings.RAIL_BOTTOM to "Bottom"), rail) {
+            Choice(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
                 rail = it; settings.railPosition = it
             }
         }
         item {
-            Choice("Style", listOf(Settings.STYLE_AUTO to "Android Auto", Settings.STYLE_CARPLAY to "CarPlay"), style) {
+            Choice(stringResource(R.string.setup_choice_style), listOf(Settings.STYLE_AUTO to stringResource(R.string.setup_style_android_auto), Settings.STYLE_CARPLAY to stringResource(R.string.setup_style_carplay)), style) {
                 style = it; settings.carStyle = it
             }
         }
-        item { SwitchRow("Dark bar, even with day colors", darkBar) { darkBar = it; settings.darkBar = it } }
-        item { SwitchRow("Passenger mode: no driving restrictions (the driver must not use the screen)", passenger) { passenger = it; settings.ignoreDriving = it } }
-        item { SwitchRow("Message notifications", banners) { banners = it; settings.messageBanners = it } }
-        item { SwitchRow("Read messages aloud", aloud) { aloud = it; settings.readMessagesAloud = it } }
-        item { SwitchRow("Phone audio in the car (next connection)", audio) { audio = it; settings.carAudio = it } }
+        item { SwitchRow(stringResource(R.string.setup_switch_dark_bar), darkBar) { darkBar = it; settings.darkBar = it } }
+        item { SwitchRow(stringResource(R.string.setup_switch_passenger), passenger) { passenger = it; settings.ignoreDriving = it } }
+        item { SwitchRow(stringResource(R.string.setup_switch_message_notifications), banners) { banners = it; settings.messageBanners = it } }
+        item { SwitchRow(stringResource(R.string.msg_toggle_read_aloud_title), aloud) { aloud = it; settings.readMessagesAloud = it } }
+        item { SwitchRow(stringResource(R.string.setup_switch_audio_next_connection), audio) { audio = it; settings.carAudio = it } }
     }
 }
 

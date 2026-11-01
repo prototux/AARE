@@ -41,9 +41,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -143,8 +145,8 @@ internal fun CarKeyboard(mode: KeyboardMode, sink: KeyboardSink, submitIcon: Ima
                                 }
                             }) {
                                 when (key.kind) {
-                                    FnKind.Symbols -> Text("?123", style = MaterialTheme.typography.labelLarge, color = fg)
-                                    FnKind.Letters -> Text("ABC", style = MaterialTheme.typography.labelLarge, color = fg)
+                                    FnKind.Symbols -> Text(stringResource(R.string.kbd_symbols_label), style = MaterialTheme.typography.labelLarge, color = fg)
+                                    FnKind.Letters -> Text(stringResource(R.string.kbd_letters_label), style = MaterialTheme.typography.labelLarge, color = fg)
                                     else -> Icon(fnIcon(key.kind, submitIcon), null, tint = fg, modifier = Modifier.size(30.dp))
                                 }
                             }
@@ -245,7 +247,7 @@ internal fun CarTextField(
                     .carFocusHighlight(CircleShape).clickable(onClick = onClear),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Close, "Clear", tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
+                Icon(Icons.Rounded.Close, stringResource(R.string.common_clear), tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
             }
         }
     }

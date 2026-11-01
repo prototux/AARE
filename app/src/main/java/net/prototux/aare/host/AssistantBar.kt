@@ -37,9 +37,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import net.prototux.aare.R
 import net.prototux.aare.media.Pill
 import net.prototux.aare.ui.car.AppIcon
 import net.prototux.aare.ui.car.CarAppEntry
@@ -98,11 +100,11 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
                     if (text.isNotBlank()) {
                         Text(text, style = MaterialTheme.typography.titleMedium, maxLines = 3, overflow = TextOverflow.Ellipsis)
                     } else if (listening) {
-                        Text("Listening…", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.assistant_listening), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Box(Modifier.size(d.touchTarget).clip(CircleShape).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Close, "Close", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(Icons.Rounded.Close, stringResource(R.string.common_close), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (busy && !listening) {
