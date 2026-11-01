@@ -252,7 +252,7 @@ class VideoChannel(
         val changed = projected != focused
         focused = projected
         if (projected) {
-            synchronized(lock) { needKeyFrame = true; pending.clear() }
+            synchronized(lock) { needKeyFrame = true; while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) } }
             // resend codec config: some head units reset their decoder when focus returns
             codecConfig?.let { sendCodecConfigData(it, 0, it.size, Priority.VIDEO) }
         }

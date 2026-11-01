@@ -29,11 +29,10 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     // coalesce into one write per message at its flush() — fewer blocking syscalls on the pipe.
     override val output: OutputStream = BufferedOutputStream(FileOutputStream(fd.fileDescriptor), 64 * 1024)
 
-    @Volatile private var closed = false
+    private val closed = java.util.concurrent.atomic.AtomicBoolean(false)
 
     override fun close() {
-        if (closed) return
-        closed = true
+        if (!closed.compareAndSet(false, true)) return
         // Closing the fd makes a blocked read() return with an error.
         runCatching { fd.close() }
         runCatching { input.close() }

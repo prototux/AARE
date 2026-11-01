@@ -119,6 +119,7 @@ class ProjectionService : Service() {
         val s = session
         session = null
         s?.stop()
+        net.prototux.aare.mirror.PhoneMirror.release()
         // onEnded is ignored from here on: a LAN session must not leave the network listener on.
         if (lanSession) { lanSession = false; settings.headUnitServerLan = false }
         tcpServer?.stop()
@@ -312,6 +313,7 @@ class ProjectionService : Service() {
         projection?.registerCallback(object : MediaProjection.Callback() {
             override fun onStop() {
                 projection = null
+                net.prototux.aare.mirror.PhoneMirror.release()
                 _state.update { it.copy(audioCapture = false) }
                 if (destroyed) return
                 updateNotification(_state.value.status)

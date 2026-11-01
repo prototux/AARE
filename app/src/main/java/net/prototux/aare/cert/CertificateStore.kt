@@ -38,7 +38,7 @@ class CertificateStore(private val context: Context) {
      * into this build of AARE (release builds), then the generated one, which always works.
      */
     fun entries(): List<Entry> {
-        val imported = dir.listFiles { f -> f.isDirectory }.orEmpty().sortedBy { it.name }.mapNotNull { load(it) }
+        val imported = dir.listFiles { f -> f.isDirectory && f.name != "_generated" }.orEmpty().sortedBy { it.name }.mapNotNull { load(it) }
         return imported + listOfNotNull(builtIn) + Entry(GENERATED, generated(), removable = false)
     }
 
