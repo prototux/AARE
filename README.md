@@ -261,6 +261,14 @@ Some cars keep playing the phone's **Bluetooth** audio while in Android Auto mod
 Land Cruiser in [Tested on real head units](#tested-on-real-head-units) does). With those, none
 of the above is needed: pair the phone with the car and leave *Car audio* unset.
 
+**Samsung Galaxy / One UI:** *Settings → Sounds and vibration → Separate app sound* can route
+chosen navigation or media apps directly to a paired **vehicle Bluetooth audio device**. A Galaxy
+S23 owner reports hearing both music and spoken navigation guidance this way. This is **phone
+Bluetooth output**, not proof that AARE captures navigation voice or sends it over an AAP audio
+channel; it also does not verify simultaneous official Android Auto plus AARE projection.
+See [Samsung Separate app sound and Bluetooth](docs/samsung-separate-app-sound.md) for the
+setup, caveats and the scoped field report.
+
 ## Testing without a car: the desktop head unit
 
 `./headunit.sh` turns your computer into a car for a phone or emulator connected with adb. You
