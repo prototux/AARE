@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Hiermee kunt u het telefoonscherm vanuit de auto gebruiken: AARE geeft de aanrakingen op het autoscherm door aan de telefoon en controleert welke app op de voorgrond staat, zodat het telefoonscherm tijdens het rijden gepauzeerd blijft, behalve wanneer een navigatie-app wordt weergegeven. AARE leest niets anders.</string>
+    <string name="mirror_locked_placeholder">Het telefoonscherm is gepauzeerd zolang de telefoon vergrendeld is. Ontgrendel de telefoon om het te tonen.</string>
+    <string name="mirror_driving_no_accessibility">Het telefoonscherm is gepauzeerd tijdens het rijden. Om navigatie-apps tijdens het rijden te tonen, schakelt u AARE in bij de toegankelijkheidsinstellingen van de telefoon: zo weet AARE welke app open is.</string>
+    <string name="mirror_driving_nav_only">Het telefoonscherm is gepauzeerd tijdens het rijden. Het toont alleen navigatie-apps.</string>
+    <string name="mirror_need_car_audio">Schakel Autoaudio in bij AARE op de telefoon en kies Volledig scherm wanneer Android dit vraagt: het telefoonscherm gebruikt dezelfde toestemming.</string>
+    <string name="mirror_need_accessibility">Om de telefoon vanuit de auto te gebruiken, schakelt u AARE in bij de toegankelijkheidsinstellingen van de telefoon.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Terug</string>
+    <string name="common_up">Omhoog</string>
+    <string name="common_down">Omlaag</string>
+    <string name="common_cancel">Annuleren</string>
+    <string name="common_clear">Wissen</string>
+    <string name="common_call">Bellen</string>
+    <string name="common_dismiss">Negeren</string>
+    <string name="common_close">Sluiten</string>
+    <string name="common_nothing_to_show">Niets om te tonen</string>
+    <string name="common_no_items">Geen items</string>
+    <string name="common_unsupported_screen">Dit scherm wordt nog niet ondersteund</string>
+    <string name="common_loading">Laden</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Autoscherm</string>
+    <string name="setup_page_car_screen_subtitle">Kleuren, balkpositie, telefoonscherm</string>
+    <string name="setup_page_apps_title">Apps</string>
+    <string name="setup_page_apps_subtitle">Welke apps in de auto worden getoond</string>
+    <string name="setup_page_connection_title">Verbinding</string>
+    <string name="setup_page_connection_subtitle">Draadloos, videokwaliteit, uw auto\'s</string>
+    <string name="setup_page_advanced_title">Geavanceerd</string>
+    <string name="setup_page_advanced_subtitle">Head-unit-server, certificaten, logboek</string>
+    <string name="setup_tagline">Opensource auto-projectie</string>
+    <string name="setup_status_certificate">certificaat: %1$s</string>
+    <string name="setup_status_disconnected_hint">Sluit de telefoon aan op de Android Auto USB-poort van de auto, of maak draadloos verbinding met een gekoppelde auto.</string>
+    <string name="setup_status_last_error">Laatste fout: %1$s</string>
+    <string name="setup_trust_new_cert">Dit nieuwe certificaat van de head unit vertrouwen</string>
+    <string name="setup_trust_head_unit">Deze head unit vertrouwen</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Voorbeeld autoscherm</string>
+    <string name="setup_disconnect">Verbinding verbreken</string>
+    <string name="setup_finish_title">Installatie afronden</string>
+    <string name="setup_check_permissions_title">Machtigingen</string>
+    <string name="setup_check_permissions_subtitle">Microfoon, locatie, Bluetooth, Wi-Fi in de buurt, meldingen, oproepen, contacten en agenda</string>
+    <string name="setup_check_notification_access_title">Meldingstoegang</string>
+    <string name="setup_check_notification_access_subtitle">Berichten, routebeschrijvingen van Google Maps en Waze, nu afspelend</string>
+    <string name="setup_check_audio_subtitle">Laat het geluid van de telefoon naar de auto gaan</string>
+    <string name="setup_action_set_up">Instellen</string>
+    <string name="setup_section_connecting">Verbinden</string>
+    <string name="setup_toggle_wireless_title">Draadloos</string>
+    <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
+    <string name="setup_toggle_resume_music_title">Muziek hervatten</string>
+    <string name="setup_toggle_resume_music_subtitle">Start de laatst gebruikte muziekapp wanneer de auto verbinding maakt</string>
+    <string name="setup_section_location">Locatie</string>
+    <string name="setup_toggle_car_gps_title">GPS van de auto gebruiken</string>
+    <string name="setup_toggle_car_gps_subtitle">Tijdens de verbinding zien apps op de telefoon de positie van de auto in plaats van die van de telefoon zelf, zodat navigatie-apps de twee niet mengen</string>
+    <string name="setup_check_mock_location_title">AARE toestaan de locatie in te stellen</string>
+    <string name="setup_check_mock_location_subtitle">Ontwikkelaarsopties &gt; App voor neplocatie selecteren &gt; AARE</string>
+    <string name="setup_section_video">Video</string>
+    <string name="setup_toggle_60fps_title">Voorkeur voor 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Vloeiender als de auto het ondersteunt</string>
+    <string name="setup_choice_max_resolution">Maximale resolutie</string>
+    <string name="setup_hint_lower_resolution">Lager verbruikt minder batterij en bandbreedte.</string>
+    <string name="setup_section_your_cars">Uw auto\'s</string>
+    <string name="setup_cars_empty">Auto\'s verschijnen hier na de eerste verbinding.</string>
+    <string name="setup_car_last_connected">Laatst verbonden %1$s</string>
+    <string name="setup_action_forget">Vergeten</string>
+    <string name="setup_section_trusted_head_units">Vertrouwde head units</string>
+    <string name="setup_trusted_head_units_hint">Een gekoppelde draadloze auto wordt vertrouwd bij de eerste verbinding; een nieuwe USB- of ontwikkelaars-head unit alleen nadat u op Vertrouwen heeft getikt (in de melding of op het startscherm). Vertrouw alleen een head unit waarmee u nu verbonden bent. Als een head unit later een ander certificaat toont, wordt u opnieuw gevraagd: vertrouw het alleen als de software is bijgewerkt.</string>
+    <string name="setup_trusted_head_units_empty">Nog geen.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Uiterlijk</string>
+    <string name="setup_choice_colors">Kleuren</string>
+    <string name="setup_choice_colors_auto">Dag/nacht van de auto</string>
+    <string name="setup_choice_dark">Donker</string>
+    <string name="setup_choice_light">Licht</string>
+    <string name="setup_choice_bar">Balk</string>
+    <string name="setup_choice_bar_auto">Bestuurderszijde</string>
+    <string name="setup_choice_left">Links</string>
+    <string name="setup_choice_right">Rechts</string>
+    <string name="setup_choice_bottom">Onder</string>
+    <string name="setup_toggle_dark_bar_title">Donkere balk</string>
+    <string name="setup_toggle_dark_bar_subtitle">Houd de balk donker, ook bij dagkleuren</string>
+    <string name="setup_section_dashboard">Dashboard</string>
+    <string name="setup_choice_wallpaper">Achtergrond</string>
+    <string name="setup_wallpaper_none">Geen</string>
+    <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_toggle_weather_title">Weer</string>
+    <string name="setup_toggle_weather_subtitle">Naast de klok, van Open-Meteo (het haalt een geschatte positie op, ongeveer 10 km)</string>
+    <string name="setup_toggle_calendar_title">Volgende agenda-afspraak</string>
+    <string name="setup_toggle_calendar_subtitle">Onder de muziek, met een snelkoppeling om naar de locatie te navigeren</string>
+    <string name="setup_section_driving">Rijden</string>
+    <string name="setup_toggle_passenger_title">Passagiersmodus</string>
+    <string name="setup_toggle_passenger_subtitle">Negeert de rijstatus van de auto: typen, lange lijsten en het telefoonscherm blijven beschikbaar tijdens het rijden, voor een passagier. De bestuurder mag het scherm niet gebruiken tijdens het rijden.</string>
+    <string name="setup_section_app_list">In de app-lijst van de auto</string>
+    <string name="setup_app_list_hint">Schakel de apps uit die u niet in de auto wilt.</string>
+    <string name="setup_app_list_loading">Apps zoeken…</string>
+    <string name="setup_app_group_nav">Navigatie- en auto-apps</string>
+    <string name="setup_app_list_no_nav">Nog geen: installeer CoMaps, Organic Maps of een andere Android Auto-app.</string>
+    <string name="setup_app_kind_navigation">Navigatie</string>
+    <string name="setup_app_kind_generic">Auto-app</string>
+    <string name="setup_app_group_media">Media</string>
+    <string name="setup_app_kind_media">Muziek, podcasts, radio</string>
+    <string name="setup_app_group_messaging">Berichten</string>
+    <string name="setup_app_kind_messaging">Berichten uit hun meldingen</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Android Auto-apps die AARE niet kan tonen</string>
+    <string name="setup_hint_allowlist">Apps die zijn gebouwd met recente versies van Google\'s auto-bibliotheek accepteren alleen hosts op hun toestaanlijst; zie de README.</string>
+    <string name="setup_app_entry_phone">Telefoon</string>
+    <string name="setup_app_entry_settings">Instellingen</string>
+    <string name="setup_app_entry_notifications">Meldingen</string>
+    <string name="setup_section_app_order">Volgorde in de auto</string>
+    <string name="setup_section_connection_log">Verbindingslogboek</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Niet aangesloten bij Google. Android Auto is een handelsmerk van Google LLC.</string>
+    <string name="setup_choice_style">Stijl</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Donkere balk, ook bij dagkleuren</string>
+    <string name="setup_switch_passenger">Passagiersmodus: geen rijbeperkingen (de bestuurder mag het scherm niet gebruiken)</string>
+    <string name="setup_switch_message_notifications">Berichtmeldingen</string>
+    <string name="setup_switch_audio_next_connection">Telefoonaudio in de auto (volgende verbinding)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Telefooncertificaten</string>
+    <string name="cert_hint">Head units controleren het certificaat van de telefoon. Opensource head units accepteren het gegenereerde certificaat; auto\'s met Google\'s head-unit-software accepteren alleen een certificaat dat door Google is uitgegeven, dat AARE niet kan meeleveren. U kunt een certificaat importeren dat u mag gebruiken (PEM-certificaat + PKCS#8-sleutel, of PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · tot %2$s</string>
+    <string name="cert_action_remove">Verwijderen</string>
+    <string name="cert_action_import">Certificaat importeren…</string>
+    <string name="cert_p12_dialog_title">PKCS#12-wachtwoord</string>
+    <string name="cert_action_import_confirm">Importeren</string>
+    <string name="cert_imported_fallback">geïmporteerd</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Head-unit-server</string>
+    <string name="huserver_toggle_subtitle">Zoals de ontwikkelaarsmodus van Android Auto, voor de desktop head unit, DHU, openauto, Headunit Revived. Alleen bereikbaar via adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Accepteren vanaf het netwerk</string>
+    <string name="huserver_toggle_network_subtitle">Ook luisteren op TCP-poort 5277 op elk netwerk, zonder wachtwoord. Iedereen op dezelfde Wi-Fi kan verbinding maken, het autoscherm zien en de microfoon gebruiken.</string>
+    <string name="huserver_toggle_lanonce_title">Netwerkmodus uitschakelen na een sessie</string>
+    <string name="huserver_toggle_lanonce_subtitle">Veiliger: het netwerk moet voor elke sessie opnieuw worden toegestaan. Schakel dit uit voor head units die zelf opnieuw verbinding maken, zoals openauto of Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Telefoonscherm op de server</string>
+    <string name="huserver_toggle_mirror_subtitle">Biedt "Telefoonscherm" ook aan iedereen die hier verbinding maakt. Risicovol: deze persoon ziet het scherm van de telefoon en kan erop tikken, laat het dus uit, tenzij u de head unit vertrouwt.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Berichten</string>
+    <string name="msg_page_subtitle">Banners en voorlezen</string>
+    <string name="msg_check_notification_access_subtitle">Nodig om berichten in de auto te zien</string>
+    <string name="msg_toggle_banners_title">Berichtmeldingen tonen</string>
+    <string name="msg_toggle_banners_subtitle">Een banner op het autoscherm voor elk nieuw bericht</string>
+    <string name="msg_toggle_group_title">Groepsberichten</string>
+    <string name="msg_toggle_group_subtitle">Toon ook berichten uit groepsgesprekken</string>
+    <string name="msg_toggle_read_aloud_title">Berichten voorlezen</string>
+    <string name="msg_toggle_read_aloud_subtitle">Lees elk nieuw bericht voor zodra het binnenkomt</string>
+    <string name="msg_hint_apps">Berichten-apps (WhatsApp, Signal, sms…) hebben ook hun eigen pagina in de app-lijst van de auto.</string>
+    <string name="msg_section_while_driving">Tijdens het rijden</string>
+    <string name="msg_toggle_dnd_title">Niet storen</string>
+    <string name="msg_toggle_dnd_subtitle">Zet de telefoon op stil tijdens de verbinding; oproepen en prioritaire gesprekken komen nog steeds door</string>
+    <string name="msg_check_dnd_access_title">AARE toestaan Niet storen in te schakelen</string>
+    <string name="msg_check_dnd_access_subtitle">Android vraagt dit eenmaal</string>
+    <string name="msg_toggle_autoreply_title">Automatisch antwoord</string>
+    <string name="msg_toggle_autoreply_subtitle">Beantwoordt mensen die schrijven, eenmaal per gesprek per rit (geen groepen)</string>
+    <string name="msg_autoreply_field_label">Antwoord</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Autoaudio</string>
+    <string name="audio_page_subtitle">Hoe het geluid van de telefoon naar de auto gaat</string>
+    <string name="audio_toggle_enable_title">Telefoonaudio in de auto</string>
+    <string name="audio_toggle_enable_subtitle">Muziek, podcasts, de assistent en, afhankelijk van de methode, navigatiestem</string>
+    <string name="audio_using_method">Gebruikt: %1$s</string>
+    <string name="audio_no_method">Nog geen methode ingesteld: kies er hieronder een.</string>
+    <string name="audio_section_methods">Methoden, beste eerst</string>
+    <string name="audio_policy_ready">Gereed. Muziek en navigatiestem gaan apart naar de auto, de telefoon blijft stil.</string>
+    <string name="audio_policy_not_ready">Zoals Android Auto: muziek en navigatiestem apart, telefoonluidspreker uit. Vereist een geroote telefoon: installeer AARE als systeemapp met de Magisk-module (zie de README).</string>
+    <string name="audio_shizuku_ready">Gereed. Alles wat de telefoon afspeelt gaat naar de auto, inclusief navigatiestem; de telefoon blijft stil.</string>
+    <string name="audio_shizuku_needs_android12">Vereist Android 12 of nieuwer.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku draait: tik om AARE toe te staan.</string>
+    <string name="audio_shizuku_install_hint">Geen root nodig. Installeer Shizuku, start het (draadloos debuggen, eenmaal per herstart), en kom dan hier terug.</string>
+    <string name="audio_playback_ready">Gereed. Alleen media: geen navigatiestem, sommige apps doen niet mee, en de telefoon blijft ook afspelen.</string>
+    <string name="audio_playback_not_ready">Werkt overal, met beperkingen: alleen media, geen navigatiestem. Android vraagt om het scherm op te nemen: kies Volledig scherm (ook gebruikt door het telefoonscherm).</string>
+    <string name="audio_notice_setup_hint">Open AARE op de telefoon en stel Autoaudio in om de telefoon in de auto te horen</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Telefoonscherm</string>
+    <string name="phone_toggle_enable_title">Telefoonscherm in de auto</string>
+    <string name="phone_toggle_enable_subtitle">Het eigen scherm van de telefoon, voor apps die AARE niet kan hosten (Google Maps, Waze). Gepauzeerd zolang de telefoon vergrendeld is, en tijdens het rijden, behalve wanneer een navigatie-app de weg wijst. Niet aangeboden op de head-unit-server, behalve als daar ingeschakeld</string>
+    <string name="phone_check_touch_title">Aanraken op het telefoonscherm</string>
+    <string name="phone_check_touch_subtitle">Schakel AARE in bij Toegankelijkheid. Sideloaded apps hebben mogelijk eerst "Beperkte instellingen toestaan" nodig in de app-info van AARE</string>
+    <string name="phone_hint_touch_capture">De afbeelding gebruikt de schermopname-machtiging (pagina Autoaudio, kies Volledig scherm).</string>
+    <string name="phone_app_row_subtitle">Het eigen scherm van de telefoon, voor apps die AARE niet kan hosten</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Spraakassistent</string>
+    <string name="assistant_page_subtitle">Wat de spraakknop opent</string>
+    <string name="assistant_same_as_phone">Hetzelfde als de telefoon</string>
+    <string name="assistant_no_default">Geen standaardassistent ingesteld op de telefoon</string>
+    <string name="assistant_has_car_app_subtitle">Op het autoscherm, met de microfoon van de auto</string>
+    <string name="assistant_opens_on_phone">Opent op de telefoon</string>
+    <string name="assistant_hint">De spraakknop op het stuur en de microfoon van de balk openen deze assistent. Assistenten met een auto-app, zoals Lapin, werken het best.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Autoverbinding</string>
+    <string name="notif_action_stop">Stoppen</string>
+    <string name="notif_action_trust">Vertrouwen</string>
+    <string name="notif_status_connecting_wirelessly">Draadloos verbinden…</string>
+    <string name="notif_status_not_connected">Niet verbonden</string>
+    <string name="notif_keeping_consent_suffix">%1$s · schermopname-toestemming voor autoaudio wordt behouden (Stoppen trekt deze in)</string>
+    <string name="notif_cert_changed_title">Certificaat van head unit gewijzigd</string>
+    <string name="notif_new_head_unit_title">Nieuwe head unit</string>
+    <string name="notif_trust_warning">Vertrouw alleen een head unit waarmee u nu verbonden bent</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, maak dan opnieuw verbinding.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, maak dan opnieuw verbinding.</string>
+    <string name="notif_cert_changed_message">certificaat van head unit gewijzigd: tik op Vertrouwen in de melding of in AARE, alleen als de software is bijgewerkt, maak dan opnieuw verbinding</string>
+    <string name="notif_cert_untrusted_message">certificaat van head unit nog niet vertrouwd: tik op Vertrouwen in de melding of in AARE, maak dan opnieuw verbinding</string>
+    <string name="notif_car_nearby_title">Auto in de buurt</string>
+    <string name="notif_car_nearby_text">Tik om draadloos verbinding te maken</string>
+    <string name="notif_status_connecting_to">Verbinden met %1$s</string>
+    <string name="notif_status_connected_to">Verbonden met %1$s</string>
+    <string name="notif_status_projecting_to">Projecteren naar %1$s</string>
+    <string name="notif_status_cant_start_video">Kan video niet starten: %1$s</string>
+    <string name="notif_not_calling_title">Niet aan het bellen</string>
+    <string name="notif_not_calling_text">%1$s vroeg om een code met * of # te bellen, geen telefoonnummer</string>
+    <string name="notif_calling_title">Bellen naar %1$s</string>
+    <string name="notif_asked_by">Gevraagd door %1$s</string>
+    <string name="notif_call_confirm_title">%1$s bellen?</string>
+    <string name="notif_no_nav_app">Geen navigatie-app op de telefoon</string>
+    <string name="notif_cant_open">Kan dit niet openen vanuit de auto</string>
+    <string name="notif_navigation_title">Navigatie</string>
+    <string name="notif_navigation_no_app_text">Geen navigatie-app in de auto</string>
+    <string name="notif_assistant_title">Assistent</string>
+    <string name="notif_assistant_choose_text">Kies een spraakassistent in de instellingen van AARE op de telefoon</string>
+    <string name="notif_assistant_no_car_screen">%1$s heeft geen autoscherm: het is geopend op de telefoon</string>
+    <string name="notif_assistant_cant_open">%1$s kan niet worden geopend. Kies een andere assistent in de instellingen van AARE</string>
+    <string name="notif_parked_only_title">Niet beschikbaar tijdens het rijden</string>
+    <string name="notif_parked_only_text">Parkeer om dit te gebruiken</string>
+    <string name="notif_empty">Geen meldingen</string>
+    <string name="notif_title">Meldingen</string>
+    <string name="notif_clear_all">Alles wissen</string>
+    <string name="notif_new_message_placeholder">Nieuw bericht</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Apps</string>
+    <string name="dash_menu_home">Start</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Geen navigatie-app</string>
+    <string name="nav_dashboard_where_to">Waarheen?</string>
+    <string name="nav_dashboard_install_hint">Installeer een navigatie-app die Android Auto ondersteunt op de telefoon</string>
+    <string name="nav_dashboard_choose_app">Kies uw kaarten-app</string>
+    <string name="nav_guidance_on_phone">%1$s, op de telefoon</string>
+    <string name="nav_next_step_then">Dan</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Muziek</string>
+    <string name="media_nothing_playing">Niets speelt af</string>
+    <string name="media_action_previous">Vorige</string>
+    <string name="media_action_play_pause">Afspelen/pauzeren</string>
+    <string name="media_action_next">Volgende</string>
+    <string name="media_playing_from">Speelt af vanaf %1$s</string>
+    <string name="media_connecting_to">Verbinden met %1$s</string>
+    <string name="media_queue_title">Wachtrij</string>
+    <string name="media_search_app">%1$s doorzoeken</string>
+    <string name="media_action_search">Zoeken</string>
+    <string name="media_action_browse">Bladeren</string>
+    <string name="media_now_playing_label">Nu afspelend</string>
+    <string name="media_nothing_here">Niets hier</string>
+    <string name="media_couldnt_load_more">Kon niet meer laden</string>
+    <string name="media_starting">Starten…</string>
+    <string name="media_action_pause">Pauzeren</string>
+    <string name="media_action_play">Afspelen</string>
+    <string name="media_queue_empty">De wachtrij is leeg</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Geef AARE meldingstoegang op de telefoon om hier berichten te zien</string>
+    <string name="msg_listener_not_ready">Hier is nog niets te zien</string>
+    <string name="msg_reply_sent">Antwoord verzonden</string>
+    <string name="msg_reply_rejected">%1$s heeft het antwoord niet geaccepteerd</string>
+    <string name="msg_no_new_messages">Geen nieuwe berichten van %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Berichten worden tijdens het rijden voorgelezen.</string>
+    <string name="msg_action_read_aloud">Voorlezen</string>
+    <string name="msg_action_mark_read">Als gelezen markeren</string>
+    <string name="msg_action_reply">Antwoorden</string>
+    <string name="msg_reply_hint">Bericht aan %1$s</string>
+    <string name="msg_message_count_one">1 bericht</string>
+    <string name="msg_message_count_many">%1$d berichten</string>
+
+    <string name="assistant_mic_label">Assistent</string>
+    <string name="assistant_listening">Luisteren…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Recent</string>
+    <string name="phone_tab_contacts">Contacten</string>
+    <string name="phone_tab_keypad">Kiezer</string>
+    <string name="phone_permissions_placeholder">Sta oproepen, oproepgeschiedenis en contacten toe in AARE op de telefoon (Installatie afronden).</string>
+    <string name="phone_notice_calling_title">Bellen</string>
+    <string name="phone_no_recent_calls">Geen recente oproepen</string>
+    <string name="phone_no_contacts">Geen contacten met een telefoonnummer</string>
+    <string name="phone_call_in_progress">Oproep actief</string>
+    <string name="phone_action_hang_up">Oproep beëindigen</string>
+    <string name="phone_keypad_delete">Verwijderen</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Opladen</string>
+    <string name="phone_incoming_call">Inkomende oproep</string>
+    <string name="phone_action_decline">Afwijzen</string>
+    <string name="phone_action_answer">Opnemen</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Vandaag</string>
+    <string name="dash_latest_label">Laatste</string>
+    <string name="cluster_arrival_time">Aankomst %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Zoeken is beschikbaar tijdens parkeren</string>
+</resources>

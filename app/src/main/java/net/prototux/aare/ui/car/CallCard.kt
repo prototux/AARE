@@ -26,9 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import net.prototux.aare.R
 import net.prototux.aare.car.Calls
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -58,12 +60,12 @@ private fun Ringing(call: CarCall, actions: CarActions, modifier: Modifier) {
         }
         Spacer(Modifier.width(20.dp))
         Column(Modifier.weight(1f)) {
-            Text("Incoming call", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.phone_incoming_call), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(call.name, style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, "Decline", Red) { actions.endCall() }
-            RoundButton(Icons.Rounded.Call, "Answer", Green) { actions.answerCall() }
+            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_decline), Red) { actions.endCall() }
+            RoundButton(Icons.Rounded.Call, stringResource(R.string.phone_action_answer), Green) { actions.answerCall() }
         }
     }
 }
@@ -81,10 +83,11 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
     ) {
         Icon(Icons.Rounded.Call, null, tint = Color.White)
         Spacer(Modifier.width(12.dp))
-        Text("${call.name} · ${elapsed / 60}:${"%02d".format(elapsed % 60)}", color = Color.White,
+        val timeStr = "${elapsed / 60}:${"%02d".format(elapsed % 60)}"
+        Text(stringResource(R.string.phone_in_call_elapsed, call.name, timeStr), color = Color.White,
             style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 420.dp))
         Spacer(Modifier.width(12.dp))
-        if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, "Hang up", Red, size = LocalCarDimens.current.touchTarget - 16.dp) { actions.endCall() }
+        if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), Red, size = LocalCarDimens.current.touchTarget - 16.dp) { actions.endCall() }
     }
 }
 

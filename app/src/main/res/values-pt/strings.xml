@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Permite utilizar o ecrã do telemóvel a partir do carro: a AARE reproduz no telemóvel os toques feitos no ecrã do carro e verifica qual a aplicação em primeiro plano, para que o ecrã do telemóvel fique em pausa durante a condução, exceto quando mostra uma aplicação de navegação. A AARE não lê mais nada.</string>
+    <string name="mirror_locked_placeholder">O ecrã do telemóvel está em pausa enquanto o telemóvel estiver bloqueado. Desbloqueie o telemóvel para o mostrar.</string>
+    <string name="mirror_driving_no_accessibility">O ecrã do telemóvel está em pausa durante a condução. Para mostrar aplicações de navegação durante a condução, ative a AARE nas definições de acessibilidade do telemóvel: isso indica à AARE qual a aplicação aberta.</string>
+    <string name="mirror_driving_nav_only">O ecrã do telemóvel está em pausa durante a condução. Mostra apenas aplicações de navegação.</string>
+    <string name="mirror_need_car_audio">Ative o Áudio do carro na AARE no telemóvel e escolha Ecrã inteiro quando o Android perguntar: o ecrã do telemóvel utiliza a mesma permissão.</string>
+    <string name="mirror_need_accessibility">Para utilizar o telemóvel a partir do carro, ative a AARE nas definições de acessibilidade do telemóvel.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Voltar</string>
+    <string name="common_up">Para cima</string>
+    <string name="common_down">Para baixo</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_clear">Limpar</string>
+    <string name="common_call">Ligar</string>
+    <string name="common_dismiss">Ignorar</string>
+    <string name="common_close">Fechar</string>
+    <string name="common_nothing_to_show">Nada para mostrar</string>
+    <string name="common_no_items">Sem itens</string>
+    <string name="common_unsupported_screen">Este ecrã ainda não é suportado</string>
+    <string name="common_loading">A carregar</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Ecrã do carro</string>
+    <string name="setup_page_car_screen_subtitle">Cores, posição da barra, ecrã do telemóvel</string>
+    <string name="setup_page_apps_title">Aplicações</string>
+    <string name="setup_page_apps_subtitle">Quais as aplicações mostradas no carro</string>
+    <string name="setup_page_connection_title">Ligação</string>
+    <string name="setup_page_connection_subtitle">Sem fios, qualidade de vídeo, os seus carros</string>
+    <string name="setup_page_advanced_title">Avançado</string>
+    <string name="setup_page_advanced_subtitle">Servidor da unidade principal, certificados, registo</string>
+    <string name="setup_tagline">Projeção automóvel de código aberto</string>
+    <string name="setup_status_certificate">certificado: %1$s</string>
+    <string name="setup_status_disconnected_hint">Ligue o telemóvel à porta USB Android Auto do carro, ou ligue-se sem fios a um carro emparelhado.</string>
+    <string name="setup_status_last_error">Último erro: %1$s</string>
+    <string name="setup_trust_new_cert">Confiar no novo certificado desta unidade principal</string>
+    <string name="setup_trust_head_unit">Confiar nesta unidade principal</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Pré-visualizar o ecrã do carro</string>
+    <string name="setup_disconnect">Desligar</string>
+    <string name="setup_finish_title">Concluir a configuração</string>
+    <string name="setup_check_permissions_title">Permissões</string>
+    <string name="setup_check_permissions_subtitle">Microfone, localização, Bluetooth, Wi-Fi próximo, notificações, chamadas, contactos e calendário</string>
+    <string name="setup_check_notification_access_title">Acesso às notificações</string>
+    <string name="setup_check_notification_access_subtitle">Mensagens, indicações do Google Maps e do Waze, a reproduzir agora</string>
+    <string name="setup_check_audio_subtitle">Permitir que o som do telemóvel chegue ao carro</string>
+    <string name="setup_action_set_up">Configurar</string>
+    <string name="setup_section_connecting">A ligar</string>
+    <string name="setup_toggle_wireless_title">Sem fios</string>
+    <string name="setup_toggle_wireless_subtitle">Ligar a carros emparelhados por Wi-Fi quando entram no alcance do Bluetooth</string>
+    <string name="setup_toggle_resume_music_title">Retomar a música</string>
+    <string name="setup_toggle_resume_music_subtitle">Iniciar a última aplicação de música quando o carro se ligar</string>
+    <string name="setup_section_location">Localização</string>
+    <string name="setup_toggle_car_gps_title">Utilizar o GPS do carro</string>
+    <string name="setup_toggle_car_gps_subtitle">Enquanto ligado, as aplicações no telemóvel veem a posição do carro em vez da do próprio telemóvel, para que as aplicações de navegação não misturem as duas</string>
+    <string name="setup_check_mock_location_title">Permitir que a AARE defina a localização</string>
+    <string name="setup_check_mock_location_subtitle">Opções de programador &gt; Selecionar aplicação de localização fictícia &gt; AARE</string>
+    <string name="setup_section_video">Vídeo</string>
+    <string name="setup_toggle_60fps_title">Preferir 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Mais suave quando o carro o suporta</string>
+    <string name="setup_choice_max_resolution">Resolução máxima</string>
+    <string name="setup_hint_lower_resolution">Uma resolução mais baixa consome menos bateria e dados.</string>
+    <string name="setup_section_your_cars">Os seus carros</string>
+    <string name="setup_cars_empty">Os carros aparecem aqui após a primeira ligação.</string>
+    <string name="setup_car_last_connected">Última ligação: %1$s</string>
+    <string name="setup_action_forget">Esquecer</string>
+    <string name="setup_section_trusted_head_units">Unidades principais de confiança</string>
+    <string name="setup_trusted_head_units_hint">Um carro sem fios emparelhado passa a ser de confiança na primeira ligação; uma nova unidade principal USB ou de programador só depois de tocar em Confiar (na respetiva notificação ou no ecrã principal). Só confie numa unidade principal à qual esteja ligado neste momento. Se uma unidade principal mostrar mais tarde um certificado diferente, é pedido novamente: só confie nela se o respetivo software tiver sido atualizado.</string>
+    <string name="setup_trusted_head_units_empty">Ainda nenhuma.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Aspeto</string>
+    <string name="setup_choice_colors">Cores</string>
+    <string name="setup_choice_colors_auto">Dia/noite do carro</string>
+    <string name="setup_choice_dark">Escuro</string>
+    <string name="setup_choice_light">Claro</string>
+    <string name="setup_choice_bar">Barra</string>
+    <string name="setup_choice_bar_auto">Lado do condutor</string>
+    <string name="setup_choice_left">Esquerda</string>
+    <string name="setup_choice_right">Direita</string>
+    <string name="setup_choice_bottom">Fundo</string>
+    <string name="setup_toggle_dark_bar_title">Barra escura</string>
+    <string name="setup_toggle_dark_bar_subtitle">Manter a barra escura mesmo com as cores de dia</string>
+    <string name="setup_section_dashboard">Painel</string>
+    <string name="setup_choice_wallpaper">Fundo de ecrã</string>
+    <string name="setup_wallpaper_none">Nenhum</string>
+    <string name="setup_wallpaper_photo">Fotografia</string>
+    <string name="setup_toggle_weather_title">Meteorologia</string>
+    <string name="setup_toggle_weather_subtitle">Junto ao relógio, fornecida pelo Open-Meteo (obtém uma posição aproximada, cerca de 10 km)</string>
+    <string name="setup_toggle_calendar_title">Próximo evento do calendário</string>
+    <string name="setup_toggle_calendar_subtitle">Sob a música, com um atalho para navegar até ao local</string>
+    <string name="setup_section_driving">Condução</string>
+    <string name="setup_toggle_passenger_title">Modo passageiro</string>
+    <string name="setup_toggle_passenger_subtitle">Ignorar o estado de condução do carro: a escrita, as listas longas e o ecrã do telemóvel continuam disponíveis em movimento, para um passageiro. O condutor não deve utilizar o ecrã durante a condução.</string>
+    <string name="setup_section_app_list">Na lista de aplicações do carro</string>
+    <string name="setup_app_list_hint">Desative as aplicações que não quer no carro.</string>
+    <string name="setup_app_list_loading">A procurar aplicações…</string>
+    <string name="setup_app_group_nav">Navegação e aplicações de carro</string>
+    <string name="setup_app_list_no_nav">Ainda nenhuma: instale o CoMaps, o Organic Maps ou outra aplicação Android Auto.</string>
+    <string name="setup_app_kind_navigation">Navegação</string>
+    <string name="setup_app_kind_generic">Aplicação de carro</string>
+    <string name="setup_app_group_media">Multimédia</string>
+    <string name="setup_app_kind_media">Música, podcasts, rádio</string>
+    <string name="setup_app_group_messaging">Mensagens</string>
+    <string name="setup_app_kind_messaging">Mensagens a partir das suas notificações</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Aplicações Android Auto que a AARE não consegue mostrar</string>
+    <string name="setup_hint_allowlist">As aplicações criadas com versões recentes da biblioteca de carro da Google só aceitam anfitriões incluídos na sua lista de permissões; consulte o README.</string>
+    <string name="setup_app_entry_phone">Telefone</string>
+    <string name="setup_app_entry_settings">Definições</string>
+    <string name="setup_app_entry_notifications">Notificações</string>
+    <string name="setup_section_app_order">Ordem no carro</string>
+    <string name="setup_section_connection_log">Registo de ligação</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Não afiliada com a Google. Android Auto é uma marca comercial da Google LLC.</string>
+    <string name="setup_choice_style">Estilo</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Barra escura, mesmo com as cores de dia</string>
+    <string name="setup_switch_passenger">Modo passageiro: sem restrições de condução (o condutor não deve utilizar o ecrã)</string>
+    <string name="setup_switch_message_notifications">Notificações de mensagens</string>
+    <string name="setup_switch_audio_next_connection">Áudio do telemóvel no carro (próxima ligação)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Certificados do telemóvel</string>
+    <string name="cert_hint">As unidades principais verificam o certificado do telemóvel. As unidades principais de código aberto aceitam o certificado gerado; os carros que utilizam o software de unidade principal da Google só aceitam um certificado emitido pela Google, que a AARE não pode incluir. Pode importar um que tenha o direito de utilizar (certificado PEM + chave PKCS#8, ou PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · até %2$s</string>
+    <string name="cert_action_remove">Remover</string>
+    <string name="cert_action_import">Importar certificado…</string>
+    <string name="cert_p12_dialog_title">Palavra-passe PKCS#12</string>
+    <string name="cert_action_import_confirm">Importar</string>
+    <string name="cert_imported_fallback">importado</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Servidor da unidade principal</string>
+    <string name="huserver_toggle_subtitle">Como o modo de programador do Android Auto, para a unidade principal de computador, DHU, openauto, Headunit Revived. Só acessível através de adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Aceitar a partir da rede</string>
+    <string name="huserver_toggle_network_subtitle">Também escutar na porta TCP 5277 em qualquer rede, sem palavra-passe. Qualquer pessoa na mesma rede Wi-Fi pode ligar-se, ver o ecrã do carro e utilizar o microfone.</string>
+    <string name="huserver_toggle_lanonce_title">Desativar o modo de rede após cada sessão</string>
+    <string name="huserver_toggle_lanonce_subtitle">Mais seguro: a rede tem de ser autorizada novamente em cada sessão. Desative isto para unidades principais que se voltam a ligar por conta própria, como o openauto ou o Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Ecrã do telemóvel no servidor</string>
+    <string name="huserver_toggle_mirror_subtitle">Também oferece "Ecrã do telemóvel" a quem se ligar aqui. Arriscado: a pessoa vê o ecrã do telemóvel e pode tocar nele, por isso deixe desativado a menos que confie na unidade principal.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Mensagens</string>
+    <string name="msg_page_subtitle">Avisos e leitura em voz alta</string>
+    <string name="msg_check_notification_access_subtitle">Necessário para ver mensagens no carro</string>
+    <string name="msg_toggle_banners_title">Mostrar notificações de mensagens</string>
+    <string name="msg_toggle_banners_subtitle">Um aviso no ecrã do carro para cada mensagem nova</string>
+    <string name="msg_toggle_group_title">Mensagens de grupo</string>
+    <string name="msg_toggle_group_subtitle">Mostrar também mensagens de conversas de grupo</string>
+    <string name="msg_toggle_read_aloud_title">Ler mensagens em voz alta</string>
+    <string name="msg_toggle_read_aloud_subtitle">Ler em voz alta cada mensagem nova à medida que chega</string>
+    <string name="msg_hint_apps">As aplicações de mensagens (WhatsApp, Signal, SMS…) também têm a sua própria página na lista de aplicações do carro.</string>
+    <string name="msg_section_while_driving">Durante a condução</string>
+    <string name="msg_toggle_dnd_title">Não perturbar</string>
+    <string name="msg_toggle_dnd_subtitle">Silenciar o telemóvel enquanto ligado; as chamadas e as conversas prioritárias continuam a passar</string>
+    <string name="msg_check_dnd_access_title">Permitir que a AARE ative o Não perturbar</string>
+    <string name="msg_check_dnd_access_subtitle">O Android pergunta uma vez</string>
+    <string name="msg_toggle_autoreply_title">Resposta automática</string>
+    <string name="msg_toggle_autoreply_subtitle">Responder a quem escreve, uma vez por conversa em cada viagem (exceto grupos)</string>
+    <string name="msg_autoreply_field_label">Resposta</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Áudio do carro</string>
+    <string name="audio_page_subtitle">Como o som do telemóvel chega ao carro</string>
+    <string name="audio_toggle_enable_title">Áudio do telemóvel no carro</string>
+    <string name="audio_toggle_enable_subtitle">Música, podcasts, o assistente e, dependendo do método, a voz de navegação</string>
+    <string name="audio_using_method">A utilizar: %1$s</string>
+    <string name="audio_no_method">Ainda nenhum método configurado: escolha um abaixo.</string>
+    <string name="audio_section_methods">Métodos, por ordem de preferência</string>
+    <string name="audio_policy_ready">Pronto. A música e a voz de navegação vão para o carro separadamente, o telemóvel fica em silêncio.</string>
+    <string name="audio_policy_not_ready">Como no Android Auto: música e voz de navegação separadas, altifalante do telemóvel desligado. Requer um telemóvel com root: instale a AARE como aplicação do sistema com o módulo Magisk (consulte o README).</string>
+    <string name="audio_shizuku_ready">Pronto. Tudo o que o telemóvel reproduz vai para o carro, incluindo a voz de navegação; o telemóvel fica em silêncio.</string>
+    <string name="audio_shizuku_needs_android12">Requer Android 12 ou mais recente.</string>
+    <string name="audio_shizuku_tap_allow">O Shizuku está em execução: toque para permitir a AARE.</string>
+    <string name="audio_shizuku_install_hint">Não é necessário root. Instale o Shizuku, inicie-o (depuração sem fios, uma vez por reinício) e volte aqui depois.</string>
+    <string name="audio_playback_ready">Pronto. Apenas multimédia: sem voz de navegação, algumas aplicações optam por não participar, e o telemóvel continua também a reproduzir.</string>
+    <string name="audio_playback_not_ready">Funciona em qualquer lado, com limitações: apenas multimédia, sem voz de navegação. O Android pede para capturar o ecrã: escolha Ecrã inteiro (também utilizado pelo ecrã do telemóvel).</string>
+    <string name="audio_notice_setup_hint">Abra a AARE no telemóvel e configure o áudio do carro para ouvir o telemóvel no carro</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Ecrã do telemóvel</string>
+    <string name="phone_toggle_enable_title">Ecrã do telemóvel no carro</string>
+    <string name="phone_toggle_enable_subtitle">O próprio ecrã do telemóvel, para aplicações que a AARE não consegue alojar (Google Maps, Waze). Em pausa enquanto o telemóvel está bloqueado, e durante a condução a menos que uma aplicação de navegação esteja a guiar. Não é oferecido no servidor da unidade principal a menos que seja ativado aí</string>
+    <string name="phone_check_touch_title">Toque no ecrã do telemóvel</string>
+    <string name="phone_check_touch_subtitle">Ative a AARE em Acessibilidade. As aplicações instaladas fora da loja podem precisar primeiro de "Permitir definições restritas" nas informações da aplicação AARE</string>
+    <string name="phone_hint_touch_capture">A imagem utiliza a permissão de captura de ecrã (página Áudio do carro, escolha Ecrã inteiro).</string>
+    <string name="phone_app_row_subtitle">O próprio ecrã do telemóvel, para aplicações que a AARE não consegue alojar</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Assistente de voz</string>
+    <string name="assistant_page_subtitle">O que o botão de voz abre</string>
+    <string name="assistant_same_as_phone">O mesmo que no telemóvel</string>
+    <string name="assistant_no_default">Nenhum assistente predefinido no telemóvel</string>
+    <string name="assistant_has_car_app_subtitle">No ecrã do carro, com o microfone do carro</string>
+    <string name="assistant_opens_on_phone">Abre no telemóvel</string>
+    <string name="assistant_hint">O botão de voz do volante e o microfone da barra abrem este assistente. Os assistentes com uma aplicação de carro, como o Lapin, funcionam melhor.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Ligação ao carro</string>
+    <string name="notif_action_stop">Parar</string>
+    <string name="notif_action_trust">Confiar</string>
+    <string name="notif_status_connecting_wirelessly">A ligar sem fios…</string>
+    <string name="notif_status_not_connected">Não ligado</string>
+    <string name="notif_keeping_consent_suffix">%1$s · a manter o consentimento de captura de ecrã para o áudio do carro (Parar liberta-o)</string>
+    <string name="notif_cert_changed_title">Certificado da unidade principal alterado</string>
+    <string name="notif_new_head_unit_title">Nova unidade principal</string>
+    <string name="notif_trust_warning">Só confie numa unidade principal à qual esteja ligado neste momento</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, depois volte a ligar.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, depois volte a ligar.</string>
+    <string name="notif_cert_changed_message">certificado da unidade principal alterado: toque em Confiar na notificação ou na AARE apenas se o respetivo software tiver sido atualizado, depois volte a ligar</string>
+    <string name="notif_cert_untrusted_message">certificado da unidade principal ainda não é de confiança: toque em Confiar na notificação ou na AARE, depois volte a ligar</string>
+    <string name="notif_car_nearby_title">Carro próximo</string>
+    <string name="notif_car_nearby_text">Toque para ligar sem fios</string>
+    <string name="notif_status_connecting_to">A ligar a %1$s</string>
+    <string name="notif_status_connected_to">Ligado a %1$s</string>
+    <string name="notif_status_projecting_to">A projetar para %1$s</string>
+    <string name="notif_status_cant_start_video">Não é possível iniciar o vídeo: %1$s</string>
+    <string name="notif_not_calling_title">Sem chamada</string>
+    <string name="notif_not_calling_text">%1$s pediu para marcar um código com * ou #, não um número de telefone</string>
+    <string name="notif_calling_title">A ligar a %1$s</string>
+    <string name="notif_asked_by">Pedido por %1$s</string>
+    <string name="notif_call_confirm_title">Ligar a %1$s?</string>
+    <string name="notif_no_nav_app">Nenhuma aplicação de navegação no telemóvel</string>
+    <string name="notif_cant_open">Não é possível abrir isso a partir do carro</string>
+    <string name="notif_navigation_title">Navegação</string>
+    <string name="notif_navigation_no_app_text">Nenhuma aplicação de navegação no carro</string>
+    <string name="notif_assistant_title">Assistente</string>
+    <string name="notif_assistant_choose_text">Escolha um assistente de voz nas definições da AARE no telemóvel</string>
+    <string name="notif_assistant_no_car_screen">%1$s não tem ecrã de carro: abriu no telemóvel</string>
+    <string name="notif_assistant_cant_open">Não é possível abrir %1$s. Escolha outro assistente nas definições da AARE</string>
+    <string name="notif_parked_only_title">Não disponível durante a condução</string>
+    <string name="notif_parked_only_text">Estacione para utilizar isto</string>
+    <string name="notif_empty">Sem notificações</string>
+    <string name="notif_title">Notificações</string>
+    <string name="notif_clear_all">Limpar tudo</string>
+    <string name="notif_new_message_placeholder">Mensagem nova</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Aplicações</string>
+    <string name="dash_menu_home">Início</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Nenhuma aplicação de navegação</string>
+    <string name="nav_dashboard_where_to">Para onde?</string>
+    <string name="nav_dashboard_install_hint">Instale no telemóvel uma aplicação de navegação compatível com o Android Auto</string>
+    <string name="nav_dashboard_choose_app">Escolha a sua aplicação de mapas</string>
+    <string name="nav_guidance_on_phone">%1$s, no telemóvel</string>
+    <string name="nav_next_step_then">Depois</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Música</string>
+    <string name="media_nothing_playing">Nada em reprodução</string>
+    <string name="media_action_previous">Anterior</string>
+    <string name="media_action_play_pause">Reproduzir/pausar</string>
+    <string name="media_action_next">Seguinte</string>
+    <string name="media_playing_from">A reproduzir de %1$s</string>
+    <string name="media_connecting_to">A ligar a %1$s</string>
+    <string name="media_queue_title">Fila</string>
+    <string name="media_search_app">Pesquisar %1$s</string>
+    <string name="media_action_search">Pesquisar</string>
+    <string name="media_action_browse">Explorar</string>
+    <string name="media_now_playing_label">A reproduzir</string>
+    <string name="media_nothing_here">Nada aqui</string>
+    <string name="media_couldnt_load_more">Não foi possível carregar mais</string>
+    <string name="media_starting">A iniciar…</string>
+    <string name="media_action_pause">Pausa</string>
+    <string name="media_action_play">Reproduzir</string>
+    <string name="media_queue_empty">A fila está vazia</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Conceda à AARE acesso às notificações no telemóvel para ver mensagens aqui</string>
+    <string name="msg_listener_not_ready">Ainda nada para ver aqui</string>
+    <string name="msg_reply_sent">Resposta enviada</string>
+    <string name="msg_reply_rejected">%1$s não aceitou a resposta</string>
+    <string name="msg_no_new_messages">Sem mensagens novas de %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. As mensagens são lidas em voz alta durante a condução.</string>
+    <string name="msg_action_read_aloud">Ler em voz alta</string>
+    <string name="msg_action_mark_read">Marcar como lida</string>
+    <string name="msg_action_reply">Responder</string>
+    <string name="msg_reply_hint">Mensagem para %1$s</string>
+    <string name="msg_message_count_one">1 mensagem</string>
+    <string name="msg_message_count_many">%1$d mensagens</string>
+
+    <string name="assistant_mic_label">Assistente</string>
+    <string name="assistant_listening">A ouvir…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Recentes</string>
+    <string name="phone_tab_contacts">Contactos</string>
+    <string name="phone_tab_keypad">Teclado</string>
+    <string name="phone_permissions_placeholder">Permita chamadas, histórico de chamadas e contactos na AARE no telemóvel (Concluir a configuração).</string>
+    <string name="phone_notice_calling_title">A ligar</string>
+    <string name="phone_no_recent_calls">Sem chamadas recentes</string>
+    <string name="phone_no_contacts">Sem contactos com número de telefone</string>
+    <string name="phone_call_in_progress">Chamada em curso</string>
+    <string name="phone_action_hang_up">Desligar</string>
+    <string name="phone_keypad_delete">Eliminar</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">A carregar</string>
+    <string name="phone_incoming_call">Chamada a receber</string>
+    <string name="phone_action_decline">Rejeitar</string>
+    <string name="phone_action_answer">Atender</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Hoje</string>
+    <string name="dash_latest_label">Mais recente</string>
+    <string name="cluster_arrival_time">Chegada %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">A pesquisa está disponível quando estacionado</string>
+</resources>

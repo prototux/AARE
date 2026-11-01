@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Дозволяє користуватися екраном телефону з автомобіля: AARE відтворює на телефоні дотики, зроблені на екрані автомобіля, і перевіряє, який застосунок активний, щоб екран телефону залишався призупиненим під час керування, якщо на ньому не показано навігаційний застосунок. AARE більше нічого не читає.</string>
+    <string name="mirror_locked_placeholder">Екран телефону призупинено, поки телефон заблокований. Розблокуйте телефон, щоб його показати.</string>
+    <string name="mirror_driving_no_accessibility">Екран телефону призупинено під час керування. Щоб показувати навігаційні застосунки під час керування, увімкніть AARE в налаштуваннях спеціальних можливостей телефону: це повідомляє AARE, який застосунок відкрито.</string>
+    <string name="mirror_driving_nav_only">Екран телефону призупинено під час керування. Він показує лише навігаційні застосунки.</string>
+    <string name="mirror_need_car_audio">Увімкніть Звук в автомобілі в AARE на телефоні та виберіть Весь екран, коли Android запитає: екран телефону використовує той самий дозвіл.</string>
+    <string name="mirror_need_accessibility">Щоб користуватися телефоном з автомобіля, увімкніть AARE в налаштуваннях спеціальних можливостей телефону.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Назад</string>
+    <string name="common_up">Вгору</string>
+    <string name="common_down">Вниз</string>
+    <string name="common_cancel">Скасувати</string>
+    <string name="common_clear">Очистити</string>
+    <string name="common_call">Подзвонити</string>
+    <string name="common_dismiss">Відхилити</string>
+    <string name="common_close">Закрити</string>
+    <string name="common_nothing_to_show">Немає що показати</string>
+    <string name="common_no_items">Немає елементів</string>
+    <string name="common_unsupported_screen">Цей екран ще не підтримується</string>
+    <string name="common_loading">Завантаження</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Екран автомобіля</string>
+    <string name="setup_page_car_screen_subtitle">Кольори, положення панелі, екран телефону</string>
+    <string name="setup_page_apps_title">Застосунки</string>
+    <string name="setup_page_apps_subtitle">Які застосунки показуються в автомобілі</string>
+    <string name="setup_page_connection_title">З\'єднання</string>
+    <string name="setup_page_connection_subtitle">Бездротове з\'єднання, якість відео, ваші автомобілі</string>
+    <string name="setup_page_advanced_title">Додатково</string>
+    <string name="setup_page_advanced_subtitle">Сервер головного пристрою, сертифікати, журнал</string>
+    <string name="setup_tagline">Проєкція для автомобіля з відкритим кодом</string>
+    <string name="setup_status_certificate">сертифікат: %1$s</string>
+    <string name="setup_status_disconnected_hint">Підключіть телефон до USB-порту Android Auto в автомобілі або з\'єднайтеся бездротово з парним автомобілем.</string>
+    <string name="setup_status_last_error">Остання помилка: %1$s</string>
+    <string name="setup_trust_new_cert">Довіряти новому сертифікату цього головного пристрою</string>
+    <string name="setup_trust_head_unit">Довіряти цьому головному пристрою</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Попередній перегляд екрана автомобіля</string>
+    <string name="setup_disconnect">Відключити</string>
+    <string name="setup_finish_title">Завершити налаштування</string>
+    <string name="setup_check_permissions_title">Дозволи</string>
+    <string name="setup_check_permissions_subtitle">Мікрофон, геолокація, Bluetooth, Wi-Fi поруч, сповіщення, дзвінки, контакти та календар</string>
+    <string name="setup_check_notification_access_title">Доступ до сповіщень</string>
+    <string name="setup_check_notification_access_subtitle">Повідомлення, маршрути з Google Maps і Waze, те, що відтворюється зараз</string>
+    <string name="setup_check_audio_subtitle">Дозволити звуку телефону доходити до автомобіля</string>
+    <string name="setup_action_set_up">Налаштувати</string>
+    <string name="setup_section_connecting">З\'єднання</string>
+    <string name="setup_toggle_wireless_title">Бездротово</string>
+    <string name="setup_toggle_wireless_subtitle">З\'єднуватися з парними автомобілями через Wi-Fi, коли вони опиняються в зоні дії Bluetooth</string>
+    <string name="setup_toggle_resume_music_title">Відновлювати музику</string>
+    <string name="setup_toggle_resume_music_subtitle">Запускати останній відтворюваний музичний застосунок при з\'єднанні з автомобілем</string>
+    <string name="setup_section_location">Геолокація</string>
+    <string name="setup_toggle_car_gps_title">Використовувати GPS автомобіля</string>
+    <string name="setup_toggle_car_gps_subtitle">Під час з\'єднання застосунки на телефоні бачать позицію автомобіля замість позиції телефону, тож навігаційні застосунки не плутають ці дві</string>
+    <string name="setup_check_mock_location_title">Дозволити AARE встановлювати геолокацію</string>
+    <string name="setup_check_mock_location_subtitle">Параметри розробника &gt; Вибрати застосунок фіктивної геолокації &gt; AARE</string>
+    <string name="setup_section_video">Відео</string>
+    <string name="setup_toggle_60fps_title">Надавати перевагу 60 кадрам/с</string>
+    <string name="setup_toggle_60fps_subtitle">Плавніше, якщо автомобіль це підтримує</string>
+    <string name="setup_choice_max_resolution">Максимальна роздільна здатність</string>
+    <string name="setup_hint_lower_resolution">Нижча споживає менше заряду батареї та трафіку.</string>
+    <string name="setup_section_your_cars">Ваші автомобілі</string>
+    <string name="setup_cars_empty">Автомобілі з\'являться тут після першого з\'єднання.</string>
+    <string name="setup_car_last_connected">Останнє з\'єднання %1$s</string>
+    <string name="setup_action_forget">Забути</string>
+    <string name="setup_section_trusted_head_units">Довірені головні пристрої</string>
+    <string name="setup_trusted_head_units_hint">Парний бездротовий автомобіль стає довіреним після першого з\'єднання; новий USB або пристрій розробника — лише після натискання Довіряти (у його сповіщенні або на головному екрані). Довіряйте лише головному пристрою, до якого ви підключені зараз. Якщо головний пристрій пізніше показує інший сертифікат, вас запитають знову: довіряйте йому лише якщо його програмне забезпечення було оновлено.</string>
+    <string name="setup_trusted_head_units_empty">Ще немає.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Вигляд</string>
+    <string name="setup_choice_colors">Кольори</string>
+    <string name="setup_choice_colors_auto">День/ніч автомобіля</string>
+    <string name="setup_choice_dark">Темний</string>
+    <string name="setup_choice_light">Світлий</string>
+    <string name="setup_choice_bar">Панель</string>
+    <string name="setup_choice_bar_auto">Бік водія</string>
+    <string name="setup_choice_left">Ліворуч</string>
+    <string name="setup_choice_right">Праворуч</string>
+    <string name="setup_choice_bottom">Знизу</string>
+    <string name="setup_toggle_dark_bar_title">Темна панель</string>
+    <string name="setup_toggle_dark_bar_subtitle">Залишати панель темною навіть зі світлими кольорами</string>
+    <string name="setup_section_dashboard">Панель приладів</string>
+    <string name="setup_choice_wallpaper">Шпалери</string>
+    <string name="setup_wallpaper_none">Немає</string>
+    <string name="setup_wallpaper_photo">Фото</string>
+    <string name="setup_toggle_weather_title">Погода</string>
+    <string name="setup_toggle_weather_subtitle">Біля годинника, від Open-Meteo (отримує приблизну позицію, близько 10 км)</string>
+    <string name="setup_toggle_calendar_title">Найближча подія календаря</string>
+    <string name="setup_toggle_calendar_subtitle">Під музикою, з ярликом для навігації до її місця</string>
+    <string name="setup_section_driving">Керування</string>
+    <string name="setup_toggle_passenger_title">Режим пасажира</string>
+    <string name="setup_toggle_passenger_subtitle">Ігнорувати стан керування автомобілем: введення тексту, довгі списки та екран телефону залишаються доступними в русі, для пасажира. Водій не повинен використовувати екран під час керування.</string>
+    <string name="setup_section_app_list">У списку застосунків автомобіля</string>
+    <string name="setup_app_list_hint">Вимкніть застосунки, які не потрібні в автомобілі.</string>
+    <string name="setup_app_list_loading">Пошук застосунків…</string>
+    <string name="setup_app_group_nav">Навігація та автомобільні застосунки</string>
+    <string name="setup_app_list_no_nav">Ще немає: установіть CoMaps, Organic Maps або інший застосунок Android Auto.</string>
+    <string name="setup_app_kind_navigation">Навігація</string>
+    <string name="setup_app_kind_generic">Автомобільний застосунок</string>
+    <string name="setup_app_group_media">Медіа</string>
+    <string name="setup_app_kind_media">Музика, подкасти, радіо</string>
+    <string name="setup_app_group_messaging">Повідомлення</string>
+    <string name="setup_app_kind_messaging">Повідомлення з його сповіщень</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Застосунки Android Auto, які AARE не може показати</string>
+    <string name="setup_hint_allowlist">Застосунки, створені на новіших версіях бібліотеки Google для автомобілів, приймають лише хости зі списку дозволених; див. README.</string>
+    <string name="setup_app_entry_phone">Телефон</string>
+    <string name="setup_app_entry_settings">Налаштування</string>
+    <string name="setup_app_entry_notifications">Сповіщення</string>
+    <string name="setup_section_app_order">Порядок в автомобілі</string>
+    <string name="setup_section_connection_log">Журнал з\'єднань</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Не пов\'язано з Google. Android Auto є торговою маркою Google LLC.</string>
+    <string name="setup_choice_style">Стиль</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Темна панель, навіть зі світлими кольорами</string>
+    <string name="setup_switch_passenger">Режим пасажира: без обмежень керування (водій не повинен використовувати екран)</string>
+    <string name="setup_switch_message_notifications">Сповіщення про повідомлення</string>
+    <string name="setup_switch_audio_next_connection">Звук телефону в автомобілі (наступне з\'єднання)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Сертифікати телефону</string>
+    <string name="cert_hint">Головні пристрої перевіряють сертифікат телефону. Головні пристрої з відкритим кодом приймають згенерований сертифікат; автомобілі з програмним забезпеченням головного пристрою Google приймають лише сертифікат, виданий Google, який AARE не може включити. Ви можете імпортувати той, на використання якого маєте право (сертифікат PEM + ключ PKCS#8, або PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · до %2$s</string>
+    <string name="cert_action_remove">Видалити</string>
+    <string name="cert_action_import">Імпортувати сертифікат…</string>
+    <string name="cert_p12_dialog_title">Пароль PKCS#12</string>
+    <string name="cert_action_import_confirm">Імпортувати</string>
+    <string name="cert_imported_fallback">імпортовано</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Сервер головного пристрою</string>
+    <string name="huserver_toggle_subtitle">Як режим розробника Android Auto, для настільного головного пристрою, DHU, openauto, Headunit Revived. Доступний лише через adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Приймати з мережі</string>
+    <string name="huserver_toggle_network_subtitle">Також слухати на порту TCP 5277 у будь-якій мережі, без пароля. Будь-хто в тій самій мережі Wi-Fi може підключитися, бачити екран автомобіля та використовувати мікрофон.</string>
+    <string name="huserver_toggle_lanonce_title">Вимикати мережевий режим після сесії</string>
+    <string name="huserver_toggle_lanonce_subtitle">Безпечніше: мережу потрібно знову дозволяти для кожної сесії. Вимкніть це для головних пристроїв, які самостійно перепідключаються, як openauto чи Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Екран телефону на сервері</string>
+    <string name="huserver_toggle_mirror_subtitle">Також пропонувати «Екран телефону» будь-кому, хто підключається тут. Ризиковано: вони бачать екран телефону і можуть на нього натискати, тож залишайте це вимкненим, якщо не довіряєте головному пристрою.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Повідомлення</string>
+    <string name="msg_page_subtitle">Банери та читання вголос</string>
+    <string name="msg_check_notification_access_subtitle">Потрібно, щоб бачити повідомлення в автомобілі</string>
+    <string name="msg_toggle_banners_title">Показувати сповіщення про повідомлення</string>
+    <string name="msg_toggle_banners_subtitle">Банер на екрані автомобіля для кожного нового повідомлення</string>
+    <string name="msg_toggle_group_title">Групові повідомлення</string>
+    <string name="msg_toggle_group_subtitle">Також показувати повідомлення з групових розмов</string>
+    <string name="msg_toggle_read_aloud_title">Читати повідомлення вголос</string>
+    <string name="msg_toggle_read_aloud_subtitle">Читати кожне нове повідомлення вголос, коли воно надходить</string>
+    <string name="msg_hint_apps">Застосунки для повідомлень (WhatsApp, Signal, SMS…) також мають власну сторінку в списку застосунків автомобіля.</string>
+    <string name="msg_section_while_driving">Під час керування</string>
+    <string name="msg_toggle_dnd_title">Не турбувати</string>
+    <string name="msg_toggle_dnd_subtitle">Вимикати звук телефону під час з\'єднання; дзвінки та пріоритетні розмови все одно проходять</string>
+    <string name="msg_check_dnd_access_title">Дозволити AARE увімкнути Не турбувати</string>
+    <string name="msg_check_dnd_access_subtitle">Android запитує один раз</string>
+    <string name="msg_toggle_autoreply_title">Автовідповідь</string>
+    <string name="msg_toggle_autoreply_subtitle">Відповідає тим, хто пише, один раз на розмову за поїздку (не групам)</string>
+    <string name="msg_autoreply_field_label">Відповідь</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Звук в автомобілі</string>
+    <string name="audio_page_subtitle">Як звук телефону доходить до автомобіля</string>
+    <string name="audio_toggle_enable_title">Звук телефону в автомобілі</string>
+    <string name="audio_toggle_enable_subtitle">Музика, подкасти, асистент і, залежно від методу, голос навігації</string>
+    <string name="audio_using_method">Використовується: %1$s</string>
+    <string name="audio_no_method">Жодний метод ще не налаштовано: виберіть один нижче.</string>
+    <string name="audio_section_methods">Методи, кращі спочатку</string>
+    <string name="audio_policy_ready">Готово. Музика і голос навігації йдуть до автомобіля окремо, телефон залишається тихим.</string>
+    <string name="audio_policy_not_ready">Як Android Auto: музика і голос навігації окремо, динамік телефону вимкнено. Потрібен телефон з root-правами: установіть AARE як системний застосунок за допомогою модуля Magisk (див. README).</string>
+    <string name="audio_shizuku_ready">Готово. Усе, що відтворює телефон, йде до автомобіля, включно з голосом навігації; телефон залишається тихим.</string>
+    <string name="audio_shizuku_needs_android12">Потрібен Android 12 або новіший.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku працює: натисніть, щоб дозволити AARE.</string>
+    <string name="audio_shizuku_install_hint">Root-права не потрібні. Установіть Shizuku, запустіть його (бездротове налагодження, один раз після перезавантаження), а потім поверніться сюди.</string>
+    <string name="audio_playback_ready">Готово. Лише медіа: без голосу навігації, деякі застосунки відключаються, а телефон теж продовжує відтворювати.</string>
+    <string name="audio_playback_not_ready">Працює всюди, з обмеженнями: лише медіа, без голосу навігації. Android запитує про захоплення екрана: виберіть Весь екран (також використовується екраном телефону).</string>
+    <string name="audio_notice_setup_hint">Відкрийте AARE на телефоні та налаштуйте звук в автомобілі, щоб чути телефон в автомобілі</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Екран телефону</string>
+    <string name="phone_toggle_enable_title">Екран телефону в автомобілі</string>
+    <string name="phone_toggle_enable_subtitle">Власний екран телефону, для застосунків, які AARE не може хостити (Google Maps, Waze). Призупинено, коли телефон заблокований, і під час керування, якщо навігаційний застосунок не веде маршрут. Не пропонується на сервері головного пристрою, якщо там не увімкнено</string>
+    <string name="phone_check_touch_title">Дотик на екрані телефону</string>
+    <string name="phone_check_touch_subtitle">Увімкніть AARE в Спеціальних можливостях. Застосунки, встановлені не з магазину, можуть спочатку вимагати «Дозволити обмежені налаштування» в інформації про застосунок AARE</string>
+    <string name="phone_hint_touch_capture">Зображення використовує дозвіл на захоплення екрана (сторінка Звук в автомобілі, виберіть Весь екран).</string>
+    <string name="phone_app_row_subtitle">Власний екран телефону, для застосунків, які AARE не може хостити</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Голосовий асистент</string>
+    <string name="assistant_page_subtitle">Що відкриває голосова кнопка</string>
+    <string name="assistant_same_as_phone">Так само, як на телефоні</string>
+    <string name="assistant_no_default">На телефоні не встановлено асистента за замовчуванням</string>
+    <string name="assistant_has_car_app_subtitle">На екрані автомобіля, з мікрофоном автомобіля</string>
+    <string name="assistant_opens_on_phone">Відкривається на телефоні</string>
+    <string name="assistant_hint">Голосова кнопка на кермі та мікрофон на панелі відкривають цього асистента. Найкраще працюють асистенти з автомобільним застосунком, як Lapin.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">З\'єднання з автомобілем</string>
+    <string name="notif_action_stop">Зупинити</string>
+    <string name="notif_action_trust">Довіряти</string>
+    <string name="notif_status_connecting_wirelessly">Бездротове з\'єднання…</string>
+    <string name="notif_status_not_connected">Не з\'єднано</string>
+    <string name="notif_keeping_consent_suffix">%1$s · зберігає згоду на захоплення екрана для звуку в автомобілі (Зупинити звільнить її)</string>
+    <string name="notif_cert_changed_title">Сертифікат головного пристрою змінився</string>
+    <string name="notif_new_head_unit_title">Новий головний пристрій</string>
+    <string name="notif_trust_warning">Довіряйте лише головному пристрою, до якого ви підключені зараз</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, потім з\'єднайтеся знову.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, потім з\'єднайтеся знову.</string>
+    <string name="notif_cert_changed_message">сертифікат головного пристрою змінився: натисніть Довіряти в сповіщенні або в AARE лише якщо його програмне забезпечення було оновлено, потім з\'єднайтеся знову</string>
+    <string name="notif_cert_untrusted_message">сертифікат головного пристрою ще не довірений: натисніть Довіряти в сповіщенні або в AARE, потім з\'єднайтеся знову</string>
+    <string name="notif_car_nearby_title">Автомобіль поруч</string>
+    <string name="notif_car_nearby_text">Натисніть, щоб з\'єднатися бездротово</string>
+    <string name="notif_status_connecting_to">З\'єднання з %1$s</string>
+    <string name="notif_status_connected_to">З\'єднано з %1$s</string>
+    <string name="notif_status_projecting_to">Трансляція на %1$s</string>
+    <string name="notif_status_cant_start_video">Не вдається запустити відео: %1$s</string>
+    <string name="notif_not_calling_title">Дзвінка немає</string>
+    <string name="notif_not_calling_text">%1$s попросив набрати код із * або #, а не номер телефону</string>
+    <string name="notif_calling_title">Дзвінок до %1$s</string>
+    <string name="notif_asked_by">Запит від %1$s</string>
+    <string name="notif_call_confirm_title">Подзвонити %1$s?</string>
+    <string name="notif_no_nav_app">На телефоні немає навігаційного застосунку</string>
+    <string name="notif_cant_open">Не вдається відкрити це з автомобіля</string>
+    <string name="notif_navigation_title">Навігація</string>
+    <string name="notif_navigation_no_app_text">В автомобілі немає навігаційного застосунку</string>
+    <string name="notif_assistant_title">Асистент</string>
+    <string name="notif_assistant_choose_text">Виберіть голосового асистента в налаштуваннях AARE на телефоні</string>
+    <string name="notif_assistant_no_car_screen">%1$s не має екрана для автомобіля: він відкрився на телефоні</string>
+    <string name="notif_assistant_cant_open">Не вдається відкрити %1$s. Виберіть іншого асистента в налаштуваннях AARE</string>
+    <string name="notif_parked_only_title">Недоступно під час керування</string>
+    <string name="notif_parked_only_text">Паркуйтеся, щоб це використати</string>
+    <string name="notif_empty">Немає сповіщень</string>
+    <string name="notif_title">Сповіщення</string>
+    <string name="notif_clear_all">Очистити все</string>
+    <string name="notif_new_message_placeholder">Нове повідомлення</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Застосунки</string>
+    <string name="dash_menu_home">Головний екран</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Немає навігаційного застосунку</string>
+    <string name="nav_dashboard_where_to">Куди?</string>
+    <string name="nav_dashboard_install_hint">Установіть на телефон навігаційний застосунок, що підтримує Android Auto</string>
+    <string name="nav_dashboard_choose_app">Виберіть картографічний застосунок</string>
+    <string name="nav_guidance_on_phone">%1$s, на телефоні</string>
+    <string name="nav_next_step_then">Потім</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Музика</string>
+    <string name="media_nothing_playing">Нічого не відтворюється</string>
+    <string name="media_action_previous">Попередній</string>
+    <string name="media_action_play_pause">Відтворити/пауза</string>
+    <string name="media_action_next">Наступний</string>
+    <string name="media_playing_from">Відтворюється з %1$s</string>
+    <string name="media_connecting_to">З\'єднання з %1$s</string>
+    <string name="media_queue_title">Черга</string>
+    <string name="media_search_app">Пошук у %1$s</string>
+    <string name="media_action_search">Пошук</string>
+    <string name="media_action_browse">Огляд</string>
+    <string name="media_now_playing_label">Зараз відтворюється</string>
+    <string name="media_nothing_here">Тут нічого немає</string>
+    <string name="media_couldnt_load_more">Не вдалося завантажити більше</string>
+    <string name="media_starting">Запуск…</string>
+    <string name="media_action_pause">Пауза</string>
+    <string name="media_action_play">Відтворити</string>
+    <string name="media_queue_empty">Черга порожня</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Надайте AARE доступ до сповіщень на телефоні, щоб бачити повідомлення тут</string>
+    <string name="msg_listener_not_ready">Тут ще нічого немає</string>
+    <string name="msg_reply_sent">Відповідь надіслано</string>
+    <string name="msg_reply_rejected">%1$s не прийняв відповідь</string>
+    <string name="msg_no_new_messages">Немає нових повідомлень від %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Повідомлення читаються вголос під час керування.</string>
+    <string name="msg_action_read_aloud">Читати вголос</string>
+    <string name="msg_action_mark_read">Позначити як прочитане</string>
+    <string name="msg_action_reply">Відповісти</string>
+    <string name="msg_reply_hint">Повідомлення до %1$s</string>
+    <string name="msg_message_count_one">1 повідомлення</string>
+    <string name="msg_message_count_many">%1$d повідомлень</string>
+
+    <string name="assistant_mic_label">Асистент</string>
+    <string name="assistant_listening">Слухає…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Останні</string>
+    <string name="phone_tab_contacts">Контакти</string>
+    <string name="phone_tab_keypad">Клавіатура</string>
+    <string name="phone_permissions_placeholder">Дозвольте дзвінки, історію дзвінків і контакти в AARE на телефоні (Завершити налаштування).</string>
+    <string name="phone_notice_calling_title">Дзвінок</string>
+    <string name="phone_no_recent_calls">Немає останніх дзвінків</string>
+    <string name="phone_no_contacts">Немає контактів з номером телефону</string>
+    <string name="phone_call_in_progress">Дзвінок триває</string>
+    <string name="phone_action_hang_up">Завершити</string>
+    <string name="phone_keypad_delete">Видалити</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Заряджається</string>
+    <string name="phone_incoming_call">Вхідний дзвінок</string>
+    <string name="phone_action_decline">Відхилити</string>
+    <string name="phone_action_answer">Відповісти</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Сьогодні</string>
+    <string name="dash_latest_label">Останнє</string>
+    <string name="cluster_arrival_time">Прибуття %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Пошук доступний після паркування</string>
+</resources>

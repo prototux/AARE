@@ -53,9 +53,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** ListTemplate: a single list or titled sections, with header, action strip and floating actions. */
@@ -106,7 +108,7 @@ internal fun ItemListView(
 
     if (lines.none { it is Line.Entry }) {
         val message = sections.firstNotNullOfOrNull { it.list.noItemsMessage }
-        EmptyMessage(message, "Nothing to show", modifier)
+        EmptyMessage(message, stringResource(R.string.common_nothing_to_show), modifier)
         return
     }
 
@@ -219,7 +221,7 @@ private fun EmptyRow(text: CarText?) {
         if (text != null) {
             CarTextView(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            Text("No items", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.common_no_items), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

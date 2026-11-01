@@ -54,9 +54,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
+import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -69,7 +71,7 @@ internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolea
     val current by hub.connection.collectAsState()
     val connection = current?.takeIf { it.app.service == app.service }
     if (connection == null) {
-        Placeholder("Connecting to ${app.label}", loading = true, modifier = modifier.background(MaterialTheme.colorScheme.background))
+        Placeholder(stringResource(R.string.media_connecting_to, app.label), loading = true, modifier = modifier.background(MaterialTheme.colorScheme.background))
         return
     }
     val ui = remember(connection) { hub.uiFor(connection) }
@@ -115,7 +117,7 @@ private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, s
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (ui.canGoBack) {
-            CircleButton(Icons.AutoMirrored.Rounded.ArrowBack, "Back", onClick = ui::back)
+            CircleButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), onClick = ui::back)
         } else {
             Box(Modifier.size(d.touchTarget), contentAlignment = Alignment.Center) { AppBadge(app, 48) }
         }
@@ -124,8 +126,8 @@ private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, s
         Box(Modifier.weight(1f)) {
             when {
                 ui.view == MediaView.NOW_PLAYING -> Title(app.label)
-                ui.view == MediaView.QUEUE -> Title("Queue")
-                ui.view == MediaView.SEARCH -> Title(ui.query.ifEmpty { "Search ${app.label}" })
+                ui.view == MediaView.QUEUE -> Title(stringResource(R.string.media_queue_title))
+                ui.view == MediaView.SEARCH -> Title(ui.query.ifEmpty { stringResource(R.string.media_search_app, app.label) })
                 ui.stack.isNotEmpty() -> Title(ui.stack.last().title)
                 !tabs.isNullOrEmpty() -> Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     tabs.forEachIndexed { i, item -> Pill(item.titleText, selected = i == ui.tab, onClick = { ui.selectTab(i) }) }
@@ -135,10 +137,10 @@ private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, s
         }
         val ready = status as? MediaConnection.Status.Ready
         if (ready?.searchSupported == true && ui.view == MediaView.BROWSE) {
-            CircleButton(Icons.Rounded.Search, "Search", onClick = { ui.view = MediaView.SEARCH })
+            CircleButton(Icons.Rounded.Search, stringResource(R.string.media_action_search), onClick = { ui.view = MediaView.SEARCH })
         }
         if (ui.view == MediaView.NOW_PLAYING) {
-            CircleButton(Icons.Rounded.LibraryMusic, "Browse", onClick = { ui.view = MediaView.BROWSE })
+            CircleButton(Icons.Rounded.LibraryMusic, stringResource(R.string.media_action_browse), onClick = { ui.view = MediaView.BROWSE })
         } else if (ui.view == MediaView.BROWSE && source.info != null) {
             NowPlayingChip(source) { ui.view = MediaView.NOW_PLAYING }
         }
@@ -173,7 +175,7 @@ private fun NowPlayingChip(source: SourceState, onClick: () -> Unit) {
         ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.size(48.dp), CircleShape)
         Spacer(Modifier.width(12.dp))
         Icon(
-            if (info.playing) Icons.Rounded.GraphicEq else Icons.Rounded.PlayArrow, "Now playing",
+            if (info.playing) Icons.Rounded.GraphicEq else Icons.Rounded.PlayArrow, stringResource(R.string.media_now_playing_label),
             tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(32.dp),
         )
     }
@@ -195,9 +197,9 @@ private fun BrowseBody(hub: DefaultMediaHub, ui: MediaUi, status: MediaConnectio
         }
         when {
             level != null -> BrowseLevel(hub, ui, level)
-            status is MediaConnection.Status.Connecting -> Placeholder("Connecting to ${ui.connection.app.label}", loading = true)
+            status is MediaConnection.Status.Connecting -> Placeholder(stringResource(R.string.media_connecting_to, ui.connection.app.label), loading = true)
             status is MediaConnection.Status.Failed -> Unit
-            else -> Placeholder("Loading", loading = true)
+            else -> Placeholder(stringResource(R.string.common_loading), loading = true)
         }
     }
 }
@@ -216,8 +218,8 @@ private fun BrowseLevel(hub: DefaultMediaHub, ui: MediaUi, level: Level) {
     if (items.isEmpty()) {
         when {
             loader.error != null -> ErrorCard(loader.error!!, Modifier.fillMaxWidth().padding(16.dp), onRetry = loader::retry)
-            loader.loading || !loader.end -> Placeholder("Loading", loading = true)
-            else -> Placeholder("Nothing here", loading = false, icon = Icons.Rounded.Folder)
+            loader.loading || !loader.end -> Placeholder(stringResource(R.string.common_loading), loading = true)
+            else -> Placeholder(stringResource(R.string.media_nothing_here), loading = false, icon = Icons.Rounded.Folder)
         }
         return
     }
@@ -257,7 +259,7 @@ private fun BrowseLevel(hub: DefaultMediaHub, ui: MediaUi, level: Level) {
         loader.error?.let { e ->
             item(span = { GridItemSpan(maxLineSpan) }, contentType = "more-error") {
                 ErrorCard(
-                    e.copy(message = "Couldn't load more"),
+                    e.copy(message = stringResource(R.string.media_couldnt_load_more)),
                     Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     onRetry = loader::retryMore,
                 )

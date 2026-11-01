@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AARE</string>
+    <string name="mirror_touch_description">Îți permite să folosești ecranul telefonului din mașină: AARE reproduce pe telefon apăsările făcute pe ecranul mașinii și verifică ce aplicație este activă, astfel încât ecranul telefonului rămâne întrerupt în timpul condusului, cu excepția cazului în care afișează o aplicație de navigație. AARE nu citește altceva.</string>
+    <string name="mirror_locked_placeholder">Ecranul telefonului este întrerupt cât timp telefonul este blocat. Deblochează telefonul pentru a-l afișa.</string>
+    <string name="mirror_driving_no_accessibility">Ecranul telefonului este întrerupt în timpul condusului. Pentru a afișa aplicațiile de navigație în timpul condusului, activează AARE în setările de accesibilitate ale telefonului: astfel AARE știe ce aplicație este deschisă.</string>
+    <string name="mirror_driving_nav_only">Ecranul telefonului este întrerupt în timpul condusului. Afișează doar aplicațiile de navigație.</string>
+    <string name="mirror_need_car_audio">Activează Audio mașină în AARE pe telefon și alege Ecran întreg când Android întreabă: ecranul telefonului folosește aceeași permisiune.</string>
+    <string name="mirror_need_accessibility">Pentru a folosi telefonul din mașină, activează AARE în setările de accesibilitate ale telefonului.</string>
+
+    <!-- common: shared across screens -->
+    <string name="common_back">Înapoi</string>
+    <string name="common_up">Sus</string>
+    <string name="common_down">Jos</string>
+    <string name="common_cancel">Anulează</string>
+    <string name="common_clear">Șterge</string>
+    <string name="common_call">Apelează</string>
+    <string name="common_dismiss">Ignoră</string>
+    <string name="common_close">Închide</string>
+    <string name="common_nothing_to_show">Nimic de afișat</string>
+    <string name="common_no_items">Niciun element</string>
+    <string name="common_unsupported_screen">Acest ecran nu este încă acceptat</string>
+    <string name="common_loading">Se încarcă</string>
+
+    <!-- setup: MainActivity home/settings screens -->
+    <string name="setup_page_car_screen_title">Ecran mașină</string>
+    <string name="setup_page_car_screen_subtitle">Culori, poziția barei, ecranul telefonului</string>
+    <string name="setup_page_apps_title">Aplicații</string>
+    <string name="setup_page_apps_subtitle">Ce aplicații apar în mașină</string>
+    <string name="setup_page_connection_title">Conexiune</string>
+    <string name="setup_page_connection_subtitle">Wireless, calitatea video, mașinile tale</string>
+    <string name="setup_page_advanced_title">Avansat</string>
+    <string name="setup_page_advanced_subtitle">Server pentru unitatea centrală, certificate, jurnal</string>
+    <string name="setup_tagline">Proiecție auto open-source</string>
+    <string name="setup_status_certificate">certificat: %1$s</string>
+    <string name="setup_status_disconnected_hint">Conectează telefonul la portul USB Android Auto al mașinii, sau conectează-te wireless la o mașină asociată.</string>
+    <string name="setup_status_last_error">Ultima eroare: %1$s</string>
+    <string name="setup_trust_new_cert">Acceptă noul certificat al acestei unități centrale</string>
+    <string name="setup_trust_head_unit">Acceptă această unitate centrală</string>
+    <string name="setup_trust_fingerprint_suffix">%1$s (SHA-256 %2$s...)</string>
+    <string name="setup_preview_car_screen">Previzualizează ecranul mașinii</string>
+    <string name="setup_disconnect">Deconectează</string>
+    <string name="setup_finish_title">Finalizează configurarea</string>
+    <string name="setup_check_permissions_title">Permisiuni</string>
+    <string name="setup_check_permissions_subtitle">Microfon, locație, Bluetooth, Wi-Fi din apropiere, notificări, apeluri, contacte și calendar</string>
+    <string name="setup_check_notification_access_title">Acces la notificări</string>
+    <string name="setup_check_notification_access_subtitle">Mesaje, indicații de la Google Maps și Waze, melodia curentă</string>
+    <string name="setup_check_audio_subtitle">Permite ca sunetul telefonului să ajungă în mașină</string>
+    <string name="setup_action_set_up">Configurează</string>
+    <string name="setup_section_connecting">Conectare</string>
+    <string name="setup_toggle_wireless_title">Wireless</string>
+    <string name="setup_toggle_wireless_subtitle">Se conectează prin Wi-Fi la mașinile asociate când ajung în raza Bluetooth</string>
+    <string name="setup_toggle_resume_music_title">Reiau muzica</string>
+    <string name="setup_toggle_resume_music_subtitle">Pornește ultima aplicație muzicală redată când se conectează mașina</string>
+    <string name="setup_section_location">Locație</string>
+    <string name="setup_toggle_car_gps_title">Folosește GPS-ul mașinii</string>
+    <string name="setup_toggle_car_gps_subtitle">Cât timp ești conectat, aplicațiile de pe telefon văd poziția mașinii în loc de cea a telefonului, astfel încât aplicațiile de navigație nu le confundă</string>
+    <string name="setup_check_mock_location_title">Permite AARE să seteze locația</string>
+    <string name="setup_check_mock_location_subtitle">Opțiuni dezvoltator &gt; Selectează aplicația de locație simulată &gt; AARE</string>
+    <string name="setup_section_video">Video</string>
+    <string name="setup_toggle_60fps_title">Preferă 60 fps</string>
+    <string name="setup_toggle_60fps_subtitle">Mai fluid când mașina îl acceptă</string>
+    <string name="setup_choice_max_resolution">Rezoluție maximă</string>
+    <string name="setup_hint_lower_resolution">O rezoluție mai mică folosește mai puțină baterie și lățime de bandă.</string>
+    <string name="setup_section_your_cars">Mașinile tale</string>
+    <string name="setup_cars_empty">Mașinile apar aici după prima conectare.</string>
+    <string name="setup_car_last_connected">Ultima conectare %1$s</string>
+    <string name="setup_action_forget">Elimină</string>
+    <string name="setup_section_trusted_head_units">Unități centrale de încredere</string>
+    <string name="setup_trusted_head_units_hint">O mașină wireless asociată este acceptată la prima conectare; o unitate centrală nouă prin USB sau pentru dezvoltatori doar după ce apeși Acceptă (în notificarea ei sau pe ecranul principal). Acceptă doar o unitate centrală la care ești conectat chiar acum. Dacă o unitate centrală afișează mai târziu un certificat diferit, vei fi întrebat din nou: acceptă-l doar dacă software-ul ei a fost actualizat.</string>
+    <string name="setup_trusted_head_units_empty">Niciuna încă.</string>
+    <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
+    <string name="setup_section_look">Aspect</string>
+    <string name="setup_choice_colors">Culori</string>
+    <string name="setup_choice_colors_auto">Zi/noapte, ca mașina</string>
+    <string name="setup_choice_dark">Întunecat</string>
+    <string name="setup_choice_light">Luminos</string>
+    <string name="setup_choice_bar">Bară</string>
+    <string name="setup_choice_bar_auto">Partea șoferului</string>
+    <string name="setup_choice_left">Stânga</string>
+    <string name="setup_choice_right">Dreapta</string>
+    <string name="setup_choice_bottom">Jos</string>
+    <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
+    <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
+    <string name="setup_section_dashboard">Tablou de bord</string>
+    <string name="setup_choice_wallpaper">Fundal</string>
+    <string name="setup_wallpaper_none">Niciunul</string>
+    <string name="setup_wallpaper_photo">Fotografie</string>
+    <string name="setup_toggle_weather_title">Vreme</string>
+    <string name="setup_toggle_weather_subtitle">Lângă ceas, de la Open-Meteo (primește o poziție aproximativă, de circa 10 km)</string>
+    <string name="setup_toggle_calendar_title">Următorul eveniment din calendar</string>
+    <string name="setup_toggle_calendar_subtitle">Sub muzică, cu o comandă rapidă pentru a naviga spre locul respectiv</string>
+    <string name="setup_section_driving">Condus</string>
+    <string name="setup_toggle_passenger_title">Mod pasager</string>
+    <string name="setup_toggle_passenger_subtitle">Ignoră starea de condus a mașinii: tastarea, listele lungi și ecranul telefonului rămân disponibile în mișcare, pentru un pasager. Șoferul nu trebuie să folosească ecranul în timpul condusului.</string>
+    <string name="setup_section_app_list">În lista de aplicații a mașinii</string>
+    <string name="setup_app_list_hint">Dezactivează aplicațiile pe care nu le vrei în mașină.</string>
+    <string name="setup_app_list_loading">Se caută aplicații…</string>
+    <string name="setup_app_group_nav">Navigație și aplicații auto</string>
+    <string name="setup_app_list_no_nav">Niciuna încă: instalează CoMaps, Organic Maps sau altă aplicație Android Auto.</string>
+    <string name="setup_app_kind_navigation">Navigație</string>
+    <string name="setup_app_kind_generic">Aplicație auto</string>
+    <string name="setup_app_group_media">Media</string>
+    <string name="setup_app_kind_media">Muzică, podcasturi, radio</string>
+    <string name="setup_app_group_messaging">Mesagerie</string>
+    <string name="setup_app_kind_messaging">Mesaje din notificările sale</string>
+    <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_section_unsupported_apps">Aplicații Android Auto pe care AARE nu le poate afișa</string>
+    <string name="setup_hint_allowlist">Aplicațiile construite cu versiuni recente ale bibliotecii auto de la Google acceptă doar gazdele din lista lor de permisiuni; vezi README.</string>
+    <string name="setup_app_entry_phone">Telefon</string>
+    <string name="setup_app_entry_settings">Setări</string>
+    <string name="setup_app_entry_notifications">Notificări</string>
+    <string name="setup_section_app_order">Ordinea în mașină</string>
+    <string name="setup_section_connection_log">Jurnal de conectare</string>
+    <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nu este afiliat cu Google. Android Auto este o marcă înregistrată a Google LLC.</string>
+    <string name="setup_choice_style">Stil</string>
+    <string name="setup_style_android_auto">Android Auto</string>
+    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_switch_dark_bar">Bară întunecată, chiar și cu culori de zi</string>
+    <string name="setup_switch_passenger">Mod pasager: fără restricții de condus (șoferul nu trebuie să folosească ecranul)</string>
+    <string name="setup_switch_message_notifications">Notificări de mesaje</string>
+    <string name="setup_switch_audio_next_connection">Audio telefon în mașină (la următoarea conectare)</string>
+
+    <!-- cert: certificate management -->
+    <string name="cert_section_title">Certificate telefon</string>
+    <string name="cert_hint">Unitățile centrale verifică certificatul telefonului. Unitățile centrale open-source acceptă certificatul generat; mașinile care folosesc software-ul Google pentru unitatea centrală acceptă doar un certificat emis de Google, pe care AARE nu îl poate include. Poți importa unul pe care ai dreptul să-l folosești (certificat PEM + cheie PKCS#8, sau PKCS#12).</string>
+    <string name="cert_entry_subtitle">%1$s · până la %2$s</string>
+    <string name="cert_action_remove">Elimină</string>
+    <string name="cert_action_import">Importă certificat…</string>
+    <string name="cert_p12_dialog_title">Parolă PKCS#12</string>
+    <string name="cert_action_import_confirm">Importă</string>
+    <string name="cert_imported_fallback">importat</string>
+
+    <!-- huserver: developer head unit server -->
+    <string name="huserver_label">Server unitate centrală</string>
+    <string name="huserver_toggle_subtitle">Ca modul dezvoltator al Android Auto, pentru unitatea centrală desktop, DHU, openauto, Headunit Revived. Accesibil doar prin adb: adb forward tcp:5277 localabstract:aare_hu</string>
+    <string name="huserver_toggle_network_title">Acceptă din rețea</string>
+    <string name="huserver_toggle_network_subtitle">Ascultă și pe portul TCP 5277 pe orice rețea, fără parolă. Oricine din aceeași rețea Wi-Fi se poate conecta și poate vedea ecranul mașinii și folosi microfonul.</string>
+    <string name="huserver_toggle_lanonce_title">Dezactivează modul de rețea după o sesiune</string>
+    <string name="huserver_toggle_lanonce_subtitle">Mai sigur: rețeaua trebuie permisă din nou pentru fiecare sesiune. Dezactivează această opțiune pentru unitățile centrale care se reconectează automat, precum openauto sau Headunit Revived.</string>
+    <string name="huserver_toggle_mirror_title">Ecranul telefonului pe server</string>
+    <string name="huserver_toggle_mirror_subtitle">Oferă și "Ecranul telefonului" oricui se conectează aici. Riscant: va vedea ecranul telefonului și va putea apăsa pe el, deci lasă-l dezactivat dacă nu ai încredere în unitatea centrală.</string>
+
+    <!-- msg: messaging settings -->
+    <string name="msg_settings_title">Mesaje</string>
+    <string name="msg_page_subtitle">Bannere și citire cu voce tare</string>
+    <string name="msg_check_notification_access_subtitle">Necesar pentru a vedea mesajele în mașină</string>
+    <string name="msg_toggle_banners_title">Arată notificările de mesaje</string>
+    <string name="msg_toggle_banners_subtitle">Un banner pe ecranul mașinii pentru fiecare mesaj nou</string>
+    <string name="msg_toggle_group_title">Mesaje de grup</string>
+    <string name="msg_toggle_group_subtitle">Arată și mesajele din conversațiile de grup</string>
+    <string name="msg_toggle_read_aloud_title">Citește mesajele cu voce tare</string>
+    <string name="msg_toggle_read_aloud_subtitle">Citește cu voce tare fiecare mesaj nou pe măsură ce ajunge</string>
+    <string name="msg_hint_apps">Aplicațiile de mesagerie (WhatsApp, Signal, SMS…) au și propria pagină în lista de aplicații a mașinii.</string>
+    <string name="msg_section_while_driving">În timpul condusului</string>
+    <string name="msg_toggle_dnd_title">Nu deranja</string>
+    <string name="msg_toggle_dnd_subtitle">Pune telefonul pe silențios cât timp este conectat; apelurile și conversațiile prioritare ajung totuși</string>
+    <string name="msg_check_dnd_access_title">Permite AARE să activeze Nu deranja</string>
+    <string name="msg_check_dnd_access_subtitle">Android întreabă o singură dată</string>
+    <string name="msg_toggle_autoreply_title">Răspuns automat</string>
+    <string name="msg_toggle_autoreply_subtitle">Răspunde persoanelor care scriu, o dată per conversație per deplasare (nu și grupurilor)</string>
+    <string name="msg_autoreply_field_label">Răspuns</string>
+
+    <!-- audio: car audio settings -->
+    <string name="audio_settings_title">Audio mașină</string>
+    <string name="audio_page_subtitle">Cum ajunge sunetul telefonului în mașină</string>
+    <string name="audio_toggle_enable_title">Audio telefon în mașină</string>
+    <string name="audio_toggle_enable_subtitle">Muzică, podcasturi, asistentul și, în funcție de metodă, vocea de navigație</string>
+    <string name="audio_using_method">Se folosește: %1$s</string>
+    <string name="audio_no_method">Nicio metodă nu este încă configurată: alege una mai jos.</string>
+    <string name="audio_section_methods">Metode, în ordinea recomandării</string>
+    <string name="audio_policy_ready">Pregătit. Muzica și vocea de navigație ajung separat în mașină, telefonul rămâne silențios.</string>
+    <string name="audio_policy_not_ready">Ca Android Auto: muzica și vocea de navigație separat, difuzorul telefonului dezactivat. Necesită un telefon cu root: instalează AARE ca aplicație de sistem cu modulul Magisk (vezi README).</string>
+    <string name="audio_shizuku_ready">Pregătit. Tot ce redă telefonul ajunge în mașină, inclusiv vocea de navigație; telefonul rămâne silențios.</string>
+    <string name="audio_shizuku_needs_android12">Necesită Android 12 sau o versiune mai nouă.</string>
+    <string name="audio_shizuku_tap_allow">Shizuku este activ: apasă pentru a permite AARE.</string>
+    <string name="audio_shizuku_install_hint">Nu necesită root. Instalează Shizuku, pornește-l (depanare wireless, o dată per repornire), apoi revino aici.</string>
+    <string name="audio_playback_ready">Pregătit. Doar media: fără vocea de navigație, unele aplicații pot renunța, iar telefonul continuă să redea și el.</string>
+    <string name="audio_playback_not_ready">Funcționează oriunde, cu limitări: doar media, fără vocea de navigație. Android cere să capturezi ecranul: alege Ecran întreg (folosit și de ecranul telefonului).</string>
+    <string name="audio_notice_setup_hint">Deschide AARE pe telefon și configurează audio mașină pentru a auzi telefonul în mașină</string>
+
+    <!-- phone: phone screen feature -->
+    <string name="phone_section_title">Ecran telefon</string>
+    <string name="phone_toggle_enable_title">Ecranul telefonului în mașină</string>
+    <string name="phone_toggle_enable_subtitle">Ecranul propriu al telefonului, pentru aplicațiile pe care AARE nu le poate găzdui (Google Maps, Waze). Întrerupt cât timp telefonul este blocat și în timpul condusului, cu excepția cazului în care o aplicație de navigație ghidează. Nu este oferit pe serverul unității centrale decât dacă este activat acolo</string>
+    <string name="phone_check_touch_title">Apăsare pe ecranul telefonului</string>
+    <string name="phone_check_touch_subtitle">Activează AARE în Accesibilitate. Aplicațiile instalate manual pot avea nevoie întâi de "Permite setările restricționate" în informațiile aplicației AARE</string>
+    <string name="phone_hint_touch_capture">Imaginea folosește permisiunea de captură a ecranului (pagina Audio mașină, alege Ecran întreg).</string>
+    <string name="phone_app_row_subtitle">Ecranul propriu al telefonului, pentru aplicațiile pe care AARE nu le poate găzdui</string>
+
+    <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_settings_title">Asistent vocal</string>
+    <string name="assistant_page_subtitle">Ce deschide butonul vocal</string>
+    <string name="assistant_same_as_phone">La fel ca pe telefon</string>
+    <string name="assistant_no_default">Niciun asistent implicit setat pe telefon</string>
+    <string name="assistant_has_car_app_subtitle">Pe ecranul mașinii, cu microfonul mașinii</string>
+    <string name="assistant_opens_on_phone">Se deschide pe telefon</string>
+    <string name="assistant_hint">Butonul vocal de pe volan și microfonul din bară deschid acest asistent. Asistenții cu o aplicație auto, precum Lapin, funcționează cel mai bine.</string>
+
+    <!-- notif: notifications and in-car notices -->
+    <string name="notif_channel_connection">Conexiune mașină</string>
+    <string name="notif_action_stop">Stop</string>
+    <string name="notif_action_trust">Acceptă</string>
+    <string name="notif_status_connecting_wirelessly">Se conectează wireless…</string>
+    <string name="notif_status_not_connected">Neconectat</string>
+    <string name="notif_keeping_consent_suffix">%1$s · se păstrează acordul de captură a ecranului pentru audio mașină (Stop îl eliberează)</string>
+    <string name="notif_cert_changed_title">Certificatul unității centrale s-a schimbat</string>
+    <string name="notif_new_head_unit_title">Unitate centrală nouă</string>
+    <string name="notif_trust_warning">Acceptă doar o unitate centrală la care ești conectat chiar acum</string>
+    <string name="notif_untrusted_message">SHA-256 %1$s... %2$s, apoi reconectează-te.</string>
+    <string name="notif_trust_reconnect_suffix">%1$s, apoi reconectează-te.</string>
+    <string name="notif_cert_changed_message">certificatul unității centrale s-a schimbat: apasă Acceptă în notificare sau în AARE doar dacă software-ul ei a fost actualizat, apoi reconectează-te</string>
+    <string name="notif_cert_untrusted_message">certificatul unității centrale nu este încă acceptat: apasă Acceptă în notificare sau în AARE, apoi reconectează-te</string>
+    <string name="notif_car_nearby_title">Mașină în apropiere</string>
+    <string name="notif_car_nearby_text">Apasă pentru a te conecta wireless</string>
+    <string name="notif_status_connecting_to">Se conectează la %1$s</string>
+    <string name="notif_status_connected_to">Conectat la %1$s</string>
+    <string name="notif_status_projecting_to">Se proiectează pe %1$s</string>
+    <string name="notif_status_cant_start_video">Videoul nu poate fi pornit: %1$s</string>
+    <string name="notif_not_calling_title">Nu se apelează</string>
+    <string name="notif_not_calling_text">%1$s a cerut formarea unui cod cu * sau #, nu a unui număr de telefon</string>
+    <string name="notif_calling_title">Se apelează %1$s</string>
+    <string name="notif_asked_by">Cerut de %1$s</string>
+    <string name="notif_call_confirm_title">Apelezi %1$s?</string>
+    <string name="notif_no_nav_app">Nicio aplicație de navigație pe telefon</string>
+    <string name="notif_cant_open">Nu se poate deschide din mașină</string>
+    <string name="notif_navigation_title">Navigație</string>
+    <string name="notif_navigation_no_app_text">Nicio aplicație de navigație în mașină</string>
+    <string name="notif_assistant_title">Asistent</string>
+    <string name="notif_assistant_choose_text">Alege un asistent vocal în setările AARE de pe telefon</string>
+    <string name="notif_assistant_no_car_screen">%1$s nu are ecran pentru mașină: s-a deschis pe telefon</string>
+    <string name="notif_assistant_cant_open">%1$s nu poate fi deschis. Alege alt asistent în setările AARE</string>
+    <string name="notif_parked_only_title">Indisponibil în timpul condusului</string>
+    <string name="notif_parked_only_text">Parchează pentru a folosi această funcție</string>
+    <string name="notif_empty">Nicio notificare</string>
+    <string name="notif_title">Notificări</string>
+    <string name="notif_clear_all">Șterge tot</string>
+    <string name="notif_new_message_placeholder">Mesaj nou</string>
+    <string name="notif_unseen_overflow">9+</string>
+
+    <!-- dash: car shell / dashboard chrome -->
+    <string name="dash_menu_apps">Aplicații</string>
+    <string name="dash_menu_home">Acasă</string>
+
+    <!-- nav: navigation feature (dashboard card and templates) -->
+    <string name="nav_dashboard_no_app_title">Nicio aplicație de navigație</string>
+    <string name="nav_dashboard_where_to">Încotro?</string>
+    <string name="nav_dashboard_install_hint">Instalează pe telefon o aplicație de navigație care acceptă Android Auto</string>
+    <string name="nav_dashboard_choose_app">Alege aplicația de hărți</string>
+    <string name="nav_guidance_on_phone">%1$s, pe telefon</string>
+    <string name="nav_next_step_then">Apoi</string>
+
+    <!-- media: media cards and controls -->
+    <string name="media_fallback_label">Muzică</string>
+    <string name="media_nothing_playing">Nimic în redare</string>
+    <string name="media_action_previous">Anterior</string>
+    <string name="media_action_play_pause">Redă/pauză</string>
+    <string name="media_action_next">Următor</string>
+    <string name="media_playing_from">Se redă din %1$s</string>
+    <string name="media_connecting_to">Se conectează la %1$s</string>
+    <string name="media_queue_title">Coadă</string>
+    <string name="media_search_app">Caută în %1$s</string>
+    <string name="media_action_search">Căutare</string>
+    <string name="media_action_browse">Răsfoire</string>
+    <string name="media_now_playing_label">Se redă acum</string>
+    <string name="media_nothing_here">Nimic aici</string>
+    <string name="media_couldnt_load_more">Nu s-au putut încărca mai multe</string>
+    <string name="media_starting">Se pornește…</string>
+    <string name="media_action_pause">Pauză</string>
+    <string name="media_action_play">Redă</string>
+    <string name="media_queue_empty">Coada este goală</string>
+
+    <!-- msg: messaging screen (notifications-based conversations) -->
+    <string name="msg_no_access">Acordă AARE acces la notificări pe telefon pentru a vedea mesajele aici</string>
+    <string name="msg_listener_not_ready">Nimic de văzut aici încă</string>
+    <string name="msg_reply_sent">Răspuns trimis</string>
+    <string name="msg_reply_rejected">%1$s nu a acceptat răspunsul</string>
+    <string name="msg_no_new_messages">Niciun mesaj nou de la %1$s</string>
+    <string name="msg_reading_aloud_hint">%1$s. Mesajele sunt citite cu voce tare în timpul condusului.</string>
+    <string name="msg_action_read_aloud">Citește cu voce tare</string>
+    <string name="msg_action_mark_read">Marchează ca citit</string>
+    <string name="msg_action_reply">Răspunde</string>
+    <string name="msg_reply_hint">Mesaj către %1$s</string>
+    <string name="msg_message_count_one">1 mesaj</string>
+    <string name="msg_message_count_many">%1$d mesaje</string>
+
+    <string name="assistant_mic_label">Asistent</string>
+    <string name="assistant_listening">Ascultă…</string>
+
+    <!-- phone: car phone screen (recents, contacts, keypad) -->
+    <string name="phone_tab_recents">Recente</string>
+    <string name="phone_tab_contacts">Contacte</string>
+    <string name="phone_tab_keypad">Tastatură</string>
+    <string name="phone_permissions_placeholder">Permite apelurile, istoricul apelurilor și contactele în AARE pe telefon (Finalizează configurarea).</string>
+    <string name="phone_notice_calling_title">Se apelează</string>
+    <string name="phone_no_recent_calls">Niciun apel recent</string>
+    <string name="phone_no_contacts">Niciun contact cu un număr de telefon</string>
+    <string name="phone_call_in_progress">Apel în curs</string>
+    <string name="phone_action_hang_up">Închide</string>
+    <string name="phone_keypad_delete">Șterge</string>
+    <string name="phone_status_wifi">Wi-Fi</string>
+    <string name="phone_status_charging">Se încarcă</string>
+    <string name="phone_incoming_call">Apel primit</string>
+    <string name="phone_action_decline">Refuză</string>
+    <string name="phone_action_answer">Răspunde</string>
+    <string name="phone_in_call_elapsed">%1$s · %2$s</string>
+    <string name="dash_event_today">Astăzi</string>
+    <string name="dash_latest_label">Cel mai recent</string>
+    <string name="cluster_arrival_time">Sosire %1$s</string>
+
+    <!-- kbd: on-screen car keyboard -->
+    <string name="kbd_symbols_label">\?123</string>
+    <string name="kbd_letters_label">ABC</string>
+
+    <!-- search: media search view -->
+    <string name="search_parked_only">Căutarea este disponibilă doar la parcare</string>
+</resources>
