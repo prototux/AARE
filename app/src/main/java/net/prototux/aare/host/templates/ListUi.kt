@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** ListTemplate: a single list or titled sections, with header, action strip and floating actions. */
@@ -272,7 +273,7 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
     val enabled = row.isEnabled
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().heightIn(min = d.touchTarget).clip(shape).background(rowBackground())
-            .then(if (onClick != null && enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null && enabled) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
             .alpha(if (enabled) 1f else 0.38f)
             .padding(start = if (radio != null) 8.dp else 20.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

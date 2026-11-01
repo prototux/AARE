@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -208,7 +209,10 @@ private fun Progress(info: PlaybackInfo, canSeek: Boolean, seekTo: (Long) -> Uni
 private fun ActionButton(hub: DefaultMediaHub, action: CustomAction) {
     val d = LocalCarDimens.current
     val icon = rememberIcon(hub.art, action.icon, 96)
-    Box(Modifier.size(d.touchTarget).clip(CircleShape).clickable { action.run() }, contentAlignment = Alignment.Center) {
+    Box(
+        Modifier.size(d.touchTarget).clip(CircleShape).carFocusHighlight(CircleShape).clickable { action.run() },
+        contentAlignment = Alignment.Center,
+    ) {
         if (icon != null) {
             Icon(icon.asImageBitmap(), action.label, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(d.iconSize))
         } else {
@@ -231,6 +235,7 @@ internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> U
             val bg = if (entry.current) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
             Row(
                 Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp)).background(bg)
+                    .carFocusHighlight(RoundedCornerShape(20.dp))
                     .clickable { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

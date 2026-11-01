@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -84,7 +85,8 @@ private fun TabChip(tab: Tab, selected: Boolean, onClick: () -> Unit) {
     val bg = if (selected) scheme.secondaryContainer else Color.Transparent
     val fg = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
     Row(
-        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(bg).clickable(onClick = onClick)
+        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(bg)
+            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick)
             .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** Where an action is drawn; decides its size and default colours. */
@@ -179,7 +180,7 @@ private fun ActionSurface(
             .widthIn(min = minWidth)
             .clip(shape)
             .background(bg)
-            .then(if (onClick != null && enabled) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(if (onClick != null && enabled) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
             .alpha(if (enabled) 1f else 0.38f)
             .padding(horizontal = horizontalPadding),
         verticalAlignment = Alignment.CenterVertically,

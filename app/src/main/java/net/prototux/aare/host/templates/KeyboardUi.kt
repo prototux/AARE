@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Backspace
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** Layout of the on-screen keyboard, from InputSignInMethod.KEYBOARD_* or search. */
@@ -168,7 +170,8 @@ private fun fnIcon(kind: FnKind, submit: ImageVector): ImageVector = when (kind)
 @Composable
 private fun KeyCap(modifier: Modifier, bg: Color, onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
-        modifier.clip(RoundedCornerShape(14.dp)).background(bg).clickable(onClick = onClick),
+        modifier.clip(RoundedCornerShape(14.dp)).background(bg)
+            .carFocusHighlight(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -211,7 +214,7 @@ internal fun CarTextField(
     Row(
         modifier.height(d.touchTarget - 4.dp).clip(RoundedCornerShape(percent = 50)).background(border)
             .padding(2.dp).clip(RoundedCornerShape(percent = 50)).background(scheme.surfaceContainerHigh)
-            .clickable(onClick = onFocus).padding(start = 22.dp, end = 8.dp),
+            .carFocusHighlight(RoundedCornerShape(percent = 50)).clickable(onClick = onFocus).padding(start = 22.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leadingIcon != null) {
@@ -240,7 +243,8 @@ internal fun CarTextField(
         }
         if (value.isNotEmpty()) {
             Box(
-                Modifier.size(56.dp).clip(RoundedCornerShape(percent = 50)).clickable(onClick = onClear),
+                Modifier.size(56.dp).clip(RoundedCornerShape(percent = 50))
+                    .carFocusHighlight(CircleShape).clickable(onClick = onClear),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.common_clear), tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))

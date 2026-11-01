@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -169,7 +170,7 @@ private fun NowPlayingChip(source: SourceState, onClick: () -> Unit) {
     val info = source.info ?: return
     Row(
         Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable(onClick = onClick).padding(start = 8.dp, end = 20.dp),
+            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick).padding(start = 8.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.size(48.dp), CircleShape)
@@ -279,7 +280,7 @@ private fun ItemRow(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, 
     val art = rememberArt(hub.art, md.artworkUri, md.artworkData, hub.connection.value?.packageName, 192)
     Row(
         Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
+            .carFocusHighlight(RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (style.isCategory) {
@@ -319,7 +320,7 @@ private fun Tile(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, onC
     if (style.isCategory) {
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
-                .clickable(onClick = onClick).padding(16.dp),
+                .carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val tint = MaterialTheme.colorScheme.primary
@@ -330,7 +331,10 @@ private fun Tile(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, onC
         }
         return
     }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(bottom = 8.dp)) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+            .carFocusHighlight(RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(bottom = 8.dp),
+    ) {
         ArtBox(art, placeholderFor(item), Modifier.fillMaxWidth().aspectRatio(1f), RoundedCornerShape(20.dp))
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
