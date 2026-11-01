@@ -100,6 +100,7 @@ class ProjectionService : Service() {
         when (intent?.action) {
             ACTION_USB -> IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_ACCESSORY, UsbAccessory::class.java)?.let { openUsb(it) }
             ACTION_WIRELESS -> intent.getStringExtra(EXTRA_DEVICE)?.let { connectWireless(it) }
+            ACTION_PROBE_WIRELESS -> probeConnectedWireless()
             ACTION_AUDIO_CONSENT -> acceptAudioConsent(intent)
             ACTION_STOP -> { stopEverything(); return START_NOT_STICKY }
         }
@@ -183,6 +184,30 @@ class ProjectionService : Service() {
                 _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = e.message) }
             }
         }
+    }
+
+    /**
+     * The car was already connected over Bluetooth when AARE opened, so the ACL-connect broadcast
+     * that normally starts wireless never fired (#56). Find a connected wireless head unit and
+     * start the flow. No-op (with a clear log) if a session is up or nothing is connected.
+     */
+    private fun probeConnectedWireless() {
+        if (!settings.wireless || wirelessJob?.isActive == true) { scheduleIdleStop(); return }
+        if (session != null) { log("wireless: already connected; unplug USB first to connect wirelessly"); scheduleIdleStop(); return }
+        val connector = WirelessConnector(this, DiagAapLog)
+        if (connector.missingPermissions().isNotEmpty()) { scheduleIdleStop(); return }
+        val device = runCatching { connector.findConnectedHeadUnits() }.getOrDefault(emptyList()).firstOrNull()
+        if (device == null) {
+            log("wireless: no Android Auto car connected over Bluetooth to probe")
+            scheduleIdleStop()
+            return
+        }
+        log("wireless: ${runCatching { device.name }.getOrNull() ?: device.address} already connected over Bluetooth, connecting")
+        connectWireless(device.address)
+    }
+
+    private fun scheduleIdleStop() {
+        main.postDelayed({ if (idle()) stopEverything() }, 3_000)
     }
 
     private fun openUsb(accessory: UsbAccessory) {
@@ -404,6 +429,7 @@ class ProjectionService : Service() {
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
         const val ACTION_WIRELESS = "net.prototux.aare.WIRELESS"
+        const val ACTION_PROBE_WIRELESS = "net.prototux.aare.PROBE_WIRELESS"
         const val EXTRA_DEVICE = "device"
         const val ACTION_AUDIO_CONSENT = "net.prototux.aare.AUDIO_CONSENT"
         const val EXTRA_RESULT_CODE = "code"
@@ -439,6 +465,12 @@ class ProjectionService : Service() {
          * A wireless head unit appeared. Starting a foreground service from the background can be
          * refused; then a notification lets the driver start it with one tap.
          */
+        /** Try to connect to a car already on Bluetooth (#56): opening AARE, or enabling wireless. */
+        fun probeWireless(context: Context) {
+            if (!Settings(context).wireless) return
+            context.startForegroundService(Intent(context, ProjectionService::class.java).setAction(ACTION_PROBE_WIRELESS))
+        }
+
         fun startWireless(context: Context, address: String) {
             val intent = Intent(context, ProjectionService::class.java).setAction(ACTION_WIRELESS).putExtra(EXTRA_DEVICE, address)
             try {

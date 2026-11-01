@@ -83,6 +83,25 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
     }
 
     /**
+     * Bonded head units offering wireless Android Auto that are already connected over Bluetooth.
+     * For the case where the car was connected before AARE could react to the ACL-connect
+     * broadcast (#56): we can't wait for an edge that already passed, so we look at the current
+     * state. Uses the hidden isConnected(); if it can't be read, returns empty and the normal
+     * ACL-connect path is unaffected.
+     */
+    @SuppressLint("MissingPermission")
+    fun findConnectedHeadUnits(): List<BluetoothDevice> {
+        requirePermissions(bluetoothPermissions())
+        val adapter = adapter ?: return emptyList()
+        if (!adapter.isEnabled) return emptyList()
+        return adapter.bondedDevices.orEmpty().filter { isHeadUnit(it) && isConnected(it) }
+    }
+
+    private fun isConnected(device: BluetoothDevice): Boolean = runCatching {
+        BluetoothDevice::class.java.getMethod("isConnected").invoke(device) as Boolean
+    }.getOrDefault(false)
+
+    /**
      * Connects to [device] and returns the AAP byte pipe. Cancelling the coroutine aborts the
      * attempt and releases everything it set up. Must run while the app is in the foreground (an
      * activity or a foreground service): Android refuses Wi-Fi requests from background apps.
