@@ -103,15 +103,30 @@ an uninstall first.
 As head units based on the official Google's host implementation checks the certificate/key of AARE,
 in order to use those, key extraction is needed:
 
-1. Download the APKm of Android Auto/com.google.android.projection.gearhead, for example from
+1. On your computer, clone this repository, or use **Code → Download ZIP** on GitHub and
+   extract it. Open a terminal in the repository folder, where [extract_key.py](extract_key.py)
+   is located alongside this README. For Git:
+
+   ```sh
+   git clone https://github.com/prototux/AARE.git
+   cd AARE
+   ```
+
+2. Download the APKm of Android Auto/com.google.android.projection.gearhead, for example from
    [APKPure](https://apkpure.com/fr/android-auto/com.google.android.projection.gearhead) or
-   [APKMirror](https://www.apkmirror.com/apk/google-inc/android-auto/)
+   [APKMirror](https://www.apkmirror.com/apk/google-inc/android-auto/), and place it in the
+   repository folder.
 
-2. Run the extract_key.py on the apkm: `./extract_key.py com.google.android.projection.gearhead.apkm`
+3. With Python 3 installed on your computer, run the script from that folder, replacing the
+   filename with the name of your downloaded APKm:
 
-3. The key and certificate are the `carservice_key.pem` and `carservice_cert.pem`. Copy them on your phone.
+   ```sh
+   python3 extract_key.py com.google.android.projection.gearhead.apkm
+   ```
 
-4. Open those two files with AARE. It should now work with the head unit.
+4. The key and certificate are the `carservice_key.pem` and `carservice_cert.pem`. Copy them on your phone.
+
+5. Open those two files with AARE. It should now work with the head unit.
 
 ## Using it
 
