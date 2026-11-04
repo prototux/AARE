@@ -67,6 +67,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -134,8 +135,11 @@ private fun ContentArea(
     val gutter = LocalCarDimens.current.gutter
     // Give rotary / D-pad head units a starting point: focus lands on the first focusable of each
     // screen when it opens, so the highlight is visible without a touch. Harmless on touch units.
+    // Keyed on the input mode too: in touch mode the request fails, so the first knob detent
+    // (which leaves touch mode) asks again.
     val focusEntry = remember { FocusRequester() }
-    LaunchedEffect(state.screen) { runCatching { focusEntry.requestFocus() } }
+    val inputMode = LocalInputModeManager.current.inputMode
+    LaunchedEffect(state.screen, inputMode) { runCatching { focusEntry.requestFocus() } }
     AnimatedContent(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },

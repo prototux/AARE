@@ -143,6 +143,7 @@ class CarSession(
         aap.start()
         runtime.microphone = { sink, stopped -> micRouter.open(sink, stopped) }
         runtime.projection = projection
+        runtime.exitToCar = ::exitToCar
         runtime.onTrip = { _, trip ->
             guidanceChanged(hosted = true, guiding = trip != null)
             navBridge?.update(trip)
@@ -156,6 +157,19 @@ class CarSession(
     }
 
     fun stop() = aap.stop()
+
+    /**
+     * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
+     * Focus isn't dropped here: the head unit answers with a native VIDEO_FOCUS_NOTIFICATION (or
+     * refuses, and projection carries on), and its projection icon gives the screen back later.
+     * Any thread: sends only queue.
+     */
+    fun exitToCar() {
+        val ch = video ?: return
+        if (aap.state != AapSession.State.RUNNING || !ch.opened) return
+        Log.i(TAG, "asking the car for its own screen")
+        ch.requestNativeFocus()
+    }
 
     val rttMs: Long get() = aap.lastRttMs
 
@@ -430,9 +444,12 @@ class CarSession(
         }
     }
 
+    /** HOME goes to the dashboard; held, it hands the screen back to the car. */
+    private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
+
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
         when (code) {
-            KeyEvent.KEYCODE_HOME -> if (!down) runtime.actions.goHome()
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()

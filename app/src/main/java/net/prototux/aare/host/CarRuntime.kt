@@ -92,6 +92,8 @@ class CarRuntime(
     var projection: () -> MediaProjection? = { null }
     /** Guidance from a navigation app on the phone (Google Maps, Waze…) changed, or ended (null). */
     var onPhoneGuidance: ((PhoneGuidance?) -> Unit)? = null
+    /** Hands the screen back to the car's own UI; null (no "Exit to car" entry) without a head unit. Set before [start]. */
+    var exitToCar: (() -> Unit)? = null
 
     // ------------------------------------------------------------------ HostEnvironment
 
@@ -401,6 +403,11 @@ class CarRuntime(
         // The order chosen on the phone first, then alphabetical.
         val order = settings.appOrder.withIndex().associate { (i, k) -> k to i }
         entries.sortWith(compareBy<CarAppEntry>({ order[orderKey(it)] ?: Int.MAX_VALUE }, { it.label.lowercase() }))
+        // Not an app, so outside the user's order: always last, like Android Auto's "Exit".
+        if (exitToCar != null) {
+            entries += CarAppEntry(EXIT_ID, context.packageName, context.getString(R.string.dash_menu_exit_to_car),
+                builtinIcon(R.drawable.ic_car_exit), CarAppKind.EXIT)
+        }
         ui.apps.clear()
         ui.apps.addAll(entries)
         // Restore the last navigation and media apps, so the dashboard isn't empty.
@@ -548,6 +555,8 @@ class CarRuntime(
 
     val actions = object : CarActions {
         override fun openApp(app: CarAppEntry) {
+            // No screen of its own and not a recent app: the projection stays as it is until the car takes focus.
+            if (app.kind == CarAppKind.EXIT) { exitToCar?.invoke(); return }
             when (app.kind) {
                 CarAppKind.MEDIA -> {
                     ui.activeMediaAppId = app.id
@@ -681,6 +690,7 @@ class CarRuntime(
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"
+        const val EXIT_ID = "exit-to-car"
 
         /** Started runtimes, oldest first. Main thread. */
         private val running = ArrayList<CarRuntime>()

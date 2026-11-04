@@ -39,6 +39,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.car.CarSession
+import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.transport.LocalSocketTransport
@@ -94,6 +95,8 @@ class ProjectionService : Service() {
         settings = Settings(this)
         certs = CertificateStore(this)
         media = MediaHub(this, scope)
+        // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
+        DrivingMode.recover(this)
         createChannel()
         _state.update { it.copy(running = true) }
     }

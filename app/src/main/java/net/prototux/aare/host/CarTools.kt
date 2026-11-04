@@ -3,6 +3,7 @@ package net.prototux.aare.host
 import net.prototux.aare.Settings
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.Conversation
+import net.prototux.aare.ui.car.CarAppKind
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.PhoneStatusInfo
 import org.json.JSONArray
@@ -106,9 +107,11 @@ object CarTools {
             "home", "dashboard", "map" -> { ui.screen = CarScreen.Dashboard; return ok("home") }
             "apps", "app list", "launcher" -> { ui.screen = CarScreen.Launcher; return ok("app list") }
         }
-        val app = ui.apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
-            ?: ui.apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
-            ?: return error("no app called \"$what\" in the car; apps: " + ui.apps.joinToString { it.label })
+        // "Exit to car" isn't an app: a loose match on "car" mustn't take the screen away.
+        val apps = ui.apps.filter { it.kind != CarAppKind.EXIT }
+        val app = apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
+            ?: apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
+            ?: return error("no app called \"$what\" in the car; apps: " + apps.joinToString { it.label })
         rt.actions.openApp(app)
         return ok("${app.label} is on the car screen")
     }

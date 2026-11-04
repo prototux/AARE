@@ -241,6 +241,7 @@
     <!-- dash: car shell / dashboard chrome -->
     <string name="dash_menu_apps">Apps</string>
     <string name="dash_menu_home">Home</string>
+    <string name="dash_menu_exit_to_car">Exit to car</string>
 
     <!-- nav: navigation feature (dashboard card and templates) -->
     <string name="nav_dashboard_no_app_title">No navigation app</string>
