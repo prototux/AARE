@@ -36,6 +36,8 @@ class NavStatusBridge(
     private val png: (Bitmap, Int, Int) -> ByteArray?,
 ) {
     private var active = false
+    /** REROUTING was sent: the next guidance sends ACTIVE again. */
+    private var rerouting = false
     /** A hosted navigation app is guiding: it wins over [phone] guidance. */
     private var hosted = false
     private var phone: PhoneGuidance? = null
@@ -49,24 +51,33 @@ class NavStatusBridge(
     }
 
     private fun send(trip: Trip?) {
+        if (trip != null && trip.isLoading) {
+            // The app is working out a route, and a loading trip can't carry steps (the library
+            // forbids it): still the hosted app's guidance, not its end, so the cluster keeps it
+            // and the phone app's guidance doesn't take over meanwhile.
+            hosted = true
+            if (!active) {
+                active = true
+                channel.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
+            }
+            if (!rerouting) {
+                rerouting = true
+                channel.status(NavigationStatus.NavigationStatusEnum.REROUTING)
+            }
+            return
+        }
         if (trip == null || trip.steps.isEmpty()) {
             hosted = false
             if (phone != null) { sendPhone(phone!!); return }
             if (active) {
                 active = false
+                rerouting = false
                 channel.status(NavigationStatus.NavigationStatusEnum.INACTIVE)
             }
             return
         }
         hosted = true
-        if (!active) {
-            active = true
-            channel.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
-        }
-        if (trip.isLoading) {
-            channel.status(NavigationStatus.NavigationStatusEnum.REROUTING)
-            return
-        }
+        activate()
         val step = trip.steps.first()
         val maneuver = step.maneuver
         val stepEstimate = trip.stepTravelEstimates.firstOrNull()
@@ -137,16 +148,22 @@ class NavStatusBridge(
             if (g != null) sendPhone(g)
             else if (active) {
                 active = false
+                rerouting = false
                 channel.status(NavigationStatus.NavigationStatusEnum.INACTIVE)
             }
         }.onFailure { Log.w(TAG, "phone guidance not sent", it) }
     }
 
+    /** ACTIVE when guidance starts, and again when it comes back after a reroute. */
+    private fun activate() {
+        if (active && !rerouting) return
+        active = true
+        rerouting = false
+        channel.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
+    }
+
     private fun sendPhone(g: PhoneGuidance) {
-        if (!active) {
-            active = true
-            channel.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
-        }
+        activate()
         val state = NavigationState.newBuilder()
             .addSteps(NavigationStep.newBuilder().setCue(NavigationCue.newBuilder().addAlternateText(g.instruction)))
         val position = NavigationCurrentPosition.newBuilder()
