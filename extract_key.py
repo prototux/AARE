@@ -34,10 +34,10 @@ Dependencies: none (cryptography/pycryptodome are used opportunistically if
 installed, otherwise a built-in pure-Python AES is used).
 
 Usage:
-    python3 tools/extract_key.py com.google.android.projection.gearhead_*.apkm
-    python3 tools/extract_key.py base.apk -o out/ --dump-bins
-    python3 tools/extract_key.py classes.dex --stdout > key.pem
-    python3 tools/extract_key.py --self-test
+    python3 extract_key.py com.google.android.projection.gearhead_*.apkm
+    python3 extract_key.py base.apk -o out/ --dump-bins
+    python3 extract_key.py classes.dex --stdout > key.pem
+    python3 extract_key.py --self-test
 """
 
 from __future__ import annotations
@@ -299,7 +299,6 @@ class AESProvider:
 # ---------------------------------------------------------------------------
 # AOSP android.util.Base64 decoder (skip-filtering), ported from
 # frameworks/base/core/java/android/util/Base64.java (Apache-2.0).
-# Same semantics as ExtractKey.java's aospBase64Decode().
 # ---------------------------------------------------------------------------
 
 SKIP = -1
@@ -391,7 +390,7 @@ def aosp_base64_decode(data: bytes) -> bytes | None:
 
 
 # ---------------------------------------------------------------------------
-# The app's KDF (uga.bl / ivq / jep).  See tools/decrypt_key_from_apk.md.
+# The app's KDF (uga.bl / ivq / jep).
 # ---------------------------------------------------------------------------
 
 
@@ -414,7 +413,7 @@ def tweak(src: bytes, buf: bytearray, tables) -> None:
     decompiler artefact and it changes the result when src and buf are the very
     same array (the seven self-mixing rounds do exactly that).  The original
     bytecode reads src[i] per inner iteration - verified by deriving a valid
-    PKCS#8 key from a real APK, and matching tools/ExtractKey.java.
+    PKCS#8 key from a real APK.
     """
     if src is buf:  # self-mixing round: source byte must be re-read per inner step
         n = len(src)
@@ -1028,10 +1027,11 @@ def main(argv=None):
         report("Brute forcing %d salt(s) x %d blob(s)..." % (len(all_salts), len(all_ciphers)))
         tried = set()
         for lbl, (soff, _ss, sdata) in all_salts:
-            for _lbl, (coff, csize, cdata) in all_ciphers:
-                if (sdata, csize) in tried:
+            for _lbl, (coff, _cs, cdata) in all_ciphers:
+                # by content: only the same arrays (copied across dex files) are worth skipping
+                if (sdata, cdata) in tried:
                     continue
-                tried.add((sdata, csize))
+                tried.add((sdata, cdata))
                 guess = Candidate(lbl, soff, coff, sdata, cdata)
                 result, car = attempt(guess)
                 if result:
@@ -1043,7 +1043,7 @@ def main(argv=None):
     if not result:
         report("FAILED: no valid key derived. Either this file holds no key blob", file=sys.stderr)
         report("(e.g. a split/secondary dex) or the layout changed in this build -", file=sys.stderr)
-        report("see 'Adapting to another build' in tools/README.md.", file=sys.stderr)
+        report("see 'AA Key extraction' in README.md.", file=sys.stderr)
         return 1
 
     der, info, _order = result
