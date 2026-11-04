@@ -146,11 +146,17 @@ internal fun MapScaffold(
             LocalInCard provides true,
         ) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(gutter)) {
+                // obstructsMap() only for a strip that is drawn: its rect goes away with it (an empty strip draws
+                // nothing, so its old position would never be updated or removed).
                 if (!panMode) {
                     overlay()
-                    ActionStripView(actionStrip, ActionLook.MapStrip, vertical = false, Modifier.align(Alignment.TopEnd).obstructsMap())
+                    if (!actionStrip?.actions.isNullOrEmpty()) {
+                        ActionStripView(actionStrip, ActionLook.MapStrip, vertical = false, Modifier.align(Alignment.TopEnd).obstructsMap())
+                    }
                 }
-                ActionStripView(mapActionStrip, ActionLook.MapStrip, vertical = true, Modifier.align(Alignment.BottomEnd).obstructsMap())
+                if (!mapActionStrip?.actions.isNullOrEmpty()) {
+                    ActionStripView(mapActionStrip, ActionLook.MapStrip, vertical = true, Modifier.align(Alignment.BottomEnd).obstructsMap())
+                }
             }
         }
     }

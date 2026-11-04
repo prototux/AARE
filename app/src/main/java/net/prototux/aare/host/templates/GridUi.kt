@@ -71,7 +71,8 @@ internal fun ItemGrid(list: ItemList, itemSize: Int, circle: Boolean, bottomClea
     val host = LocalTemplateHost.current
     val inCard = LocalInCard.current
     val limit = host.contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID).takeIf { it > 0 } ?: Int.MAX_VALUE
-    val items = remember(list, limit) { list.items.filterIsInstance<GridItem>().take(limit) }
+    // identity, not ItemList.equals: that finds two lists whose items differ only by a bitmap image equal
+    val items = remember(System.identityHashCode(list), limit) { list.items.filterIsInstance<GridItem>().take(limit) }
     val cell = gridCellWidth(itemSize)
 
     val visibility = list.onItemVisibilityChangedDelegate

@@ -85,6 +85,11 @@ internal fun ActionView(
         return
     }
     if (action.type == Action.TYPE_PAN && pan == null) return // no map here: nothing to pan
+    // The library's standard COMPOSE_MESSAGE and MEDIA_PLAYBACK leave the behaviour to the host (no click delegate
+    // for the first, an optional one for the second). AARE has no compose flow or now-playing link for hosted apps
+    // yet: skip them rather than draw a blank button that does nothing.
+    if (action.type == Action.TYPE_COMPOSE_MESSAGE) return
+    if (action.type == Action.TYPE_MEDIA_PLAYBACK && action.onClickDelegate == null) return
 
     var vector: ImageVector? = null
     var carIcon: CarIcon? = null
@@ -98,6 +103,12 @@ internal fun ActionView(
         Action.TYPE_PAN -> {
             vector = if (pan?.active == true) Icons.Rounded.Close else Icons.Rounded.OpenWith
             onClick = pan?.toggle
+        }
+        Action.TYPE_MEDIA_PLAYBACK -> {
+            // it can't carry an icon or a title: the host draws its own
+            vector = standardIcon(CarIcon.TYPE_MEDIA_PLAYBACK)
+            val delegate = action.onClickDelegate
+            if (delegate != null) onClick = { host.click(delegate) }
         }
         else -> {
             carIcon = action.icon

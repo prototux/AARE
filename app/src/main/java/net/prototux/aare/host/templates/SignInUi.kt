@@ -135,7 +135,11 @@ private class InputState(initial: String, initiallyEditing: Boolean, val method:
 private fun rememberInputState(method: InputSignInMethod): InputState {
     val host = LocalTemplateHost.current
     val latest = rememberUpdatedState(method)
-    return remember { InputState(method.defaultValue.plain(), method.isShowKeyboardByDefault, { latest.value }, host) }
+    // A new field (username, then password, from the same screen) starts afresh; the same one re-sent with an
+    // error keeps what was typed. Not keyed on the default value: apps may echo the typed text into it.
+    return remember(method.inputType, method.keyboardType, method.hint.plain()) {
+        InputState(method.defaultValue.plain(), method.isShowKeyboardByDefault, { latest.value }, host)
+    }
 }
 
 @Composable

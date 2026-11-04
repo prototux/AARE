@@ -1,6 +1,8 @@
 package net.prototux.aare.host.templates
 
 import androidx.car.app.constraints.ConstraintManager
+import androidx.car.app.messaging.model.CarMessage
+import androidx.car.app.messaging.model.ConversationItem
 import androidx.car.app.model.CarText
 import androidx.car.app.model.Item
 import androidx.car.app.model.ItemList
@@ -105,7 +107,10 @@ internal fun ItemListView(
     val host = LocalTemplateHost.current
     val inCard = LocalInCard.current
     val limit = host.contentLimit(limitType).takeIf { it > 0 } ?: Int.MAX_VALUE
-    val lines = remember(sections, limit) { buildLines(sections, limit) }
+    // Keyed on identity, like the selections below: Row.equals compares images with CarIcon.equals, which finds all
+    // bitmaps equal, so an equal-looking refresh must still bring its new rows (images, click delegates).
+    val listIds = sections.map { System.identityHashCode(it.list) }
+    val lines = remember(listIds, limit) { buildLines(sections, limit) }
 
     if (lines.none { it is Line.Entry }) {
         val message = sections.firstNotNullOfOrNull { it.list.noItemsMessage }
@@ -113,8 +118,9 @@ internal fun ItemListView(
         return
     }
 
-    // optimistic radio selection per section, reset whenever the app sends a new selection
-    val selections = remember(sections.map { it.list.selectedIndex }) { mutableStateMapOf<Int, Int>() }
+    // optimistic radio selection per section, reset on every template the app sends (also one that refuses the
+    // change and keeps its selection)
+    val selections = remember(listIds) { mutableStateMapOf<Int, Int>() }
 
     ReportVisibleItems(state, lines, sections)
 
@@ -134,8 +140,8 @@ internal fun ItemListView(
                     val selectDelegate = list.onSelectedDelegate
                     val row = line.item as? Row
                     if (row == null) {
-                        // ListTemplate only allows rows; anything else is drawn as a plain title
-                        EmptyRow(null)
+                        // ListTemplate only allows rows and, from messaging apps, conversations
+                        (line.item as? ConversationItem)?.let { ConversationRow(it, groupShape(line.first, line.last)) }
                         return@itemsIndexed
                     }
                     val shape = groupShape(line.first, line.last)
@@ -256,7 +262,8 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
     val d = LocalCarDimens.current
     val scheme = MaterialTheme.colorScheme
     val toggle = row.toggle
-    var checked by remember(toggle?.isChecked) { mutableStateOf(toggle?.isChecked ?: false) }
+    // Reset on every template the app sends (identity): one that refuses the change resends the old value.
+    var checked by remember(System.identityHashCode(toggle)) { mutableStateOf(toggle?.isChecked ?: false) }
     val setChecked: (Boolean) -> Unit = { value ->
         checked = value
         toggle?.onCheckedChangeDelegate?.let { delegate ->
@@ -339,6 +346,55 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
             )
         }
     }
+}
+
+/**
+ * A messaging app's ConversationItem: avatar, title, the newest message (only how many there are while driving, as
+ * in AARE's own messaging screen) and the app's actions. Parked, a tap shows the last messages and marks them read.
+ */
+@Composable
+private fun ConversationRow(c: ConversationItem, shape: Shape) {
+    val host = LocalTemplateHost.current
+    val scheme = MaterialTheme.colorScheme
+    val messages = c.messages
+    var open by remember(c.id) { mutableStateOf(false) }
+    val onClick: (() -> Unit)? = if (host.driving || messages.isEmpty()) null else { {
+        open = !open
+        if (open) safeCall("onMarkAsRead") { c.conversationCallbackDelegate.sendMarkAsRead(host.done) }
+    } }
+    androidx.compose.foundation.layout.Row(
+        Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(shape).background(rowBackground())
+            .then(if (onClick != null) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
+            .padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        c.icon?.let {
+            CarIconView(it, imageSize(Row.IMAGE_TYPE_SMALL), shape = CircleShape, contentScale = ContentScale.Crop)
+            Spacer(Modifier.width(16.dp))
+        }
+        Column(Modifier.weight(1f).padding(end = 8.dp)) {
+            CarTextView(c.title, style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+            when {
+                host.driving -> Text(
+                    if (messages.size == 1) stringResource(R.string.msg_message_count_one) else stringResource(R.string.msg_message_count_many, messages.size),
+                    style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant,
+                )
+                open -> messages.takeLast(5).forEach { ConversationMessage(c, it, maxLines = 4) }
+                else -> messages.lastOrNull()?.let { ConversationMessage(c, it, maxLines = 1) }
+            }
+        }
+        c.actions.forEach { action ->
+            ActionView(action, ActionLook.Header)
+        }
+    }
+}
+
+@Composable
+private fun ConversationMessage(c: ConversationItem, m: CarMessage, maxLines: Int) {
+    // Who wrote it where the title doesn't say: someone in a group, or the phone's owner.
+    val sender = m.sender?.name?.toString()?.takeIf { it.isNotBlank() && it != c.title.plain() }
+    if (sender != null) Text(sender, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+    CarTextView(m.body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = maxLines)
 }
 
 @Composable

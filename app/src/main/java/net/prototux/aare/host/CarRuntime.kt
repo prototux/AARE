@@ -79,6 +79,8 @@ class CarRuntime(
 
     /** Hosted car app connections by entry id. */
     private val connections = mutableStateMapOf<String, CarAppConnection>()
+    /** Apps that finished themselves: only an explicit open ([connection]) starts them again, not the composition. */
+    private val finished = HashSet<String>()
     private val carApps = HashMap<String, CarAppInfo>()
     private val visibleCount = HashMap<CarAppConnection, Int>()
 
@@ -152,9 +154,13 @@ class CarRuntime(
             return
         }
         val isNavigate = action == CarContext.ACTION_NAVIGATE || intent.data?.scheme == "geo" || intent.data?.scheme == "google.navigation"
+        // As in CarContext.startCarApp's contract, an explicit component may only start the calling app itself:
+        // otherwise any app could hand another a crafted intent and take over the screen. A navigation intent
+        // naming another app goes to the driver's navigation app instead.
+        val own = intent.component?.takeIf { it.packageName == from.info.packageName }
         val target = when {
-            intent.component != null -> connections.values.firstOrNull { it.info.service == intent.component }
-                ?: carApps.entries.firstOrNull { it.value.service == intent.component }?.let { connection(it.key) }
+            own != null -> connections.values.firstOrNull { it.info.service == own }
+                ?: carApps.entries.firstOrNull { it.value.service == own && it.value.packageName !in settings.hiddenApps }?.let { connection(it.key) }
             isNavigate -> navConnection()
             else -> null
         }
@@ -177,6 +183,8 @@ class CarRuntime(
         if (navigatingApp === app) navigationEnded(app)
         visibleCount.remove(app)
         app.release()
+        // Before the removal: the screen fading out recomposes on it and would otherwise bind the app again.
+        finished += id
         connections.remove(id)
     }
 
@@ -218,6 +226,12 @@ class CarRuntime(
     }
 
     override fun openMicrophone(app: CarAppConnection, sink: (ByteArray, Int, Int) -> Unit, onStopped: () -> Unit): MicHandle? {
+        // Binder thread. Car apps stay bound in the background: only one the driver sees (on screen, on the
+        // dashboard's map card, in the assistant bar) or the assistant just asked to listen may open the mic.
+        if (!app.shown && ui.assistantAppId?.let { connections[it] } !== app) {
+            Log.w(TAG, "${app.info.packageName}: microphone refused, not on screen")
+            return null
+        }
         // The rail's mic and the assistant bar show when an app listens.
         val handle = microphone?.invoke(sink) { main.post { ui.listening = false }; onStopped() } ?: return null
         main.post { ui.listening = true }
@@ -336,6 +350,7 @@ class CarRuntime(
         settings.unregisterListener(settingsListener)
         connections.values.forEach { it.release() }
         connections.clear()
+        finished.clear()
         clusterConnections.values.forEach { it.release() }
         clusterConnections.clear()
         if (ownsMedia) media.release()
@@ -466,10 +481,14 @@ class CarRuntime(
 
     /** The connection for a car app entry, created on first use. */
     fun connection(id: String): CarAppConnection? {
+        finished.remove(id)
         connections[id]?.let { return it }
         val info = carApps[id] ?: return null
         return CarAppConnection(context, info, this).also { connections[id] = it }
     }
+
+    /** The connection the car screen draws: like [connection], but doesn't start an app that finished itself again. */
+    private fun shownConnection(id: String): CarAppConnection? = if (id in finished) connections[id] else connection(id)
 
     private fun navConnection(): CarAppConnection? {
         val id = ui.activeNavAppId ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }?.id ?: return null
@@ -580,9 +599,10 @@ class CarRuntime(
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
         if (entry != null && conn != null) {
-            // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen.
-            conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
+            // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen. Set before
+            // the intent goes out: the app may open the microphone before the bar is drawn (see openMicrophone).
             if ((ui.screen as? CarScreen.App)?.appId != entry.id) ui.assistantAppId = entry.id
+            conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
             return
         }
         val label = Assistants.label(context, pkg) ?: pkg
@@ -603,7 +623,8 @@ class CarRuntime(
         when (val s = ui.screen) {
             is CarScreen.App -> {
                 val conn = connections[s.appId]
-                if (conn != null) conn.back() else ui.screen = CarScreen.Dashboard
+                // An app still connecting or that failed has no screen to go back in: leave it.
+                if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back() else ui.screen = CarScreen.Dashboard
             }
             CarScreen.Launcher -> ui.screen = CarScreen.Dashboard
             CarScreen.Dashboard -> Unit
@@ -632,13 +653,13 @@ class CarRuntime(
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
-                            else -> connection(app.id)?.let { CarAppScreen(it, this, mod) }
+                            else -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod) }
                         }
                     },
-                    navMap = { app, mod -> connection(app.id)?.let { CarAppScreen(it, this, mod, compact = true) } },
+                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true) } },
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
-                        val conn = entry?.let { connection(it.id) }
+                        val conn = entry?.let { shownConnection(it.id) }
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
