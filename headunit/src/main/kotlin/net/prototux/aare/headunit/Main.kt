@@ -44,6 +44,7 @@ import javax.swing.JToggleButton
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.concurrent.thread
+import kotlin.system.exitProcess
 
 private const val USAGE = """AARE desktop head unit: a car screen on your desktop for a phone running AARE.
 
@@ -73,6 +74,15 @@ Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · Enter se
 fun main(args: Array<String>) {
     if ("--help" in args || "-h" in args) { println(USAGE); return }
     val opts = parseArgs(args)
+    if (opts.containsKey("hu-cert") != opts.containsKey("hu-key")) {
+        System.err.println("--hu-cert and --hu-key go together")
+        exitProcess(2)
+    }
+    // Finite too: NaN passes a `<= 0` test, and Infinity would make the speed slider unbounded.
+    if (opts["speed"]?.let { s -> s.toDoubleOrNull()?.let { it.isFinite() && it > 0 } != true } == true) {
+        System.err.println("--speed needs a positive number of km/h")
+        exitProcess(2)
+    }
     if (opts.containsKey("gps-only")) return gpsOnly(opts)
     if (!VideoDecoder.available()) {
         System.err.println("ffmpeg not found: install it (it decodes the car screen).")
@@ -116,6 +126,18 @@ private fun parseArgs(args: Array<String>): Map<String, String> {
         } else i++
     }
     return m
+}
+
+/**
+ * The DER of the first PKCS#8 key in [pem]. Only the lines between its BEGIN and END markers count,
+ * so a bundle with the certificate in it, or openssl's "Bag Attributes" headers, still works.
+ */
+internal fun pkcs8KeyDer(pem: String): ByteArray {
+    val body = pem.lineSequence().map { it.trim() }
+        .dropWhile { it != "-----BEGIN PRIVATE KEY-----" }.drop(1)
+        .takeWhile { it != "-----END PRIVATE KEY-----" }.joinToString("")
+    require(body.isNotEmpty()) { "no PKCS#8 key (-----BEGIN PRIVATE KEY-----) found" }
+    return Base64.getMimeDecoder().decode(body)
 }
 
 /** The window, the connection loop and the simulated drive. */
@@ -361,7 +383,21 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
     fun loadIdentity(): PhoneIdentity {
         val certPath = opts["hu-cert"]
         val keyPath = opts["hu-key"]
-        if (certPath != null && keyPath != null) return readIdentity(File(certPath), File(keyPath))
+        if (certPath != null && keyPath != null) {
+            // the user's own certificate: a bad one is an error, not something to replace quietly
+            return try {
+                readIdentity(File(certPath), File(keyPath))
+            } catch (e: Exception) {
+                val text = runCatching { File(keyPath).readText() }.getOrDefault("")
+                val hint = when {
+                    "BEGIN RSA PRIVATE KEY" in text -> " (PKCS#1 key: convert it with `openssl pkcs8 -topk8 -nocrypt`)"
+                    "BEGIN EC PRIVATE KEY" in text -> " (an EC key: the head unit needs an RSA key)"
+                    else -> ""
+                }
+                System.err.println("can't use --hu-cert $certPath / --hu-key $keyPath: ${e.message}$hint")
+                exitProcess(1)
+            }
+        }
         // no certificate given: keep one per user, so the phone's Trust sticks across runs
         val dir = File(configHome(), "aare/headunit")
         val certFile = File(dir, "cert.pem")
@@ -390,9 +426,8 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
 
     fun readIdentity(certFile: File, keyFile: File): PhoneIdentity {
         val certs = certFile.inputStream().use { CertificateFactory.getInstance("X.509").generateCertificates(it) }.map { it as X509Certificate }
-        val der = Base64.getMimeDecoder().decode(keyFile.readLines().filter { !it.startsWith("-----") }.joinToString(""))
-        val key = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(der))
-        return PhoneIdentity(certs.first(), key, certs.drop(1))
+        val key = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(pkcs8KeyDer(keyFile.readText())))
+        return PhoneIdentity(certs.firstOrNull() ?: error("no certificate in ${certFile.path}"), key, certs.drop(1))
     }
 
     /** $XDG_CONFIG_HOME or ~/.config; %APPDATA% on Windows. */
@@ -473,7 +508,9 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         ))
         p.add(gap(6))
         p.add(label("Cruise speed", 11f, color = MUTED))
-        p.add(JSlider(50, 160, cruiseKmh.toInt()).apply {
+        // widened to take a --speed outside the usual range: JSlider throws on a value outside min..max
+        val kmh = cruiseKmh.toInt()
+        p.add(JSlider(minOf(50, kmh), maxOf(160, kmh), kmh).apply {
             background = PANEL; isFocusable = false
             addChangeListener { cruiseKmh = value.toDouble() }
         })

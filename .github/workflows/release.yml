@@ -39,8 +39,8 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$(( ${MAJOR:-0} * 10000 + ${MINOR:-0} * 100 + ${PATCH:-0} ))" >> "$GITHUB_ENV"
 
-      - name: Protocol tests
-        run: ./gradlew --no-daemon :aap:test
+      - name: Protocol and head unit tests
+        run: ./gradlew --no-daemon :aap:test :headunit:test
 
       - name: Signed release APK
         if: env.HAS_KEY == 'true'

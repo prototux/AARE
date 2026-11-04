@@ -10,6 +10,12 @@
 #   ./headunit.sh --res 1920x1080 --time-scale 10 --speed 110 --rhd
 #   ./headunit.sh google --time-scale 60
 set -e
+# before the cd, while "$0" still resolves; prints the comment block above
+case "$1" in
+    -h|--help)
+        awk 'NR > 1 && !/^#/ { exit } NR > 1 { sub(/^# ?/, ""); print }' "$0"
+        exit 0 ;;
+esac
 cd "$(dirname "$0")"
 ROOT=$(pwd)
 
@@ -17,9 +23,6 @@ MODE=aare
 case "$1" in
     google|official|aa) MODE=google; shift ;;
     aare) shift ;;
-    -h|--help)
-        sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
-        exit 0 ;;
 esac
 
 command -v adb >/dev/null || { echo "adb not found (Android SDK platform-tools)" >&2; exit 1; }

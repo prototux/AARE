@@ -24,7 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -70,7 +72,7 @@ internal fun SearchTemplateView(t: SearchTemplate) {
             }
             CarTextField(
                 value = query,
-                hint = t.searchHint ?: "Search",
+                hint = t.searchHint ?: stringResource(R.string.media_action_search),
                 editing = keyboard,
                 onFocus = {
                     if (host.driving) host.showParkedOnlyMessage() else keyboardWanted = true
@@ -89,7 +91,7 @@ internal fun SearchTemplateView(t: SearchTemplate) {
                         t.isLoading -> LoadingBox()
                         list != null && list.items.isNotEmpty() ->
                             ItemListView(listOf(ListSection(null, list)), ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
-                        list != null && query.isNotEmpty() && !keyboard -> EmptyMessage(list.noItemsMessage, "No results")
+                        list != null && query.isNotEmpty() && !keyboard -> EmptyMessage(list.noItemsMessage, stringResource(R.string.tpl_no_results))
                     }
                 }
             }

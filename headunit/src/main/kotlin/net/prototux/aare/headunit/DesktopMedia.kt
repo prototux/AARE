@@ -38,13 +38,16 @@ class VideoDecoder(private val width: Int, private val height: Int, private val 
     @Volatile var frames = 0
         private set
 
+    // Kept to interrupt in close(): with the queue empty it would wait in take() forever.
+    private val writer = Thread({
+        try {
+            while (true) { input.write(queue.take()); input.flush() }
+        } catch (_: Exception) {
+        }
+    }, "ffmpeg-in").apply { isDaemon = true }
+
     init {
-        Thread({
-            try {
-                while (true) { input.write(queue.take()); input.flush() }
-            } catch (_: Exception) {
-            }
-        }, "ffmpeg-in").apply { isDaemon = true; start() }
+        writer.start()
         Thread({
             val data = DataInputStream(process.inputStream.buffered(width * height * 3))
             try {
@@ -79,6 +82,7 @@ class VideoDecoder(private val width: Int, private val height: Int, private val 
         private set
 
     fun close() {
+        writer.interrupt()
         runCatching { input.close() }
         process.destroy()
     }

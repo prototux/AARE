@@ -31,6 +31,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         private set
     private var encoder: VideoEncoder? = null
     private var display: ProjectionDisplay? = null
+    /** A cluster encoder that keeps failing goes dark instead of restarting forever. */
+    private val restarts = RestartLimiter(CarSession.MAX_RESTARTS, CarSession.RESTART_WINDOW_MS)
 
     fun open(service: aap_protobuf.service.ServiceOuterClass.Service): VideoChannel = VideoChannel(service, this).also { channel = it }
 
@@ -61,18 +63,29 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
         val dpi = if (config.density > 0) config.density else CarSession.defaultDensity(minOf(w, h))
         Log.i(TAG, "cluster video ${w}x$h@$fps ${dpi}dpi")
-        val enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
+        // lateinit: the sink below needs to know whether its encoder is still the current one.
+        lateinit var enc: VideoEncoder
+        enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) = ch.sendCodecConfig(data, offset, length)
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) =
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
             override fun onError(e: Exception) {
                 Log.e(TAG, "cluster encoder failed, restarting", e)
-                main.post { start(config) }
+                main.post {
+                    // Stopped (the session ended), or this encoder was already replaced.
+                    if (encoder !== enc) return@post
+                    // A cluster that can't restart goes dark; the main display carries on.
+                    if (!restarts.allow()) { Log.w(TAG, "cluster encoder keeps failing, leaving it dark"); stop(); return@post }
+                    runCatching { start(config) }.onFailure { Log.w(TAG, "cluster video restart", it); stop() }
+                }
             }
         })
         enc.start()
         encoder = enc
-        display = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) { Content() }.also { it.show() }
+        // Assigned before show(), so that a failing show() still has stop() release the display.
+        val pd = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) { Content() }
+        display = pd
+        pd.show()
     }
 
     @Composable

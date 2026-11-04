@@ -63,9 +63,11 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 import kotlin.math.abs
@@ -146,11 +148,17 @@ internal fun MapScaffold(
             LocalInCard provides true,
         ) {
             BoxWithConstraints(Modifier.fillMaxSize().padding(gutter)) {
+                // obstructsMap() only for a strip that is drawn: its rect goes away with it (an empty strip draws
+                // nothing, so its old position would never be updated or removed).
                 if (!panMode) {
                     overlay()
-                    ActionStripView(actionStrip, ActionLook.MapStrip, vertical = false, Modifier.align(Alignment.TopEnd).obstructsMap())
+                    if (!actionStrip?.actions.isNullOrEmpty()) {
+                        ActionStripView(actionStrip, ActionLook.MapStrip, vertical = false, Modifier.align(Alignment.TopEnd).obstructsMap())
+                    }
                 }
-                ActionStripView(mapActionStrip, ActionLook.MapStrip, vertical = true, Modifier.align(Alignment.BottomEnd).obstructsMap())
+                if (!mapActionStrip?.actions.isNullOrEmpty()) {
+                    ActionStripView(mapActionStrip, ActionLook.MapStrip, vertical = true, Modifier.align(Alignment.BottomEnd).obstructsMap())
+                }
             }
         }
     }
@@ -382,7 +390,7 @@ private fun MapListCard(
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 loading -> LoadingBox()
-                list == null -> EmptyMessage(null, "Nothing to show")
+                list == null -> EmptyMessage(null, stringResource(R.string.common_nothing_to_show))
                 else -> ItemListView(listOf(ListSection(null, list)), limitType)
             }
         }

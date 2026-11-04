@@ -85,6 +85,7 @@ internal fun ActionView(
         return
     }
     if (action.type == Action.TYPE_PAN && pan == null) return // no map here: nothing to pan
+    if (!action.isDrawn()) return
 
     var vector: ImageVector? = null
     var carIcon: CarIcon? = null
@@ -98,6 +99,12 @@ internal fun ActionView(
         Action.TYPE_PAN -> {
             vector = if (pan?.active == true) Icons.Rounded.Close else Icons.Rounded.OpenWith
             onClick = pan?.toggle
+        }
+        Action.TYPE_MEDIA_PLAYBACK -> {
+            // it can't carry an icon or a title: the host draws its own
+            vector = standardIcon(CarIcon.TYPE_MEDIA_PLAYBACK)
+            val delegate = action.onClickDelegate
+            if (delegate != null) onClick = { host.click(delegate) }
         }
         else -> {
             carIcon = action.icon
@@ -224,5 +231,16 @@ internal fun ActionButtons(actions: List<Action>, modifier: Modifier = Modifier,
     }
 }
 
+/**
+ * The library's standard COMPOSE_MESSAGE and MEDIA_PLAYBACK leave the behaviour to the host (no click delegate for
+ * the first, an optional one for the second). AARE has no compose flow or now-playing link for hosted apps yet:
+ * they are skipped rather than drawn as a blank button that does nothing.
+ */
+private fun Action.isDrawn(): Boolean = when (type) {
+    Action.TYPE_COMPOSE_MESSAGE -> false
+    Action.TYPE_MEDIA_PLAYBACK -> onClickDelegate != null
+    else -> true
+}
+
 /** Space to leave under scrolling content so floating actions never hide the last row. */
-internal fun fabClearance(actions: List<Action>): Dp = if (actions.isEmpty()) 0.dp else 76.dp + 32.dp
+internal fun fabClearance(actions: List<Action>): Dp = if (actions.none { it.isDrawn() }) 0.dp else 76.dp + 32.dp

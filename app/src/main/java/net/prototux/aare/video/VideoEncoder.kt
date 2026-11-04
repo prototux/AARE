@@ -66,42 +66,52 @@ class VideoEncoder(
             // SPS/PPS before every key frame, so a head unit that resets its decoder can resync.
             int(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1)
         }
-        var format = format(emptySet())
-        val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
-        val c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-        c.setCallback(Callback(), Handler(t.looper))
-        // Encoders differ in which tuning keys they accept: drop them step by step until one works.
-        val fallbacks = listOf(
-            emptyList(),
-            listOf(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES),
-            listOf(MediaFormat.KEY_LATENCY, MediaFormat.KEY_PRIORITY, MediaFormat.KEY_MAX_B_FRAMES),
-            listOf(MediaFormat.KEY_PROFILE, MediaFormat.KEY_LEVEL, MediaFormat.KEY_BITRATE_MODE),
-            listOf(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER),
-        )
-        var configured = false
-        var lastError: Exception? = null
-        val dropped = HashSet<String>()
-        for (drop in fallbacks) {
-            dropped += drop
-            format = format(dropped)
-            try {
-                c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-                configured = true
-                break
-            } catch (e: Exception) {
-                lastError = e
-                Log.w(TAG, "encoder ${c.name} rejected $format: ${e.message}")
-                runCatching { c.reset() }
+        // Until the codec runs, a failure must release what was made so far: the caller never
+        // gets an encoder to stop, and a leaked codec holds one of the few hardware instances.
+        var c: MediaCodec? = null
+        var surface: Surface? = null
+        try {
+            var format = format(emptySet())
+            val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
+            c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            c.setCallback(Callback(), Handler(t.looper))
+            // Encoders differ in which tuning keys they accept: drop them step by step until one works.
+            val fallbacks = listOf(
+                emptyList(),
+                listOf(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES),
+                listOf(MediaFormat.KEY_LATENCY, MediaFormat.KEY_PRIORITY, MediaFormat.KEY_MAX_B_FRAMES),
+                listOf(MediaFormat.KEY_PROFILE, MediaFormat.KEY_LEVEL, MediaFormat.KEY_BITRATE_MODE),
+                listOf(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER),
+            )
+            var configured = false
+            var lastError: Exception? = null
+            val dropped = HashSet<String>()
+            for (drop in fallbacks) {
+                dropped += drop
+                format = format(dropped)
+                try {
+                    c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+                    configured = true
+                    break
+                } catch (e: Exception) {
+                    lastError = e
+                    Log.w(TAG, "encoder ${c.name} rejected $format: ${e.message}")
+                    runCatching { c.reset() }
+                }
             }
+            if (!configured) throw IllegalStateException("no usable H.264 encoder configuration for ${width}x$height@$fps", lastError)
+            surface = c.createInputSurface()
+            c.start()
+            inputSurface = surface
+            codec = c
+            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
+        } catch (e: Throwable) {
+            surface?.let { runCatching { it.release() } }
+            c?.let { runCatching { it.release() } }
+            t.quitSafely()
+            thread = null
+            throw e
         }
-        if (!configured) {
-            c.release(); t.quitSafely()
-            throw IllegalStateException("no usable H.264 encoder configuration for ${width}x$height@$fps", lastError)
-        }
-        inputSurface = c.createInputSurface()
-        c.start()
-        codec = c
-        Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
     }
 
     /** Asks for an IDR frame now (after focus changes, or when the head unit asks). */

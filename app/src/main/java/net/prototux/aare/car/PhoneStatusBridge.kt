@@ -55,6 +55,8 @@ class PhoneStatusBridge(
     private var callState = TelephonyManager.CALL_STATE_IDLE
     /** When the call went off-hook (elapsedRealtime), for its duration. */
     private var callSinceMs = 0L
+    /** The current call already went off-hook (answered or dialled): [callSinceMs] is its start. */
+    private var wasOffhook = false
     /** The number the phone-state broadcast gave for the current call (needs READ_CALL_LOG). */
     private var heardNumber: String? = null
     /** The active call's number: kept across a waiting call's RINGING/OFFHOOK blip so declining it doesn't lose it. */
@@ -146,10 +148,11 @@ class PhoneStatusBridge(
         val state = Calls.state(context)
         val now = SystemClock.elapsedRealtime()
         if (state != callState) {
-            // Call waiting goes OFFHOOK -> RINGING -> OFFHOOK: only a call starting from idle
-            // resets the duration, not the waiting call's blip on an already-active one.
-            if (callState == TelephonyManager.CALL_STATE_IDLE) callSinceMs = now
-            if (state == TelephonyManager.CALL_STATE_IDLE) { heardNumber = null; activeNumber = null; ringingNumber = null }
+            // The duration counts from the answer (or the dial), not from the first ring. Call
+            // waiting goes OFFHOOK -> RINGING -> OFFHOOK: only the call's first off-hook starts
+            // it, not the waiting call's blip on an already-active one.
+            if (state == TelephonyManager.CALL_STATE_OFFHOOK && !wasOffhook) { callSinceMs = now; wasOffhook = true }
+            if (state == TelephonyManager.CALL_STATE_IDLE) { heardNumber = null; activeNumber = null; ringingNumber = null; wasOffhook = false }
             // Straight to off-hook is an outgoing call, which may not say its number: if it was
             // just dialled from the car, use that.
             if (callState == TelephonyManager.CALL_STATE_IDLE && state == TelephonyManager.CALL_STATE_OFFHOOK) {

@@ -1,9 +1,9 @@
 package net.prototux.aare.media
 
 import androidx.media3.session.SessionError
+import net.prototux.aare.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SourcePickerTest {
@@ -57,8 +57,9 @@ class SourcePickerTest {
 
     @Test
     fun errorTextMapsSessionErrors() {
-        assertEquals("Sign in to Tempus on your phone", errorText(SessionError.ERROR_SESSION_AUTHENTICATION_EXPIRED, "Tempus"))
-        assertTrue(errorText(12345, "Tempus").contains("12345"))
+        assertEquals(R.string.media_error_sign_in, errorTextRes(SessionError.ERROR_SESSION_AUTHENTICATION_EXPIRED))
+        assertEquals(R.string.media_error_disconnected, errorTextRes(SessionError.ERROR_SESSION_DISCONNECTED))
+        assertEquals(R.string.media_error_code, errorTextRes(12345))
     }
 
     @Test

@@ -10,8 +10,11 @@ import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.notify.PhoneGuidance
 
-/** What kind of app an entry in the launcher is, which decides where its UI goes. */
-enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, PHONE, SETTINGS, NOTIFICATIONS }
+/**
+ * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
+ * it hands the screen back to the car's own.
+ */
+enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
 
 /** One launchable app on the car screen. */
 @Stable
@@ -53,10 +56,7 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
-) {
-    /** [message], or a banner offering "Read aloud" (message banners not yet flagged by their poster). */
-    val isMessage: Boolean get() = message || actions.any { it.first == "Read aloud" }
-}
+)
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
 data class CarGeometry(

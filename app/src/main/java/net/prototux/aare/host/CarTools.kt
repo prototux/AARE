@@ -3,6 +3,7 @@ package net.prototux.aare.host
 import net.prototux.aare.Settings
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.Conversation
+import net.prototux.aare.ui.car.CarAppKind
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.PhoneStatusInfo
 import org.json.JSONArray
@@ -33,9 +34,12 @@ object CarTools {
             "Read the message back first: the user confirms before it is sent.",
             param("conversation", "string", "the conversation's name, as car_messages gives it (a contact or a group)") to true,
             param("message", "string", "the reply, as the user wants it sent") to true,
+            param("app", "string", "the conversation's app, as car_messages gives it, when several conversations have that name") to false,
             confirm = true, summary = "reply “{message}” to {conversation}"))
         put(tool("car_mark_read", "Mark a conversation from car_messages as read.",
-            param("conversation", "string", "the conversation's name, as car_messages gives it") to true, silent = true))
+            param("conversation", "string", "the conversation's name, as car_messages gives it") to true,
+            param("app", "string", "the conversation's app, as car_messages gives it, when several conversations have that name") to false,
+            silent = true))
         put(tool("car_display", "Switch the car screen to dark or light colors, or back to the car's own day/night setting.",
             param("mode", "string", "dark, light or auto", listOf("dark", "light", "auto")) to true, silent = true))
     }
@@ -47,8 +51,8 @@ object CarTools {
         "car_media" -> media(runtime, args.optString("action"))
         "car_open" -> open(runtime, args.optString("what"))
         "car_messages" -> messages(runtime, args.optString("app"))
-        "car_reply" -> reply(runtime, args.optString("conversation"), args.optString("message"))
-        "car_mark_read" -> markRead(args.optString("conversation"))
+        "car_reply" -> reply(runtime, args.optString("conversation"), args.optString("app"), args.optString("message"))
+        "car_mark_read" -> markRead(args.optString("conversation"), args.optString("app"))
         "car_display" -> display(runtime, args.optString("mode"))
         else -> error("unknown car tool $name")
     }
@@ -106,9 +110,11 @@ object CarTools {
             "home", "dashboard", "map" -> { ui.screen = CarScreen.Dashboard; return ok("home") }
             "apps", "app list", "launcher" -> { ui.screen = CarScreen.Launcher; return ok("app list") }
         }
-        val app = ui.apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
-            ?: ui.apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
-            ?: return error("no app called \"$what\" in the car; apps: " + ui.apps.joinToString { it.label })
+        // "Exit to car" isn't an app: a loose match on "car" mustn't take the screen away.
+        val apps = ui.apps.filter { it.kind != CarAppKind.EXIT }
+        val app = apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
+            ?: apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
+            ?: return error("no app called \"$what\" in the car; apps: " + apps.joinToString { it.label })
         rt.actions.openApp(app)
         return ok("${app.label} is on the car screen")
     }
@@ -116,9 +122,7 @@ object CarTools {
     private fun messages(rt: CarRuntime, app: String): JSONObject {
         val listener = CarNotificationListener.instance ?: return noListener(rt.context)
         val list = listener.conversations()
-        val pm = listener.packageManager
-        fun label(pkg: String) = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
-        val filtered = if (app.isBlank()) list else list.filter { label(it.packageName).contains(app, ignoreCase = true) }
+        val filtered = inApp(list, app) { label(it.packageName) }
         val out = JSONArray()
         filtered.take(8).forEach { c ->
             out.put(JSONObject().put("app", label(c.packageName)).put("conversation", c.title).put("can_reply", c.canReply)
@@ -127,29 +131,67 @@ object CarTools {
         return JSONObject().put("conversations", out).put("count", filtered.size)
     }
 
-    /** The conversation called [name]: exact, then partial match. */
-    private fun conversation(name: String): Conversation? {
-        val list = CarNotificationListener.instance?.conversations() ?: return null
+    /**
+     * The items whose title matches [name]: the exact matches if there are any, else the titles that contain it.
+     * Blank names and blank titles never match, and a title is never matched by being part of the name ("Al" in
+     * "Alice"): a reply must not go to a conversation the driver didn't name.
+     */
+    internal fun <T> matches(items: List<T>, name: String, title: (T) -> String): List<T> {
         val n = name.trim()
-        return list.firstOrNull { it.title.equals(n, ignoreCase = true) }
-            ?: list.firstOrNull { it.title.contains(n, ignoreCase = true) || n.contains(it.title, ignoreCase = true) }
+        if (n.isEmpty()) return emptyList()
+        val named = items.filter { title(it).isNotBlank() }
+        return named.filter { title(it).trim().equals(n, ignoreCase = true) }.ifEmpty { named.filter { title(it).contains(n, ignoreCase = true) } }
     }
 
-    private fun reply(rt: CarRuntime, name: String, message: String): JSONObject {
+    /** The items of [app] (a part of the app's name, as the user said it), or all of them if it's blank. */
+    internal fun <T> inApp(items: List<T>, app: String, appName: (T) -> String): List<T> =
+        if (app.isBlank()) items else items.filter { appName(it).contains(app.trim(), ignoreCase = true) }
+
+    /**
+     * Runs [use] on the one conversation called [name] (in [app], if given), or gives back the error. The
+     * assistant's confirmation shows the name the LLM sent, so anything but a single match is refused, and the
+     * result names the conversation used. Two conversations with the same name (Mom on WhatsApp and SMS) are told
+     * apart by their app.
+     */
+    private fun withConversation(name: String, app: String, where: String, use: (Conversation) -> JSONObject): JSONObject {
+        if (name.isBlank()) return error("which conversation?")
+        val found = inApp(matches(CarNotificationListener.instance?.conversations().orEmpty(), name) { it.title }, app) { label(it.packageName) }
+        val inWhat = if (app.isBlank()) "" else " in $app"
+        return when (found.size) {
+            1 -> use(found[0])
+            0 -> error("no conversation called \"$name\"$inWhat$where")
+            else -> error("several conversations match \"$name\"$inWhat, ask which one, then call again with its name and app: " +
+                found.joinToString { "${it.title} (${label(it.packageName)})" })
+        }
+    }
+
+    private fun reply(rt: CarRuntime, name: String, app: String, message: String): JSONObject {
         val listener = CarNotificationListener.instance ?: return if (CarNotificationListener.accessGranted(rt.context)) {
             CarNotificationListener.rebind(rt.context)
             error("the messages aren't available yet, try again in a moment")
         } else error("AARE has no notification access on the phone")
         if (message.isBlank()) return error("empty message")
-        val c = conversation(name) ?: return error("no conversation called \"$name\" among the unread messages")
-        if (!c.canReply) return error("${c.title}'s app doesn't allow replies from notifications")
-        return if (listener.reply(c, message.trim())) ok("sent to ${c.title}") else error("the app refused the reply")
+        return withConversation(name, app, " among the unread messages") { c ->
+            when {
+                !c.canReply -> error("${c.title}'s app doesn't allow replies from notifications")
+                listener.reply(c, message.trim()) -> resolved(ok("sent to ${c.title}"), c)
+                else -> error("the app refused the reply")
+            }
+        }
     }
 
-    private fun markRead(name: String): JSONObject {
-        val c = conversation(name) ?: return error("no conversation called \"$name\"")
-        val pi = c.markRead ?: return error("${c.title}'s app has no mark-as-read action")
-        return if (runCatching { pi.send() }.isSuccess) ok("marked as read") else error("the app refused")
+    private fun markRead(name: String, app: String): JSONObject = withConversation(name, app, "") { c ->
+        val pi = c.markRead ?: return@withConversation error("${c.title}'s app has no mark-as-read action")
+        if (runCatching { pi.send() }.isSuccess) resolved(ok("marked as read"), c) else error("the app refused")
+    }
+
+    /** Adds the conversation actually used to a result. */
+    private fun resolved(result: JSONObject, c: Conversation) = result.put("conversation", c.title).put("app", label(c.packageName))
+
+    /** An app's name for the assistant, or its package if unknown. */
+    private fun label(pkg: String): String {
+        val pm = CarNotificationListener.instance?.packageManager ?: return pkg
+        return runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrDefault(pkg)
     }
 
     private fun display(rt: CarRuntime, mode: String): JSONObject {
