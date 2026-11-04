@@ -51,6 +51,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import net.prototux.aare.R
 import net.prototux.aare.car.CarData
 
 /**
@@ -148,7 +149,7 @@ class CarAppConnection(
                 Context.BIND_AUTO_CREATE or Context.BIND_INCLUDE_CAPABILITIES or Context.BIND_IMPORTANT)
         }.getOrElse { log("bind failed", it); false }
         bound = ok
-        if (!ok) fail("Could not start ${info.label}")
+        if (!ok) fail(context.getString(R.string.carapp_error_start, info.label))
     }
 
     /** On screen (map on the dashboard counts) or not: drives the app's Screen lifecycle. */
@@ -257,7 +258,7 @@ class CarAppConnection(
 
         override fun onServiceDisconnected(name: ComponentName) = onAppDied()
         override fun onBindingDied(name: ComponentName) = onAppDied()
-        override fun onNullBinding(name: ComponentName) = fail("${info.label} refused the connection")
+        override fun onNullBinding(name: ComponentName) = fail(context.getString(R.string.carapp_error_refused, info.label))
     }
 
     private fun handshake(app: ICarApp) {
@@ -268,7 +269,7 @@ class CarAppConnection(
             val appMin = appInfo?.minCarAppApiLevel ?: CarAppApiLevels.LEVEL_1
             libraryVersion = appInfo?.libraryDisplayVersion ?: ""
             if (appMin > hostMax) {
-                fail("${info.label} needs car API level $appMin; this host supports $hostMax")
+                fail(context.getString(R.string.carapp_error_api_level, info.label, appMin, hostMax))
                 return@call
             }
             apiLevel = minOf(appLatest, hostMax)
@@ -360,7 +361,7 @@ class CarAppConnection(
         // (onBindingDied especially) leaks bindings and keeps the service alive.
         unbind()
         status = Status.FAILED
-        error = "${info.label} stopped"
+        error = context.getString(R.string.carapp_error_stopped, info.label)
         // Reconnect while it's on screen, a few times: apps get killed and restarted by the OS.
         if (visible && retries++ < 3) main.postDelayed({ if (visible && status == Status.FAILED) connect() }, 1_000L * retries)
     }
@@ -427,8 +428,8 @@ class CarAppConnection(
         if (status == Status.CONNECTING) {
             fail(when {
                 "Unknown host" in message || "not allowed" in message || "SecurityException" in message ->
-                    "${info.label} only accepts Google's Android Auto. It needs to allow AARE (see the app list on the phone)."
-                else -> "${info.label} couldn't start: ${message.lineSequence().first().take(120)}"
+                    context.getString(R.string.carapp_error_google_only, info.label)
+                else -> context.getString(R.string.carapp_error_cant_start, info.label, message.lineSequence().first().take(120))
             })
         }
     }

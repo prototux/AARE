@@ -9,6 +9,7 @@ import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.Vide
 import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
 import aap_protobuf.service.navigationstatus.message.NavigationDestinationOuterClass.NavigationDestination
 import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.NavigationState
+import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import net.prototux.aare.aap.cert.SelfSignedCertificate
@@ -267,5 +268,18 @@ class SessionLoopbackTest {
         nav!!.update(step("second"), null, null, null)
         assertEquals("first", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
         assertEquals("second", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
+    }
+
+    @Test
+    fun heldNavUpdateIsDroppedWhenRerouting() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        fun step(address: String) = NavigationState.newBuilder()
+            .addDestinations(NavigationDestination.newBuilder().setAddress(address)).build()
+        nav!!.update(step("old route"), null, null, null)
+        nav!!.update(step("abandoned"), null, null, null)
+        // The held step belongs to the route being left: it must not follow REROUTING.
+        nav!!.status(NavigationStatus.NavigationStatusEnum.REROUTING)
+        assertEquals("old route", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
+        assertEquals(null, hu.navStates.poll(1, TimeUnit.SECONDS))
     }
 }

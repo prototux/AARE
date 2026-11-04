@@ -31,6 +31,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         private set
     private var encoder: VideoEncoder? = null
     private var display: ProjectionDisplay? = null
+    /** A cluster encoder that keeps failing goes dark instead of restarting forever. */
+    private val restarts = RestartLimiter(CarSession.MAX_RESTARTS, CarSession.RESTART_WINDOW_MS)
 
     fun open(service: aap_protobuf.service.ServiceOuterClass.Service): VideoChannel = VideoChannel(service, this).also { channel = it }
 
@@ -73,6 +75,7 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
                     // Stopped (the session ended), or this encoder was already replaced.
                     if (encoder !== enc) return@post
                     // A cluster that can't restart goes dark; the main display carries on.
+                    if (!restarts.allow()) { Log.w(TAG, "cluster encoder keeps failing, leaving it dark"); stop(); return@post }
                     runCatching { start(config) }.onFailure { Log.w(TAG, "cluster video restart", it); stop() }
                 }
             }

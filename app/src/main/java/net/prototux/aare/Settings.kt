@@ -178,6 +178,11 @@ class Settings(context: Context) {
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
 
+    /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
+    var requestedPermissions: Set<String>
+        get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("requested_permissions", v) }
+
     /** Apps hidden from the car launcher. */
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", emptySet()) ?: emptySet()

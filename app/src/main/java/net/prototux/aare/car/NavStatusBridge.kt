@@ -40,6 +40,8 @@ class NavStatusBridge(
     private var rerouting = false
     /** A hosted navigation app is guiding: it wins over [phone] guidance. */
     private var hosted = false
+    /** The hosted app has sent steps: only then is a loading trip a reroute, not the first route. */
+    private var hostedSteps = false
     private var phone: PhoneGuidance? = null
 
     /**
@@ -54,8 +56,10 @@ class NavStatusBridge(
         if (trip != null && trip.isLoading) {
             // The app is working out a route, and a loading trip can't carry steps (the library
             // forbids it): still the hosted app's guidance, not its end, so the cluster keeps it
-            // and the phone app's guidance doesn't take over meanwhile.
+            // and the phone app's guidance doesn't take over meanwhile. Before its first route
+            // there is nothing to reroute: wait for the steps.
             hosted = true
+            if (!hostedSteps) return
             if (!active) {
                 active = true
                 channel.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
@@ -68,6 +72,7 @@ class NavStatusBridge(
         }
         if (trip == null || trip.steps.isEmpty()) {
             hosted = false
+            hostedSteps = false
             if (phone != null) { sendPhone(phone!!); return }
             if (active) {
                 active = false
@@ -77,6 +82,7 @@ class NavStatusBridge(
             return
         }
         hosted = true
+        hostedSteps = true
         activate()
         val step = trip.steps.first()
         val maneuver = step.maneuver

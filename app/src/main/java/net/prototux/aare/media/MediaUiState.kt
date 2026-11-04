@@ -20,6 +20,8 @@ internal enum class MediaView { BROWSE, NOW_PLAYING, QUEUE, SEARCH }
 @Stable
 internal class NodeLoader(
     private val scope: CoroutineScope,
+    /** The error shown when [fetch] fails with anything but a [BrowseException]. */
+    private val fallbackError: () -> MediaError,
     private val fetch: suspend (page: Int, pageSize: Int) -> List<MediaItem>,
 ) {
     var items by mutableStateOf<List<MediaItem>>(emptyList())
@@ -55,7 +57,7 @@ internal class NodeLoader(
                 throw e
             } catch (e: Exception) {
                 if (gen == generation) {
-                    error = (e as? BrowseException)?.error ?: MediaError("Could not load this list")
+                    error = (e as? BrowseException)?.error ?: fallbackError()
                     end = true
                 }
             } finally {
@@ -212,7 +214,7 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
         if (text.isEmpty()) return
         // One search level at a time, else Back re-shows a stale result and each search leaks a level.
         stack.removeAll { it.id.startsWith("search:") }
-        stack += Level("search:$text", "“$text”", NodeLoader(scope) { page, size ->
+        stack += Level("search:$text", "“$text”", NodeLoader(scope, connection::loadListError) { page, size ->
             if (page == 0) connection.search(text, size) else emptyList()
         }, StyleHints(), isNode = false)
         view = MediaView.BROWSE
@@ -233,5 +235,5 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
 
     /** Levels start loading when first shown (see BrowseLevel), not when created. */
     private fun level(id: String, title: String, hints: StyleHints) =
-        Level(id, title, NodeLoader(scope) { page, size -> connection.children(id, page, size) }, hints)
+        Level(id, title, NodeLoader(scope, connection::loadListError) { page, size -> connection.children(id, page, size) }, hints)
 }

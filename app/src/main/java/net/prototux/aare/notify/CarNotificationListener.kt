@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.media.AudioAttributes
@@ -130,11 +131,17 @@ class CarNotificationListener : NotificationListenerService() {
         sink(Message(sbn.key, title, last.text, c.icon, actions, group) { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
     }
 
-    /** The default dialer, or the system one (some phones post the call notification from it). */
+    /**
+     * The default dialer, the system one (some phones post the call notification from it), or any app
+     * of the system image: on Samsung and some AOSP ROMs a separate in-call UI posts it
+     * (com.samsung.android.incallui, com.android.incallui), and no installed app can pass for one.
+     */
     private fun isDialer(pkg: String): Boolean = runCatching {
         val telecom = getSystemService(TelecomManager::class.java) ?: return@runCatching false
-        pkg == telecom.defaultDialerPackage ||
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && pkg == telecom.systemDialerPackage)
+        if (pkg == telecom.defaultDialerPackage) return@runCatching true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && pkg == telecom.systemDialerPackage) return@runCatching true
+        val flags = packageManager.getApplicationInfo(pkg, 0).flags
+        (flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
     }.getOrDefault(false)
 
     /** The conversations currently in the notification shade, newest first; all apps if [packageName] is null. */

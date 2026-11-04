@@ -20,11 +20,21 @@ import androidx.compose.ui.unit.dp
  * Place it directly before the element's own `.clickable`, whose focus target it observes (a
  * clickable is focusable by default, so Compose's D-pad traversal already reaches it; this only
  * makes the focus visible). It draws nothing until something is focused, so touch head units,
- * which never move focus, are unaffected.
+ * which never move focus, are unaffected; and nothing after a touch, see [CarFocusVisibility].
  */
 fun Modifier.carFocusHighlight(shape: Shape): Modifier = composed {
     var focused by remember { mutableStateOf(false) }
     val color = MaterialTheme.colorScheme.primary
+    val shown = focused && CarFocusVisibility.keyInput
     onFocusChanged { focused = it.isFocused }
-        .border(width = if (focused) 3.dp else 0.dp, color = if (focused) color else Color.Transparent, shape = shape)
+        .border(width = if (shown) 3.dp else 0.dp, color = if (shown) color else Color.Transparent, shape = shape)
+}
+
+/**
+ * Whether the car's last input was a navigation key rather than a touch (main thread). Car touches
+ * are injected straight into the window, so they never put it back in touch mode once a knob took
+ * it out: on a unit with both, the highlight would otherwise stay up and follow the taps.
+ */
+object CarFocusVisibility {
+    var keyInput by mutableStateOf(false)
 }

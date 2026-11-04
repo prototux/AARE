@@ -46,9 +46,13 @@ internal class SessionTracker(
     private val listener = ComponentName(context, LISTENER)
     private val handler = Handler(Looper.getMainLooper())
     private val onChanged = MediaSessionManager.OnActiveSessionsChangedListener { list ->
+        // Removing the listener doesn't drop a call already queued on the handler: after release()
+        // it would create sources (and controller callbacks) that nothing releases.
+        if (released) return@OnActiveSessionsChangedListener
         if (list.isNullOrEmpty()) recheck() else update(list)
     }
     private var listening = false
+    private var released = false
     private var poll: Job? = null
 
     fun start() {
@@ -102,6 +106,7 @@ internal class SessionTracker(
     }
 
     fun release() {
+        released = true
         poll?.cancel()
         if (listening) runCatching { manager.removeOnActiveSessionsChangedListener(onChanged) }
         listening = false
@@ -117,7 +122,7 @@ internal class SessionTracker(
 
 /** One platform media session, as a [PlaybackSource]. */
 internal class SessionSource(
-    context: Context,
+    private val context: Context,
     private val controller: MediaController,
     private val scope: CoroutineScope,
     private val art: ArtLoader,

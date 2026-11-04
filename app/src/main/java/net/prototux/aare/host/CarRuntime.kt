@@ -410,9 +410,10 @@ class CarRuntime(
         }
         ui.apps.clear()
         ui.apps.addAll(entries)
-        // Restore the last navigation and media apps, so the dashboard isn't empty.
+        // Restore the last navigation and media apps, so the dashboard isn't empty. Not a navigation app that
+        // finished itself: its map card would stay blank instead of offering the picker.
         if (ui.activeNavAppId == null) {
-            val nav = entries.filter { it.kind == CarAppKind.NAVIGATION }
+            val nav = entries.filter { it.kind == CarAppKind.NAVIGATION && it.id !in finished }
             ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
         }
         if (ui.activeMediaAppId == null) {

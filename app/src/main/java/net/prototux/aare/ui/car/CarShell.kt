@@ -53,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -135,15 +137,19 @@ private fun ContentArea(
     val gutter = LocalCarDimens.current.gutter
     // Give rotary / D-pad head units a starting point: focus lands on the first focusable of each
     // screen when it opens, so the highlight is visible without a touch. Harmless on touch units.
-    // Keyed on the input mode too: in touch mode the request fails, so the first knob detent
-    // (which leaves touch mode) asks again.
+    // Asked again on an input mode change: in touch mode the request fails, so the first knob
+    // detent (which leaves touch mode) asks again. Not when the content still holds focus (a tap
+    // between two knob turns), or focus would jump back to the first item.
     val focusEntry = remember { FocusRequester() }
+    var contentFocused by remember { mutableStateOf(false) }
     val inputMode = LocalInputModeManager.current.inputMode
-    LaunchedEffect(state.screen, inputMode) { runCatching { focusEntry.requestFocus() } }
+    LaunchedEffect(state.screen) { runCatching { focusEntry.requestFocus() } }
+    LaunchedEffect(inputMode) { if (!contentFocused) runCatching { focusEntry.requestFocus() } }
     AnimatedContent(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
-        modifier = modifier.fillMaxHeight().focusRequester(focusEntry).focusGroup(),
+        modifier = modifier.fillMaxHeight().onFocusChanged { contentFocused = it.hasFocus }
+            .focusRequester(focusEntry).focusGroup(),
         label = "screen",
     ) { screen ->
         when (screen) {

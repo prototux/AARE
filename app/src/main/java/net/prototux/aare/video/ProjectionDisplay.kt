@@ -29,6 +29,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import net.prototux.aare.ui.car.CarFocusVisibility
 
 /**
  * The car screen, rendered on the phone.
@@ -71,6 +72,7 @@ class ProjectionDisplay(
 
     fun dispatchTouch(event: MotionEvent) {
         main.post {
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) CarFocusVisibility.keyInput = false
             presentation?.window?.decorView?.dispatchTouchEvent(event)
             event.recycle()
         }
@@ -87,7 +89,9 @@ class ProjectionDisplay(
             // put the window back in touch mode. Like the platform, the key that leaves touch mode
             // is used up doing so (the first knob detent shows the focus, it doesn't move it on),
             // but only if it did leave it: a refused switch must not eat every key.
-            if (decor.isInTouchMode && event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)) {
+            val navigation = event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)
+            if (navigation) CarFocusVisibility.keyInput = true
+            if (navigation && decor.isInTouchMode) {
                 decor.requestFocusFromTouch()
                 if (!decor.isInTouchMode) return@post
             }

@@ -134,8 +134,9 @@ class NavigationStatusChannel(service: Service) : ServiceChannel(service, "navst
     }
 
     fun status(s: NavigationStatus.NavigationStatusEnum) = synchronized(lock) {
-        // A step held back for the rate limit must not light the cluster up again after navigation ended.
-        if (s == NavigationStatus.NavigationStatusEnum.INACTIVE) pending = null
+        // A step held back for the rate limit must not light the cluster up again after navigation
+        // ended, nor show the abandoned route's maneuver while rerouting.
+        if (s != NavigationStatus.NavigationStatusEnum.ACTIVE) pending = null
         send(NavStatusMsg.STATUS, NavigationStatus.newBuilder().setStatus(s).build(), Priority.INPUT)
     }
 

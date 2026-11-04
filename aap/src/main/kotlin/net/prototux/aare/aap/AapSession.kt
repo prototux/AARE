@@ -227,8 +227,12 @@ class AapSession(
 
     fun sendControl(id: Int, body: MessageLite) = send(0, id, body)
 
-    fun requestAudioFocus(type: AudioFocusRequestType) =
-        sendControl(ControlMsg.AUDIO_FOCUS_REQUEST, AudioFocusRequest.newBuilder().setAudioFocusType(type).build())
+    /**
+     * Asks the head unit for audio focus. A change that follows a stream's STOP goes at
+     * [Priority.AUDIO], so it can't overtake that STOP or the data still queued before it.
+     */
+    fun requestAudioFocus(type: AudioFocusRequestType, priority: Int = Priority.CONTROL) =
+        send(0, ControlMsg.AUDIO_FOCUS_REQUEST, AudioFocusRequest.newBuilder().setAudioFocusType(type).build(), priority = priority)
 
     fun requestNavFocus(type: NavFocusType) =
         sendControl(ControlMsg.NAV_FOCUS_REQUEST, NavFocusRequestNotification.newBuilder().setFocusType(type).build())

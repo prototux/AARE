@@ -255,6 +255,9 @@ internal class MediaConnection(
         _status.value = Status.Failed(MediaError(message))
     }
 
+    /** The error for a list that failed without the app saying why. */
+    fun loadListError() = MediaError(context.getString(R.string.media_error_load_list))
+
     /** One page of [parentId]'s children. Throws [BrowseException]. */
     suspend fun children(parentId: String, page: Int, pageSize: Int): List<MediaItem> {
         val b = connected()
@@ -263,7 +266,7 @@ internal class MediaConnection(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            throw BrowseException(MediaError(context.getString(R.string.media_error_load_list)))
+            throw BrowseException(loadListError())
         }
         if (result.resultCode != LibraryResult.RESULT_SUCCESS) throw BrowseException(errorOf(result))
         return result.value.orEmpty()

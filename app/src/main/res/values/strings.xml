@@ -358,4 +358,12 @@
     <string name="tpl_parked_only">Available when parked</string>
     <string name="tpl_sign_in_parked_only">You can sign in when parked</string>
     <string name="tpl_password_hint">Password</string>
+
+    <!-- carapp: errors of a hosted car app (Android for Cars App Library), shown on the car screen -->
+    <string name="carapp_error_start">Could not start %1$s</string>
+    <string name="carapp_error_refused">%1$s refused the connection</string>
+    <string name="carapp_error_api_level">%1$s needs car API level %2$d; this host supports %3$d</string>
+    <string name="carapp_error_stopped">%1$s stopped</string>
+    <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
+    <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
 </resources>

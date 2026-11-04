@@ -78,7 +78,8 @@ fun main(args: Array<String>) {
         System.err.println("--hu-cert and --hu-key go together")
         exitProcess(2)
     }
-    if (opts["speed"]?.let { s -> (s.toDoubleOrNull() ?: 0.0) <= 0 } == true) {
+    // Finite too: NaN passes a `<= 0` test, and Infinity would make the speed slider unbounded.
+    if (opts["speed"]?.let { s -> s.toDoubleOrNull()?.let { it.isFinite() && it > 0 } != true } == true) {
         System.err.println("--speed needs a positive number of km/h")
         exitProcess(2)
     }

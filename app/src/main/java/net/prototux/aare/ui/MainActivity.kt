@@ -324,13 +324,19 @@ private fun Pill(label: String, icon: ImageVector?, onClick: () -> Unit) {
 private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> Unit, open: (Page) -> Unit) {
     val ctx = LocalContext.current
     fun granted(p: String) = ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED
+    val activity = ctx as? android.app.Activity
+    val settings = remember { Settings(ctx) }
+    fun rationale(p: String) = activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, p)
+    // The rationale of each permission just before the request, and the ones asked for in an earlier one.
+    var rationaleBefore by remember { mutableStateOf(emptySet<String>()) }
+    var askedBefore by remember { mutableStateOf(emptySet<String>()) }
     val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         recheck()
         // Denied twice, a permission is no longer asked for: the request answers at once and the row
-        // would seem dead, so open AARE's system settings to grant it there. The rationale is false
-        // before any request too, which is why this is checked only after one.
-        val activity = ctx as? android.app.Activity
-        val blocked = result.filterValues { !it }.keys.any { activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, it) }
+        // would seem dead, so open AARE's system settings to grant it there.
+        val blocked = activity != null && result.filterValues { !it }.keys.any {
+            permissionBlocked(it in rationaleBefore, rationale(it), it in askedBefore)
+        }
         if (blocked) ctx.startSafely(appDetails(ctx))
     }
     // Only the permissions this Android version has: a newer one reads as denied on older releases and
@@ -354,6 +360,9 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
 
     Section(stringResource(R.string.setup_finish_title)) {
         Check(stringResource(R.string.setup_check_permissions_title), stringResource(R.string.setup_check_permissions_subtitle), perms) {
+            rationaleBefore = runtimePerms.filter(::rationale).toSet()
+            askedBefore = settings.requestedPermissions
+            settings.requestedPermissions = askedBefore + runtimePerms
             permissions.launch(runtimePerms.toTypedArray())
         }
         Check(stringResource(R.string.setup_check_notification_access_title), stringResource(R.string.setup_check_notification_access_subtitle), notificationAccess) {
@@ -377,6 +386,15 @@ private fun Check(title: String, subtitle: String, done: Boolean, onClick: () ->
         if (!done) Text(stringResource(R.string.setup_action_set_up), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
     }
 }
+
+/**
+ * Whether a permission the request just denied can no longer be asked for (main setup row). Since Android 11,
+ * backing out of the dialog also denies with no rationale, as before any request: so it counts as refused for
+ * good only if the rationale went from shown to gone (refused a second time), or it was asked for in an earlier
+ * request and still has none (blocked back then).
+ */
+internal fun permissionBlocked(rationaleBefore: Boolean, rationaleAfter: Boolean, askedBefore: Boolean): Boolean =
+    !rationaleAfter && (rationaleBefore || askedBefore)
 
 /** AARE's page in the system settings, where every permission and access can be granted by hand. */
 private fun appDetails(ctx: Context) =
@@ -627,11 +645,18 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
 }
 
 /** Copies the chosen photo into AARE's files, at most 1920 pixels on its longest side, as the car's wallpaper. */
-private fun saveWallpaper(context: android.content.Context, uri: Uri): Boolean = runCatching {
-    // Decoded before the file is opened, so a photo that can't be read leaves the current one alone.
-    val bmp = decodeWallpaper(context, uri, 1920)
-    java.io.File(context.filesDir, Settings.WALLPAPER_FILE).outputStream().use { check(bmp.compress(Bitmap.CompressFormat.JPEG, 90, it)) }
-}.isSuccess
+private fun saveWallpaper(context: android.content.Context, uri: Uri): Boolean {
+    // Written to a temporary file and renamed over the current one only once complete, so a photo
+    // that can't be read or written (a full disk) leaves the current wallpaper alone.
+    val tmp = java.io.File(context.filesDir, Settings.WALLPAPER_FILE + ".tmp")
+    val ok = runCatching {
+        val bmp = decodeWallpaper(context, uri, 1920)
+        tmp.outputStream().use { check(bmp.compress(Bitmap.CompressFormat.JPEG, 90, it)) }
+        check(tmp.renameTo(java.io.File(context.filesDir, Settings.WALLPAPER_FILE)))
+    }.isSuccess
+    if (!ok) tmp.delete()
+    return ok
+}
 
 /**
  * Decodes [uri] upright (cameras store portrait photos sideways with an EXIF orientation tag) and

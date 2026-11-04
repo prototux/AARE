@@ -220,9 +220,10 @@ class VideoChannel(
         synchronized(lock) { sentAt.clear() }
         startStream(index)
         listener.onVideoStart(index, configs[index])
-        // Ask to be shown; head units answer with a focus notification.
+        // Ask to be shown; head units answer with a focus notification. At the data priority so
+        // it follows START: the head unit must not be asked to show a stream it hasn't started.
         send(MediaMsg.VIDEO_FOCUS_REQUEST, VideoFocusRequestNotification.newBuilder()
-            .setMode(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setReason(VideoFocusReason.UNKNOWN).build())
+            .setMode(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setReason(VideoFocusReason.UNKNOWN).build(), dataPriority)
     }
 
     override fun onOtherMessage(msg: AapMessage) {

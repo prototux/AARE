@@ -47,6 +47,7 @@ import net.prototux.aare.aap.AapSession
 import net.prototux.aare.aap.PhoneDescription
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.PinRefusal
+import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import net.prototux.aare.aap.SessionOptions
 import net.prototux.aare.aap.Transport
@@ -366,7 +367,7 @@ class CarSession(
                     // The session ended, or this encoder was already replaced: nothing to restart.
                     if (closed || encoder !== enc) return@post
                     try {
-                        if (!mayRestartEncoder()) throw IllegalStateException("the encoder keeps failing", e)
+                        if (!encoderRestarts.allow()) throw IllegalStateException("the encoder keeps failing", e)
                         startProjection(videoConfig ?: config, rightHandDrive)
                     } catch (failure: Exception) {
                         // Same as a failed first start: end the session (onClosed tears it all down).
@@ -399,16 +400,8 @@ class CarSession(
         touch = TouchMapper(inputCh?.first ?: layout.visibleWidth, inputCh?.second ?: layout.visibleHeight, layout)
     }
 
-    /** Encoder-error restarts in the last [RESTART_WINDOW_MS] (elapsedRealtime, main thread). */
-    private val encoderRestarts = ArrayDeque<Long>()
-
     /** An encoder that fails again and again ends the session rather than restart forever. */
-    private fun mayRestartEncoder(): Boolean {
-        val now = SystemClock.elapsedRealtime()
-        while (encoderRestarts.isNotEmpty() && now - encoderRestarts.first() > RESTART_WINDOW_MS) encoderRestarts.removeFirst()
-        encoderRestarts.addLast(now)
-        return encoderRestarts.size <= MAX_RESTARTS
-    }
+    private val encoderRestarts = RestartLimiter(MAX_RESTARTS, RESTART_WINDOW_MS)
 
     private fun teardownVideo() {
         display?.release(); display = null
@@ -581,7 +574,8 @@ class CarSession(
         override fun request(playing: Boolean) {
             mediaPlaying = playing
             if (playing) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
-            else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE)
+            // Comes right after the stream's STOP: keep it behind STOP and the last data.
+            else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
         }
         override val granted: Boolean get() = mediaFocus
     }
@@ -594,7 +588,7 @@ class CarSession(
                 playing -> AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK
                 mediaPlaying -> AudioFocusRequestType.AUDIO_FOCUS_GAIN
                 else -> AudioFocusRequestType.AUDIO_FOCUS_RELEASE
-            })
+            }, if (playing) Priority.CONTROL else Priority.AUDIO)
         }
         override val granted: Boolean get() = mediaFocus || guidanceFocusState
     }
@@ -656,14 +650,17 @@ class CarSession(
         val ch = playback ?: return
         scope.launch {
             var lastTrack: List<Any?>? = null
+            var lastArt: Bitmap? = null
             media.playback.collectLatest { p ->
                 if (p == null) return@collectLatest
                 // Not just the title: the art (often loaded after the rest), the artist or the
-                // duration can come in a later update of the same track. The bitmap compares by
-                // reference, which changes only with the art, so the JPEG is made once per cover.
-                val track = listOf(p.title, p.artist, p.album, p.durationMs, p.art)
-                if (track != lastTrack) {
+                // duration can come in a later update of the same track. The art compares by
+                // content: a platform session hands out a new Bitmap on every update, and the
+                // JPEG must be made once per cover, not on every play, pause or seek.
+                val track = listOf(p.title, p.artist, p.album, p.durationMs)
+                if (track != lastTrack || !sameArt(lastArt, p.art)) {
                     lastTrack = track
+                    lastArt = p.art
                     val meta = MediaPlaybackMetadata.newBuilder().setSong(p.title).setArtist(p.artist).setAlbum(p.album)
                         .setDurationSeconds((p.durationMs / 1000).toInt().coerceAtLeast(0))
                     p.art?.let { art ->
@@ -680,6 +677,9 @@ class CarSession(
             }
         }
     }
+
+    private fun sameArt(a: Bitmap?, b: Bitmap?): Boolean = a === b ||
+        (a != null && b != null && a.width == b.width && a.height == b.height && runCatching { a.sameAs(b) }.getOrDefault(false))
 
     // ------------------------------------------------------------------ teardown
 
@@ -720,8 +720,9 @@ class CarSession(
         private const val TAG = "AareSession"
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
-        private const val MAX_RESTARTS = 3
-        private const val RESTART_WINDOW_MS = 10_000L
+        /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
+        internal const val MAX_RESTARTS = 3
+        internal const val RESTART_WINDOW_MS = 10_000L
 
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480

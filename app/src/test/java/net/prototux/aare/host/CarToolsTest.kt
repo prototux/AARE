@@ -27,6 +27,15 @@ class CarToolsTest {
     }
 
     @Test
+    fun theAppTellsSameNamedConversationsApart() {
+        val all = listOf("Mom" to "WhatsApp", "Mom" to "Messages", "Dad" to "WhatsApp")
+        val moms = CarTools.matches(all, "Mom") { it.first }
+        assertEquals(listOf("Mom" to "WhatsApp"), CarTools.inApp(moms, "whatsapp") { it.second })
+        // No app named: every match stays, and the ambiguity is refused.
+        assertEquals(moms, CarTools.inApp(moms, " ") { it.second })
+    }
+
+    @Test
     fun everyCandidateIsReturnedSoAmbiguityIsRefused() {
         assertEquals(listOf("Mom", "mom"), match("Mom", "Mom", "mom", "Mom ❤️"))
         assertEquals(listOf("Family", "Family trip"), match("fam", "Family", "Family trip", "Work"))
