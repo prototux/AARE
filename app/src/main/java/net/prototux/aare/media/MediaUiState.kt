@@ -193,11 +193,14 @@ internal class MediaUi(val connection: MediaConnection, private val scope: Corou
         view = MediaView.BROWSE
     }
 
-    /** Browsable items open a level; playable ones start playing and show now playing. */
+    /**
+     * Browsable items open a level; playable ones start playing and show now playing. Items that are
+     * explicitly neither ("Sign in to see your library") are informational rows: a tap does nothing.
+     */
     fun open(item: MediaItem) {
         if (item.isBrowsableItem) {
             stack += childLevel(item)
-        } else {
+        } else if (item.isPlayableItem) {
             connection.play(item)
             view = MediaView.NOW_PLAYING
         }

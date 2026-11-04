@@ -146,6 +146,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             requirePermissions(requiredPermissions())
             val adapter = adapter ?: throw WirelessException("this phone has no Bluetooth")
             if (!adapter.isEnabled) throw WirelessException("Bluetooth is turned off")
+            // A secure RFCOMM connect to an unbonded device starts pairing, and the session trusts the head
+            // unit's certificate on first use because the user bonded it. BONDING: the user is pairing it now.
+            if (device.bondState == BluetoothDevice.BOND_NONE) {
+                throw WirelessException("${device.address} is not paired: pair the head unit in Bluetooth settings first")
+            }
             try {
                 val socket = openRfcomm(adapter)
                 val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
@@ -161,15 +166,26 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 log.i("wireless: connected, $name")
                 return t
             } catch (e: Throwable) {
-                abort()
-                if (aborted.get() && e !is WirelessException) throw WirelessException("cancelled", e)
+                // Only an outside abort turns the worker's socket errors into "cancelled": read it before marking.
+                val wasAborted = aborted.getAndSet(true)
+                // Not abort(): if it already ran, it missed what this thread opened after it (between a
+                // checkNotAborted() and the field write), and every such path ends here.
+                releaseAll()
+                if (wasAborted && e !is WirelessException) throw WirelessException("cancelled", e)
                 throw e
             }
         }
 
-        /** Releases everything this attempt opened: TCP, RFCOMM, the network request. Idempotent. */
+        /** Stops the attempt and releases everything it opened. Idempotent. */
         fun abort() {
-            if (!aborted.compareAndSet(false, true)) return
+            if (aborted.compareAndSet(false, true)) releaseAll()
+        }
+
+        /**
+         * Releases TCP, RFCOMM and the network request (last, so a blocked join() wakes up). Safe to call
+         * more than once: every close is idempotent.
+         */
+        private fun releaseAll() {
             transport?.let { runCatching { it.close() } }
             tcp?.let { runCatching { it.close() } }
             bootstrap?.close()

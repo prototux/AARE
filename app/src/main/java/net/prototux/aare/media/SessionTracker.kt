@@ -44,7 +44,9 @@ internal class SessionTracker(
     private val manager = context.getSystemService(MediaSessionManager::class.java)
     private val listener = ComponentName(context, LISTENER)
     private val handler = Handler(Looper.getMainLooper())
-    private val onChanged = MediaSessionManager.OnActiveSessionsChangedListener { update(it.orEmpty()) }
+    private val onChanged = MediaSessionManager.OnActiveSessionsChangedListener { list ->
+        if (list.isNullOrEmpty()) recheck() else update(list)
+    }
     private var listening = false
     private var poll: Job? = null
 
@@ -66,6 +68,24 @@ internal class SessionTracker(
         } catch (e: SecurityException) {
             _available.value = false
             false
+        }
+    }
+
+    /**
+     * An empty list is either the last session ending or the system dropping our listener because
+     * notification access was revoked. In that case go back to polling, so it listens again once
+     * access is granted again.
+     */
+    private fun recheck() {
+        try {
+            update(manager.getActiveSessions(listener))
+        } catch (e: SecurityException) {
+            runCatching { manager.removeOnActiveSessionsChangedListener(onChanged) }
+            listening = false
+            _available.value = false
+            update(emptyList())
+            poll?.cancel()
+            start()
         }
     }
 

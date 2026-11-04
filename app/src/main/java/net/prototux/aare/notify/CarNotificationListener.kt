@@ -8,10 +8,12 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.media.AudioAttributes
+import android.os.Build
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
+import android.telecom.TelecomManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -62,6 +64,8 @@ class CarNotificationListener : NotificationListenerService() {
     private val forwarded = object : LinkedHashMap<String, Conversation.Line>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Conversation.Line>?) = size > 256
     }
+    /** The dialer notification that named [caller]: only its removal clears the name. */
+    private var callerKey: String? = null
 
     override fun onListenerConnected() {
         instance = this
@@ -72,6 +76,9 @@ class CarNotificationListener : NotificationListenerService() {
     override fun onListenerDisconnected() {
         instance = null
         _guidance.value = null
+        // Its removal would not reach us any more.
+        callerKey = null
+        _caller.value = null
     }
 
     override fun onDestroy() {
@@ -82,15 +89,19 @@ class CarNotificationListener : NotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         _changes.update { it + 1 }
-        if (sbn.notification.category == Notification.CATEGORY_CALL) _caller.value = null
+        if (sbn.key == callerKey) { callerKey = null; _caller.value = null }
         if (sbn.key == _guidance.value?.key) refreshGuidance()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         _changes.update { it + 1 }
         // The dialer's call notification names the caller (no call log permission needed for that).
-        if (sbn.notification.category == Notification.CATEGORY_CALL) {
-            sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.takeIf { it.isNotBlank() }?.let { _caller.value = it }
+        // Only the dialer's: the car shows this name for the cellular call, so any other app could spoof it.
+        if (sbn.notification.category == Notification.CATEGORY_CALL && isDialer(sbn.packageName)) {
+            sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.takeIf { it.isNotBlank() }?.let {
+                _caller.value = it
+                callerKey = sbn.key
+            }
             return
         }
         if (sbn.packageName != packageName && PhoneGuidance.isGuidance(sbn)) {
@@ -117,6 +128,13 @@ class CarNotificationListener : NotificationListenerService() {
         val group = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(sbn.notification)?.isGroupConversation == true
         sink(Message(sbn.key, title, last.text, c.icon, actions, group) { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
     }
+
+    /** The default dialer, or the system one (some phones post the call notification from it). */
+    private fun isDialer(pkg: String): Boolean = runCatching {
+        val telecom = getSystemService(TelecomManager::class.java) ?: return@runCatching false
+        pkg == telecom.defaultDialerPackage ||
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && pkg == telecom.systemDialerPackage)
+    }.getOrDefault(false)
 
     /** The conversations currently in the notification shade, newest first; all apps if [packageName] is null. */
     fun conversations(packageName: String? = null): List<Conversation> =
