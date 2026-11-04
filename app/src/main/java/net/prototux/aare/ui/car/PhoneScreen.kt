@@ -94,8 +94,11 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
     LaunchedEffect(inCall) { if (!inCall) reload++ }
     val callingTitle = context.getString(R.string.phone_notice_calling_title)
     val call: (Callee) -> Unit = { c ->
-        Calls.place(context, c.number)
-        runtime.notice(callingTitle, c.name.ifBlank { c.number })
+        // An empty tel: places no call; it would only show a "Calling" banner with no name.
+        if (c.number.isNotBlank()) {
+            Calls.place(context, c.number)
+            runtime.notice(callingTitle, c.name.ifBlank { c.number })
+        }
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background).padding(horizontal = 24.dp)) {
@@ -215,7 +218,8 @@ private fun recents(context: Context): List<Callee> = runCatching {
         arrayOf(CallLog.Calls.NUMBER, CallLog.Calls.CACHED_NAME, CallLog.Calls.TYPE, CallLog.Calls.DATE),
         null, null, "${CallLog.Calls.DATE} DESC")?.use { c ->
         while (c.moveToNext() && out.size < 30) {
-            val number = c.getString(0) ?: continue
+            // Withheld and unknown callers have an empty number, not null: nothing to call back.
+            val number = c.getString(0)?.takeIf { it.isNotBlank() } ?: continue
             if (!seen.add(number)) continue
             val ago = DateUtils.getRelativeTimeSpanString(c.getLong(3), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
             out += Callee(c.getString(1).orEmpty(), number, ago, c.getInt(2))
@@ -236,7 +240,7 @@ private fun contacts(context: Context): List<Callee> = runCatching {
             "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC")?.use { c ->
             while (c.moveToNext() && out.size < 200) {
                 val name = c.getString(0).orEmpty()
-                val number = c.getString(1) ?: continue
+                val number = c.getString(1)?.takeIf { it.isNotBlank() } ?: continue
                 if (!seen.add(name + number.filter(Char::isDigit))) continue
                 val type = ContactsContract.CommonDataKinds.Phone.getTypeLabel(context.resources, c.getInt(2), c.getString(3)).toString()
                 out += Callee(name, number, "$type · $number")
