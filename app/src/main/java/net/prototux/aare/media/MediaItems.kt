@@ -58,7 +58,7 @@ internal fun errorAction(extras: Bundle?): Pair<String?, PendingIntent?> {
     if (extras == null) return null to null
     val label = extras.getString(MediaKeys.ERROR_RESOLUTION_ACTION_LABEL)
     val intent = BundleCompat.getParcelable(extras, MediaKeys.ERROR_RESOLUTION_ACTION_INTENT, PendingIntent::class.java)
-    return if (intent != null) (label ?: "Fix") to intent else null to null
+    return if (intent != null) label to intent else null to null
 }
 
 /** Thrown by [MediaConnection] browse calls with a message fit for the error card. */

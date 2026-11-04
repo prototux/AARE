@@ -39,9 +39,11 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -129,11 +131,11 @@ internal fun ErrorCard(error: MediaError, modifier: Modifier = Modifier, onRetry
         if (error.action != null) {
             Spacer(Modifier.width(12.dp))
             // the app's own resolution (e.g. its sign-in screen) opens on the phone
-            Pill(error.actionLabel ?: "Fix", selected = true, onClick = { sendAction(error.action) })
+            Pill(error.actionLabel ?: stringResource(R.string.media_error_fix), selected = true, onClick = { sendAction(error.action) })
         }
         if (onRetry != null) {
             Spacer(Modifier.width(12.dp))
-            Pill("Retry", selected = error.action == null, onClick = onRetry)
+            Pill(stringResource(R.string.media_action_retry), selected = error.action == null, onClick = onRetry)
         }
     }
 }

@@ -40,9 +40,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 
 /**
  * SignInTemplate: instructions on the driver side, the sign-in method on the other (text input
@@ -55,7 +57,7 @@ internal fun SignInTemplateView(t: SignInTemplate) {
     TemplateScaffold(header) {
         when {
             t.isLoading -> LoadingBox()
-            host.driving -> EmptyMessage(null, "You can sign in when parked", icon = Icons.Rounded.Lock)
+            host.driving -> EmptyMessage(null, stringResource(R.string.tpl_sign_in_parked_only), icon = Icons.Rounded.Lock)
             else -> SignInBody(t)
         }
     }
@@ -145,10 +147,11 @@ private fun rememberInputState(method: InputSignInMethod): InputState {
 @Composable
 private fun InputMethodField(method: InputSignInMethod, state: InputState) {
     val password = method.inputType == InputSignInMethod.INPUT_TYPE_PASSWORD
+    val passwordHint = stringResource(R.string.tpl_password_hint)
     Column(Modifier.fillMaxWidth()) {
         CarTextField(
             value = state.text,
-            hint = method.hint.plain().ifEmpty { if (password) "Password" else "" },
+            hint = method.hint.plain().ifEmpty { if (password) passwordHint else "" },
             editing = state.editing,
             onFocus = { state.editing = true },
             onClear = { state.change("") },

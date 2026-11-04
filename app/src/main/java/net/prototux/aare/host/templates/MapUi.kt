@@ -63,9 +63,11 @@ import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
 import kotlin.math.abs
@@ -388,7 +390,7 @@ private fun MapListCard(
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 loading -> LoadingBox()
-                list == null -> EmptyMessage(null, "Nothing to show")
+                list == null -> EmptyMessage(null, stringResource(R.string.common_nothing_to_show))
                 else -> ItemListView(listOf(ListSection(null, list)), limitType)
             }
         }

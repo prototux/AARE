@@ -606,7 +606,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         Column(Modifier.weight(1f)) {
             Text(notice.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             // While driving a message shows who wrote, not what: it can be read aloud instead.
-            Text(if (state.drivingRestricted && notice.isMessage) stringResource(R.string.notif_new_message_placeholder) else notice.text,
+            Text(if (state.drivingRestricted && notice.message) stringResource(R.string.notif_new_message_placeholder) else notice.text,
                 style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

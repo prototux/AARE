@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.prototux.aare.R
 
 /**
  * Follows every active media session on the phone through [MediaSessionManager], so "now playing"
@@ -199,7 +200,7 @@ internal class SessionSource(
         val fresh = message != null && now - noticeSince < NOTICE_MS
         val error = if (st == PlaybackState.STATE_ERROR || fresh) {
             val (actionLabel, intent) = errorAction(ps?.extras)
-            MediaError(message ?: "$label reported an error", actionLabel, intent)
+            MediaError(message ?: context.getString(R.string.media_error_reported, label), actionLabel, intent)
         } else null
         _state.value = SourceState(
             info = info,

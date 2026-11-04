@@ -38,10 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
 
 /** GridTemplate: tiles of GridItems (icons or large images), with header and floating actions. */
@@ -53,7 +55,7 @@ internal fun GridTemplateView(t: GridTemplate) {
         val list = t.singleList
         when {
             t.isLoading -> LoadingBox()
-            list == null || list.items.isEmpty() -> EmptyMessage(list?.noItemsMessage, "Nothing to show")
+            list == null || list.items.isEmpty() -> EmptyMessage(list?.noItemsMessage, stringResource(R.string.common_nothing_to_show))
             else -> ItemGrid(list, t.itemSize, t.itemImageShape == GridTemplate.ITEM_IMAGE_SHAPE_CIRCLE, fabClearance(t.actions))
         }
     }

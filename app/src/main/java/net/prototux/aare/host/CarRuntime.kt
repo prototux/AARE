@@ -390,11 +390,11 @@ class CarRuntime(
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
         // Built in, like Android Auto's: calls and the car-side settings.
-        entries += CarAppEntry(PHONE_ID, context.packageName, "Phone", builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
-        entries += CarAppEntry(SETTINGS_ID, context.packageName, "Settings", builtinIcon(R.drawable.ic_car_settings), CarAppKind.SETTINGS)
-        entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, "Notifications", builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
+        entries += CarAppEntry(PHONE_ID, context.packageName, context.getString(R.string.setup_app_entry_phone), builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
+        entries += CarAppEntry(SETTINGS_ID, context.packageName, context.getString(R.string.setup_app_entry_settings), builtinIcon(R.drawable.ic_car_settings), CarAppKind.SETTINGS)
+        entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, context.getString(R.string.setup_app_entry_notifications), builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
         if (settings.phoneScreen && phoneScreenAllowed) {
-            entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, "Phone screen", builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
+            entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
         for (m in messaging) {
             if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
@@ -457,8 +457,8 @@ class CarRuntime(
             if (state != last) { since = System.currentTimeMillis(); last = state }
             val name = CarNotificationListener.caller.value
             val call = when (state) {
-                TelephonyManager.CALL_STATE_RINGING -> CarCall(ringing = true, name = name ?: "Incoming call", sinceMs = since)
-                TelephonyManager.CALL_STATE_OFFHOOK -> CarCall(ringing = false, name = name ?: "Call", sinceMs = since)
+                TelephonyManager.CALL_STATE_RINGING -> CarCall(ringing = true, name = name ?: context.getString(R.string.phone_incoming_call), sinceMs = since)
+                TelephonyManager.CALL_STATE_OFFHOOK -> CarCall(ringing = false, name = name ?: context.getString(R.string.phone_call_fallback_name), sinceMs = since)
                 else -> null
             }
             if (call != ui.call) ui.call = call

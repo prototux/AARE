@@ -56,10 +56,7 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
-) {
-    /** [message], or a banner offering "Read aloud" (message banners not yet flagged by their poster). */
-    val isMessage: Boolean get() = message || actions.any { it.first == "Read aloud" }
-}
+)
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
 data class CarGeometry(

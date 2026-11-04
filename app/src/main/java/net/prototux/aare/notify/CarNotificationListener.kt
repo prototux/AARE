@@ -22,6 +22,7 @@ import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import net.prototux.aare.R
 import net.prototux.aare.media.ArtLoader
 import java.util.Locale
 
@@ -120,8 +121,8 @@ class CarNotificationListener : NotificationListenerService() {
         forwarded[sbn.key] = last
         if (last.fromUser) return
         val actions = buildList<Pair<String, () -> Unit>> {
-            add("Read aloud" to { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
-            c.markRead?.let { pi -> add("Mark read" to { runCatching { pi.send() } }) }
+            add(getString(R.string.msg_action_read_aloud) to { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
+            c.markRead?.let { pi -> add(getString(R.string.msg_action_mark_read) to { runCatching { pi.send() } }) }
         }
         val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() }.getOrDefault(sbn.packageName)
         val title = if (last.sender.isNotEmpty() && last.sender != c.title) "${c.title} · ${last.sender}" else c.title.ifEmpty { app }
