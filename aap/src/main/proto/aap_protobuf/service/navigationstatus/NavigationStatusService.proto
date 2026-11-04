@@ -5,7 +5,9 @@ package aap_protobuf.service.navigationstatus;
 message NavigationStatusService {
     required int32 minimum_interval_ms = 1;
 
-    required InstrumentClusterType type = 2;
+    // AARE: required -> optional (wire-identical): an unknown cluster type must not fail service
+    // discovery. Readers check hasType().
+    optional InstrumentClusterType type = 2;
     enum InstrumentClusterType {
         IMAGE = 1;
         ENUM = 2;
