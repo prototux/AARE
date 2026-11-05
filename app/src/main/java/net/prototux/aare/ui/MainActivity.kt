@@ -1,6 +1,8 @@
 package net.prototux.aare.ui
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -937,14 +939,23 @@ private fun displayName(ctx: Context, uri: Uri): String =
 
 @Composable
 private fun LogCard() {
+    val ctx = LocalContext.current
     val log by DiagLog.lines.collectAsState()
     if (log.isEmpty()) return
-    Section(stringResource(R.string.setup_section_connection_log)) {
+    val title = stringResource(R.string.setup_section_connection_log)
+    Section(title) {
         log.takeLast(40).forEach {
             Text(it, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+        Row {
+            // Copies every retained line, not only the ones shown above.
+            TextButton(onClick = {
+                ctx.getSystemService(ClipboardManager::class.java)
+                    ?.setPrimaryClip(ClipData.newPlainText(title, log.joinToString("\n")))
+            }) { Text(stringResource(android.R.string.copy)) }
+            TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+        }
     }
 }
 
