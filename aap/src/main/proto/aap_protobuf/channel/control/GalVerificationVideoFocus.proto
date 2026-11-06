@@ -5,7 +5,7 @@ import "aap_protobuf/service/media/video/message/VideoFocusMode.proto";
 package aap_protobuf.service.control.message;
 
 message GalVerificationVideoFocus {
-  required media.video.message.VideoFocusMode video_focus_mode = 1;
+  optional media.video.message.VideoFocusMode video_focus_mode = 1;
   optional bool deny = 2;
   optional bool unsolicited = 3;
 }

@@ -3,9 +3,9 @@ syntax="proto2";
 package aap_protobuf.service.mediabrowser.message;
 
 message MediaList {
-  required string path = 1;
+  optional string path = 1;
 
-  required Type type = 2;
+  optional Type type = 2;
   enum Type {
     UNKNOWN = 0;
     PLAYLIST = 1;

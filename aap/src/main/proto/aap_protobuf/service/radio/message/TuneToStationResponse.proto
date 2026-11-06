@@ -7,6 +7,6 @@ import "aap_protobuf/shared/MessageStatus.proto";
 package aap_protobuf.service.radio.message;
 
 message TuneToStationResponse {
-  required shared.MessageStatus status = 1;
-  required int32 radio_id = 2;
+  optional shared.MessageStatus status = 1 [default = STATUS_SUCCESS];
+  optional int32 radio_id = 2;
 }

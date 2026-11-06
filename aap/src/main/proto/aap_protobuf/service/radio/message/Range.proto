@@ -5,6 +5,6 @@ option optimize_for=SPEED;
 package aap_protobuf.service.radio.message;
 
 message Range {
-    required int32 min = 1;
-    required int32 max = 2;
+    optional int32 min = 1;
+    optional int32 max = 2;
 }

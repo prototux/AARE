@@ -5,6 +5,6 @@ option optimize_for=SPEED;
 package aap_protobuf.service.radio.message;
 
 message Location {
-  required double longitude = 1;
-  required double latitude = 2;
+  optional double longitude = 1;
+  optional double latitude = 2;
 }

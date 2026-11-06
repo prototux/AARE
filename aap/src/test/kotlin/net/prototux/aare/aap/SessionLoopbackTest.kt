@@ -35,7 +35,10 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SessionLoopbackTest {
+open class SessionLoopbackTest {
+
+    /** Whether the simulated head unit leaves out fields that are 0, like a proto3 encoder. */
+    protected open val omitZeroFields = false
 
     private lateinit var hu: HeadUnitSimulator
     private lateinit var huSocket: Socket
@@ -63,7 +66,7 @@ class SessionLoopbackTest {
         val phoneSocket = server.accept()
         server.close()
 
-        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2)
+        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, omitZeroFields = omitZeroFields)
         val id = SelfSignedCertificate.generate("phone")
         phone = AapSession(
             InterruptibleCloseTransport(SocketTransport(phoneSocket)),
@@ -296,4 +299,12 @@ class SessionLoopbackTest {
         assertEquals("old route", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
         assertEquals(null, hu.navStates.poll(1, TimeUnit.SECONDS))
     }
+}
+
+/**
+ * The same sessions against a head unit that omits every field set to 0, as Ford SYNC 4 does
+ * (#74: an empty AUTH_COMPLETE, then a service discovery response aasdk's definitions rejected).
+ */
+class ZeroOmittingSessionLoopbackTest : SessionLoopbackTest() {
+    override val omitZeroFields = true
 }

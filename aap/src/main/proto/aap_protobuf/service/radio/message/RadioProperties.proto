@@ -11,13 +11,13 @@ import "aap_protobuf/service/radio/message/ItuRegion.proto";
 package aap_protobuf.service.radio.message;
 
 message RadioProperties {
-    required int32 radio_id = 1;
+    optional int32 radio_id = 1;
     // AARE: required -> optional (wire-identical): an unknown radio type must not fail service
     // discovery (this message is part of it).
     optional RadioType type = 2;
     repeated Range channel_range = 3;
     repeated int32 channel_spacings = 4;
-    required int32 channel_spacing = 5;
+    optional int32 channel_spacing = 5;
     optional bool background_tuner = 6;
     optional ItuRegion region = 7;
     optional RdsType rds = 8;

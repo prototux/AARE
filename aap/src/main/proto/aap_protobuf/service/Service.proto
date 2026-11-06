@@ -20,7 +20,7 @@ package aap_protobuf.service;
 
 message Service
 {
-    required int32 id = 1;
+    optional int32 id = 1;
     optional sensorsource.SensorSourceService sensor_source_service = 2;
     optional media.sink.MediaSinkService media_sink_service = 3;
     optional inputsource.InputSourceService input_source_service = 4;
