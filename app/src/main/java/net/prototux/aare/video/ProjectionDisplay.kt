@@ -7,6 +7,7 @@ import android.hardware.display.VirtualDisplay
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Display
 import android.view.MotionEvent
 import android.view.KeyEvent
@@ -48,6 +49,8 @@ class ProjectionDisplay(
     private val main = Handler(Looper.getMainLooper())
     private val display: VirtualDisplay
     private var presentation: CarPresentation? = null
+    /** Touches logged so far, with whether the UI took them (#74). Main thread. */
+    private var loggedTouches = 0
 
     init {
         val dm = context.getSystemService(DisplayManager::class.java)
@@ -71,7 +74,13 @@ class ProjectionDisplay(
 
     fun dispatchTouch(event: MotionEvent) {
         main.post {
-            presentation?.window?.decorView?.dispatchTouchEvent(event)
+            val decor = presentation?.window?.decorView
+            val handled = decor?.dispatchTouchEvent(event)
+            if (loggedTouches < LOGGED_TOUCHES) {
+                loggedTouches++
+                Log.i(TAG, "touch ${MotionEvent.actionToString(event.actionMasked)} at ${event.x.toInt()},${event.y.toInt()}: " +
+                    "handled=$handled, window ${decor?.width}x${decor?.height}")
+            }
             event.recycle()
         }
     }
@@ -132,5 +141,10 @@ class ProjectionDisplay(
             registry.currentState = Lifecycle.State.DESTROYED
             store.clear()
         }
+    }
+
+    private companion object {
+        const val TAG = "AareDisplay"
+        const val LOGGED_TOUCHES = 40
     }
 }

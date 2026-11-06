@@ -123,6 +123,13 @@ class CarSession(
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
     private val audio = ArrayList<AudioChannel>()
 
+    /**
+     * The car channel a kind of audio goes to: the first one the car lists. Some cars offer two of
+     * a kind (the Mach-E has two media and two guidance channels, #74); feeding both made their
+     * captures stop each other (Shizuku records once for the whole phone), so the car got silence.
+     */
+    private fun isPrimary(channel: AudioChannel) = audio.firstOrNull { it.streamType == channel.streamType } === channel
+
     // @Volatile: written on main (startProjection), read on the AAP reader thread (input) and the
     // encoder callback thread; without it a restart can leave them seeing a stale display/mapper.
     @Volatile private var encoder: VideoEncoder? = null
@@ -149,6 +156,8 @@ class CarSession(
             navBridge?.updatePhone(g)
         }
         runtime.start()
+        // Which screen the car shows: whether taps navigate at all (#74).
+        scope.launch { androidx.compose.runtime.snapshotFlow { runtime.ui.screen }.collect { Log.i(TAG, "car screen: $it") } }
         listener.onStatus(this, context.getString(R.string.notif_status_connecting_to, transport.name))
     }
 
@@ -161,6 +170,7 @@ class CarSession(
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {
         headUnitName = AapSession.describe(response).substringBefore(" [").ifBlank { response.displayName }
         CarData.discovered(response, owner = this)
+        touchInVisiblePixels = touchesInVisiblePixels(response)
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
         main.post {
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
@@ -186,6 +196,8 @@ class CarSession(
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
                 s.hasInputSourceService() -> InputChannel(s, inputListener).also { ch ->
                     ch.touchScreen?.let { touchSize = it.width to it.height }
+                    Log.i(TAG, "input: touchscreens ${s.inputSourceService.touchscreenList.map { "${it.width}x${it.height}" }}, " +
+                        "touchpads ${s.inputSourceService.touchpadList.map { "${it.width}x${it.height}" }}, ${ch.keycodes.size} keycodes")
                     channels += ch
                 }
                 s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
@@ -195,6 +207,11 @@ class CarSession(
                 s.hasBluetoothService() -> channels += BluetoothChannel(s, object : BluetoothChannel.Listener {})
             }
         }
+        Log.i(TAG, "audio: " + audio.joinToString { ch ->
+            "${ch.streamType.name.removePrefix("AUDIO_STREAM_")}#${ch.id} " +
+                ch.service.mediaSinkService.audioConfigsList.joinToString("|") { "${it.samplingRate}/${it.numberOfBits}/${it.numberOfChannels}" } +
+                if (isPrimary(ch)) "" else " (not used: a second channel of this kind)"
+        })
         return channels
     }
 
@@ -315,15 +332,23 @@ class CarSession(
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
         val dpi = if (config.density > 0) config.density else defaultDensity(minOf(w, h))
-        val marginW = config.widthMargin
-        val marginH = config.heightMargin
+        val area = VisibleArea.of(config, w, h)
         val insets = config.uiConfig.takeIf { config.hasUiConfig() }?.contentInsets
+        val marginW = w - area.width
+        val marginH = h - area.height
         videoDescription = "${w}x$h@$fps ${dpi}dpi" + if (marginW + marginH > 0) " margins ${marginW}x$marginH" else ""
-        Log.i(TAG, "projection $videoDescription")
+        val ui = config.uiConfig.takeIf { config.hasUiConfig() }
+        Log.i(TAG, "projection $videoDescription, visible ${area.width}x${area.height} at ${area.left},${area.top} " +
+            "(width_margin ${config.widthMargin}, height_margin ${config.heightMargin}" +
+            (ui?.takeIf { it.hasMargins() }?.margins?.let { ", ui margins l${it.left} t${it.top} r${it.right} b${it.bottom}" } ?: "") +
+            (insets?.let { ", insets l${it.left} t${it.top} r${it.right} b${it.bottom}" } ?: "") +
+            (if (config.hasPixelAspectRatioE4()) ", pixel aspect ${config.pixelAspectRatioE4}" else "") +
+            (if (config.hasRealDensity()) ", real density ${config.realDensity}" else "") + ")")
 
         val ch = video ?: return
         val enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
             private var frames = 0
+            private var lastStatsMs = 0L
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) {
@@ -334,6 +359,12 @@ class CarSession(
                 frames++
                 if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
                     Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
+                }
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastStatsMs >= 10_000) {
+                    lastStatsMs = now
+                    Log.i(TAG, "video: $frames frames, waiting for acks=${ch.pendingFrames}, window=${ch.maxUnacked}, ackless=${ch.ackless}, " +
+                        "ack latency=${ch.ackLatencyMs} ms, dropped=${ch.droppedFrames}, congestion drops=${ch.congestionDrops}")
                 }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
                 abr.onFrame(ch)
@@ -346,17 +377,17 @@ class CarSession(
         enc.start()
         encoder = enc
 
-        // The visible area is the video minus its margins (split evenly), minus the UI insets.
-        val visibleW = w - marginW - (insets?.let { it.left + it.right } ?: 0)
-        val visibleH = h - marginH - (insets?.let { it.top + it.bottom } ?: 0)
+        // The visible area is the part of the frame the car shows, minus the UI insets.
+        val visibleW = area.width - (insets?.let { it.left + it.right } ?: 0)
+        val visibleH = area.height - (insets?.let { it.top + it.bottom } ?: 0)
         runtime.densityDpi = dpi
         runtime.screenWidthDp = visibleW * 160 / dpi
         runtime.screenHeightDp = visibleH * 160 / dpi
         runtime.rightHandDrive = rightHandDrive
-        val padLeft = marginW / 2 + (insets?.left ?: 0)
-        val padTop = marginH / 2 + (insets?.top ?: 0)
-        val padRight = marginW - marginW / 2 + (insets?.right ?: 0)
-        val padBottom = marginH - marginH / 2 + (insets?.bottom ?: 0)
+        val padLeft = area.left + (insets?.left ?: 0)
+        val padTop = area.top + (insets?.top ?: 0)
+        val padRight = w - area.right + (insets?.right ?: 0)
+        val padBottom = h - area.bottom + (insets?.bottom ?: 0)
         display = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
             val d = LocalDensity.current
             Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -365,8 +396,14 @@ class CarSession(
                 }
             }
         }.also { it.show() }
-        val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: (w - marginW), inputCh?.second ?: (h - marginH), w, h, marginW, marginH)
+        // A car whose touches come in visible-area pixels maps 1:1, whatever panel size it declares.
+        val inputCh = touchSize.takeUnless { touchInVisiblePixels }
+        touch = TouchMapper(inputCh?.first ?: area.width, inputCh?.second ?: area.height, area)
+        Log.i(TAG, "touch: panel ${when {
+            touchInVisiblePixels -> "${touchSize?.let { "${it.first}x${it.second}" }} declared, but this head unit reports touches in visible-area pixels"
+            inputCh != null -> "${inputCh.first}x${inputCh.second}"
+            else -> "not declared, using the visible area"
+        }} mapped into ${area.width}x${area.height} at +${area.left},+${area.top}")
     }
 
     private fun teardownVideo() {
@@ -377,12 +414,26 @@ class CarSession(
     // ------------------------------------------------------------------ input
 
     @Volatile private var touchSize: Pair<Int, Int>? = null
+    /** The head unit reports touches in pixels of the visible area, not of the panel it declares. */
+    @Volatile private var touchInVisiblePixels = false
+    /** Input reports logged so far; the first few show how the car's touches map (#74). */
+    private var loggedInputs = 0
 
     private val inputListener = object : InputChannel.Listener {
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
-                val ev = touch?.map(report.touchEvent) ?: return
+                val ev = touch?.map(report.touchEvent)
+                if (loggedInputs < LOGGED_INPUTS) {
+                    loggedInputs++
+                    val t = report.touchEvent
+                    Log.i(TAG, "touch ${t.action} index ${t.actionIndex} at ${t.pointerDataList.map { "${it.x},${it.y}" }} -> " +
+                        (ev?.let { "${it.x.toInt()},${it.y.toInt()}" } ?: "dropped (mapper=${touch != null})") + ", display=${display != null}")
+                }
+                ev ?: return
                 display?.dispatchTouch(ev)
+            } else if (loggedInputs < LOGGED_INPUTS) {
+                loggedInputs++
+                Log.i(TAG, "input report: key=${report.hasKeyEvent()} relative=${report.hasRelativeEvent()} absolute=${report.hasAbsoluteEvent()} touchpad=${report.hasTouchpadEvent()}")
             }
             if (report.hasKeyEvent()) {
                 for (k in report.keyEvent.keysList) main.post { onKey(k.keycode, k.down, k.longpress) }
@@ -461,9 +512,10 @@ class CarSession(
         override fun onAudioReady(channel: AudioChannel, config: aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration) {
             if (!settings.carAudio) return
             if (channel.streamType != AudioStreamType.AUDIO_STREAM_MEDIA && channel.streamType != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
+            if (!isPrimary(channel)) return
             main.post { startAudio(channel) }
         }
-        override fun onUnderflow(channel: AudioChannel) { audioOuts[channel.streamType]?.onUnderflow() }
+        override fun onUnderflow(channel: AudioChannel) { if (isPrimary(channel)) audioOuts[channel.streamType]?.onUnderflow() }
     }
 
     /** Capture methods that failed in this session: the next best one is used instead. */
@@ -622,8 +674,19 @@ class CarSession(
 
     companion object {
         private const val TAG = "AareSession"
+        private const val LOGGED_INPUTS = 40
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
+
+        /**
+         * Ford SYNC 4 (Mustang Mach-E, #74) declares a 1200x1244 touch panel but reports touches
+         * in pixels of the 1042x1080 part of the video it shows: taps on its corners come in at
+         * about 1040x1080, and scaling them as panel coordinates put every tap ~13% short.
+         */
+        internal fun touchesInVisiblePixels(r: ServiceDiscoveryResponse): Boolean {
+            val hu = r.headunitInfo
+            return listOf(hu.make, hu.headUnitMake, r.make, r.headUnitMake).any { it.trim().equals("Ford", ignoreCase = true) }
+        }
 
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480

@@ -262,7 +262,11 @@ class AapSession(
         }
     }
 
+    /** Channel and message id pairs seen so far: the first of each kind is logged. Reader thread only. */
+    private val seenKinds = HashSet<Int>()
+
     private fun dispatch(msg: AapMessage) {
+        if (msg.channel != 0 && seenKinds.add((msg.channel shl 16) or msg.id)) log.d("first rx $msg")
         // Once TLS is up the head unit has no legitimate reason to send anything in the clear; drop it, don't end the session.
         if (tlsUp && !msg.encrypted) {
             log.w("dropping plaintext frame after TLS is up: $msg")
