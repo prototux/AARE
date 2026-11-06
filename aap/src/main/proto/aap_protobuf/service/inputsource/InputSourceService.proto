@@ -10,16 +10,16 @@ message InputSourceService {
 
     repeated TouchScreen touchscreen = 2;
     message TouchScreen {
-        required int32 width = 1;
-        required int32 height = 2;
+        optional int32 width = 1;
+        optional int32 height = 2;
         optional message.TouchScreenType type = 3;
         optional bool is_secondary = 4;
     }
 
     repeated TouchPad touchpad = 3;
     message TouchPad {
-        required int32 width = 1;
-        required int32 height = 2;
+        optional int32 width = 1;
+        optional int32 height = 2;
         optional bool ui_navigation = 3;
         optional int32 physical_width = 4;
         optional int32 physical_height = 5;

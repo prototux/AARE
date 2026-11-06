@@ -6,6 +6,6 @@ package aap_protobuf.service.bluetooth.message;
 
 message BluetoothPairingRequest
 {
-    required string phone_address = 1;
-    required BluetoothPairingMethod pairing_method = 2;
+    optional string phone_address = 1;
+    optional BluetoothPairingMethod pairing_method = 2;
 }

@@ -6,5 +6,5 @@ package aap_protobuf.service.sensorsource.message;
 
 message SensorStartResponseMessage
 {
-    required shared.MessageStatus status = 1;
+    optional shared.MessageStatus status = 1 [default = STATUS_SUCCESS];
 }

@@ -4,6 +4,6 @@ package aap_protobuf.service.control.message;
 
 message ChannelOpenRequest
 {
-    required sint32 priority = 1;
-    required int32 service_id = 2;
+    optional sint32 priority = 1;
+    optional int32 service_id = 2;
 }

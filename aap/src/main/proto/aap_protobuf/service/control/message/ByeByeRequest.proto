@@ -6,5 +6,5 @@ package aap_protobuf.service.control.message;
 
 message ByeByeRequest
 {
-    required ByeByeReason reason = 1;
+    optional ByeByeReason reason = 1;
 }
