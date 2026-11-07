@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -37,6 +38,7 @@ import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
+import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.media.MediaHub
@@ -178,14 +180,31 @@ class ProjectionService : Service() {
         log("wireless: connecting to ${runCatching { device.name }.getOrNull() ?: address}")
         _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
-            try {
-                val transport = connector.connect(device)
-                startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                log("wireless: ${e.message}")
-                _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = e.message) }
+            // Right after the Bluetooth link comes up some cars accept the connection but don't
+            // start Android Auto yet (the Mach-E hangs up after a few silent seconds, #74); a
+            // little later they do. The retries run in this job, so the service stays up meanwhile.
+            var retries = 0
+            while (true) {
+                try {
+                    val transport = connector.connect(device)
+                    startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true)
+                    return@launch
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log("wireless: ${e.message}")
+                    val carNotReady = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessBootstrapException && it.whileNegotiating }
+                    if (carNotReady && retries < WIRELESS_RETRIES && session == null) {
+                        retries++
+                        val wait = WIRELESS_RETRY_DELAY_MS * retries
+                        log("wireless: the car didn't start Android Auto yet; trying again in ${wait / 1000} s ($retries/$WIRELESS_RETRIES)")
+                        delay(wait)
+                        if (session == null) continue
+                        return@launch
+                    }
+                    _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = e.message) }
+                    return@launch
+                }
             }
         }
     }
@@ -430,6 +449,9 @@ class ProjectionService : Service() {
         private const val TAG = "AareService"
         private const val CHANNEL = "connection"
         private const val NOTIFICATION_ID = 1
+        /** Wireless attempts after a car that wasn't ready yet, waiting this much longer each time. */
+        private const val WIRELESS_RETRIES = 2
+        private const val WIRELESS_RETRY_DELAY_MS = 10_000L
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
