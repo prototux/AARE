@@ -13,6 +13,7 @@ import net.prototux.aare.aap.AapLog
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -221,6 +222,7 @@ class WirelessBootstrapTest {
         awaitEnd()
         val e = failure as WirelessBootstrapException
         assertEquals(WppStatus.PHONE_WIFI_DISABLED, e.status)
+        assertFalse("a Wi-Fi problem on the phone isn't the car not being ready", e.whileNegotiating)
         assertNull(phone.ready.poll())
         assertNull("the phone closes the link after a failure", readWppFrame(phoneToHu.input))
     }
@@ -243,6 +245,7 @@ class WirelessBootstrapTest {
         start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0))
         awaitEnd()
         assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out"))
+        assertTrue((failure as WirelessBootstrapException).whileNegotiating)
     }
 
     @Test(timeout = 10_000)
@@ -277,8 +280,19 @@ class WirelessBootstrapTest {
         hu.expect(WppMessageId.INFO_REQUEST)
         hu.hangUp()
         awaitEnd()
-        assertTrue(failure is WirelessBootstrapException)
+        assertTrue((failure as WirelessBootstrapException).whileNegotiating)
         assertNull(phone.ready.poll())
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitHangingUpWithoutAWordIsACarNotReady() {
+        // The Mach-E right after the Bluetooth link comes up (#74): accepts RFCOMM, says nothing, hangs up.
+        start(Phone { JoinResult.Joined() })
+        hu.hangUp()
+        awaitEnd()
+        val e = failure as WirelessBootstrapException
+        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("before sending its WifiStartRequest"))
+        assertTrue(e.whileNegotiating)
     }
 
     @Test(timeout = 10_000)
@@ -288,6 +302,7 @@ class WirelessBootstrapTest {
         b.close()
         awaitEnd()
         assertTrue(failure is WirelessBootstrapException)
+        assertFalse("cancelling isn't retried", (failure as WirelessBootstrapException).whileNegotiating)
     }
 
     @Test
