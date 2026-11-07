@@ -37,6 +37,10 @@ import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFo
 import aap_protobuf.service.media.video.message.VideoFocusNotificationOuterClass.VideoFocusNotification
 import aap_protobuf.service.media.video.message.VideoFocusRequestNotificationOuterClass.VideoFocusRequestNotification
 import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.NavigationStatusService
+import aap_protobuf.service.radio.RadioServiceOuterClass.RadioService
+import aap_protobuf.service.radio.message.RadioPropertiesOuterClass.RadioProperties
+import aap_protobuf.service.radio.message.RadioTypeOuterClass.RadioType
+import aap_protobuf.service.radio.message.RangeOuterClass.Range
 import aap_protobuf.service.sensorsource.SensorSourceServiceOuterClass.SensorSourceService
 import aap_protobuf.service.sensorsource.message.DrivingStatusDataOuterClass.DrivingStatusData
 import aap_protobuf.service.sensorsource.message.NightModeDataOuterClass.NightModeData
@@ -76,7 +80,14 @@ class HeadUnitSimulator(
     private val maxUnacked: Int = 4,
     /** Raw H.264 (Annex-B) of the projection is written here if set. */
     private val videoOut: OutputStream? = null,
+    /**
+     * Encode like Ford SYNC 4 (#74): fields whose value is 0 are left out, as a proto3 encoder
+     * does, even the ones aasdk's definitions call required.
+     */
+    omitZeroFields: Boolean = false,
 ) {
+    /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
+    private val writeZeros = !omitZeroFields
     val huCert = SelfSignedCertificate.generate("AARE simulated head unit")
     private val cryptor = Cryptor(huCert.certificate, huCert.keyPair.private, client = true)
     @Volatile private var tlsUp = false
@@ -86,7 +97,7 @@ class HeadUnitSimulator(
 
     // channel ids, as a typical head unit numbers them
     val video = 1; val mediaAudio = 2; val guidance = 3; val system = 4; val mic = 5
-    val input = 6; val sensors = 7; val navStatus = 8; val playback = 9
+    val input = 6; val sensors = 7; val navStatus = 8; val playback = 9; val radio = 10
 
     val discoveryRequest = CountDownLatch(1)
     var phoneRequest: ServiceDiscoveryRequest? = null
@@ -123,7 +134,8 @@ class HeadUnitSimulator(
         if (m.channel == 0 && !m.control) return control(m)
         if (m.control && m.id == ControlMsg.CHANNEL_OPEN_REQUEST) {
             openedChannels.add(m.channel)
-            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
+            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder()
+                .apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build(), control = true)
             return
         }
         when (m.channel) {
@@ -134,11 +146,11 @@ class HeadUnitSimulator(
             sensors -> if (m.id == SensorMsg.REQUEST) {
                 val req = SensorRequest.parseFrom(m.bodyBytes())
                 sensorRequests.add(req.type)
-                send(sensors, SensorMsg.RESPONSE, SensorResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build())
+                send(sensors, SensorMsg.RESPONSE, SensorResponse.newBuilder().apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build())
                 val batch = SensorBatch.newBuilder()
                 when (req.type) {
                     SensorType.SENSOR_NIGHT_MODE -> batch.addNightModeData(NightModeData.newBuilder().setNightMode(true))
-                    SensorType.SENSOR_DRIVING_STATUS_DATA -> batch.addDrivingStatusData(DrivingStatusData.newBuilder().setStatus(0))
+                    SensorType.SENSOR_DRIVING_STATUS_DATA -> batch.addDrivingStatusData(DrivingStatusData.newBuilder().apply { if (writeZeros) setStatus(0) })
                     else -> Unit
                 }
                 send(sensors, SensorMsg.BATCH, batch.build())
@@ -156,7 +168,7 @@ class HeadUnitSimulator(
                 val out = cryptor.handshake(m.bodyBytes())
                 if (out.isNotEmpty()) sendPlain(0, ControlMsg.ENCAPSULATED_SSL, out)
                 if (cryptor.handshakeDone && !tlsUp) {
-                    sendPlain(0, ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().setStatus(0).build().toByteArray())
+                    sendPlain(0, ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().apply { if (writeZeros) setStatus(0) }.build().toByteArray())
                     tlsUp = true
                 }
             }
@@ -213,7 +225,7 @@ class HeadUnitSimulator(
                     audioChunks.incrementAndGet()
                 }
                 val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
-                send(m.channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(session).setAck(1).build())
+                send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
         }
     }
@@ -223,7 +235,7 @@ class HeadUnitSimulator(
             MediaMsg.SETUP -> send(mic, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY).setMaxUnacked(1).build())
             MediaMsg.MICROPHONE_REQUEST -> {
                 val r = MicrophoneRequest.parseFrom(m.bodyBytes())
-                send(mic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().setStatus(0).setSessionId(1).build())
+                send(mic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().apply { if (writeZeros) setStatus(0) }.setSessionId(1).build())
                 if (r.open) sendMicChunk()
             }
         }
@@ -281,7 +293,7 @@ class HeadUnitSimulator(
             .addChannels(Service.newBuilder().setId(video).setMediaSinkService(MediaSinkService.newBuilder()
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)
-                    .setFrameRate(VideoFrameRateType.VIDEO_FPS_30).setDensity(dpi).setWidthMargin(0).setHeightMargin(0))))
+                    .setFrameRate(VideoFrameRateType.VIDEO_FPS_30).setDensity(dpi).apply { if (writeZeros) { setWidthMargin(0); setHeightMargin(0) } })))
             .addChannels(audio(mediaAudio, AudioStreamType.AUDIO_STREAM_MEDIA, 48000, 2))
             .addChannels(audio(guidance, AudioStreamType.AUDIO_STREAM_GUIDANCE, 16000, 1))
             .addChannels(audio(system, AudioStreamType.AUDIO_STREAM_SYSTEM_AUDIO, 16000, 1))
@@ -298,6 +310,10 @@ class HeadUnitSimulator(
             .addChannels(Service.newBuilder().setId(navStatus).setNavigationStatusService(NavigationStatusService.newBuilder()
                 .setMinimumIntervalMs(500).setType(NavigationStatusService.InstrumentClusterType.ENUM)))
             .addChannels(Service.newBuilder().setId(playback).setMediaPlaybackService(MediaPlaybackStatusService.getDefaultInstance()))
+            // An AM tuner numbered 0: a proto3 head unit sends neither its id nor its type (both 0).
+            .addChannels(Service.newBuilder().setId(radio).setRadioService(RadioService.newBuilder().addRadioProperties(
+                RadioProperties.newBuilder().apply { if (writeZeros) { setRadioId(0); setType(RadioType.AM_RADIO) } }
+                    .addChannelRange(Range.newBuilder().setMin(530).setMax(1710)).setChannelSpacing(10))))
             .build()
     }
 

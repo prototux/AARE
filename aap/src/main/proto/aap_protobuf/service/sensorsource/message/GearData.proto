@@ -6,5 +6,5 @@ package aap_protobuf.service.sensorsource.message;
 
 message GearData
 {
-    required Gear gear = 1;
+    optional Gear gear = 1;
 }

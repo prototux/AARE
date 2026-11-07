@@ -5,6 +5,6 @@ import "aap_protobuf/aaw/Status.proto";
 package aap_protobuf.aaw;
 
 message WifiConnectionStatus {
-  required Status status = 1;
+  optional Status status = 1 [default = STATUS_SUCCESS];
   optional string error_message = 2;
 }

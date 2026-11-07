@@ -6,6 +6,6 @@ package aap_protobuf.service.bluetooth.message;
 
 message BluetoothPairingResponse
 {
-    required shared.MessageStatus status = 1;
-    required bool already_paired = 2;
+    optional shared.MessageStatus status = 1 [default = STATUS_SUCCESS];
+    optional bool already_paired = 2;
 }

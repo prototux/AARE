@@ -3,7 +3,7 @@ syntax="proto2";
 package aap_protobuf.service.media.shared.message;
 
 message AudioConfiguration {
-    required uint32 sampling_rate = 1;
-    required uint32 number_of_bits = 2;
-    required uint32 number_of_channels = 3;
+    optional uint32 sampling_rate = 1;
+    optional uint32 number_of_bits = 2;
+    optional uint32 number_of_channels = 3;
 }

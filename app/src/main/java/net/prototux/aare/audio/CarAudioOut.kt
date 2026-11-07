@@ -72,6 +72,7 @@ class CarAudioOut(
             onFailed()
             return
         }
+        Log.i(TAG, "$name: capturing at $rate Hz, $channels ch")
         // ~20 ms chunks: small enough for low latency, big enough to keep the message rate sane.
         val chunk = rate / 50 * channels * 2
         val buf = ByteArray(10 + chunk)
@@ -89,7 +90,7 @@ class CarAudioOut(
                 var got = 0
                 while (got < chunk && running) {
                     val n = source.read(buf, 10 + got, chunk - got)
-                    if (n < 0) { running = false; break }
+                    if (n < 0) { Log.i(TAG, "$name: capture ended"); running = false; break }
                     if (n == 0) { Thread.sleep(2); continue } // no data yet: yield, don't busy-spin
                     got += n
                 }
@@ -99,9 +100,11 @@ class CarAudioOut(
                 val ts = frames * 1_000_000L / rate
                 frames += chunk / (2 * channels)
                 if (!playing && lastSound == now) {
+                    Log.i(TAG, "$name: sound, asking the car for focus")
                     focus.request(true)
                     playing = true
                 } else if (playing && now - lastSound > SILENCE_MS) {
+                    Log.i(TAG, "$name: silence, stream closed")
                     channel.stopPlayback()
                     focus.request(false)
                     playing = false
@@ -114,6 +117,7 @@ class CarAudioOut(
                     if (!focus.granted) { queue(ts); continue }
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
+                    Log.i(TAG, "$name: focus granted, stream open (${channel.config?.samplingRate} Hz, ${channel.config?.numberOfChannels} ch)")
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
                     // not a raised one left over from the last stream's underflow.
@@ -150,6 +154,8 @@ class CarAudioOut(
         thread?.join(500)
         thread = null
     }
+
+    private val name get() = "${channel.streamType.name.removePrefix("AUDIO_STREAM_").lowercase()}#${channel.id}"
 
     companion object {
         private const val TAG = "AareAudioOut"

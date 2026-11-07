@@ -4,7 +4,7 @@ package aap_protobuf.service.navigationstatus.message;
 
 message NavigationStatus
 {
-    required NavigationStatusEnum status = 1;
+    optional NavigationStatusEnum status = 1;
     enum NavigationStatusEnum {
         UNAVAILABLE = 0;
         ACTIVE = 1;

@@ -8,8 +8,8 @@ import "aap_protobuf/service/radio/message/RadioStationInfo.proto";
 package aap_protobuf.service.radio.message;
 
 message GetProgramListResponse {
-  required shared.MessageStatus status = 1;
-  required int32 radio_id = 2;
-  required bool completed = 3;
+  optional shared.MessageStatus status = 1 [default = STATUS_SUCCESS];
+  optional int32 radio_id = 2;
+  optional bool completed = 3;
   repeated RadioStationInfo program_list = 4;
 }

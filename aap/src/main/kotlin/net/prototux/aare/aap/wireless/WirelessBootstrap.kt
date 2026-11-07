@@ -46,8 +46,16 @@ sealed interface JoinResult {
     class Failed(val status: Int, val message: String) : JoinResult
 }
 
-class WirelessBootstrapException(message: String, val status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) :
-    Exception(message, cause)
+class WirelessBootstrapException(
+    message: String,
+    val status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE,
+    cause: Throwable? = null,
+    /**
+     * Failed before the head unit told us its endpoint and network (it hung up, went silent,
+     * or sent something unusable): a car that isn't ready yet, so trying again later can work.
+     */
+    val whileNegotiating: Boolean = false,
+) : Exception(message, cause)
 
 /**
  * Phone side of the Bluetooth RFCOMM bootstrap of wireless Android Auto: learn the head unit's
@@ -442,7 +450,8 @@ class WirelessBootstrap(
     }
 
     private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
-        WirelessBootstrapException(message, status, cause).also { log.e("wireless: $message", cause) }
+        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
+            .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000
 
