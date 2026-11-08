@@ -34,6 +34,26 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
+    /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
+    var checkUpdates: Boolean
+        get() = prefs.getBoolean("check_updates", true)
+        set(v) = prefs.edit { putBoolean("check_updates", v) }
+
+    // Update-check cache (see UpdateChecker): the latest release seen and its page, when we last
+    // asked, and the version the user dismissed. Versions are stored without a leading "v".
+    var updateLatestVersion: String?
+        get() = prefs.getString("update_latest_version", null)
+        set(v) = prefs.edit { putString("update_latest_version", v) }
+    var updateLatestUrl: String?
+        get() = prefs.getString("update_latest_url", null)
+        set(v) = prefs.edit { putString("update_latest_url", v) }
+    var updateLastCheckMs: Long
+        get() = prefs.getLong("update_last_check_ms", 0)
+        set(v) = prefs.edit { putLong("update_last_check_ms", v) }
+    var updateDismissedVersion: String?
+        get() = prefs.getString("update_dismissed_version", null)
+        set(v) = prefs.edit { putString("update_dismissed_version", v) }
+
     /** Largest video height we accept from the head unit's offers (480, 720, 1080, 1440, 2160). */
     var maxVideoHeight: Int
         get() = prefs.getInt("max_video_height", 1080)
