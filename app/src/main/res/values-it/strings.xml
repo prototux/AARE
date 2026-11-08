@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certificati del telefono</string>
-    <string name="cert_hint">Le head unit controllano il certificato del telefono. Le head unit open source accettano quello generato automaticamente; le auto che usano il software head unit di Google accettano solo un certificato emesso da Google, che AARE non può includere. Puoi importare un certificato che hai il diritto di usare (certificato PEM + chiave PKCS#8, oppure PKCS#12).</string>
+    <string name="cert_hint">Le head unit controllano il certificato del telefono. Le head unit open source accettano quello generato automaticamente; le auto che usano il software head unit di Google accettano solo un certificato emesso da Google, che AARE non può includere. Puoi importare un certificato che hai il diritto di usare (certificato PEM + chiave PKCS#8, oppure PKCS#12). Puoi anche scaricare quello dell\'app Android Auto più recente (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · fino al %2$s</string>
     <string name="cert_action_remove">Rimuovi</string>
     <string name="cert_action_import">Importa certificato…</string>
+    <string name="cert_action_download">Scarica certificato</string>
+    <string name="cert_action_downloading">Download in corso…</string>
+    <string name="cert_download_unavailable">Il repository dei certificati non esiste più (eliminato o rimosso): %1$s. Estrai invece il certificato dall\'app Android Auto (vedi il README).</string>
+    <string name="cert_download_network">Impossibile scaricare il certificato: %1$s. Controlla la connessione e riprova.</string>
+    <string name="cert_download_invalid">Il certificato scaricato è stato rifiutato: %1$s</string>
     <string name="cert_p12_dialog_title">Password PKCS#12</string>
     <string name="cert_action_import_confirm">Importa</string>
     <string name="cert_imported_fallback">importato</string>

@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Сертифікати телефону</string>
-    <string name="cert_hint">Головні пристрої перевіряють сертифікат телефону. Головні пристрої з відкритим кодом приймають згенерований сертифікат; автомобілі з програмним забезпеченням головного пристрою Google приймають лише сертифікат, виданий Google, який AARE не може включити. Ви можете імпортувати той, на використання якого маєте право (сертифікат PEM + ключ PKCS#8, або PKCS#12).</string>
+    <string name="cert_hint">Головні пристрої перевіряють сертифікат телефону. Головні пристрої з відкритим кодом приймають згенерований сертифікат; автомобілі з програмним забезпеченням головного пристрою Google приймають лише сертифікат, виданий Google, який AARE не може включити. Ви можете імпортувати той, на використання якого маєте право (сертифікат PEM + ключ PKCS#8, або PKCS#12). Також можна завантажити сертифікат з найновішої версії Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · до %2$s</string>
     <string name="cert_action_remove">Видалити</string>
     <string name="cert_action_import">Імпортувати сертифікат…</string>
+    <string name="cert_action_download">Завантажити сертифікат</string>
+    <string name="cert_action_downloading">Завантаження…</string>
+    <string name="cert_download_unavailable">Репозиторію сертифікатів більше не існує (видалено або заблоковано): %1$s. Натомість витягніть сертифікат із застосунку Android Auto (див. README).</string>
+    <string name="cert_download_network">Не вдалося завантажити сертифікат: %1$s. Перевірте з’єднання і спробуйте ще раз.</string>
+    <string name="cert_download_invalid">Завантажений сертифікат відхилено: %1$s</string>
     <string name="cert_p12_dialog_title">Пароль PKCS#12</string>
     <string name="cert_action_import_confirm">Імпортувати</string>
     <string name="cert_imported_fallback">імпортовано</string>

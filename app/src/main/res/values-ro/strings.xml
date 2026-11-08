@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certificate telefon</string>
-    <string name="cert_hint">Unitățile centrale verifică certificatul telefonului. Unitățile centrale open-source acceptă certificatul generat; mașinile care folosesc software-ul Google pentru unitatea centrală acceptă doar un certificat emis de Google, pe care AARE nu îl poate include. Poți importa unul pe care ai dreptul să-l folosești (certificat PEM + cheie PKCS#8, sau PKCS#12).</string>
+    <string name="cert_hint">Unitățile centrale verifică certificatul telefonului. Unitățile centrale open-source acceptă certificatul generat; mașinile care folosesc software-ul Google pentru unitatea centrală acceptă doar un certificat emis de Google, pe care AARE nu îl poate include. Poți importa unul pe care ai dreptul să-l folosești (certificat PEM + cheie PKCS#8, sau PKCS#12). Poți descărca și certificatul din cea mai recentă aplicație Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · până la %2$s</string>
     <string name="cert_action_remove">Elimină</string>
     <string name="cert_action_import">Importă certificat…</string>
+    <string name="cert_action_download">Descarcă certificatul</string>
+    <string name="cert_action_downloading">Se descarcă…</string>
+    <string name="cert_download_unavailable">Depozitul de certificate nu mai există (șters sau eliminat): %1$s. Extrage în schimb certificatul din aplicația Android Auto (vezi README).</string>
+    <string name="cert_download_network">Certificatul nu a putut fi descărcat: %1$s. Verifică conexiunea și încearcă din nou.</string>
+    <string name="cert_download_invalid">Certificatul descărcat a fost respins: %1$s</string>
     <string name="cert_p12_dialog_title">Parolă PKCS#12</string>
     <string name="cert_action_import_confirm">Importă</string>
     <string name="cert_imported_fallback">importat</string>

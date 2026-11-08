@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certificats du téléphone</string>
-    <string name="cert_hint">Les autoradios vérifient le certificat du téléphone. Les autoradios open source acceptent celui généré automatiquement ; les voitures utilisant le logiciel d\'autoradio de Google n\'acceptent qu\'un certificat délivré par Google, qu\'AARE ne peut pas inclure. Vous pouvez importer un certificat que vous avez le droit d\'utiliser (certificat PEM + clé PKCS#8, ou PKCS#12).</string>
+    <string name="cert_hint">Les autoradios vérifient le certificat du téléphone. Les autoradios open source acceptent celui généré automatiquement ; les voitures utilisant le logiciel d\'autoradio de Google n\'acceptent qu\'un certificat délivré par Google, qu\'AARE ne peut pas inclure. Vous pouvez importer un certificat que vous avez le droit d\'utiliser (certificat PEM + clé PKCS#8, ou PKCS#12). Vous pouvez aussi télécharger celui de la dernière version d\'Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · jusqu\'au %2$s</string>
     <string name="cert_action_remove">Supprimer</string>
     <string name="cert_action_import">Importer un certificat…</string>
+    <string name="cert_action_download">Télécharger le certificat</string>
+    <string name="cert_action_downloading">Téléchargement…</string>
+    <string name="cert_download_unavailable">Le dépôt de certificats n\'existe plus (supprimé ou retiré) : %1$s. Extrayez plutôt le certificat de l\'application Android Auto (voir le README).</string>
+    <string name="cert_download_network">Impossible de télécharger le certificat : %1$s. Vérifiez la connexion et réessayez.</string>
+    <string name="cert_download_invalid">Le certificat téléchargé a été refusé : %1$s</string>
     <string name="cert_p12_dialog_title">Mot de passe PKCS#12</string>
     <string name="cert_action_import_confirm">Importer</string>
     <string name="cert_imported_fallback">importé</string>

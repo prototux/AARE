@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Chứng chỉ điện thoại</string>
-    <string name="cert_hint">Đầu đĩa kiểm tra chứng chỉ của điện thoại. Đầu đĩa mã nguồn mở chấp nhận chứng chỉ được tạo tự động; xe dùng phần mềm đầu đĩa của Google chỉ chấp nhận chứng chỉ do Google cấp, mà AARE không thể kèm theo. Bạn có thể nhập chứng chỉ mà bạn có quyền sử dụng (chứng chỉ PEM + khóa PKCS#8, hoặc PKCS#12).</string>
+    <string name="cert_hint">Đầu đĩa kiểm tra chứng chỉ của điện thoại. Đầu đĩa mã nguồn mở chấp nhận chứng chỉ được tạo tự động; xe dùng phần mềm đầu đĩa của Google chỉ chấp nhận chứng chỉ do Google cấp, mà AARE không thể kèm theo. Bạn có thể nhập chứng chỉ mà bạn có quyền sử dụng (chứng chỉ PEM + khóa PKCS#8, hoặc PKCS#12). Bạn cũng có thể tải xuống chứng chỉ từ ứng dụng Android Auto mới nhất (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · đến %2$s</string>
     <string name="cert_action_remove">Xóa</string>
     <string name="cert_action_import">Nhập chứng chỉ…</string>
+    <string name="cert_action_download">Tải chứng chỉ xuống</string>
+    <string name="cert_action_downloading">Đang tải xuống…</string>
+    <string name="cert_download_unavailable">Kho chứng chỉ không còn tồn tại (đã bị xóa hoặc gỡ bỏ): %1$s. Thay vào đó, hãy trích xuất chứng chỉ từ ứng dụng Android Auto (xem README).</string>
+    <string name="cert_download_network">Không tải được chứng chỉ: %1$s. Hãy kiểm tra kết nối rồi thử lại.</string>
+    <string name="cert_download_invalid">Chứng chỉ đã tải xuống bị từ chối: %1$s</string>
     <string name="cert_p12_dialog_title">Mật khẩu PKCS#12</string>
     <string name="cert_action_import_confirm">Nhập</string>
     <string name="cert_imported_fallback">đã nhập</string>

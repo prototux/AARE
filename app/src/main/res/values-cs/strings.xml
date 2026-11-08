@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certifikáty telefonu</string>
-    <string name="cert_hint">Hlavní jednotky kontrolují certifikát telefonu. Open-source hlavní jednotky přijímají vygenerovaný certifikát; auta se softwarem hlavní jednotky Google přijímají pouze certifikát vydaný Google, který AARE nemůže zahrnout. Můžete importovat certifikát, ke kterému máte právo použití (certifikát PEM + klíč PKCS#8, nebo PKCS#12).</string>
+    <string name="cert_hint">Hlavní jednotky kontrolují certifikát telefonu. Open-source hlavní jednotky přijímají vygenerovaný certifikát; auta se softwarem hlavní jednotky Google přijímají pouze certifikát vydaný Google, který AARE nemůže zahrnout. Můžete importovat certifikát, ke kterému máte právo použití (certifikát PEM + klíč PKCS#8, nebo PKCS#12). Můžete také stáhnout certifikát z nejnovější aplikace Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · do %2$s</string>
     <string name="cert_action_remove">Odstranit</string>
     <string name="cert_action_import">Importovat certifikát…</string>
+    <string name="cert_action_download">Stáhnout certifikát</string>
+    <string name="cert_action_downloading">Stahování…</string>
+    <string name="cert_download_unavailable">Repozitář s certifikáty už neexistuje (byl smazán nebo stažen): %1$s. Místo toho extrahujte certifikát z aplikace Android Auto (viz README).</string>
+    <string name="cert_download_network">Certifikát se nepodařilo stáhnout: %1$s. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="cert_download_invalid">Stažený certifikát byl odmítnut: %1$s</string>
     <string name="cert_p12_dialog_title">Heslo PKCS#12</string>
     <string name="cert_action_import_confirm">Importovat</string>
     <string name="cert_imported_fallback">importovaný</string>

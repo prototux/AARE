@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Puhelimen varmenteet</string>
-    <string name="cert_hint">Soittolaitteet tarkistavat puhelimen varmenteen. Avoimen lähdekoodin soittolaitteet hyväksyvät luodun varmenteen; Googlen soittolaiteohjelmistoa käyttävät autot hyväksyvät vain Googlen myöntämän varmenteen, jota AARE ei voi sisällyttää. Voit tuoda sellaisen, jonka käyttöön sinulla on oikeus (PEM-varmenne + PKCS#8-avain, tai PKCS#12).</string>
+    <string name="cert_hint">Soittolaitteet tarkistavat puhelimen varmenteen. Avoimen lähdekoodin soittolaitteet hyväksyvät luodun varmenteen; Googlen soittolaiteohjelmistoa käyttävät autot hyväksyvät vain Googlen myöntämän varmenteen, jota AARE ei voi sisällyttää. Voit tuoda sellaisen, jonka käyttöön sinulla on oikeus (PEM-varmenne + PKCS#8-avain, tai PKCS#12). Voit myös ladata uusimman Android Auto -sovelluksen varmenteen (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · asti %2$s</string>
     <string name="cert_action_remove">Poista</string>
     <string name="cert_action_import">Tuo varmenne…</string>
+    <string name="cert_action_download">Lataa varmenne</string>
+    <string name="cert_action_downloading">Ladataan…</string>
+    <string name="cert_download_unavailable">Varmennevarastoa ei enää ole (poistettu tai estetty): %1$s. Pura varmenne sen sijaan Android Auto -sovelluksesta (katso README).</string>
+    <string name="cert_download_network">Varmenteen lataus epäonnistui: %1$s. Tarkista yhteys ja yritä uudelleen.</string>
+    <string name="cert_download_invalid">Ladattu varmenne hylättiin: %1$s</string>
     <string name="cert_p12_dialog_title">PKCS#12-salasana</string>
     <string name="cert_action_import_confirm">Tuo</string>
     <string name="cert_imported_fallback">tuotu</string>

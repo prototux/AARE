@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Telefon tanúsítványai</string>
-    <string name="cert_hint">A fejegységek ellenőrzik a telefon tanúsítványát. A nyílt forráskódú fejegységek elfogadják a generáltat; a Google fejegység-szoftverét használó autók csak a Google által kiadott tanúsítványt fogadják el, amelyet az AARE nem tartalmazhat. Importálhatsz olyat, amelynek használatára jogosultsággal rendelkezel (PEM tanúsítvány + PKCS#8 kulcs, vagy PKCS#12).</string>
+    <string name="cert_hint">A fejegységek ellenőrzik a telefon tanúsítványát. A nyílt forráskódú fejegységek elfogadják a generáltat; a Google fejegység-szoftverét használó autók csak a Google által kiadott tanúsítványt fogadják el, amelyet az AARE nem tartalmazhat. Importálhatsz olyat, amelynek használatára jogosultsággal rendelkezel (PEM tanúsítvány + PKCS#8 kulcs, vagy PKCS#12). A legújabb Android Auto alkalmazás tanúsítványát is letöltheted (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · eddig: %2$s</string>
     <string name="cert_action_remove">Eltávolítás</string>
     <string name="cert_action_import">Tanúsítvány importálása…</string>
+    <string name="cert_action_download">Tanúsítvány letöltése</string>
+    <string name="cert_action_downloading">Letöltés…</string>
+    <string name="cert_download_unavailable">A tanúsítványtároló már nem létezik (törölték vagy eltávolították): %1$s. Inkább nyerd ki a tanúsítványt az Android Auto alkalmazásból (lásd a README-t).</string>
+    <string name="cert_download_network">Nem sikerült letölteni a tanúsítványt: %1$s. Ellenőrizd a kapcsolatot, és próbáld újra.</string>
+    <string name="cert_download_invalid">A letöltött tanúsítvány el lett utasítva: %1$s</string>
     <string name="cert_p12_dialog_title">PKCS#12 jelszó</string>
     <string name="cert_action_import_confirm">Importálás</string>
     <string name="cert_imported_fallback">importált</string>

@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Telefonzertifikate</string>
-    <string name="cert_hint">Head Units prüfen das Zertifikat des Telefons. Open-Source-Head-Units akzeptieren das generierte; Autos mit Googles Head-Unit-Software akzeptieren nur ein von Google ausgestelltes Zertifikat, das AARE nicht enthalten kann. Sie können eines importieren, das Sie nutzen dürfen (PEM-Zertifikat + PKCS#8-Schlüssel, oder PKCS#12).</string>
+    <string name="cert_hint">Head Units prüfen das Zertifikat des Telefons. Open-Source-Head-Units akzeptieren das generierte; Autos mit Googles Head-Unit-Software akzeptieren nur ein von Google ausgestelltes Zertifikat, das AARE nicht enthalten kann. Sie können eines importieren, das Sie nutzen dürfen (PEM-Zertifikat + PKCS#8-Schlüssel, oder PKCS#12). Sie können auch das Zertifikat der neuesten Android-Auto-App herunterladen (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · bis %2$s</string>
     <string name="cert_action_remove">Entfernen</string>
     <string name="cert_action_import">Zertifikat importieren…</string>
+    <string name="cert_action_download">Zertifikat herunterladen</string>
+    <string name="cert_action_downloading">Wird heruntergeladen…</string>
+    <string name="cert_download_unavailable">Das Zertifikat-Repository existiert nicht mehr (gelöscht oder gesperrt): %1$s. Extrahieren Sie das Zertifikat stattdessen aus der Android-Auto-App (siehe README).</string>
+    <string name="cert_download_network">Das Zertifikat konnte nicht heruntergeladen werden: %1$s. Prüfen Sie die Verbindung und versuchen Sie es erneut.</string>
+    <string name="cert_download_invalid">Das heruntergeladene Zertifikat wurde abgelehnt: %1$s</string>
     <string name="cert_p12_dialog_title">PKCS#12-Passwort</string>
     <string name="cert_action_import_confirm">Importieren</string>
     <string name="cert_imported_fallback">importiert</string>
