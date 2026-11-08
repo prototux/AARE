@@ -124,6 +124,14 @@ class CarSession(
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
     private val audio = ArrayList<AudioChannel>()
 
+    /**
+     * The car channel a kind of audio goes to: the first one the car lists. Some cars offer two of
+     * a kind (the Ford Mustang Mach-E has two media and two guidance channels, #74). Feeding both
+     * made their captures stop each other (Shizuku records once for the whole phone, and an output
+     * replaced by the second channel releases that recording), so the car only got silence.
+     */
+    private fun isPrimary(channel: AudioChannel) = audio.firstOrNull { it.streamType == channel.streamType } === channel
+
     // @Volatile: written on main (startProjection), read on the AAP reader thread (input) and the
     // encoder callback thread; without it a restart can leave them seeing a stale display/mapper.
     @Volatile private var encoder: VideoEncoder? = null
@@ -213,6 +221,11 @@ class CarSession(
                 s.hasBluetoothService() -> channels += BluetoothChannel(s, object : BluetoothChannel.Listener {})
             }
         }
+        Log.i(TAG, "audio: " + audio.joinToString { ch ->
+            "${ch.streamType.name.removePrefix("AUDIO_STREAM_")}#${ch.id} " +
+                ch.service.mediaSinkService.audioConfigsList.joinToString("|") { "${it.samplingRate}/${it.numberOfBits}/${it.numberOfChannels}" } +
+                if (isPrimary(ch)) "" else " (not used: a second channel of this kind)"
+        })
         return channels
     }
 
@@ -517,9 +530,10 @@ class CarSession(
         override fun onAudioReady(channel: AudioChannel, config: aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration) {
             if (!settings.carAudio) return
             if (channel.streamType != AudioStreamType.AUDIO_STREAM_MEDIA && channel.streamType != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
+            if (!isPrimary(channel)) return
             main.post { startAudio(channel) }
         }
-        override fun onUnderflow(channel: AudioChannel) { audioOuts[channel.streamType]?.onUnderflow() }
+        override fun onUnderflow(channel: AudioChannel) { if (isPrimary(channel)) audioOuts[channel.streamType]?.onUnderflow() }
     }
 
     /** Capture methods that failed in this session: the next best one is used instead. */
