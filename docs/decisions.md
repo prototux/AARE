@@ -55,3 +55,26 @@ download replaces the previous one (marked by a `downloaded` file in its directo
 sort by name and an older copy would be offered first. Rejected: bundling the files in the APK
 (AARE doesn't ship Google's key) and a periodic background refresh (network traffic the user didn't
 ask for). If Google ever replaces the CA, the pin needs an app update.
+
+## Xposed host-shims module (optional, rooted phones)
+
+`xposed/` is a standalone libxposed module (a separate APK, not part of the app, no app dependency
+on it). It lets AARE pass for Google's Android Auto host through hooks, for users already on LSPosed,
+as an alternative to the Magisk privapp module and the consent dialog. It adds no capability AARE
+lacks otherwise. See [xposed.md](xposed.md).
+
+Design choices:
+- **Separate module, built on demand, not released.** Hooks touch app and AOSP internals that break
+  between versions; keeping it out of the app APK and the release keeps that fragility away from
+  normal installs.
+- **libxposed (`io.github.libxposed:api`, `compileOnly`), not legacy XposedBridge.** The modern API
+  with a declared scope; the framework provides it at runtime.
+- **Every hook gated on AARE's package/uid, and falls through to the original otherwise.** A real
+  Google session is never altered; no other app or user is touched.
+- **System hooks only cover framework-level checks.** Natively enforced permissions (audio capture
+  in audioserver) still need the native grant, so the Magisk module stays the way to get system
+  audio. The permission hook is best-effort and skips unknown system_server shapes rather than
+  risking a boot loop.
+
+Status: unverified on a device; the PR is a starting point. Open question for the owner: whether to
+ship it as a release artifact later, or keep it build-it-yourself.

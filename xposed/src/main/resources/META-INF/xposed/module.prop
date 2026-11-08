@@ -1,0 +1,7 @@
+id=net.prototux.aare.xposed
+name=AARE host shims
+version=0.1.0
+versionCode=1
+author=AARE
+description=Lets AARE stand in for Google's Android Auto host on a rooted phone: makes projection-client apps accept AARE as their host, and grants AARE's privileged permissions and MediaProjection without the Magisk module or the consent dialog.
+scope=net.prototux.aare
