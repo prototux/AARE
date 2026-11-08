@@ -35,7 +35,9 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     }
 
     val keycodes: List<Int> = service.inputSourceService.keycodesSupportedList
-    val touchScreen = service.inputSourceService.touchscreenList.firstOrNull()
+    // The main touch panel: a car with a cluster/second screen lists that one as is_secondary.
+    val touchScreen = service.inputSourceService.touchscreenList.firstOrNull { !it.isSecondary }
+        ?: service.inputSourceService.touchscreenList.firstOrNull()
     val touchPad = service.inputSourceService.touchpadList.firstOrNull()
 
     override fun onOpened() {

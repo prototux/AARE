@@ -16,6 +16,7 @@ import aap_protobuf.service.media.sink.message.VideoFrameRateTypeOuterClass.Vide
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClass.MediaPlaybackMetadata
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.MediaPlaybackStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
+import aap_protobuf.service.ServiceOuterClass.Service
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -195,12 +196,16 @@ class CarSession(
             settings.rememberCar(runtime.ui.headUnitName)
         }
         val channels = ArrayList<ServiceChannel>()
+        // Input services are resolved after the loop, once the main display id is known: a car with
+        // a cluster/second screen lists one input service per display, several of them empty.
+        val inputServices = ArrayList<Service>()
+        var mainDisplayId = 0
         for (s in response.channelsList) {
             when {
                 s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> {
                     // The main display, and the instrument cluster's if the car has one (display_type CLUSTER).
                     when (s.mediaSinkService.displayType.number) {
-                        0 -> if (video == null) video = VideoChannel(s, videoListener(rhd)).also { channels += it }
+                        0 -> if (video == null) { mainDisplayId = s.mediaSinkService.displayId; video = VideoChannel(s, videoListener(rhd)).also { channels += it } }
                         1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s) }
                     }
                 }
@@ -211,15 +216,25 @@ class CarSession(
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
-                s.hasInputSourceService() -> InputChannel(s, inputListener).also { ch ->
-                    ch.touchScreen?.let { touchSize = it.width to it.height }
-                    channels += ch
-                }
+                s.hasInputSourceService() -> inputServices += s
                 s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
                 s.hasBluetoothService() -> channels += BluetoothChannel(s, object : BluetoothChannel.Listener {})
+            }
+        }
+        // The input service for the projected (main) display: match its display id, require a real
+        // non-secondary touch panel, and skip the empty input services a multi-screen unit lists.
+        fun realTouch(s: Service) = s.inputSourceService.touchscreenList.any { (it.width > 0 || it.height > 0) && !it.isSecondary }
+        val mainInput = inputServices.firstOrNull { it.inputSourceService.displayId == mainDisplayId && realTouch(it) }
+            ?: inputServices.firstOrNull(::realTouch)
+            ?: inputServices.firstOrNull()
+        mainInput?.let { s ->
+            InputChannel(s, inputListener).also { ch ->
+                ch.touchScreen?.let { touchSize = it.width to it.height }
+                channels += ch
+                Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
         }
         Log.i(TAG, "audio: " + audio.joinToString { ch ->
