@@ -105,6 +105,12 @@ class HeadUnit(
         val rightHandDrive: Boolean = false,
         /** Also offer an 800x480 instrument-cluster display (a second video sink, display_type CLUSTER). */
         val cluster: Boolean = false,
+        /**
+         * Present as a head unit with no touchscreen (rotary knob / D-pad only, like the Mazda
+         * commander in #42). The input service still advertises its keycodes, but no touch panel,
+         * so the phone drives the UI entirely from keys and rotary detents.
+         */
+        val noTouch: Boolean = false,
     )
 
     interface Listener {
@@ -517,7 +523,11 @@ class HeadUnit(
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioConfig(pcm(16_000, 1))))
             .addChannels(Service.newBuilder().setId(chInput).setInputSourceService(InputSourceService.newBuilder()
                 .addAllKeycodesSupported(SUPPORTED_KEYS)
-                .addTouchscreen(InputSourceService.TouchScreen.newBuilder().setWidth(config.width).setHeight(config.height))))
+                .apply {
+                    // A real rotary/D-pad-only unit declares no touch panel (--no-touch).
+                    if (!config.noTouch) addTouchscreen(
+                        InputSourceService.TouchScreen.newBuilder().setWidth(config.width).setHeight(config.height))
+                }))
             .addChannels(Service.newBuilder().setId(chSensors).setSensorSourceService(SensorSourceService.newBuilder().apply {
                 for (t in listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_LOCATION,
                     SensorType.SENSOR_SPEED, SensorType.SENSOR_GEAR, SensorType.SENSOR_PARKING_BRAKE) + FakeCar.SENSORS) addSensors(Sensor.newBuilder().setSensorType(t))
