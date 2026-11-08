@@ -235,6 +235,18 @@ class HeadUnit(
             .build())
     }
 
+    /**
+     * Fakes putting the car in reverse: show the car's own screen (unsolicited native video focus),
+     * then hand projection back after [seconds]. Reproduces the LG GEN5 reverse case (#109).
+     */
+    fun reverse(seconds: Double) {
+        if (!tlsUp) return
+        fun focus(mode: VideoFocusMode) = send(chVideo, MediaMsg.VIDEO_FOCUS_NOTIFICATION,
+            VideoFocusNotification.newBuilder().setFocus(mode).setUnsolicited(true).build())
+        focus(VideoFocusMode.VIDEO_FOCUS_NATIVE)
+        timer.schedule({ focus(VideoFocusMode.VIDEO_FOCUS_PROJECTED) }, (seconds * 1000).toLong(), TimeUnit.MILLISECONDS)
+    }
+
     // ------------------------------------------------------------------ sensors
 
     fun setNight(on: Boolean) {

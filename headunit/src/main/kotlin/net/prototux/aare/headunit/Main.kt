@@ -68,7 +68,7 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --hu-cert PEM --hu-key PEM   head-unit certificate chain + PKCS#8 key to present (default: one made on first run, kept in ~/.config/aare/headunit)
   --headless DIR         no window: save a PNG of the screen to DIR every few seconds (for tests)
   --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N
-                         dpad:up|down|left|right|center  night  day  park  drive
+                         dpad:up|down|left|right|center  reverse:SECS  night  day  park  drive
 
 Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · numpad 8/4/6/2 + 5 D-pad
       Enter select · K play/pause · , . prev/next
@@ -383,6 +383,7 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
                     what == "day" -> unit.setNight(false).also { night = false }
                     what == "park" -> unit.setDriving(false).also { driving = false }
                     what == "drive" -> unit.setDriving(true).also { driving = true }
+                    what.startsWith("reverse:") -> unit.reverse(what.removePrefix("reverse:").toDouble())
                 }
             }
         }

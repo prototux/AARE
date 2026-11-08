@@ -184,6 +184,8 @@ class VideoChannel(
     val configs: List<VideoConfiguration> = service.mediaSinkService.videoConfigsList
     @Volatile var chosen: VideoConfiguration? = null
         private set
+    /** The configuration index of the running stream, to START a new session on the same one. */
+    @Volatile private var startIndex = 0
     @Volatile var focused = false
         private set
 
@@ -217,6 +219,7 @@ class VideoChannel(
         if (!ready) return
         val index = listener.chooseConfiguration(configs, configIndices).coerceIn(0, configs.size - 1)
         chosen = configs[index]
+        startIndex = index
         synchronized(lock) { sentAt.clear() }
         startStream(index)
         listener.onVideoStart(index, configs[index])
@@ -230,7 +233,7 @@ class VideoChannel(
         when (msg.id) {
             MediaMsg.VIDEO_FOCUS_NOTIFICATION -> {
                 val n = VideoFocusNotification.parseFrom(msg.bodyBytes())
-                setFocus(isProjected(n.focus))
+                setFocus(n.focus)
             }
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 // Some head units ask us to change focus; we comply and confirm.
@@ -240,7 +243,7 @@ class VideoChannel(
                 send(MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder()
                     .setFocus(if (projected) r.mode else VideoFocusMode.VIDEO_FOCUS_NATIVE)
                     .setUnsolicited(false).build())
-                setFocus(projected)
+                setFocus(r.mode)
             }
             MediaMsg.UPDATE_UI_CONFIG_REQUEST -> {
                 // The head unit changes the layout at runtime (insets, theme): apply it and
@@ -255,13 +258,23 @@ class VideoChannel(
         }
     }
 
-    private fun setFocus(projected: Boolean) {
+    private fun setFocus(mode: VideoFocusMode) {
+        val projected = isProjected(mode)
         val changed = projected != focused
         focused = projected
         if (projected) {
+            // Some head units throw their decoder away while they show their own screen (the
+            // reverse camera on LG GEN5, #109) and only build a new one on a START: if we stopped
+            // the stream for a full native focus, start a fresh session now so the picture returns.
+            if (!started) startStream(startIndex)
             synchronized(lock) { needKeyFrame = true; while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) } }
-            // resend codec config: some head units reset their decoder when focus returns
+            // Resend the codec config after the (re)start, the same as at connection.
             codecConfig?.let { sendCodecConfigData(it, 0, it.size, Priority.VIDEO) }
+        } else if (mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) {
+            // Full native: the head unit shows its own screen (reverse, "exit to car"). Stop the
+            // stream so it can tear its decoder down cleanly; we re-START when projection returns.
+            // A transient native (a brief overlay) keeps the stream open; we just stop feeding it.
+            stopStream()
         }
         if (changed || projected) listener.onVideoFocus(projected)
     }
