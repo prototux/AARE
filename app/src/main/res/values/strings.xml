@@ -120,6 +120,9 @@
     <string name="setup_app_entry_notifications">Notifications</string>
     <string name="setup_section_app_order">Order in the car</string>
     <string name="setup_section_connection_log">Connection log</string>
+    <string name="setup_log_save">Save</string>
+    <string name="setup_toggle_verbose_log_title">Verbose protocol log</string>
+    <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Not affiliated with Google. Android Auto is a trademark of Google LLC.</string>
     <string name="setup_choice_style">Style</string>
     <string name="setup_style_android_auto">Android Auto</string>

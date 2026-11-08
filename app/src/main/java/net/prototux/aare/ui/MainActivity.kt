@@ -114,6 +114,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
+import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
@@ -1085,21 +1086,37 @@ private fun displayName(ctx: Context, uri: Uri): String =
 @Composable
 private fun LogCard() {
     val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
     val log by DiagLog.lines.collectAsState()
-    if (log.isEmpty()) return
     val title = stringResource(R.string.setup_section_connection_log)
+    // Writes every retained line to a file the user picks, to attach to a bug report.
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            ctx.contentResolver.openOutputStream(uri)?.use { it.write(DiagLog.lines.value.joinToString("\n").toByteArray()) }
+        }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+    }
     Section(title) {
-        log.takeLast(40).forEach {
-            Text(it, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Always shown, so the trace can be turned on before connecting.
+        var verbose by remember { mutableStateOf(settings.verboseProtocolLog) }
+        Toggle(stringResource(R.string.setup_toggle_verbose_log_title), stringResource(R.string.setup_toggle_verbose_log_subtitle), verbose) {
+            verbose = it; settings.verboseProtocolLog = it; SessionAapLog.verbose = it
         }
-        Row {
-            // Copies every retained line, not only the ones shown above.
-            TextButton(onClick = {
-                ctx.getSystemService(ClipboardManager::class.java)
-                    ?.setPrimaryClip(ClipData.newPlainText(title, log.joinToString("\n")))
-            }) { Text(stringResource(android.R.string.copy)) }
-            TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+        if (log.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            log.takeLast(40).forEach {
+                Text(it, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Row {
+                // Copies every retained line, not only the ones shown above.
+                TextButton(onClick = {
+                    ctx.getSystemService(ClipboardManager::class.java)
+                        ?.setPrimaryClip(ClipData.newPlainText(title, log.joinToString("\n")))
+                }) { Text(stringResource(android.R.string.copy)) }
+                TextButton(onClick = { save.launch("aare-log.txt") }) { Text(stringResource(R.string.setup_log_save)) }
+                TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+            }
         }
     }
 }
