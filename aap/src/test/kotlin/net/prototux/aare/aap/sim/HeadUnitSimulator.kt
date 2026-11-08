@@ -19,6 +19,7 @@ import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.S
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
+import aap_protobuf.service.inputsource.message.RelativeEventOuterClass.RelativeEvent
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
@@ -253,6 +254,13 @@ class HeadUnitSimulator(
                     .addKeys(aap_protobuf.service.inputsource.message.KeyEventOuterClass.KeyEvent.Key.newBuilder()
                         .setKeycode(code).setDown(down).setMetastate(0))).build())
         }
+    }
+
+    /** Turns the rotary controller [detents] detents (positive = clockwise), like a knob. */
+    fun rotary(detents: Int) {
+        send(input, InputMsg.INPUT_REPORT, InputReport.newBuilder().setTimestamp(System.nanoTime())
+            .setRelativeEvent(RelativeEvent.newBuilder()
+                .addData(RelativeEvent.Rel.newBuilder().setKeycode(65536 /* rotary */).setDelta(detents))).build())
     }
 
     fun requestFocusNative() = send(video, MediaMsg.VIDEO_FOCUS_NOTIFICATION,

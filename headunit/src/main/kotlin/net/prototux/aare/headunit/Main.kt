@@ -59,15 +59,18 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --fps60                ask for 60 fps
   --rhd                  right-hand drive
   --cluster              also offer an 800x480 instrument-cluster display (shown in a second window)
+  --no-touch             present as a rotary/D-pad-only unit with no touchscreen (like a Mazda commander)
   --route NAME|FILE      simulated drive (default paris-marseille); "none" to disable
   --speed KMH            cruising speed on open road (default 130)
   --time-scale X         drive X times faster than real time (default 1)
   --serial S             adb serial of an emulator, to move its GPS along the route too
   --hu-cert PEM --hu-key PEM   head-unit certificate chain + PKCS#8 key to present (default: one made on first run, kept in ~/.config/aare/headunit)
   --headless DIR         no window: save a PNG of the screen to DIR every few seconds (for tests)
-  --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N  night  day  park  drive
+  --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N
+                         dpad:up|down|left|right|center  night  day  park  drive
 
-Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · Enter select · K play/pause · , . prev/next
+Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · numpad 8/4/6/2 + 5 D-pad
+      Enter select · K play/pause · , . prev/next
       N night/day · P parked/driving · Space pause the drive"""
 
 fun main(args: Array<String>) {
@@ -131,6 +134,7 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         fps60 = opts.containsKey("fps60"),
         rightHandDrive = opts.containsKey("rhd"),
         cluster = opts.containsKey("cluster"),
+        noTouch = opts.containsKey("no-touch"),
     )
     val identity: PhoneIdentity = loadIdentity()
     val route: RouteDrive? = opts["route"].let { r -> if (r == "none") null else runCatching { RouteDrive.load(r ?: "paris-marseille") }.getOrNull() }
@@ -349,6 +353,10 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
                     }
                     what.startsWith("key:") -> unit.pressKey(what.removePrefix("key:").toInt())
                     what.startsWith("rotate:") -> unit.rotate(what.removePrefix("rotate:").toInt())
+                    what.startsWith("dpad:") -> unit.pressKey(when (what.removePrefix("dpad:")) {
+                        "up" -> 19; "down" -> 20; "left" -> 21; "right" -> 22; "center", "centre", "ok" -> 23
+                        else -> return@thread
+                    })
                     what == "night" -> unit.setNight(true).also { night = true }
                     what == "day" -> unit.setNight(false).also { night = false }
                     what == "park" -> unit.setDriving(false).also { driving = false }
@@ -483,9 +491,28 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         p.add(row(button("Back") { hu?.pressKey(4) }, button("Home") { hu?.pressKey(3) }, button("🎤 Voice") { hu?.pressKey(84) }))
         p.add(gap(6))
         p.add(row(button("⏮") { hu?.pressKey(88) }, button("⏯") { hu?.pressKey(85) }, button("⏭") { hu?.pressKey(87) }))
+
+        // Rotary knob and D-pad, for testing focus navigation on units with no touchscreen (#42).
+        section("Rotary / D-pad" + if (config.noTouch) " (no touchscreen)" else "")
+        p.add(row(button("⟲ rotate") { hu?.rotate(-1) }, button("rotate ⟳") { hu?.rotate(1) }))
+        p.add(gap(6))
+        p.add(dpad())
+
         p.add(gap(14))
-        p.add(label(html("Mouse = touch · Esc back · H home · V voice · wheel/arrows rotary · N night · P parked · Space pause drive"), 11f, color = MUTED))
+        p.add(label(html("Mouse = touch · Esc back · H home · V voice · wheel/arrows rotary · numpad D-pad · N night · P parked · Space pause drive"), 11f, color = MUTED))
         return p
+    }
+
+    /** A 3×3 grid of D-pad buttons sending the real D-pad keycodes (19-22) and centre (23). */
+    private fun dpad(): JComponent {
+        fun key(text: String, code: Int) = button(text) { hu?.pressKey(code) }
+        return JPanel(GridLayout(3, 3, 6, 6)).apply {
+            isOpaque = false; alignmentX = 0f
+            maximumSize = Dimension(Int.MAX_VALUE, 120)
+            add(JLabel()); add(key("▲", 19)); add(JLabel())
+            add(key("◀", 21)); add(key("OK", 23)); add(key("▶", 22))
+            add(JLabel()); add(key("▼", 20)); add(JLabel())
+        }
     }
 
     fun installKeys() {
@@ -502,6 +529,12 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
                     KeyEvent.VK_ENTER -> h?.pressKey(23)
                     KeyEvent.VK_UP, KeyEvent.VK_LEFT -> h?.rotate(-1)
                     KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT -> h?.rotate(1)
+                    // Numpad: a real D-pad (keycodes 19-22 + centre 23), distinct from the rotary.
+                    KeyEvent.VK_NUMPAD8 -> h?.pressKey(19)
+                    KeyEvent.VK_NUMPAD2 -> h?.pressKey(20)
+                    KeyEvent.VK_NUMPAD4 -> h?.pressKey(21)
+                    KeyEvent.VK_NUMPAD6 -> h?.pressKey(22)
+                    KeyEvent.VK_NUMPAD5 -> h?.pressKey(23)
                     KeyEvent.VK_N -> { night = !night; h?.setNight(night) }
                     KeyEvent.VK_P -> { driving = !driving; h?.setDriving(driving) }
                     KeyEvent.VK_SPACE -> paused = !paused
