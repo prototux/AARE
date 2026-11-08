@@ -1,5 +1,7 @@
 # AARE
 
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/prototux/AARE)
+
 AARE is an open-source reimplementation of the phone side of Android Auto. The phone talks the
 Android Auto projection protocol (AAP) to the car's head unit, draws the car screen itself, and
 runs apps that Google's Android Auto keeps out:
