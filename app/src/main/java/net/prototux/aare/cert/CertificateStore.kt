@@ -69,14 +69,27 @@ class CertificateStore(private val context: Context) {
     }
 
     /** Imports a PEM certificate (chain) and a PEM PKCS#8 private key. */
-    fun importPem(name: String, certPem: String, keyPem: String): Entry {
+    fun importPem(name: String, certPem: String, keyPem: String): Entry = load(savePem(name, certPem, keyPem))!!
+
+    private fun savePem(name: String, certPem: String, keyPem: String): File {
         val certs = CertificateFactory.getInstance("X.509")
             .generateCertificates(certPem.byteInputStream()).map { it as X509Certificate }
         require(certs.isNotEmpty()) { "no certificate in the file" }
         val key = parsePkcs8(keyPem)
         val d = newDir(name)
         save(d, certs, key)
-        return load(d)!!
+        return d
+    }
+
+    /**
+     * Stores a certificate from [CertificateDownload], replacing any earlier download: only the
+     * latest is worth offering, and an older one would be tried first (entries sort by name).
+     */
+    fun importDownloaded(d: CertificateDownload.Downloaded): Entry {
+        dir.listFiles().orEmpty().filter { File(it, DOWNLOADED_MARKER).exists() }.forEach { it.deleteRecursively() }
+        val saved = savePem("Android Auto ${d.version}", d.certPem, d.keyPem)
+        File(saved, DOWNLOADED_MARKER).writeText(CertificateDownload.SOURCE)
+        return load(saved)!!
     }
 
     /** Imports a PKCS#12 bundle. */
@@ -120,6 +133,8 @@ class CertificateStore(private val context: Context) {
         private const val GENERATED = "Generated (self-signed)"
         private const val BUILT_IN = "AARE (built in)"
         private const val BUILT_IN_DIR = "phone_identity"
+        /** Marks a certificate directory written by [importDownloaded]. */
+        private const val DOWNLOADED_MARKER = "downloaded"
 
         fun pem(type: String, der: ByteArray) =
             "-----BEGIN $type-----\n" + Base64.encodeToString(der, Base64.NO_WRAP).chunked(64).joinToString("\n") + "\n-----END $type-----\n"

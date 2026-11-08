@@ -42,3 +42,16 @@ in a car session (not the on-phone preview), sits outside the user's app order, 
   `requestFocusFromTouch()` may be refused when the phone's own focused window isn't ours. To check
   on a phone: logcat for "Touch mode switch rejected" with the screen locked and a knob-only unit.
   If it is refused, the car UI needs focus targets that work in touch mode.
+
+## Downloading Android Auto's certificate
+
+*Advanced > Phone certificates > Download certificate* fetches `android-auto/latest/` from
+github.com/iscle/android-auto-certificates (raw.githubusercontent.com), only on tap: no background
+check, so AARE contacts that host only when the user asks. That repository is a third party, so the
+download is accepted only when its chain holds the pinned Google Automotive Link CA, the CA signed
+the leaf, and the key matches the leaf (`CertificateDownload.check`). Anything else couldn't pass a
+Google-library head unit anyway; the checks keep junk or a swapped file out of the list. A
+download replaces the previous one (marked by a `downloaded` file in its directory) because entries
+sort by name and an older copy would be offered first. Rejected: bundling the files in the APK
+(AARE doesn't ship Google's key) and a periodic background refresh (network traffic the user didn't
+ask for). If Google ever replaces the CA, the pin needs an app update.

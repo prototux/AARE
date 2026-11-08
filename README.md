@@ -101,7 +101,13 @@ an uninstall first.
 ## AA Key extraction
 
 As head units based on the official Google's host implementation checks the certificate/key of AARE,
-in order to use those, key extraction is needed:
+in order to use those, key extraction is needed.
+
+The quickest way: under *Advanced > Phone certificates*, tap **Download certificate**. AARE fetches
+the certificate and key extracted from the latest Android Auto app by
+[iscle/android-auto-certificates](https://github.com/iscle/android-auto-certificates), checks that
+the certificate is issued by Google Automotive Link and that the key matches it, and adds it to its
+certificates (replacing an earlier download). To extract them yourself instead:
 
 1. On your computer, clone this repository, or use **Code → Download ZIP** on GitHub and
    extract it. Open a terminal in the repository folder, where [extract_key.py](extract_key.py)
@@ -399,8 +405,9 @@ During the handshake the head unit checks the phone's TLS certificate.
   refuses authentication (status -3).
 - **Open-source head units:** openauto/Crankshaft, Headunit Revived, LIVI and aa-proxy-rs accept
   AARE's generated certificate, as do some OEM units.
-- **Importing a certificate:** AARE does not ship or extract Google's key. If you have a
-  certificate and key you're entitled to use, import it under *Advanced > Phone certificates*.
+- **Importing a certificate:** AARE does not ship Google's key. If you have a certificate and key
+  you're entitled to use, import it under *Advanced > Phone certificates*, or tap *Download
+  certificate* there (see [AA Key extraction](#aa-key-extraction)).
 - **Fallback order:** AARE offers its certificates in turn. After a head unit rejects one, the
   next connection uses the next one.
 
