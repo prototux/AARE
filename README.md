@@ -510,6 +510,22 @@ that came with it:
 
 and for the first test of AARE in a real car.
 
+Code fixes and docs from [@s-ratashnyuk](https://github.com/s-ratashnyuk) (zero-panel touch
+mapping), [@JVKeller](https://github.com/JVKeller) (Mazda command-knob focus),
+[@jameswynn](https://github.com/jameswynn) (a copyable connection log),
+[@pafolol](https://github.com/pafolol) (the Samsung USB permission fix),
+[@jooray](https://github.com/jooray) and [@KrishnaX12](https://github.com/KrishnaX12) (README and
+key-extraction docs), and [@freezed23](https://github.com/freezed23) (the Samsung
+separate-app-sound write-up).
+
+Head-unit reports from [@Shane11r](https://github.com/Shane11r), [@dani203](https://github.com/dani203),
+[@pgwipeout](https://github.com/pgwipeout), [@tylertneal](https://github.com/tylertneal),
+[@rutgerputter](https://github.com/rutgerputter), [@ranjowd](https://github.com/ranjowd),
+[@remyzerems](https://github.com/remyzerems), [@breversa](https://github.com/breversa),
+[@alkralor](https://github.com/alkralor), [@xaoc7](https://github.com/xaoc7),
+[@matthias-hoste](https://github.com/matthias-hoste) and [@paulhiggs](https://github.com/paulhiggs)
+— see [Tested on real head units](#tested-on-real-head-units) for the cars.
+
 ## License
 
 GPL-3.0-or-later (see [LICENSE](LICENSE)). The protobuf definitions come from aasdk
