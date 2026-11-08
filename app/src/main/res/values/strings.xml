@@ -136,10 +136,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Phone certificates</string>
-    <string name="cert_hint">Head units check the phone\'s certificate. Open-source head units accept the generated one; cars using Google\'s head unit software only accept a certificate issued by Google, which AARE cannot include. You can import one you have the right to use (PEM certificate + PKCS#8 key, or PKCS#12).</string>
+    <string name="cert_hint">Head units check the phone\'s certificate. Open-source head units accept the generated one; cars using Google\'s head unit software only accept a certificate issued by Google, which AARE cannot include. You can import one you have the right to use (PEM certificate + PKCS#8 key, or PKCS#12), or download the one from the latest Android Auto app (from github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · until %2$s</string>
     <string name="cert_action_remove">Remove</string>
     <string name="cert_action_import">Import certificate…</string>
+    <string name="cert_action_download">Download certificate</string>
+    <string name="cert_action_downloading">Downloading…</string>
+    <string name="cert_download_unavailable">The certificate repository is gone (deleted or taken down): %1$s. Extract the certificate from the Android Auto app instead (see the README).</string>
+    <string name="cert_download_network">Couldn\'t download the certificate: %1$s. Check the connection and try again.</string>
+    <string name="cert_download_invalid">The downloaded certificate was rejected: %1$s</string>
     <string name="cert_p12_dialog_title">PKCS#12 password</string>
     <string name="cert_action_import_confirm">Import</string>
     <string name="cert_imported_fallback">imported</string>

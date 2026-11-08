@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Telefoncertifikat</string>
-    <string name="cert_hint">Head units kontrollerar telefonens certifikat. Head units med öppen källkod accepterar det genererade; bilar som använder Googles head unit-programvara accepterar bara ett certifikat utfärdat av Google, som AARE inte kan inkludera. Du kan importera ett som du har rätt att använda (PEM-certifikat + PKCS#8-nyckel, eller PKCS#12).</string>
+    <string name="cert_hint">Head units kontrollerar telefonens certifikat. Head units med öppen källkod accepterar det genererade; bilar som använder Googles head unit-programvara accepterar bara ett certifikat utfärdat av Google, som AARE inte kan inkludera. Du kan importera ett som du har rätt att använda (PEM-certifikat + PKCS#8-nyckel, eller PKCS#12). Du kan också ladda ner det från den senaste Android Auto-appen (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · till %2$s</string>
     <string name="cert_action_remove">Ta bort</string>
     <string name="cert_action_import">Importera certifikat…</string>
+    <string name="cert_action_download">Ladda ner certifikat</string>
+    <string name="cert_action_downloading">Laddar ner…</string>
+    <string name="cert_download_unavailable">Certifikatarkivet finns inte längre (raderat eller borttaget): %1$s. Extrahera i stället certifikatet från Android Auto-appen (se README).</string>
+    <string name="cert_download_network">Det gick inte att ladda ner certifikatet: %1$s. Kontrollera anslutningen och försök igen.</string>
+    <string name="cert_download_invalid">Det nedladdade certifikatet avvisades: %1$s</string>
     <string name="cert_p12_dialog_title">PKCS#12-lösenord</string>
     <string name="cert_action_import_confirm">Importera</string>
     <string name="cert_imported_fallback">importerat</string>

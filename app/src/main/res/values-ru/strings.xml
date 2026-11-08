@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Сертификаты телефона</string>
-    <string name="cert_hint">Головные устройства проверяют сертификат телефона. Головные устройства с открытым кодом принимают сгенерированный сертификат; автомобили с программным обеспечением головного устройства Google принимают только сертификат, выданный Google, который AARE не может включить. Вы можете импортировать тот, на использование которого у вас есть право (сертификат PEM + ключ PKCS#8, или PKCS#12).</string>
+    <string name="cert_hint">Головные устройства проверяют сертификат телефона. Головные устройства с открытым кодом принимают сгенерированный сертификат; автомобили с программным обеспечением головного устройства Google принимают только сертификат, выданный Google, который AARE не может включить. Вы можете импортировать тот, на использование которого у вас есть право (сертификат PEM + ключ PKCS#8, или PKCS#12). Также можно скачать сертификат из последней версии Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · до %2$s</string>
     <string name="cert_action_remove">Удалить</string>
     <string name="cert_action_import">Импортировать сертификат…</string>
+    <string name="cert_action_download">Скачать сертификат</string>
+    <string name="cert_action_downloading">Загрузка…</string>
+    <string name="cert_download_unavailable">Репозиторий сертификатов больше не существует (удалён или заблокирован): %1$s. Вместо этого извлеките сертификат из приложения Android Auto (см. README).</string>
+    <string name="cert_download_network">Не удалось скачать сертификат: %1$s. Проверьте подключение и повторите попытку.</string>
+    <string name="cert_download_invalid">Скачанный сертификат отклонён: %1$s</string>
     <string name="cert_p12_dialog_title">Пароль PKCS#12</string>
     <string name="cert_action_import_confirm">Импортировать</string>
     <string name="cert_imported_fallback">импортирован</string>

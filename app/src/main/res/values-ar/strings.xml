@@ -120,10 +120,15 @@
     <string name="setup_switch_audio_next_connection">صوت الهاتف في السيارة (الاتصال التالي)</string>
 
     <string name="cert_section_title">شهادات الهاتف</string>
-    <string name="cert_hint">تتحقق وحدات التحكم من شهادة الهاتف. تقبل وحدات التحكم مفتوحة المصدر الشهادة المُولَّدة؛ أما السيارات التي تستخدم برنامج وحدة تحكم Google فلا تقبل إلا شهادة صادرة عن Google، وهو ما لا يمكن لـ AARE تضمينه. يمكنك استيراد شهادة لديك الحق في استخدامها (شهادة PEM + مفتاح PKCS#8، أو PKCS#12).</string>
+    <string name="cert_hint">تتحقق وحدات التحكم من شهادة الهاتف. تقبل وحدات التحكم مفتوحة المصدر الشهادة المُولَّدة؛ أما السيارات التي تستخدم برنامج وحدة تحكم Google فلا تقبل إلا شهادة صادرة عن Google، وهو ما لا يمكن لـ AARE تضمينه. يمكنك استيراد شهادة لديك الحق في استخدامها (شهادة PEM + مفتاح PKCS#8، أو PKCS#12). يمكنك أيضًا تنزيل الشهادة المستخرجة من أحدث إصدار من تطبيق Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · حتى %2$s</string>
     <string name="cert_action_remove">إزالة</string>
     <string name="cert_action_import">استيراد شهادة…</string>
+    <string name="cert_action_download">تنزيل الشهادة</string>
+    <string name="cert_action_downloading">جارٍ التنزيل…</string>
+    <string name="cert_download_unavailable">مستودع الشهادات لم يعد موجودًا (حُذف أو أُزيل): %1$s. استخرج الشهادة من تطبيق Android Auto بدلًا من ذلك (راجع ملف README).</string>
+    <string name="cert_download_network">تعذّر تنزيل الشهادة: %1$s. تحقّق من الاتصال وأعد المحاولة.</string>
+    <string name="cert_download_invalid">رُفضت الشهادة التي جرى تنزيلها: %1$s</string>
     <string name="cert_p12_dialog_title">كلمة مرور PKCS#12</string>
     <string name="cert_action_import_confirm">استيراد</string>
     <string name="cert_imported_fallback">مستوردة</string>

@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certificados do telemóvel</string>
-    <string name="cert_hint">As unidades principais verificam o certificado do telemóvel. As unidades principais de código aberto aceitam o certificado gerado; os carros que utilizam o software de unidade principal da Google só aceitam um certificado emitido pela Google, que a AARE não pode incluir. Pode importar um que tenha o direito de utilizar (certificado PEM + chave PKCS#8, ou PKCS#12).</string>
+    <string name="cert_hint">As unidades principais verificam o certificado do telemóvel. As unidades principais de código aberto aceitam o certificado gerado; os carros que utilizam o software de unidade principal da Google só aceitam um certificado emitido pela Google, que a AARE não pode incluir. Pode importar um que tenha o direito de utilizar (certificado PEM + chave PKCS#8, ou PKCS#12). Também pode transferir o da versão mais recente da app Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · até %2$s</string>
     <string name="cert_action_remove">Remover</string>
     <string name="cert_action_import">Importar certificado…</string>
+    <string name="cert_action_download">Transferir certificado</string>
+    <string name="cert_action_downloading">A transferir…</string>
+    <string name="cert_download_unavailable">O repositório de certificados já não existe (eliminado ou removido): %1$s. Em alternativa, extraia o certificado da app Android Auto (consulte o README).</string>
+    <string name="cert_download_network">Não foi possível transferir o certificado: %1$s. Verifique a ligação e tente novamente.</string>
+    <string name="cert_download_invalid">O certificado transferido foi rejeitado: %1$s</string>
     <string name="cert_p12_dialog_title">Palavra-passe PKCS#12</string>
     <string name="cert_action_import_confirm">Importar</string>
     <string name="cert_imported_fallback">importado</string>

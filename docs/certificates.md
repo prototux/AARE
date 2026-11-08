@@ -92,9 +92,14 @@ check, so not every factory head unit does. Reports from real cars are welcome (
     last fallback, and the only one in builds without the built-in certificate.
   - Head units that don't check the phone accept either; Google-library head units refuse both.
 - **Importing a certificate:** under *Advanced > Phone certificates* you can import a certificate
-  chain and key (PEM, or a PKCS#12 file) that you are entitled to use. **AARE does not ship,
-  download or extract Google's certificate or key**, and this repository doesn't explain how to
-  get them.
+  chain and key (PEM, or a PKCS#12 file) that you are entitled to use. AARE doesn't ship Google's
+  certificate or key. *Download certificate* fetches the ones extracted from the latest Android
+  Auto app from [iscle/android-auto-certificates](https://github.com/iscle/android-auto-certificates)
+  (the files under `android-auto/latest/`), only when you tap it. That repository is a third party,
+  so AARE keeps the download only if its chain contains the Google Automotive Link CA (pinned by
+  SHA-256 `49e52efc…c4ad17f`), the CA signed the leaf, and the key signs data the leaf's public key
+  verifies. A new download replaces the previous one; certificates you imported stay.
+  [extract_key.py](../extract_key.py) gets the same files from an Android Auto APK.
 - **Fallback order:** imported certificates first, then the built-in one, then the generated one;
   AARE offers them in turn. When a head unit
   refuses one (a failed handshake, or a non-zero `AUTH_COMPLETE`), the next connection offers

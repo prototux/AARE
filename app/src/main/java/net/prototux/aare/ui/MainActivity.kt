@@ -121,6 +121,7 @@ import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
+import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
@@ -1022,6 +1023,8 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
     var pickCert by rememberSaveable { mutableStateOf<Uri?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var p12 by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var downloading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val keyPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { keyUri ->
         val certUri = pickCert ?: return@rememberLauncherForActivityResult
         if (keyUri == null) return@rememberLauncherForActivityResult
@@ -1054,7 +1057,21 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
                 if (e.removable) TextButton(onClick = { certs.remove(e); entries = certs.entries() }) { Text(stringResource(R.string.cert_action_remove)) }
             }
         }
-        TextButton(onClick = { certPicker.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.cert_action_import)) }
+        Row {
+            TextButton(onClick = { certPicker.launch(arrayOf("*/*")) }) { Text(stringResource(R.string.cert_action_import)) }
+            TextButton(enabled = !downloading, onClick = {
+                downloading = true
+                error = null
+                scope.launch {
+                    error = runCatching {
+                        val d = withContext(Dispatchers.IO) { CertificateDownload.fetch() }
+                        certs.importDownloaded(d)
+                        entries = certs.entries()
+                    }.exceptionOrNull()?.let { downloadError(ctx, it) }
+                    downloading = false
+                }
+            }) { Text(stringResource(if (downloading) R.string.cert_action_downloading else R.string.cert_action_download)) }
+        }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
     }
     p12?.let { uri ->
@@ -1073,6 +1090,14 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
             dismissButton = { TextButton(onClick = { p12 = null }) { Text(stringResource(R.string.common_cancel)) } },
         )
     }
+}
+
+/** What to tell the user when Download certificate fails. */
+private fun downloadError(ctx: Context, e: Throwable): String = when (e) {
+    is CertificateDownload.Unavailable -> ctx.getString(R.string.cert_download_unavailable, CertificateDownload.SOURCE)
+    is CertificateDownload.Invalid -> ctx.getString(R.string.cert_download_invalid, e.message)
+    is java.io.IOException -> ctx.getString(R.string.cert_download_network, e.message ?: e.toString())
+    else -> e.message ?: e.toString()
 }
 
 /** The picked file's name as the provider shows it, for naming an imported certificate. */

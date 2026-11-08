@@ -123,10 +123,15 @@
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Certyfikaty telefonu</string>
-    <string name="cert_hint">Jednostki centralne sprawdzają certyfikat telefonu. Jednostki centralne open source akceptują wygenerowany certyfikat; samochody z oprogramowaniem jednostki centralnej Google akceptują tylko certyfikat wydany przez Google, którego AARE nie może dołączyć. Możesz zaimportować taki, do którego masz prawo użycia (certyfikat PEM + klucz PKCS#8, lub PKCS#12).</string>
+    <string name="cert_hint">Jednostki centralne sprawdzają certyfikat telefonu. Jednostki centralne open source akceptują wygenerowany certyfikat; samochody z oprogramowaniem jednostki centralnej Google akceptują tylko certyfikat wydany przez Google, którego AARE nie może dołączyć. Możesz zaimportować taki, do którego masz prawo użycia (certyfikat PEM + klucz PKCS#8, lub PKCS#12). Możesz też pobrać certyfikat z najnowszej aplikacji Android Auto (github.com/iscle/android-auto-certificates).</string>
     <string name="cert_entry_subtitle">%1$s · do %2$s</string>
     <string name="cert_action_remove">Usuń</string>
     <string name="cert_action_import">Importuj certyfikat…</string>
+    <string name="cert_action_download">Pobierz certyfikat</string>
+    <string name="cert_action_downloading">Pobieranie…</string>
+    <string name="cert_download_unavailable">Repozytorium certyfikatów już nie istnieje (usunięte lub zablokowane): %1$s. Zamiast tego wyodrębnij certyfikat z aplikacji Android Auto (zobacz README).</string>
+    <string name="cert_download_network">Nie udało się pobrać certyfikatu: %1$s. Sprawdź połączenie i spróbuj ponownie.</string>
+    <string name="cert_download_invalid">Pobrany certyfikat został odrzucony: %1$s</string>
     <string name="cert_p12_dialog_title">Hasło PKCS#12</string>
     <string name="cert_action_import_confirm">Importuj</string>
     <string name="cert_imported_fallback">zaimportowany</string>
