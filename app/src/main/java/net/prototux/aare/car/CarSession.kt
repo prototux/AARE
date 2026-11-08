@@ -410,8 +410,10 @@ class CarSession(
         }
         display = pd
         pd.show()
+        // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
+        // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: layout.visibleWidth, inputCh?.second ?: layout.visibleHeight, layout)
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout)
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
