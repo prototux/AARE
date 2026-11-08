@@ -27,17 +27,40 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 object MediaHooks {
 
     private const val GEARHEAD = "com.google.android.projection.gearhead"
-    private const val MEDIA_BROWSER_SERVICE = "android.media.browse.MediaBrowserService"
 
-    /** Installs the media hooks if [param]'s app exposes a MediaBrowserService; otherwise no-op. */
+    /** Legacy framework browse service, and the media3 session/library services. */
+    private val MEDIA_SERVICE_ACTIONS = listOf(
+        "android.media.browse.MediaBrowserService",
+        "androidx.media3.session.MediaLibraryService",
+        "androidx.media3.session.MediaSessionService",
+    )
+
+    /** Installs the media hooks if [param]'s app exposes a media browse/session service; else no-op. */
     fun install(xposed: XposedInterface, param: PackageLoadedParam) {
         val uid = aareUid
         if (uid < 0) return
-        val services = mediaBrowserServices(param.packageName)
-        if (services.isEmpty()) return
+        val legacy = services(param.packageName, "android.media.browse.MediaBrowserService")
+        val anyMedia = MEDIA_SERVICE_ACTIONS.any { services(param.packageName, it).isNotEmpty() }
+        if (!anyMedia) return
         val cl = param.defaultClassLoader
-        services.forEach { className -> hookOnGetRoot(xposed, cl, className, uid) }
+        legacy.forEach { className -> hookOnGetRoot(xposed, cl, className, uid) }
+        hookMedia3Controller(xposed, cl)
         hookUidToPackage(xposed, cl, uid)
+    }
+
+    /**
+     * media3's `MediaSession.ControllerInfo.getPackageName()` → Android Auto's package when the
+     * controller is AARE, so a media3 `MediaLibraryService` that checks the connecting controller's
+     * package in `onConnect` accepts AARE. (A validator that also checks the signature still relies
+     * on the uid→package mapping below, and so on Android Auto being installed for its certificate.)
+     */
+    private fun hookMedia3Controller(xposed: XposedInterface, cl: ClassLoader) {
+        val cls = runCatching { cl.loadClass("androidx.media3.session.MediaSession\$ControllerInfo") }.getOrNull() ?: return
+        val method = runCatching { cls.getMethod("getPackageName") }.getOrNull() ?: return
+        xposed.hook(method).intercept { chain ->
+            val pkg = chain.proceed()
+            if (pkg == ModuleMain.AARE_PACKAGE) GEARHEAD else pkg
+        }
     }
 
     /** `onGetRoot(String package, int uid, Bundle)` → called with Android Auto's package for AARE's uid. */
@@ -72,10 +95,10 @@ object MediaHooks {
         }
     }
 
-    /** The app's own MediaBrowserService class names, from its manifest. */
-    private fun mediaBrowserServices(packageName: String): List<String> = runCatching {
+    /** The app's own service class names answering [action], from its manifest. */
+    private fun services(packageName: String, action: String): List<String> = runCatching {
         val ctx = Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null) as Context
-        val intent = Intent(MEDIA_BROWSER_SERVICE).setPackage(packageName)
+        val intent = Intent(action).setPackage(packageName)
         @Suppress("DEPRECATION")
         ctx.packageManager.queryIntentServices(intent, 0).mapNotNull { it.serviceInfo?.name }
     }.getOrDefault(emptyList())
