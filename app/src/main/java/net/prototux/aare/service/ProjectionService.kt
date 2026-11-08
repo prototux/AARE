@@ -418,13 +418,30 @@ class ProjectionService : Service() {
         // started from the background (USB, Bluetooth); then run without it.
         val mic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
             checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        // Navigation apps read location with the screen off the same way: they are bound with
+        // BIND_INCLUDE_CAPABILITIES, so they only get location while locked if this service has the
+        // location type (Android Auto's host has it). Without it their location requests go inactive
+        // once the phone locks: the map stops following the car, or stays black when the app was
+        // never opened on the phone. Needs AARE's own location permission (already used for car GPS).
+        val location = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        val micType = if (mic) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
+        val locationType = if (location) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
+        // Android 14 refuses either extra type when we were started from the background: try with
+        // both, then each, then neither.
+        val attempts = listOf(types or micType or locationType, types or micType, types or locationType, types).distinct()
         runCatching {
-            if (mic) {
-                runCatching { start(types or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE) }
-                    .onFailure { Log.i(TAG, "no microphone foreground type: ${it.message}"); start(types) }
-            } else {
-                start(types)
+            var last: Throwable? = null
+            for (t in attempts) {
+                val ok = runCatching { start(t) }.onFailure { last = it }.isSuccess
+                if (ok) {
+                    if (location && t and locationType == 0) Log.i(TAG, "no location foreground type: ${last?.message}")
+                    if (mic && t and micType == 0) Log.i(TAG, "no microphone foreground type: ${last?.message}")
+                    return@runCatching
+                }
             }
+            throw last ?: IllegalStateException("startForeground failed")
         }
             .onFailure { Log.w(TAG, "startForeground", it); log("can't run in the foreground: ${it.message}") }
     }
