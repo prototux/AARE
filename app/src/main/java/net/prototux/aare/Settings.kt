@@ -71,6 +71,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("prefer_60fps", true)
         set(v) = prefs.edit { putBoolean("prefer_60fps", v) }
 
+    /**
+     * Force H.264 video even when the head unit and phone could both do a newer codec (H.265...).
+     * The newer codec is used automatically otherwise; this is the escape hatch for head units that
+     * advertise one but decode it poorly.
+     */
+    var forceH264: Boolean
+        get() = prefs.getBoolean("force_h264", false)
+        set(v) = prefs.edit { putBoolean("force_h264", v) }
+
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
         get() = prefs.getString("rail_position", null)
