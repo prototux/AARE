@@ -24,6 +24,7 @@ class ModuleMain : XposedModule() {
         // Don't hook AARE's own process: it already knows it is the host.
         if (param.packageName == AARE_PACKAGE) return
         AppProcessHooks.install(this, param)
+        MediaHooks.install(this, param)
     }
 
     override fun onSystemServerStarting(param: SystemServerStartingParam) {

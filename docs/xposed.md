@@ -31,9 +31,21 @@ Two kinds of app refuse a non-Google host, each hooked by its own gate.
   permission is unaffected. This hook only clears the permission wall; AARE must also implement the
   `ICarProjection` host side (a separate piece of work in the app itself).
 
+- **Media apps that only serve Android Auto — `MediaBrowserService.onGetRoot` + uid→package.** An
+  app like Spotify or VRadio exposes a `MediaBrowserService` and, in `onGetRoot`, returns a browsable
+  root only to Android Auto: by package name (VRadio checks the caller equals
+  `com.google.android.projection.gearhead`), or by package name **and** signing certificate (the AOSP
+  media sample's `PackageValidator`, via `allowed_media_browser_callers.xml`). The hooks make AARE's
+  uid look like Android Auto to that app: `onGetRoot` is called with the package rewritten to Android
+  Auto's for AARE's uid (a name-only check then passes), and `getPackagesForUid`/`getNameForUid` map
+  AARE's uid to Android Auto's package (so a validator that cross-checks uid→package, then its
+  signature, resolves Android Auto's real certificate). A signature-checking app (Spotify) therefore
+  still needs Android Auto installed for its certificate to be present to match; a name-only app
+  (VRadio) needs only the `onGetRoot` rewrite.
+
 A client app is only hooked if the module is enabled for it in the Xposed manager. The shipped
-`scope.list` lists `com.waze` and `com.google.android.apps.maps`; add other Car App Library apps
-(CoMaps, OsmAnd…) there yourself if a specific one rejects AARE's host.
+`scope.list` lists `com.waze`, `com.google.android.apps.maps`, `com.spotify.music` and
+`com.ilv.vradio`; add other apps there yourself if a specific one rejects AARE's host.
 
 ### In system_server
 
