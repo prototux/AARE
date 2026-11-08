@@ -68,6 +68,7 @@ import net.prototux.aare.audio.CarAudioOut
 import net.prototux.aare.audio.PcmSource
 import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuSource
+import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
@@ -565,7 +566,11 @@ class CarSession(
                 }
                 AudioPolicySource(context, usages, rate, ch)
             }
-            CaptureMethod.SHIZUKU -> if (guidance) return else ShizukuSource(context, rate, ch)
+            CaptureMethod.SHIZUKU -> when {
+                guidance -> return
+                CaptureMethods.shizukuAvailable() -> ShizukuSource(context, rate, ch)
+                else -> SuSource(context, rate, ch)
+            }
             CaptureMethod.PLAYBACK_CAPTURE -> if (guidance || p == null) return else PlaybackCaptureSource(p, rate, ch)
             null -> {
                 if (!guidance) runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))

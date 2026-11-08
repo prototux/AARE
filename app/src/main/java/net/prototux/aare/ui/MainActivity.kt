@@ -390,7 +390,7 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
     @Suppress("UNUSED_EXPRESSION") refresh
     val perms = runtimePerms.all(::granted)
     val notificationAccess = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
-    val audio = CaptureMethods.audioPolicyAvailable(ctx) || CaptureMethods.shizukuAvailable() || state.audioCapture
+    val audio = CaptureMethods.audioPolicyAvailable(ctx) || CaptureMethods.shizukuAvailable() || CaptureMethods.rootAvailable(ctx) || state.audioCapture
     if (perms && notificationAccess && audio) return
 
     Section(stringResource(R.string.setup_finish_title)) {
@@ -761,9 +761,10 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val policy = CaptureMethods.audioPolicyAvailable(ctx)
     val shizuku = CaptureMethods.shizukuAvailable()
     val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
+    val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
-        shizuku -> CaptureMethod.SHIZUKU
+        shizuku || root -> CaptureMethod.SHIZUKU
         state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
     }
@@ -786,13 +787,23 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
             Check(CaptureMethod.SHIZUKU.label,
                 when {
                     shizuku -> stringResource(R.string.audio_shizuku_ready)
+                    root -> stringResource(R.string.audio_root_ready)
                     Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> stringResource(R.string.audio_shizuku_needs_android12)
                     shizukuAsk -> stringResource(R.string.audio_shizuku_tap_allow)
-                    else -> stringResource(R.string.audio_shizuku_install_hint)
+                    else -> stringResource(R.string.audio_shizuku_or_root_hint)
                 },
-                shizuku) {
-                if (shizukuAsk) runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
-                else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                shizuku || root) {
+                when {
+                    shizukuAsk -> runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
+                    shizuku || root -> Unit
+                    // Check for root (prompts su on a rooted phone); otherwise point to Shizuku.
+                    else -> CaptureMethods.checkRoot { granted ->
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            if (granted) { settings.rootAudio = true; recheck() }
+                            else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                        }
+                    }
+                }
             }
             Check(CaptureMethod.PLAYBACK_CAPTURE.label,
                 if (state.audioCapture) stringResource(R.string.audio_playback_ready)

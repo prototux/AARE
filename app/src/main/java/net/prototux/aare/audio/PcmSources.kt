@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import net.prototux.aare.BuildConfig
+import net.prototux.aare.Settings
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
 import java.io.IOException
@@ -37,8 +38,8 @@ interface PcmSource {
 enum class CaptureMethod(val label: String) {
     /** Android Auto's own way: an audio policy (privileged app, see tools/magisk). Music and navigation voice apart. */
     AUDIO_POLICY("System audio routing (like Android Auto)"),
-    /** The phone's whole output through Shizuku (adb rights): navigation voice included, mixed with music. */
-    SHIZUKU("Shizuku"),
+    /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
+    SHIZUKU("Shizuku or root"),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
     PLAYBACK_CAPTURE("Screen-capture permission"),
 }
@@ -61,10 +62,27 @@ object CaptureMethods {
         Shizuku.pingBinder() && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false)
 
+    /** The user allowed capturing car audio through su (a rooted phone), confirmed by [checkRoot]. */
+    fun rootAvailable(context: Context): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Settings(context).rootAudio
+
+    /** Runs `su -c id` off the main thread; [onResult] gets true if root is granted (uid 0). */
+    fun checkRoot(onResult: (Boolean) -> Unit) {
+        Thread {
+            val granted = runCatching {
+                val p = ProcessBuilder("su", "-c", "id").redirectErrorStream(true).start()
+                val out = p.inputStream.bufferedReader().use { it.readText() }
+                if (!p.waitFor(10, TimeUnit.SECONDS)) p.destroy()
+                out.contains("uid=0")
+            }.getOrDefault(false)
+            onResult(granted)
+        }.apply { isDaemon = true }.start()
+    }
+
     /** The best method available now, skipping [exclude] (methods that already failed). */
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
         CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
-        CaptureMethod.SHIZUKU !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU
+        CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable(context)) -> CaptureMethod.SHIZUKU
         // Capturing other apps' sound arrived in Android 10.
         CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
@@ -218,6 +236,45 @@ class ShizukuSource(private val context: Context, private val rate: Int, private
         stream = null
         runCatching { Shizuku.unbindUserService(args, connection, true) }
         service = null
+    }
+}
+
+/**
+ * The phone's whole output, recorded by [SuAudioMain] in a root process AARE starts with `su` and
+ * `app_process` (the scrcpy/Shizuku way). The same capture as [ShizukuSource], for rooted phones
+ * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module. PCM arrives on the
+ * process's stdout.
+ */
+class SuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
+    private var process: Process? = null
+    private var stream: InputStream? = null
+
+    override fun start(): Boolean {
+        val apk = context.applicationInfo.sourceDir
+        val cmd = "CLASSPATH='$apk' app_process / ${SuAudioMain::class.java.name} $rate $channels"
+        val p = runCatching { ProcessBuilder("su", "-c", cmd).start() }
+            .onFailure { Log.w(TAG, "su launch", it) }.getOrNull() ?: return false
+        process = p
+        stream = p.inputStream
+        // Drain stderr so a chatty app_process can't fill its pipe and stall the capture.
+        Thread {
+            runCatching { p.errorStream.bufferedReader().forEachLine { if (BuildConfig.DEBUG) Log.d(TAG, "su: $it") } }
+        }.apply { isDaemon = true }.start()
+        return true
+    }
+
+    override fun read(buf: ByteArray, offset: Int, length: Int): Int = try {
+        stream?.read(buf, offset, length) ?: -1
+    } catch (_: IOException) {
+        -1
+    }
+
+    override fun release() {
+        // Closing our end breaks the helper's stdout pipe, so it stops; destroy() kills the su shell.
+        runCatching { stream?.close() }
+        runCatching { process?.destroy() }
+        stream = null
+        process = null
     }
 }
 
