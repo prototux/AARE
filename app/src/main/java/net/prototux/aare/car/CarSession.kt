@@ -203,7 +203,14 @@ class CarSession(
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
                 s.hasInputSourceService() -> InputChannel(s, inputListener).also { ch ->
-                    ch.touchScreen?.let { touchSize = it.width to it.height }
+                    ch.touchScreen?.let {
+                        if (touchesInVisiblePixels(response)) {
+                            // Mapped 1:1 into the visible area instead (TouchMapper's undeclared panel).
+                            Log.i(TAG, "touch: ${it.width}x${it.height} panel declared, but this head unit reports touches in visible-area pixels")
+                        } else {
+                            touchSize = it.width to it.height
+                        }
+                    }
                     channels += ch
                 }
                 s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
@@ -729,6 +736,17 @@ class CarSession(
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
+
+        /**
+         * Ford SYNC 4 (2026 Mustang Mach-E, #74) declares a 1200x1244 touch panel but reports
+         * touches in pixels of the 1042x1080 part of the video it shows: taps on its corners come
+         * in at about 1040x1080. Scaled as panel coordinates, every tap landed up to ~13% short, and
+         * the bottom rail could not be reached.
+         */
+        internal fun touchesInVisiblePixels(r: ServiceDiscoveryResponse): Boolean {
+            val hu = r.headunitInfo
+            return listOf(hu.make, hu.headUnitMake, r.make, r.headUnitMake).any { it.trim().equals("Ford", ignoreCase = true) }
+        }
 
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480
