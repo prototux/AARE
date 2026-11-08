@@ -52,6 +52,11 @@
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_section_updates">Updates</string>
+    <string name="setup_toggle_updates_title">Check for updates</string>
+    <string name="setup_toggle_updates_subtitle">Warn on the home screen when a newer release is on GitHub. Off never connects to the internet.</string>
+    <string name="update_available_title">Update available — %1$s</string>
+    <string name="update_available_subtitle">You have %1$s. Tap to view the release.</string>
     <string name="setup_section_location">Location</string>
     <string name="setup_toggle_car_gps_title">Use the car\'s GPS</string>
     <string name="setup_toggle_car_gps_subtitle">While connected, apps on the phone see the car\'s position instead of the phone\'s own, so navigation apps don\'t mix the two</string>
