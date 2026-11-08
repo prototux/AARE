@@ -515,8 +515,9 @@ mapping), [@JVKeller](https://github.com/JVKeller) (Mazda command-knob focus),
 [@jameswynn](https://github.com/jameswynn) (a copyable connection log),
 [@pafolol](https://github.com/pafolol) (the Samsung USB permission fix),
 [@jooray](https://github.com/jooray) and [@KrishnaX12](https://github.com/KrishnaX12) (README and
-key-extraction docs), and [@freezed23](https://github.com/freezed23) (the Samsung
-separate-app-sound write-up).
+key-extraction docs), [@freezed23](https://github.com/freezed23) (the Samsung
+separate-app-sound write-up), and [@MattMaaaan](https://github.com/MattMaaaan) (diagnosing and
+patching navigation location while the phone is locked, and the reverse-camera video restart).
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r), [@dani203](https://github.com/dani203),
 [@pgwipeout](https://github.com/pgwipeout), [@tylertneal](https://github.com/tylertneal),
