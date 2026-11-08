@@ -55,6 +55,8 @@
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_bt_address_label">Phone Bluetooth address (optional)</string>
+    <string name="setup_bt_address_hint">Some head units show a black screen until they know which phone is connected. Find it in Settings &gt; About phone &gt; Status. Leave empty if your car already works.</string>
     <string name="setup_section_updates">Updates</string>
     <string name="setup_toggle_updates_title">Check for updates</string>
     <string name="setup_toggle_updates_subtitle">Warn on the home screen when a newer release is on GitHub. Off never connects to the internet.</string>
