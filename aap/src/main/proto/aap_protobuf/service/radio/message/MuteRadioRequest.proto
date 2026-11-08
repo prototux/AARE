@@ -6,5 +6,5 @@ package aap_protobuf.service.radio.message;
 
 message MuteRadioRequest {
   optional int32 radio_id = 1;
-  required bool mute = 2;
+  optional bool mute = 2;
 }

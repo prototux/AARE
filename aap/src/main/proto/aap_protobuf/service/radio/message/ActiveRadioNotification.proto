@@ -8,7 +8,7 @@ import "aap_protobuf/service/radio/message/RadioStationInfo.proto";
 package aap_protobuf.service.radio.message;
 
 message ActiveRadioNotification {
-  optional shared.MessageStatus status = 1;
-  required int32 radio_id = 2;
+  optional shared.MessageStatus status = 1 [default = STATUS_SUCCESS];
+  optional int32 radio_id = 2;
   optional message.RadioStationInfo station_info = 3;
 }

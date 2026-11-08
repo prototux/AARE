@@ -4,7 +4,7 @@ package aap_protobuf.service.navigationstatus.message;
 
 message NavigationNextTurnEvent {
     option deprecated = true;
-    required string road = 1;
+    optional string road = 1;
 
     optional TurnSide turn_side = 2;
     enum TurnSide {

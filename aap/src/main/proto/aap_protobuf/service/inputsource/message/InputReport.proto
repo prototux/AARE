@@ -9,7 +9,7 @@ package aap_protobuf.service.inputsource.message;
 
 message InputReport
 {
-    required uint64 timestamp = 1;
+    optional uint64 timestamp = 1;
     optional int32 disp_channel_id = 2 [deprecated = true];
     optional TouchEvent touch_event = 3;
     optional KeyEvent key_event = 4;

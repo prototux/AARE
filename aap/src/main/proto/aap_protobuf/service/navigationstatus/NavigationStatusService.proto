@@ -3,7 +3,7 @@ syntax="proto2";
 package aap_protobuf.service.navigationstatus;
 
 message NavigationStatusService {
-    required int32 minimum_interval_ms = 1;
+    optional int32 minimum_interval_ms = 1;
 
     // AARE: required -> optional (wire-identical): an unknown cluster type must not fail service
     // discovery. Readers check hasType().
@@ -15,8 +15,8 @@ message NavigationStatusService {
 
     optional ImageOptions image_options = 3;
     message ImageOptions {
-        required int32 height = 1;
-        required int32 width = 2;
-        required int32 colour_depth_bits = 3;
+        optional int32 height = 1;
+        optional int32 width = 2;
+        optional int32 colour_depth_bits = 3;
     }
 }

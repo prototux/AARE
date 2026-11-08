@@ -3,8 +3,8 @@ syntax="proto2";
 package aap_protobuf.service.mediabrowser.message;
 
 message MediaSong {
-  required string path = 1;
-  required string name = 2;
+  optional string path = 1;
+  optional string name = 2;
   optional string artist = 3;
   optional string album = 4;
 }

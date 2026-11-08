@@ -7,7 +7,7 @@ import "aap_protobuf/service/radio/message/RadioStationInfo.proto";
 package aap_protobuf.service.radio.message;
 
 message RadioStationInfoNotification {
-  required int32 radio_id = 1;
-  required RadioStationInfo station_info = 2;
+  optional int32 radio_id = 1;
+  optional RadioStationInfo station_info = 2;
 }
 

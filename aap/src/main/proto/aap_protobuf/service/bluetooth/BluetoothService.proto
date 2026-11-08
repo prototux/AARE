@@ -6,6 +6,6 @@ package aap_protobuf.service.bluetooth;
 
 message BluetoothService
 {
-    required string car_address = 1;
+    optional string car_address = 1;
     repeated message.BluetoothPairingMethod supported_pairing_methods = 2 [packed = true];
 }

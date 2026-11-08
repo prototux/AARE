@@ -5,7 +5,7 @@ option optimize_for=SPEED;
 package aap_protobuf.service.radio.message;
 
 message TuneToStationRequest {
-  required int32 radio_id = 1;
-  required int32 channel = 2;
+  optional int32 radio_id = 1;
+  optional int32 channel = 2;
   optional int32 sub_channel = 3;
 }

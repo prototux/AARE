@@ -5,5 +5,5 @@ import "aap_protobuf/service/control/message/NavFocusType.proto";
 package aap_protobuf.service.control.message;
 
 message NavFocusNotification {
-    required NavFocusType focus_type = 1;
+    optional NavFocusType focus_type = 1;
 }
