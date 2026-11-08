@@ -16,9 +16,7 @@ is AARE).
 
 ### In each scoped client app
 
-Two kinds of app refuse a non-Google host, each hooked by its own gate. Both mechanisms were mapped
-by the meraz9000/AARE research (GPL; see *Credits* below), which demonstrated them on rooted
-hardware.
+Two kinds of app refuse a non-Google host, each hooked by its own gate.
 
 - **Waze and other Car App Library apps — `HostValidator.isValidHost(HostInfo)` → true for AARE.**
   These apps check the host's package name *and* signing certificate against an allowlist; AARE's
@@ -31,7 +29,7 @@ hardware.
   on every projection transaction. The hook returns *granted* only when the IPC caller is AARE's uid
   and only for that permission, so Maps accepts AARE as its projection host. Every other caller and
   permission is unaffected. This hook only clears the permission wall; AARE must also implement the
-  `ICarProjection` host side (see [gearhead-projected-activity.md](research/gearhead-projected-activity.md)).
+  `ICarProjection` host side (a separate piece of work in the app itself).
 
 A client app is only hooked if the module is enabled for it in the Xposed manager. The shipped
 `scope.list` lists `com.waze` and `com.google.android.apps.maps`; add other Car App Library apps
@@ -56,11 +54,3 @@ class/method shapes and skips the hook if none match, rather than risking a boot
 New, and **not yet verified on a device**. The in-app hooks depend on `androidx.car.app` internals
 (the `HostInfo.mPackageName` field); the system hooks depend on AOSP internals that vary by version.
 The PR is a starting point for testing, not a finished feature, and is kept out of the release build.
-
-## Credits
-
-The Maps (`CAPTURE_VIDEO_OUTPUT`) and Waze (`HostValidator`) mechanisms were reverse-engineered and
-demonstrated by the [meraz9000/AARE](https://github.com/meraz9000/AARE) fork (Eduardo Mera, GPL-3.0),
-documented in [research/gearhead-projected-activity.md](research/gearhead-projected-activity.md).
-This module re-implements the two permission/host gates against the modern libxposed API and narrows
-them to AARE's uid; the research and its on-device proof are that fork's.

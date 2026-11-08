@@ -7,8 +7,7 @@ import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 /**
  * Hooks loaded into a projection client app (anything in scope that isn't AARE or the system).
  *
- * Two kinds of app refuse a non-Google host, each with its own gate and one hook. The mechanisms
- * are the ones mapped in the meraz9000/AARE research (GPL, see docs/xposed.md):
+ * Two kinds of app refuse a non-Google host, each with its own gate and one hook:
  *
  *  - **Car App Library apps** (Waze, and any `androidx.car.app` app with a host allowlist) reject a
  *    host whose signing certificate isn't on their list, in `HostValidator.isValidHost`.
@@ -50,8 +49,7 @@ object AppProcessHooks {
      * `ContextImpl.checkCallingPermission(CAPTURE_VIDEO_OUTPUT)` → granted when the IPC caller is
      * AARE. Google Maps runs this check on the host that binds its projection service; granting it
      * only for AARE's uid lets AARE host Maps' projected activity, and leaves every other caller and
-     * every other permission untouched. This is the `ContextImpl`/`ContextWrapper` hook from the
-     * meraz9000 research, narrowed to AARE's uid.
+     * every other permission untouched.
      */
     private fun hookCaptureVideoOutput(xposed: XposedInterface, cl: ClassLoader) {
         val contextImpl = runCatching { cl.loadClass("android.app.ContextImpl") }.getOrNull() ?: return
