@@ -39,9 +39,18 @@ Two kinds of app refuse a non-Google host, each hooked by its own gate.
   uid look like Android Auto to that app: `onGetRoot` is called with the package rewritten to Android
   Auto's for AARE's uid (a name-only check then passes), and `getPackagesForUid`/`getNameForUid` map
   AARE's uid to Android Auto's package (so a validator that cross-checks uid→package, then its
-  signature, resolves Android Auto's real certificate). A signature-checking app (Spotify) therefore
-  still needs Android Auto installed for its certificate to be present to match; a name-only app
-  (VRadio) needs only the `onGetRoot` rewrite.
+  signature, resolves Android Auto's real certificate). A media3 app checked in its session
+  callback's `onConnect` is covered by the same mapping plus a hook on
+  `MediaSession.ControllerInfo.getPackageName`. A name-only app (VRadio) needs only the `onGetRoot`
+  rewrite.
+- **Signature-checking media apps — caller-allowlist injection (no Android Auto needed).** Rather
+  than rely on Android Auto being installed for its certificate, the module admits AARE by **AARE's
+  own real certificate**: it hooks `Resources.getXml` for exactly the
+  `allowed_media_browser_callers(_v2)` resource the AOSP `PackageValidator` reads, and returns a
+  parser over the app's own entries plus one for AARE carrying AARE's real certificate hash. No
+  certificate is forged. Defensive: only that resource is touched, and any failure returns the
+  original parser unchanged, so a bug is a no-op rather than a broken media browser. With this,
+  Spotify needs no Android Auto installed.
 
 A client app is only hooked if the module is enabled for it in the Xposed manager. The shipped
 `scope.list` lists `com.waze`, `com.google.android.apps.maps`, `com.spotify.music` and
