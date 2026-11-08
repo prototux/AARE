@@ -230,6 +230,40 @@ open class SessionLoopbackTest {
         assertEquals(null, closeError)
     }
 
+    /**
+     * A head unit that acks audio for a while then stops mid-stream (#82). Without recovery the
+     * in-flight window fills and every further chunk is dropped, so the car goes silent until the
+     * phone is reconnected. Once we are well past the window with no ack in sight, the stream must
+     * switch to ack-less sending and keep flowing.
+     */
+    @Test
+    fun audioRecoversWhenHeadUnitStopsAcking() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertTrue("media channel should become ready", media.ready)
+        media.startPlayback()
+
+        // Normal play: a few chunks, all acked. The stream stays ack-based.
+        repeat(3) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        Thread.sleep(300)
+        assertFalse("ack-based while acks flow", media.ackless)
+        val delivered = hu.audioChunks.get()
+        assertEquals(3, delivered)
+
+        // The head unit goes quiet: it stops acking audio. The capture thread keeps handing us
+        // ~20 ms chunks regardless, so keep offering them.
+        hu.ackAudio = false
+        repeat(40) { media.sendPcm(ByteArray(10 + 3840), 10, 3840, (it + 3) * 20_000L); Thread.sleep(5) }
+
+        assertTrue("stream should fall back to ack-less sending once acks stop", media.ackless)
+        assertTrue(
+            "audio should keep reaching the head unit after the stall (got ${hu.audioChunks.get()}, was $delivered)",
+            hu.audioChunks.get() > delivered + AudioChannel.SLACK + 2,
+        )
+    }
+
     @Test
     fun headUnitDisappearingClosesSession() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
