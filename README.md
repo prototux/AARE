@@ -103,15 +103,30 @@ an uninstall first.
 As head units based on the official Google's host implementation checks the certificate/key of AARE,
 in order to use those, key extraction is needed:
 
-1. Download the APKm of Android Auto/com.google.android.projection.gearhead, for example from
+1. On your computer, clone this repository, or use **Code → Download ZIP** on GitHub and
+   extract it. Open a terminal in the repository folder, where [extract_key.py](extract_key.py)
+   is located alongside this README. For Git:
+
+   ```sh
+   git clone https://github.com/prototux/AARE.git
+   cd AARE
+   ```
+
+2. Download the APKm of Android Auto/com.google.android.projection.gearhead, for example from
    [APKPure](https://apkpure.com/fr/android-auto/com.google.android.projection.gearhead) or
-   [APKMirror](https://www.apkmirror.com/apk/google-inc/android-auto/)
+   [APKMirror](https://www.apkmirror.com/apk/google-inc/android-auto/), and place it in the
+   repository folder.
 
-2. Run the extract_key.py on the apkm: `./extract_key.py com.google.android.projection.gearhead.apkm`
+3. With Python 3 installed on your computer, run the script from that folder, replacing the
+   filename with the name of your downloaded APKm:
 
-3. The key and certificate are the `carservice_key.pem` and `carservice_cert.pem`. Copy them on your phone.
+   ```sh
+   python3 extract_key.py com.google.android.projection.gearhead.apkm
+   ```
 
-4. Open those two files with AARE. It should now work with the head unit.
+4. The key and certificate are the `carservice_key.pem` and `carservice_cert.pem`. Copy them on your phone.
+
+5. Open those two files with AARE. It should now work with the head unit.
 
 If it prints `FAILED: no valid key derived`, check that you gave it the whole bundle or the base APK: the split
 APKs hold no key. Run it again with `-v` to see the certificates and the salt and key-blob candidates it finds in
@@ -355,6 +370,7 @@ Other tools:
 
 | Head unit | Phone | Link | AARE | Result |
 |---|---|---|---|---|
+| Factory 10.2" multimedia screen of a 2022 Hyundai Kona Electric (LG Electronics Standard GEN5 Wide) | Google Pixel 10 Pro | USB | 1.2.0 + touch fix | **Works after the touch fix and [AA key extraction](#aa-key-extraction)** (reported by a user). The unit advertises a 0x0 touchscreen; the fix uses the visible video dimensions when the panel size is unspecified. |
 | ZLink 3 aftermarket unit, model K2001N (Allwinner T3, Android 7, sold as Android 12), in a VW Golf 6 | Pixel 10 Pro XL, Android 17 | Wireless | 1.1.0 | **Works:** full sessions with video, with AARE's own certificate. On Android 17 it needs the local network permission ([#22](https://github.com/prototux/AARE/pull/22)). Known issue: the unit asks for 1280x720 at 160 dpi with 256x120 margins, and the screen edges are cut off. |
 | Denso Ten E-DA2, the factory unit of a 2026 Toyota Land Cruiser 79 series (wired Android Auto only) | Samsung Galaxy S23 (SM-S911B), Android 16, not rooted | USB | not stated | **Works**, all features tried ([#37](https://github.com/prototux/AARE/issues/37)), with AARE's own self-signed certificate. The unit also plays the phone's Bluetooth audio during Android Auto, so the car audio setup isn't needed. |
 | Factory unit of a 2023 Skoda Octavia V, MIB3 (VW Group) | Pixel 10, GrapheneOS, no Google services | USB and wireless | not stated | **Works after [AA key extraction](#aa-key-extraction)** (reported by a user, not tested by the maintainers): with AARE's own self-signed certificate the unit rejected the connection (`AUTH_COMPLETE` status -3, [#48](https://github.com/prototux/AARE/issues/48)); with the extracted certificate it connects. Known issue: the UI ignores the unit's video margins, so the layout is off ([#55](https://github.com/prototux/AARE/issues/55)). |

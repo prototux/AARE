@@ -23,6 +23,7 @@ import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.sim.HeadUnitSimulator
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -168,6 +169,19 @@ class SessionLoopbackTest {
         val down = inputs.poll(3, TimeUnit.SECONDS)!!
         assertEquals(100, down.touchEvent.getPointerData(0).x)
         assertNotNull(inputs.poll(3, TimeUnit.SECONDS))
+
+        // input: a D-pad key and a rotary detent reach the phone through the same channel
+        // (rotary/D-pad-only units have no touchscreen; keys and detents must still route). #42
+        hu.key(19) // KEYCODE_DPAD_UP
+        val keyDown = inputs.poll(3, TimeUnit.SECONDS)!!
+        assertTrue("expected a key event", keyDown.hasKeyEvent())
+        assertEquals(19, keyDown.keyEvent.getKeys(0).keycode)
+        assertTrue("expected the key down", keyDown.keyEvent.getKeys(0).down)
+        assertFalse("expected the key up", inputs.poll(3, TimeUnit.SECONDS)!!.keyEvent.getKeys(0).down)
+        hu.rotary(1)
+        val rotate = inputs.poll(3, TimeUnit.SECONDS)!!
+        assertTrue("expected a relative (rotary) event", rotate.hasRelativeEvent())
+        assertEquals(1, rotate.relativeEvent.getData(0).delta)
 
         // sensors: driving status and night mode were requested and answered
         assertNotNull(sensors.poll(3, TimeUnit.SECONDS))

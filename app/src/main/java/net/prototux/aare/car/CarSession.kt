@@ -419,9 +419,15 @@ class CarSession(
                 display?.dispatchTouch(ev)
             }
             if (report.hasKeyEvent()) {
-                for (k in report.keyEvent.keysList) main.post { onKey(k.keycode, k.down, k.longpress) }
+                for (k in report.keyEvent.keysList) {
+                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} long=${k.longpress}")
+                    main.post { onKey(k.keycode, k.down, k.longpress) }
+                }
             }
             if (report.hasRelativeEvent()) {
+                for (r in report.relativeEvent.dataList) {
+                    Log.d(TAG, "input rotary: keycode=${r.keycode} delta=${r.delta}")
+                }
                 // Rotary controller: each detent moves focus to the next/previous element in layout
                 // order, like Android Auto. Compose maps Tab to "focus next" and Shift+Tab to
                 // "focus previous" (not D-pad up/down, which is 2D spatial and wrong for a knob).

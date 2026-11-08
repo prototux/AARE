@@ -1,6 +1,8 @@
 package net.prototux.aare.ui
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -57,6 +59,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Forum
@@ -64,6 +67,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material3.AlertDialog
@@ -111,6 +115,7 @@ import kotlinx.coroutines.withContext
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.car.DrivingMode
@@ -178,7 +183,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeWireless(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -196,6 +201,7 @@ private fun Home() {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item { Header() }
+                item { UpdateBanner() }
                 item { StatusCard(state) }
                 item { Setup(state, refresh, { refresh++ }) { page = it } }
                 item {
@@ -269,6 +275,33 @@ private fun Section(title: String, content: @Composable () -> Unit) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         content()
+    }
+}
+
+/** A quiet warning when a newer release is on GitHub: tap to view it, or dismiss it. No popup. */
+@Composable
+private fun UpdateBanner() {
+    val ctx = LocalContext.current
+    val update by UpdateChecker.available.collectAsState()
+    update?.let { u ->
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.tertiaryContainer)
+                .clickable { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.url))) }
+                .padding(start = 18.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.SystemUpdate, null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.update_available_title, u.version), style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer)
+                Text(stringResource(R.string.update_available_subtitle, net.prototux.aare.BuildConfig.VERSION_NAME),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+            IconButton(onClick = { UpdateChecker.dismiss(ctx) }) {
+                Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+        }
     }
 }
 
@@ -415,6 +448,7 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 @Composable
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
+    var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
@@ -432,6 +466,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+        }
+        Section(stringResource(R.string.setup_section_updates)) {
+            Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
+                checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx)
+            }
         }
         Section(stringResource(R.string.setup_section_location)) {
             Toggle(stringResource(R.string.setup_toggle_car_gps_title), stringResource(R.string.setup_toggle_car_gps_subtitle), carGps) {
@@ -1045,14 +1084,23 @@ private fun displayName(ctx: Context, uri: Uri): String =
 
 @Composable
 private fun LogCard() {
+    val ctx = LocalContext.current
     val log by DiagLog.lines.collectAsState()
     if (log.isEmpty()) return
-    Section(stringResource(R.string.setup_section_connection_log)) {
+    val title = stringResource(R.string.setup_section_connection_log)
+    Section(title) {
         log.takeLast(40).forEach {
             Text(it, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+        Row {
+            // Copies every retained line, not only the ones shown above.
+            TextButton(onClick = {
+                ctx.getSystemService(ClipboardManager::class.java)
+                    ?.setPrimaryClip(ClipData.newPlainText(title, log.joinToString("\n")))
+            }) { Text(stringResource(android.R.string.copy)) }
+            TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+        }
     }
 }
 

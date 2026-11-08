@@ -18,8 +18,16 @@ class TouchMapper(
     private val layout: ProjectionLayout,
 ) {
     private var downTime = 0L
-    private val scaleX = layout.visibleWidth.toFloat() / touchWidth.coerceAtLeast(1)
-    private val scaleY = layout.visibleHeight.toFloat() / touchHeight.coerceAtLeast(1)
+    // Some factory head units (Hyundai GEN5 Wide) advertise a 0x0 touchscreen. Treat each
+    // nonpositive dimension as unspecified and use the visible video size, so touches map 1:1
+    // instead of being multiplied far outside the display (#89).
+    val panelWidth = touchWidth.takeIf { it > 0 } ?: layout.visibleWidth.coerceAtLeast(1)
+    val panelHeight = touchHeight.takeIf { it > 0 } ?: layout.visibleHeight.coerceAtLeast(1)
+    private val scaleX = layout.visibleWidth.toFloat() / panelWidth
+    private val scaleY = layout.visibleHeight.toFloat() / panelHeight
+
+    internal fun mapX(x: Int): Float = x * scaleX + layout.marginLeft
+    internal fun mapY(y: Int): Float = y * scaleY + layout.marginTop
 
     fun map(e: TouchEvent): MotionEvent? {
         val n = e.pointerDataCount
@@ -44,8 +52,8 @@ class TouchMapper(
         val coords = Array(n) { i ->
             val p = e.getPointerData(i)
             MotionEvent.PointerCoords().apply {
-                x = p.x * scaleX + layout.marginLeft
-                y = p.y * scaleY + layout.marginTop
+                x = mapX(p.x)
+                y = mapY(p.y)
                 pressure = 1f
                 size = 1f
             }

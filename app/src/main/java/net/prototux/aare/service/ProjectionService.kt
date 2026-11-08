@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.hardware.usb.UsbAccessory
@@ -20,6 +22,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +84,9 @@ class ProjectionService : Service() {
     private var projection: MediaProjection? = null
     private var usbAccessory: UsbAccessory? = null
     private var usbRetries = 0
+    /** The accessory whose USB permission dialog is showing; keeps the service alive until answered. */
+    private var usbPermissionPending: UsbAccessory? = null
+    private var usbPermissionReceiver: BroadcastReceiver? = null
     /** When the running session started, so a link that worked for a while gets a fresh retry budget. */
     private var sessionStart = 0L
     private var wakeLock: PowerManager.WakeLock? = null
@@ -121,6 +127,9 @@ class ProjectionService : Service() {
         // Pending retries and idle checks would run on a dead instance.
         main.removeCallbacksAndMessages(null)
         wirelessJob?.cancel()
+        usbPermissionReceiver?.let { runCatching { unregisterReceiver(it) } }
+        usbPermissionReceiver = null
+        usbPermissionPending = null
         // The session closes up to a second later; forget it first so its onEnded is ignored.
         val s = session
         session = null
@@ -227,9 +236,62 @@ class ProjectionService : Service() {
     private fun openUsb(accessory: UsbAccessory) {
         usbAccessory = accessory
         val usb = getSystemService(UsbManager::class.java)
+        // Some phones (Samsung) don't grant the permission with USB_ACCESSORY_ATTACHED: opening
+        // then fails with "User has not given permission to accessory". Ask, and open once granted.
+        if (!usb.hasPermission(accessory)) {
+            requestUsbPermission(usb, accessory)
+            return
+        }
         val transport = runCatching { UsbAccessoryTransport(usb, accessory) }
             .onFailure { log("USB: ${it.message}") }.getOrNull() ?: return
         startSession(transport, wireless = false, peerKey = usbPeerKey(accessory), trustOnFirstUse = false)
+    }
+
+    /**
+     * Shows the system USB permission dialog for [accessory]; [openUsb] runs again when granted.
+     * The PendingIntent is explicit (our package) and mutable: the system adds
+     * EXTRA_PERMISSION_GRANTED and EXTRA_ACCESSORY to it.
+     */
+    private fun requestUsbPermission(usb: UsbManager, accessory: UsbAccessory) {
+        if (usbPermissionPending == accessory) return // dialog already showing
+        usbPermissionPending = accessory
+        if (usbPermissionReceiver == null) {
+            val receiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context, intent: Intent) {
+                    if (intent.action != ACTION_USB_PERMISSION || destroyed) return
+                    val acc = IntentCompat.getParcelableExtra(intent, UsbManager.EXTRA_ACCESSORY, UsbAccessory::class.java)
+                        ?: usbPermissionPending
+                    usbPermissionPending = null
+                    val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false) ||
+                        (acc != null && getSystemService(UsbManager::class.java).hasPermission(acc))
+                    if (granted && acc != null) {
+                        log("USB: permission granted")
+                        if (session == null) openUsb(acc)
+                    } else {
+                        log("USB: permission denied")
+                        usbAccessory = null
+                        usbRetries = 0
+                        scheduleIdleStop()
+                    }
+                }
+            }
+            ContextCompat.registerReceiver(this, receiver, IntentFilter(ACTION_USB_PERMISSION), ContextCompat.RECEIVER_NOT_EXPORTED)
+            usbPermissionReceiver = receiver
+        }
+        val flags = PendingIntent.FLAG_UPDATE_CURRENT or
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0)
+        val pi = PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION).setPackage(packageName), flags)
+        log("USB: asking for permission to use the accessory")
+        runCatching { usb.requestPermission(accessory, pi) }.onFailure {
+            log("USB: permission request failed: ${it.message}")
+            usbPermissionPending = null
+            scheduleIdleStop()
+            return
+        }
+        // Not answered (dialog dismissed without a broadcast): stop waiting after a while.
+        main.postDelayed({
+            if (usbPermissionPending == accessory) { usbPermissionPending = null; scheduleIdleStop() }
+        }, 120_000)
     }
 
     /**
@@ -305,6 +367,7 @@ class ProjectionService : Service() {
             if (SystemClock.elapsedRealtime() - sessionStart > USB_RETRY_RESET_MS) usbRetries = 0
             val acc = usbAccessory
             if (acc != null && pinRefusal == null && usbRetries++ < 3 && getSystemService(UsbManager::class.java).accessoryList?.contains(acc) == true) {
+                // openUsb checks hasPermission() again and asks for it if it was lost.
                 main.postDelayed({ if (this@ProjectionService.session == null) openUsb(acc) }, 1_500)
             } else {
                 usbAccessory = null
@@ -426,7 +489,7 @@ class ProjectionService : Service() {
     }
 
     /** Nothing to keep the service for. A held screen-capture consent counts: it can't be given again silently. */
-    private fun idle() = session == null && tcpServer == null && wirelessJob?.isActive != true && projection == null
+    private fun idle() = session == null && usbPermissionPending == null && tcpServer == null && wirelessJob?.isActive != true && projection == null
 
     private fun stopEverything() {
         // No USB reconnect after this: the session's onEnded may come after the stop.
@@ -447,6 +510,7 @@ class ProjectionService : Service() {
         /** A USB session that lasted this long had recovered: its drop starts a new retry budget. */
         private const val USB_RETRY_RESET_MS = 60_000L
         const val ACTION_USB = "net.prototux.aare.USB"
+        const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
         const val ACTION_WIRELESS = "net.prototux.aare.WIRELESS"
@@ -467,6 +531,21 @@ class ProjectionService : Service() {
             PinnedHeadUnits(context).add(peerKey, sha256)
             context.getSystemService(NotificationManager::class.java).cancel(TrustReceiver.NOTIFICATION_ID)
             _state.update { s -> s.copy(pendingTrust = null, lastError = s.lastError.takeIf { s.pendingTrust == null }) }
+        }
+
+        /** Accessory strings head units use for Android Auto (res/xml/accessory_filter.xml). */
+        private fun isAndroidAuto(a: UsbAccessory) =
+            a.manufacturer == "Android" && (a.model == "Android Auto" || a.model == "Android Open Automotive Protocol")
+
+        /**
+         * Opening the app: an Android Auto accessory may already be attached without the USB
+         * permission (Samsung). Hand it to the service, which asks for the permission and connects.
+         */
+        fun probeUsb(context: Context) {
+            if (_state.value.connected) return
+            val usb = context.getSystemService(UsbManager::class.java) ?: return
+            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull(::isAndroidAuto) ?: return
+            startUsb(context, accessory)
         }
 
         fun startUsb(context: Context, accessory: UsbAccessory) {
