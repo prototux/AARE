@@ -42,10 +42,10 @@ class ShellAudioService : IShellAudio.Stub {
     override fun start(sampleRate: Int, channels: Int): ParcelFileDescriptor? {
         stop()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-        // Shizuku runs this as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT; a root helper
-        // (libsu RootService) runs as uid 0, which doesn't — the permission is checked against the
-        // recording uid, and being root isn't enough. Drop to the shell uid (gid before uid; once
-        // dropped we can't go back, which is fine: we only record audio from here on).
+        // Shizuku runs this as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT; the su helper
+        // (SuAudioMain via app_process) runs as uid 0, which doesn't — the permission is checked
+        // against the recording uid, and being root isn't enough. Drop to the shell uid (gid before
+        // uid; once dropped we can't go back, which is fine: we only record audio from here on).
         if (Process.myUid() == 0) runCatching { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
             .onFailure { Log.w(TAG, "could not drop to the shell uid", it); return null }
         return try {

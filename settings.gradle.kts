@@ -16,11 +16,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // libsu (su-backed car audio) is only published on JitPack; restricted to it so JitPack
-        // can't serve or shadow any other dependency.
-        maven("https://jitpack.io") {
-            content { includeGroup("com.github.topjohnwu.libsu") }
-        }
     }
 }
 rootProject.name = "AARE"

@@ -134,7 +134,6 @@ import net.prototux.aare.mirror.MirrorTouchService
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
-import com.topjohnwu.superuser.Shell
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
 import kotlin.math.roundToInt
@@ -390,7 +389,7 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
     @Suppress("UNUSED_EXPRESSION") refresh
     val perms = runtimePerms.all(::granted)
     val notificationAccess = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
-    val audio = CaptureMethods.audioPolicyAvailable(ctx) || CaptureMethods.shizukuAvailable() || CaptureMethods.rootAvailable() || state.audioCapture
+    val audio = CaptureMethods.audioPolicyAvailable(ctx) || CaptureMethods.shizukuAvailable() || CaptureMethods.rootAvailable(ctx) || state.audioCapture
     if (perms && notificationAccess && audio) return
 
     Section(stringResource(R.string.setup_finish_title)) {
@@ -761,7 +760,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val policy = CaptureMethods.audioPolicyAvailable(ctx)
     val shizuku = CaptureMethods.shizukuAvailable()
     val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
-    val root = CaptureMethods.rootAvailable()
+    val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
         shizuku || root -> CaptureMethod.SHIZUKU
@@ -796,10 +795,10 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 when {
                     shizukuAsk -> runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
                     shizuku || root -> Unit
-                    // Try root (prompts su on a rooted phone); otherwise point to Shizuku.
-                    else -> runCatching {
-                        Shell.getShell { shell ->
-                            if (shell.isRoot) recheck()
+                    // Check for root (prompts su on a rooted phone); otherwise point to Shizuku.
+                    else -> CaptureMethods.checkRoot { granted ->
+                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                            if (granted) { settings.rootAudio = true; recheck() }
                             else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
                         }
                     }

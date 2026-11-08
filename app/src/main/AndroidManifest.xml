@@ -118,11 +118,6 @@
             android:exported="false"
             android:foregroundServiceType="connectedDevice|mediaProjection|microphone|location" />
 
-        <!-- Started by libsu in a root process for car audio (audio/RootAudioService). -->
-        <service
-            android:name=".audio.RootAudioService"
-            android:exported="false" />
-
         <service
             android:name=".notify.CarNotificationListener"
             android:exported="true"

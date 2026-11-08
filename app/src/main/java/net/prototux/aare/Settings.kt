@@ -120,6 +120,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("car_audio", true)
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
+    /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
+    var rootAudio: Boolean
+        get() = prefs.getBoolean("root_audio", false)
+        set(v) = prefs.edit { putBoolean("root_audio", v) }
+
     /**
      * Package of the assistant the steering-wheel voice button opens (a car app such as Lapin, or a
      * phone assistant); null = follow the phone's default digital assistant.
