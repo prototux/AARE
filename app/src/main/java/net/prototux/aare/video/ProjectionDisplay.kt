@@ -7,11 +7,13 @@ import android.hardware.display.VirtualDisplay
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Display
 import android.view.MotionEvent
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.OnBackPressedDispatcherOwner
@@ -77,7 +79,35 @@ class ProjectionDisplay(
     }
 
     fun dispatchKey(event: KeyEvent) {
-        main.post { presentation?.window?.decorView?.dispatchKeyEvent(event) }
+        main.post {
+            val decor = presentation?.window?.decorView ?: return@post
+            if (decor.findFocus() == null) takeFocus(decor)
+            decor.dispatchKeyEvent(event)
+        }
+    }
+
+    /**
+     * Gives the car window's content view focus so rotary / D-pad keys have somewhere to go.
+     *
+     * Keys and touches are injected straight into the window's view hierarchy, bypassing
+     * ViewRootImpl, so the window never gets window focus and never leaves touch mode (ViewRootImpl
+     * normally does that on the first key). In touch mode Compose treats clickables as unfocusable,
+     * a plain requestFocus() fails, and every key is dropped (dispatchKeyEvent returns false).
+     * requestFocusFromTouch() leaves touch mode first, then requests focus.
+     */
+    private fun takeFocus(decor: View) {
+        val target = firstFocusable(decor) ?: return
+        target.isFocusableInTouchMode = true
+        runCatching { target.requestFocusFromTouch() }.getOrElse {
+            Log.w(TAG, "requestFocusFromTouch failed", it)
+            target.requestFocus()
+        }
+    }
+
+    private fun firstFocusable(v: View): View? {
+        if (v.isFocusable) return v
+        if (v is ViewGroup) for (i in 0 until v.childCount) firstFocusable(v.getChildAt(i))?.let { return it }
+        return null
     }
 
     fun release() {
@@ -86,6 +116,10 @@ class ProjectionDisplay(
             presentation = null
             display.release()
         }
+    }
+
+    private companion object {
+        const val TAG = "AareDisplay"
     }
 
     private class CarPresentation(
