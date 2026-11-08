@@ -16,6 +16,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("hu_server", false)
         set(v) = prefs.edit { putBoolean("hu_server", v) }
 
+    /** Write the protocol frame trace to the in-app connection log too, to capture it without adb. */
+    var verboseProtocolLog: Boolean
+        get() = prefs.getBoolean("verbose_protocol_log", false)
+        set(v) = prefs.edit { putBoolean("verbose_protocol_log", v) }
+
     /** Also accept head units from the network (TCP 5277, no authentication). Switched off again after one session if [headUnitServerLanOnce]. */
     var headUnitServerLan: Boolean
         get() = prefs.getBoolean("hu_server_lan", false)
