@@ -190,6 +190,8 @@
     <string name="audio_shizuku_needs_android12">Needs Android 12 or newer.</string>
     <string name="audio_shizuku_tap_allow">Shizuku is running: tap to allow AARE.</string>
     <string name="audio_shizuku_install_hint">No root needed. Install Shizuku, start it (wireless debugging, once per reboot), then come back here.</string>
+    <string name="audio_root_ready">Ready, through root. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
+    <string name="audio_shizuku_or_root_hint">On a rooted phone (KernelSU, Magisk, APatch…), tap to allow root. Otherwise install Shizuku and start it (wireless debugging, once per reboot).</string>
     <string name="audio_playback_ready">Ready. Media only: no navigation voice, some apps opt out, and the phone keeps playing too.</string>
     <string name="audio_playback_not_ready">Works everywhere, with limits: media only, no navigation voice. Android asks to capture the screen: choose Entire screen (also used by the phone screen).</string>
     <string name="audio_notice_setup_hint">Open AARE on the phone and set up car audio to hear the phone in the car</string>

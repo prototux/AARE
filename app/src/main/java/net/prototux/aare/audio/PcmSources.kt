@@ -3,6 +3,7 @@ package net.prototux.aare.audio
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
@@ -12,10 +13,13 @@ import android.media.AudioPlaybackCaptureConfiguration
 import android.media.AudioRecord
 import android.media.projection.MediaProjection
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.topjohnwu.superuser.Shell
+import com.topjohnwu.superuser.ipc.RootService
 import net.prototux.aare.BuildConfig
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
@@ -37,8 +41,8 @@ interface PcmSource {
 enum class CaptureMethod(val label: String) {
     /** Android Auto's own way: an audio policy (privileged app, see tools/magisk). Music and navigation voice apart. */
     AUDIO_POLICY("System audio routing (like Android Auto)"),
-    /** The phone's whole output through Shizuku (adb rights): navigation voice included, mixed with music. */
-    SHIZUKU("Shizuku"),
+    /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
+    SHIZUKU("Shizuku or root"),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
     PLAYBACK_CAPTURE("Screen-capture permission"),
 }
@@ -61,10 +65,14 @@ object CaptureMethods {
         Shizuku.pingBinder() && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false)
 
+    /** AARE already holds a root grant (KernelSU, Magisk, APatch…): the capture helper can run via su. */
+    fun rootAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        runCatching { Shell.isAppGrantedRoot() == true }.getOrDefault(false)
+
     /** The best method available now, skipping [exclude] (methods that already failed). */
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
         CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
-        CaptureMethod.SHIZUKU !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU
+        CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable()) -> CaptureMethod.SHIZUKU
         // Capturing other apps' sound arrived in Android 10.
         CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
@@ -217,6 +225,54 @@ class ShizukuSource(private val context: Context, private val rate: Int, private
         runCatching { stream?.close() }
         stream = null
         runCatching { Shizuku.unbindUserService(args, connection, true) }
+        service = null
+    }
+}
+
+/**
+ * The phone's whole output, recorded by [ShellAudioService] in a root process libsu starts with su
+ * (KernelSU, Magisk, APatch…). The same capture as [ShizukuSource], for rooted phones without the
+ * Shizuku app or the Magisk module.
+ */
+class SuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
+    private var service: IShellAudio? = null
+    private var stream: InputStream? = null
+    private val intent = Intent(context, RootAudioService::class.java)
+    private val bound = CountDownLatch(1)
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            service = binder?.takeIf { it.pingBinder() }?.let(IShellAudio.Stub::asInterface)
+            bound.countDown()
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            service = null
+            runCatching { stream?.close() }
+        }
+    }
+
+    override fun start(): Boolean {
+        if (!CaptureMethods.rootAvailable()) return false
+        // RootService.bind must run on the main thread; launching the su process can take a while.
+        Handler(Looper.getMainLooper()).post {
+            runCatching { RootService.bind(intent, connection) }.onFailure { Log.w(TAG, "root bind", it); bound.countDown() }
+        }
+        if (!bound.await(20, TimeUnit.SECONDS)) return false
+        val pfd = runCatching { service?.start(rate, channels) }.onFailure { Log.w(TAG, "root capture", it) }.getOrNull() ?: return false
+        stream = ParcelFileDescriptor.AutoCloseInputStream(pfd)
+        return true
+    }
+
+    override fun read(buf: ByteArray, offset: Int, length: Int): Int = try {
+        stream?.read(buf, offset, length) ?: -1
+    } catch (_: IOException) {
+        -1
+    }
+
+    override fun release() {
+        runCatching { service?.stop() }
+        runCatching { stream?.close() }
+        stream = null
+        Handler(Looper.getMainLooper()).post { runCatching { RootService.stop(intent) } }
         service = null
     }
 }

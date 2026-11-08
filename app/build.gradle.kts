@@ -120,6 +120,8 @@ dependencies {
     // audio-policy interface when installed as a privileged app (tools/magisk).
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
+    implementation(libs.libsu.core)
+    implementation(libs.libsu.service)
     implementation(libs.hiddenapibypass)
     testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
