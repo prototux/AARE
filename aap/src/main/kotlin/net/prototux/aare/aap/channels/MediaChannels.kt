@@ -25,6 +25,7 @@ import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Common part of the phone→head unit media streams (video and audio sinks on the head unit):
@@ -53,6 +54,18 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     @Volatile private var ackSeen = false
     private val sentSinceStart = AtomicInteger(0)
 
+    // Read-only per-stream telemetry. This distinguishes queued DATA, actually written DATA,
+    // and head-unit ACK messages; a zero ACK count is not inferred from an unset latency value.
+    private val dataQueued = AtomicLong(0)
+    private val dataWritten = AtomicLong(0)
+    private val ackMessages = AtomicLong(0)
+    private val ackUnits = AtomicLong(0)
+    val diagnosticDataQueued: Long get() = dataQueued.get()
+    val diagnosticDataWritten: Long get() = dataWritten.get()
+    val diagnosticAckMessages: Long get() = ackMessages.get()
+    val diagnosticAckUnits: Long get() = ackUnits.get()
+    val diagnosticInFlight: Int get() = unacked.get()
+
     override fun onOpened() {
         send(MediaMsg.SETUP, Setup.newBuilder().setType(codec).build())
     }
@@ -70,6 +83,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
                 val ack = Ack.parseFrom(msg.bodyBytes())
                 ackSeen = true
                 val n = if (ack.hasAck()) ack.ack else 1
+                ackMessages.incrementAndGet()
+                ackUnits.addAndGet(n.coerceAtLeast(0).toLong())
                 // Never go negative: some head units ack frames sent before a restart.
                 unacked.updateAndGet { maxOf(0, it - n) }
                 onAcked()
@@ -87,6 +102,10 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         mediaSession = sessionCounter.incrementAndGet()
         unacked.set(0)
         sentSinceStart.set(0)
+        dataQueued.set(0)
+        dataWritten.set(0)
+        ackMessages.set(0)
+        ackUnits.set(0)
         send(MediaMsg.START, Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex).build())
         started = true
     }
@@ -126,7 +145,11 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         noteAttempt()
         if (ackless) unacked.set(0)
         val plain = if (start == 0) buf else buf.copyOfRange(start, offset + length)
-        session.sendRaw(id, plain, length + 10, priority = priority, onSent = onSent)
+        dataQueued.incrementAndGet()
+        session.sendRaw(id, plain, length + 10, priority = priority, onSent = {
+            dataWritten.incrementAndGet()
+            onSent?.invoke()
+        })
     }
 
     protected fun sendCodecConfigData(data: ByteArray, offset: Int, length: Int, priority: Int) {
