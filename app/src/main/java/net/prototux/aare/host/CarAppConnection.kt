@@ -45,8 +45,13 @@ import androidx.car.app.serialization.Bundleable
 import androidx.car.app.versioning.CarAppApiLevels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.setValue
 import java.io.IOException
+import java.io.OutputStream
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
+import net.prototux.aare.R
 import net.prototux.aare.car.CarData
 
 /**
@@ -73,7 +78,11 @@ class CarAppConnection(
     /** Human-readable reason when [status] is FAILED. */
     var error by mutableStateOf<String?>(null)
         private set
-    var template by mutableStateOf<Template?>(null)
+    /**
+     * Every reply is applied, even one equal to the current template: CarIcon.equals finds all bitmaps equal (a new
+     * maneuver arrow), and a refused toggle comes back unchanged but must still reset the optimistic UI state.
+     */
+    var template by mutableStateOf<Template?>(null, neverEqualPolicy())
         private set
     var templateId by mutableStateOf<String?>(null)
         private set
@@ -99,7 +108,9 @@ class CarAppConnection(
     private var bound = false
     /** Set once [cleanup] has run, so a subscribeCarHardwareResult racing in on a binder thread doesn't re-add a listener nothing will remove. */
     @Volatile private var cleanedUp = false
-    private var visible = false
+    @Volatile private var visible = false
+    /** On screen, the dashboard's map card or the assistant bar ([setVisible]). Any thread. */
+    val shown: Boolean get() = visible
     private var started = false
     private var pendingIntent: Intent? = null
     private var retries = 0
@@ -115,6 +126,8 @@ class CarAppConnection(
     private var stableArea: Rect? = null
 
     private val hardwareSubscriptions = HashMap<Int, ICarHardwareResult>()
+    /** The microphone the app has open, closed by [cleanup] so a released app doesn't keep the car's. */
+    @Volatile private var mic: MicPipe? = null
 
     // ------------------------------------------------------------------ public API (main thread)
 
@@ -136,7 +149,7 @@ class CarAppConnection(
                 Context.BIND_AUTO_CREATE or Context.BIND_INCLUDE_CAPABILITIES or Context.BIND_IMPORTANT)
         }.getOrElse { log("bind failed", it); false }
         bound = ok
-        if (!ok) fail("Could not start ${info.label}")
+        if (!ok) fail(context.getString(R.string.carapp_error_start, info.label))
     }
 
     /** On screen (map on the dashboard counts) or not: drives the app's Screen lifecycle. */
@@ -245,7 +258,7 @@ class CarAppConnection(
 
         override fun onServiceDisconnected(name: ComponentName) = onAppDied()
         override fun onBindingDied(name: ComponentName) = onAppDied()
-        override fun onNullBinding(name: ComponentName) = fail("${info.label} refused the connection")
+        override fun onNullBinding(name: ComponentName) = fail(context.getString(R.string.carapp_error_refused, info.label))
     }
 
     private fun handshake(app: ICarApp) {
@@ -256,7 +269,7 @@ class CarAppConnection(
             val appMin = appInfo?.minCarAppApiLevel ?: CarAppApiLevels.LEVEL_1
             libraryVersion = appInfo?.libraryDisplayVersion ?: ""
             if (appMin > hostMax) {
-                fail("${info.label} needs car API level $appMin; this host supports $hostMax")
+                fail(context.getString(R.string.carapp_error_api_level, info.label, appMin, hostMax))
                 return@call
             }
             apiLevel = minOf(appLatest, hostMax)
@@ -348,7 +361,7 @@ class CarAppConnection(
         // (onBindingDied especially) leaks bindings and keeps the service alive.
         unbind()
         status = Status.FAILED
-        error = "${info.label} stopped"
+        error = context.getString(R.string.carapp_error_stopped, info.label)
         // Reconnect while it's on screen, a few times: apps get killed and restarted by the OS.
         if (visible && retries++ < 3) main.postDelayed({ if (visible && status == Status.FAILED) connect() }, 1_000L * retries)
     }
@@ -370,8 +383,10 @@ class CarAppConnection(
         started = false
         navigating = false
         alert = null
-        synchronized(hardwareSubscriptions) { cleanedUp = true; hardwareSubscriptions.clear() }
-        CarData.removeListener(carDataListener)
+        // The listener changes under the same lock as the subscriptions: a binder thread subscribing at the same
+        // time can't add it back after this removal (CarData's add/remove don't lock, so no lock order issue).
+        synchronized(hardwareSubscriptions) { cleanedUp = true; hardwareSubscriptions.clear(); CarData.removeListener(carDataListener) }
+        mic?.stop()
     }
 
     private fun unbind() {
@@ -413,8 +428,8 @@ class CarAppConnection(
         if (status == Status.CONNECTING) {
             fail(when {
                 "Unknown host" in message || "not allowed" in message || "SecurityException" in message ->
-                    "${info.label} only accepts Google's Android Auto. It needs to allow AARE (see the app list on the phone)."
-                else -> "${info.label} couldn't start: ${message.lineSequence().first().take(120)}"
+                    context.getString(R.string.carapp_error_google_only, info.label)
+                else -> context.getString(R.string.carapp_error_cant_start, info.label, message.lineSequence().first().take(120))
             })
         }
     }
@@ -518,15 +533,20 @@ class CarAppConnection(
                 return
             }
             // Binder thread: cleanup() may already have torn this connection down.
-            val live = synchronized(hardwareSubscriptions) { if (!cleanedUp) hardwareSubscriptions[resultType] = callback; !cleanedUp }
-            if (!live) return
-            CarData.addListener(carDataListener)
+            synchronized(hardwareSubscriptions) {
+                if (cleanedUp) return
+                hardwareSubscriptions[resultType] = callback
+                CarData.addListener(carDataListener)
+            }
+            // Outside the lock: a call back into the app.
             deliverHardware(resultType, callback)
         }
 
         override fun unsubscribeCarHardwareResult(resultType: Int, params: Bundleable?) {
-            val empty = synchronized(hardwareSubscriptions) { hardwareSubscriptions.remove(resultType); hardwareSubscriptions.isEmpty() }
-            if (empty) CarData.removeListener(carDataListener)
+            synchronized(hardwareSubscriptions) {
+                hardwareSubscriptions.remove(resultType)
+                if (hardwareSubscriptions.isEmpty()) CarData.removeListener(carDataListener)
+            }
         }
     }
 
@@ -583,27 +603,61 @@ class CarAppConnection(
         }
         val request = runCatching { requestBundle.get() as OpenMicrophoneRequest }.getOrNull()
         val pipe = ParcelFileDescriptor.createReliablePipe()
-        val out = ParcelFileDescriptor.AutoCloseOutputStream(pipe[1])
-        var handle: MicHandle? = null
-        val stop = {
-            handle?.close()
-            runCatching { out.close() }
-            Unit
-        }
-        handle = env.openMicrophone(this, sink = { data, off, len ->
-            try { out.write(data, off, len) } catch (e: IOException) { main.post { stop() } }
-        }, onStopped = {
+        val p = MicPipe(ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]))
+        val handle = env.openMicrophone(this, sink = p::write, onStopped = {
             runCatching { request?.carAudioCallbackDelegate?.onStopRecording() }
-            stop()
+            p.stop()
         })
         if (handle == null) {
-            runCatching { pipe[0].close() }; runCatching { out.close() }
+            runCatching { pipe[0].close() }; p.stop()
             return null
         }
+        mic = p
+        p.attach(handle)
+        // cleanup() ran meanwhile (binder thread): it couldn't see this one.
+        if (cleanedUp) p.stop()
         val response = OpenMicrophoneResponse.Builder(object : CarAudioCallback {
-            override fun onStopRecording() { main.post { stop() } }
+            override fun onStopRecording() { main.post { p.stop() } }
         }).setCarMicrophoneDescriptor(pipe[0]).build()
         return Bundleable.create(response)
+    }
+
+    /**
+     * One opened microphone: the PCM goes through a bounded queue to a thread of its own that writes the app's
+     * pipe. The sink runs on the AAP reader thread, which must never block, and a pipe the app stops reading
+     * fills up in about 2 s: when the app falls that far behind, chunks are dropped (whole, so samples stay aligned).
+     */
+    private inner class MicPipe(private val out: OutputStream) {
+        private val queue = ArrayBlockingQueue<ByteArray>(MIC_QUEUE_CHUNKS)
+        private val stopped = AtomicBoolean()
+        @Volatile private var handle: MicHandle? = null
+        private val writer = Thread({
+            try {
+                while (true) out.write(queue.take())
+            } catch (_: InterruptedException) {
+            } catch (_: IOException) {
+                main.post { stop() } // the app closed its end
+            }
+        }, "aare-mic-pipe").apply { isDaemon = true; start() }
+
+        /** Any thread, never blocks. The caller may reuse [data]: it is copied. */
+        fun write(data: ByteArray, off: Int, len: Int) {
+            if (!stopped.get()) queue.offer(data.copyOfRange(off, off + len))
+        }
+
+        fun attach(h: MicHandle) {
+            handle = h
+            if (stopped.get()) h.close() // stopped before the runtime answered
+        }
+
+        /** Idempotent, any thread: the app, the router (another listener took over) or [cleanup]. */
+        fun stop() {
+            if (!stopped.compareAndSet(false, true)) return
+            if (mic === this) mic = null
+            handle?.close()
+            writer.interrupt()
+            runCatching { out.close() }
+        }
     }
 
     private fun hasPermission(permission: String): Boolean =
@@ -622,6 +676,8 @@ class CarAppConnection(
 
     companion object {
         private const val TAG = "AareCarApp"
+        /** Microphone chunks queued for an app that reads slowly: about a second of 20 ms chunks. */
+        private const val MIC_QUEUE_CHUNKS = 50
 
         /** The OnDoneCallback handed to template delegates: logs failures. */
         val templateDone = object : androidx.car.app.OnDoneCallback {

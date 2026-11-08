@@ -151,11 +151,17 @@ class AapSession(
     private val queue = PriorityBlockingQueue<Outgoing>()
     private val seq = AtomicLong()
     private val closed = AtomicBoolean(false)
+    private val runningEntered = AtomicBoolean(false)
     private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { r ->
         Thread(r, "aap-timer").apply { isDaemon = true }
     }
     private val channels = java.util.concurrent.ConcurrentHashMap<Int, ServiceChannel>()
     private var pendingOpens = 0
+    /**
+     * Set once the head unit said bye-bye: it may hang up before our response is written, and
+     * that EOF or broken pipe is then the orderly end it announced, not a failure.
+     */
+    @Volatile private var headUnitByeBye: String? = null
 
     @Volatile private var lastInboundMs = now()
     @Volatile private var pingIntervalMs = 1_000L
@@ -221,8 +227,12 @@ class AapSession(
 
     fun sendControl(id: Int, body: MessageLite) = send(0, id, body)
 
-    fun requestAudioFocus(type: AudioFocusRequestType) =
-        sendControl(ControlMsg.AUDIO_FOCUS_REQUEST, AudioFocusRequest.newBuilder().setAudioFocusType(type).build())
+    /**
+     * Asks the head unit for audio focus. A change that follows a stream's STOP goes at
+     * [Priority.AUDIO], so it can't overtake that STOP or the data still queued before it.
+     */
+    fun requestAudioFocus(type: AudioFocusRequestType, priority: Int = Priority.CONTROL) =
+        send(0, ControlMsg.AUDIO_FOCUS_REQUEST, AudioFocusRequest.newBuilder().setAudioFocusType(type).build(), priority = priority)
 
     fun requestNavFocus(type: NavFocusType) =
         sendControl(ControlMsg.NAV_FOCUS_REQUEST, NavFocusRequestNotification.newBuilder().setFocusType(type).build())
@@ -359,8 +369,10 @@ class AapSession(
             ControlMsg.BYEBYE_REQUEST -> {
                 val reason = runCatching { ByeByeRequest.parseFrom(msg.bodyBytes()).reason }.getOrNull()
                 log.i("head unit says bye-bye: $reason")
+                val why = "head unit ended the session ($reason)"
+                headUnitByeBye = why
                 sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance().toByteArray()),
-                    onSent = { close("head unit ended the session ($reason)", null) })
+                    onSent = { close(why, null) })
             }
             ControlMsg.BYEBYE_RESPONSE -> close("session ended", null)
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
@@ -388,6 +400,11 @@ class AapSession(
             0, 0, // STATUS_SUCCESS
         )
         sendRaw(0, AapMessage.plaintext(ControlMsg.VERSION_RESPONSE, body), encrypted = false)
+        enterHandshake()
+    }
+
+    /** Starts the TLS handshake, with its own timeout whichever way the head unit got here. */
+    private fun enterHandshake() {
         state = State.HANDSHAKE
         cryptor.beginHandshake()
         schedule({
@@ -399,8 +416,7 @@ class AapSession(
         if (state != State.HANDSHAKE) {
             log.w("TLS bytes in state $state")
             if (state.ordinal > State.HANDSHAKE.ordinal) return
-            state = State.HANDSHAKE
-            cryptor.beginHandshake()
+            enterHandshake()
         }
         tlsStarted = true
         val out = cryptor.handshake(bytes)
@@ -450,7 +466,13 @@ class AapSession(
             fail("service discovery response in state $state", null)
             return
         }
-        val resp = ServiceDiscoveryResponse.parseFrom(msg.bodyBytes())
+        val resp = try {
+            ServiceDiscoveryResponse.parseFrom(msg.bodyBytes())
+        } catch (e: com.google.protobuf.InvalidProtocolBufferException) {
+            // Say what broke instead of a bare "read failed" (a required field we can't read, usually).
+            fail("bad service discovery response", e)
+            return
+        }
         discovery = resp
         log.i("head unit: ${describe(resp)}")
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
@@ -467,12 +489,22 @@ class AapSession(
                 ChannelOpenRequest.newBuilder().setPriority(ch.openPriority).setServiceId(ch.id).build(),
                 control = true)
         }
-        if (wanted.isEmpty()) enterRunning()
+        if (wanted.isEmpty()) {
+            enterRunning()
+        } else {
+            // A head unit that never answers one open request must not keep the session out of RUNNING.
+            schedule({
+                if (state != State.OPENING) return@schedule
+                log.w("channels not open after 10 s: ${channels.values.filter { !it.opened }.joinToString { "${it.id} (${it.name})" }}")
+                enterRunning()
+            }, 10, TimeUnit.SECONDS)
+        }
         startKeepAlive()
     }
 
+    /** From the reader or, on an open timeout, the timer: [Callbacks.onRunning] must still run once. */
     private fun enterRunning() {
-        if (state == State.RUNNING) return
+        if (state != State.OPENING || !runningEntered.compareAndSet(false, true)) return
         state = State.RUNNING
         log.i("session running: ${channels.values.count { it.opened }}/${channels.size} channels open")
         callbacks.onRunning(this)
@@ -499,6 +531,7 @@ class AapSession(
 
     private fun fail(reason: String, error: Throwable?) {
         if (closed.get()) return
+        headUnitByeBye?.let { close(it, null); return }
         log.w("session failed: $reason", error)
         close(reason, error ?: AapException(reason))
     }
@@ -513,17 +546,26 @@ class AapSession(
             ?: "head unit sent no certificate: AARE only connects to head units that present one".takeIf { cryptor.peerCertificateMissing }
             ?: reason
         log.i("session closed: $why")
-        scheduler.shutdownNow()
-        transport.close()
-        for (ch in channels.values) runHandler(ch) { ch.onClosed() }
-        queue.clear()
-        callbacks.onClosed(this, why, error)
+        try {
+            // A throwing transport must not skip the channels' and the owner's teardown.
+            runCatching { transport.close() }.onFailure { log.w("closing ${transport.name} failed", it) }
+            for (ch in channels.values) runHandler(ch) { ch.onClosed() }
+            queue.clear()
+            callbacks.onClosed(this, why, error)
+        } finally {
+            // Last: close() often runs on the timer thread itself (timeouts, stop grace), and
+            // shutdownNow() interrupts it, which would break any interruptible call made after it.
+            scheduler.shutdownNow()
+        }
     }
 
     val isClosed get() = closed.get()
 
-    /** Schedules a one-shot task; silently dropped once the session has shut its timer down. */
-    private fun schedule(task: () -> Unit, delay: Long, unit: TimeUnit) {
+    /**
+     * Schedules a one-shot task on the session's timer thread; silently dropped once the session
+     * has shut its timer down.
+     */
+    internal fun schedule(task: () -> Unit, delay: Long, unit: TimeUnit) {
         try {
             scheduler.schedule(task, delay, unit)
         } catch (_: java.util.concurrent.RejectedExecutionException) {

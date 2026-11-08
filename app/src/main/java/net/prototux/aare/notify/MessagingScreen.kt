@@ -85,14 +85,16 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
     // The open conversation went away (read on the phone, or marked as read): back to the list.
     LaunchedEffect(conversations, openKey) { if (openKey != null && conversations != null && open == null) { openKey = null; replying = false } }
     DisposableEffect(app.id) {
-        runtime.screenBack = {
+        val back: () -> Boolean = {
             when {
                 replying -> { replying = false; true }
                 openKey != null -> { openKey = null; true }
                 else -> false
             }
         }
-        onDispose { runtime.screenBack = null }
+        runtime.screenBack = back
+        // The next screen installs its own handler before this one fades out: leave that one alone.
+        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background)) {

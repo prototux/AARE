@@ -67,6 +67,7 @@ class TcpServer(
             while (!s.isClosed) {
                 try {
                     val socket = s.accept()
+                    if (stopped) { runCatching { socket.close() }; break }
                     // The wildcard bind includes loopback and this phone's own addresses, but adb now uses @aare_hu:
                     // a peer with one of those addresses is an app on this phone.
                     if (isLocalPeer(socket)) {

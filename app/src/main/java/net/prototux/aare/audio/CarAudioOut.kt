@@ -67,9 +67,11 @@ class CarAudioOut(
     private fun loop(rate: Int, channels: Int) {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
         if (!source.start()) {
+            // Not a failure to act on if stop() came meanwhile (a slow start outlasts its join).
+            val wanted = running
             running = false
             source.release()
-            onFailed()
+            if (wanted) onFailed()
             return
         }
         // ~20 ms chunks: small enough for low latency, big enough to keep the message rate sane.
@@ -80,6 +82,9 @@ class CarAudioOut(
         var frames = 0L
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
+        // The source ended by itself (its service or the audio server died), not by stop(): the
+        // next capture method takes over, rather than the car going silent for the rest of the drive.
+        var died = false
         fun queue(ts: Long) {
             queued.addLast(buf.copyOf() to ts)
             while (queued.size > MAX_QUEUED) queued.removeFirst()
@@ -89,7 +94,7 @@ class CarAudioOut(
                 var got = 0
                 while (got < chunk && running) {
                     val n = source.read(buf, 10 + got, chunk - got)
-                    if (n < 0) { running = false; break }
+                    if (n < 0) { died = running; running = false; break }
                     if (n == 0) { Thread.sleep(2); continue } // no data yet: yield, don't busy-spin
                     got += n
                 }
@@ -142,6 +147,7 @@ class CarAudioOut(
             playing = false
             queued.clear()
             source.release()
+            if (died) onFailed()
         }
     }
 

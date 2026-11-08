@@ -141,7 +141,9 @@ private fun CarIcon.isResource(): Boolean =
 private fun rememberCarIconBitmap(icon: CarIcon, sizePx: Int, key: Any? = null): ImageBitmap? {
     val host = LocalTemplateHost.current
     val night = host.night
-    val cacheKey: Any = remember(icon, sizePx, key, night) { key ?: contentKey(icon, night)?.let { "$it@$sizePx" } ?: icon }
+    // Keyed on identity: CarIcon.equals finds any two bitmap icons equal, so a new arrow would keep the old key.
+    // Each refresh deserializes new icons, so the content key is still computed only once per refresh.
+    val cacheKey: Any = remember(Same(icon), sizePx, key, night) { key ?: contentKey(icon, night)?.let { "$it@$sizePx" } ?: Same(icon) }
     var bitmap by remember { mutableStateOf(IconCache.get(cacheKey)) }
     LaunchedEffect(cacheKey) {
         val cached = IconCache.get(cacheKey)
@@ -166,13 +168,21 @@ private fun contentKey(icon: CarIcon, night: Boolean): String? = runCatching {
     when (ic.type) {
         IconCompat.TYPE_RESOURCE -> "res:${ic.resPackage}:${ic.resId}:${if (night) "night" else "day"}"
         IconCompat.TYPE_URI, IconCompat.TYPE_URI_ADAPTIVE_BITMAP -> "uri:${ic.uri}"
-        IconCompat.TYPE_BITMAP, IconCompat.TYPE_ADAPTIVE_BITMAP -> ic.bitmap?.let { "bmp:${it.width}x${it.height}:${sampleHash(it)}" }
+        IconCompat.TYPE_BITMAP, IconCompat.TYPE_ADAPTIVE_BITMAP -> ic.bitmap?.let { "bmp:${it.width}x${it.height}:${pixelHash(it)}" }
         else -> null
     }
 }.getOrNull()
 
-/** Cheap content hash: 81 sampled pixels are plenty to tell maneuver arrows or album arts apart. */
-private fun sampleHash(b: Bitmap): Int {
+/**
+ * Content hash of a bitmap. Small ones (maneuver arrows, lanes, junctions) hash every pixel: two arrows may differ
+ * only in an exit number or a highlighted lane. Bigger ones (photos, album art) are told apart by 81 sampled pixels.
+ */
+private fun pixelHash(b: Bitmap): Int {
+    if (b.width * b.height <= FULL_HASH_PIXELS) {
+        val pixels = IntArray(b.width * b.height)
+        b.getPixels(pixels, 0, b.width, 0, 0, b.width, b.height)
+        return pixels.contentHashCode()
+    }
     var h = 17
     val sx = maxOf(1, b.width / 8)
     val sy = maxOf(1, b.height / 8)
@@ -186,6 +196,15 @@ private fun sampleHash(b: Bitmap): Int {
         y += sy
     }
     return h
+}
+
+/** Bitmaps up to this many pixels get a full content hash (a 512x128 lanes image is 64K). */
+private const val FULL_HASH_PIXELS = 512 * 128
+
+/** Equal only for the same object: a remember or cache key that doesn't go through CarIcon.equals. */
+private class Same(private val value: Any) {
+    override fun equals(other: Any?) = other is Same && other.value === value
+    override fun hashCode() = System.identityHashCode(value)
 }
 
 /** Process-wide bitmap cache for template icons, bounded in bytes. */

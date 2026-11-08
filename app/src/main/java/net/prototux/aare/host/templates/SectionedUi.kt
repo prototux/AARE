@@ -104,7 +104,8 @@ private fun SectionView(section: Section<*>, columns: Int, first: Boolean) {
 @Composable
 private fun RowSectionView(section: RowSection, rows: List<Row>) {
     val host = LocalTemplateHost.current
-    var selected by remember(section.initialSelectedIndex) { mutableStateOf(section.initialSelectedIndex) }
+    // Reset on every template the app sends (identity): one that refuses the choice resends the same index.
+    var selected by remember(System.identityHashCode(section)) { mutableStateOf(section.initialSelectedIndex) }
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         rows.forEachIndexed { i, row ->
             val shape = groupShape(i == 0, i == rows.lastIndex)

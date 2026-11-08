@@ -42,7 +42,7 @@ class MicRouter(
             mic.openMic()
         } else {
             carRequested = false
-            startPhoneMic()
+            startPhoneMic(c)
         }
         voiceSession(true)
         return MicHandle { close(c) }
@@ -72,10 +72,11 @@ class MicRouter(
     /** The car answered our request (reader thread); if it refused, the phone's mic takes over. */
     @Synchronized
     fun onCarMicOpened(ok: Boolean) {
-        if (ok || !carRequested || client == null) return
+        val c = client
+        if (ok || !carRequested || c == null) return
         Log.i(TAG, "car microphone refused, using the phone's")
         carRequested = false
-        startPhoneMic()
+        startPhoneMic(c)
     }
 
     /** The session ended: whoever listens hears the end of the stream. */
@@ -87,7 +88,7 @@ class MicRouter(
     }
 
     @SuppressLint("MissingPermission")
-    private fun startPhoneMic() {
+    private fun startPhoneMic(c: Client) {
         if (phoneRunning) return
         phoneRunning = true
         phoneThread = Thread({
@@ -99,7 +100,11 @@ class MicRouter(
             } catch (e: Exception) {
                 Log.w(TAG, "phone microphone unavailable", e); null
             }
-            if (rec == null || rec.state != AudioRecord.STATE_INITIALIZED) { rec?.release(); phoneRunning = false; return@Thread }
+            if (rec == null || rec.state != AudioRecord.STATE_INITIALIZED) {
+                rec?.release()
+                phoneMicFailed(c)
+                return@Thread
+            }
             val buf = ByteArray(640) // 20 ms
             rec.startRecording()
             while (phoneRunning) {
@@ -109,6 +114,23 @@ class MicRouter(
             rec.stop()
             rec.release()
         }, "aare-phone-mic").apply { start() }
+    }
+
+    /**
+     * The phone's mic couldn't start (busy in a call, no permission): end the stream for [c] now,
+     * or its app would wait for sound forever. Runs on the mic thread, so not through [close],
+     * whose join would wait for this very thread.
+     */
+    @Synchronized
+    private fun phoneMicFailed(c: Client) {
+        // A newer mic thread took over meanwhile: it isn't this one's to stop.
+        if (phoneThread !== Thread.currentThread()) return
+        phoneRunning = false
+        phoneThread = null
+        if (client !== c) return
+        client = null
+        voiceSession(false)
+        c.onStopped()
     }
 
     private fun stopPhoneMic() {

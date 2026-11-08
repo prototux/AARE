@@ -27,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 
 /** MessageTemplate: icon (or spinner), a short message, optional debug text and up to two buttons. */
 @Composable
@@ -103,7 +105,7 @@ internal fun LongMessageTemplateView(t: LongMessageTemplate) {
     val header = headerSpec(null, t.title, t.headerAction, t.actionStrip)
     TemplateScaffold(header) {
         if (host.driving) {
-            EmptyMessage(null, "Available when parked", icon = Icons.Rounded.Lock)
+            EmptyMessage(null, stringResource(R.string.tpl_parked_only), icon = Icons.Rounded.Lock)
             return@TemplateScaffold
         }
         Column(Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {

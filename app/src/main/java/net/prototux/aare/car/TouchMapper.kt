@@ -10,27 +10,24 @@ import android.view.MotionEvent
  * Turns the head unit's touch reports into Android [MotionEvent]s in projection coordinates.
  *
  * The touch panel reports in its own resolution, which covers the visible part of the video
- * (the video minus its margins); we scale and offset into the full video frame.
+ * (the video minus its margins, see [ProjectionLayout]); we scale and offset into the full video frame.
  */
 class TouchMapper(
     private val touchWidth: Int,
     private val touchHeight: Int,
-    private val videoWidth: Int,
-    private val videoHeight: Int,
-    private val marginX: Int,
-    private val marginY: Int,
+    private val layout: ProjectionLayout,
 ) {
     private var downTime = 0L
-    // Some factory head units (Hyundai GEN5 Wide) advertise a 0x0 touchscreen.
-    // Treat each nonpositive dimension as unspecified and use the visible video size.
-    // Using 1 as the denominator instead multiplies every touch far outside the display.
-    val panelWidth = touchWidth.takeIf { it > 0 } ?: (videoWidth - marginX).coerceAtLeast(1)
-    val panelHeight = touchHeight.takeIf { it > 0 } ?: (videoHeight - marginY).coerceAtLeast(1)
-    private val scaleX = (videoWidth - marginX).toFloat() / panelWidth
-    private val scaleY = (videoHeight - marginY).toFloat() / panelHeight
+    // Some factory head units (Hyundai GEN5 Wide) advertise a 0x0 touchscreen. Treat each
+    // nonpositive dimension as unspecified and use the visible video size, so touches map 1:1
+    // instead of being multiplied far outside the display (#89).
+    val panelWidth = touchWidth.takeIf { it > 0 } ?: layout.visibleWidth.coerceAtLeast(1)
+    val panelHeight = touchHeight.takeIf { it > 0 } ?: layout.visibleHeight.coerceAtLeast(1)
+    private val scaleX = layout.visibleWidth.toFloat() / panelWidth
+    private val scaleY = layout.visibleHeight.toFloat() / panelHeight
 
-    internal fun mapX(x: Int): Float = x * scaleX + marginX / 2f
-    internal fun mapY(y: Int): Float = y * scaleY + marginY / 2f
+    internal fun mapX(x: Int): Float = x * scaleX + layout.marginLeft
+    internal fun mapY(y: Int): Float = y * scaleY + layout.marginTop
 
     fun map(e: TouchEvent): MotionEvent? {
         val n = e.pointerDataCount

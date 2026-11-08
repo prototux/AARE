@@ -8,6 +8,7 @@ import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputRepor
 import aap_protobuf.service.media.sink.message.KeyBindingRequestOuterClass.KeyBindingRequest
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClass.MediaPlaybackMetadata
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.MediaPlaybackStatus
+import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.NavigationStatusService
 import aap_protobuf.service.navigationstatus.message.NavigationCurrentPositionOuterClass.NavigationCurrentPosition
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnDistanceEventOuterClass.NavigationNextTurnDistanceEvent
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
@@ -24,6 +25,7 @@ import net.prototux.aare.aap.NavStatusMsg
 import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.SensorMsg
 import net.prototux.aare.aap.ServiceChannel
+import java.util.concurrent.TimeUnit
 
 /** Touch screen, touch pad, buttons and rotary controller of the car. */
 class InputChannel(service: Service, private val listener: Listener) : ServiceChannel(service, "input") {
@@ -55,7 +57,8 @@ class SensorChannel(service: Service, private val listener: Listener) : ServiceC
         fun onSensors(batch: SensorBatch)
     }
 
-    val available: List<SensorType> = service.sensorSourceService.sensorsList.map { it.sensorType }
+    /** Sensors of a type this build doesn't know read back as the default (LOCATION): skip them. */
+    val available: List<SensorType> = service.sensorSourceService.sensorsList.filter { it.hasSensorType() }.map { it.sensorType }
 
     override fun onOpened() {
         // Everything the car offers (it only advertises what it has), the ones that drive the UI first.
@@ -104,13 +107,24 @@ class SensorChannel(service: Service, private val listener: Listener) : ServiceC
  * so we send both.
  */
 class NavigationStatusChannel(service: Service) : ServiceChannel(service, "navstatus") {
-    val wantsImages = service.navigationStatusService.type ==
-        aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.NavigationStatusService.InstrumentClusterType.IMAGE
+    /** An unknown cluster type reads back as the default (IMAGE): only trust one the car set. */
+    val wantsImages = service.navigationStatusService.let {
+        it.hasType() && it.type == NavigationStatusService.InstrumentClusterType.IMAGE
+    }
     val imageOptions = service.navigationStatusService.imageOptions
     val minIntervalMs = service.navigationStatusService.minimumIntervalMs
     @Volatile var active = false
         private set
+
+    private class Step(
+        val state: NavigationState?, val position: NavigationCurrentPosition?,
+        val turn: NavigationNextTurnEvent?, val distance: NavigationNextTurnDistanceEvent?,
+    )
+    private val lock = Any()
     private var lastSentMs = 0L
+    /** The newest step that came inside the rate-limit window; sent when the window ends. */
+    private var pending: Step? = null
+    private var flushScheduled = false
 
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {
@@ -119,22 +133,54 @@ class NavigationStatusChannel(service: Service) : ServiceChannel(service, "navst
         }
     }
 
-    fun status(s: NavigationStatus.NavigationStatusEnum) =
+    fun status(s: NavigationStatus.NavigationStatusEnum) = synchronized(lock) {
+        // A step held back for the rate limit must not light the cluster up again after navigation
+        // ended, nor show the abandoned route's maneuver while rerouting.
+        if (s != NavigationStatus.NavigationStatusEnum.ACTIVE) pending = null
         send(NavStatusMsg.STATUS, NavigationStatus.newBuilder().setStatus(s).build(), Priority.INPUT)
+    }
 
-    /** Sends the current step; rate-limited to what the head unit asked for. */
+    /**
+     * Sends the current step, rate-limited to what the head unit asked for. A step inside the
+     * window is held and sent when it ends (newest wins), so the cluster never stays on a stale one.
+     */
     fun update(
         state: NavigationState?, position: NavigationCurrentPosition?,
         turn: NavigationNextTurnEvent?, distance: NavigationNextTurnDistanceEvent?, force: Boolean = false,
-    ) {
-        val now = System.nanoTime() / 1_000_000
-        if (!force && now - lastSentMs < minIntervalMs) return
-        lastSentMs = now
-        state?.let { send(NavStatusMsg.STATE, it, Priority.INPUT) }
-        position?.let { send(NavStatusMsg.CURRENT_POSITION, it, Priority.INPUT) }
-        turn?.let { send(NavStatusMsg.TURN_EVENT, it, Priority.INPUT) }
-        distance?.let { send(NavStatusMsg.DISTANCE_EVENT, it, Priority.INPUT) }
+    ) = synchronized(lock) {
+        val step = Step(state, position, turn, distance)
+        val wait = lastSentMs + minIntervalMs - now()
+        if (!force && wait > 0) {
+            pending = step
+            if (!flushScheduled) {
+                flushScheduled = true
+                session.schedule({ flush() }, wait, TimeUnit.MILLISECONDS)
+            }
+            return@synchronized
+        }
+        pending = null
+        sendStep(step)
     }
+
+    /** Runs on the session's timer thread. */
+    private fun flush() = synchronized(lock) {
+        flushScheduled = false
+        val step = pending ?: return@synchronized
+        pending = null
+        sendStep(step)
+    }
+
+    private fun sendStep(step: Step) {
+        lastSentMs = now()
+        step.state?.let { send(NavStatusMsg.STATE, it, Priority.INPUT) }
+        step.position?.let { send(NavStatusMsg.CURRENT_POSITION, it, Priority.INPUT) }
+        step.turn?.let { send(NavStatusMsg.TURN_EVENT, it, Priority.INPUT) }
+        step.distance?.let { send(NavStatusMsg.DISTANCE_EVENT, it, Priority.INPUT) }
+    }
+
+    override fun onClosed() = synchronized(lock) { pending = null }
+
+    private fun now() = System.nanoTime() / 1_000_000
 }
 
 /** Now-playing info for the head unit's own widgets and cluster. */

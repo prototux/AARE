@@ -21,6 +21,9 @@
     <string name="common_no_items">No items</string>
     <string name="common_unsupported_screen">This screen isn\'t supported yet</string>
     <string name="common_loading">Loading</string>
+    <string name="common_ok">OK</string>
+    <string name="common_try_again">Try again</string>
+    <string name="common_something_went_wrong">Something went wrong</string>
 
     <!-- setup: MainActivity home/settings screens -->
     <string name="setup_page_car_screen_title">Car screen</string>
@@ -125,6 +128,8 @@
     <string name="setup_switch_passenger">Passenger mode: no driving restrictions (the driver must not use the screen)</string>
     <string name="setup_switch_message_notifications">Message notifications</string>
     <string name="setup_switch_audio_next_connection">Phone audio in the car (next connection)</string>
+    <string name="setup_nothing_to_open">This phone has no app that can open this</string>
+    <string name="setup_wallpaper_failed">Couldn\'t use this photo as the wallpaper</string>
 
     <!-- cert: certificate management -->
     <string name="cert_section_title">Phone certificates</string>
@@ -165,6 +170,8 @@
     <string name="msg_toggle_autoreply_title">Auto-reply</string>
     <string name="msg_toggle_autoreply_subtitle">Answer people who write, once per conversation per drive (not groups)</string>
     <string name="msg_autoreply_field_label">Reply</string>
+    <!-- Sent to contacts while driving, unless the user wrote their own reply. -->
+    <string name="msg_autoreply_default">I\'m driving right now, I\'ll answer later.</string>
 
     <!-- audio: car audio settings -->
     <string name="audio_settings_title">Car audio</string>
@@ -246,6 +253,7 @@
     <!-- dash: car shell / dashboard chrome -->
     <string name="dash_menu_apps">Apps</string>
     <string name="dash_menu_home">Home</string>
+    <string name="dash_menu_exit_to_car">Exit to car</string>
 
     <!-- nav: navigation feature (dashboard card and templates) -->
     <string name="nav_dashboard_no_app_title">No navigation app</string>
@@ -274,6 +282,34 @@
     <string name="media_action_pause">Pause</string>
     <string name="media_action_play">Play</string>
     <string name="media_queue_empty">The queue is empty</string>
+    <string name="media_action_retry">Retry</string>
+    <!-- Button opening the media app's own fix (e.g. its sign-in screen) when the app gave no label. -->
+    <string name="media_error_fix">Fix</string>
+    <string name="media_error_no_service">%1$s has no media service</string>
+    <string name="media_error_not_responding">%1$s is not responding</string>
+    <string name="media_error_refused">%1$s did not accept the connection</string>
+    <string name="media_error_connect">Could not connect to %1$s</string>
+    <string name="media_error_open">Could not open %1$s</string>
+    <string name="media_error_not_connected">%1$s is not connected</string>
+    <string name="media_error_stopped">%1$s stopped</string>
+    <string name="media_error_load_list">Could not load this list</string>
+    <string name="media_error_search">Search failed</string>
+    <string name="media_error_reported">%1$s reported an error</string>
+    <!-- Errors a media app reports by code. All take the same arguments, %1$s the app and %2$d the
+         error code, so each may use either or neither. -->
+    <string name="media_error_sign_in">Sign in to %1$s on your phone</string>
+    <string name="media_error_premium">%1$s needs a premium account</string>
+    <string name="media_error_stream_limit">Too many devices are streaming</string>
+    <string name="media_error_parental">Blocked by parental controls</string>
+    <string name="media_error_region">Not available in your region</string>
+    <string name="media_error_skip_limit">Skip limit reached</string>
+    <string name="media_error_setup">Finish setting up %1$s on your phone</string>
+    <string name="media_error_end_of_playlist">End of the playlist</string>
+    <string name="media_error_permission">%1$s does not allow AARE to browse it</string>
+    <string name="media_error_io">Network or storage problem</string>
+    <string name="media_error_not_supported">Not supported by %1$s</string>
+    <string name="media_error_disconnected">%1$s disconnected</string>
+    <string name="media_error_code">%1$s reported an error (%2$d)</string>
 
     <!-- msg: messaging screen (notifications-based conversations) -->
     <string name="msg_no_access">Give AARE notification access on the phone to see messages here</string>
@@ -306,6 +342,8 @@
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Charging</string>
     <string name="phone_incoming_call">Incoming call</string>
+    <!-- The call card's name for an ongoing call whose caller is unknown (a noun). -->
+    <string name="phone_call_fallback_name">Call</string>
     <string name="phone_action_decline">Decline</string>
     <string name="phone_action_answer">Answer</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
@@ -319,4 +357,18 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Search is available when parked</string>
+
+    <!-- tpl: fallbacks in car apps' templates, when the app gives no text of its own -->
+    <string name="tpl_no_results">No results</string>
+    <string name="tpl_parked_only">Available when parked</string>
+    <string name="tpl_sign_in_parked_only">You can sign in when parked</string>
+    <string name="tpl_password_hint">Password</string>
+
+    <!-- carapp: errors of a hosted car app (Android for Cars App Library), shown on the car screen -->
+    <string name="carapp_error_start">Could not start %1$s</string>
+    <string name="carapp_error_refused">%1$s refused the connection</string>
+    <string name="carapp_error_api_level">%1$s needs car API level %2$d; this host supports %3$d</string>
+    <string name="carapp_error_stopped">%1$s stopped</string>
+    <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
+    <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
 </resources>

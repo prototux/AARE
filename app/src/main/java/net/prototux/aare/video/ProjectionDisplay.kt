@@ -7,13 +7,11 @@ import android.hardware.display.VirtualDisplay
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.Display
 import android.view.MotionEvent
 import android.view.KeyEvent
 import android.view.Surface
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.OnBackPressedDispatcherOwner
@@ -31,6 +29,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import net.prototux.aare.ui.car.CarFocusVisibility
 
 /**
  * The car screen, rendered on the phone.
@@ -73,6 +72,7 @@ class ProjectionDisplay(
 
     fun dispatchTouch(event: MotionEvent) {
         main.post {
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) CarFocusVisibility.keyInput = false
             presentation?.window?.decorView?.dispatchTouchEvent(event)
             event.recycle()
         }
@@ -81,33 +81,34 @@ class ProjectionDisplay(
     fun dispatchKey(event: KeyEvent) {
         main.post {
             val decor = presentation?.window?.decorView ?: return@post
-            if (decor.findFocus() == null) takeFocus(decor)
+            // Injected keys skip the view root's input stages, which is where a navigation key
+            // normally takes a window out of touch mode. Left in it, Compose stays in touch input
+            // mode, where clickables can't take focus: a rotary knob or D-pad would have nothing to
+            // move to. Only for navigation keys, so a stray steering-wheel key on a touch screen
+            // doesn't bring up focus highlights; and checked every time, as the window manager may
+            // put the window back in touch mode. Like the platform, the key that leaves touch mode
+            // is used up doing so (the first knob detent shows the focus, it doesn't move it on),
+            // but only if it did leave it: a refused switch must not eat every key.
+            val navigation = event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)
+            if (navigation) CarFocusVisibility.keyInput = true
+            if (navigation && decor.isInTouchMode) {
+                decor.requestFocusFromTouch()
+                if (!decor.isInTouchMode) return@post
+            }
             decor.dispatchKeyEvent(event)
         }
     }
 
     /**
-     * Gives the car window's content view focus so rotary / D-pad keys have somewhere to go.
-     *
-     * Keys and touches are injected straight into the window's view hierarchy, bypassing
-     * ViewRootImpl, so the window never gets window focus and never leaves touch mode (ViewRootImpl
-     * normally does that on the first key). In touch mode Compose treats clickables as unfocusable,
-     * a plain requestFocus() fails, and every key is dropped (dispatchKeyEvent returns false).
-     * requestFocusFromTouch() leaves touch mode first, then requests focus.
+     * Runs the car screen's enabled Compose BackHandler, if it has one (main thread). False when
+     * none is enabled, for the caller's own Back handling.
      */
-    private fun takeFocus(decor: View) {
-        val target = firstFocusable(decor) ?: return
-        target.isFocusableInTouchMode = true
-        runCatching { target.requestFocusFromTouch() }.getOrElse {
-            Log.w(TAG, "requestFocusFromTouch failed", it)
-            target.requestFocus()
-        }
-    }
-
-    private fun firstFocusable(v: View): View? {
-        if (v.isFocusable) return v
-        if (v is ViewGroup) for (i in 0 until v.childCount) firstFocusable(v.getChildAt(i))?.let { return it }
-        return null
+    fun back(): Boolean {
+        val d = presentation?.onBackPressedDispatcher ?: return false
+        // Never let the dispatcher fall back to its default: that would dismiss the Presentation.
+        if (!d.hasEnabledCallbacks()) return false
+        d.onBackPressed()
+        return true
     }
 
     fun release() {
@@ -119,7 +120,13 @@ class ProjectionDisplay(
     }
 
     private companion object {
-        const val TAG = "AareDisplay"
+        /** Keys that move or use focus, as in the platform's own check for leaving touch mode. */
+        fun isNavigationKey(code: Int) = when (code) {
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER,
+            KeyEvent.KEYCODE_PAGE_UP, KeyEvent.KEYCODE_PAGE_DOWN, KeyEvent.KEYCODE_MOVE_HOME, KeyEvent.KEYCODE_MOVE_END -> true
+            else -> false
+        }
     }
 
     private class CarPresentation(

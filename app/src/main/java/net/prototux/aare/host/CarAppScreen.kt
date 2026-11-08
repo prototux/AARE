@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -73,7 +74,7 @@ fun CarAppScreen(conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier
             else Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer))
         }
         when {
-            conn.status == CarAppConnection.Status.FAILED -> AppMessage(conn, conn.error ?: "Something went wrong", retry = { conn.connect() })
+            conn.status == CarAppConnection.Status.FAILED -> AppMessage(conn, conn.error ?: stringResource(R.string.common_something_went_wrong), retry = { conn.connect() })
             template == null -> AppMessage(conn, null, retry = null)
             // A new screen (new template id) starts fresh; refreshes keep scroll position and input.
             else -> androidx.compose.runtime.key(conn.templateId) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
@@ -103,7 +104,7 @@ private fun AppMessage(conn: CarAppConnection, message: String?, retry: (() -> U
             if (retry != null) {
                 Spacer(Modifier.height(20.dp))
                 Text(
-                    "Try again", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary,
+                    stringResource(R.string.common_try_again), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.primary)
                         .clickable(onClick = retry).padding(horizontal = 32.dp, vertical = 18.dp),
                 )
@@ -138,7 +139,7 @@ private fun AlertCard(alert: Alert, conn: CarAppConnection, host: TemplateHost, 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 alert.actions.forEach { action ->
                     Text(
-                        action.title?.toString() ?: "OK", style = MaterialTheme.typography.labelLarge,
+                        action.title?.toString() ?: stringResource(R.string.common_ok), style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.clip(RoundedCornerShape(28.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
                             .clickable {
                                 runCatching { action.onClickDelegate?.sendClick(host.done) }

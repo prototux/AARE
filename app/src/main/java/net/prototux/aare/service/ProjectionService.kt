@@ -20,6 +20,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -41,6 +42,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.car.CarSession
+import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.transport.LocalSocketTransport
@@ -85,6 +87,8 @@ class ProjectionService : Service() {
     /** The accessory whose USB permission dialog is showing; keeps the service alive until answered. */
     private var usbPermissionPending: UsbAccessory? = null
     private var usbPermissionReceiver: BroadcastReceiver? = null
+    /** When the running session started, so a link that worked for a while gets a fresh retry budget. */
+    private var sessionStart = 0L
     private var wakeLock: PowerManager.WakeLock? = null
     private var wirelessJob: Job? = null
     /** onDestroy ran: a session closing late must not touch this instance any more. */
@@ -97,6 +101,8 @@ class ProjectionService : Service() {
         settings = Settings(this)
         certs = CertificateStore(this)
         media = MediaHub(this, scope)
+        // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
+        DrivingMode.recover(this)
         createChannel()
         _state.update { it.copy(running = true) }
     }
@@ -128,6 +134,8 @@ class ProjectionService : Service() {
         val s = session
         session = null
         s?.stop()
+        // Sessions borrow this hub (ownsMedia = false): only the service can release its browser and listeners.
+        media.release()
         net.prototux.aare.mirror.PhoneMirror.release()
         // onEnded is ignored from here on: a LAN session must not leave the network listener on.
         if (lanSession) { lanSession = false; settings.headUnitServerLan = false }
@@ -153,6 +161,8 @@ class ProjectionService : Service() {
                 // so a service killed mid-session does not come back listening on the network.
                 TcpServer(lan = lan) { t ->
                     main.post {
+                        // Accepted while onDestroy ran: a session here would hold a wake lock nothing releases.
+                        if (destroyed) { t.close(); return@post }
                         if (session == null) {
                             lanSession = lan && t !is LocalSocketTransport && settings.headUnitServerLanOnce
                             if (lanSession) settings.headUnitServerLan = false
@@ -297,6 +307,7 @@ class ProjectionService : Service() {
      * [mirror]: whether the car may be offered the phone screen (the developer TCP server only if opted in).
      */
     private fun startSession(transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true) {
+        if (destroyed) { transport.close(); return }
         if (session != null) {
             log("already connected; refusing ${transport.name}")
             transport.close()
@@ -305,6 +316,7 @@ class ProjectionService : Service() {
         val cert = certs.pick(settings.certificateIndex)
         log("connecting ${transport.name} with certificate \"${cert.name}\"")
         acquireWakeLock()
+        sessionStart = SystemClock.elapsedRealtime()
         val s = CarSession(this, transport, cert.identity, settings, media, { projection }, wireless, peerKey, trustOnFirstUse, sessionListener, mirror)
         session = s
         _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null, pendingTrust = null) }
@@ -351,6 +363,8 @@ class ProjectionService : Service() {
             updateNotification(getString(R.string.notif_status_not_connected))
             // A USB link that dropped while still plugged in usually comes back: retry a few times.
             // Not a refused certificate: it would be refused again until the user trusts it.
+            // The budget counts drops in a row, not per plug-in: a head unit that drops each link at once is not retried forever.
+            if (SystemClock.elapsedRealtime() - sessionStart > USB_RETRY_RESET_MS) usbRetries = 0
             val acc = usbAccessory
             if (acc != null && pinRefusal == null && usbRetries++ < 3 && getSystemService(UsbManager::class.java).accessoryList?.contains(acc) == true) {
                 // openUsb checks hasPermission() again and asks for it if it was lost.
@@ -493,6 +507,8 @@ class ProjectionService : Service() {
         private const val TAG = "AareService"
         private const val CHANNEL = "connection"
         private const val NOTIFICATION_ID = 1
+        /** A USB session that lasted this long had recovered: its drop starts a new retry budget. */
+        private const val USB_RETRY_RESET_MS = 60_000L
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"

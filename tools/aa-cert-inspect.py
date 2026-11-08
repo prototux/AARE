@@ -93,8 +93,9 @@ class Cert:
 
     def org(self) -> str:
         """The organisation (falling back to the CN) from the subject."""
-        pairs = re.findall(r'([A-Za-z]+)=(?:"([^"]*)"|([^,]*))', self.subject)
-        fields = {k: (v1 or v2) for k, v1, v2 in pairs}
+        # OpenSSL 3 prints "O=CarService", 1.1 "O = CarService"
+        pairs = re.findall(r'([A-Za-z]+)\s*=\s*(?:"([^"]*)"|([^,]*))', self.subject)
+        fields = {k: (v1 or v2).strip() for k, v1, v2 in pairs}
         return fields.get("O") or fields.get("CN") or "?"
 
     def days_left(self) -> int | None:
@@ -105,7 +106,8 @@ class Cert:
 
     def filename(self) -> str:
         slug = re.sub(r"[^A-Za-z0-9]+", "-", self.org()).strip("-").lower() or "cert"
-        return f"{slug}-{'root' if self.root else 'leaf'}.pem"
+        # the hash keeps two certificates of the same organisation (say an old and a renewed leaf) apart
+        return f"{slug}-{'root' if self.root else 'leaf'}-{self.sha256[:8].lower()}.pem"
 
     def report(self, origin: str) -> str:
         left = self.days_left()

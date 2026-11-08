@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.prototux.aare.R
 
 /**
  * Follows every active media session on the phone through [MediaSessionManager], so "now playing"
@@ -44,8 +45,14 @@ internal class SessionTracker(
     private val manager = context.getSystemService(MediaSessionManager::class.java)
     private val listener = ComponentName(context, LISTENER)
     private val handler = Handler(Looper.getMainLooper())
-    private val onChanged = MediaSessionManager.OnActiveSessionsChangedListener { update(it.orEmpty()) }
+    private val onChanged = MediaSessionManager.OnActiveSessionsChangedListener { list ->
+        // Removing the listener doesn't drop a call already queued on the handler: after release()
+        // it would create sources (and controller callbacks) that nothing releases.
+        if (released) return@OnActiveSessionsChangedListener
+        if (list.isNullOrEmpty()) recheck() else update(list)
+    }
     private var listening = false
+    private var released = false
     private var poll: Job? = null
 
     fun start() {
@@ -69,6 +76,24 @@ internal class SessionTracker(
         }
     }
 
+    /**
+     * An empty list is either the last session ending or the system dropping our listener because
+     * notification access was revoked. In that case go back to polling, so it listens again once
+     * access is granted again.
+     */
+    private fun recheck() {
+        try {
+            update(manager.getActiveSessions(listener))
+        } catch (e: SecurityException) {
+            runCatching { manager.removeOnActiveSessionsChangedListener(onChanged) }
+            listening = false
+            _available.value = false
+            update(emptyList())
+            poll?.cancel()
+            start()
+        }
+    }
+
     /** Keeps sources for sessions still active (by token), creates new ones, drops the rest. */
     private fun update(controllers: List<MediaController>) {
         val old = _sources.value.associateBy { it.token }
@@ -81,6 +106,7 @@ internal class SessionTracker(
     }
 
     fun release() {
+        released = true
         poll?.cancel()
         if (listening) runCatching { manager.removeOnActiveSessionsChangedListener(onChanged) }
         listening = false
@@ -96,7 +122,7 @@ internal class SessionTracker(
 
 /** One platform media session, as a [PlaybackSource]. */
 internal class SessionSource(
-    context: Context,
+    private val context: Context,
     private val controller: MediaController,
     private val scope: CoroutineScope,
     private val art: ArtLoader,
@@ -179,7 +205,7 @@ internal class SessionSource(
         val fresh = message != null && now - noticeSince < NOTICE_MS
         val error = if (st == PlaybackState.STATE_ERROR || fresh) {
             val (actionLabel, intent) = errorAction(ps?.extras)
-            MediaError(message ?: "$label reported an error", actionLabel, intent)
+            MediaError(message ?: context.getString(R.string.media_error_reported, label), actionLabel, intent)
         } else null
         _state.value = SourceState(
             info = info,

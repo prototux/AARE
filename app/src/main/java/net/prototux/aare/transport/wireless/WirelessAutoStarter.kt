@@ -97,7 +97,12 @@ class WirelessAutoStarter(
                 BluetoothDevice.ACTION_UUID -> {
                     val uuids = IntentCompat.getParcelableArrayExtra(intent, BluetoothDevice.EXTRA_UUID, ParcelUuid::class.java)
                         ?.filterIsInstance<ParcelUuid>()?.toTypedArray()
-                    device.takeIf { WirelessConnector.hasAaUuid(uuids) || WirelessConnector.isHeadUnit(it) }
+                    // Any app's SDP query broadcasts this, for any nearby device. BONDING, not only BONDED: on
+                    // first pairing the UUIDs arrive before Android reports the bond, and nothing else fires then.
+                    device.takeIf {
+                        it.bondState != BluetoothDevice.BOND_NONE &&
+                            (WirelessConnector.hasAaUuid(uuids) || WirelessConnector.isHeadUnit(it))
+                    }
                 }
                 else -> null
             }

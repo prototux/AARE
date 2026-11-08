@@ -115,7 +115,8 @@ object CarData {
                 connected = true,
                 identity = Identity(hu.make.ifEmpty { response.make }, hu.model.ifEmpty { response.model },
                     hu.year.ifEmpty { response.year }.trim().toIntOrNull()),
-                advertised = sensors?.sensorsList?.map { it.sensorType }?.toSet().orEmpty(),
+                // sensor_type is optional: an unknown type parses as unset and would read as the default (location).
+                advertised = sensors?.sensorsList?.filter { it.hasSensorType() }?.map { it.sensorType }?.toSet().orEmpty(),
                 fuelTypes = sensors?.supportedFuelTypesList?.map { it.number }.orEmpty(),
                 evConnectorTypes = sensors?.supportedEvConnectorTypesList?.map { it.number }.orEmpty(),
             )

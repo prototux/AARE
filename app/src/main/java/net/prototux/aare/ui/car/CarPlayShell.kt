@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Mic
@@ -148,11 +150,16 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
         Clock()
         PhoneStatusIcons()
         WeatherChip(state.weather)
-        Spacer(Modifier.weight(1f))
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            listOfNotNull(nav, media, phone).forEach { app -> SquircleIcon(app, 60) { actions.openApp(app) } }
+        // Only the apps are weighted: on a short screen they scroll, and voice and home keep their size.
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                listOfNotNull(nav, media, phone).forEach { app -> SquircleIcon(app, 60) { actions.openApp(app) } }
+            }
         }
-        Spacer(Modifier.weight(1f))
         voice()
         Spacer(Modifier.height(12.dp))
         homeButton()

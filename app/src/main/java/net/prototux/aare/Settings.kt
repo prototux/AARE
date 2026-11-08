@@ -7,6 +7,8 @@ import java.util.UUID
 
 /** User settings, in one SharedPreferences file. */
 class Settings(context: Context) {
+    /** Not the Activity [Settings] may be made with, so an instance kept around does not leak it. */
+    private val appContext = context.applicationContext
     private val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
     /** Serve the developer "head unit server" like Android Auto does, through adb (for DHU/openauto/headunit-revived). */
@@ -156,8 +158,9 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("auto_reply", false)
         set(v) = prefs.edit { putBoolean("auto_reply", v) }
 
+    /** The default is resolved on read and never stored, so it follows the phone's language. */
     var autoReplyText: String
-        get() = prefs.getString("auto_reply_text", null)?.takeIf { it.isNotBlank() } ?: "I'm driving right now, I'll answer later."
+        get() = prefs.getString("auto_reply_text", null)?.takeIf { it.isNotBlank() } ?: appContext.getString(R.string.msg_autoreply_default)
         set(v) = prefs.edit { putString("auto_reply_text", v) }
 
     /** Read incoming messages aloud as they arrive. */
@@ -194,6 +197,11 @@ class Settings(context: Context) {
     var appOrder: List<String>
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
+
+    /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
+    var requestedPermissions: Set<String>
+        get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("requested_permissions", v) }
 
     /** Apps hidden from the car launcher. */
     var hiddenApps: Set<String>

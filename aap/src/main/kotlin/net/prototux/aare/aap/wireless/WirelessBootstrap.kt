@@ -173,7 +173,9 @@ class WirelessBootstrap(
         if (!closed.compareAndSet(false, true)) return
         runCatching { input.close() }
         runCatching { output.close() }
-        inbox.put(Inbound.End(null))
+        // offer, not put: the queue is unbounded, and put() throws when close() runs on an
+        // interrupted thread (an AAP session closing from its own timer).
+        inbox.offer(Inbound.End(null))
     }
 
     // ---- phase 1: learn the endpoint and the credentials ----
@@ -386,14 +388,14 @@ class WirelessBootstrap(
                     // Answered here so pings are answered even while connectWifi() blocks.
                     sendQuietly(WppMessageId.PING_RESPONSE, frame.payload)
                 } else {
-                    inbox.put(Inbound.Message(frame))
+                    inbox.offer(Inbound.Message(frame))
                 }
             }
         } catch (e: IOException) {
             if (!closed.get()) error = e
         }
         linkEnded = true
-        inbox.put(Inbound.End(error))
+        inbox.offer(Inbound.End(error))
     }
 
     private fun send(id: Int, payload: ByteArray) {

@@ -128,6 +128,11 @@ in order to use those, key extraction is needed:
 
 5. Open those two files with AARE. It should now work with the head unit.
 
+If it prints `FAILED: no valid key derived`, check that you gave it the whole bundle or the base APK: the split
+APKs hold no key. Run it again with `-v` to see the certificates and the salt and key-blob candidates it finds in
+each dex. If there are none, the layout changed in that Android Auto build (the docstring at the top of
+`extract_key.py` says what it looks for): open an issue with the Android Auto version.
+
 ## Using it
 
 1. Open AARE on the phone and finish *Finish setting up*: permissions, notification access (for

@@ -38,6 +38,7 @@ import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFo
 import aap_protobuf.service.media.video.message.VideoFocusNotificationOuterClass.VideoFocusNotification
 import aap_protobuf.service.media.video.message.VideoFocusRequestNotificationOuterClass.VideoFocusRequestNotification
 import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.NavigationStatusService
+import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.NavigationState
 import aap_protobuf.service.sensorsource.SensorSourceServiceOuterClass.SensorSourceService
 import aap_protobuf.service.sensorsource.message.DrivingStatusDataOuterClass.DrivingStatusData
 import aap_protobuf.service.sensorsource.message.NightModeDataOuterClass.NightModeData
@@ -56,12 +57,14 @@ import net.prototux.aare.aap.FrameReader
 import net.prototux.aare.aap.FrameWriter
 import net.prototux.aare.aap.InputMsg
 import net.prototux.aare.aap.MediaMsg
+import net.prototux.aare.aap.NavStatusMsg
 import net.prototux.aare.aap.SensorMsg
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import java.io.OutputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -104,6 +107,12 @@ class HeadUnitSimulator(
     val closed = CountDownLatch(1)
     @Volatile var videoStart: Start? = null
     @Volatile var error: Throwable? = null
+    /** Video focus the phone reported, in order. */
+    val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
+    /** Navigation states the phone sent, in order. */
+    val navStates = LinkedBlockingQueue<NavigationState>()
+    /** False plays a head unit that never answers the phone's bye-bye. */
+    @Volatile var answerByeBye = true
 
     fun start() {
         Thread({
@@ -144,6 +153,7 @@ class HeadUnitSimulator(
                 }
                 send(sensors, SensorMsg.BATCH, batch.build())
             }
+            navStatus -> if (m.id == NavStatusMsg.STATE) navStates.add(NavigationState.parseFrom(m.bodyBytes()))
         }
     }
 
@@ -183,7 +193,7 @@ class HeadUnitSimulator(
             }
             ControlMsg.BYEBYE_REQUEST -> {
                 byeBye.countDown()
-                send(0, ControlMsg.BYEBYE_RESPONSE, aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse.getDefaultInstance())
+                if (answerByeBye) send(0, ControlMsg.BYEBYE_RESPONSE, aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse.getDefaultInstance())
             }
         }
     }
@@ -200,6 +210,7 @@ class HeadUnitSimulator(
                     .setFocus(if (r.mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) VideoFocusMode.VIDEO_FOCUS_NATIVE else VideoFocusMode.VIDEO_FOCUS_PROJECTED)
                     .setUnsolicited(false).build())
             }
+            MediaMsg.VIDEO_FOCUS_NOTIFICATION -> focusNotifications.add(VideoFocusNotification.parseFrom(m.bodyBytes()).focus)
             MediaMsg.CODEC_CONFIG -> {
                 codecConfigs.incrementAndGet()
                 videoOut?.write(m.body, m.bodyOffset, m.bodyLength)
@@ -268,6 +279,10 @@ class HeadUnitSimulator(
 
     fun requestFocusProjected() = send(video, MediaMsg.VIDEO_FOCUS_NOTIFICATION,
         VideoFocusNotification.newBuilder().setFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setUnsolicited(true).build())
+
+    /** Asks the phone for a video focus mode, as some head units do. */
+    fun requestFocus(mode: VideoFocusMode) = send(video, MediaMsg.VIDEO_FOCUS_REQUEST,
+        VideoFocusRequestNotification.newBuilder().setMode(mode).build())
 
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 

@@ -47,6 +47,7 @@ import net.prototux.aare.aap.AapSession
 import net.prototux.aare.aap.PhoneDescription
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.PinRefusal
+import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import net.prototux.aare.aap.SessionOptions
 import net.prototux.aare.aap.Transport
@@ -143,9 +144,13 @@ class CarSession(
         aap.start()
         runtime.microphone = { sink, stopped -> micRouter.open(sink, stopped) }
         runtime.projection = projection
-        runtime.onTrip = { _, trip -> navBridge?.update(trip) }
+        runtime.exitToCar = ::exitToCar
+        runtime.onTrip = { _, trip ->
+            guidanceChanged(hosted = true, guiding = trip != null)
+            navBridge?.update(trip)
+        }
         runtime.onPhoneGuidance = { g ->
-            if (g != null && !navFocusRequested && aap.state == AapSession.State.RUNNING) { navFocusRequested = true; aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED) }
+            guidanceChanged(hosted = false, guiding = g != null)
             navBridge?.updatePhone(g)
         }
         runtime.start()
@@ -153,6 +158,19 @@ class CarSession(
     }
 
     fun stop() = aap.stop()
+
+    /**
+     * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
+     * Focus isn't dropped here: the head unit answers with a native VIDEO_FOCUS_NOTIFICATION (or
+     * refuses, and projection carries on), and its projection icon gives the screen back later.
+     * Any thread: sends only queue.
+     */
+    fun exitToCar() {
+        val ch = video ?: return
+        if (aap.state != AapSession.State.RUNNING || !ch.opened) return
+        Log.i(TAG, "asking the car for its own screen")
+        ch.requestNativeFocus()
+    }
 
     val rttMs: Long get() = aap.lastRttMs
 
@@ -200,9 +218,12 @@ class CarSession(
 
     override fun onRunning(session: AapSession) {
         main.post {
+            if (closed) return@post
             listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
             navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png) }
             navBridge?.updatePhone(runtime.ui.phoneGuidance)
+            // A route that started before the session was running still gets the focus.
+            requestNavFocus()
             drivingMode.start()
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
@@ -263,6 +284,7 @@ class CarSession(
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
+                if (closed) return@post
                 try {
                     startProjection(config, rightHandDrive)
                 } catch (e: Exception) {
@@ -289,6 +311,7 @@ class CarSession(
         override fun onUiConfig(config: UiConfig) {
             // New insets or margins: lay the projection out again with them.
             main.post {
+                if (closed) return@post
                 val last = videoConfig ?: return@post
                 Log.i(TAG, "UI config update from the head unit")
                 try {
@@ -315,14 +338,14 @@ class CarSession(
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
         val dpi = if (config.density > 0) config.density else defaultDensity(minOf(w, h))
-        val marginW = config.widthMargin
-        val marginH = config.heightMargin
-        val insets = config.uiConfig.takeIf { config.hasUiConfig() }?.contentInsets
-        videoDescription = "${w}x$h@$fps ${dpi}dpi" + if (marginW + marginH > 0) " margins ${marginW}x$marginH" else ""
+        val layout = ProjectionLayout.of(config, w, h)
+        videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe()
         Log.i(TAG, "projection $videoDescription")
 
         val ch = video ?: return
-        val enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
+        // lateinit: the sink below needs to know whether its encoder is still the current one.
+        lateinit var enc: VideoEncoder
+        enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
@@ -340,34 +363,45 @@ class CarSession(
             }
             override fun onError(e: Exception) {
                 Log.e(TAG, "encoder failed, restarting", e)
-                main.post { startProjection(videoConfig ?: config, rightHandDrive) }
+                main.post {
+                    // The session ended, or this encoder was already replaced: nothing to restart.
+                    if (closed || encoder !== enc) return@post
+                    try {
+                        if (!encoderRestarts.allow()) throw IllegalStateException("the encoder keeps failing", e)
+                        startProjection(videoConfig ?: config, rightHandDrive)
+                    } catch (failure: Exception) {
+                        // Same as a failed first start: end the session (onClosed tears it all down).
+                        Log.e(TAG, "can't restart the projection", failure)
+                        listener.onStatus(this@CarSession, context.getString(R.string.notif_status_cant_start_video, failure.message))
+                        aap.stop()
+                    }
+                }
             }
         })
         enc.start()
         encoder = enc
 
-        // The visible area is the video minus its margins (split evenly), minus the UI insets.
-        val visibleW = w - marginW - (insets?.let { it.left + it.right } ?: 0)
-        val visibleH = h - marginH - (insets?.let { it.top + it.bottom } ?: 0)
         runtime.densityDpi = dpi
-        runtime.screenWidthDp = visibleW * 160 / dpi
-        runtime.screenHeightDp = visibleH * 160 / dpi
+        runtime.screenWidthDp = layout.contentWidth * 160 / dpi
+        runtime.screenHeightDp = layout.contentHeight * 160 / dpi
         runtime.rightHandDrive = rightHandDrive
-        val padLeft = marginW / 2 + (insets?.left ?: 0)
-        val padTop = marginH / 2 + (insets?.top ?: 0)
-        val padRight = marginW - marginW / 2 + (insets?.right ?: 0)
-        val padBottom = marginH - marginH / 2 + (insets?.bottom ?: 0)
-        display = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
+        // Assigned before show(), so that a failing show() still has teardownVideo() release the display.
+        val pd = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
             val d = LocalDensity.current
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 with(d) {
-                    runtime.Root(Modifier.padding(start = padLeft.toDp(), top = padTop.toDp(), end = padRight.toDp(), bottom = padBottom.toDp()))
+                    runtime.Root(Modifier.padding(start = layout.padLeft.toDp(), top = layout.padTop.toDp(), end = layout.padRight.toDp(), bottom = layout.padBottom.toDp()))
                 }
             }
-        }.also { it.show() }
+        }
+        display = pd
+        pd.show()
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: (w - marginW), inputCh?.second ?: (h - marginH), w, h, marginW, marginH)
+        touch = TouchMapper(inputCh?.first ?: layout.visibleWidth, inputCh?.second ?: layout.visibleHeight, layout)
     }
+
+    /** An encoder that fails again and again ends the session rather than restart forever. */
+    private val encoderRestarts = RestartLimiter(MAX_RESTARTS, RESTART_WINDOW_MS)
 
     private fun teardownVideo() {
         display?.release(); display = null
@@ -409,10 +443,13 @@ class CarSession(
         }
     }
 
+    /** HOME goes to the dashboard; held, it hands the screen back to the car. */
+    private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
+
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
         when (code) {
-            KeyEvent.KEYCODE_HOME -> if (!down) runtime.actions.goHome()
-            KeyEvent.KEYCODE_BACK -> if (!down) runtime.back()
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
+            KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
@@ -423,6 +460,16 @@ class CarSession(
             KEYCODE_NAVIGATION -> if (!down) runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
         }
+    }
+
+    /**
+     * The car's Back key. A Compose BackHandler on the car screen (the media browser going up a
+     * folder) comes first, as it would for the phone's own Back; then the runtime's back stack.
+     * The assistant overlay closes before anything under it handles Back.
+     */
+    private fun back() {
+        if (runtime.ui.assistantAppId == null && display?.back() == true) return
+        runtime.back()
     }
 
     // ------------------------------------------------------------------ sensors
@@ -447,7 +494,10 @@ class CarSession(
                     if (l.hasBearingE6()) bearing = l.bearingE6 / 1e6f
                     time = System.currentTimeMillis()
                     elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
-                }.also { if (settings.carGpsForPhone) locationFeed.push(it) }
+                }.also {
+                    // Turned off mid-drive: give the phone its own GPS back now, not at the disconnect.
+                    if (settings.carGpsForPhone) locationFeed.push(it) else locationFeed.stop()
+                }
                 carSensors = true
             }
             batch.compassDataList.lastOrNull()?.let { runtime.carHeading = it.bearingE6 / 1e6f; carSensors = true }
@@ -483,6 +533,7 @@ class CarSession(
      * only have one mixed stream, which goes to the media channel.
      */
     private fun startAudio(channel: AudioChannel) {
+        if (closed) return
         val cfg = channel.config ?: return
         val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
         val p = projection()
@@ -509,13 +560,19 @@ class CarSession(
         }
         if (!guidance) DiagLog.add("car audio: ${method.label}")
         audioOuts.remove(channel.streamType)?.stop()
-        audioOuts[channel.streamType] = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, onFailed = {
+        lateinit var out: CarAudioOut
+        out = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, onFailed = {
             main.post {
+                // Only if it's still this stream's output: a late failure (a slow Shizuku bind
+                // giving up after teardown, or after a replacement) must not start a capture
+                // nothing would ever stop.
+                if (!audioOuts.remove(channel.streamType, out)) return@post
                 DiagLog.add("car audio: ${method.label} failed, trying the next method")
                 failedCapture += method
                 startAudio(channel)
             }
-        }).also { it.start() }
+        })
+        audioOuts[channel.streamType] = out.also { it.start() }
     }
 
     /** Music: full focus while it plays. */
@@ -523,7 +580,8 @@ class CarSession(
         override fun request(playing: Boolean) {
             mediaPlaying = playing
             if (playing) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
-            else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE)
+            // Comes right after the stream's STOP: keep it behind STOP and the last data.
+            else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
         }
         override val granted: Boolean get() = mediaFocus
     }
@@ -536,7 +594,7 @@ class CarSession(
                 playing -> AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK
                 mediaPlaying -> AudioFocusRequestType.AUDIO_FOCUS_GAIN
                 else -> AudioFocusRequestType.AUDIO_FOCUS_RELEASE
-            })
+            }, if (playing) Priority.CONTROL else Priority.AUDIO)
         }
         override val granted: Boolean get() = mediaFocus || guidanceFocusState
     }
@@ -551,7 +609,36 @@ class CarSession(
     // ------------------------------------------------------------------ status to the head unit
 
     private var navBridge: NavStatusBridge? = null
-    private var navFocusRequested = false
+    // Guarded by navLock: trips, phone guidance and onRunning come from different threads.
+    private val navLock = Any()
+    private var hostedGuiding = false
+    private var phoneGuiding = false
+    /**
+     * A route started and the car wasn't asked for projected nav focus yet. Once per route: a
+     * driver who switched to the car's own navigation mid-route isn't overridden at every update,
+     * but the next route asks again.
+     */
+    private var navFocusPending = false
+
+    /** A hosted app's trip or a phone app's guidance started, changed or ended. */
+    private fun guidanceChanged(hosted: Boolean, guiding: Boolean) {
+        synchronized(navLock) {
+            val was = hostedGuiding || phoneGuiding
+            if (hosted) hostedGuiding = guiding else phoneGuiding = guiding
+            val now = hostedGuiding || phoneGuiding
+            if (now && !was) navFocusPending = true
+            else if (!now) navFocusPending = false
+        }
+        requestNavFocus()
+    }
+
+    private fun requestNavFocus() {
+        synchronized(navLock) {
+            if (!navFocusPending || aap.state != AapSession.State.RUNNING) return
+            navFocusPending = false
+        }
+        aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED)
+    }
 
     private fun turnImage(m: androidx.car.app.navigation.model.Maneuver, w: Int, h: Int): ByteArray? {
         val icon = m.icon ?: return null
@@ -568,11 +655,18 @@ class CarSession(
     private fun startPlaybackStatus() {
         val ch = playback ?: return
         scope.launch {
-            var lastTitle: String? = null
+            var lastTrack: List<Any?>? = null
+            var lastArt: Bitmap? = null
             media.playback.collectLatest { p ->
                 if (p == null) return@collectLatest
-                if (p.title != lastTitle) {
-                    lastTitle = p.title
+                // Not just the title: the art (often loaded after the rest), the artist or the
+                // duration can come in a later update of the same track. The art compares by
+                // content: a platform session hands out a new Bitmap on every update, and the
+                // JPEG must be made once per cover, not on every play, pause or seek.
+                val track = listOf(p.title, p.artist, p.album, p.durationMs)
+                if (track != lastTrack || !sameArt(lastArt, p.art)) {
+                    lastTrack = track
+                    lastArt = p.art
                     val meta = MediaPlaybackMetadata.newBuilder().setSong(p.title).setArtist(p.artist).setAlbum(p.album)
                         .setDurationSeconds((p.durationMs / 1000).toInt().coerceAtLeast(0))
                     p.art?.let { art ->
@@ -588,16 +682,18 @@ class CarSession(
                     .build())
             }
         }
-        // Ask for navigation focus once a nav app starts guiding.
-        runtime.onTrip = { _, trip ->
-            if (trip != null && !navFocusRequested) { navFocusRequested = true; aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED) }
-            navBridge?.update(trip)
-        }
     }
+
+    private fun sameArt(a: Bitmap?, b: Bitmap?): Boolean = a === b ||
+        (a != null && b != null && a.width == b.width && a.height == b.height && runCatching { a.sameAs(b) }.getOrDefault(false))
 
     // ------------------------------------------------------------------ teardown
 
+    /** The session ended (main thread): work posted before that and run after must not start anything. */
+    private var closed = false
+
     private fun teardown() {
+        closed = true
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
@@ -630,6 +726,9 @@ class CarSession(
         private const val TAG = "AareSession"
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
+        /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
+        internal const val MAX_RESTARTS = 3
+        internal const val RESTART_WINDOW_MS = 10_000L
 
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480

@@ -7,6 +7,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -14,6 +19,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings as AndroidSettings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -100,6 +106,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
@@ -128,6 +135,7 @@ import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
+import kotlin.math.roundToInt
 
 /** The phone side: what's connected, what's set up, and the settings. */
 class MainActivity : ComponentActivity() {
@@ -221,7 +229,7 @@ private fun Home() {
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
                         Page.AUDIO -> item { AudioSettings(settings, state, refresh) { refresh++ } }
-                        Page.CONNECTION -> item { ConnectionSettings(settings) }
+                        Page.CONNECTION -> item { ConnectionSettings(settings, refresh) }
                         Page.ADVANCED -> {
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
@@ -349,11 +357,28 @@ private fun Pill(label: String, icon: ImageVector?, onClick: () -> Unit) {
 private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> Unit, open: (Page) -> Unit) {
     val ctx = LocalContext.current
     fun granted(p: String) = ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED
-    val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { recheck() }
+    val activity = ctx as? android.app.Activity
+    val settings = remember { Settings(ctx) }
+    fun rationale(p: String) = activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, p)
+    // The rationale of each permission just before the request, and the ones asked for in an earlier one.
+    var rationaleBefore by remember { mutableStateOf(emptySet<String>()) }
+    var askedBefore by remember { mutableStateOf(emptySet<String>()) }
+    val permissions = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        recheck()
+        // Denied twice, a permission is no longer asked for: the request answers at once and the row
+        // would seem dead, so open AARE's system settings to grant it there.
+        val blocked = activity != null && result.filterValues { !it }.keys.any {
+            permissionBlocked(it in rationaleBefore, rationale(it), it in askedBefore)
+        }
+        if (blocked) ctx.startSafely(appDetails(ctx))
+    }
     // Only the permissions this Android version has: a newer one reads as denied on older releases and
     // can't be requested, so setup would never finish. Before 12, Bluetooth and Wi-Fi scans need location.
+    // Android 12+ ignores a request for fine location without coarse; precise stays required (wireless
+    // before 13, car apps' location).
     val runtimePerms = buildList {
-        add(Manifest.permission.RECORD_AUDIO); add(Manifest.permission.ACCESS_FINE_LOCATION)
+        add(Manifest.permission.RECORD_AUDIO)
+        add(Manifest.permission.ACCESS_COARSE_LOCATION); add(Manifest.permission.ACCESS_FINE_LOCATION)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { add(Manifest.permission.BLUETOOTH_CONNECT); add(Manifest.permission.BLUETOOTH_SCAN) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { add(Manifest.permission.POST_NOTIFICATIONS); add(Manifest.permission.NEARBY_WIFI_DEVICES) }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) add(Manifest.permission.ACCESS_LOCAL_NETWORK)
@@ -368,10 +393,13 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
 
     Section(stringResource(R.string.setup_finish_title)) {
         Check(stringResource(R.string.setup_check_permissions_title), stringResource(R.string.setup_check_permissions_subtitle), perms) {
+            rationaleBefore = runtimePerms.filter(::rationale).toSet()
+            askedBefore = settings.requestedPermissions
+            settings.requestedPermissions = askedBefore + runtimePerms
             permissions.launch(runtimePerms.toTypedArray())
         }
         Check(stringResource(R.string.setup_check_notification_access_title), stringResource(R.string.setup_check_notification_access_subtitle), notificationAccess) {
-            ctx.startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            ctx.startSafely(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS), appDetails(ctx))
         }
         Check(stringResource(R.string.audio_settings_title), stringResource(R.string.setup_check_audio_subtitle), audio) { open(Page.AUDIO) }
     }
@@ -392,10 +420,33 @@ private fun Check(title: String, subtitle: String, done: Boolean, onClick: () ->
     }
 }
 
+/**
+ * Whether a permission the request just denied can no longer be asked for (main setup row). Since Android 11,
+ * backing out of the dialog also denies with no rationale, as before any request: so it counts as refused for
+ * good only if the rationale went from shown to gone (refused a second time), or it was asked for in an earlier
+ * request and still has none (blocked back then).
+ */
+internal fun permissionBlocked(rationaleBefore: Boolean, rationaleAfter: Boolean, askedBefore: Boolean): Boolean =
+    !rationaleAfter && (rationaleBefore || askedBefore)
+
+/** AARE's page in the system settings, where every permission and access can be granted by hand. */
+private fun appDetails(ctx: Context) =
+    Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ctx.packageName, null))
+
+/**
+ * Opens a settings screen or a link. Some phones lack the screen (Go builds and OEM ROMs drop some)
+ * or have no browser: then [fallback] opens instead, or a short message, rather than a crash. No
+ * resolveActivity() check first: package visibility hides browsers from it without a <queries> entry.
+ */
+private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
+    val opened = listOfNotNull(intent, fallback).any { runCatching { startActivity(it) }.isSuccess }
+    if (!opened) Toast.makeText(this, R.string.setup_nothing_to_open, Toast.LENGTH_SHORT).show()
+}
+
 // ---------------------------------------------------------------- settings
 
 @Composable
-private fun ConnectionSettings(settings: Settings) {
+private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
@@ -408,6 +459,9 @@ private fun ConnectionSettings(settings: Settings) {
     var pins by remember { mutableStateOf(pinned.all) }
     // A head unit trusted from the notification while this screen is open shows up right away.
     DisposableEffect(pinned) { onDispose(pinned.listen { pins = pinned.all }) }
+    // Read here, not in the Section's lambda, so coming back from Developer options re-checks it.
+    @Suppress("UNUSED_EXPRESSION") refresh
+    val mockAllowed = PhoneLocationFeed.allowed(ctx)
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
@@ -422,8 +476,8 @@ private fun ConnectionSettings(settings: Settings) {
             Toggle(stringResource(R.string.setup_toggle_car_gps_title), stringResource(R.string.setup_toggle_car_gps_subtitle), carGps) {
                 carGps = it; settings.carGpsForPhone = it
             }
-            if (carGps) Check(stringResource(R.string.setup_check_mock_location_title), stringResource(R.string.setup_check_mock_location_subtitle), PhoneLocationFeed.allowed(ctx)) {
-                ctx.startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+            if (carGps) Check(stringResource(R.string.setup_check_mock_location_title), stringResource(R.string.setup_check_mock_location_subtitle), mockAllowed) {
+                ctx.startSafely(Intent(AndroidSettings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS), appDetails(ctx))
             }
         }
         Section(stringResource(R.string.setup_section_video)) {
@@ -489,7 +543,9 @@ private fun HeadUnitServerSettings(settings: Settings) {
     Section(stringResource(R.string.huserver_label)) {
         Toggle(stringResource(R.string.huserver_label), stringResource(R.string.huserver_toggle_subtitle), huServer) {
             huServer = it; settings.headUnitServer = it
-            if (it) ProjectionService.startIdleIfEnabled(ctx) else if (!ProjectionService.state.value.connected) ProjectionService.stop(ctx)
+            // Off only closes the listener: the service stays for a session, a wireless attempt or the
+            // audio consent, and goes away by itself when it has nothing left.
+            ProjectionService.startIdleIfEnabled(ctx)
         }
         if (huServer) Toggle(stringResource(R.string.huserver_toggle_network_title), stringResource(R.string.huserver_toggle_network_subtitle), lan) {
             lan = it; settings.headUnitServerLan = it
@@ -518,7 +574,7 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
     Section(stringResource(R.string.msg_settings_title)) {
         if (!access) Check(stringResource(R.string.setup_check_notification_access_title), stringResource(R.string.msg_check_notification_access_subtitle), false) {
-            ctx.startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            ctx.startSafely(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS), appDetails(ctx))
         }
         Toggle(stringResource(R.string.msg_toggle_banners_title), stringResource(R.string.msg_toggle_banners_subtitle), banners) { banners = it; settings.messageBanners = it }
         Toggle(stringResource(R.string.msg_toggle_group_title), stringResource(R.string.msg_toggle_group_subtitle), groups) { groups = it; settings.groupMessages = it }
@@ -532,7 +588,7 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
             dnd = it; settings.dndWhileDriving = it
         }
         if (dnd) Check(stringResource(R.string.msg_check_dnd_access_title), stringResource(R.string.msg_check_dnd_access_subtitle), DrivingMode.accessGranted(ctx)) {
-            ctx.startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+            ctx.startSafely(Intent(AndroidSettings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS), appDetails(ctx))
         }
         Toggle(stringResource(R.string.msg_toggle_autoreply_title), stringResource(R.string.msg_toggle_autoreply_subtitle), autoReply) {
             autoReply = it; settings.autoReply = it
@@ -573,6 +629,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 // Through "none", so the car reloads the photo even if one was already set.
                 settings.wallpaper = "none"; settings.wallpaper = Settings.WALLPAPER_CUSTOM
                 wallpaper = Settings.WALLPAPER_CUSTOM
+            } else {
+                Toast.makeText(ctx, R.string.setup_wallpaper_failed, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -616,7 +674,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             if (phoneScreen) {
                 Check(stringResource(R.string.phone_check_touch_title), stringResource(R.string.phone_check_touch_subtitle), touch) {
-                    ctx.startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+                    ctx.startSafely(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS), appDetails(ctx))
                 }
                 Text(stringResource(R.string.phone_hint_touch_capture),
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -625,13 +683,63 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     }
 }
 
-/** Copies the chosen photo into AARE's files, at most 1920 pixels wide, as the car's wallpaper. */
-private fun saveWallpaper(context: android.content.Context, uri: Uri): Boolean = runCatching {
-    val src = context.contentResolver.openInputStream(uri)!!.use { android.graphics.BitmapFactory.decodeStream(it) }
-    val scale = minOf(1f, 1920f / maxOf(src.width, src.height))
-    val bmp = if (scale < 1f) android.graphics.Bitmap.createScaledBitmap(src, (src.width * scale).toInt(), (src.height * scale).toInt(), true) else src
-    java.io.File(context.filesDir, Settings.WALLPAPER_FILE).outputStream().use { bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
-}.isSuccess
+/** Copies the chosen photo into AARE's files, at most 1920 pixels on its longest side, as the car's wallpaper. */
+private fun saveWallpaper(context: android.content.Context, uri: Uri): Boolean {
+    // Written to a temporary file and renamed over the current one only once complete, so a photo
+    // that can't be read or written (a full disk) leaves the current wallpaper alone.
+    val tmp = java.io.File(context.filesDir, Settings.WALLPAPER_FILE + ".tmp")
+    val ok = runCatching {
+        val bmp = decodeWallpaper(context, uri, 1920)
+        tmp.outputStream().use { check(bmp.compress(Bitmap.CompressFormat.JPEG, 90, it)) }
+        check(tmp.renameTo(java.io.File(context.filesDir, Settings.WALLPAPER_FILE)))
+    }.isSuccess
+    if (!ok) tmp.delete()
+    return ok
+}
+
+/**
+ * Decodes [uri] upright (cameras store portrait photos sideways with an EXIF orientation tag) and
+ * already scaled down towards [maxPx], so a 200 MP photo is never decoded at full size.
+ */
+private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: Int): Bitmap {
+    val resolver = context.contentResolver
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        // ImageDecoder applies the EXIF orientation itself.
+        return ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE // compress() needs a software bitmap
+            val (w, h) = info.size.width to info.size.height
+            val scale = maxPx.toFloat() / maxOf(w, h)
+            if (scale < 1f) decoder.setTargetSize((w * scale).roundToInt().coerceAtLeast(1), (h * scale).roundToInt().coerceAtLeast(1))
+        }
+    }
+    // Android 8: a power-of-two sample size, then the exact scale and the EXIF rotation in one matrix.
+    // Each pass opens its own stream: a content stream can be read only once.
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    resolver.openInputStream(uri)!!.use { BitmapFactory.decodeStream(it, null, bounds) }
+    var sample = 1
+    while (maxOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxPx) sample *= 2
+    val src = resolver.openInputStream(uri)!!.use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample }) }
+        ?: error("can't decode the photo")
+    val orientation = runCatching {
+        resolver.openInputStream(uri)!!.use { ExifInterface(it).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL) }
+    }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+    val scale = minOf(1f, maxPx.toFloat() / maxOf(src.width, src.height))
+    val m = Matrix().apply {
+        postScale(scale, scale)
+        when (orientation) {
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> postRotate(180f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> { postRotate(90f); postScale(-1f, 1f) }
+            ExifInterface.ORIENTATION_ROTATE_90 -> postRotate(90f)
+            ExifInterface.ORIENTATION_TRANSVERSE -> { postRotate(-90f); postScale(-1f, 1f) }
+            ExifInterface.ORIENTATION_ROTATE_270 -> postRotate(-90f)
+        }
+    }
+    val out = Bitmap.createBitmap(src, 0, 0, src.width, src.height, m, true)
+    if (out !== src) src.recycle()
+    return out
+}
 
 /** Car audio: the capture methods, best first, and what each needs. */
 @Composable
@@ -671,7 +779,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 if (policy) stringResource(R.string.audio_policy_ready)
                 else stringResource(R.string.audio_policy_not_ready),
                 policy) {
-                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
             }
             Check(CaptureMethod.SHIZUKU.label,
                 when {
@@ -682,7 +790,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 },
                 shizuku) {
                 if (shizukuAsk) runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
-                else ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
             }
             Check(CaptureMethod.PLAYBACK_CAPTURE.label,
                 if (state.audioCapture) stringResource(R.string.audio_playback_ready)
