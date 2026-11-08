@@ -3,5 +3,5 @@ name=AARE host shims
 version=0.1.0
 versionCode=1
 author=AARE
-description=Lets AARE stand in for Google's Android Auto host on a rooted phone: makes projection-client apps accept AARE as their host, and grants AARE's privileged permissions and MediaProjection without the Magisk module or the consent dialog.
+description=Lets AARE host Android Auto apps that refuse a non-Google host, on a rooted phone: Car App Library apps (Waze) via HostValidator, Google Maps via its CAPTURE_VIDEO_OUTPUT check, plus AARE's own privileged permissions and MediaProjection without the Magisk module or the consent dialog. All gated to AARE.
 scope=net.prototux.aare

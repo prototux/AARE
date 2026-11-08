@@ -16,16 +16,26 @@ is AARE).
 
 ### In each scoped client app
 
-- **`HostValidator.isValidHost(HostInfo)` → true for AARE.** Car App Library apps check the host's
-  package name *and* signing certificate against an allowlist. AARE's certificate isn't Google's, so
-  the check fails; the hook accepts AARE specifically. (See `TEMPLATE_RENDERER` in the app manifest
-  for the non-root path that covers older library versions.)
-- **`HostInfo.getPackageName()` → Google's package when the host is AARE.** For an app that only
-  compares the host package name string (not its signature), this makes AARE read as Google's host.
-  Fragile: an app with its own stronger check is unaffected.
+Two kinds of app refuse a non-Google host, each hooked by its own gate. Both mechanisms were mapped
+by the meraz9000/AARE research (GPL; see *Credits* below), which demonstrated them on rooted
+hardware.
 
-A Car App Library app is only hooked if the module is enabled for it in the Xposed manager. The
-shipped `scope.list` lists a few common apps; users add their own.
+- **Waze and other Car App Library apps — `HostValidator.isValidHost(HostInfo)` → true for AARE.**
+  These apps check the host's package name *and* signing certificate against an allowlist; AARE's
+  certificate isn't Google's, so the check fails (`SecurityException: Unrecognized host with uid …`).
+  The hook accepts AARE specifically. (The app manifest's `TEMPLATE_RENDERER` permission is the
+  non-root path that covers older library versions.)
+- **Google Maps — `ContextImpl.checkCallingPermission(CAPTURE_VIDEO_OUTPUT)` → granted for AARE's
+  uid.** Maps uses the private `ICarProjection` protocol and, inside its own process, checks that the
+  binding host holds `CAPTURE_VIDEO_OUTPUT` — a `signature` permission an ordinary app can't hold —
+  on every projection transaction. The hook returns *granted* only when the IPC caller is AARE's uid
+  and only for that permission, so Maps accepts AARE as its projection host. Every other caller and
+  permission is unaffected. This hook only clears the permission wall; AARE must also implement the
+  `ICarProjection` host side (see [gearhead-projected-activity.md](research/gearhead-projected-activity.md)).
+
+A client app is only hooked if the module is enabled for it in the Xposed manager. The shipped
+`scope.list` lists `com.waze` and `com.google.android.apps.maps`; add other Car App Library apps
+(CoMaps, OsmAnd…) there yourself if a specific one rejects AARE's host.
 
 ### In system_server
 
@@ -46,3 +56,11 @@ class/method shapes and skips the hook if none match, rather than risking a boot
 New, and **not yet verified on a device**. The in-app hooks depend on `androidx.car.app` internals
 (the `HostInfo.mPackageName` field); the system hooks depend on AOSP internals that vary by version.
 The PR is a starting point for testing, not a finished feature, and is kept out of the release build.
+
+## Credits
+
+The Maps (`CAPTURE_VIDEO_OUTPUT`) and Waze (`HostValidator`) mechanisms were reverse-engineered and
+demonstrated by the [meraz9000/AARE](https://github.com/meraz9000/AARE) fork (Eduardo Mera, GPL-3.0),
+documented in [research/gearhead-projected-activity.md](research/gearhead-projected-activity.md).
+This module re-implements the two permission/host gates against the modern libxposed API and narrows
+them to AARE's uid; the research and its on-device proof are that fork's.

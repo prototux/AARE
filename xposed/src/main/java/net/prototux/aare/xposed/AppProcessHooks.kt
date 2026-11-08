@@ -1,28 +1,42 @@
 package net.prototux.aare.xposed
 
+import android.os.Binder
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 
 /**
  * Hooks loaded into a projection client app (anything in scope that isn't AARE or the system).
  *
- * Two app-side gates keep a non-Google host out, and each has one hook:
- *  - the Car App Library's own `HostValidator`, which checks the host's package name and signing
- *    certificate against an allowlist (AARE's certificate isn't Google's, so it fails);
- *  - an app's own check that the connected host package is Google's Android Auto.
+ * Two kinds of app refuse a non-Google host, each with its own gate and one hook. The mechanisms
+ * are the ones mapped in the meraz9000/AARE research (GPL, see docs/xposed.md):
  *
- * Both are only relaxed for AARE as the host; a real Google session is unaffected because every
- * hook falls through to the original result (`chain.proceed()`) unless the host is AARE.
+ *  - **Car App Library apps** (Waze, and any `androidx.car.app` app with a host allowlist) reject a
+ *    host whose signing certificate isn't on their list, in `HostValidator.isValidHost`.
+ *  - **Google Maps** uses the private `ICarProjection` protocol and checks `CAPTURE_VIDEO_OUTPUT`
+ *    (a signature permission an ordinary app can't hold) on the binding host, inside its own
+ *    process, on every projection transaction.
+ *
+ * Each hook is scoped to AARE as the host and falls through to the original otherwise, so a real
+ * Google Android Auto session is never affected.
  */
 object AppProcessHooks {
+
+    /** Google Maps: the app that uses the private ICarProjection protocol. */
+    private const val MAPS_PACKAGE = "com.google.android.apps.maps"
+
+    private const val CAPTURE_VIDEO_OUTPUT = "android.permission.CAPTURE_VIDEO_OUTPUT"
+    private const val PERMISSION_GRANTED = 0 // PackageManager.PERMISSION_GRANTED
 
     fun install(xposed: XposedInterface, param: PackageLoadedParam) {
         val cl = param.defaultClassLoader
         hookHostValidator(xposed, cl)
-        hookHostInfoPackageName(xposed, cl)
+        if (param.packageName == MAPS_PACKAGE) hookCaptureVideoOutput(xposed, cl)
     }
 
-    /** `HostValidator.isValidHost(HostInfo)` → true when the host is AARE. */
+    /**
+     * `HostValidator.isValidHost(HostInfo)` → true when the host is AARE, so a Car App Library app
+     * accepts AARE despite its non-Google signing certificate. (Waze's rejection is exactly this.)
+     */
     private fun hookHostValidator(xposed: XposedInterface, cl: ClassLoader) {
         val hostValidator = runCatching { cl.loadClass("androidx.car.app.HostValidator") }.getOrNull() ?: return
         val hostInfo = runCatching { cl.loadClass("androidx.car.app.HostInfo") }.getOrNull() ?: return
@@ -33,14 +47,25 @@ object AppProcessHooks {
     }
 
     /**
-     * `HostInfo.getPackageName()` → Google's package when the real host is AARE, so an app that
-     * only compares the host package name string (not its signature) treats AARE as Google's host.
+     * `ContextImpl.checkCallingPermission(CAPTURE_VIDEO_OUTPUT)` → granted when the IPC caller is
+     * AARE. Google Maps runs this check on the host that binds its projection service; granting it
+     * only for AARE's uid lets AARE host Maps' projected activity, and leaves every other caller and
+     * every other permission untouched. This is the `ContextImpl`/`ContextWrapper` hook from the
+     * meraz9000 research, narrowed to AARE's uid.
      */
-    private fun hookHostInfoPackageName(xposed: XposedInterface, cl: ClassLoader) {
-        val hostInfo = runCatching { cl.loadClass("androidx.car.app.HostInfo") }.getOrNull() ?: return
-        val method = runCatching { hostInfo.getDeclaredMethod("getPackageName") }.getOrNull() ?: return
+    private fun hookCaptureVideoOutput(xposed: XposedInterface, cl: ClassLoader) {
+        val contextImpl = runCatching { cl.loadClass("android.app.ContextImpl") }.getOrNull() ?: return
+        val method = runCatching {
+            contextImpl.getDeclaredMethod("checkCallingPermission", String::class.java)
+        }.getOrNull() ?: return
+        val uid = aareUid
+        if (uid < 0) return
         xposed.hook(method).intercept { chain ->
-            if (hostPackage(chain.thisObject) == ModuleMain.AARE_PACKAGE) ModuleMain.GEARHEAD_PACKAGE else chain.proceed()
+            if (chain.getArg(0) == CAPTURE_VIDEO_OUTPUT && Binder.getCallingUid() == uid) {
+                PERMISSION_GRANTED
+            } else {
+                chain.proceed()
+            }
         }
     }
 
@@ -48,4 +73,13 @@ object AppProcessHooks {
     private fun hostPackage(hostInfo: Any?): String? = runCatching {
         hostInfo?.javaClass?.getDeclaredField("mPackageName")?.apply { isAccessible = true }?.get(hostInfo) as? String
     }.getOrNull()
+
+    /** AARE's app uid, resolved once from this (client-app) process's package manager; -1 if absent. */
+    private val aareUid: Int by lazy {
+        runCatching {
+            val ctx = Class.forName("android.app.ActivityThread")
+                .getMethod("currentApplication").invoke(null) as android.content.Context
+            ctx.packageManager.getApplicationInfo(ModuleMain.AARE_PACKAGE, 0).uid
+        }.getOrDefault(-1)
+    }
 }

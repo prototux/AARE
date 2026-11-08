@@ -32,8 +32,5 @@ class ModuleMain : XposedModule() {
 
     companion object {
         const val AARE_PACKAGE = "net.prototux.aare"
-
-        /** Google's Android Auto package, the host identity apps and head units expect. */
-        const val GEARHEAD_PACKAGE = "com.google.android.projection.gearhead"
     }
 }
