@@ -53,8 +53,9 @@ Two kinds of app refuse a non-Google host, each hooked by its own gate.
   Spotify needs no Android Auto installed.
 
 A client app is only hooked if the module is enabled for it in the Xposed manager. The shipped
-`scope.list` lists `com.waze`, `com.google.android.apps.maps`, `com.spotify.music` and
-`com.ilv.vradio`; add other apps there yourself if a specific one rejects AARE's host.
+`scope.list` covers `android` and the apps known to gate on Android Auto — Google Maps and Waze,
+the template nav apps 2GIS, Yandex Maps and EasyPark, and the media apps Spotify, VRadio, YouTube
+Music, SoundCloud and Tidal; add other apps there yourself if a specific one rejects AARE's host.
 
 ### In system_server
 
