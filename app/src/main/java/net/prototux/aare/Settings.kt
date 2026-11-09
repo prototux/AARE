@@ -138,6 +138,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
+    /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
+    var callBarOffsetX: Float
+        get() = prefs.getFloat("call_bar_x", 0f)
+        set(v) = prefs.edit { putFloat("call_bar_x", v) }
+    var callBarOffsetY: Float
+        get() = prefs.getFloat("call_bar_y", 0f)
+        set(v) = prefs.edit { putFloat("call_bar_y", v) }
+
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
         get() = prefs.getBoolean("car_gps", true)
