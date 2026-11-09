@@ -138,6 +138,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
+    /** Also show the car data (speed, sensors…) as an app on the car screen, for diagnostics. */
+    var carDataApp: Boolean
+        get() = prefs.getBoolean("car_data_app", false)
+        set(v) = prefs.edit { putBoolean("car_data_app", v) }
+
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
         get() = prefs.getBoolean("car_gps", true)

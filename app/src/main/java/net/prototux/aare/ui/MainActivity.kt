@@ -1142,12 +1142,18 @@ private fun DataRow(label: String, value: String?) {
 private fun CarDataCard() {
     val car by CarData.state.collectAsState()
     val proj by ProjectionService.state.collectAsState()
-    if (!car.connected) {
-        Section(stringResource(R.string.setup_page_car_data_title)) {
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    var inCar by remember { mutableStateOf(settings.carDataApp) }
+    Section(stringResource(R.string.setup_page_car_data_title)) {
+        Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
+        if (!car.connected) {
+            Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        return
     }
+    if (!car.connected) return
+    Spacer(Modifier.height(16.dp))
     val on = stringResource(R.string.car_data_on); val off = stringResource(R.string.car_data_off)
     val yes = stringResource(R.string.car_data_yes); val no = stringResource(R.string.car_data_no)
     fun onOff(b: Boolean?) = b?.let { if (it) on else off }

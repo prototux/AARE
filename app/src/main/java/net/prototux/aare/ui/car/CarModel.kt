@@ -14,7 +14,7 @@ import net.prototux.aare.notify.PhoneGuidance
  * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
  * it hands the screen back to the car's own.
  */
-enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
+enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, CAR_DATA, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
 
 /** One launchable app on the car screen. */
 @Stable

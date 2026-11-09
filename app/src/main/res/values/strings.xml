@@ -83,6 +83,9 @@
     <string name="car_data_accelerometer">Accelerometer</string>
     <string name="car_data_gyroscope">Gyroscope</string>
     <string name="car_data_dtc">Trouble codes</string>
+    <string name="car_data_app_label">Car data</string>
+    <string name="car_data_show_in_car_title">Show on the car screen</string>
+    <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>
     <string name="setup_tagline">Open-source car projection</string>
     <string name="setup_status_certificate">certificate: %1$s</string>
     <string name="setup_status_disconnected_hint">Plug the phone into the car\'s Android Auto USB port, or connect to a paired car wirelessly.</string>
