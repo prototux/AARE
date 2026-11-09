@@ -319,4 +319,7 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Поиск доступен на парковке</string>
+
+    <string name="setup_toggle_force_h264_title">Принудительно использовать видео H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">По умолчанию AARE использует лучший кодек, поддерживаемый и автомобилем, и телефоном (H.265…). Включите, если изображение в автомобиле искажено.</string>
 </resources>

@@ -319,4 +319,7 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">A keresés csak álló autóban elérhető</string>
+
+    <string name="setup_toggle_force_h264_title">H.264 videó kényszerítése</string>
+    <string name="setup_toggle_force_h264_subtitle">Alapértelmezés szerint az AARE a legjobb, az autó és a telefon által is támogatott kodeket használja (H.265…). Kapcsolja be, ha az autó képe akadozik.</string>
 </resources>

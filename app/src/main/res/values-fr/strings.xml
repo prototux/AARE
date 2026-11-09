@@ -319,4 +319,7 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">La recherche est disponible à l\'arrêt</string>
+
+    <string name="setup_toggle_force_h264_title">Forcer la vidéo H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">Par défaut, AARE utilise le meilleur codec partagé par la voiture et le téléphone (H.265…). Activez cette option si l\'image de la voiture est perturbée.</string>
 </resources>
