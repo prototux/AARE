@@ -138,6 +138,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
+    /** Show a web browser (a WebView) on the car screen. Off by default; paused while driving. */
+    var browser: Boolean
+        get() = prefs.getBoolean("browser", false)
+        set(v) = prefs.edit { putBoolean("browser", v) }
+
+    /** The page the car browser opens. */
+    var browserUrl: String
+        get() = prefs.getString("browser_url", BROWSER_DEFAULT_URL) ?: BROWSER_DEFAULT_URL
+        set(v) = prefs.edit { putString("browser_url", v) }
+
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
         get() = prefs.getBoolean("car_gps", true)
@@ -228,6 +238,7 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putInt("cert_index", v) }
 
     companion object {
+        const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val RAIL_AUTO = "auto"
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
