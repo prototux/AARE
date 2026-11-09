@@ -249,6 +249,21 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("videos", false)
         set(v) = prefs.edit { putBoolean("videos", v) }
 
+    /** The Jellyfin server for the Videos app (an http(s) address), and the signed-in account (see JellyfinAccount). */
+    var jellyfinServer: String?
+        get() = prefs.getString("jellyfin_server", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_server") else putString("jellyfin_server", v) }
+    var jellyfinUserId: String?
+        get() = prefs.getString("jellyfin_user_id", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_user_id") else putString("jellyfin_user_id", v) }
+    var jellyfinUserName: String?
+        get() = prefs.getString("jellyfin_user_name", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_user_name") else putString("jellyfin_user_name", v) }
+    /** The access token Jellyfin gave at sign-in: never logged. */
+    var jellyfinToken: String?
+        get() = prefs.getString("jellyfin_token", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_token") else putString("jellyfin_token", v) }
+
     /** The page the car browser opens. */
     var browserUrl: String
         get() = prefs.getString("browser_url", BROWSER_DEFAULT_URL) ?: BROWSER_DEFAULT_URL

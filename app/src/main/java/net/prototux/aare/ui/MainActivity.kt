@@ -1044,6 +1044,7 @@ private fun AppsCard(settings: Settings) {
                 Check(stringResource(R.string.videos_check_permission_title), stringResource(R.string.videos_check_permission_subtitle), videosAllowed) {
                     videoPermission.launch(net.prototux.aare.player.LocalVideos.permission)
                 }
+                JellyfinSettings(settings)
             }
         }
         if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser, videos)
@@ -1058,6 +1059,65 @@ private fun AppsCard(settings: Settings) {
         }
         Text(stringResource(R.string.setup_hint_allowlist),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Signing in to a Jellyfin server for the car's Videos app. The password is sent once and not kept. */
+@Composable
+private fun JellyfinSettings(settings: Settings) {
+    val scope = rememberCoroutineScope()
+    var account by remember { mutableStateOf(net.prototux.aare.player.JellyfinAccount.load(settings)) }
+    var server by remember { mutableStateOf(settings.jellyfinServer ?: "") }
+    var user by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.jellyfin_title), style = MaterialTheme.typography.titleSmall)
+        val a = account
+        if (a != null) {
+            Text(stringResource(R.string.jellyfin_signed_in, a.userName, a.serverLabel), style = MaterialTheme.typography.bodyMedium)
+            androidx.compose.material3.OutlinedButton(onClick = {
+                net.prototux.aare.player.JellyfinAccount.clear(settings)
+                DiagLog.add("jellyfin: signed out")
+                account = null
+            }) { Text(stringResource(R.string.jellyfin_sign_out)) }
+            return@Column
+        }
+        Text(stringResource(R.string.jellyfin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(value = server, onValueChange = { server = it }, label = { Text(stringResource(R.string.jellyfin_server_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri))
+        if (server.trim().startsWith("http://") || (server.isNotBlank() && "://" !in server)) {
+            Text(stringResource(R.string.jellyfin_cleartext_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text(stringResource(R.string.jellyfin_user_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text(stringResource(R.string.jellyfin_password_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password))
+        error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+        androidx.compose.material3.Button(enabled = !busy && server.isNotBlank() && user.isNotBlank(), onClick = {
+            busy = true; error = null
+            val s = server; val u = user; val p = password
+            scope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { net.prototux.aare.player.JellyfinClient.signIn(s, u, p, settings.instanceId) }
+                }
+                busy = false
+                result.onSuccess {
+                    it.save(settings)
+                    DiagLog.add("jellyfin: signed in to ${it.serverLabel} as ${it.userName}")
+                    password = ""
+                    account = it
+                }.onFailure {
+                    // The message never holds the password or the token (JellyfinClient).
+                    error = it.message ?: it.javaClass.simpleName
+                    DiagLog.add("jellyfin: sign-in failed: $error")
+                }
+            }
+        }) { Text(stringResource(if (busy) R.string.jellyfin_signing_in else R.string.jellyfin_sign_in)) }
     }
 }
 

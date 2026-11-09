@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Home media servers (Jellyfin) usually answer on plain http on the local network, at an address
+  only the user knows, so cleartext can't be limited to known domains here. The phone's Jellyfin
+  settings warn when an address isn't https. Only the system's certificate authorities are trusted.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

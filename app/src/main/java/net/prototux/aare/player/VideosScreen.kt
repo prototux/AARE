@@ -62,6 +62,7 @@ sealed interface VideoPage {
     data object Home : VideoPage
     data object Recent : VideoPage
     data class Folder(val folder: VideoFolder) : VideoPage
+    data class Jellyfin(val parentId: String?, val title: String) : VideoPage
     data class Playing(val item: VideoItem) : VideoPage
 }
 
@@ -101,10 +102,12 @@ internal fun VideosScreen(runtime: CarRuntime, driving: Boolean, settings: Setti
         VideoPage.Home -> stringResource(R.string.videos_app_label)
         VideoPage.Recent -> stringResource(R.string.videos_recent)
         is VideoPage.Folder -> page.folder.name
+        is VideoPage.Jellyfin -> page.title
         is VideoPage.Playing -> page.item.title
     }
+    val jellyfin = remember(settings) { JellyfinAccount.load(settings) }
     val rows by produceState<Result<List<VideoRow>>?>(null, page) {
-        value = withContext(Dispatchers.IO) { runCatching { rowsFor(context, page) } }
+        value = withContext(Dispatchers.IO) { runCatching { rowsFor(context, page, jellyfin) } }
     }
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
         Row(
@@ -135,13 +138,16 @@ internal fun VideosScreen(runtime: CarRuntime, driving: Boolean, settings: Setti
 
 private fun emptyText(context: android.content.Context, page: VideoPage): String = when {
     page == VideoPage.Home && !LocalVideos.granted(context) -> context.getString(R.string.videos_no_permission)
+    page is VideoPage.Jellyfin -> context.getString(R.string.videos_jellyfin_empty)
     else -> context.getString(R.string.videos_none)
 }
 
 /** The rows of a list page (IO thread). */
-private fun rowsFor(context: android.content.Context, page: VideoPage): List<VideoRow> = when (page) {
+private suspend fun rowsFor(context: android.content.Context, page: VideoPage, jellyfin: JellyfinAccount?): List<VideoRow> = when (page) {
     VideoPage.Home -> buildList {
         val videos = LocalVideos.all(context)
+        if (jellyfin != null) add(VideoRow("jellyfin", context.getString(R.string.videos_jellyfin), jellyfin.serverLabel, Icons.Rounded.VideoLibrary,
+            open = VideoPage.Jellyfin(null, context.getString(R.string.videos_jellyfin))))
         if (videos.isNotEmpty()) {
             add(VideoRow("recent", context.getString(R.string.videos_recent), context.resources.getQuantityString(R.plurals.videos_count, videos.size, videos.size),
                 Icons.Rounded.History, open = VideoPage.Recent))
@@ -153,6 +159,12 @@ private fun rowsFor(context: android.content.Context, page: VideoPage): List<Vid
     }
     VideoPage.Recent -> LocalVideos.all(context).take(RECENT).map { localRow(context, it, showFolder = true) }
     is VideoPage.Folder -> LocalVideos.all(context).filter { it.folderId == page.folder.id }.map { localRow(context, it, showFolder = false) }
+    is VideoPage.Jellyfin -> {
+        val account = jellyfin ?: error(context.getString(R.string.videos_jellyfin_not_set_up))
+        val client = JellyfinClient(account)
+        val items = if (page.parentId == null) client.views() else client.items(page.parentId)
+        items.map { jellyfinRow(client, it) }
+    }
     is VideoPage.Playing -> emptyList()
 }
 
@@ -165,6 +177,18 @@ private fun localRow(context: android.content.Context, v: LocalVideo, showFolder
     return VideoRow("local:${v.id}", v.title, parts.joinToString(" · "), Icons.Rounded.Movie,
         thumb = { LocalVideos.thumbnail(context, v, THUMB_W, THUMB_H) },
         open = VideoPage.Playing(VideoItem(v.uri.toString(), v.title, v.folder.takeIf { it.isNotBlank() })))
+}
+
+private fun jellyfinRow(client: JellyfinClient, item: JellyfinItem): VideoRow {
+    val subtitle = listOfNotNull(
+        item.runtimeMs?.let(::formatTime),
+        item.year?.toString(),
+        item.seriesName,
+    ).joinToString(" · ").ifBlank { null }
+    val open = if (item.isFolder) VideoPage.Jellyfin(item.id, item.name)
+        else VideoPage.Playing(VideoItem(client.streamUrl(item.id), item.name, item.seriesName))
+    return VideoRow("jf:${item.id}", item.name, subtitle, if (item.isFolder) Icons.Rounded.Folder else Icons.Rounded.Movie,
+        thumb = if (item.hasImage) ({ client.image(item.id, THUMB_H * 2) }) else null, open = open)
 }
 
 @Composable
