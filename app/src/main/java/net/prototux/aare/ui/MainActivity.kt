@@ -235,6 +235,7 @@ private fun Home() {
                         Page.ADVANCED -> {
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
+                            item { VehicleOverridesCard() }
                             item { LogCard() }
                         }
                     }
@@ -1118,6 +1119,36 @@ private fun displayName(ctx: Context, uri: Uri): String =
             if (c.moveToFirst()) c.getString(0) else null
         }
     }.getOrNull() ?: uri.lastPathSegment?.substringAfterLast('/') ?: ctx.getString(R.string.cert_imported_fallback)
+
+@Composable
+private fun VehicleOverridesCard() {
+    val ctx = LocalContext.current
+    val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
+    var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            ctx.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
+        }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+    }
+    Section(stringResource(R.string.vehicles_section_title)) {
+        Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
+        Text(file.absolutePath, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+        Row {
+            TextButton(onClick = { import.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text(stringResource(R.string.vehicles_import)) }
+            TextButton(onClick = {
+                runCatching { file.parentFile?.mkdirs(); file.writeText(net.prototux.aare.car.VehicleOverrides.template()) }
+                    .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+                count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+                Toast.makeText(ctx, file.absolutePath, Toast.LENGTH_LONG).show()
+            }) { Text(stringResource(R.string.vehicles_template)) }
+        }
+    }
+}
 
 @Composable
 private fun LogCard() {
