@@ -79,7 +79,8 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
 @Composable
 fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val player = remember { CarVideoPlayer.create(context) }
+    // One player per video: it's released when the video closes (below), never reused after that.
+    val player = remember(item.uri) { CarVideoPlayer.create(context) }
     var playing by remember { mutableStateOf(false) }
     var ratio by remember { mutableFloatStateOf(16f / 9f) }
     var position by remember { mutableLongStateOf(0L) }
@@ -145,7 +146,8 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
         pokes++
     }
 
-    DisposableEffect(Unit) {
+    // Keyed on the player: the keys must drive this video's player, not a released one.
+    DisposableEffect(player) {
         val back: () -> Boolean = { onClose(); true }
         runtime.screenBack = back
         val input = object : CarRuntime.CarScreenInput {

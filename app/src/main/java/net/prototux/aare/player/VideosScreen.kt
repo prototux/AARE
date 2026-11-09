@@ -105,7 +105,8 @@ internal fun VideosScreen(runtime: CarRuntime, driving: Boolean, settings: Setti
         is VideoPage.Jellyfin -> page.title
         is VideoPage.Playing -> page.item.title
     }
-    val jellyfin = remember(settings) { JellyfinAccount.load(settings) }
+    // Read again on each page: signing in or out on the phone shows the next time a list loads.
+    val jellyfin = JellyfinAccount.load(settings)
     val rows by produceState<Result<List<VideoRow>>?>(null, page) {
         value = withContext(Dispatchers.IO) { runCatching { rowsFor(context, page, jellyfin) } }
     }
