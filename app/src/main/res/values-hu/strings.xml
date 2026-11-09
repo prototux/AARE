@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">A keresés csak álló autóban elérhető</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Böngésző</string>
+    <string name="browser_app_row_subtitle">Webböngésző az autó képernyőjén, amikor parkolsz</string>
+    <string name="browser_url_label">Kezdőlap</string>
+    <string name="browser_hint_parked">A böngésző szünetel vezetés közben.</string>
+    <string name="browser_paused_driving">A böngésző szünetel vezetés közben.</string>
 </resources>

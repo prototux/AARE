@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Пошук доступний після паркування</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Браузер</string>
+    <string name="browser_app_row_subtitle">Веб-браузер на екрані автомобіля, для моментів, коли ви припарковані</string>
+    <string name="browser_url_label">Домашня сторінка</string>
+    <string name="browser_hint_parked">Браузер призупинено під час руху.</string>
+    <string name="browser_paused_driving">Браузер призупинено під час руху.</string>
 </resources>

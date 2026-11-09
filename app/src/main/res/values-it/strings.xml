@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">La ricerca è disponibile da parcheggiati</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">Un browser web sullo schermo dell\'auto, per quando sei parcheggiato</string>
+    <string name="browser_url_label">Pagina iniziale</string>
+    <string name="browser_hint_parked">Il browser è in pausa durante la guida.</string>
+    <string name="browser_paused_driving">Il browser è in pausa durante la guida.</string>
 </resources>

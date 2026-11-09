@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Tìm kiếm chỉ khả dụng khi đã đỗ xe</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Trình duyệt</string>
+    <string name="browser_app_row_subtitle">Trình duyệt web trên màn hình xe, dùng khi bạn đã đỗ xe</string>
+    <string name="browser_url_label">Trang chủ</string>
+    <string name="browser_hint_parked">Trình duyệt tạm dừng khi đang lái xe.</string>
+    <string name="browser_paused_driving">Trình duyệt tạm dừng khi đang lái xe.</string>
 </resources>

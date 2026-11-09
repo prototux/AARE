@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Căutarea este disponibilă doar la parcare</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">Un browser web pe ecranul mașinii, pentru când ești parcat</string>
+    <string name="browser_url_label">Pagina de pornire</string>
+    <string name="browser_hint_parked">Browserul este întrerupt în timpul condusului.</string>
+    <string name="browser_paused_driving">Browserul este întrerupt în timpul condusului.</string>
 </resources>

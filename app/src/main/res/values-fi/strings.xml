@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Haku on käytettävissä pysäköitynä</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Selain</string>
+    <string name="browser_app_row_subtitle">Verkkoselain auton näytöllä, kun olet pysäköitynä</string>
+    <string name="browser_url_label">Aloitussivu</string>
+    <string name="browser_hint_parked">Selain on keskeytetty ajon ajaksi.</string>
+    <string name="browser_paused_driving">Selain on keskeytetty ajon ajaksi.</string>
 </resources>

@@ -303,4 +303,11 @@
     <string name="kbd_letters_label">ABC</string>
 
     <string name="search_parked_only">停车后才可使用搜索</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">浏览器</string>
+    <string name="browser_app_row_subtitle">车载屏幕上的网页浏览器，供停车时使用</string>
+    <string name="browser_url_label">主页</string>
+    <string name="browser_hint_parked">行车时浏览器会暂停。</string>
+    <string name="browser_paused_driving">行车时浏览器会暂停。</string>
 </resources>

@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Søk er tilgjengelig når bilen er parkert</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Nettleser</string>
+    <string name="browser_app_row_subtitle">En nettleser på bilskjermen, for når du er parkert</string>
+    <string name="browser_url_label">Startside</string>
+    <string name="browser_hint_parked">Nettleseren er satt på pause under kjøring.</string>
+    <string name="browser_paused_driving">Nettleseren er satt på pause under kjøring.</string>
 </resources>

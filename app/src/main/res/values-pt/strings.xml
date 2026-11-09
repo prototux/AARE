@@ -319,4 +319,11 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">A pesquisa está disponível quando estacionado</string>
+
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Navegador</string>
+    <string name="browser_app_row_subtitle">Um navegador web no ecrã do carro, para quando está estacionado</string>
+    <string name="browser_url_label">Página inicial</string>
+    <string name="browser_hint_parked">O navegador é pausado durante a condução.</string>
+    <string name="browser_paused_driving">O navegador é pausado durante a condução.</string>
 </resources>
