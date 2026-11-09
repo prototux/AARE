@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -479,11 +481,26 @@ private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
 
 @Composable
 fun AppIcon(app: CarAppEntry, sizeDp: Int) {
-    if (app.icon != null) {
-        Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(CircleShape))
-    } else {
-        Box(Modifier.size(sizeDp.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Text(app.label.take(1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+    Box(contentAlignment = Alignment.BottomEnd) {
+        if (app.icon != null) {
+            Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(CircleShape))
+        } else {
+            Box(Modifier.size(sizeDp.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                Text(app.label.take(1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+        }
+        // A corner badge marks an ordinary phone app (not an Android Auto one), so a NewPipe that
+        // appears both as its car app and as a launched phone app is told apart at a glance.
+        if (app.kind == CarAppKind.STANDALONE) {
+            Box(
+                Modifier.size((sizeDp * 0.36f).dp).clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiary)
+                    .border((sizeDp * 0.03f).dp, MaterialTheme.colorScheme.surface, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Rounded.Smartphone, stringResource(R.string.standalone_not_native),
+                    tint = MaterialTheme.colorScheme.onTertiary, modifier = Modifier.size((sizeDp * 0.22f).dp))
+            }
         }
     }
 }
