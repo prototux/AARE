@@ -158,6 +158,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Safer: the network has to be allowed again for each session. Turn this off for head units that reconnect on their own, like openauto or Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Phone screen on the server</string>
     <string name="huserver_toggle_mirror_subtitle">Also offer "Phone screen" to whoever connects here. Risky: they see the phone\'s screen and can tap on it, so leave it off unless you trust the head unit.</string>
+    <string name="huserver_toggle_localhost_title">Allow localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Accept a connection from an Android-Auto-in-the-browser app on this phone, for cars without Android Auto (e.g. Tesla). Any app on the phone could connect, so leave it off unless you use one.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Messages</string>

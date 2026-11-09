@@ -36,6 +36,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("head_unit_server_mirror", false)
         set(v) = prefs.edit { putBoolean("head_unit_server_mirror", v) }
 
+    /**
+     * Accept head-unit connections over loopback TCP ([TcpServer.PORT]) from an Android-Auto-in-the-
+     * browser bridge on this phone (webaa, paath — for cars without Android Auto, like Tesla). Any app
+     * on the phone can then reach the server, so it is off by default.
+     */
+    var headUnitServerLocalhost: Boolean
+        get() = prefs.getBoolean("hu_server_localhost", false)
+        set(v) = prefs.edit { putBoolean("hu_server_localhost", v) }
+
     /** Connect wirelessly to bonded head units that advertise wireless Android Auto. */
     var wireless: Boolean
         get() = prefs.getBoolean("wireless", true)

@@ -542,6 +542,7 @@ private fun HeadUnitServerSettings(settings: Settings) {
     LaunchedEffect(connected) { lan = settings.headUnitServerLan }
     var lanOnce by remember { mutableStateOf(settings.headUnitServerLanOnce) }
     var mirror by remember { mutableStateOf(settings.headUnitServerMirror) }
+    var localhost by remember { mutableStateOf(settings.headUnitServerLocalhost) }
     Section(stringResource(R.string.huserver_label)) {
         Toggle(stringResource(R.string.huserver_label), stringResource(R.string.huserver_toggle_subtitle), huServer) {
             huServer = it; settings.headUnitServer = it
@@ -558,6 +559,10 @@ private fun HeadUnitServerSettings(settings: Settings) {
         }
         if (huServer) Toggle(stringResource(R.string.huserver_toggle_mirror_title), stringResource(R.string.huserver_toggle_mirror_subtitle), mirror) {
             mirror = it; settings.headUnitServerMirror = it
+        }
+        if (huServer) Toggle(stringResource(R.string.huserver_toggle_localhost_title), stringResource(R.string.huserver_toggle_localhost_subtitle), localhost) {
+            localhost = it; settings.headUnitServerLocalhost = it
+            ProjectionService.startIdleIfEnabled(ctx)
         }
     }
 }
