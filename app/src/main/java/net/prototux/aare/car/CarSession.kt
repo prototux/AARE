@@ -67,6 +67,7 @@ import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CarAudioOut
 import net.prototux.aare.audio.PcmSource
 import net.prototux.aare.audio.PlaybackCaptureSource
+import net.prototux.aare.audio.ShizukuPolicySource
 import net.prototux.aare.audio.ShizukuSource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
@@ -556,7 +557,7 @@ class CarSession(
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
-            CaptureMethod.AUDIO_POLICY -> {
+            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY -> {
                 // Without a guidance channel in the car, navigation voice goes with the music.
                 val hasGuidance = audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
                 val usages = when {
@@ -564,7 +565,8 @@ class CarSession(
                     hasGuidance -> CaptureMethods.MEDIA_USAGES
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
-                AudioPolicySource(context, usages, rate, ch)
+                if (method == CaptureMethod.AUDIO_POLICY) AudioPolicySource(context, usages, rate, ch)
+                else ShizukuPolicySource(context, usages, rate, ch)
             }
             CaptureMethod.SHIZUKU -> when {
                 guidance -> return
@@ -589,6 +591,14 @@ class CarSession(
                 DiagLog.add("car audio: ${method.label} failed, trying the next method")
                 failedCapture += method
                 startAudio(channel)
+                // Split capture gone: the other channel goes to the next method too (the mixed
+                // stream needs the media channel alone, or nav voice would play twice).
+                if (method == CaptureMethod.SHIZUKU_POLICY) {
+                    audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
+                        audioOuts.remove(other.streamType)?.stop()
+                        startAudio(other)
+                    }
+                }
             }
         })
         audioOuts[channel.streamType] = out.also { it.start() }
