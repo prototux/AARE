@@ -319,4 +319,14 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">La búsqueda está disponible al estacionar</string>
+
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Apps en la pantalla del coche (avanzado)</string>
+    <string name="standalone_section_warning">Estas no son apps de Android Auto: AARE muestra su pantalla normal del teléfono, solo mientras está estacionado, y necesita root o Shizuku. Úsalo bajo tu propia responsabilidad.</string>
+    <string name="standalone_toggle_title">Iniciar apps del teléfono en la pantalla del coche</string>
+    <string name="standalone_toggle_subtitle">Elige las apps a continuación. Se muestran solo al estacionar.</string>
+    <string name="standalone_need_root">Necesita root o Shizuku. Configura uno en Audio del coche y luego vuelve.</string>
+    <string name="standalone_not_native">No es una app de Android Auto · uso al estacionar</string>
+    <string name="standalone_starting">Iniciando…</string>
+    <string name="standalone_paused_driving">Pausado mientras conduces.</string>
 </resources>

@@ -303,4 +303,14 @@
     <string name="kbd_letters_label">ABC</string>
 
     <string name="search_parked_only">البحث متاح عند التوقف</string>
+
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">تطبيقات على شاشة السيارة (متقدم)</string>
+    <string name="standalone_section_warning">هذه ليست تطبيقات Android Auto: يعرض AARE شاشة الهاتف العادية، فقط أثناء التوقف، ويحتاج إلى root أو Shizuku. استخدمها على مسؤوليتك الخاصة.</string>
+    <string name="standalone_toggle_title">تشغيل تطبيقات الهاتف على شاشة السيارة</string>
+    <string name="standalone_toggle_subtitle">اختر التطبيقات أدناه. تظهر فقط عند التوقف.</string>
+    <string name="standalone_need_root">يحتاج إلى root أو Shizuku. أعدّ أحدهما في صفحة صوت السيارة، ثم عد إلى هنا.</string>
+    <string name="standalone_not_native">ليس تطبيق Android Auto · استخدام أثناء التوقف</string>
+    <string name="standalone_starting">جارٍ البدء…</string>
+    <string name="standalone_paused_driving">متوقف مؤقتًا أثناء القيادة.</string>
 </resources>

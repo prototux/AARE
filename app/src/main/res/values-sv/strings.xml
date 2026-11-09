@@ -319,4 +319,14 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Sökning är tillgänglig när bilen är parkerad</string>
+
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Appar på bilskärmen (avancerat)</string>
+    <string name="standalone_section_warning">Det här är inte Android Auto-appar: AARE visar deras vanliga telefonskärm, bara när bilen är parkerad, och kräver root eller Shizuku. Använd på egen risk.</string>
+    <string name="standalone_toggle_title">Starta telefonappar på bilskärmen</string>
+    <string name="standalone_toggle_subtitle">Välj apparna nedan. Visas bara när parkerad.</string>
+    <string name="standalone_need_root">Kräver root eller Shizuku. Ställ in en av dem på sidan Billjud och kom sedan tillbaka.</string>
+    <string name="standalone_not_native">Inte en Android Auto-app · användning vid parkering</string>
+    <string name="standalone_starting">Startar…</string>
+    <string name="standalone_paused_driving">Pausad under körning.</string>
 </resources>

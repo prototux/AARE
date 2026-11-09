@@ -319,4 +319,14 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">La recherche est disponible à l\'arrêt</string>
+
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Apps sur l\'écran de la voiture (avancé)</string>
+    <string name="standalone_section_warning">Ce ne sont pas des apps Android Auto : AARE affiche leur écran de téléphone normal, uniquement à l\'arrêt, et nécessite root ou Shizuku. Utilisation à vos risques et périls.</string>
+    <string name="standalone_toggle_title">Lancer des apps du téléphone sur l\'écran de la voiture</string>
+    <string name="standalone_toggle_subtitle">Choisissez les apps ci-dessous. Affichées uniquement à l\'arrêt.</string>
+    <string name="standalone_need_root">Nécessite root ou Shizuku. Configurez l\'un des deux dans Audio voiture, puis revenez ici.</string>
+    <string name="standalone_not_native">Pas une app Android Auto · usage à l\'arrêt</string>
+    <string name="standalone_starting">Démarrage…</string>
+    <string name="standalone_paused_driving">Suspendu pendant la conduite.</string>
 </resources>
