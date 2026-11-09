@@ -45,6 +45,7 @@ import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
+import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.transport.LocalSocketTransport
@@ -95,6 +96,8 @@ class ProjectionService : Service() {
     private var wirelessJob: Job? = null
     /** onDestroy ran: a session closing late must not touch this instance any more. */
     private var destroyed = false
+    /** The download prompt is shown at most once per service lifetime, until a Google cert arrives. */
+    private var certDownloadPrompted = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -116,6 +119,7 @@ class ProjectionService : Service() {
             ACTION_WIRELESS -> intent.getStringExtra(EXTRA_DEVICE)?.let { connectWireless(it) }
             ACTION_PROBE_WIRELESS -> probeConnectedWireless()
             ACTION_AUDIO_CONSENT -> acceptAudioConsent(intent)
+            ACTION_DOWNLOAD_CERT -> downloadCertificate()
             ACTION_STOP -> { stopEverything(); return START_NOT_STICKY }
         }
         applyListeners()
@@ -375,6 +379,12 @@ class ProjectionService : Service() {
                 // Offer the next certificate next time: strict head units only accept Google-issued ones.
                 settings.certificateIndex = settings.certificateIndex + 1
                 log("head unit rejected the certificate; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
+                // Strict head units accept only a Google-issued certificate. If we don't have one yet,
+                // offer to fetch it, so the user needn't open Advanced before connecting.
+                if (!certs.hasGoogleCertificate() && !certDownloadPrompted) {
+                    certDownloadPrompted = true
+                    certNotice(getString(R.string.notif_cert_download_title), getString(R.string.notif_cert_download_message), retry = true)
+                }
             }
             pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
@@ -512,6 +522,55 @@ class ProjectionService : Service() {
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(text))
     }
 
+    /**
+     * The certificate-download prompt and its progress/result. [retry] adds a Download action, for
+     * the first offer and after a failed attempt; the progress and success notices are plain.
+     */
+    private fun certNotice(title: String, text: String, retry: Boolean) {
+        val builder = Notification.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .setAutoCancel(!retry)
+        if (retry) {
+            val download = PendingIntent.getService(this, CERT_DOWNLOAD_NOTIFICATION_ID,
+                Intent(this, ProjectionService::class.java).setAction(ACTION_DOWNLOAD_CERT),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            builder.addAction(Notification.Action.Builder(null, getString(R.string.notif_action_download_cert), download).build())
+        }
+        getSystemService(NotificationManager::class.java).notify(CERT_DOWNLOAD_NOTIFICATION_ID, builder.build())
+    }
+
+    /**
+     * Fetches Android Auto's certificate (the Advanced > Download certificate action, from a
+     * notification), adds it to the store and offers it on the next connection, so the user can
+     * just reconnect. Runs off the main thread; the notification tracks progress and the result.
+     */
+    private fun downloadCertificate() {
+        certNotice(getString(R.string.app_name), getString(R.string.notif_cert_download_progress), retry = false)
+        Thread {
+            val result = runCatching {
+                certs.importDownloaded(CertificateDownload.fetch())
+            }
+            main.post {
+                if (destroyed) return@post
+                result.onSuccess { entry ->
+                    // Offer the downloaded certificate first on the next connection.
+                    settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
+                    certDownloadPrompted = false
+                    certNotice(getString(R.string.notif_cert_download_ready_title),
+                        getString(R.string.notif_cert_download_ready_message), retry = false)
+                    log("downloaded Android Auto's certificate \"${entry.name}\"; reconnect to use it")
+                }.onFailure { e ->
+                    certNotice(getString(R.string.notif_cert_download_title),
+                        getString(R.string.notif_cert_download_failed, e.message ?: e.toString()), retry = true)
+                    log("certificate download failed: ${e.message}")
+                }
+            }
+        }.start()
+    }
+
     private fun acquireWakeLock() {
         if (wakeLock?.isHeld == true) return
         wakeLock = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "aare:projection").apply {
@@ -543,6 +602,8 @@ class ProjectionService : Service() {
         private const val TAG = "AareService"
         private const val CHANNEL = "connection"
         private const val NOTIFICATION_ID = 1
+        // 2 = wireless re-connect, 3 = trust prompt (TrustReceiver); 4 = certificate download prompt.
+        private const val CERT_DOWNLOAD_NOTIFICATION_ID = 4
         /** A USB session that lasted this long had recovered: its drop starts a new retry budget. */
         private const val USB_RETRY_RESET_MS = 60_000L
         /** Wireless attempts after a car that wasn't ready yet, waiting this much longer each time. */
@@ -552,6 +613,7 @@ class ProjectionService : Service() {
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
+        const val ACTION_DOWNLOAD_CERT = "net.prototux.aare.DOWNLOAD_CERT"
         const val ACTION_WIRELESS = "net.prototux.aare.WIRELESS"
         const val ACTION_PROBE_WIRELESS = "net.prototux.aare.PROBE_WIRELESS"
         const val EXTRA_DEVICE = "device"
