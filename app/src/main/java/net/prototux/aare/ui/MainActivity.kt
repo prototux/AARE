@@ -132,6 +132,8 @@ import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
 import net.prototux.aare.mirror.MirrorTouchService
+import androidx.core.graphics.drawable.toBitmap
+import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
@@ -888,6 +890,7 @@ private fun AppsCard(settings: Settings) {
             AppRow(null, stringResource(R.string.phone_section_title), stringResource(R.string.phone_app_row_subtitle), phoneScreen) { phoneScreen = it; settings.phoneScreen = it }
         }
         if (l != null) AppOrder(settings, l, hidden, phoneScreen)
+        StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
         }
@@ -946,6 +949,57 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
 @Composable
 private fun AppGroup(title: String) {
     Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+}
+
+/** Opt-in: launch ordinary phone apps on the car screen (parked only; needs root or Shizuku). */
+@Composable
+private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
+    var enabled by remember { mutableStateOf(settings.standaloneApps) }
+    var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    val available = remember { AppLauncher.available(ctx) }
+    Section(stringResource(R.string.standalone_section_title)) {
+        Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.standalone_toggle_title), stringResource(R.string.standalone_toggle_subtitle), enabled) {
+            enabled = it; settings.standaloneApps = it
+        }
+        if (enabled && !available) {
+            Text(stringResource(R.string.standalone_need_root), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+        }
+        if (enabled) {
+            val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
+                value = withContext(Dispatchers.IO) { launchableApps(ctx) }
+            }
+            val list = apps
+            if (list == null) {
+                Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
+            } else {
+                Spacer(Modifier.height(8.dp))
+                list.forEach { (pkg, label, icon) ->
+                    AppRow(icon, label, pkg, pkg in allowed) { on ->
+                        allowed = if (on) allowed + pkg else allowed - pkg
+                        settings.standaloneAppPackages = allowed
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Every app with a launcher icon, except AARE itself, for the standalone allow-list. */
+private fun launchableApps(ctx: android.content.Context): List<Triple<String, String, android.graphics.Bitmap?>> {
+    val pm = ctx.packageManager
+    val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+    return pm.queryIntentActivities(intent, 0)
+        .mapNotNull { it.activityInfo?.packageName }
+        .filter { it != ctx.packageName }
+        .distinct()
+        .mapNotNull { pkg ->
+            val info = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull() ?: return@mapNotNull null
+            val icon = runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull()
+            Triple(pkg, pm.getApplicationLabel(info).toString(), icon)
+        }.sortedBy { it.second.lowercase() }
 }
 
 @Composable
