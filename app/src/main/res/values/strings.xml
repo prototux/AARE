@@ -366,6 +366,14 @@
     <string name="browser_home">Home page</string>
     <string name="browser_address_hint">Search or type a web address</string>
 
+    <!-- video: AARE's video player on the car screen -->
+    <string name="video_paused_driving">The picture is hidden while driving. The sound carries on.</string>
+    <string name="video_error">Can\'t play this video (%1$s)</string>
+    <string name="video_play">Play</string>
+    <string name="video_pause">Pause</string>
+    <string name="video_back_10">Back 10 seconds</string>
+    <string name="video_forward_10">Forward 10 seconds</string>
+
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>
