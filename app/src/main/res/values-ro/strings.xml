@@ -319,4 +319,55 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Căutarea este disponibilă doar la parcare</string>
+
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Date despre mașină</string>
+    <string name="setup_page_car_data_subtitle">Viteză, treaptă de viteză și senzori în timp real din mașină</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Conectează-te la o mașină pentru a-i vedea datele.</string>
+    <string name="car_data_section_car">Mașină</string>
+    <string name="car_data_section_live">Date live</string>
+    <string name="car_data_identity">Vehicul</string>
+    <string name="car_data_head_unit">Unitate centrală</string>
+    <string name="car_data_connection">Conexiune</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Senzori anunțați</string>
+    <string name="car_data_driving">Conducere</string>
+    <string name="car_data_parked">parcată</string>
+    <string name="car_data_moving">în mișcare</string>
+    <string name="car_data_night">Iluminare</string>
+    <string name="car_data_night_on">noapte</string>
+    <string name="car_data_night_off">zi</string>
+    <string name="car_data_speed">Viteză</string>
+    <string name="car_data_cruise">Tempomat setat</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Treaptă de viteză</string>
+    <string name="car_data_parking_brake">Frână de mână</string>
+    <string name="car_data_on">pornit</string>
+    <string name="car_data_off">oprit</string>
+    <string name="car_data_odometer">Kilometraj</string>
+    <string name="car_data_fuel">Combustibil</string>
+    <string name="car_data_low">scăzut</string>
+    <string name="car_data_compass">Rumb</string>
+    <string name="car_data_satellites">Sateliți GPS</string>
+    <string name="car_data_environment">Exterior</string>
+    <string name="car_data_rain">ploaie</string>
+    <string name="car_data_climate">Climatizare</string>
+    <string name="car_data_steering">Direcție</string>
+    <string name="car_data_tyres">Presiune anvelope</string>
+    <string name="car_data_doors">Uși</string>
+    <string name="car_data_hood">capotă</string>
+    <string name="car_data_trunk">portbagaj</string>
+    <string name="car_data_door">ușă</string>
+    <string name="car_data_closed">toate închise</string>
+    <string name="car_data_lights">Lumini</string>
+    <string name="car_data_hazard">avarii</string>
+    <string name="car_data_passenger">Pasager</string>
+    <string name="car_data_toll">Card de taxă rutieră</string>
+    <string name="car_data_yes">da</string>
+    <string name="car_data_no">nu</string>
+    <string name="car_data_accelerometer">Accelerometru</string>
+    <string name="car_data_gyroscope">Giroscop</string>
+    <string name="car_data_dtc">Coduri de eroare</string>
 </resources>

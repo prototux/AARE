@@ -319,4 +319,55 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Søgning er tilgængelig, når bilen er parkeret</string>
+
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Bildata</string>
+    <string name="setup_page_car_data_subtitle">Hastighed, gear og sensorer fra bilen i realtid</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Opret forbindelse til en bil for at se dens data.</string>
+    <string name="car_data_section_car">Bil</string>
+    <string name="car_data_section_live">Livedata</string>
+    <string name="car_data_identity">Køretøj</string>
+    <string name="car_data_head_unit">Hovedenhed</string>
+    <string name="car_data_connection">Forbindelse</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Annoncerede sensorer</string>
+    <string name="car_data_driving">Kørsel</string>
+    <string name="car_data_parked">parkeret</string>
+    <string name="car_data_moving">i bevægelse</string>
+    <string name="car_data_night">Belysning</string>
+    <string name="car_data_night_on">nat</string>
+    <string name="car_data_night_off">dag</string>
+    <string name="car_data_speed">Hastighed</string>
+    <string name="car_data_cruise">Fartpilot indstillet</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Gear</string>
+    <string name="car_data_parking_brake">Parkeringsbremse</string>
+    <string name="car_data_on">til</string>
+    <string name="car_data_off">fra</string>
+    <string name="car_data_odometer">Kilometertæller</string>
+    <string name="car_data_fuel">Brændstof</string>
+    <string name="car_data_low">lavt</string>
+    <string name="car_data_compass">Retning</string>
+    <string name="car_data_satellites">GPS-satellitter</string>
+    <string name="car_data_environment">Udenfor</string>
+    <string name="car_data_rain">regn</string>
+    <string name="car_data_climate">Klimaanlæg</string>
+    <string name="car_data_steering">Styring</string>
+    <string name="car_data_tyres">Dæktryk</string>
+    <string name="car_data_doors">Døre</string>
+    <string name="car_data_hood">motorhjelm</string>
+    <string name="car_data_trunk">bagagerum</string>
+    <string name="car_data_door">dør</string>
+    <string name="car_data_closed">alle lukket</string>
+    <string name="car_data_lights">Lys</string>
+    <string name="car_data_hazard">advarselsblink</string>
+    <string name="car_data_passenger">Passager</string>
+    <string name="car_data_toll">Bro-/vejafgiftskort</string>
+    <string name="car_data_yes">ja</string>
+    <string name="car_data_no">nej</string>
+    <string name="car_data_accelerometer">Accelerometer</string>
+    <string name="car_data_gyroscope">Gyroskop</string>
+    <string name="car_data_dtc">Fejlkoder</string>
 </resources>

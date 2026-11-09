@@ -319,4 +319,55 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Поиск доступен на парковке</string>
+
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Данные автомобиля</string>
+    <string name="setup_page_car_data_subtitle">Скорость, передача и датчики автомобиля в реальном времени</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Подключитесь к автомобилю, чтобы увидеть его данные.</string>
+    <string name="car_data_section_car">Автомобиль</string>
+    <string name="car_data_section_live">Данные в реальном времени</string>
+    <string name="car_data_identity">Транспортное средство</string>
+    <string name="car_data_head_unit">Головное устройство</string>
+    <string name="car_data_connection">Подключение</string>
+    <string name="car_data_video">Видео</string>
+    <string name="car_data_advertised">Заявленные датчики</string>
+    <string name="car_data_driving">Движение</string>
+    <string name="car_data_parked">на стоянке</string>
+    <string name="car_data_moving">в движении</string>
+    <string name="car_data_night">Освещение</string>
+    <string name="car_data_night_on">ночь</string>
+    <string name="car_data_night_off">день</string>
+    <string name="car_data_speed">Скорость</string>
+    <string name="car_data_cruise">Установленный круиз-контроль</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Передача</string>
+    <string name="car_data_parking_brake">Стояночный тормоз</string>
+    <string name="car_data_on">вкл</string>
+    <string name="car_data_off">выкл</string>
+    <string name="car_data_odometer">Одометр</string>
+    <string name="car_data_fuel">Топливо</string>
+    <string name="car_data_low">низкий</string>
+    <string name="car_data_compass">Направление</string>
+    <string name="car_data_satellites">Спутники GPS</string>
+    <string name="car_data_environment">Снаружи</string>
+    <string name="car_data_rain">дождь</string>
+    <string name="car_data_climate">Климат-контроль</string>
+    <string name="car_data_steering">Руль</string>
+    <string name="car_data_tyres">Давление в шинах</string>
+    <string name="car_data_doors">Двери</string>
+    <string name="car_data_hood">капот</string>
+    <string name="car_data_trunk">багажник</string>
+    <string name="car_data_door">дверь</string>
+    <string name="car_data_closed">все закрыты</string>
+    <string name="car_data_lights">Фары</string>
+    <string name="car_data_hazard">аварийная сигнализация</string>
+    <string name="car_data_passenger">Пассажир</string>
+    <string name="car_data_toll">Карта для оплаты дорог</string>
+    <string name="car_data_yes">да</string>
+    <string name="car_data_no">нет</string>
+    <string name="car_data_accelerometer">Акселерометр</string>
+    <string name="car_data_gyroscope">Гироскоп</string>
+    <string name="car_data_dtc">Коды неисправностей</string>
 </resources>

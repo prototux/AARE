@@ -319,4 +319,55 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">A keresés csak álló autóban elérhető</string>
+
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Autó adatai</string>
+    <string name="setup_page_car_data_subtitle">Élő sebesség, sebességfokozat és érzékelők az autóból</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Csatlakozzon egy autóhoz az adatainak megtekintéséhez.</string>
+    <string name="car_data_section_car">Autó</string>
+    <string name="car_data_section_live">Élő adatok</string>
+    <string name="car_data_identity">Jármű</string>
+    <string name="car_data_head_unit">Fejegység</string>
+    <string name="car_data_connection">Kapcsolat</string>
+    <string name="car_data_video">Videó</string>
+    <string name="car_data_advertised">Jelentett érzékelők</string>
+    <string name="car_data_driving">Vezetés</string>
+    <string name="car_data_parked">parkol</string>
+    <string name="car_data_moving">mozgásban</string>
+    <string name="car_data_night">Világítás</string>
+    <string name="car_data_night_on">éjszaka</string>
+    <string name="car_data_night_off">nappal</string>
+    <string name="car_data_speed">Sebesség</string>
+    <string name="car_data_cruise">Tempomat beállítva</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Sebességfokozat</string>
+    <string name="car_data_parking_brake">Rögzítőfék</string>
+    <string name="car_data_on">be</string>
+    <string name="car_data_off">ki</string>
+    <string name="car_data_odometer">Kilométeróra</string>
+    <string name="car_data_fuel">Üzemanyag</string>
+    <string name="car_data_low">alacsony</string>
+    <string name="car_data_compass">Irány</string>
+    <string name="car_data_satellites">GPS-műholdak</string>
+    <string name="car_data_environment">Kint</string>
+    <string name="car_data_rain">eső</string>
+    <string name="car_data_climate">Klíma</string>
+    <string name="car_data_steering">Kormányzás</string>
+    <string name="car_data_tyres">Gumiabroncs-nyomás</string>
+    <string name="car_data_doors">Ajtók</string>
+    <string name="car_data_hood">motorháztető</string>
+    <string name="car_data_trunk">csomagtartó</string>
+    <string name="car_data_door">ajtó</string>
+    <string name="car_data_closed">mind zárva</string>
+    <string name="car_data_lights">Lámpák</string>
+    <string name="car_data_hazard">vészvillogó</string>
+    <string name="car_data_passenger">Utas</string>
+    <string name="car_data_toll">Autópálya-matrica</string>
+    <string name="car_data_yes">igen</string>
+    <string name="car_data_no">nem</string>
+    <string name="car_data_accelerometer">Gyorsulásmérő</string>
+    <string name="car_data_gyroscope">Giroszkóp</string>
+    <string name="car_data_dtc">Hibakódok</string>
 </resources>

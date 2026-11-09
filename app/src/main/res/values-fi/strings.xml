@@ -319,4 +319,55 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Haku on käytettävissä pysäköitynä</string>
+
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Auton tiedot</string>
+    <string name="setup_page_car_data_subtitle">Nopeus, vaihde ja anturit suoraan autosta</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Yhdistä autoon nähdäksesi sen tiedot.</string>
+    <string name="car_data_section_car">Auto</string>
+    <string name="car_data_section_live">Reaaliaikaiset tiedot</string>
+    <string name="car_data_identity">Ajoneuvo</string>
+    <string name="car_data_head_unit">Keskusyksikkö</string>
+    <string name="car_data_connection">Yhteys</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Ilmoitetut anturit</string>
+    <string name="car_data_driving">Ajo</string>
+    <string name="car_data_parked">pysäköity</string>
+    <string name="car_data_moving">liikkeessä</string>
+    <string name="car_data_night">Valaistus</string>
+    <string name="car_data_night_on">yö</string>
+    <string name="car_data_night_off">päivä</string>
+    <string name="car_data_speed">Nopeus</string>
+    <string name="car_data_cruise">Vakionopeuden asetus</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Vaihde</string>
+    <string name="car_data_parking_brake">Seisontajarru</string>
+    <string name="car_data_on">päällä</string>
+    <string name="car_data_off">pois</string>
+    <string name="car_data_odometer">Matkamittari</string>
+    <string name="car_data_fuel">Polttoaine</string>
+    <string name="car_data_low">vähissä</string>
+    <string name="car_data_compass">Suunta</string>
+    <string name="car_data_satellites">GPS-satelliitit</string>
+    <string name="car_data_environment">Ulkona</string>
+    <string name="car_data_rain">sade</string>
+    <string name="car_data_climate">Ilmastointi</string>
+    <string name="car_data_steering">Ohjaus</string>
+    <string name="car_data_tyres">Rengaspaine</string>
+    <string name="car_data_doors">Ovet</string>
+    <string name="car_data_hood">konepelti</string>
+    <string name="car_data_trunk">tavaratila</string>
+    <string name="car_data_door">ovi</string>
+    <string name="car_data_closed">kaikki kiinni</string>
+    <string name="car_data_lights">Valot</string>
+    <string name="car_data_hazard">varoitusvilkut</string>
+    <string name="car_data_passenger">Matkustaja</string>
+    <string name="car_data_toll">Tiemaksukortti</string>
+    <string name="car_data_yes">kyllä</string>
+    <string name="car_data_no">ei</string>
+    <string name="car_data_accelerometer">Kiihtyvyysanturi</string>
+    <string name="car_data_gyroscope">Gyroskooppi</string>
+    <string name="car_data_dtc">Vikakoodit</string>
 </resources>
