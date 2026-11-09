@@ -373,6 +373,20 @@
     <string name="video_pause">Pause</string>
     <string name="video_back_10">Back 10 seconds</string>
     <string name="video_forward_10">Forward 10 seconds</string>
+    <string name="videos_app_label">Videos</string>
+    <string name="videos_app_row_subtitle">The phone\'s videos on the car screen, for when you\'re parked; the sound goes to the car</string>
+    <string name="videos_check_permission_title">Allow AARE to see your videos</string>
+    <string name="videos_check_permission_subtitle">To list the phone\'s videos in the car</string>
+    <string name="videos_recent">Recent</string>
+    <string name="videos_unnamed_folder">Videos</string>
+    <string name="videos_parked_only">Choose a video when you\'re parked. A playing video keeps its sound while driving.</string>
+    <string name="videos_load_failed">Can\'t load this list: %1$s</string>
+    <string name="videos_none">No videos here</string>
+    <string name="videos_no_permission">Allow AARE to see your videos on the phone (Apps settings)</string>
+    <plurals name="videos_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_settings_title">Voice assistant</string>

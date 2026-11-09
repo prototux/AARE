@@ -244,6 +244,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("browser", false)
         set(v) = prefs.edit { putBoolean("browser", v) }
 
+    /** Show the Videos app on the car screen (the phone's videos, Jellyfin). Off by default; the picture is paused while driving. */
+    var videos: Boolean
+        get() = prefs.getBoolean("videos", false)
+        set(v) = prefs.edit { putBoolean("videos", v) }
+
     /** The page the car browser opens. */
     var browserUrl: String
         get() = prefs.getString("browser_url", BROWSER_DEFAULT_URL) ?: BROWSER_DEFAULT_URL

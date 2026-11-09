@@ -973,6 +973,17 @@ private fun AppsCard(settings: Settings) {
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
+    var videos by remember { mutableStateOf(settings.videos) }
+    var videosAllowed by remember { mutableStateOf(net.prototux.aare.player.LocalVideos.granted(ctx)) }
+    val videoPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        videosAllowed = ok
+        // Refused for good (no rationale left after a refusal): Android won't ask again, so open
+        // AARE's settings to allow it there.
+        val activity = ctx as? android.app.Activity
+        if (!ok && activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, net.prototux.aare.player.LocalVideos.permission)) {
+            ctx.startSafely(appDetails(ctx))
+        }
+    }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
     val lists by produceState<LauncherLists?>(null) {
         value = withContext(Dispatchers.IO) {
@@ -1028,8 +1039,14 @@ private fun AppsCard(settings: Settings) {
                 Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             }
+            AppRow(null, stringResource(R.string.videos_app_label), stringResource(R.string.videos_app_row_subtitle), videos) { videos = it; settings.videos = it }
+            if (videos) {
+                Check(stringResource(R.string.videos_check_permission_title), stringResource(R.string.videos_check_permission_subtitle), videosAllowed) {
+                    videoPermission.launch(net.prototux.aare.player.LocalVideos.permission)
+                }
+            }
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
+        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser, videos)
         StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
@@ -1046,7 +1063,7 @@ private fun AppsCard(settings: Settings) {
 
 /** The order of the car's app list: the visible apps, with up and down buttons. */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean, videos: Boolean) {
     // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
     val all = buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -1058,6 +1075,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
         if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
+        if (videos) Triple(CarRuntime.VIDEOS_ID, stringResource(R.string.videos_app_label), null) else null,
     )
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }
