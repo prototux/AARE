@@ -144,6 +144,12 @@ class CarSession(
     @Volatile private var mediaFocus = false
     /** The car lets navigation voice play (but not music). */
     @Volatile private var guidanceFocusState = false
+    /**
+     * The car answered our own guidance request. Some head units (Ford SYNC) answer the transient
+     * may-duck request with a plain LOSS: the music lost focus so the prompt can play. Taken as
+     * a grant for the guidance channel, or the prompt waits for a GAIN that never comes.
+     */
+    @Volatile private var guidanceAnswered = false
     @Volatile var headUnitName: String = ""
         private set
     @Volatile var videoDescription: String = ""
@@ -256,6 +262,11 @@ class CarSession(
 
     override fun onAudioFocus(session: AapSession, notification: AudioFocusNotification) {
         val state = notification.focusState
+        if (!notification.unsolicited && guidancePlaying) {
+            // A call or the car's own source taking over arrives as LOSS_TRANSIENT: not a grant.
+            guidanceAnswered = state != AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT
+            DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
+        }
         // Ducking keeps the music going: the head unit lowers it itself.
         mediaFocus = state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY ||
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK
@@ -579,7 +590,7 @@ class CarSession(
                 return
             }
         }
-        if (!guidance) DiagLog.add("car audio: ${method.label}")
+        DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")
         audioOuts.remove(channel.streamType)?.stop()
         lateinit var out: CarAudioOut
         out = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, onFailed = {
@@ -618,6 +629,7 @@ class CarSession(
     /** Navigation voice: transient focus that ducks the car's other sound, then back to the music if it plays. */
     private val guidanceFocus = object : CarAudioOut.Focus {
         override fun request(playing: Boolean) {
+            guidanceAnswered = false
             guidancePlaying = playing
             aap.requestAudioFocus(when {
                 playing -> AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK
@@ -625,7 +637,7 @@ class CarSession(
                 else -> AudioFocusRequestType.AUDIO_FOCUS_RELEASE
             }, if (playing) Priority.CONTROL else Priority.AUDIO)
         }
-        override val granted: Boolean get() = mediaFocus || guidanceFocusState
+        override val granted: Boolean get() = mediaFocus || guidanceFocusState || guidanceAnswered
     }
 
     // ------------------------------------------------------------------ microphone
