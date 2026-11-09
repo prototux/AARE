@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Neben der Uhr, von Open-Meteo (es erhält eine ungefähre Position von etwa 10 km)</string>
     <string name="setup_toggle_calendar_title">Nächster Kalendertermin</string>
     <string name="setup_toggle_calendar_subtitle">Unter der Musik, mit einer Verknüpfung zur Navigation zum entsprechenden Ort</string>
+    <string name="setup_toggle_media_first_title">Musik zuerst</string>
+    <string name="setup_toggle_media_first_subtitle">Auf dem Startbildschirm steht die Musik dort, wo die Karte ist (links oder oben), und die Karte danach</string>
     <string name="setup_section_driving">Fahren</string>
     <string name="setup_toggle_passenger_title">Beifahrermodus</string>
     <string name="setup_toggle_passenger_subtitle">Ignoriert den Fahrstatus des Autos: Tippen, lange Listen und der Telefonbildschirm bleiben während der Fahrt für einen Beifahrer verfügbar. Der Fahrer darf den Bildschirm während der Fahrt nicht benutzen.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Dunkle Leiste, auch bei Tagfarben</string>
+    <string name="setup_switch_media_first">Musik vor der Karte auf dem Startbildschirm</string>
     <string name="setup_switch_passenger">Beifahrermodus: keine Fahreinschränkungen (der Fahrer darf den Bildschirm nicht benutzen)</string>
     <string name="setup_switch_message_notifications">Nachrichtenbenachrichtigungen</string>
     <string name="setup_switch_audio_next_connection">Telefonaudio im Auto (nächste Verbindung)</string>

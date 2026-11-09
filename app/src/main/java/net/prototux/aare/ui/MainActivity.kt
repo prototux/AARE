@@ -639,6 +639,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var mediaFirst by remember { mutableStateOf(settings.dashboardMediaFirst) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
@@ -682,6 +683,9 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Toggle(stringResource(R.string.setup_toggle_calendar_title), stringResource(R.string.setup_toggle_calendar_subtitle), calendar) {
                 calendar = it; settings.showCalendar = it
+            }
+            Toggle(stringResource(R.string.setup_toggle_media_first_title), stringResource(R.string.setup_toggle_media_first_subtitle), mediaFirst) {
+                mediaFirst = it; settings.dashboardMediaFirst = it
             }
         }
         Section(stringResource(R.string.setup_section_driving)) {

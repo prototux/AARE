@@ -44,6 +44,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
     var aloud by remember { mutableStateOf(settings.readMessagesAloud) }
     var audio by remember { mutableStateOf(settings.carAudio) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var mediaFirst by remember { mutableStateOf(settings.dashboardMediaFirst) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     LazyColumn(
         modifier.background(MaterialTheme.colorScheme.background),
@@ -67,6 +68,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             }
         }
         item { SwitchRow(stringResource(R.string.setup_switch_dark_bar), darkBar) { darkBar = it; settings.darkBar = it } }
+        item { SwitchRow(stringResource(R.string.setup_switch_media_first), mediaFirst) { mediaFirst = it; settings.dashboardMediaFirst = it } }
         item { SwitchRow(stringResource(R.string.setup_switch_passenger), passenger) { passenger = it; settings.ignoreDriving = it } }
         item { SwitchRow(stringResource(R.string.setup_switch_message_notifications), banners) { banners = it; settings.messageBanners = it } }
         item { SwitchRow(stringResource(R.string.msg_toggle_read_aloud_title), aloud) { aloud = it; settings.readMessagesAloud = it } }

@@ -350,8 +350,9 @@ internal fun Dashboard(
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
             // portrait screens (720x1280, 1080x1920…): the cards stacked, the map on top
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxWidth())
-                MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxWidth())
+                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxWidth()) }
+                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxWidth()) }
+                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
@@ -364,14 +365,16 @@ internal fun Dashboard(
         } else if (narrow) {
             // small screens: one big card, media as a strip under it
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1f).fillMaxWidth())
-                MediaCard(state, actions, compact = true, modifier = Modifier.fillMaxWidth().height(112.dp))
+                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1f).fillMaxWidth()) }
+                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = true, modifier = Modifier.fillMaxWidth().height(112.dp)) }
+                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxHeight())
-                MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
+                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxHeight()) }
+                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight()) }
+                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
@@ -383,16 +386,19 @@ internal fun Dashboard(
             }
         } else {
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.65f).fillMaxHeight())
                 val event = state.nextEvent
-                if (event == null) {
-                    MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
-                } else {
-                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                        MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
-                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.65f).fillMaxHeight()) }
+                val media: @Composable () -> Unit = {
+                    if (event == null) {
+                        MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
+                    } else {
+                        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
+                            MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
+                            Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                        }
                     }
                 }
+                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
             }
         }
     }

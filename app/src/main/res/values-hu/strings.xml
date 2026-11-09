@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Az óra mellett, az Open-Meteo-tól (hozzávetőleges, kb. 10 km pontosságú pozíciót kap)</string>
     <string name="setup_toggle_calendar_title">Következő naptáresemény</string>
     <string name="setup_toggle_calendar_subtitle">A zene alatt, gyorsgombbal a helyszínéhez navigáláshoz</string>
+    <string name="setup_toggle_media_first_title">Először a zene</string>
+    <string name="setup_toggle_media_first_subtitle">A kezdőképernyőn a zene kerül a térkép helyére (balra vagy felülre), a térkép pedig utána</string>
     <string name="setup_section_driving">Vezetés</string>
     <string name="setup_toggle_passenger_title">Utas mód</string>
     <string name="setup_toggle_passenger_subtitle">Az autó vezetési állapotának figyelmen kívül hagyása: a gépelés, a hosszú listák és a telefon képernyője mozgás közben is elérhető marad, az utas számára. A vezető vezetés közben nem használhatja a képernyőt.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Sötét sáv, nappali színeknél is</string>
+    <string name="setup_switch_media_first">Zene a térkép előtt a kezdőképernyőn</string>
     <string name="setup_switch_passenger">Utas mód: nincs vezetési korlátozás (a vezető nem használhatja a képernyőt)</string>
     <string name="setup_switch_message_notifications">Üzenetértesítések</string>
     <string name="setup_switch_audio_next_connection">Telefon hangja az autóban (következő csatlakozásnál)</string>

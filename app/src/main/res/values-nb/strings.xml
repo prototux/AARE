@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Ved siden av klokken, fra Open-Meteo (den henter en omtrentlig posisjon, ca. 10 km)</string>
     <string name="setup_toggle_calendar_title">Neste kalenderhendelse</string>
     <string name="setup_toggle_calendar_subtitle">Under musikken, med en snarvei for å navigere til stedet</string>
+    <string name="setup_toggle_media_first_title">Musikk først</string>
+    <string name="setup_toggle_media_first_subtitle">På startskjermen havner musikken der kartet er (til venstre eller øverst), og kartet etter den</string>
     <string name="setup_section_driving">Kjøring</string>
     <string name="setup_toggle_passenger_title">Passasjermodus</string>
     <string name="setup_toggle_passenger_subtitle">Ignorerer bilens kjørestatus: skriving, lange lister og telefonskjermen forblir tilgjengelige under kjøring, for en passasjer. Føreren må ikke bruke skjermen under kjøring.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Mørk stolpe, selv med dagfarger</string>
+    <string name="setup_switch_media_first">Musikk før kartet på startskjermen</string>
     <string name="setup_switch_passenger">Passasjermodus: ingen kjørebegrensninger (føreren må ikke bruke skjermen)</string>
     <string name="setup_switch_message_notifications">Meldingsvarsler</string>
     <string name="setup_switch_audio_next_connection">Telefonaudio i bilen (neste tilkobling)</string>

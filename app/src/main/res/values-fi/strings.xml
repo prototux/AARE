@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Kellon vierellä, Open-Meteolta (hakee arvioidun sijainnin, noin 10 km)</string>
     <string name="setup_toggle_calendar_title">Seuraava kalenteritapahtuma</string>
     <string name="setup_toggle_calendar_subtitle">Musiikin alla, pikakuvakkeella navigointiin sen paikkaan</string>
+    <string name="setup_toggle_media_first_title">Musiikki ensin</string>
+    <string name="setup_toggle_media_first_subtitle">Kotinäytössä musiikki tulee kartan paikalle (vasemmalle tai ylös) ja kartta sen jälkeen</string>
     <string name="setup_section_driving">Ajaminen</string>
     <string name="setup_toggle_passenger_title">Matkustajatila</string>
     <string name="setup_toggle_passenger_subtitle">Ohita auton ajotila: kirjoittaminen, pitkät luettelot ja puhelimen näyttö pysyvät käytettävissä liikkeessä, matkustajaa varten. Kuljettaja ei saa käyttää näyttöä ajaessaan.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Tumma palkki, myös vaaleilla väreillä</string>
+    <string name="setup_switch_media_first">Musiikki ennen karttaa kotinäytössä</string>
     <string name="setup_switch_passenger">Matkustajatila: ei ajorajoituksia (kuljettaja ei saa käyttää näyttöä)</string>
     <string name="setup_switch_message_notifications">Viesti-ilmoitukset</string>
     <string name="setup_switch_audio_next_connection">Puhelimen äänet autossa (seuraava yhteys)</string>
