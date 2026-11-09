@@ -98,6 +98,9 @@ class ProjectionService : Service() {
     private var destroyed = false
     /** The download prompt is shown at most once per service lifetime, until a Google cert arrives. */
     private var certDownloadPrompted = false
+    /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
+    private var lastSessionWireless = false
+    private var lastWirelessAddress: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -200,6 +203,7 @@ class ProjectionService : Service() {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
             return
         }
+        lastWirelessAddress = address
         log("wireless: connecting to ${runCatching { device.name }.getOrNull() ?: address}")
         _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
@@ -336,6 +340,7 @@ class ProjectionService : Service() {
             transport.close()
             return
         }
+        lastSessionWireless = wireless
         val cert = certs.pick(settings.certificateIndex)
         log("connecting ${transport.name} with certificate \"${cert.name}\"")
         acquireWakeLock()
@@ -559,9 +564,19 @@ class ProjectionService : Service() {
                     // Offer the downloaded certificate first on the next connection.
                     settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
                     certDownloadPrompted = false
-                    certNotice(getString(R.string.notif_cert_download_ready_title),
-                        getString(R.string.notif_cert_download_ready_message), retry = false)
-                    log("downloaded Android Auto's certificate \"${entry.name}\"; reconnect to use it")
+                    val address = lastWirelessAddress
+                    if (lastSessionWireless && address != null && session == null) {
+                        // Wireless can reconnect itself over the still-bonded Bluetooth link.
+                        certNotice(getString(R.string.notif_cert_download_ready_title),
+                            getString(R.string.notif_cert_download_reconnecting), retry = false)
+                        log("downloaded Android Auto's certificate \"${entry.name}\"; reconnecting wirelessly")
+                        connectWireless(address)
+                    } else {
+                        // USB (and anything else): the user reconnects, which re-triggers the flow.
+                        certNotice(getString(R.string.notif_cert_download_ready_title),
+                            getString(R.string.notif_cert_download_ready_message), retry = false)
+                        log("downloaded Android Auto's certificate \"${entry.name}\"; reconnect to use it")
+                    }
                 }.onFailure { e ->
                     certNotice(getString(R.string.notif_cert_download_title),
                         getString(R.string.notif_cert_download_failed, e.message ?: e.toString()), retry = true)

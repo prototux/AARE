@@ -229,6 +229,7 @@
     <string name="notif_cert_download_progress">Downloading Android Auto\'s certificate…</string>
     <string name="notif_cert_download_ready_title">Certificate ready</string>
     <string name="notif_cert_download_ready_message">Android Auto\'s certificate was added. Reconnect to the head unit to use it.</string>
+    <string name="notif_cert_download_reconnecting">Android Auto\'s certificate was added. Reconnecting to the head unit…</string>
     <string name="notif_cert_download_failed">Couldn\'t download the certificate: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Connecting wirelessly…</string>
     <string name="notif_status_not_connected">Not connected</string>
