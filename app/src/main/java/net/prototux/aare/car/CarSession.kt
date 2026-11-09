@@ -473,7 +473,13 @@ class CarSession(
             KeyEvent.KEYCODE_MEDIA_NEXT -> if (!down) media.next()
             KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) media.previous()
             KEYCODE_MEDIA -> if (!down) runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
-            KEYCODE_NAVIGATION -> if (!down) runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            KEYCODE_NAVIGATION, KEYCODE_TURN_CARD -> if (!down) runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            // The car's dedicated Phone button opens the phone app; the Call/Endcall keys answer and hang up.
+            KEYCODE_TEL -> if (!down) runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
+            KeyEvent.KEYCODE_CALL -> if (!down) { if (runtime.ui.call?.ringing == true) runtime.actions.answerCall() else runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp) }
+            KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
+            // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
+            KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
         }
     }
@@ -747,6 +753,9 @@ class CarSession(
         private const val TAG = "AareSession"
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
+        const val KEYCODE_RADIO = 65539
+        const val KEYCODE_TEL = 65540
+        const val KEYCODE_TURN_CARD = 65544
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L

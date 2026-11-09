@@ -279,6 +279,13 @@ class HeadUnitSimulator(
         }
     }
 
+    /** The car's dedicated function buttons (AA keycodes), as a head unit's hardware keys send them. */
+    fun phoneButton() = key(65540) // KEYCODE_TEL
+    fun navigationButton() = key(65538) // KEYCODE_NAVIGATION
+    fun mediaButton() = key(65537) // KEYCODE_MEDIA
+    fun radioButton() = key(65539) // KEYCODE_RADIO
+    fun callButton() = key(5) // KEYCODE_CALL
+
     /** Turns the rotary controller [detents] detents (positive = clockwise), like a knob. */
     fun rotary(detents: Int) {
         send(input, InputMsg.INPUT_REPORT, InputReport.newBuilder().setTimestamp(System.nanoTime())
@@ -324,7 +331,9 @@ class HeadUnitSimulator(
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM)
                 .setAudioConfig(AudioConfiguration.newBuilder().setSamplingRate(16000).setNumberOfBits(16).setNumberOfChannels(1))))
             .addChannels(Service.newBuilder().setId(input).setInputSourceService(InputSourceService.newBuilder()
-                .addAllKeycodesSupported(listOf(3, 4, 19, 20, 21, 22, 23, 84, 85, 87, 88, 65536))
+                // HOME, BACK, CALL, ENDCALL, DPAD, SEARCH, media, VOICE_ASSIST, rotary, and the AA
+                // function buttons: MEDIA, NAVIGATION, RADIO, TEL.
+                .addAllKeycodesSupported(listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 231, 65536, 65537, 65538, 65539, 65540))
                 .addTouchscreen(InputSourceService.TouchScreen.newBuilder().setWidth(width).setHeight(height))))
             .addChannels(Service.newBuilder().setId(sensors).setSensorSourceService(SensorSourceService.newBuilder()
                 .addSensors(Sensor.newBuilder().setSensorType(SensorType.SENSOR_DRIVING_STATUS_DATA))
