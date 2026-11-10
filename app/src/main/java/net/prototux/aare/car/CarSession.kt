@@ -226,7 +226,11 @@ class CarSession(
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
-                s.hasBluetoothService() -> channels += BluetoothChannel(s, object : BluetoothChannel.Listener {})
+                s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
+                    override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
+                        DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
+                    }
+                })
             }
         }
         Log.i(TAG, "audio: " + audio.joinToString { ch ->
@@ -811,6 +815,26 @@ class CarSession(
         val m = Build.MODEL
         return if (m.startsWith(Build.MANUFACTURER, ignoreCase = true)) m else "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} $m"
     }
+
+    /**
+     * The phone's own Bluetooth MAC for the car's pairing handshake, or null if unknown. Prefer the
+     * user-set value; else try to read it (Android hides it from apps on most devices, returning
+     * null or the 02:00:00:00:00:00 placeholder — then we skip the handshake rather than send junk).
+     */
+    private fun phoneBtAddress(): String? {
+        val set = settings.phoneBluetoothAddress.trim()
+        val fromSecure = runCatching {
+            android.provider.Settings.Secure.getString(context.contentResolver, "bluetooth_address")
+        }.getOrNull()
+        val fromAdapter = runCatching {
+            if (context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.address else null
+        }.getOrNull()
+        return listOf(set, fromSecure, fromAdapter).firstOrNull(::isValidBtMac)
+    }
+
+    private fun isValidBtMac(s: String?): Boolean =
+        !s.isNullOrBlank() && s != "02:00:00:00:00:00" && s.matches(Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}"))
 
     private fun icon(size: Int): ByteArray? = runCatching {
         val d = context.packageManager.getApplicationIcon(context.packageName)

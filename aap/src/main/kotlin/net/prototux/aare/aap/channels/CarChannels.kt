@@ -196,13 +196,21 @@ class MediaPlaybackChannel(service: Service) : ServiceChannel(service, "playback
  * car (HFP). Android hides the phone's own address from normal apps, so [phoneAddress] may be
  * unknown, in which case we just let the user pair the usual way.
  */
-class BluetoothChannel(service: Service, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
+class BluetoothChannel(service: Service, private val phoneAddress: String?, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
     interface Listener {
         fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {}
     }
 
     val carAddress: String = service.bluetoothService.carAddress
     val methods: List<BluetoothPairingMethod> = service.bluetoothService.supportedPairingMethodsList
+
+    override fun onOpened() {
+        // Announce the phone to the car. Some head units withhold the projected screen until they
+        // know which phone is connected (they keep video focus "native"); this pairing request over
+        // the Bluetooth service channel is how the official phone identifies itself. Only when we
+        // have a real phone Bluetooth address; Android hides it from apps on most devices.
+        phoneAddress?.let { requestPairing(it) }
+    }
 
     fun requestPairing(phoneAddress: String) {
         val method = when {
