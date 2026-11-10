@@ -139,4 +139,6 @@ interface CarActions {
     fun endCall()
     /** Navigate to a place (an address or a name) in the car's navigation app. */
     fun navigateTo(place: String)
+    /** Hide the dashboard's calendar event; the next one takes its place. */
+    fun dismissEvent(event: NextEvent)
 }

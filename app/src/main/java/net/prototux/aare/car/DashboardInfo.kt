@@ -21,7 +21,8 @@ import java.util.Locale
 data class Weather(val temperature: Int, val unit: String, val code: Int, val day: Boolean)
 
 /** The next calendar event, for the dashboard. */
-data class NextEvent(val title: String, val startMs: Long, val allDay: Boolean, val location: String)
+/** [key] tells this occurrence apart from the event's others, for [DashboardInfo.dismiss]. */
+data class NextEvent(val title: String, val startMs: Long, val allDay: Boolean, val location: String, val key: String = "")
 
 /**
  * What Android Auto shows around the map: the weather and the next calendar event. The weather
@@ -61,9 +62,22 @@ object DashboardInfo {
     }
 
     /** The next event in the coming 12 hours (timed events first), else today's all-day event, or null. Blocking. */
+    /** Hides [event] from the dashboard; the next one shows instead. Kept for two days, then forgotten. */
+    fun dismiss(context: Context, event: NextEvent) {
+        val prefs = dismissed(context)
+        val old = System.currentTimeMillis() - 2 * 86_400_000L
+        val keep = prefs.getStringSet(KEY_DISMISSED, emptySet()).orEmpty()
+            .filter { (it.substringAfter(':').toLongOrNull() ?: 0) > old }.toSet()
+        prefs.edit().putStringSet(KEY_DISMISSED, keep + event.key).apply()
+    }
+
+    private fun dismissed(context: Context) = context.applicationContext.getSharedPreferences("dashboard", Context.MODE_PRIVATE)
+    private const val KEY_DISMISSED = "dismissed_events"
+
     fun nextEvent(context: Context): NextEvent? {
         if (context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return null
         val window = EventWindow(System.currentTimeMillis(), ZoneId.systemDefault())
+        val hidden = dismissed(context).getStringSet(KEY_DISMISSED, emptySet()).orEmpty()
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
             ContentUris.appendId(it, window.queryFrom)
             ContentUris.appendId(it, window.queryTo)
@@ -71,12 +85,14 @@ object DashboardInfo {
         return runCatching {
             context.contentResolver.query(uri,
                 arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.ALL_DAY,
-                    CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.END),
+                    CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.END, CalendarContract.Instances.EVENT_ID),
                 "${CalendarContract.Instances.VISIBLE} = 1", null, "${CalendarContract.Instances.ALL_DAY} ASC, ${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
                 while (c.moveToNext()) {
                     val allDay = c.getInt(2) == 1
                     if (!window.shows(c.getLong(1), c.getLong(4), allDay)) continue
-                    return@use NextEvent(c.getString(0).orEmpty().ifBlank { "Event" }, c.getLong(1), allDay, c.getString(3).orEmpty())
+                    val key = "${c.getLong(5)}:${c.getLong(1)}" // event id and this occurrence's start
+                    if (key in hidden) continue
+                    return@use NextEvent(c.getString(0).orEmpty().ifBlank { "Event" }, c.getLong(1), allDay, c.getString(3).orEmpty(), key)
                 }
                 null
             }

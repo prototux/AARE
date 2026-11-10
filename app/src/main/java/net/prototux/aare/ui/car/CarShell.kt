@@ -354,7 +354,7 @@ internal fun Dashboard(
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
-                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     latest != null -> Card(Modifier.fillMaxWidth().height(180.dp), onClick = {
                         state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
                     }) { LatestNotification(latest, state.drivingRestricted) }
@@ -374,7 +374,7 @@ internal fun Dashboard(
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
-                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     latest != null -> Card(Modifier.weight(0.9f).fillMaxHeight(), onClick = {
                         state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
                     }) { LatestNotification(latest, state.drivingRestricted) }
@@ -389,7 +389,7 @@ internal fun Dashboard(
                 } else {
                     Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                         MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
-                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     }
                 }
             }
