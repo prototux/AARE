@@ -66,50 +66,53 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
 
     Box(modifier.background(Color.Black)) {
         if (!driving) {
-            androidx.compose.ui.viewinterop.AndroidView(
-                factory = { ctx ->
-                    TextureView(ctx).apply {
-                        surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                            override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
-                                val surface = Surface(st)
-                                // connect() blocks (binds Shizuku / spawns su), so do it off the main thread.
-                                Thread {
-                                    if (launcher.connect()) {
-                                        val id = launcher.start(surface, w, h, runtime.densityDpi, packageName)
-                                        started = id >= 0
-                                    }
-                                }.apply { isDaemon = true }.start()
+            // On a car with a knob and no touch, a cursor stands in for the finger.
+            CursorPane(Modifier.fillMaxSize()) {
+                androidx.compose.ui.viewinterop.AndroidView(
+                    factory = { ctx ->
+                        TextureView(ctx).apply {
+                            surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                                override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
+                                    val surface = Surface(st)
+                                    // connect() blocks (binds Shizuku / spawns su), so do it off the main thread.
+                                    Thread {
+                                        if (launcher.connect()) {
+                                            val id = launcher.start(surface, w, h, runtime.densityDpi, packageName)
+                                            started = id >= 0
+                                        }
+                                    }.apply { isDaemon = true }.start()
+                                }
+                                override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
+                                    launcher.resize(Surface(st), w, h, runtime.densityDpi)
+                                }
+                                override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean = true
+                                override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
                             }
-                            override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
-                                launcher.resize(Surface(st), w, h, runtime.densityDpi)
-                            }
-                            override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean = true
-                            override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-            // Forward the car's touches to the launched app's display (single pointer for now).
-            Box(Modifier.fillMaxSize().pointerInput(packageName) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val t0 = down.uptimeMillis
-                    launcher.touch(t0, t0, MotionEvent.ACTION_DOWN, down.position.x, down.position.y, 0)
-                    down.consume()
-                    while (true) {
-                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        if (change.pressed) {
-                            launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_MOVE, change.position.x, change.position.y, 0)
-                        } else {
-                            launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_UP, change.position.x, change.position.y, 0)
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // Forward the car's touches to the launched app's display (single pointer for now).
+                Box(Modifier.fillMaxSize().pointerInput(packageName) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val t0 = down.uptimeMillis
+                        launcher.touch(t0, t0, MotionEvent.ACTION_DOWN, down.position.x, down.position.y, 0)
+                        down.consume()
+                        while (true) {
+                            val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                            if (change.pressed) {
+                                launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_MOVE, change.position.x, change.position.y, 0)
+                            } else {
+                                launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_UP, change.position.x, change.position.y, 0)
+                                change.consume()
+                                break
+                            }
                             change.consume()
-                            break
                         }
-                        change.consume()
                     }
-                }
-            })
+                })
+            }
             // A quiet reminder that this isn't an Android Auto app.
             Text(
                 stringResource(R.string.standalone_not_native),

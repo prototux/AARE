@@ -77,6 +77,8 @@ import net.prototux.aare.aap.pcm.PcmFormat
 import net.prototux.aare.tts.CarVoice
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
+import net.prototux.aare.ui.car.CarFocusVisibility
+import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.video.BitrateController
 import net.prototux.aare.video.ProjectionDisplay
@@ -522,6 +524,8 @@ class CarSession(
                 }
             }
             if (report.hasRelativeEvent()) {
+                // A knob is present: tilting it now jumps between panes, see rotaryWrap.
+                main.post { if (!closed) CarFocusVisibility.rotary = true }
                 for (r in report.relativeEvent.dataList) {
                     Log.d(TAG, "input rotary: keycode=${r.keycode} delta=${r.delta}")
                 }
@@ -540,8 +544,13 @@ class CarSession(
         }
     }
 
-    /** HOME goes to the dashboard; held, it hands the screen back to the car. */
-    private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
+    /** HOME goes to the dashboard, or from it to the app list; held, it hands the screen back to the car. */
+    private val homeKey = LongPressKey(onPress = ::home, onLongPress = ::exitToCar)
+
+    /** Home, like the rail's menu button: already there, it opens the app list (and closes it again). */
+    private fun home() {
+        if (runtime.ui.screen == CarScreen.Dashboard) runtime.actions.openLauncher() else runtime.actions.goHome()
+    }
 
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
         when (code) {
@@ -551,8 +560,6 @@ class CarSession(
             // button: while a call rings it answers. During a call it does nothing: an assistant
             // would take the microphone from the call. No call: the assistant, as before.
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down && !callKey()) runtime.assistant()
-            KeyEvent.KEYCODE_CALL -> if (!down) { if (runtime.ui.call?.ringing == true) runtime.actions.answerCall() else runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp) }
-            KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) media.pause()
@@ -959,6 +966,7 @@ class CarSession(
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         readyAudio.clear(); audioMethods.clear()
         phoneMute.set(false)
+        CarFocusVisibility.rotary = false // the next car may have no knob
         phoneBridge?.stop(); phoneBridge = null
         locationFeed.stop()
         drivingMode.stop()

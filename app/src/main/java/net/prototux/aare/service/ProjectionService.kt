@@ -42,7 +42,6 @@ import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
-import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.cert.CertificateDownload
@@ -778,9 +777,6 @@ class ProjectionService : Service() {
         private const val CERT_DOWNLOAD_NOTIFICATION_ID = 4
         /** A USB session that lasted this long had recovered: its drop starts a new retry budget. */
         private const val USB_RETRY_RESET_MS = 60_000L
-        /** Wireless attempts after a car that wasn't ready yet, waiting this much longer each time. */
-        private const val WIRELESS_RETRIES = 2
-        private const val WIRELESS_RETRY_DELAY_MS = 10_000L
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"

@@ -237,7 +237,6 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("resume_media", false)
         set(v) = prefs.edit { putBoolean("resume_media", v) }
 
-
     /** Show incoming messages as banners on the car screen. */
     var messageBanners: Boolean
         get() = prefs.getBoolean("message_banners", true)

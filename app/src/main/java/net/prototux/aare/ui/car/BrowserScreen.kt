@@ -88,7 +88,7 @@ internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: Stri
         Column(Modifier.fillMaxSize()) {
             // Toolbar
             Row(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow).padding(horizontal = 6.dp, vertical = 6.dp),
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow).padding(horizontal = 6.dp, vertical = 6.dp).rotaryArea(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 ToolButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), canBack) { web?.goBack() }
@@ -105,26 +105,28 @@ internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                 )
                 ToolButton(Icons.Rounded.Home, stringResource(R.string.browser_home)) { web?.loadUrl(home) }
             }
-            // The page
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        webChromeClient = WebChromeClient()
-                        webViewClient = object : WebViewClient() {
-                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
-                                url?.let { currentUrl = it }
-                                canBack = view.canGoBack(); canForward = view.canGoForward()
+            // The page; on a car with a knob and no touch, a cursor stands in for the finger.
+            CursorPane(Modifier.fillMaxWidth().weight(1f)) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            webChromeClient = WebChromeClient()
+                            webViewClient = object : WebViewClient() {
+                                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                                    url?.let { currentUrl = it }
+                                    canBack = view.canGoBack(); canForward = view.canGoForward()
+                                }
                             }
+                            loadUrl(home)
+                            web = this
                         }
-                        loadUrl(home)
-                        web = this
-                    }
-                },
-                onRelease = { it.destroy() },
-                modifier = Modifier.fillMaxWidth().weight(1f),
-            )
+                    },
+                    onRelease = { it.destroy() },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             // Car keyboard for the address field (the phone IME can't show on the car display).
             if (editing) {
                 val sink = object : KeyboardSink {

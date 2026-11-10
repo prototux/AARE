@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.R
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
@@ -68,7 +70,11 @@ internal fun WeatherChip(weather: Weather?) {
 internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier) {
     val context = LocalContext.current
     val time = if (event.allDay) stringResource(R.string.dash_event_today) else DateFormat.getTimeFormat(context).format(event.startMs)
-    Column(modifier.padding(24.dp), verticalArrangement = Arrangement.Center) {
+    // Without a place there's nothing to press, but the knob can still land on the card (its pane
+    // would otherwise be skipped); with one, the navigate chip takes focus.
+    val r = LocalCarDimens.current.cardRadius
+    val focus = if (event.location.isBlank()) Modifier.carFocusHighlight(RoundedCornerShape(r)).focusable() else Modifier
+    Column(modifier.then(focus).padding(24.dp), verticalArrangement = Arrangement.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Event, null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(10.dp))
@@ -80,7 +86,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-                    .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    .carFocusHighlight(RoundedCornerShape(20.dp)).clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Navigation, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
