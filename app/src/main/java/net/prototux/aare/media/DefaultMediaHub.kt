@@ -9,14 +9,17 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Creates the media hub for a car session. Call on the main thread; [scope] bounds its lifetime
@@ -89,6 +92,11 @@ class DefaultMediaHub(context: Context, scope: CoroutineScope) : MediaHub {
         _connection.value = MediaConnection(context, scope, app, art).also { it.connect() }
     }
 
+    override suspend fun awaitConnection(timeoutMs: Long): Boolean {
+        val c = _connection.value ?: return false
+        return awaitSettled(c.status, timeoutMs) || c.connected
+    }
+
     internal fun uiFor(c: MediaConnection): MediaUi = ui?.takeIf { it.connection === c } ?: MediaUi(c, scope).also { ui = it }
 
     /** Transport goes to what is shown as playing, else to our connection. */
@@ -124,3 +132,7 @@ class DefaultMediaHub(context: Context, scope: CoroutineScope) : MediaHub {
         scope.cancel()
     }
 }
+
+/** True once [status] is [MediaConnection.Status.Ready]; false if it fails first or stays connecting for [timeoutMs]. */
+internal suspend fun awaitSettled(status: Flow<MediaConnection.Status>, timeoutMs: Long): Boolean =
+    withTimeoutOrNull(timeoutMs) { status.firstOrNull { it !is MediaConnection.Status.Connecting } } is MediaConnection.Status.Ready

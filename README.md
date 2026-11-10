@@ -273,7 +273,7 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
 | Method | Needs | Navigation voice | Phone speaker |
 |---|---|---|---|
 | **System audio routing**, as Android Auto does it | a rooted phone, AARE installed as a privileged app (below) | yes, on the car's navigation channel | off |
-| **Shizuku** | [Shizuku](https://shizuku.rikka.app/) running, Android 12+ | yes, mixed with the music | off |
+| **Shizuku** | [Shizuku](https://shizuku.rikka.app/) running, Android 12+ | yes, on the car's navigation channel | off |
 | **Screen-capture permission** | one consent (choose *Entire screen*) | no | still plays |
 
 - **Privileged install (root):** `tools/magisk/build-module.sh` makes `build/aare-magisk.zip`.
@@ -281,7 +281,11 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
   `/system/priv-app` with `MODIFY_AUDIO_ROUTING`. Later updates install normally if they are
   signed with the same key.
 - **Shizuku (no root):** install Shizuku and start it (wireless debugging, once after each
-  reboot). Then on AARE's *Car audio* page tap *Shizuku* to allow AARE.
+  reboot). Then on AARE's *Car audio* page tap *Shizuku* to allow AARE. The shell that Shizuku
+  runs as holds `MODIFY_AUDIO_ROUTING`, so AARE registers the same audio policy as the
+  privileged install from there: music and navigation voice go to their own car channels. If
+  the phone refuses it, AARE falls back to recording the phone's whole output, with navigation
+  voice mixed into the music.
 - **Screen capture:** works everywhere, but Android only gives normal apps media, game and
   "unknown" sounds, so navigation voice stays on the phone, and apps may opt out.
 

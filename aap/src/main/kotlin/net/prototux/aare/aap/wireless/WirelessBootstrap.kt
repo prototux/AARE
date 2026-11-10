@@ -9,6 +9,7 @@ import aap_protobuf.aaw.WifiStartRequestOuterClass.WifiStartRequest
 import aap_protobuf.aaw.WifiStartResponseOuterClass.WifiStartResponse
 import aap_protobuf.aaw.WifiVersionRequestOuterClass.WifiVersionRequest
 import aap_protobuf.aaw.WifiVersionResponseOuterClass.WifiVersionResponse
+import aap_protobuf.aaw.WifiVersionResponseOuterClass.WppWifiDeviceInfo
 import com.google.protobuf.InvalidProtocolBufferException
 import net.prototux.aare.aap.AapLog
 import java.io.IOException
@@ -70,7 +71,8 @@ class WirelessBootstrapException(
  * Threads: a reader thread answers pings at once and queues everything else for [run]; while
  * the phone joins the network a keepalive thread pings the head unit, because some cars give up
  * on a silent RFCOMM link within ~15 s and the user may still be looking at Android's
- * "connect to device" dialog.
+ * "connect to device" dialog. After a WifiVersionRequest a pinger thread does that instead, for
+ * the rest of the link.
  */
 class WirelessBootstrap(
     private val input: InputStream,
@@ -116,6 +118,20 @@ class WirelessBootstrap(
         val holdLink: Boolean = true,
         /** Sent as device_serial in WifiVersionResponse, like the official phone; null to omit. */
         val deviceSerial: String? = null,
+        /**
+         * Sent as phone_info.instance_id in WifiVersionResponse, like the official phone; null omits
+         * phone_info. Google's receiver library drops every message from a phone without it except
+         * pings and version responses.
+         */
+        val instanceId: String? = null,
+        /** phone_info.device_name (the head unit may show it); only sent with [instanceId]. */
+        val deviceName: String? = null,
+        /**
+         * After answering a WifiVersionRequest, send a WifiPingRequest this often for the rest of the
+         * link (Android Auto: 1 s; Google's receiver library closes the link after 10 s without one);
+         * 0 disables.
+         */
+        val pingIntervalMs: Long = 1_000,
     )
 
     enum class State { NEW, NEGOTIATING, JOINING, READY, DONE, FAILED }
@@ -135,6 +151,8 @@ class WirelessBootstrap(
     private var lastWriteNs = 0L
     /** Set once the head unit hung up; later sends are skipped. */
     @Volatile private var linkEnded = false
+    /** The link pinger runs (see [Options.pingIntervalMs]). */
+    private var linkPinging = false
 
     /**
      * Runs the bootstrap: returns once the link ended after a successful [Listener.onReady] (or
@@ -269,16 +287,39 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
         }
-        // Gearhead's answer: echo the version, the device serial, and the Wi-Fi channel type the
-        // head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold the
-        // WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
+        // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
+        // type the head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold
+        // the WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
         val response = WifiVersionResponse.newBuilder()
             .setMajor(request?.takeIf { it.hasMajor() }?.major ?: 1)
             .setMinor(request?.takeIf { it.hasMinor() }?.minor ?: 0)
             .setStatus(WppStatus.SUCCESS)
         options.deviceSerial?.let { response.setDeviceSerial(it) }
+        // No bluetooth_address: reading the phone's own MAC needs the privileged LOCAL_MAC_ADDRESS
+        // permission, which AARE does not request; the receiver knows the link by its RFCOMM peer address.
+        options.instanceId?.let { id ->
+            response.setDeviceInfo(WppWifiDeviceInfo.newBuilder().setDeviceId(id).apply { options.deviceName?.let { deviceName = it } })
+        }
         request?.takeIf { it.hasSupportedWifiChannelType() }?.let { response.setSelectedWifiChannelType(it.supportedWifiChannelType) }
         send(WppMessageId.VERSION_RESPONSE, response.build().toByteArray())
+        startLinkPinger()
+    }
+
+    /**
+     * Pings the head unit until the link ends, as Android Auto does after the version exchange (see
+     * [Options.pingIntervalMs]); head units that send no WifiVersionRequest get none.
+     */
+    private fun startLinkPinger() {
+        if (options.pingIntervalMs <= 0 || linkPinging) return
+        linkPinging = true
+        log.i("wireless: pinging the head unit every ${options.pingIntervalMs} ms")
+        thread(name = "wpp-ping", isDaemon = true) {
+            while (!linkEnded && !closed.get()) {
+                Thread.sleep(options.pingIntervalMs)
+                val ping = WifiPingRequest.newBuilder().setTimestamp(System.currentTimeMillis()).build()
+                sendQuietly(WppMessageId.PING_REQUEST, ping.toByteArray())
+            }
+        }
     }
 
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
@@ -340,7 +381,7 @@ class WirelessBootstrap(
         private val stopped = CountDownLatch(1)
 
         fun start() {
-            if (options.keepaliveIntervalMs <= 0) return
+            if (options.keepaliveIntervalMs <= 0 || linkPinging) return
             thread(name = "wpp-keepalive", isDaemon = true) {
                 while (!stopped.await(options.keepaliveIntervalMs, TimeUnit.MILLISECONDS) && !linkEnded && !closed.get()) {
                     val ping = WifiPingRequest.newBuilder().setTimestamp(System.currentTimeMillis()).build()
@@ -362,7 +403,7 @@ class WirelessBootstrap(
                     return
                 }
                 is Inbound.Message -> when (event.frame.id) {
-                    WppMessageId.INFO_RESPONSE, WppMessageId.PING_RESPONSE -> log.d("wireless: late ${event.frame}")
+                    WppMessageId.INFO_RESPONSE -> log.d("wireless: late ${event.frame}")
                     else -> onOtherMessage(event.frame)
                 }
             }

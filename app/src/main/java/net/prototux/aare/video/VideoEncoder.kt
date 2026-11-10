@@ -92,7 +92,6 @@ class VideoEncoder(
             var format = format(emptySet())
             val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
             c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(kind.mime)
-            c.setCallback(Callback(), Handler(t.looper))
             // Encoders differ in which tuning keys they accept: drop them step by step until one works.
             val fallbacks = listOf(
                 emptyList(),
@@ -108,6 +107,10 @@ class VideoEncoder(
                 dropped += drop
                 format = format(dropped)
                 try {
+                    // Set before every configure(): on Android 8.x the reset() after a rejected format
+                    // also drops the callback, the codec then runs in sync mode, no output ever reaches
+                    // us and the encoder stalls once its output buffers are full (black car screen).
+                    c.setCallback(Callback(), Handler(t.looper))
                     c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
                     configured = true
                     break
