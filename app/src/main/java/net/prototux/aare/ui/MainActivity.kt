@@ -132,6 +132,9 @@ import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
 import net.prototux.aare.mirror.MirrorTouchService
+import androidx.core.graphics.drawable.toBitmap
+import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
@@ -174,6 +177,7 @@ private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: Image
     MESSAGES(R.string.msg_settings_title, R.string.msg_page_subtitle, Icons.Rounded.Forum),
     AUDIO(R.string.audio_settings_title, R.string.audio_page_subtitle, Icons.AutoMirrored.Rounded.VolumeUp),
     CONNECTION(R.string.setup_page_connection_title, R.string.setup_page_connection_subtitle, Icons.Rounded.Bluetooth),
+    CAR_DATA(R.string.setup_page_car_data_title, R.string.setup_page_car_data_subtitle, Icons.Rounded.DirectionsCar),
     ADVANCED(R.string.setup_page_advanced_title, R.string.setup_page_advanced_subtitle, Icons.Rounded.Tune),
 }
 
@@ -232,9 +236,11 @@ private fun Home() {
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
                         Page.AUDIO -> item { AudioSettings(settings, state, refresh) { refresh++ } }
                         Page.CONNECTION -> item { ConnectionSettings(settings, refresh) }
+                        Page.CAR_DATA -> item { CarDataCard() }
                         Page.ADVANCED -> {
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
+                            item { VehicleOverridesCard() }
                             item { LogCard() }
                         }
                     }
@@ -453,11 +459,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
+    var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
-    var pauseOnDisconnect by remember { mutableStateOf(settings.pauseMediaOnDisconnect) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
-    var btAddress by remember { mutableStateOf(settings.phoneBluetoothAddress) }
+    var btAddr by remember { mutableStateOf(settings.phoneBluetoothAddress) }
     val ctx = LocalContext.current
     val pinned = remember { net.prototux.aare.PinnedHeadUnits(ctx) }
     var pins by remember { mutableStateOf(pinned.all) }
@@ -470,17 +476,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
-            Toggle(stringResource(R.string.setup_toggle_pause_disconnect_title), stringResource(R.string.setup_toggle_pause_disconnect_subtitle), pauseOnDisconnect) { pauseOnDisconnect = it; settings.pauseMediaOnDisconnect = it }
-            // Optional: Android hides the phone's own Bluetooth address, so the user copies it from
-            // the phone's settings. Stored only when it's a whole address (or cleared).
-            val btValid = btAddress.isBlank() || Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$").matches(btAddress.trim())
-            OutlinedTextField(btAddress, { v ->
-                btAddress = v
-                if (v.isBlank() || Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$").matches(v.trim())) settings.phoneBluetoothAddress = v.trim().uppercase()
-            }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true, isError = !btValid,
-                label = { Text(stringResource(R.string.setup_field_phone_bt_label)) },
-                placeholder = { Text("AA:BB:CC:DD:EE:FF") },
-                supportingText = { Text(stringResource(R.string.setup_field_phone_bt_hint)) })
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(btAddr, { btAddr = it; settings.phoneBluetoothAddress = it.trim() }, Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.setup_bt_address_label)) },
+                supportingText = { Text(stringResource(R.string.setup_bt_address_hint)) },
+                singleLine = true)
         }
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
@@ -501,6 +501,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 maxH = it.toInt(); settings.maxVideoHeight = maxH
             }
             Text(stringResource(R.string.setup_hint_lower_resolution), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Toggle(stringResource(R.string.setup_toggle_force_h264_title), stringResource(R.string.setup_toggle_force_h264_subtitle), forceH264) { forceH264 = it; settings.forceH264 = it }
         }
         Section(stringResource(R.string.setup_section_your_cars)) {
             if (cars.isEmpty()) Text(stringResource(R.string.setup_cars_empty), style = MaterialTheme.typography.bodyMedium)
@@ -555,6 +556,7 @@ private fun HeadUnitServerSettings(settings: Settings) {
     LaunchedEffect(connected) { lan = settings.headUnitServerLan }
     var lanOnce by remember { mutableStateOf(settings.headUnitServerLanOnce) }
     var mirror by remember { mutableStateOf(settings.headUnitServerMirror) }
+    var localhost by remember { mutableStateOf(settings.headUnitServerLocalhost) }
     Section(stringResource(R.string.huserver_label)) {
         Toggle(stringResource(R.string.huserver_label), stringResource(R.string.huserver_toggle_subtitle), huServer) {
             huServer = it; settings.headUnitServer = it
@@ -571,6 +573,10 @@ private fun HeadUnitServerSettings(settings: Settings) {
         }
         if (huServer) Toggle(stringResource(R.string.huserver_toggle_mirror_title), stringResource(R.string.huserver_toggle_mirror_subtitle), mirror) {
             mirror = it; settings.headUnitServerMirror = it
+        }
+        if (huServer) Toggle(stringResource(R.string.huserver_toggle_localhost_title), stringResource(R.string.huserver_toggle_localhost_subtitle), localhost) {
+            localhost = it; settings.headUnitServerLocalhost = it
+            ProjectionService.startIdleIfEnabled(ctx)
         }
     }
 }
@@ -779,7 +785,8 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
-        shizuku || root -> CaptureMethod.SHIZUKU
+        shizuku -> CaptureMethod.SHIZUKU_POLICY
+        root -> CaptureMethod.SHIZUKU
         state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
     }
@@ -907,6 +914,8 @@ private fun AppsCard(settings: Settings) {
     val ctx = LocalContext.current
     var hidden by remember { mutableStateOf(settings.hiddenApps) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
+    var browser by remember { mutableStateOf(settings.browser) }
+    var browserUrl by remember { mutableStateOf(settings.browserUrl) }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
     val lists by produceState<LauncherLists?>(null) {
         value = withContext(Dispatchers.IO) {
@@ -950,8 +959,19 @@ private fun AppsCard(settings: Settings) {
             }
             AppGroup(stringResource(R.string.setup_app_group_aare))
             AppRow(null, stringResource(R.string.phone_section_title), stringResource(R.string.phone_app_row_subtitle), phoneScreen) { phoneScreen = it; settings.phoneScreen = it }
+            AppRow(null, stringResource(R.string.browser_app_label), stringResource(R.string.browser_app_row_subtitle), browser) { browser = it; settings.browser = it }
+            if (browser) {
+                OutlinedTextField(
+                    value = browserUrl, onValueChange = { browserUrl = it; settings.browserUrl = it },
+                    label = { Text(stringResource(R.string.browser_url_label)) }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+                Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            }
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen)
+        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
+        StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
         }
@@ -967,7 +987,7 @@ private fun AppsCard(settings: Settings) {
 
 /** The order of the car's app list: the visible apps, with up and down buttons. */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean) {
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
     val all = buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -978,6 +998,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         Triple(CarRuntime.SETTINGS_ID, stringResource(R.string.setup_app_entry_settings), null),
         Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
+        if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
     )
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }
@@ -1010,6 +1031,57 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
 @Composable
 private fun AppGroup(title: String) {
     Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+}
+
+/** Opt-in: launch ordinary phone apps on the car screen (parked only; needs root or Shizuku). */
+@Composable
+private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
+    var enabled by remember { mutableStateOf(settings.standaloneApps) }
+    var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    val available = remember { AppLauncher.available(ctx) }
+    Section(stringResource(R.string.standalone_section_title)) {
+        Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.standalone_toggle_title), stringResource(R.string.standalone_toggle_subtitle), enabled) {
+            enabled = it; settings.standaloneApps = it
+        }
+        if (enabled && !available) {
+            Text(stringResource(R.string.standalone_need_root), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
+        }
+        if (enabled) {
+            val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
+                value = withContext(Dispatchers.IO) { launchableApps(ctx) }
+            }
+            val list = apps
+            if (list == null) {
+                Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
+            } else {
+                Spacer(Modifier.height(8.dp))
+                list.forEach { (pkg, label, icon) ->
+                    AppRow(icon, label, pkg, pkg in allowed) { on ->
+                        allowed = if (on) allowed + pkg else allowed - pkg
+                        settings.standaloneAppPackages = allowed
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Every app with a launcher icon, except AARE itself, for the standalone allow-list. */
+private fun launchableApps(ctx: android.content.Context): List<Triple<String, String, android.graphics.Bitmap?>> {
+    val pm = ctx.packageManager
+    val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+    return pm.queryIntentActivities(intent, 0)
+        .mapNotNull { it.activityInfo?.packageName }
+        .filter { it != ctx.packageName }
+        .distinct()
+        .mapNotNull { pkg ->
+            val info = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull() ?: return@mapNotNull null
+            val icon = runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull()
+            Triple(pkg, pm.getApplicationLabel(info).toString(), icon)
+        }.sortedBy { it.second.lowercase() }
 }
 
 @Composable
@@ -1182,6 +1254,131 @@ private fun displayName(ctx: Context, uri: Uri): String =
             if (c.moveToFirst()) c.getString(0) else null
         }
     }.getOrNull() ?: uri.lastPathSegment?.substringAfterLast('/') ?: ctx.getString(R.string.cert_imported_fallback)
+
+/** One label/value line; renders nothing when the car hasn't reported this value yet. */
+@Composable
+private fun DataRow(label: String, value: String?) {
+    if (value == null) return
+    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.Top) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(12.dp))
+        Text(value, style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace))
+    }
+}
+
+/**
+ * A read-only view of everything the head unit tells AARE about the car: its identity and the live
+ * value of every sensor it reports (an "OBD-ish" viewer, but for the AAP sensor stream). All values
+ * come from [CarData.state] and [ProjectionService.state], which update themselves.
+ */
+@Composable
+private fun CarDataCard() {
+    val car by CarData.state.collectAsState()
+    val proj by ProjectionService.state.collectAsState()
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    var inCar by remember { mutableStateOf(settings.carDataApp) }
+    Section(stringResource(R.string.setup_page_car_data_title)) {
+        Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
+        if (!car.connected) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (!car.connected) return
+    Spacer(Modifier.height(16.dp))
+    val on = stringResource(R.string.car_data_on); val off = stringResource(R.string.car_data_off)
+    val yes = stringResource(R.string.car_data_yes); val no = stringResource(R.string.car_data_no)
+    fun onOff(b: Boolean?) = b?.let { if (it) on else off }
+    fun yesNo(b: Boolean?) = b?.let { if (it) yes else no }
+
+    Section(stringResource(R.string.car_data_section_car)) {
+        val id = car.identity
+        DataRow(stringResource(R.string.car_data_identity),
+            id?.let { listOfNotNull(it.make.ifBlank { null }, it.model.ifBlank { null }, it.year?.toString()).joinToString(" ").ifBlank { null } })
+        DataRow(stringResource(R.string.car_data_head_unit), proj.headUnit.ifBlank { null })
+        DataRow(stringResource(R.string.car_data_connection), proj.transport.ifBlank { null })
+        DataRow(stringResource(R.string.car_data_video), proj.video.ifBlank { null })
+        if (car.advertised.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.car_data_advertised), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(car.advertised.map { it.name.removePrefix("SENSOR_") }.sorted().joinToString(", "),
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.car_data_section_live)) {
+        DataRow(stringResource(R.string.car_data_driving), car.drivingStatus?.let { if (it.value == 0) stringResource(R.string.car_data_parked) else stringResource(R.string.car_data_moving) })
+        DataRow(stringResource(R.string.car_data_night), car.nightMode?.let { if (it.value) stringResource(R.string.car_data_night_on) else stringResource(R.string.car_data_night_off) })
+        DataRow(stringResource(R.string.car_data_speed), car.speed?.let { "%.0f km/h".format(it.value.metersPerSecond * 3.6f) })
+        DataRow(stringResource(R.string.car_data_cruise), car.speed?.value?.cruiseSetSpeed?.let { "$it" })
+        DataRow(stringResource(R.string.car_data_rpm), car.rpm?.let { "%.0f".format(it.value) })
+        DataRow(stringResource(R.string.car_data_gear), car.gearName)
+        DataRow(stringResource(R.string.car_data_parking_brake), onOff(car.parkingBrake?.value))
+        DataRow(stringResource(R.string.car_data_odometer), car.odometer?.let { o ->
+            "%.0f km".format(o.value.km) + (o.value.tripKm?.let { " · trip %.0f km".format(it) } ?: "") })
+        DataRow(stringResource(R.string.car_data_fuel), car.fuel?.let { f ->
+            listOfNotNull(f.value.levelPercent?.let { "$it%" }, f.value.rangeKm?.let { "$it km" }, if (f.value.low == true) stringResource(R.string.car_data_low) else null)
+                .joinToString(" · ").ifBlank { null } })
+        DataRow(stringResource(R.string.car_data_compass), car.compass?.let { "%.0f°".format(it.value.bearingDeg) })
+        DataRow(stringResource(R.string.car_data_satellites), car.satellites?.let { s -> "${s.value.inUse}" + (s.value.inView?.let { " / $it" } ?: "") })
+        DataRow(stringResource(R.string.car_data_environment), car.environment?.let { e ->
+            listOfNotNull(e.value.temperatureC?.let { "%.1f °C".format(it) }, e.value.pressureKpa?.let { "%.0f kPa".format(it) }, e.value.rain?.let { if (it > 0) stringResource(R.string.car_data_rain) else null })
+                .joinToString(" · ").ifBlank { null } })
+        DataRow(stringResource(R.string.car_data_climate), car.hvac?.let { h ->
+            listOfNotNull(h.value.targetC?.let { "→ %.0f °C".format(it) }, h.value.currentC?.let { "%.0f °C".format(it) }).joinToString(" · ").ifBlank { null } })
+        DataRow(stringResource(R.string.car_data_steering), car.deadReckoning?.value?.steeringAngleDeg?.let { "%.0f°".format(it) })
+        DataRow(stringResource(R.string.car_data_tyres), car.tirePressuresKpa?.let { t -> t.value.joinToString(" · ") { "%.0f".format(it) } + " kPa" })
+        DataRow(stringResource(R.string.car_data_doors), car.doors?.let { d ->
+            val open = buildList {
+                if (d.value.hoodOpen == true) add(stringResource(R.string.car_data_hood))
+                if (d.value.trunkOpen == true) add(stringResource(R.string.car_data_trunk))
+                repeat(d.value.doorsOpen.count { it }) { add(stringResource(R.string.car_data_door)) }
+            }
+            if (open.isEmpty()) stringResource(R.string.car_data_closed) else open.joinToString(", ") })
+        DataRow(stringResource(R.string.car_data_lights), car.lights?.let { l ->
+            listOfNotNull(l.value.headLights?.name?.lowercase(), l.value.turn?.takeIf { it != CarData.Turn.NONE }?.name?.lowercase(),
+                if (l.value.hazard == true) stringResource(R.string.car_data_hazard) else null).joinToString(" · ").ifBlank { null } })
+        DataRow(stringResource(R.string.car_data_passenger), yesNo(car.passengerPresent?.value))
+        DataRow(stringResource(R.string.car_data_toll), yesNo(car.tollCardPresent?.value))
+        DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
+        DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
+        DataRow(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }?.joinToString(" ") { "%02x".format(it) })
+    }
+}
+
+private fun xyz(v: CarData.Vector3): String? =
+    listOf(v.x, v.y, v.z).let { if (it.all { c -> c == null }) null else it.joinToString(", ") { c -> c?.let { "%.2f".format(it) } ?: "–" } }
+
+@Composable
+private fun VehicleOverridesCard() {
+    val ctx = LocalContext.current
+    val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
+    var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            ctx.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
+        }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+    }
+    Section(stringResource(R.string.vehicles_section_title)) {
+        Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
+        Text(file.absolutePath, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+        Row {
+            TextButton(onClick = { import.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text(stringResource(R.string.vehicles_import)) }
+            TextButton(onClick = {
+                runCatching { file.parentFile?.mkdirs(); file.writeText(net.prototux.aare.car.VehicleOverrides.template()) }
+                    .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+                count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+                Toast.makeText(ctx, file.absolutePath, Toast.LENGTH_LONG).show()
+            }) { Text(stringResource(R.string.vehicles_template)) }
+        }
+    }
+}
 
 @Composable
 private fun LogCard() {

@@ -110,6 +110,8 @@ class HeadUnitSimulator(
     val videoBytes = AtomicInteger()
     val codecConfigs = AtomicInteger()
     val audioChunks = AtomicInteger()
+    /** Set false to simulate a head unit that stops acking audio mid-stream (#82). */
+    @Volatile var ackAudio = true
     val pingsAnswered = AtomicInteger()
     val focusRequests = AtomicInteger()
     val sensorRequests = ConcurrentHashMap.newKeySet<SensorType>()
@@ -237,7 +239,8 @@ class HeadUnitSimulator(
                     audioChunks.incrementAndGet()
                 }
                 val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
-                send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
+                if (m.channel == video || ackAudio)
+                    send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
         }
     }
@@ -278,6 +281,13 @@ class HeadUnitSimulator(
                         .setKeycode(code).setDown(down).setMetastate(0))).build())
         }
     }
+
+    /** The car's dedicated function buttons (AA keycodes), as a head unit's hardware keys send them. */
+    fun phoneButton() = key(65540) // KEYCODE_TEL
+    fun navigationButton() = key(65538) // KEYCODE_NAVIGATION
+    fun mediaButton() = key(65537) // KEYCODE_MEDIA
+    fun radioButton() = key(65539) // KEYCODE_RADIO
+    fun callButton() = key(5) // KEYCODE_CALL
 
     /** Turns the rotary controller [detents] detents (positive = clockwise), like a knob. */
     fun rotary(detents: Int) {
@@ -324,7 +334,9 @@ class HeadUnitSimulator(
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM)
                 .setAudioConfig(AudioConfiguration.newBuilder().setSamplingRate(16000).setNumberOfBits(16).setNumberOfChannels(1))))
             .addChannels(Service.newBuilder().setId(input).setInputSourceService(InputSourceService.newBuilder()
-                .addAllKeycodesSupported(listOf(3, 4, 19, 20, 21, 22, 23, 84, 85, 87, 88, 65536))
+                // HOME, BACK, CALL, ENDCALL, DPAD, SEARCH, media, VOICE_ASSIST, rotary, and the AA
+                // function buttons: MEDIA, NAVIGATION, RADIO, TEL.
+                .addAllKeycodesSupported(listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 231, 65536, 65537, 65538, 65539, 65540))
                 .addTouchscreen(InputSourceService.TouchScreen.newBuilder().setWidth(width).setHeight(height))))
             .addChannels(Service.newBuilder().setId(sensors).setSensorSourceService(SensorSourceService.newBuilder()
                 .addSensors(Sensor.newBuilder().setSensorType(SensorType.SENSOR_DRIVING_STATUS_DATA))

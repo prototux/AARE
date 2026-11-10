@@ -13,6 +13,7 @@ coroutines = "1.11.0"
 junit = "4.13.2"
 shizuku = "13.1.5"
 hiddenApiBypass = "6.2"
+libxposed = "102.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version.ref = "hiddenApiBypass" }
+libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "libxposed" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

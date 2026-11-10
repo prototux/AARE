@@ -45,6 +45,7 @@ import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
+import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.transport.LocalSocketTransport
@@ -83,6 +84,7 @@ class ProjectionService : Service() {
     private var session: CarSession? = null
     private var tcpServer: TcpServer? = null
     private var tcpServerLan = false
+    private var tcpServerLocalhost = false
     /** The running session came in over the head unit server's LAN listener, which turns off after it. */
     private var lanSession = false
     private var projection: MediaProjection? = null
@@ -100,6 +102,11 @@ class ProjectionService : Service() {
     private val wirelessPolicy = WirelessRetryPolicy()
     /** onDestroy ran: a session closing late must not touch this instance any more. */
     private var destroyed = false
+    /** The download prompt is shown at most once per service lifetime, until a Google cert arrives. */
+    private var certDownloadPrompted = false
+    /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
+    private var lastSessionWireless = false
+    private var lastWirelessAddress: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -122,6 +129,7 @@ class ProjectionService : Service() {
             ACTION_WIRELESS -> intent.getStringExtra(EXTRA_DEVICE)?.let { connectWireless(it) }
             ACTION_PROBE_WIRELESS -> probeConnectedWireless()
             ACTION_AUDIO_CONSENT -> acceptAudioConsent(intent)
+            ACTION_DOWNLOAD_CERT -> downloadCertificate()
             ACTION_STOP -> { stopEverything(); return START_NOT_STICKY }
             ACTION_DISCONNECT -> disconnect()
         }
@@ -161,14 +169,16 @@ class ProjectionService : Service() {
     /** Starts or stops the head unit server according to the settings. */
     private fun applyListeners() {
         val lan = settings.headUnitServer && settings.headUnitServerLan
-        // The LAN option changed (or switched itself off after a session): listen again with the new scope.
-        if (tcpServer != null && tcpServerLan != lan) { tcpServer?.stop(); tcpServer = null }
+        val localhost = settings.headUnitServer && settings.headUnitServerLocalhost
+        // A scope option changed (or LAN switched itself off after a session): listen again with it.
+        if (tcpServer != null && (tcpServerLan != lan || tcpServerLocalhost != localhost)) { tcpServer?.stop(); tcpServer = null }
         if (settings.headUnitServer && tcpServer == null) {
             tcpServerLan = lan
+            tcpServerLocalhost = localhost
             tcpServer = runCatching {
                 // Unless the user keeps network mode on, a LAN session clears the stored LAN option right away,
                 // so a service killed mid-session does not come back listening on the network.
-                TcpServer(lan = lan) { t ->
+                TcpServer(lan = lan, localhost = localhost) { t ->
                     main.post {
                         // Accepted while onDestroy ran: a session here would hold a wake lock nothing releases.
                         if (destroyed) { t.close(); return@post }
@@ -180,7 +190,8 @@ class ProjectionService : Service() {
                     }
                 }.also { it.start() }
             }.onFailure { log("can't listen for the head unit server: ${it.message}") }.getOrNull()
-            if (tcpServer != null) log("head unit server listening on @${TcpServer.LOCAL_NAME} (adb)${if (lan) " and TCP ${TcpServer.PORT} (LAN)" else ""}")
+            if (tcpServer != null) log("head unit server listening on @${TcpServer.LOCAL_NAME} (adb)" +
+                (if (lan) " and TCP ${TcpServer.PORT} (LAN)" else if (localhost) " and TCP ${TcpServer.PORT} (localhost)" else ""))
         } else if (!settings.headUnitServer && tcpServer != null) {
             tcpServer?.stop(); tcpServer = null
         }
@@ -219,6 +230,7 @@ class ProjectionService : Service() {
             return
         }
         wirelessTarget = address
+        lastWirelessAddress = address
         wirelessStage = WirelessRetryPolicy.Stage.RFCOMM
         _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
@@ -253,7 +265,11 @@ class ProjectionService : Service() {
                 DiagAapLog,
                 WirelessConnector.Options(
                     rfcommAttempts = 1,
-                    bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(deviceSerial = settings.instanceId),
+                    // instance_id too: Google's receiver library ignores every phone message but
+                    // pings and version responses until phone_info carries one.
+                    bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
+                        deviceSerial = settings.instanceId, instanceId = settings.instanceId,
+                        deviceName = runCatching { getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.name }.getOrNull()),
                     onStage = { wirelessStage = it },
                 ),
             )
@@ -452,6 +468,7 @@ class ProjectionService : Service() {
             transport.close()
             return
         }
+        lastSessionWireless = wireless
         val cert = certs.pick(settings.certificateIndex)
         log("connecting ${transport.name} with certificate \"${cert.name}\"")
         acquireWakeLock()
@@ -495,6 +512,12 @@ class ProjectionService : Service() {
                 // Offer the next certificate next time: strict head units only accept Google-issued ones.
                 settings.certificateIndex = settings.certificateIndex + 1
                 log("head unit rejected the certificate; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
+                // Strict head units accept only a Google-issued certificate. If we don't have one yet,
+                // offer to fetch it, so the user needn't open Advanced before connecting.
+                if (!certs.hasGoogleCertificate() && !certDownloadPrompted) {
+                    certDownloadPrompted = true
+                    certNotice(getString(R.string.notif_cert_download_title), getString(R.string.notif_cert_download_message), retry = true)
+                }
             }
             pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
@@ -643,6 +666,65 @@ class ProjectionService : Service() {
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(text))
     }
 
+    /**
+     * The certificate-download prompt and its progress/result. [retry] adds a Download action, for
+     * the first offer and after a failed attempt; the progress and success notices are plain.
+     */
+    private fun certNotice(title: String, text: String, retry: Boolean) {
+        val builder = Notification.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .setAutoCancel(!retry)
+        if (retry) {
+            val download = PendingIntent.getService(this, CERT_DOWNLOAD_NOTIFICATION_ID,
+                Intent(this, ProjectionService::class.java).setAction(ACTION_DOWNLOAD_CERT),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            builder.addAction(Notification.Action.Builder(null, getString(R.string.notif_action_download_cert), download).build())
+        }
+        getSystemService(NotificationManager::class.java).notify(CERT_DOWNLOAD_NOTIFICATION_ID, builder.build())
+    }
+
+    /**
+     * Fetches Android Auto's certificate (the Advanced > Download certificate action, from a
+     * notification), adds it to the store and offers it on the next connection, so the user can
+     * just reconnect. Runs off the main thread; the notification tracks progress and the result.
+     */
+    private fun downloadCertificate() {
+        certNotice(getString(R.string.app_name), getString(R.string.notif_cert_download_progress), retry = false)
+        Thread {
+            val result = runCatching {
+                certs.importDownloaded(CertificateDownload.fetch())
+            }
+            main.post {
+                if (destroyed) return@post
+                result.onSuccess { entry ->
+                    // Offer the downloaded certificate first on the next connection.
+                    settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
+                    certDownloadPrompted = false
+                    val address = lastWirelessAddress
+                    if (lastSessionWireless && address != null && session == null) {
+                        // Wireless can reconnect itself over the still-bonded Bluetooth link.
+                        certNotice(getString(R.string.notif_cert_download_ready_title),
+                            getString(R.string.notif_cert_download_reconnecting), retry = false)
+                        log("downloaded Android Auto's certificate \"${entry.name}\"; reconnecting wirelessly")
+                        connectWireless(address)
+                    } else {
+                        // USB (and anything else): the user reconnects, which re-triggers the flow.
+                        certNotice(getString(R.string.notif_cert_download_ready_title),
+                            getString(R.string.notif_cert_download_ready_message), retry = false)
+                        log("downloaded Android Auto's certificate \"${entry.name}\"; reconnect to use it")
+                    }
+                }.onFailure { e ->
+                    certNotice(getString(R.string.notif_cert_download_title),
+                        getString(R.string.notif_cert_download_failed, e.message ?: e.toString()), retry = true)
+                    log("certificate download failed: ${e.message}")
+                }
+            }
+        }.start()
+    }
+
     private fun acquireWakeLock() {
         if (wakeLock?.isHeld == true) return
         wakeLock = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "aare:projection").apply {
@@ -692,6 +774,8 @@ class ProjectionService : Service() {
         private const val CHANNEL = "connection"
         private const val CHANNEL_WAITING = "waiting"
         private const val NOTIFICATION_ID = 1
+        // 2 = wireless re-connect, 3 = trust prompt (TrustReceiver); 4 = certificate download prompt.
+        private const val CERT_DOWNLOAD_NOTIFICATION_ID = 4
         /** A USB session that lasted this long had recovered: its drop starts a new retry budget. */
         private const val USB_RETRY_RESET_MS = 60_000L
         /** Wireless attempts after a car that wasn't ready yet, waiting this much longer each time. */
@@ -702,6 +786,7 @@ class ProjectionService : Service() {
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
         const val ACTION_DISCONNECT = "net.prototux.aare.DISCONNECT"
+        const val ACTION_DOWNLOAD_CERT = "net.prototux.aare.DOWNLOAD_CERT"
         const val ACTION_WIRELESS = "net.prototux.aare.WIRELESS"
         const val ACTION_PROBE_WIRELESS = "net.prototux.aare.PROBE_WIRELESS"
         const val EXTRA_DEVICE = "device"

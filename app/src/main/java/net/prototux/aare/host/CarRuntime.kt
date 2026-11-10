@@ -29,6 +29,7 @@ import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
@@ -37,7 +38,9 @@ import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
+import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.car.BrowserScreen
 import net.prototux.aare.ui.car.CarActions
 import net.prototux.aare.ui.car.CarAppEntry
 import net.prototux.aare.ui.car.CarAppKind
@@ -49,7 +52,9 @@ import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
+import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.PhoneScreen
+import net.prototux.aare.ui.car.StandaloneAppScreen
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -396,6 +401,22 @@ class CarRuntime(
         if (settings.phoneScreen && phoneScreenAllowed) {
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
+        // Ordinary phone apps the user allowed onto the car screen (parked only; needs root/Shizuku).
+        if (settings.standaloneApps && AppLauncher.available(context)) {
+            for (pkg in settings.standaloneAppPackages) {
+                if (pkg in hidden) continue
+                val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
+                val label = context.packageManager.getApplicationLabel(info).toString()
+                val icon = runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
+                entries += CarAppEntry(standaloneId(pkg), pkg, label, icon, CarAppKind.STANDALONE)
+            }
+        }
+        if (settings.browser) {
+            entries += CarAppEntry(BROWSER_ID, context.packageName, context.getString(R.string.browser_app_label), builtinIcon(R.drawable.ic_car_browser), CarAppKind.BROWSER)
+        }
+        if (settings.carDataApp) {
+            entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
+        }
         for (m in messaging) {
             if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(messagingId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MESSAGING)
@@ -474,7 +495,14 @@ class CarRuntime(
             kotlinx.coroutines.delay(1_500)
             val app = media.apps.value.firstOrNull { it.packageName == settings.lastMediaApp } ?: return@launch
             media.select(app)
-            kotlinx.coroutines.delay(1_500)
+            // A play before the app is connected is dropped (playPause then only connects).
+            val waitMs = 10_000L
+            if (!media.awaitConnection(waitMs)) {
+                val line = "resume music: ${app.label} wasn't ready, not playing (waited up to ${waitMs / 1_000} s)"
+                Log.w(TAG, line)
+                DiagLog.add(line)
+                return@launch
+            }
             if (media.playback.value?.playing != true) media.playPause()
         }
     }
@@ -660,6 +688,9 @@ class CarRuntime(
                             }
                             CarAppKind.MESSAGING -> MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)
+                            CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted, app.packageName, mod)
+                            CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
+                            CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
@@ -687,7 +718,10 @@ class CarRuntime(
         fun carId(app: CarAppInfo) = "car:${app.service.flattenToShortString()}"
         fun mediaId(pkg: String) = "media:$pkg"
         fun messagingId(pkg: String) = "messages:$pkg"
+        fun standaloneId(pkg: String) = "standalone:$pkg"
         const val PHONE_SCREEN_ID = "phone-screen"
+        const val BROWSER_ID = "browser"
+        const val CAR_DATA_ID = "car-data"
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"

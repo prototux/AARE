@@ -38,6 +38,8 @@ interface PcmSource {
 enum class CaptureMethod(val label: String) {
     /** Android Auto's own way: an audio policy (privileged app, see tools/magisk). Music and navigation voice apart. */
     AUDIO_POLICY("System audio routing (like Android Auto)"),
+    /** The same audio policy, registered by a Shizuku (adb rights) process: the shell holds MODIFY_AUDIO_ROUTING. */
+    SHIZUKU_POLICY("Shizuku, music and navigation apart (like Android Auto)"),
     /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
     SHIZUKU("Shizuku or root"),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
@@ -82,6 +84,7 @@ object CaptureMethods {
     /** The best method available now, skipping [exclude] (methods that already failed). */
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
         CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
+        CaptureMethod.SHIZUKU_POLICY !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU_POLICY
         CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable(context)) -> CaptureMethod.SHIZUKU
         // Capturing other apps' sound arrived in Android 10.
         CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
@@ -130,19 +133,29 @@ class PlaybackCaptureSource(private val projection: MediaProjection, private val
 
 /**
  * Android Auto's way: an audio policy whose mix takes the matching usages away from the phone's
- * speaker and loops them back to us. The policy API is for privileged apps only: AARE must be
- * installed in /system/priv-app with MODIFY_AUDIO_ROUTING (tools/magisk).
+ * speaker and loops them back to a recorder. Registering one needs MODIFY_AUDIO_ROUTING: a
+ * privileged app (tools/magisk) or the shell, which Shizuku runs [ShellAudioService] as.
  */
-class AudioPolicySource(
-    private val context: Context,
-    private val usages: IntArray,
-    private val rate: Int,
-    private val channels: Int,
-) : PcmSource {
-    private var policy: Any? = null
-    private var record: AudioRecord? = null
+internal object AudioPolicyCapture {
+    private const val RULE_MATCH_ATTRIBUTE_USAGE = 0x1
+    private const val ROUTE_FLAG_LOOP_BACK = 0x2
 
-    override fun start(): Boolean = try {
+    class Handle(private val audioManager: AudioManager, private val policy: Any, val record: AudioRecord) {
+        fun close() {
+            runCatching { record.stop() }
+            record.release()
+            runCatching {
+                AudioManager::class.java.getMethod("unregisterAudioPolicy", policy.javaClass).invoke(audioManager, policy)
+            }.onFailure { Log.w(TAG, "unregisterAudioPolicy", it) }
+        }
+    }
+
+    /**
+     * Registers the policy and starts recording; throws if the system refuses. [recordContext]
+     * attributes the recording (the shell's helper must say "the shell", or AudioFlinger refuses
+     * a record for a package that isn't its uid's); null uses the process's own identity.
+     */
+    fun open(context: Context, audioManager: AudioManager, usages: IntArray, rate: Int, channels: Int, looper: Looper, recordContext: Context? = null): Handle {
         // Hidden-API restrictions arrived in Android 9.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) HiddenApiBypass.addHiddenApiExemptions("Landroid/media/audiopolicy/", "Landroid/media/AudioManager;")
         val ruleBuilder = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder").getConstructor().newInstance()
@@ -158,16 +171,40 @@ class AudioPolicySource(
 
         val policyBuilder = Class.forName("android.media.audiopolicy.AudioPolicy\$Builder").getConstructor(Context::class.java).newInstance(context)
         policyBuilder.javaClass.getMethod("addMix", mixClass).invoke(policyBuilder, mix)
-        policyBuilder.javaClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, Looper.getMainLooper())
+        policyBuilder.javaClass.getMethod("setLooper", Looper::class.java).invoke(policyBuilder, looper)
         val p = policyBuilder.javaClass.getMethod("build").invoke(policyBuilder)
 
-        val am = context.getSystemService(AudioManager::class.java)
-        val status = AudioManager::class.java.getMethod("registerAudioPolicy", p.javaClass).invoke(am, p) as Int
+        val status = AudioManager::class.java.getMethod("registerAudioPolicy", p.javaClass).invoke(audioManager, p) as Int
         if (status != 0) throw IllegalStateException("registerAudioPolicy: $status")
-        policy = p
-        val r = p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord
-        r.startRecording()
-        record = r
+        val record = try {
+            val sink = if (recordContext != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // The Builder overload (newer Android) keeps our attribution; without it, fall back.
+                val withBuilder = runCatching { p.javaClass.getMethod("createAudioRecordSink", mixClass, AudioRecord.Builder::class.java) }.getOrNull()
+                if (withBuilder != null) withBuilder.invoke(p, mix, AudioRecord.Builder().setContext(recordContext)) as AudioRecord?
+                else p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
+            } else {
+                p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
+            }
+            (sink ?: throw IllegalStateException("createAudioRecordSink refused")).also { it.startRecording() }
+        } catch (e: Throwable) {
+            runCatching { AudioManager::class.java.getMethod("unregisterAudioPolicy", p.javaClass).invoke(audioManager, p) }
+            throw e
+        }
+        return Handle(audioManager, p, record)
+    }
+}
+
+/** [AudioPolicyCapture] in AARE itself: needs AARE installed in /system/priv-app (tools/magisk). */
+class AudioPolicySource(
+    private val context: Context,
+    private val usages: IntArray,
+    private val rate: Int,
+    private val channels: Int,
+) : PcmSource {
+    private var handle: AudioPolicyCapture.Handle? = null
+
+    override fun start(): Boolean = try {
+        handle = AudioPolicyCapture.open(context, context.getSystemService(AudioManager::class.java), usages, rate, channels, Looper.getMainLooper())
         true
     } catch (e: Throwable) {
         Log.w(TAG, "audio policy capture unavailable", e)
@@ -175,51 +212,87 @@ class AudioPolicySource(
         false
     }
 
-    override fun read(buf: ByteArray, offset: Int, length: Int): Int = record?.read(buf, offset, length) ?: -1
+    override fun read(buf: ByteArray, offset: Int, length: Int): Int = handle?.record?.read(buf, offset, length) ?: -1
 
     override fun release() {
-        record?.let { runCatching { it.stop() }; it.release() }
-        record = null
-        val p = policy ?: return
-        policy = null
-        runCatching {
-            val am = context.getSystemService(AudioManager::class.java)
-            AudioManager::class.java.getMethod("unregisterAudioPolicy", p.javaClass).invoke(am, p)
-        }.onFailure { Log.w(TAG, "unregisterAudioPolicy", it) }
-    }
-
-    private companion object {
-        const val RULE_MATCH_ATTRIBUTE_USAGE = 0x1
-        const val ROUTE_FLAG_LOOP_BACK = 0x2
+        handle?.close()
+        handle = null
     }
 }
 
-/** The phone's whole output, recorded by [ShellAudioService] in a Shizuku (adb rights) process. */
-class ShizukuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
-    private var service: IShellAudio? = null
-    private var stream: InputStream? = null
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, ShellAudioService::class.java.name))
-        .daemon(false)
-        .processNameSuffix("audio")
-        .debuggable(BuildConfig.DEBUG)
-        .version(BuildConfig.VERSION_CODE)
-    private val connection = object : ServiceConnection {
+/**
+ * The one binding to [ShellAudioService] for this process, shared by every Shizuku capture: the
+ * music and navigation channels each have a stream in the same helper, which stops with the last.
+ */
+internal object ShellAudio {
+    private val lock = Any()
+    private var users = 0
+    @Volatile private var service: IShellAudio? = null
+    private var binding: Binding? = null
+
+    /** One bind: its own connection, so callbacks from an earlier, torn-down helper are ignored. */
+    private class Binding(val args: Shizuku.UserServiceArgs) : ServiceConnection {
+        val bound = CountDownLatch(1)
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            service = binder?.takeIf { it.pingBinder() }?.let(IShellAudio.Stub::asInterface)
+            synchronized(lock) {
+                if (binding === this) service = binder?.takeIf { it.pingBinder() }?.let(IShellAudio.Stub::asInterface)
+            }
             bound.countDown()
         }
+        // The helper's pipes close with it, so each stream reads -1 and its output fails over.
         override fun onServiceDisconnected(name: ComponentName?) {
-            service = null
-            runCatching { stream?.close() }
+            synchronized(lock) { if (binding === this) service = null }
         }
     }
-    private val bound = CountDownLatch(1)
+
+    /** The helper, bound if needed; null if Shizuku can't start it. Pair with [release]. */
+    fun acquire(context: Context): IShellAudio? {
+        if (!CaptureMethods.shizukuAvailable()) return null
+        val b = synchronized(lock) {
+            if (users++ == 0) {
+                val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, ShellAudioService::class.java.name))
+                    .daemon(false)
+                    .processNameSuffix("audio")
+                    .debuggable(BuildConfig.DEBUG)
+                    .version(BuildConfig.VERSION_CODE)
+                val nb = Binding(args)
+                binding = nb
+                runCatching { Shizuku.bindUserService(args, nb) }.onFailure {
+                    Log.w(TAG, "Shizuku bind", it)
+                    users--
+                    binding = null
+                    return null
+                }
+            }
+            binding!!
+        }
+        if (!b.bound.await(5, TimeUnit.SECONDS)) { release(); return null }
+        return service ?: run { release(); null }
+    }
+
+    fun release() = synchronized(lock) {
+        if (users == 0 || --users > 0) return@synchronized
+        // Leave the helper running (it ends with AARE's process): removing it and binding again
+        // straight away, as a failover does, can leave the new bind never connecting.
+        binding?.let { b -> runCatching { Shizuku.unbindUserService(b.args, b, false) } }
+        binding = null
+        service = null
+    }
+}
+
+/** A PCM pipe from [ShellAudioService]; [open] asks the helper for the stream. */
+abstract class ShellPipeSource(private val context: Context) : PcmSource {
+    private var service: IShellAudio? = null
+    private var stream: InputStream? = null
+
+    protected abstract fun open(service: IShellAudio): ParcelFileDescriptor?
+    protected abstract fun close(service: IShellAudio)
 
     override fun start(): Boolean {
-        if (!CaptureMethods.shizukuAvailable()) return false
-        runCatching { Shizuku.bindUserService(args, connection) }.onFailure { Log.w(TAG, "Shizuku bind", it); return false }
-        if (!bound.await(5, TimeUnit.SECONDS)) return false
-        val pfd = runCatching { service?.start(rate, channels) }.onFailure { Log.w(TAG, "Shizuku capture", it) }.getOrNull() ?: return false
+        val s = ShellAudio.acquire(context) ?: return false
+        service = s
+        val pfd = runCatching { open(s) }.onFailure { Log.w(TAG, "Shizuku capture", it) }.getOrNull()
+        if (pfd == null) { release(); return false }
         stream = ParcelFileDescriptor.AutoCloseInputStream(pfd)
         return true
     }
@@ -231,12 +304,32 @@ class ShizukuSource(private val context: Context, private val rate: Int, private
     }
 
     override fun release() {
-        runCatching { service?.stop() }
+        val s = service ?: return
+        service = null
+        runCatching { close(s) }
         runCatching { stream?.close() }
         stream = null
-        runCatching { Shizuku.unbindUserService(args, connection, true) }
-        service = null
+        ShellAudio.release()
     }
+}
+
+/** The phone's whole output, recorded by [ShellAudioService] in a Shizuku (adb rights) process. */
+class ShizukuSource(context: Context, private val rate: Int, private val channels: Int) : ShellPipeSource(context) {
+    override fun open(service: IShellAudio): ParcelFileDescriptor? = service.start(rate, channels)
+    override fun close(service: IShellAudio) = service.stop()
+}
+
+/** [usages] only, through an audio policy that [ShellAudioService] registers as the shell. */
+class ShizukuPolicySource(
+    context: Context,
+    private val usages: IntArray,
+    private val rate: Int,
+    private val channels: Int,
+) : ShellPipeSource(context) {
+    // One stream per car channel in the helper, told apart by their usages.
+    private val key = usages.sorted().hashCode()
+    override fun open(service: IShellAudio): ParcelFileDescriptor? = service.startPolicy(key, rate, channels, usages)
+    override fun close(service: IShellAudio) = service.stopPolicy(key)
 }
 
 /**
