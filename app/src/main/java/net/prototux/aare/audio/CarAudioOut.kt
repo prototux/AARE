@@ -133,11 +133,15 @@ class CarAudioOut(
                     while (queued.size > baseBacklog) queued.removeFirst()
                     priming = true
                 } else if (!focus.granted) {
-                    // Focus lost mid-stream: drop, stale sound later would be worse.
+                    // Focus lost mid-stream (the Ford answers a nav prompt's request with LOSS):
+                    // close the stream rather than leave it open and empty. The Ford keeps mixing
+                    // a starved media stream under the prompt, and the prompt crackles. When focus
+                    // returns, the branch above opens a new stream with a fresh lead.
                     focusDropped += 1 + queued.size
+                    noteStream(now)
+                    channel.stopPlayback()
+                    stoppedAtMs = now
                     queued.clear()
-                    // When it comes back the car has nothing left: build the lead up again.
-                    priming = true
                     continue
                 }
                 if (priming) {
