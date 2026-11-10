@@ -319,4 +319,61 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">A keresés csak álló autóban elérhető</string>
+
+    <string name="setup_toggle_force_h264_title">H.264 videó kényszerítése</string>
+    <string name="setup_toggle_force_h264_subtitle">Alapértelmezés szerint az AARE a legjobb, az autó és a telefon által is támogatott kodeket használja (H.265…). Kapcsolja be, ha az autó képe akadozik.</string>
+    <!-- newly translated strings -->
+    <string name="common_ok">OK</string>
+    <string name="common_try_again">Próbáld újra</string>
+    <string name="common_something_went_wrong">Valami hiba történt</string>
+    <string name="setup_section_updates">Frissítések</string>
+    <string name="setup_toggle_updates_title">Frissítések keresése</string>
+    <string name="setup_toggle_updates_subtitle">Figyelmeztetés a kezdőképernyőn, ha újabb kiadás érhető el a GitHubon. Kikapcsolva soha nem csatlakozik az internethez.</string>
+    <string name="update_available_title">Elérhető frissítés — %1$s</string>
+    <string name="update_available_subtitle">A jelenlegi verziód: %1$s. Koppints a kiadás megtekintéséhez.</string>
+    <string name="setup_log_save">Mentés</string>
+    <string name="setup_toggle_verbose_log_title">Részletes protokollnapló</string>
+    <string name="setup_toggle_verbose_log_subtitle">A teljes fejegység-protokoll naplózása ebbe a naplóba, hogy csatolni lehessen egy hibajelentéshez. Sokat naplóz; egyébként hagyd kikapcsolva.</string>
+    <string name="setup_nothing_to_open">Ezen a telefonon nincs olyan alkalmazás, amely meg tudná nyitni ezt</string>
+    <string name="setup_wallpaper_failed">Nem sikerült ezt a fényképet háttérképként beállítani</string>
+    <string name="msg_autoreply_default">Most vezetek, majd később válaszolok.</string>
+    <string name="audio_root_ready">Kész, root jogosultsággal. Minden, amit a telefon lejátszik, az autóba megy, a navigációs hangot is beleértve; a telefon néma marad.</string>
+    <string name="audio_shizuku_or_root_hint">Root jogosultságú telefonon (KernelSU, Magisk, APatch…) koppints a root engedélyezéséhez. Egyébként telepítsd a Shizukut, és indítsd el (vezeték nélküli hibakeresés, újraindításonként egyszer).</string>
+    <string name="dash_menu_exit_to_car">Kilépés az autóhoz</string>
+    <string name="media_action_retry">Újrapróbálás</string>
+    <string name="media_error_fix">Javítás</string>
+    <string name="media_error_no_service">%1$s nem rendelkezik médiaszolgáltatással</string>
+    <string name="media_error_not_responding">%1$s nem válaszol</string>
+    <string name="media_error_refused">%1$s nem fogadta el a kapcsolatot</string>
+    <string name="media_error_connect">Nem sikerült csatlakozni ehhez: %1$s</string>
+    <string name="media_error_open">Nem sikerült megnyitni: %1$s</string>
+    <string name="media_error_not_connected">%1$s nincs csatlakoztatva</string>
+    <string name="media_error_stopped">%1$s leállt</string>
+    <string name="media_error_load_list">Nem sikerült betölteni ezt a listát</string>
+    <string name="media_error_search">Sikertelen keresés</string>
+    <string name="media_error_reported">%1$s hibát jelzett</string>
+    <string name="media_error_sign_in">Jelentkezz be a %1$s szolgáltatásba a telefonodon</string>
+    <string name="media_error_premium">A %1$s prémium fiókot igényel</string>
+    <string name="media_error_stream_limit">Túl sok eszköz streamel egyszerre</string>
+    <string name="media_error_parental">Szülői felügyelet blokkolja</string>
+    <string name="media_error_region">Nem elérhető a régiódban</string>
+    <string name="media_error_skip_limit">Elérted az átugrási korlátot</string>
+    <string name="media_error_setup">Fejezd be a %1$s beállítását a telefonodon</string>
+    <string name="media_error_end_of_playlist">A lejátszási lista vége</string>
+    <string name="media_error_permission">%1$s nem engedi, hogy az AARE böngésszen benne</string>
+    <string name="media_error_io">Hálózati vagy tárolási probléma</string>
+    <string name="media_error_not_supported">A %1$s nem támogatja</string>
+    <string name="media_error_disconnected">%1$s leválasztva</string>
+    <string name="media_error_code">%1$s hibát jelzett (%2$d)</string>
+    <string name="phone_call_fallback_name">Hívás</string>
+    <string name="tpl_no_results">Nincs eredmény</string>
+    <string name="tpl_parked_only">Csak álló autóban elérhető</string>
+    <string name="tpl_sign_in_parked_only">Bejelentkezni csak álló autóban lehet</string>
+    <string name="tpl_password_hint">Jelszó</string>
+    <string name="carapp_error_start">Nem sikerült elindítani: %1$s</string>
+    <string name="carapp_error_refused">%1$s elutasította a kapcsolatot</string>
+    <string name="carapp_error_api_level">A %1$s a %2$d autós API szintet igényli; ez a fejegység a %3$d szintet támogatja</string>
+    <string name="carapp_error_stopped">%1$s leállt</string>
+    <string name="carapp_error_google_only">%1$s csak a Google Android Auto alkalmazását fogadja el. Engedélyeznie kell az AARE-t (lásd az alkalmazáslistát a telefonon).</string>
+    <string name="carapp_error_cant_start">%1$s nem tudott elindulni: %2$s</string>
 </resources>

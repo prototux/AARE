@@ -24,9 +24,14 @@ import java.net.SocketException
  * the server also listens on TCP [PORT] on all interfaces, where the peer can't be identified (peers
  * with an address of this phone are refused, so local apps can't use it on any interface):
  * anyone else on the network who can connect gets the car screen and microphone.
+ *
+ * With [localhost] set the server listens on TCP [PORT] on loopback and *accepts* local peers, so an
+ * Android-Auto-in-the-browser bridge running on this phone (webaa, paath — for cars like Tesla that
+ * have no Android Auto, #131) can connect. Any app on the phone can then reach it, so it is opt-in.
  */
 class TcpServer(
     private val lan: Boolean,
+    private val localhost: Boolean = false,
     private val port: Int = PORT,
     private val onConnection: (Transport) -> Unit,
 ) {
@@ -38,10 +43,11 @@ class TcpServer(
     fun start() {
         // Bind both before starting any thread, so a failure leaves nothing listening.
         val l = LocalServerSocket(LOCAL_NAME)
-        val s = if (lan) runCatching {
+        // LAN binds all interfaces; localhost-only binds loopback. Both on → all interfaces (loopback included).
+        val s = if (lan || localhost) runCatching {
             ServerSocket().apply {
                 reuseAddress = true
-                bind(InetSocketAddress(InetAddress.getByName("0.0.0.0"), port))
+                bind(InetSocketAddress(InetAddress.getByName(if (lan) "0.0.0.0" else "127.0.0.1"), port))
             }
         }.onFailure { runCatching { l.close() } }.getOrThrow() else null
         local = l
@@ -69,8 +75,9 @@ class TcpServer(
                     val socket = s.accept()
                     if (stopped) { runCatching { socket.close() }; break }
                     // The wildcard bind includes loopback and this phone's own addresses, but adb now uses @aare_hu:
-                    // a peer with one of those addresses is an app on this phone.
-                    if (isLocalPeer(socket)) {
+                    // a peer with one of those addresses is an app on this phone. Refused unless the user turned
+                    // on localhost mode for an AA-in-the-browser bridge (webaa, paath).
+                    if (!localhost && isLocalPeer(socket)) {
                         DiagLog.add("head unit server: refused a TCP connection from this phone")
                         runCatching { socket.close() }
                         continue

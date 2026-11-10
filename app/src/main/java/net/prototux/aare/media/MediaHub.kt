@@ -44,6 +44,13 @@ interface MediaHub {
     /** Connects to [app] (if not already) and makes it the active one. */
     fun select(app: MediaApp)
 
+    /**
+     * Waits until the connection to the selected app is ready, at most [timeoutMs]. Also true when the app is
+     * connected but its library did not load in time; false if it couldn't connect, there is none, or it timed out.
+     * The default, for hubs without a connection to wait for, is false.
+     */
+    suspend fun awaitConnection(timeoutMs: Long): Boolean = false
+
     fun playPause()
     fun next()
     fun previous()

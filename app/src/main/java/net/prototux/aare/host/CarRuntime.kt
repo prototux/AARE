@@ -29,6 +29,7 @@ import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
@@ -474,7 +475,14 @@ class CarRuntime(
             kotlinx.coroutines.delay(1_500)
             val app = media.apps.value.firstOrNull { it.packageName == settings.lastMediaApp } ?: return@launch
             media.select(app)
-            kotlinx.coroutines.delay(1_500)
+            // A play before the app is connected is dropped (playPause then only connects).
+            val waitMs = 10_000L
+            if (!media.awaitConnection(waitMs)) {
+                val line = "resume music: ${app.label} wasn't ready, not playing (waited up to ${waitMs / 1_000} s)"
+                Log.w(TAG, line)
+                DiagLog.add(line)
+                return@launch
+            }
             if (media.playback.value?.playing != true) media.playPause()
         }
     }
