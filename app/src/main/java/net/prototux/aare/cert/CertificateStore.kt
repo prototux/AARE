@@ -29,6 +29,8 @@ class CertificateStore(private val context: Context) {
         val subject: String get() = identity.certificate.subjectX500Principal.name
         val notAfter get() = identity.certificate.notAfter
         val selfSigned: Boolean get() = identity.certificate.subjectX500Principal == identity.certificate.issuerX500Principal
+        /** Issued by Google's "Google Automotive Link" CA, the certificate strict head units accept. */
+        val isGoogleIssued: Boolean get() = identity.certificate.issuerX500Principal.name.contains("Google Automotive Link", ignoreCase = true)
     }
 
     private val dir = File(context.filesDir, "certs").apply { mkdirs() }
@@ -41,6 +43,9 @@ class CertificateStore(private val context: Context) {
         val imported = dir.listFiles { f -> f.isDirectory && f.name != "_generated" }.orEmpty().sortedBy { it.name }.mapNotNull { load(it) }
         return imported + listOfNotNull(builtIn) + Entry(GENERATED, generated(), removable = false)
     }
+
+    /** Whether a Google-issued certificate (downloaded or imported) is available to offer. */
+    fun hasGoogleCertificate(): Boolean = entries().any { it.isGoogleIssued }
 
     /** AARE's own certificate, from the release build's assets; null in builds made without it. */
     private val builtIn: Entry? by lazy {
