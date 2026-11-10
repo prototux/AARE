@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 /**
  * A clear focus highlight for non-touch head units driven by a rotary controller or D-pad: a thick
  * border on the element's shape while it holds focus, so the driver can see where they are, lined
- * with a thin contrasting ring so it also shows on elements filled with the border's color.
+ * with a contrasting ring and a dim veil so it also shows on elements filled with the border's color.
  *
  * Place it directly before the element's own `.clickable`, whose focus target it observes (a
  * clickable is focusable by default, so Compose's D-pad traversal already reaches it; this only
@@ -56,14 +56,18 @@ fun Modifier.carFocusHighlight(shape: Shape): Modifier = composed {
     val shown = focused && CarFocusVisibility.keyInput
     onFocusChanged { focused = it.isFocused }
         .border(width = if (shown) 3.dp else 0.dp, color = if (shown) color else Color.Transparent, shape = shape)
-        // A second, thin ring just inside, in the color that reads on the first: on a button
+        // Inside it, a dim veil and a second ring in the color that reads on the first: on a button
         // filled with the highlight's own color (the play button), the border alone can't be seen.
         .drawWithContent {
+            // The veil goes under the content (over the element's own background), so labels stay sharp.
+            if (shown) drawOutline(shape.createOutline(size, layoutDirection, this), inner.copy(alpha = 0.3f))
             drawContent()
-            val at = (3.dp + 1.dp).toPx() // the middle of the 2 dp ring, past the 3 dp border
-            if (shown && size.minDimension > at * 4) {
+            if (!shown) return@drawWithContent
+            val w = 4.dp.toPx()
+            val at = 3.dp.toPx() + w / 2 // the middle of the ring, past the 3 dp border
+            if (size.minDimension > at * 4) {
                 val outline = shape.createOutline(Size(size.width - at * 2, size.height - at * 2), layoutDirection, this)
-                translate(at, at) { drawOutline(outline, inner, style = Stroke(2.dp.toPx())) }
+                translate(at, at) { drawOutline(outline, inner, style = Stroke(w)) }
             }
         }
 }

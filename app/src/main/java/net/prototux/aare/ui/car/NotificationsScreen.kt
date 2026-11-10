@@ -89,7 +89,7 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
 /** The bell next to the clock, with the number of unseen notifications. */
 @Composable
 internal fun NotificationBell(ui: CarUiState, onClick: () -> Unit) {
-    Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(40.dp).clip(CircleShape).carFocusHighlight(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(Icons.Rounded.Notifications, stringResource(R.string.notif_title), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         if (ui.unseen > 0) {
             Box(Modifier.align(Alignment.TopEnd).size(18.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error),
