@@ -320,6 +320,8 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Vyhledávání je dostupné po zaparkování</string>
 
+    <string name="setup_toggle_force_h264_title">Vynutit video H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">Ve výchozím nastavení AARE používá nejlepší kodek sdílený autem a telefonem (H.265…). Zapněte, pokud obraz v autě trhá nebo je poškozený.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Zkusit znovu</string>
     <string name="common_something_went_wrong">Něco se pokazilo</string>

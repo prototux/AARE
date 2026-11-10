@@ -77,6 +77,7 @@ import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.video.BitrateController
 import net.prototux.aare.video.ProjectionDisplay
+import net.prototux.aare.video.VideoCodecKind
 import net.prototux.aare.video.VideoEncoder
 import java.io.ByteArrayOutputStream
 
@@ -140,6 +141,8 @@ class CarSession(
     @Volatile private var encoder: VideoEncoder? = null
     @Volatile private var display: ProjectionDisplay? = null
     @Volatile private var touch: TouchMapper? = null
+    /** The video codec matched to this head unit (phone-hardware ∩ car-advertised), chosen at discovery. */
+    @Volatile private var videoCodec: VideoCodecKind = VideoCodecKind.H264
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
     @Volatile private var mediaFocus = false
@@ -212,7 +215,11 @@ class CarSession(
                 s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> {
                     // The main display, and the instrument cluster's if the car has one (display_type CLUSTER).
                     when (s.mediaSinkService.displayType.number) {
-                        0 -> if (video == null) { mainDisplayId = s.mediaSinkService.displayId; video = VideoChannel(s, videoListener(rhd)).also { channels += it } }
+                        0 -> if (video == null) {
+                            mainDisplayId = s.mediaSinkService.displayId
+                            videoCodec = pickVideoCodec(s.mediaSinkService.videoConfigsList)
+                            video = VideoChannel(s, videoListener(rhd), videoType(videoCodec)).also { channels += it }
+                        }
                         1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s) }
                     }
                 }
@@ -337,9 +344,18 @@ class CarSession(
 
     // ------------------------------------------------------------------ video
 
+    /** Matches the head unit's advertised video codecs against what this phone can hardware-encode. */
+    private fun pickVideoCodec(configs: List<VideoConfiguration>): VideoCodecKind {
+        val advertised = configs.map(::configCodec).toSet()
+        val kind = matchVideoCodec(advertised, settings.forceH264) { VideoEncoder.hardwareEncodes(it) }
+        Log.i(TAG, "video codec: ${kind.label} (car offers ${advertised.joinToString { it.name.removePrefix("MEDIA_CODEC_VIDEO_") }}" +
+            (if (settings.forceH264) ", H.264 forced" else "") + ")")
+        return kind
+    }
+
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
         override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, settings.maxVideoHeight, settings.prefer60fps)
+            chooseVideo(configs, preferred, settings.maxVideoHeight, settings.prefer60fps, videoType(videoCodec))
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -404,7 +420,7 @@ class CarSession(
         val ch = video ?: return
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
-        enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
+        enc = VideoEncoder(w, h, fps, kind = videoCodec, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
@@ -918,11 +934,11 @@ class CarSession(
          * [maxHeight] (short side), preferring 60 fps when asked, among the head unit's preferred
          * indices when it gave any.
          */
-        fun chooseVideo(configs: List<VideoConfiguration>, preferred: List<Int>, maxHeight: Int, prefer60: Boolean): Int {
+        fun chooseVideo(configs: List<VideoConfiguration>, preferred: List<Int>, maxHeight: Int, prefer60: Boolean, codec: MediaCodecType): Int {
             fun portrait(i: Int) = resolution(configs[i].codecResolution).let { it.second > it.first }
             // A screen has one shape: when a head unit offers both, the shape of its first preferred
             // configuration is the screen's (the other one would be letterboxed or squeezed).
-            val candidates = videoCandidates(configs, preferred, TAG).let { all ->
+            val candidates = videoCandidates(configs, preferred, codec, TAG).let { all ->
                 val shape = portrait(preferred.firstOrNull { it in all } ?: all.firstOrNull() ?: return 0)
                 all.filter { portrait(it) == shape }
             }
@@ -938,16 +954,42 @@ class CarSession(
         }
 
         /**
-         * The configurations worth choosing from: the head unit's preferred ones, and only those we
-         * can encode (H.264 Baseline; no codec given means H.264). With no H.264 one at all, the
-         * old choice anyway: better a try than no video.
+         * The configurations worth choosing from: the head unit's preferred ones, and only those in
+         * the matched [codec] (a config with no codec given means H.264). With none in that codec at
+         * all, the old choice anyway: better a try than no video.
          */
-        fun videoCandidates(configs: List<VideoConfiguration>, preferred: List<Int>, tag: String): List<Int> {
-            fun h264(i: Int) = !configs[i].hasVideoCodecType() || configs[i].videoCodecType == MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
+        fun videoCandidates(configs: List<VideoConfiguration>, preferred: List<Int>, codec: MediaCodecType, tag: String): List<Int> {
+            fun matches(i: Int) = configCodec(configs[i]) == codec
             val all = configs.indices.filter { preferred.isEmpty() || it in preferred }.ifEmpty { configs.indices.toList() }
-            all.filter(::h264).ifEmpty { configs.indices.filter(::h264) }.let { if (it.isNotEmpty()) return it }
-            Log.w(tag, "no H.264 video configuration offered (${configs.map { it.videoCodecType }}), trying one anyway")
+            all.filter(::matches).ifEmpty { configs.indices.filter(::matches) }.let { if (it.isNotEmpty()) return it }
+            Log.w(tag, "no ${codec.name.removePrefix("MEDIA_CODEC_VIDEO_")} video configuration offered (${configs.map { it.videoCodecType }}), trying one anyway")
             return all
+        }
+
+        /** A configuration with no codec set means H.264 (proto default / older head units). */
+        fun configCodec(c: VideoConfiguration): MediaCodecType =
+            if (c.hasVideoCodecType()) c.videoCodecType else MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
+
+        /** The head unit's codec type for one of the kinds the phone can hardware-encode. */
+        fun videoType(k: VideoCodecKind): MediaCodecType = when (k) {
+            VideoCodecKind.H264 -> MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP
+            VideoCodecKind.H265 -> MediaCodecType.MEDIA_CODEC_VIDEO_H265
+            VideoCodecKind.VP9 -> MediaCodecType.MEDIA_CODEC_VIDEO_VP9
+            VideoCodecKind.AV1 -> MediaCodecType.MEDIA_CODEC_VIDEO_AV1
+        }
+
+        /**
+         * The best codec both sides can do: the most efficient one the head unit advertises and the
+         * phone can hardware-encode. Falls back to H.264 (universal). [forceH264] pins H.264 for head
+         * units that advertise a newer codec but decode it poorly. [hwEncodes] is the phone's side.
+         */
+        fun matchVideoCodec(advertised: Set<MediaCodecType>, forceH264: Boolean, hwEncodes: (VideoCodecKind) -> Boolean): VideoCodecKind {
+            if (forceH264) return VideoCodecKind.H264
+            // Best -> worst by compression efficiency; the first both sides support wins.
+            for (kind in listOf(VideoCodecKind.AV1, VideoCodecKind.H265, VideoCodecKind.VP9, VideoCodecKind.H264)) {
+                if (videoType(kind) in advertised && hwEncodes(kind)) return kind
+            }
+            return VideoCodecKind.H264
         }
     }
 }

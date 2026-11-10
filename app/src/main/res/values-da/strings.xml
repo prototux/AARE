@@ -320,6 +320,8 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Søgning er tilgængelig, når bilen er parkeret</string>
 
+    <string name="setup_toggle_force_h264_title">Gennemtving H.264-video</string>
+    <string name="setup_toggle_force_h264_subtitle">Som standard bruger AARE den bedste codec, som bilen og telefonen har til fælles (H.265…). Slå til, hvis bilens billede er forvrænget.</string>
     <!-- common / setup / updates / audio / media / car app errors -->
     <string name="common_ok">OK</string>
     <string name="common_try_again">Forsøg igen</string>

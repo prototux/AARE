@@ -12,16 +12,34 @@ import android.util.Log
 import android.view.Surface
 
 /**
- * Hardware H.264 encoder fed by a Surface (a virtual display renders into it).
+ * A video codec the phone can feed a head unit, mapped to its MediaCodec MIME type and the
+ * profile/level we ask for. We only ever use codecs the phone can encode in *hardware* (see
+ * [VideoEncoder.hardwareEncodes]); the level table is tuned for H.264, where it is well tested,
+ * and left to the encoder for the others (the config fallback drops it if it is rejected anyway).
+ */
+enum class VideoCodecKind(val label: String, val mime: String, val profile: Int?) {
+    H264("H.264", MediaFormat.MIMETYPE_VIDEO_AVC, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline),
+    H265("H.265", MediaFormat.MIMETYPE_VIDEO_HEVC, MediaCodecInfo.CodecProfileLevel.HEVCProfileMain),
+    VP9("VP9", MediaFormat.MIMETYPE_VIDEO_VP9, null),
+    AV1("AV1", MediaFormat.MIMETYPE_VIDEO_AV1, null);
+
+    /** H.264 pins the level to the macroblock rate; the others let the encoder choose. */
+    fun levelFor(w: Int, h: Int, fps: Int): Int? = if (this == H264) h264LevelFor(w, h, fps) else null
+}
+
+/**
+ * Hardware video encoder fed by a Surface (a virtual display renders into it); H.264 by default,
+ * or another [VideoCodecKind] the head unit asked for and the phone can encode in hardware.
  *
- * Head units decode Baseline/Constrained Baseline H.264 in Annex-B form, the same thing the
- * official app sends. Output buffers are copied into pooled arrays with [headroom] free bytes in
- * front, so the session can prepend its message header without another copy.
+ * Head units decode Annex-B access units, the same thing the official app sends; H.264 uses
+ * Baseline/Constrained Baseline. Output buffers are copied into pooled arrays with [headroom] free
+ * bytes in front, so the session can prepend its message header without another copy.
  */
 class VideoEncoder(
     val width: Int,
     val height: Int,
     val fps: Int,
+    private val kind: VideoCodecKind = VideoCodecKind.H264,
     /** The starting bitrate; [setBitrate] changes it while running. */
     val bitrate: Int = defaultBitrate(width, height, fps),
     private val headroom: Int = 10,
@@ -48,15 +66,15 @@ class VideoEncoder(
         val t = HandlerThread("aare-video-enc", android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY).also { it.start() }
         thread = t
         // Built afresh for each attempt (MediaFormat.removeKey is Android 10+).
-        fun format(dropped: Set<String>) = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
+        fun format(dropped: Set<String>) = MediaFormat.createVideoFormat(kind.mime, width, height).apply {
             fun int(key: String, value: Int) { if (key !in dropped) setInteger(key, value) }
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
             setInteger(MediaFormat.KEY_FRAME_RATE, fps)
             // Long GOP: the transport is reliable, and we ask for key frames when they're needed.
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
-            int(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline)
-            int(MediaFormat.KEY_LEVEL, levelFor(width, height, fps))
+            kind.profile?.let { int(MediaFormat.KEY_PROFILE, it) }
+            kind.levelFor(width, height, fps)?.let { int(MediaFormat.KEY_LEVEL, it) }
             int(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
             // Keep frames flowing on a static screen so the head unit's decoder never stalls.
             if (MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER !in dropped) setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 1_000_000L / 5)
@@ -73,7 +91,7 @@ class VideoEncoder(
         try {
             var format = format(emptySet())
             val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
-            c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(kind.mime)
             // Encoders differ in which tuning keys they accept: drop them step by step until one works.
             val fallbacks = listOf(
                 emptyList(),
@@ -102,7 +120,7 @@ class VideoEncoder(
                     runCatching { c.reset() }
                 }
             }
-            if (!configured) throw IllegalStateException("no usable H.264 encoder configuration for ${width}x$height@$fps", lastError)
+            if (!configured) throw IllegalStateException("no usable ${kind.label} encoder configuration for ${width}x$height@$fps", lastError)
             surface = c.createInputSurface()
             c.start()
             inputSurface = surface
@@ -211,17 +229,29 @@ class VideoEncoder(
             return (w * h * fps * bpp).toInt().coerceIn(2_000_000, max)
         }
 
-        /** The lowest H.264 level whose macroblock rate (and frame size) covers the stream. */
-        private fun levelFor(w: Int, h: Int, fps: Int): Int {
-            val frameMbs = ((w + 15) / 16) * ((h + 15) / 16)
-            val mbps = frameMbs * fps
-            return when {
-                frameMbs > 8_704 -> MediaCodecInfo.CodecProfileLevel.AVCLevel51 // beyond 1080p
-                mbps <= 108_000 -> MediaCodecInfo.CodecProfileLevel.AVCLevel31 // 800x480@60, 720p30
-                mbps <= 216_000 -> MediaCodecInfo.CodecProfileLevel.AVCLevel32 // 720p60
-                mbps <= 245_760 -> MediaCodecInfo.CodecProfileLevel.AVCLevel4 // 1080p30
-                else -> MediaCodecInfo.CodecProfileLevel.AVCLevel42 // 1080p60
+        /** Whether the phone has a hardware encoder for [kind] (we never software-encode video). */
+        fun hardwareEncodes(kind: VideoCodecKind): Boolean {
+            val probe = MediaFormat.createVideoFormat(kind.mime, 1280, 720).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             }
+            val list = MediaCodecList(MediaCodecList.REGULAR_CODECS)
+            val name = runCatching { list.findEncoderForFormat(probe) }.getOrNull() ?: return false
+            // isHardwareAccelerated is API 29+; before that, trust only H.264 (universally hardware).
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return kind == VideoCodecKind.H264
+            return list.codecInfos.firstOrNull { it.name == name }?.isHardwareAccelerated == true
         }
+    }
+}
+
+/** The lowest H.264 level whose macroblock rate (and frame size) covers the stream. */
+private fun h264LevelFor(w: Int, h: Int, fps: Int): Int {
+    val frameMbs = ((w + 15) / 16) * ((h + 15) / 16)
+    val mbps = frameMbs * fps
+    return when {
+        frameMbs > 8_704 -> MediaCodecInfo.CodecProfileLevel.AVCLevel51 // beyond 1080p
+        mbps <= 108_000 -> MediaCodecInfo.CodecProfileLevel.AVCLevel31 // 800x480@60, 720p30
+        mbps <= 216_000 -> MediaCodecInfo.CodecProfileLevel.AVCLevel32 // 720p60
+        mbps <= 245_760 -> MediaCodecInfo.CodecProfileLevel.AVCLevel4 // 1080p30
+        else -> MediaCodecInfo.CodecProfileLevel.AVCLevel42 // 1080p60
     }
 }

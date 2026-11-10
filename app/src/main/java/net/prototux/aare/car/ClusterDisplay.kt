@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import aap_protobuf.service.media.sink.message.VideoFrameRateTypeOuterClass.VideoFrameRateType
 import androidx.compose.foundation.background
@@ -36,9 +37,11 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
 
     fun open(service: aap_protobuf.service.ServiceOuterClass.Service): VideoChannel = VideoChannel(service, this).also { channel = it }
 
-    // The cluster usually offers one configuration: take the smallest, it's a small screen.
+    // The cluster usually offers one configuration: take the smallest, it's a small screen. It stays
+    // on H.264 (universally decoded, and bandwidth is a non-issue on a tiny screen); only the main
+    // display matches newer codecs.
     override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-        CarSession.videoCandidates(configs, preferred, TAG)
+        CarSession.videoCandidates(configs, preferred, MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP, TAG)
             .minByOrNull { CarSession.resolution(configs[it].codecResolution).second } ?: 0
 
     override fun onVideoStart(index: Int, config: VideoConfiguration) {

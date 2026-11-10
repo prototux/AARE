@@ -319,6 +319,9 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Suche ist beim Parken verfügbar</string>
+
+    <string name="setup_toggle_force_h264_title">H.264-Video erzwingen</string>
+    <string name="setup_toggle_force_h264_subtitle">Standardmäßig verwendet AARE den besten Codec, den Auto und Telefon gemeinsam unterstützen (H.265…). Aktivieren Sie dies, wenn das Bild im Auto ruckelt oder gestört ist.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Erneut versuchen</string>
     <string name="common_something_went_wrong">Etwas ist schiefgelaufen</string>

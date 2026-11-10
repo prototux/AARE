@@ -320,6 +320,8 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Wyszukiwanie jest dostępne po zaparkowaniu</string>
 
+    <string name="setup_toggle_force_h264_title">Wymuś wideo H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">Domyślnie AARE używa najlepszego kodeka wspólnego dla samochodu i telefonu (H.265…). Włącz, jeśli obraz w samochodzie się zacina lub jest zniekształcony.</string>
     <!-- newly translated strings -->
     <string name="common_ok">OK</string>
     <string name="common_try_again">Spróbuj ponownie</string>

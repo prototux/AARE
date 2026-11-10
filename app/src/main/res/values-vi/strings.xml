@@ -319,6 +319,9 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Tìm kiếm chỉ khả dụng khi đã đỗ xe</string>
+
+    <string name="setup_toggle_force_h264_title">Buộc dùng video H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">Theo mặc định, AARE sử dụng codec tốt nhất mà xe và điện thoại đều hỗ trợ (H.265…). Bật tùy chọn này nếu hình ảnh trên xe bị lỗi.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Thử lại</string>
     <string name="common_something_went_wrong">Đã xảy ra lỗi</string>

@@ -319,6 +319,9 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">Haku on käytettävissä pysäköitynä</string>
+
+    <string name="setup_toggle_force_h264_title">Pakota H.264-video</string>
+    <string name="setup_toggle_force_h264_subtitle">AARE käyttää oletusarvoisesti parasta koodekkia, jonka auto ja puhelin jakavat (H.265…). Ota käyttöön, jos auton kuva on häiriöinen.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Yritä uudelleen</string>
     <string name="common_something_went_wrong">Jokin meni pieleen</string>

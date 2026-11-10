@@ -304,6 +304,8 @@
 
     <string name="search_parked_only">البحث متاح عند التوقف</string>
 
+    <string name="setup_toggle_force_h264_title">فرض ترميز H.264 للفيديو</string>
+    <string name="setup_toggle_force_h264_subtitle">بشكل افتراضي، يستخدم AARE أفضل ترميز مشترك بين السيارة والهاتف (H.265…). فعّل هذا الخيار إذا كانت صورة السيارة بها تشويش.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">إعادة المحاولة</string>
     <string name="common_something_went_wrong">حدث خطأ ما</string>

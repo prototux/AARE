@@ -320,6 +320,8 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Sökning är tillgänglig när bilen är parkerad</string>
 
+    <string name="setup_toggle_force_h264_title">Tvinga H.264-video</string>
+    <string name="setup_toggle_force_h264_subtitle">Som standard använder AARE den bästa kodeken som bilen och telefonen har gemensamt (H.265…). Slå på om bilens bild är förvrängd.</string>
     <!-- i18n/new-strings: added 2026-11-09 -->
     <string name="common_ok">OK</string>
     <string name="common_try_again">Försök igen</string>

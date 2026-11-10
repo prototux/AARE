@@ -319,6 +319,9 @@
 
     <!-- search: media search view -->
     <string name="search_parked_only">La búsqueda está disponible al estacionar</string>
+
+    <string name="setup_toggle_force_h264_title">Forzar vídeo H.264</string>
+    <string name="setup_toggle_force_h264_subtitle">De forma predeterminada, AARE usa el mejor códec que el coche y el teléfono tienen en común (H.265…). Actívalo si la imagen del coche se ve con fallos.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Reintentar</string>
     <string name="common_something_went_wrong">Algo salió mal</string>

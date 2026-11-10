@@ -303,6 +303,9 @@
     <string name="kbd_letters_label">ABC</string>
 
     <string name="search_parked_only">停车后才可使用搜索</string>
+
+    <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
+    <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">重试</string>
     <string name="common_something_went_wrong">出现错误</string>

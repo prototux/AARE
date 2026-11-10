@@ -320,6 +320,8 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Zoeken is beschikbaar tijdens parkeren</string>
 
+    <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
+    <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->
     <string name="common_ok">OK</string>
     <string name="common_try_again">Opnieuw proberen</string>
