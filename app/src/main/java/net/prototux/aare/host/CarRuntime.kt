@@ -300,6 +300,7 @@ class CarRuntime(
             }
         }
         ui.railBottom = position == Settings.RAIL_BOTTOM
+        ui.railPosition = position
         ui.driverOnRight = rightHandDrive
         ui.railOnRight = when (position) {
             Settings.RAIL_LEFT -> false

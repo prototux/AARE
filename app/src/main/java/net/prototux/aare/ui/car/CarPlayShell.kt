@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -102,7 +103,10 @@ internal fun CarPlayShell(
                 } else {
                     BarRevealButton(
                         onClick = { state.barTemporarilyVisible = true },
-                        modifier = Modifier.align(if (state.driverOnRight) Alignment.TopEnd else Alignment.TopStart).padding(16.dp),
+                        area = DpSize(maxWidth, maxHeight),
+                        defaultX = barButtonDefaultX(state.railBottom, state.railOnRight),
+                        positionKey = state.railPosition,
+                        modifier = Modifier.align(Alignment.TopStart),
                     )
                 }
             } else if (portrait) {

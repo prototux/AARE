@@ -123,6 +123,8 @@ class CarUiState {
     var carPlayStyle by mutableStateOf(false)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** The user's raw bar-position setting, used to reset the reveal button when it changes. */
+    var railPosition by mutableStateOf("")
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }
