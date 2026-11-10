@@ -457,6 +457,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var resume by remember { mutableStateOf(settings.resumeMedia) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
+    var btAddr by remember { mutableStateOf(settings.phoneBluetoothAddress) }
     val ctx = LocalContext.current
     val pinned = remember { net.prototux.aare.PinnedHeadUnits(ctx) }
     var pins by remember { mutableStateOf(pinned.all) }
@@ -469,6 +470,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(btAddr, { btAddr = it; settings.phoneBluetoothAddress = it.trim() }, Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.setup_bt_address_label)) },
+                supportingText = { Text(stringResource(R.string.setup_bt_address_hint)) },
+                singleLine = true)
         }
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {

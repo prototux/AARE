@@ -129,6 +129,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("car_audio", true)
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
+    /**
+     * The phone's own Bluetooth MAC, for the car's in-session pairing handshake. Android hides it
+     * from apps on most devices, and some head units withhold the projected screen until they know
+     * which phone is connected, so the user can set it (Settings > About phone > Status). Empty: try
+     * to read it, else skip.
+     */
+    var phoneBluetoothAddress: String
+        get() = prefs.getString("phone_bt_address", "") ?: ""
+        set(v) = prefs.edit { putString("phone_bt_address", v) }
+
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)

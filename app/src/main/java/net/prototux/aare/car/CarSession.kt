@@ -16,6 +16,7 @@ import aap_protobuf.service.media.sink.message.VideoFrameRateTypeOuterClass.Vide
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClass.MediaPlaybackMetadata
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.MediaPlaybackStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
+import aap_protobuf.service.ServiceOuterClass.Service
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -205,12 +206,17 @@ class CarSession(
             settings.rememberCar(runtime.ui.headUnitName)
         }
         val channels = ArrayList<ServiceChannel>()
+        // Input services are resolved after the loop, once the main display id is known: a car with
+        // a cluster/second screen lists one input service per display, several of them empty.
+        val inputServices = ArrayList<Service>()
+        var mainDisplayId = 0
         for (s in response.channelsList) {
             when {
                 s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> {
                     // The main display, and the instrument cluster's if the car has one (display_type CLUSTER).
                     when (s.mediaSinkService.displayType.number) {
                         0 -> if (video == null) {
+                            mainDisplayId = s.mediaSinkService.displayId
                             videoCodec = pickVideoCodec(s.mediaSinkService.videoConfigsList)
                             video = VideoChannel(s, videoListener(rhd), videoType(videoCodec)).also { channels += it }
                         }
@@ -218,21 +224,45 @@ class CarSession(
                     }
                 }
                 s.hasMediaSinkService() -> {
-                    // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
-                    if (s.mediaSinkService.audioType != AudioStreamType.AUDIO_STREAM_TELEPHONY) {
-                        AudioChannel(s, audioListener).also { audio += it; channels += it }
+                    val sink = s.mediaSinkService
+                    when {
+                        // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
+                        sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
+                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
+                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
+                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
+                        // becomes the primary instead. Codecs default to PCM, so cars that don't
+                        // advertise one are unaffected.
+                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
+                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
+                        else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
-                s.hasInputSourceService() -> InputChannel(s, inputListener).also { ch ->
-                    ch.touchScreen?.let { touchSize = it.width to it.height }
-                    channels += ch
-                }
+                s.hasInputSourceService() -> inputServices += s
                 s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
-                s.hasBluetoothService() -> channels += BluetoothChannel(s, object : BluetoothChannel.Listener {})
+                s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
+                    override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
+                        DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
+                    }
+                })
+            }
+        }
+        // The input service for the projected (main) display: match its display id, require a real
+        // non-secondary touch panel, and skip the empty input services a multi-screen unit lists.
+        fun realTouch(s: Service) = s.inputSourceService.touchscreenList.any { (it.width > 0 || it.height > 0) && !it.isSecondary }
+        val mainInput = inputServices.firstOrNull { it.inputSourceService.displayId == mainDisplayId && realTouch(it) }
+            ?: inputServices.firstOrNull(::realTouch)
+            ?: inputServices.firstOrNull()
+        mainInput?.let { s ->
+            InputChannel(s, inputListener).also { ch ->
+                ch.touchScreen?.let { touchSize = it.width to it.height }
+                channels += ch
+                Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
         }
         Log.i(TAG, "audio: " + audio.joinToString { ch ->
@@ -441,8 +471,10 @@ class CarSession(
         }
         display = pd
         pd.show()
+        // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
+        // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: layout.visibleWidth, inputCh?.second ?: layout.visibleHeight, layout)
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout)
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
@@ -502,7 +534,13 @@ class CarSession(
             KeyEvent.KEYCODE_MEDIA_NEXT -> if (!down) media.next()
             KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) media.previous()
             KEYCODE_MEDIA -> if (!down) runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
-            KEYCODE_NAVIGATION -> if (!down) runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            KEYCODE_NAVIGATION, KEYCODE_TURN_CARD -> if (!down) runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            // The car's dedicated Phone button opens the phone app; the Call/Endcall keys answer and hang up.
+            KEYCODE_TEL -> if (!down) runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
+            KeyEvent.KEYCODE_CALL -> if (!down) { if (runtime.ui.call?.ringing == true) runtime.actions.answerCall() else runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp) }
+            KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
+            // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
+            KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
         }
     }
@@ -827,6 +865,26 @@ class CarSession(
         return if (m.startsWith(Build.MANUFACTURER, ignoreCase = true)) m else "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} $m"
     }
 
+    /**
+     * The phone's own Bluetooth MAC for the car's pairing handshake, or null if unknown. Prefer the
+     * user-set value; else try to read it (Android hides it from apps on most devices, returning
+     * null or the 02:00:00:00:00:00 placeholder — then we skip the handshake rather than send junk).
+     */
+    private fun phoneBtAddress(): String? {
+        val set = settings.phoneBluetoothAddress.trim()
+        val fromSecure = runCatching {
+            android.provider.Settings.Secure.getString(context.contentResolver, "bluetooth_address")
+        }.getOrNull()
+        val fromAdapter = runCatching {
+            if (context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+                context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.address else null
+        }.getOrNull()
+        return listOf(set, fromSecure, fromAdapter).firstOrNull(::isValidBtMac)
+    }
+
+    private fun isValidBtMac(s: String?): Boolean =
+        !s.isNullOrBlank() && s != "02:00:00:00:00:00" && s.matches(Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}"))
+
     private fun icon(size: Int): ByteArray? = runCatching {
         val d = context.packageManager.getApplicationIcon(context.packageName)
         val bmp = androidx.core.graphics.drawable.DrawableCompat.wrap(d).let {
@@ -841,6 +899,9 @@ class CarSession(
         private const val TAG = "AareSession"
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
+        const val KEYCODE_RADIO = 65539
+        const val KEYCODE_TEL = 65540
+        const val KEYCODE_TURN_CARD = 65544
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
