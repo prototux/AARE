@@ -1,10 +1,12 @@
 package net.prototux.aare.aap.wireless
 
+import aap_protobuf.aaw.StatusOuterClass.Status
 import aap_protobuf.aaw.WifiConnectionStatusOuterClass.WifiConnectionStatus
 import aap_protobuf.aaw.WifiInfoResponseOuterClass.WifiInfoResponse
 import aap_protobuf.aaw.WifiPing.WifiPingRequest
 import aap_protobuf.aaw.WifiStartRequestOuterClass.WifiStartRequest
 import aap_protobuf.aaw.WifiStartResponseOuterClass.WifiStartResponse
+import aap_protobuf.aaw.WifiVersionRequestOuterClass.WifiProjectionProtocolInfo
 import aap_protobuf.aaw.WifiVersionRequestOuterClass.WifiVersionRequest
 import aap_protobuf.aaw.WifiVersionResponseOuterClass.WifiVersionResponse
 import aap_protobuf.service.wifiprojection.message.AccessPointTypeOuterClass.AccessPointType
@@ -81,7 +83,7 @@ class WirelessBootstrapTest {
 
     private fun start(
         phone: Phone,
-        options: WirelessBootstrap.Options = WirelessBootstrap.Options(messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0),
+        options: WirelessBootstrap.Options = WirelessBootstrap.Options(messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0),
     ): WirelessBootstrap {
         val b = WirelessBootstrap(huToPhone.input, phoneToHu.output, phone, quiet, options)
         bootstrap = b
@@ -108,6 +110,11 @@ class WirelessBootstrapTest {
             .setSecurityMode(mode).setAccessPointType(AccessPointType.DYNAMIC).build()
 
     private fun status(frame: WppFrame) = WifiConnectionStatus.parseFrom(frame.payload).status.number
+
+    /** A WPP 4.2 head unit like Google's receiver library, which also offers WPP over TCP. */
+    private fun versionRequest() =
+        WifiVersionRequest.newBuilder().setMajor(4).setMinor(2)
+            .setWppInfo(WifiProjectionProtocolInfo.newBuilder().setIpAddress("0.0.0.0").setPort(1234)).build()
 
     @Test(timeout = 10_000)
     fun versionAndStartBackToBackLikeOpenauto() {
@@ -303,6 +310,132 @@ class WirelessBootstrapTest {
         awaitEnd()
         assertTrue(failure is WirelessBootstrapException)
         assertFalse("cancelling isn't retried", (failure as WirelessBootstrapException).whileNegotiating)
+    }
+
+    @Test(timeout = 10_000)
+    fun versionResponseCarriesPhoneInfo() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0,
+            instanceId = "phone-id-1", deviceName = "Pixel",
+        ))
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertTrue("no phone_info", response.hasDeviceInfo())
+        assertEquals("phone-id-1", response.deviceInfo.deviceId)
+        assertEquals("Pixel", response.deviceInfo.deviceName)
+        assertFalse("bluetooth_address is not sent", response.deviceInfo.hasBluetoothAddress())
+    }
+
+    @Test(timeout = 10_000)
+    fun noPhoneInfoWithoutInstanceId() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0, deviceName = "Pixel",
+        ))
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        assertFalse(WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload).hasDeviceInfo())
+    }
+
+    @Test(timeout = 10_000)
+    fun phonePingsAfterTheVersionExchange() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 100,
+        ))
+
+        // Google's receiver says nothing more and closes the link 10 s later unless the phone pings
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val answeredAt = System.nanoTime()
+        repeat(3) {
+            val frame = hu.read()
+            assertEquals("expected WifiPingRequest, got $frame", WppMessageId.PING_REQUEST, frame.id)
+            assertTrue(WifiPingRequest.parseFrom(frame.payload).timestamp > 0)
+        }
+        val tookMs = (System.nanoTime() - answeredAt) / 1_000_000
+        assertTrue("3 pings took $tookMs ms", tookMs < 1_000)
+    }
+
+    @Test(timeout = 10_000)
+    fun pingsContinueThroughTheWholeFlow() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 100,
+        ))
+
+        // the head unit starts by itself a moment after the version exchange; the phone pings meanwhile
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.PING_REQUEST)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        assertEquals(WppStatus.SUCCESS, WifiStartResponse.parseFrom(hu.expect(WppMessageId.START_RESPONSE).payload).status.number)
+        assertEquals(WppStatus.SUCCESS, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        assertEquals("10.0.0.1" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))
+
+        // and on while the link is held for the session
+        repeat(2) { hu.expect(WppMessageId.PING_REQUEST) }
+        hu.hangUp()
+        awaitEnd()
+        assertNull(failure)
+    }
+
+    @Test(timeout = 10_000)
+    fun noPhonePingsWithoutVersionRequest() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 100,
+        ))
+
+        hu.send(WppMessageId.START_REQUEST, startRequest(ip = "192.168.4.1"))
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+        // the dongle aborts on anything else; the info response is withheld, so nothing else is due
+        val next = LinkedBlockingQueue<Result<WppFrame>>()
+        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
+        assertNull("the phone sent something unprompted", next.poll(300, TimeUnit.MILLISECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun repeatedVersionRequestKeepsOnePingStream() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 500,
+        ))
+
+        hu.send(WppMessageId.VERSION_REQUEST to versionRequest(), WppMessageId.VERSION_REQUEST to versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val first = WifiPingRequest.parseFrom(hu.expect(WppMessageId.PING_REQUEST).payload).timestamp
+        val second = WifiPingRequest.parseFrom(hu.expect(WppMessageId.PING_REQUEST).payload).timestamp
+        assertTrue("pings ${second - first} ms apart", second - first >= 250)
+    }
+
+    @Test(timeout = 10_000)
+    fun noSecondPingStreamWhileJoining() {
+        val phone = Phone { Thread.sleep(300); JoinResult.Joined() }
+        start(phone, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 50, frameGapMs = 0, pingIntervalMs = 10_000,
+        ))
+
+        hu.send(WppMessageId.VERSION_REQUEST to versionRequest(), WppMessageId.START_REQUEST to startRequest())
+        assertEquals(WppMessageId.VERSION_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // the join keepalive would ping every 50 ms here; the link pinger's first ping is not due yet
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.CONNECTION_STATUS, hu.read().id)
+    }
+
+    @Test(timeout = 10_000)
+    fun startResponseStatusIsEncoded() {
+        // Google's receiver reads a WifiStartResponse without status as a failure
+        start(Phone { JoinResult.Joined(localAddress = "10.0.0.23") })
+
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        val response = WifiStartResponse.parseFrom(hu.expect(WppMessageId.START_RESPONSE).payload)
+        assertTrue(response.hasStatus())
+        assertEquals(Status.STATUS_SUCCESS, response.status)
     }
 
     @Test

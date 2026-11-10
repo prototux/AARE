@@ -16,8 +16,13 @@ message WifiVersionResponse {
   optional bytes setup_token = 7;
 }
 
-// AARE: from open-headunit's wireless.proto.
+// AARE: fields 1-2 from open-headunit's wireless.proto, 3-4 from Gearhead's PhoneInfo
+// (docs/research/gearhead-notes.md 2.5). Google's receiver library calls field 1 instance_id: it is
+// the "mobile device ID" the receiver requires before it handles any phone message except pings and
+// version responses.
 message WppWifiDeviceInfo {
   optional string device_id = 1;
   optional string connectivity_lifetime_id = 2;
+  optional string device_name = 3;
+  optional string bluetooth_address = 4;
 }

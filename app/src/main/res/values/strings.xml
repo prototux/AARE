@@ -34,6 +34,65 @@
     <string name="setup_page_connection_subtitle">Wireless, video quality, your cars</string>
     <string name="setup_page_advanced_title">Advanced</string>
     <string name="setup_page_advanced_subtitle">Head unit server, certificates, log</string>
+    <string name="setup_page_car_data_title">Car data</string>
+    <string name="setup_page_car_data_subtitle">Live speed, gear and sensors from the car</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Connect to a car to see its data.</string>
+    <string name="car_data_section_car">Car</string>
+    <string name="car_data_section_live">Live data</string>
+    <string name="car_data_identity">Vehicle</string>
+    <string name="car_data_head_unit">Head unit</string>
+    <string name="car_data_connection">Connection</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Advertised sensors</string>
+    <string name="car_data_driving">Driving</string>
+    <string name="car_data_parked">parked</string>
+    <string name="car_data_moving">moving</string>
+    <string name="car_data_night">Lighting</string>
+    <string name="car_data_night_on">night</string>
+    <string name="car_data_night_off">day</string>
+    <string name="car_data_speed">Speed</string>
+    <string name="car_data_cruise">Cruise set</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Gear</string>
+    <string name="car_data_parking_brake">Parking brake</string>
+    <string name="car_data_on">on</string>
+    <string name="car_data_off">off</string>
+    <string name="car_data_odometer">Odometer</string>
+    <string name="car_data_fuel">Fuel</string>
+    <string name="car_data_low">low</string>
+    <string name="car_data_compass">Heading</string>
+    <string name="car_data_satellites">GPS satellites</string>
+    <string name="car_data_environment">Outside</string>
+    <string name="car_data_rain">rain</string>
+    <string name="car_data_climate">Climate</string>
+    <string name="car_data_steering">Steering</string>
+    <string name="car_data_tyres">Tyre pressure</string>
+    <string name="car_data_doors">Doors</string>
+    <string name="car_data_hood">hood</string>
+    <string name="car_data_trunk">trunk</string>
+    <string name="car_data_door">door</string>
+    <string name="car_data_closed">all closed</string>
+    <string name="car_data_lights">Lights</string>
+    <string name="car_data_hazard">hazard</string>
+    <string name="car_data_passenger">Passenger</string>
+    <string name="car_data_toll">Toll card</string>
+    <string name="car_data_yes">yes</string>
+    <string name="car_data_no">no</string>
+    <string name="car_data_accelerometer">Accelerometer</string>
+    <string name="car_data_gyroscope">Gyroscope</string>
+    <string name="car_data_dtc">Trouble codes</string>
+    <string name="car_data_app_label">Car data</string>
+    <string name="car_data_show_in_car_title">Show on the car screen</string>
+    <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>
+
+    <!-- vehicles: per-car overrides from vehicles.json -->
+    <string name="vehicles_section_title">Per-vehicle overrides</string>
+    <string name="vehicles_hint">Fix a specific car\'s density or visible-area margins without a new build. Edit vehicles.json with a file manager, matching the car by make/model/name.</string>
+    <string name="vehicles_rule_count">%1$d rule(s) loaded</string>
+    <string name="vehicles_import">Import file…</string>
+    <string name="vehicles_template">Write template</string>
     <string name="setup_tagline">Open-source car projection</string>
     <string name="setup_status_certificate">certificate: %1$s</string>
     <string name="setup_status_disconnected_hint">Plug the phone into the car\'s Android Auto USB port, or connect to a paired car wirelessly.</string>
@@ -55,6 +114,8 @@
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_bt_address_label">Phone Bluetooth address (optional)</string>
+    <string name="setup_bt_address_hint">Some head units show a black screen until they know which phone is connected. Find it in Settings &gt; About phone &gt; Status. Leave empty if your car already works.</string>
     <string name="setup_section_updates">Updates</string>
     <string name="setup_toggle_updates_title">Check for updates</string>
     <string name="setup_toggle_updates_subtitle">Warn on the home screen when a newer release is on GitHub. Off never connects to the internet.</string>
@@ -70,6 +131,8 @@
     <string name="setup_toggle_60fps_subtitle">Smoother when the car supports it</string>
     <string name="setup_choice_max_resolution">Maximum resolution</string>
     <string name="setup_hint_lower_resolution">Lower uses less battery and bandwidth.</string>
+    <string name="setup_toggle_force_h264_title">Force H.264 video</string>
+    <string name="setup_toggle_force_h264_subtitle">By default AARE uses the best codec the car and phone share (H.265…). Turn on if the car\'s picture is glitchy.</string>
     <string name="setup_section_your_cars">Your cars</string>
     <string name="setup_cars_empty">Cars appear here after the first connection.</string>
     <string name="setup_car_last_connected">Last connected %1$s</string>
@@ -158,6 +221,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Safer: the network has to be allowed again for each session. Turn this off for head units that reconnect on their own, like openauto or Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Phone screen on the server</string>
     <string name="huserver_toggle_mirror_subtitle">Also offer "Phone screen" to whoever connects here. Risky: they see the phone\'s screen and can tap on it, so leave it off unless you trust the head unit.</string>
+    <string name="huserver_toggle_localhost_title">Allow localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Accept a connection from an Android-Auto-in-the-browser app on this phone, for cars without Android Auto (e.g. Tesla). Any app on the phone could connect, so leave it off unless you use one.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Messages</string>
@@ -219,6 +284,16 @@
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
     <string name="standalone_paused_driving">Paused while driving.</string>
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>
+    <string name="browser_url_label">Home page</string>
+    <string name="browser_hint_parked">The browser is paused while driving.</string>
+    <string name="browser_paused_driving">The browser is paused while driving.</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_home">Home page</string>
+    <string name="browser_address_hint">Search or type a web address</string>
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_settings_title">Voice assistant</string>

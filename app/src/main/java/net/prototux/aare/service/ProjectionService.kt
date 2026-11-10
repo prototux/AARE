@@ -81,6 +81,7 @@ class ProjectionService : Service() {
     private var session: CarSession? = null
     private var tcpServer: TcpServer? = null
     private var tcpServerLan = false
+    private var tcpServerLocalhost = false
     /** The running session came in over the head unit server's LAN listener, which turns off after it. */
     private var lanSession = false
     private var projection: MediaProjection? = null
@@ -154,14 +155,16 @@ class ProjectionService : Service() {
     /** Starts or stops the head unit server according to the settings. */
     private fun applyListeners() {
         val lan = settings.headUnitServer && settings.headUnitServerLan
-        // The LAN option changed (or switched itself off after a session): listen again with the new scope.
-        if (tcpServer != null && tcpServerLan != lan) { tcpServer?.stop(); tcpServer = null }
+        val localhost = settings.headUnitServer && settings.headUnitServerLocalhost
+        // A scope option changed (or LAN switched itself off after a session): listen again with it.
+        if (tcpServer != null && (tcpServerLan != lan || tcpServerLocalhost != localhost)) { tcpServer?.stop(); tcpServer = null }
         if (settings.headUnitServer && tcpServer == null) {
             tcpServerLan = lan
+            tcpServerLocalhost = localhost
             tcpServer = runCatching {
                 // Unless the user keeps network mode on, a LAN session clears the stored LAN option right away,
                 // so a service killed mid-session does not come back listening on the network.
-                TcpServer(lan = lan) { t ->
+                TcpServer(lan = lan, localhost = localhost) { t ->
                     main.post {
                         // Accepted while onDestroy ran: a session here would hold a wake lock nothing releases.
                         if (destroyed) { t.close(); return@post }
@@ -173,7 +176,8 @@ class ProjectionService : Service() {
                     }
                 }.also { it.start() }
             }.onFailure { log("can't listen for the head unit server: ${it.message}") }.getOrNull()
-            if (tcpServer != null) log("head unit server listening on @${TcpServer.LOCAL_NAME} (adb)${if (lan) " and TCP ${TcpServer.PORT} (LAN)" else ""}")
+            if (tcpServer != null) log("head unit server listening on @${TcpServer.LOCAL_NAME} (adb)" +
+                (if (lan) " and TCP ${TcpServer.PORT} (LAN)" else if (localhost) " and TCP ${TcpServer.PORT} (localhost)" else ""))
         } else if (!settings.headUnitServer && tcpServer != null) {
             tcpServer?.stop(); tcpServer = null
         }
@@ -187,10 +191,13 @@ class ProjectionService : Service() {
         if (session != null || wirelessJob?.isActive == true) return
         val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: return
-        // Pass the phone's stable id as the WPP device serial: strict head units (#46) want it in
-        // the version response before they send the WifiStartRequest.
+        // Pass the phone's stable id as the WPP device serial and phone_info.instance_id: strict head
+        // units (#46) want the serial in the version response before they send the WifiStartRequest,
+        // and Google's receiver library ignores every phone message except pings and
+        // version responses until phone_info carries an instance id.
         val connector = WirelessConnector(this, DiagAapLog,
-            WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(deviceSerial = settings.instanceId)))
+            WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
+                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull())))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
