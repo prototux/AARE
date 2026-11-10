@@ -791,6 +791,8 @@ class CarSession(
 
     private fun teardown() {
         closed = true
+        // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
+        pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
