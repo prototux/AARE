@@ -320,6 +320,15 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Suche ist beim Parken verfügbar</string>
 
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Apps auf dem Autobildschirm (erweitert)</string>
+    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
+    <string name="standalone_toggle_title">Telefon-Apps auf dem Autobildschirm starten</string>
+    <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus. Nur beim Parken angezeigt.</string>
+    <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
+    <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
+    <string name="standalone_starting">Wird gestartet…</string>
+    <string name="standalone_paused_driving">Während der Fahrt pausiert.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Ein Webbrowser auf dem Autobildschirm, für wenn du geparkt bist</string>

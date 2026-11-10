@@ -320,6 +320,15 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Wyszukiwanie jest dostępne po zaparkowaniu</string>
 
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Aplikacje na ekranie samochodu (zaawansowane)</string>
+    <string name="standalone_section_warning">To nie są aplikacje Android Auto: AARE wyświetla ich zwykły ekran telefonu, tylko po zaparkowaniu, i wymaga roota lub Shizuku. Używasz na własne ryzyko.</string>
+    <string name="standalone_toggle_title">Uruchamianie aplikacji telefonu na ekranie samochodu</string>
+    <string name="standalone_toggle_subtitle">Wybierz aplikacje poniżej. Widoczne tylko po zaparkowaniu.</string>
+    <string name="standalone_need_root">Wymaga roota lub Shizuku. Skonfiguruj jedno z nich na stronie Dźwięk w samochodzie, a potem wróć.</string>
+    <string name="standalone_not_native">Nie jest aplikacją Android Auto · użycie po zaparkowaniu</string>
+    <string name="standalone_starting">Uruchamianie…</string>
+    <string name="standalone_paused_driving">Wstrzymane podczas jazdy.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Przeglądarka</string>
     <string name="browser_app_row_subtitle">Przeglądarka internetowa na ekranie samochodu, na czas postoju</string>

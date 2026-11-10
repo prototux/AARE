@@ -304,6 +304,15 @@
 
     <string name="search_parked_only">停车后才可使用搜索</string>
 
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">车载屏幕上的应用（高级）</string>
+    <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
+    <string name="standalone_toggle_title">在车载屏幕上启动手机应用</string>
+    <string name="standalone_toggle_subtitle">在下方选择应用。仅在停车时显示。</string>
+    <string name="standalone_need_root">需要 root 或 Shizuku。请在车载音频设置中配置其中之一，然后返回。</string>
+    <string name="standalone_not_native">不是 Android Auto 应用 · 仅限停车时使用</string>
+    <string name="standalone_starting">正在启动…</string>
+    <string name="standalone_paused_driving">行驶时已暂停。</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">浏览器</string>
     <string name="browser_app_row_subtitle">车载屏幕上的网页浏览器，供停车时使用</string>

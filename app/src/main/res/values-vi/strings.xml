@@ -320,6 +320,15 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Tìm kiếm chỉ khả dụng khi đã đỗ xe</string>
 
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Ứng dụng trên màn hình xe (nâng cao)</string>
+    <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
+    <string name="standalone_toggle_title">Khởi chạy ứng dụng điện thoại trên màn hình xe</string>
+    <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới. Chỉ hiển thị khi đã đỗ xe.</string>
+    <string name="standalone_need_root">Cần root hoặc Shizuku. Thiết lập một trong hai ở Âm thanh xe hơi, rồi quay lại.</string>
+    <string name="standalone_not_native">Không phải ứng dụng Android Auto · dùng khi đã đỗ xe</string>
+    <string name="standalone_starting">Đang khởi động…</string>
+    <string name="standalone_paused_driving">Tạm dừng khi đang lái xe.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Trình duyệt</string>
     <string name="browser_app_row_subtitle">Trình duyệt web trên màn hình xe, dùng khi bạn đã đỗ xe</string>

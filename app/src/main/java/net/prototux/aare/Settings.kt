@@ -166,6 +166,19 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
+    /**
+     * Launch ordinary phone apps on the car screen (NewPipe, emulators, a browser…): a parked-only,
+     * opt-in convenience that needs root or Shizuku. These apps are not Android Auto apps; AARE
+     * mirrors their normal phone UI and injects the car's touches, so it is paused while driving.
+     */
+    var standaloneApps: Boolean
+        get() = prefs.getBoolean("standalone_apps", false)
+        set(v) = prefs.edit { putBoolean("standalone_apps", v) }
+
+    /** The packages the user allows onto the car screen (see [standaloneApps]). */
+    var standaloneAppPackages: Set<String>
+        get() = prefs.getStringSet("standalone_app_pkgs", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("standalone_app_pkgs", HashSet(v)) }
     /** Show a web browser (a WebView) on the car screen. Off by default; paused while driving. */
     var browser: Boolean
         get() = prefs.getBoolean("browser", false)

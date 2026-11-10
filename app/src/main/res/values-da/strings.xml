@@ -320,6 +320,15 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Søgning er tilgængelig, når bilen er parkeret</string>
 
+    <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
+    <string name="standalone_section_title">Apps på bilskærmen (avanceret)</string>
+    <string name="standalone_section_warning">Dette er ikke Android Auto-apps: AARE viser deres normale telefonskærm, kun når bilen er parkeret, og kræver root eller Shizuku. Bruges på eget ansvar.</string>
+    <string name="standalone_toggle_title">Start telefonapps på bilskærmen</string>
+    <string name="standalone_toggle_subtitle">Vælg apps nedenfor. Vises kun når parkeret.</string>
+    <string name="standalone_need_root">Kræver root eller Shizuku. Konfigurer en af dem på siden Bilaudio, og kom så tilbage.</string>
+    <string name="standalone_not_native">Ikke en Android Auto-app · brug ved parkering</string>
+    <string name="standalone_starting">Starter…</string>
+    <string name="standalone_paused_driving">Sat på pause under kørsel.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">En webbrowser på bilens skærm, til når du er parkeret</string>
