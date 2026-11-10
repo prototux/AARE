@@ -56,6 +56,7 @@ class CarAudioOut(
         // Some head units report one at every stream end: log only the first of a burst.
         val quiet = now < underflowUntil
         underflowUntil = now + UNDERFLOW_HOLD_MS
+        if (!quiet) DiagLog.add("car audio ($label): the car ran out of sound ${(now - startedAtMs) / 1000.0} s into the stream")
         if (!quiet) Log.i(TAG,"car audio underflow on ${channel.streamType} (${channel.underflows} so far), keeping up to $UNDERFLOW_BACKLOG chunks")
     }
 
@@ -110,6 +111,7 @@ class CarAudioOut(
                     playing = true
                 } else if (playing && now - lastSound > SILENCE_MS) {
                     noteDropped()
+                    noteStream(now)
                     channel.stopPlayback()
                     focus.request(false)
                     playing = false
@@ -122,12 +124,14 @@ class CarAudioOut(
                     if (!focus.granted) { queue(ts); continue }
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
+                    startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
                     // not a raised one left over from the last stream's underflow.
                     while (queued.size > baseBacklog) queued.removeFirst()
                 } else if (!focus.granted) {
                     // Focus lost mid-stream: drop, stale sound later would be worse.
+                    focusDropped += 1 + queued.size
                     queued.clear()
                     continue
                 }
@@ -138,6 +142,7 @@ class CarAudioOut(
                 }
                 // Catching up: send the backlog in order, as fast as the car's ack window allows.
                 queue(ts)
+                if (queued.size > maxQueued) maxQueued = queued.size
                 while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
                 // through sendPcm so dropped chunks still count towards ack-less detection.
@@ -146,12 +151,26 @@ class CarAudioOut(
         } catch (e: Exception) {
             Log.w(TAG, "audio capture stopped", e)
         } finally {
-            if (playing) { runCatching { channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
+            if (playing) { runCatching { noteStream(SystemClock.elapsedRealtime()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
             playing = false
             queued.clear()
             source.release()
             if (died) onFailed()
         }
+    }
+
+    @Volatile private var startedAtMs = 0L
+    private var maxQueued = 0
+    private var focusDropped = 0
+    private var underflowsAtStart = 0
+
+    /** One connection-log line per stream: how the car kept up with it. */
+    private fun noteStream(now: Long) {
+        if (!channel.started) return
+        DiagLog.add("car audio ($label): stream ${(now - startedAtMs) / 1000.0} s, sent ${channel.streamSent}, " +
+            "${channel.streamAcks} acks, window ${channel.maxUnacked}, longest ack wait ${channel.maxAckGapMs} ms, " +
+            "backlog max $maxQueued, car underflows ${channel.underflows - underflowsAtStart}" +
+            if (focusDropped > 0) ", $focusDropped chunks muted (no focus)" else "")
     }
 
     private var lastAckless = false

@@ -58,6 +58,13 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     @Volatile private var lastAckNs = System.nanoTime()
     /** How long a head unit that has acked may go without one, window full, before we stop waiting (#82). */
     @Volatile var ackStallMs = ACK_STALL_MS
+    /** This stream (since START), for diagnostics: DATA messages sent, ack messages, longest wait for an ack with data in flight. */
+    @Volatile var streamSent = 0
+        private set
+    @Volatile var streamAcks = 0
+        private set
+    @Volatile var maxAckGapMs = 0L
+        private set
 
     override fun onOpened() {
         send(MediaMsg.SETUP, Setup.newBuilder().setType(codec).build())
@@ -76,7 +83,10 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
                 val ack = Ack.parseFrom(msg.bodyBytes())
                 sinceAck.set(0)
                 ackSeen = true
-                lastAckNs = System.nanoTime()
+                val now = System.nanoTime()
+                if (unacked.get() > 0) maxAckGapMs = maxOf(maxAckGapMs, (now - lastAckNs) / 1_000_000)
+                streamAcks++
+                lastAckNs = now
                 // Acks are back: let the car pace us again (its window is its flow control).
                 if (ackless) { ackless = false; unacked.set(0) }
                 val n = if (ack.hasAck()) ack.ack else 1
@@ -104,6 +114,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         unacked.set(0)
         sinceAck.set(0)
         lastAckNs = System.nanoTime()
+        streamSent = 0; streamAcks = 0; maxAckGapMs = 0
         send(MediaMsg.START, Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex).build(), dataPriority)
         started = true
     }
@@ -152,6 +163,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         buf[start + 1] = MediaMsg.DATA.toByte()
         for (i in 0 until 8) buf[start + 2 + i] = (timestampUs ushr (56 - 8 * i)).toByte()
         unacked.incrementAndGet()
+        streamSent++
         noteAttempt()
         if (ackless) unacked.set(0)
         val plain = if (start == 0) buf else buf.copyOfRange(start, offset + length)
