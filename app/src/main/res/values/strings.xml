@@ -34,6 +34,13 @@
     <string name="setup_page_connection_subtitle">Wireless, video quality, your cars</string>
     <string name="setup_page_advanced_title">Advanced</string>
     <string name="setup_page_advanced_subtitle">Head unit server, certificates, log</string>
+
+    <!-- vehicles: per-car overrides from vehicles.json -->
+    <string name="vehicles_section_title">Per-vehicle overrides</string>
+    <string name="vehicles_hint">Fix a specific car\'s density or visible-area margins without a new build. Edit vehicles.json with a file manager, matching the car by make/model/name.</string>
+    <string name="vehicles_rule_count">%1$d rule(s) loaded</string>
+    <string name="vehicles_import">Import file…</string>
+    <string name="vehicles_template">Write template</string>
     <string name="setup_tagline">Open-source car projection</string>
     <string name="setup_status_certificate">certificate: %1$s</string>
     <string name="setup_status_disconnected_hint">Plug the phone into the car\'s Android Auto USB port, or connect to a paired car wirelessly.</string>
