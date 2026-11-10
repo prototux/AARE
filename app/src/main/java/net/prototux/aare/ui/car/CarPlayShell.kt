@@ -80,6 +80,7 @@ internal fun CarPlayShell(
 ) {
     MaterialTheme(colorScheme = CarPlayColors, typography = MaterialTheme.typography) {
         BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black).then(modifier)) {
+            val portrait = maxHeight > maxWidth
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
                     when (val screen = state.screen) {
@@ -89,7 +90,22 @@ internal fun CarPlayShell(
                     }
                 }
             }
-            if (maxHeight > maxWidth) {
+            if (state.barHidden) {
+                content(Modifier.fillMaxSize())
+                if (state.barTemporarilyVisible) {
+                    if (portrait) {
+                        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { Dock(state, actions, horizontal = true) }
+                    } else {
+                        val alignment = if (state.driverOnRight) Alignment.CenterEnd else Alignment.CenterStart
+                        Box(Modifier.align(alignment).fillMaxHeight()) { Dock(state, actions) }
+                    }
+                } else {
+                    BarRevealButton(
+                        onClick = { state.barTemporarilyVisible = true },
+                        modifier = Modifier.align(if (state.driverOnRight) Alignment.TopEnd else Alignment.TopStart).padding(16.dp),
+                    )
+                }
+            } else if (portrait) {
                 // Portrait screens: the dock along the bottom, as in CarPlay on tall screens.
                 Column(Modifier.fillMaxSize()) {
                     content(Modifier.weight(1f).fillMaxWidth())

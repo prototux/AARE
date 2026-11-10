@@ -113,6 +113,12 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail is normally hidden, with a floating button available to reveal it. */
+    var barHidden by mutableStateOf(false)
+    /** The hidden rail has been revealed for a short time. */
+    var barTemporarilyVisible by mutableStateOf(false)
+    /** Whether overlays should currently leave room for the rail. */
+    val barVisible: Boolean get() = !barHidden || barTemporarilyVisible
     /** The CarPlay-style layout (an easter egg, *Settings > Style*). */
     var carPlayStyle by mutableStateOf(false)
     /** The rail runs along the bottom instead of a side. */

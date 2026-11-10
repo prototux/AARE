@@ -128,6 +128,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("dark_bar", false)
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
 
+    /** Hide the car screen's bar, leaving a floating button that reveals it temporarily. */
+    var hideBar: Boolean
+        get() = prefs.getBoolean("hide_bar", false)
+        set(v) = prefs.edit { putBoolean("hide_bar", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO

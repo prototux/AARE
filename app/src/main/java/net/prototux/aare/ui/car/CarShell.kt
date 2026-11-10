@@ -1,6 +1,7 @@
 package net.prototux.aare.ui.car
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,6 +10,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,6 +49,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -69,10 +73,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -100,6 +107,12 @@ fun CarShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(state.barHidden, state.barTemporarilyVisible) {
+        if (state.barHidden && state.barTemporarilyVisible) {
+            delay(4_000)
+            state.barTemporarilyVisible = false
+        }
+    }
     if (state.carPlayStyle) {
         CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
         return
@@ -109,7 +122,29 @@ fun CarShell(
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
-            if (portrait || state.railBottom) {
+            val horizontal = portrait || state.railBottom
+            if (state.barHidden) {
+                ContentArea(state, actions, appContent, navMap, Modifier.fillMaxSize())
+                if (state.barTemporarilyVisible) {
+                    if (horizontal) {
+                        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { Rail(state, actions, horizontal = true, area) }
+                    } else {
+                        val alignment = if (state.railOnRight) Alignment.CenterEnd else Alignment.CenterStart
+                        Box(Modifier.align(alignment).fillMaxHeight()) { Rail(state, actions, horizontal = false, area) }
+                    }
+                } else {
+                    val alignment = when {
+                        horizontal && state.driverOnRight -> Alignment.TopEnd
+                        horizontal -> Alignment.TopStart
+                        state.railOnRight -> Alignment.TopEnd
+                        else -> Alignment.TopStart
+                    }
+                    BarRevealButton(
+                        onClick = { state.barTemporarilyVisible = true },
+                        modifier = Modifier.align(alignment).padding(16.dp),
+                    )
+                }
+            } else if (horizontal) {
                 Column(Modifier.fillMaxSize()) {
                     ContentArea(state, actions, appContent, navMap, Modifier.weight(1f))
                     Rail(state, actions, horizontal = true, area)
@@ -125,6 +160,31 @@ fun CarShell(
             NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
+    }
+}
+
+/** A car-sized Material floating action button that restores a deliberately hidden bar. */
+@Composable
+internal fun BarRevealButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val d = LocalCarDimens.current
+    val label = stringResource(R.string.bar_reveal)
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.9f else 1f, tween(120), label = "bar reveal scale")
+    val opacity by animateFloatAsState(if (pressed) 0.9f else 0.6f, tween(120), label = "bar reveal opacity")
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier.size(d.touchTarget).graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+            alpha = opacity
+        }.semantics { contentDescription = label },
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        interactionSource = interactionSource,
+    ) {
+        Text("B", style = MaterialTheme.typography.headlineSmall)
     }
 }
 
