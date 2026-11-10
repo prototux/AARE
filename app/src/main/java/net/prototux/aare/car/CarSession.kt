@@ -217,9 +217,19 @@ class CarSession(
                     }
                 }
                 s.hasMediaSinkService() -> {
-                    // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
-                    if (s.mediaSinkService.audioType != AudioStreamType.AUDIO_STREAM_TELEPHONY) {
-                        AudioChannel(s, audioListener).also { audio += it; channels += it }
+                    val sink = s.mediaSinkService
+                    when {
+                        // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
+                        sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
+                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
+                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
+                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
+                        // becomes the primary instead. Codecs default to PCM, so cars that don't
+                        // advertise one are unaffected.
+                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
+                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
+                        else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
