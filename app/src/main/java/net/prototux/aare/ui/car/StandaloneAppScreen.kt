@@ -47,7 +47,7 @@ import net.prototux.aare.media.Placeholder
 internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
-    var started by remember(packageName) { mutableStateOf(false) }
+    var started by remember(packageName) { mutableStateOf<Boolean?>(null) }
 
     DisposableEffect(packageName) {
         // Hardware / head-unit Back goes to the launched app.
@@ -77,7 +77,7 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                                     if (launcher.connect()) {
                                         val id = launcher.start(surface, w, h, runtime.densityDpi, packageName)
                                         started = id >= 0
-                                    }
+                                    } else started = false
                                 }.apply { isDaemon = true }.start()
                             }
                             override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
@@ -118,7 +118,11 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                 modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
                     .background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = 12.dp, vertical = 3.dp),
             )
-            if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
+            when (started) {
+                null -> Placeholder(stringResource(R.string.standalone_starting), loading = true)
+                false -> Placeholder(stringResource(R.string.carapp_error_start, packageName), loading = false)
+                true -> Unit
+            }
         } else {
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
         }
