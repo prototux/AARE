@@ -87,6 +87,8 @@ class CarAudioOut(
         // The source ended by itself (its service or the audio server died), not by stop(): the
         // next capture method takes over, rather than the car going silent for the rest of the drive.
         var died = false
+        // Build up a lead before feeding the car (again): see PRIME_CHUNKS.
+        var priming = true
         fun queue(ts: Long) {
             queued.addLast(buf.copyOf() to ts)
             while (queued.size > MAX_QUEUED) queued.removeFirst()
@@ -129,10 +131,21 @@ class CarAudioOut(
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
                     // not a raised one left over from the last stream's underflow.
                     while (queued.size > baseBacklog) queued.removeFirst()
+                    priming = true
                 } else if (!focus.granted) {
                     // Focus lost mid-stream: drop, stale sound later would be worse.
                     focusDropped += 1 + queued.size
                     queued.clear()
+                    // When it comes back the car has nothing left: build the lead up again.
+                    priming = true
+                    continue
+                }
+                if (priming) {
+                    queue(ts)
+                    if (queued.size < PRIME_CHUNKS) continue
+                    priming = false
+                    if (queued.size > maxQueued) maxQueued = queued.size
+                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
                     continue
                 }
                 if (queued.isEmpty() && channel.hasRoom) {
@@ -205,6 +218,15 @@ class CarAudioOut(
         private const val MAX_QUEUED = 50
         /** Backlog kept once media plays (~240 ms). */
         private const val LIVE_BACKLOG = 12
+        /**
+         * Sound sent ahead in one burst whenever we start (or resume) feeding the car, ~200 ms.
+         * The capture delivers unevenly (gaps of 50-130 ms between 20 ms chunks), and a head unit
+         * that doesn't pace us (the Ford's window is 4096) plays what it gets at once: with nothing
+         * ahead, every late chunk is a gap, heard as crackle. Before, the only lead was whatever
+         * piled up waiting for focus: ~240 ms for music at its start, next to nothing for prompts
+         * (the Ford answers at once) or for music after one.
+         */
+        private const val PRIME_CHUNKS = 10
         /** Backlog after an underflow (~500 ms): more latency, fewer gaps. Bounded by [MAX_QUEUED]. */
         private const val UNDERFLOW_BACKLOG = 25
         private const val UNDERFLOW_HOLD_MS = 30_000L
