@@ -2,12 +2,9 @@ package net.prototux.aare.ui.car
 
 import android.graphics.SurfaceTexture
 import android.view.KeyEvent
-import android.view.MotionEvent
 import android.view.Surface
 import android.view.TextureView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -21,7 +18,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +65,9 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             androidx.compose.ui.viewinterop.AndroidView(
                 factory = { ctx ->
                     TextureView(ctx).apply {
+                        // Forward the native event intact. It contains every active pointer and
+                        // the action index required for multi-touch gesture recognition.
+                        setOnTouchListener { _, event -> launcher.touch(event); true }
                         surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                             override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
                                 val surface = Surface(st)
@@ -90,26 +89,6 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                 },
                 modifier = Modifier.fillMaxSize(),
             )
-            // Forward the car's touches to the launched app's display (single pointer for now).
-            Box(Modifier.fillMaxSize().pointerInput(packageName) {
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    val t0 = down.uptimeMillis
-                    launcher.touch(t0, t0, MotionEvent.ACTION_DOWN, down.position.x, down.position.y, 0)
-                    down.consume()
-                    while (true) {
-                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        if (change.pressed) {
-                            launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_MOVE, change.position.x, change.position.y, 0)
-                        } else {
-                            launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_UP, change.position.x, change.position.y, 0)
-                            change.consume()
-                            break
-                        }
-                        change.consume()
-                    }
-                }
-            })
             // A quiet reminder that this isn't an Android Auto app.
             Text(
                 stringResource(R.string.standalone_not_native),

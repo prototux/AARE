@@ -9,6 +9,7 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.view.MotionEvent
 import android.view.Surface
 import net.prototux.aare.BuildConfig
 import net.prototux.aare.audio.CaptureMethods
@@ -87,9 +88,7 @@ class AppLauncher(private val context: Context) {
         runCatching { host?.start(surface, width, height, dpi, pkg) ?: -1 }.onFailure { Log.w(TAG, "start", it) }.getOrDefault(-1)
 
     fun resize(surface: Surface, width: Int, height: Int, dpi: Int) { runCatching { host?.resize(surface, width, height, dpi) } }
-    fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {
-        runCatching { host?.touch(downTime, eventTime, action, x, y, pointerId) }
-    }
+    fun touch(event: MotionEvent) { runCatching { host?.touch(event) } }
     fun key(eventTime: Long, action: Int, keyCode: Int) { runCatching { host?.key(eventTime, action, keyCode) } }
 
     fun release() {

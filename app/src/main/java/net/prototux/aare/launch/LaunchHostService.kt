@@ -70,8 +70,10 @@ class LaunchHostService : ILaunchHost.Stub {
         }
     }
 
-    override fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) = asHelper {
-        val ev = MotionEvent.obtain(downTime, eventTime, action, x, y, 0)
+    override fun touch(event: MotionEvent) = asHelper {
+        // Keep the full pointer set and encoded action index so apps can recognize pinch, rotate,
+        // two-finger pan and any other gesture from the same events they receive on the phone.
+        val ev = MotionEvent.obtain(event)
         ev.source = SOURCE_TOUCHSCREEN
         setDisplayId(ev, displayId)
         inject(ev)
