@@ -265,6 +265,21 @@ open class SessionLoopbackTest {
     }
 
     @Test
+    fun functionButtonsReachThePhone() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        // The car's dedicated Phone button (AA keycode 65540) arrives as a key down then up.
+        hu.phoneButton()
+        val down = inputs.poll(3, TimeUnit.SECONDS)!!
+        assertTrue("expected a key event", down.hasKeyEvent())
+        assertEquals(65540, down.keyEvent.getKeys(0).keycode)
+        assertTrue("expected the key down", down.keyEvent.getKeys(0).down)
+        assertFalse("expected the key up", inputs.poll(3, TimeUnit.SECONDS)!!.keyEvent.getKeys(0).down)
+        // The Navigation button likewise.
+        hu.navigationButton()
+        assertEquals(65538, inputs.poll(3, TimeUnit.SECONDS)!!.keyEvent.getKeys(0).keycode)
+    }
+
+    @Test
     fun headUnitDisappearingClosesSession() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         hu.stop()
