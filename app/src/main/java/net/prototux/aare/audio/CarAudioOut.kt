@@ -4,6 +4,7 @@ import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
+import net.prototux.aare.DiagLog
 import net.prototux.aare.aap.channels.AudioChannel
 import kotlin.math.abs
 
@@ -99,6 +100,7 @@ class CarAudioOut(
                     got += n
                 }
                 if (got < chunk) continue
+                noteAckMode()
                 val now = SystemClock.elapsedRealtime()
                 if (!isSilent(buf, 10, chunk)) lastSound = now
                 val ts = frames * 1_000_000L / rate
@@ -107,6 +109,7 @@ class CarAudioOut(
                     focus.request(true)
                     playing = true
                 } else if (playing && now - lastSound > SILENCE_MS) {
+                    noteDropped()
                     channel.stopPlayback()
                     focus.request(false)
                     playing = false
@@ -149,6 +152,25 @@ class CarAudioOut(
             source.release()
             if (died) onFailed()
         }
+    }
+
+    private var lastAckless = false
+    private var droppedLogged = 0L
+    private val label get() = channel.streamType.name.removePrefix("AUDIO_STREAM_").lowercase()
+
+    /** Connection-log line when the stream stops or resumes waiting for the car's acks. */
+    private fun noteAckMode() {
+        val now = channel.ackless
+        if (now == lastAckless) return
+        lastAckless = now
+        DiagLog.add("car audio ($label): " + if (now) "no acks from the car, sending unpaced" else "acks back, paced by the car again")
+    }
+
+    /** Connection-log line with the chunks dropped (car's window full) during the stream that just ended. */
+    private fun noteDropped() {
+        val d = channel.droppedChunks - droppedLogged
+        droppedLogged = channel.droppedChunks
+        if (d > 0) DiagLog.add("car audio ($label): $d chunks dropped (car's window full)")
     }
 
     fun stop() {
