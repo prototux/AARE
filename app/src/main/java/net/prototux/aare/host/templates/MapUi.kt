@@ -84,6 +84,14 @@ internal class ObstructionRegistry {
 internal val LocalObstructions = staticCompositionLocalOf<ObstructionRegistry?> { null }
 
 /**
+ * True in the dashboard's map card: the map scaffold leaves out the action strips and gestures,
+ * and templates draw only what [MapScaffold]'s `inCompact` overlay asks for (the next turn).
+ * Without this the full-screen chrome squeezed into the card covered most of it, and the app,
+ * told only the small uncovered part was visible, fitted its map into that (very zoomed in).
+ */
+val LocalCompactMap = staticCompositionLocalOf { false }
+
+/**
  * Marks a card/strip as covering the map: its bounds shrink the visible area reported to the
  * app, and it swallows touches so they do not reach the map gesture layer underneath.
  */
@@ -115,8 +123,13 @@ internal fun MapScaffold(
     mapActionStrip: ActionStrip?,
     panModeDelegate: PanModeDelegate?,
     modifier: Modifier = Modifier,
+    inCompact: Boolean = false,
     overlay: @Composable BoxWithConstraintsScope.() -> Unit,
 ) {
+    if (LocalCompactMap.current) {
+        CompactMapScaffold(modifier, if (inCompact) overlay else null)
+        return
+    }
     val host = LocalTemplateHost.current
     val gutter = LocalCarDimens.current.gutter
     val registry = remember { ObstructionRegistry() }
@@ -163,6 +176,21 @@ internal fun MapScaffold(
         }
     }
     ReportAreas(registry, panState)
+}
+
+/** The dashboard card: the map alone, plus [overlay] if the template keeps one there; taps go to the card. */
+@Composable
+private fun CompactMapScaffold(modifier: Modifier, overlay: (@Composable BoxWithConstraintsScope.() -> Unit)?) {
+    val registry = remember { ObstructionRegistry() }
+    val gutter = LocalCarDimens.current.gutter
+    Box(modifier.fillMaxSize().onGloballyPositioned { registry.map = it.boundsInRoot() }) {
+        if (overlay != null) {
+            CompositionLocalProvider(LocalObstructions provides registry, LocalInCard provides true) {
+                BoxWithConstraints(Modifier.fillMaxSize().padding(gutter)) { overlay() }
+            }
+        }
+    }
+    ReportAreas(registry, remember { mutableStateOf(false) })
 }
 
 /** Sends visible/stable area changes (map-surface px) to the app, deduplicated. */

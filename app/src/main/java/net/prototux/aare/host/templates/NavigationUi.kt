@@ -77,9 +77,11 @@ import java.util.TimeZone
  */
 @Composable
 internal fun NavigationTemplateView(t: NavigationTemplate) {
-    MapScaffold(t.actionStrip, t.mapActionStrip, t.panModeDelegate) {
+    val compact = LocalCompactMap.current
+    // in the dashboard card only the turn card stays, so the map keeps most of the card
+    MapScaffold(t.actionStrip, t.mapActionStrip, t.panModeDelegate, inCompact = true) {
         val info = t.navigationInfo
-        val estimate = t.destinationTravelEstimate
+        val estimate = t.destinationTravelEstimate.takeIf { !compact }
         val width = if (narrow) maxWidth else panelWidth()
         val top = Modifier.align(Alignment.TopStart).width(width)
         when (info) {
