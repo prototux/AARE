@@ -261,6 +261,10 @@ class CarSession(
     }
 
     override fun onAudioFocus(session: AapSession, notification: AudioFocusNotification) {
+        // Any word from the car on focus, an answer or its own decision (radio, a call), ends the
+        // asking. Before mediaFocus changes, which a check reads.
+        val asked = synchronized(focusLock) { mediaFocusRetry.onAnswered().also { scheduleFocusCheck() } }
+        if (asked != null) DiagLog.add("audio focus: the car answered after $asked asks")
         val state = notification.focusState
         if (!notification.unsolicited && guidancePlaying) {
             // A call or the car's own source taking over arrives as LOSS_TRANSIENT: not a grant.
@@ -619,11 +623,63 @@ class CarSession(
     private val mediaFocusRequests = object : CarAudioOut.Focus {
         override fun request(playing: Boolean) {
             mediaPlaying = playing
-            if (playing) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
-            // Comes right after the stream's STOP: keep it behind STOP and the last data.
-            else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
+            synchronized(focusLock) {
+                if (playing) mediaFocusRetry.onRequested(SystemClock.uptimeMillis()) else mediaFocusRetry.onWithdrawn()
+                scheduleFocusCheck()
+                if (playing) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
+                // Comes right after the stream's STOP: keep it behind STOP and the last data.
+                else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
+            }
         }
         override val granted: Boolean get() = mediaFocus
+    }
+
+    /**
+     * Without an answer, ask again: once the same way, like Android Auto (which asks again after
+     * 500 ms, up to 3 times), then releasing first. Some head units (a Jancar one) drop the answer
+     * to a request made before their session is ready, and never answer a request that doesn't
+     * change their state.
+     */
+    private val mediaFocusRetry = FocusRetry()
+    // Guards mediaFocusRetry: requests come from the capture thread, answers from the AAP reader, checks on main.
+    private val focusLock = Any()
+    private val focusCheck = Runnable { checkMediaFocus() }
+
+    /** With focusLock held. Times are uptimeMillis, the handler's clock. */
+    private fun scheduleFocusCheck() {
+        main.removeCallbacks(focusCheck)
+        mediaFocusRetry.nextCheckAtMs()?.let { main.postAtTime(focusCheck, it) }
+    }
+
+    private fun checkMediaFocus() {
+        if (closed) return
+        val action = synchronized(focusLock) {
+            val now = SystemClock.uptimeMillis()
+            // Kept from before: the request changed nothing, so the car may not answer it.
+            if (mediaFocus) mediaFocusRetry.onAnswered()
+            // Not over a prompt: when it ends, guidance asks for the music's focus again itself.
+            val step = if (guidancePlaying) {
+                mediaFocusRetry.postpone(now)
+                FocusRetry.Action.None
+            } else mediaFocusRetry.due(now)
+            // Gains at the release's priority: the send queue is ordered by priority, and one at the
+            // default could overtake a release still queued.
+            when (step) {
+                FocusRetry.Action.Ask -> aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+                FocusRetry.Action.Rearm -> {
+                    aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
+                    aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+                }
+                else -> {}
+            }
+            scheduleFocusCheck()
+            step
+        }
+        if (action is FocusRetry.Action.GiveUp) {
+            val line = "audio focus: the car never answered (asked ${action.asked} times)"
+            Log.w(TAG, line)
+            DiagLog.add(line)
+        }
     }
 
     /** Navigation voice: transient focus that ducks the car's other sound, then back to the music if it plays. */
@@ -735,6 +791,7 @@ class CarSession(
 
     private fun teardown() {
         closed = true
+        main.removeCallbacks(focusCheck)
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
