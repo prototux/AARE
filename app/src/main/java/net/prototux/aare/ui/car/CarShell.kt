@@ -66,7 +66,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -83,7 +82,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -191,7 +189,6 @@ internal fun BarRevealButton(
     val context = LocalContext.current
     val settings = remember(context) { Settings(context) }
     val density = LocalDensity.current
-    val haptics = LocalHapticFeedback.current
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     var dragging by remember { mutableStateOf(false) }
@@ -223,7 +220,6 @@ internal fun BarRevealButton(
                     onDragStart = {
                         dragging = true
                         customPosition = customPosition ?: defaultPosition
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     onDrag = { change, drag ->
                         change.consume()
