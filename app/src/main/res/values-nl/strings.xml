@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Zoeken is beschikbaar tijdens parkeren</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Auto-gegevens</string>
+    <string name="setup_page_car_data_subtitle">Snelheid, versnelling en sensoren live vanuit de auto</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Maak verbinding met een auto om de gegevens te zien.</string>
+    <string name="car_data_section_car">Auto</string>
+    <string name="car_data_section_live">Livegegevens</string>
+    <string name="car_data_identity">Voertuig</string>
+    <string name="car_data_head_unit">Hoofdeenheid</string>
+    <string name="car_data_connection">Verbinding</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Aangekondigde sensoren</string>
+    <string name="car_data_driving">Rijden</string>
+    <string name="car_data_parked">geparkeerd</string>
+    <string name="car_data_moving">in beweging</string>
+    <string name="car_data_night">Verlichting</string>
+    <string name="car_data_night_on">nacht</string>
+    <string name="car_data_night_off">dag</string>
+    <string name="car_data_speed">Snelheid</string>
+    <string name="car_data_cruise">Cruisecontrol ingesteld</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Versnelling</string>
+    <string name="car_data_parking_brake">Parkeerrem</string>
+    <string name="car_data_on">aan</string>
+    <string name="car_data_off">uit</string>
+    <string name="car_data_odometer">Kilometerteller</string>
+    <string name="car_data_fuel">Brandstof</string>
+    <string name="car_data_low">laag</string>
+    <string name="car_data_compass">Richting</string>
+    <string name="car_data_satellites">GPS-satellieten</string>
+    <string name="car_data_environment">Buiten</string>
+    <string name="car_data_rain">regen</string>
+    <string name="car_data_climate">Klimaatregeling</string>
+    <string name="car_data_steering">Besturing</string>
+    <string name="car_data_tyres">Bandenspanning</string>
+    <string name="car_data_doors">Deuren</string>
+    <string name="car_data_hood">motorkap</string>
+    <string name="car_data_trunk">kofferbak</string>
+    <string name="car_data_door">deur</string>
+    <string name="car_data_closed">allemaal dicht</string>
+    <string name="car_data_lights">Lichten</string>
+    <string name="car_data_hazard">alarmlichten</string>
+    <string name="car_data_passenger">Passagier</string>
+    <string name="car_data_toll">Tolkaart</string>
+    <string name="car_data_yes">ja</string>
+    <string name="car_data_no">nee</string>
+    <string name="car_data_accelerometer">Versnellingsmeter</string>
+    <string name="car_data_gyroscope">Gyroscoop</string>
+    <string name="car_data_dtc">Foutcodes</string>
     <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
     <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->

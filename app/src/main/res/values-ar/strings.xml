@@ -304,6 +304,56 @@
 
     <string name="search_parked_only">البحث متاح عند التوقف</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">بيانات السيارة</string>
+    <string name="setup_page_car_data_subtitle">السرعة والترس والحساسات المباشرة من السيارة</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">اتصل بسيارة لرؤية بياناتها.</string>
+    <string name="car_data_section_car">السيارة</string>
+    <string name="car_data_section_live">بيانات مباشرة</string>
+    <string name="car_data_identity">المركبة</string>
+    <string name="car_data_head_unit">وحدة الرأس</string>
+    <string name="car_data_connection">الاتصال</string>
+    <string name="car_data_video">الفيديو</string>
+    <string name="car_data_advertised">الحساسات المعلنة</string>
+    <string name="car_data_driving">القيادة</string>
+    <string name="car_data_parked">متوقفة</string>
+    <string name="car_data_moving">تتحرك</string>
+    <string name="car_data_night">الإضاءة</string>
+    <string name="car_data_night_on">ليل</string>
+    <string name="car_data_night_off">نهار</string>
+    <string name="car_data_speed">السرعة</string>
+    <string name="car_data_cruise">سرعة الرحلان</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">الترس</string>
+    <string name="car_data_parking_brake">فرملة الوقوف</string>
+    <string name="car_data_on">مفعّل</string>
+    <string name="car_data_off">معطّل</string>
+    <string name="car_data_odometer">عداد المسافة</string>
+    <string name="car_data_fuel">الوقود</string>
+    <string name="car_data_low">منخفض</string>
+    <string name="car_data_compass">الاتجاه</string>
+    <string name="car_data_satellites">أقمار GPS الصناعية</string>
+    <string name="car_data_environment">خارج السيارة</string>
+    <string name="car_data_rain">مطر</string>
+    <string name="car_data_climate">المناخ</string>
+    <string name="car_data_steering">التوجيه</string>
+    <string name="car_data_tyres">ضغط الإطارات</string>
+    <string name="car_data_doors">الأبواب</string>
+    <string name="car_data_hood">غطاء المحرك</string>
+    <string name="car_data_trunk">صندوق السيارة</string>
+    <string name="car_data_door">باب</string>
+    <string name="car_data_closed">كل الأبواب مغلقة</string>
+    <string name="car_data_lights">الأضواء</string>
+    <string name="car_data_hazard">تحذير</string>
+    <string name="car_data_passenger">الراكب</string>
+    <string name="car_data_toll">بطاقة الرسوم</string>
+    <string name="car_data_yes">نعم</string>
+    <string name="car_data_no">لا</string>
+    <string name="car_data_accelerometer">مقياس التسارع</string>
+    <string name="car_data_gyroscope">الجيروسكوب</string>
+    <string name="car_data_dtc">أكواد الأعطال</string>
     <string name="setup_toggle_force_h264_title">فرض ترميز H.264 للفيديو</string>
     <string name="setup_toggle_force_h264_subtitle">بشكل افتراضي، يستخدم AARE أفضل ترميز مشترك بين السيارة والهاتف (H.265…). فعّل هذا الخيار إذا كانت صورة السيارة بها تشويش.</string>
     <string name="common_ok">OK</string>

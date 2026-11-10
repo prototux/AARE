@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Пошук доступний після паркування</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Дані автомобіля</string>
+    <string name="setup_page_car_data_subtitle">Швидкість, передача та датчики автомобіля в реальному часі</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Підключіться до автомобіля, щоб переглянути його дані.</string>
+    <string name="car_data_section_car">Автомобіль</string>
+    <string name="car_data_section_live">Дані в реальному часі</string>
+    <string name="car_data_identity">Транспортний засіб</string>
+    <string name="car_data_head_unit">Головний пристрій</string>
+    <string name="car_data_connection">З\'єднання</string>
+    <string name="car_data_video">Відео</string>
+    <string name="car_data_advertised">Заявлені датчики</string>
+    <string name="car_data_driving">Рух</string>
+    <string name="car_data_parked">припарковано</string>
+    <string name="car_data_moving">в русі</string>
+    <string name="car_data_night">Освітлення</string>
+    <string name="car_data_night_on">ніч</string>
+    <string name="car_data_night_off">день</string>
+    <string name="car_data_speed">Швидкість</string>
+    <string name="car_data_cruise">Встановлений круїз-контроль</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Передача</string>
+    <string name="car_data_parking_brake">Стоянкове гальмо</string>
+    <string name="car_data_on">увімк</string>
+    <string name="car_data_off">вимк</string>
+    <string name="car_data_odometer">Одометр</string>
+    <string name="car_data_fuel">Паливо</string>
+    <string name="car_data_low">низький</string>
+    <string name="car_data_compass">Напрямок</string>
+    <string name="car_data_satellites">Супутники GPS</string>
+    <string name="car_data_environment">Зовні</string>
+    <string name="car_data_rain">дощ</string>
+    <string name="car_data_climate">Клімат-контроль</string>
+    <string name="car_data_steering">Кермо</string>
+    <string name="car_data_tyres">Тиск у шинах</string>
+    <string name="car_data_doors">Двері</string>
+    <string name="car_data_hood">капот</string>
+    <string name="car_data_trunk">багажник</string>
+    <string name="car_data_door">двері</string>
+    <string name="car_data_closed">усі зачинені</string>
+    <string name="car_data_lights">Фари</string>
+    <string name="car_data_hazard">аварійна сигналізація</string>
+    <string name="car_data_passenger">Пасажир</string>
+    <string name="car_data_toll">Картка для оплати доріг</string>
+    <string name="car_data_yes">так</string>
+    <string name="car_data_no">ні</string>
+    <string name="car_data_accelerometer">Акселерометр</string>
+    <string name="car_data_gyroscope">Гіроскоп</string>
+    <string name="car_data_dtc">Коди несправностей</string>
     <string name="setup_toggle_force_h264_title">Примусово використовувати відео H.264</string>
     <string name="setup_toggle_force_h264_subtitle">За замовчуванням AARE використовує найкращий кодек, який підтримують і автомобіль, і телефон (H.265…). Увімкніть, якщо зображення в автомобілі спотворене.</string>
     <string name="common_ok">OK</string>

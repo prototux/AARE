@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Sökning är tillgänglig när bilen är parkerad</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Bildata</string>
+    <string name="setup_page_car_data_subtitle">Hastighet, växel och sensorer direkt från bilen</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Anslut till en bil för att se dess data.</string>
+    <string name="car_data_section_car">Bil</string>
+    <string name="car_data_section_live">Livedata</string>
+    <string name="car_data_identity">Fordon</string>
+    <string name="car_data_head_unit">Huvudenhet</string>
+    <string name="car_data_connection">Anslutning</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Annonserade sensorer</string>
+    <string name="car_data_driving">Körning</string>
+    <string name="car_data_parked">parkerad</string>
+    <string name="car_data_moving">i rörelse</string>
+    <string name="car_data_night">Belysning</string>
+    <string name="car_data_night_on">natt</string>
+    <string name="car_data_night_off">dag</string>
+    <string name="car_data_speed">Hastighet</string>
+    <string name="car_data_cruise">Farthållare inställd</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Växel</string>
+    <string name="car_data_parking_brake">Parkeringsbroms</string>
+    <string name="car_data_on">på</string>
+    <string name="car_data_off">av</string>
+    <string name="car_data_odometer">Vägmätare</string>
+    <string name="car_data_fuel">Bränsle</string>
+    <string name="car_data_low">lågt</string>
+    <string name="car_data_compass">Riktning</string>
+    <string name="car_data_satellites">GPS-satelliter</string>
+    <string name="car_data_environment">Utomhus</string>
+    <string name="car_data_rain">regn</string>
+    <string name="car_data_climate">Klimatanläggning</string>
+    <string name="car_data_steering">Styrning</string>
+    <string name="car_data_tyres">Däcktryck</string>
+    <string name="car_data_doors">Dörrar</string>
+    <string name="car_data_hood">motorhuv</string>
+    <string name="car_data_trunk">bagageutrymme</string>
+    <string name="car_data_door">dörr</string>
+    <string name="car_data_closed">alla stängda</string>
+    <string name="car_data_lights">Lampor</string>
+    <string name="car_data_hazard">varningsblinkers</string>
+    <string name="car_data_passenger">Passagerare</string>
+    <string name="car_data_toll">Vägavgiftskort</string>
+    <string name="car_data_yes">ja</string>
+    <string name="car_data_no">nej</string>
+    <string name="car_data_accelerometer">Accelerometer</string>
+    <string name="car_data_gyroscope">Gyroskop</string>
+    <string name="car_data_dtc">Felkoder</string>
     <string name="setup_toggle_force_h264_title">Tvinga H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard använder AARE den bästa kodeken som bilen och telefonen har gemensamt (H.265…). Slå på om bilens bild är förvrängd.</string>
     <!-- i18n/new-strings: added 2026-11-09 -->

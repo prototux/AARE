@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Vyhledávání je dostupné po zaparkování</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Data vozu</string>
+    <string name="setup_page_car_data_subtitle">Rychlost, rychlostní stupeň a senzory z vozu naživo</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Připojte se k autu pro zobrazení jeho dat.</string>
+    <string name="car_data_section_car">Auto</string>
+    <string name="car_data_section_live">Živá data</string>
+    <string name="car_data_identity">Vozidlo</string>
+    <string name="car_data_head_unit">Hlavní jednotka</string>
+    <string name="car_data_connection">Připojení</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Nabízené senzory</string>
+    <string name="car_data_driving">Jízda</string>
+    <string name="car_data_parked">zaparkováno</string>
+    <string name="car_data_moving">v pohybu</string>
+    <string name="car_data_night">Osvětlení</string>
+    <string name="car_data_night_on">noc</string>
+    <string name="car_data_night_off">den</string>
+    <string name="car_data_speed">Rychlost</string>
+    <string name="car_data_cruise">Nastavený tempomat</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Rychlostní stupeň</string>
+    <string name="car_data_parking_brake">Parkovací brzda</string>
+    <string name="car_data_on">zapnuto</string>
+    <string name="car_data_off">vypnuto</string>
+    <string name="car_data_odometer">Tachometr</string>
+    <string name="car_data_fuel">Palivo</string>
+    <string name="car_data_low">nízké</string>
+    <string name="car_data_compass">Směr</string>
+    <string name="car_data_satellites">Satelity GPS</string>
+    <string name="car_data_environment">Venku</string>
+    <string name="car_data_rain">déšť</string>
+    <string name="car_data_climate">Klimatizace</string>
+    <string name="car_data_steering">Řízení</string>
+    <string name="car_data_tyres">Tlak v pneumatikách</string>
+    <string name="car_data_doors">Dveře</string>
+    <string name="car_data_hood">kapota</string>
+    <string name="car_data_trunk">kufr</string>
+    <string name="car_data_door">dveře</string>
+    <string name="car_data_closed">vše zavřeno</string>
+    <string name="car_data_lights">Světla</string>
+    <string name="car_data_hazard">výstražná světla</string>
+    <string name="car_data_passenger">Spolujezdec</string>
+    <string name="car_data_toll">Dálniční karta</string>
+    <string name="car_data_yes">ano</string>
+    <string name="car_data_no">ne</string>
+    <string name="car_data_accelerometer">Akcelerometr</string>
+    <string name="car_data_gyroscope">Gyroskop</string>
+    <string name="car_data_dtc">Chybové kódy</string>
     <string name="setup_toggle_force_h264_title">Vynutit video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Ve výchozím nastavení AARE používá nejlepší kodek sdílený autem a telefonem (H.265…). Zapněte, pokud obraz v autě trhá nebo je poškozený.</string>
     <string name="common_ok">OK</string>

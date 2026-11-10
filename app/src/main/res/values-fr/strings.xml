@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">La recherche est disponible à l\'arrêt</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Données du véhicule</string>
+    <string name="setup_page_car_data_subtitle">Vitesse, rapport et capteurs en direct depuis la voiture</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Connectez-vous à une voiture pour voir ses données.</string>
+    <string name="car_data_section_car">Voiture</string>
+    <string name="car_data_section_live">Données en direct</string>
+    <string name="car_data_identity">Véhicule</string>
+    <string name="car_data_head_unit">Autoradio</string>
+    <string name="car_data_connection">Connexion</string>
+    <string name="car_data_video">Vidéo</string>
+    <string name="car_data_advertised">Capteurs annoncés</string>
+    <string name="car_data_driving">Conduite</string>
+    <string name="car_data_parked">garée</string>
+    <string name="car_data_moving">en mouvement</string>
+    <string name="car_data_night">Éclairage</string>
+    <string name="car_data_night_on">nuit</string>
+    <string name="car_data_night_off">jour</string>
+    <string name="car_data_speed">Vitesse</string>
+    <string name="car_data_cruise">Régulateur réglé</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Rapport</string>
+    <string name="car_data_parking_brake">Frein de stationnement</string>
+    <string name="car_data_on">activé</string>
+    <string name="car_data_off">désactivé</string>
+    <string name="car_data_odometer">Compteur kilométrique</string>
+    <string name="car_data_fuel">Carburant</string>
+    <string name="car_data_low">bas</string>
+    <string name="car_data_compass">Cap</string>
+    <string name="car_data_satellites">Satellites GPS</string>
+    <string name="car_data_environment">Extérieur</string>
+    <string name="car_data_rain">pluie</string>
+    <string name="car_data_climate">Climatisation</string>
+    <string name="car_data_steering">Direction</string>
+    <string name="car_data_tyres">Pression des pneus</string>
+    <string name="car_data_doors">Portes</string>
+    <string name="car_data_hood">capot</string>
+    <string name="car_data_trunk">coffre</string>
+    <string name="car_data_door">porte</string>
+    <string name="car_data_closed">toutes fermées</string>
+    <string name="car_data_lights">Feux</string>
+    <string name="car_data_hazard">feux de détresse</string>
+    <string name="car_data_passenger">Passager</string>
+    <string name="car_data_toll">Carte de péage</string>
+    <string name="car_data_yes">oui</string>
+    <string name="car_data_no">non</string>
+    <string name="car_data_accelerometer">Accéléromètre</string>
+    <string name="car_data_gyroscope">Gyroscope</string>
+    <string name="car_data_dtc">Codes défaut</string>
     <string name="setup_toggle_force_h264_title">Forcer la vidéo H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Par défaut, AARE utilise le meilleur codec partagé par la voiture et le téléphone (H.265…). Activez cette option si l\'image de la voiture est perturbée.</string>
     <string name="common_ok">OK</string>

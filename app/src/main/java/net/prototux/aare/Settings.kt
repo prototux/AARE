@@ -166,6 +166,10 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
+    /** Also show the car data (speed, sensors…) as an app on the car screen, for diagnostics. */
+    var carDataApp: Boolean
+        get() = prefs.getBoolean("car_data_app", false)
+        set(v) = prefs.edit { putBoolean("car_data_app", v) }
     /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
     var callBarOffsetX: Float
         get() = prefs.getFloat("call_bar_x", 0f)

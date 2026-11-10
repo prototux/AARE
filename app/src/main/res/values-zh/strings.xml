@@ -304,6 +304,56 @@
 
     <string name="search_parked_only">停车后才可使用搜索</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">车辆数据</string>
+    <string name="setup_page_car_data_subtitle">车辆的实时速度、挡位和传感器数据</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">连接到车辆以查看其数据。</string>
+    <string name="car_data_section_car">车辆</string>
+    <string name="car_data_section_live">实时数据</string>
+    <string name="car_data_identity">车辆信息</string>
+    <string name="car_data_head_unit">车机</string>
+    <string name="car_data_connection">连接</string>
+    <string name="car_data_video">视频</string>
+    <string name="car_data_advertised">已上报的传感器</string>
+    <string name="car_data_driving">行驶</string>
+    <string name="car_data_parked">已停车</string>
+    <string name="car_data_moving">行驶中</string>
+    <string name="car_data_night">灯光模式</string>
+    <string name="car_data_night_on">夜间</string>
+    <string name="car_data_night_off">白天</string>
+    <string name="car_data_speed">速度</string>
+    <string name="car_data_cruise">定速巡航设定值</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">挡位</string>
+    <string name="car_data_parking_brake">驻车制动</string>
+    <string name="car_data_on">开</string>
+    <string name="car_data_off">关</string>
+    <string name="car_data_odometer">里程表</string>
+    <string name="car_data_fuel">燃油</string>
+    <string name="car_data_low">低</string>
+    <string name="car_data_compass">方向</string>
+    <string name="car_data_satellites">GPS 卫星</string>
+    <string name="car_data_environment">车外环境</string>
+    <string name="car_data_rain">雨天</string>
+    <string name="car_data_climate">空调</string>
+    <string name="car_data_steering">转向</string>
+    <string name="car_data_tyres">胎压</string>
+    <string name="car_data_doors">车门</string>
+    <string name="car_data_hood">引擎盖</string>
+    <string name="car_data_trunk">后备箱</string>
+    <string name="car_data_door">车门</string>
+    <string name="car_data_closed">全部关闭</string>
+    <string name="car_data_lights">车灯</string>
+    <string name="car_data_hazard">危险警示灯</string>
+    <string name="car_data_passenger">乘客</string>
+    <string name="car_data_toll">通行卡</string>
+    <string name="car_data_yes">是</string>
+    <string name="car_data_no">否</string>
+    <string name="car_data_accelerometer">加速度计</string>
+    <string name="car_data_gyroscope">陀螺仪</string>
+    <string name="car_data_dtc">故障码</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>

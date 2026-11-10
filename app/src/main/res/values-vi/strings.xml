@@ -320,6 +320,56 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Tìm kiếm chỉ khả dụng khi đã đỗ xe</string>
 
+    <!-- setup_page: car data entry -->
+    <string name="setup_page_car_data_title">Dữ liệu xe</string>
+    <string name="setup_page_car_data_subtitle">Tốc độ, số và cảm biến trực tiếp từ xe</string>
+
+    <!-- car_data: the read-only car sensor viewer -->
+    <string name="car_data_not_connected">Kết nối với xe để xem dữ liệu của xe.</string>
+    <string name="car_data_section_car">Xe</string>
+    <string name="car_data_section_live">Dữ liệu trực tiếp</string>
+    <string name="car_data_identity">Phương tiện</string>
+    <string name="car_data_head_unit">Màn hình trung tâm</string>
+    <string name="car_data_connection">Kết nối</string>
+    <string name="car_data_video">Video</string>
+    <string name="car_data_advertised">Cảm biến được khai báo</string>
+    <string name="car_data_driving">Đang lái</string>
+    <string name="car_data_parked">đã đỗ</string>
+    <string name="car_data_moving">đang di chuyển</string>
+    <string name="car_data_night">Chiếu sáng</string>
+    <string name="car_data_night_on">đêm</string>
+    <string name="car_data_night_off">ngày</string>
+    <string name="car_data_speed">Tốc độ</string>
+    <string name="car_data_cruise">Tốc độ hành trình đã đặt</string>
+    <string name="car_data_rpm">RPM</string>
+    <string name="car_data_gear">Số</string>
+    <string name="car_data_parking_brake">Phanh đỗ xe</string>
+    <string name="car_data_on">bật</string>
+    <string name="car_data_off">tắt</string>
+    <string name="car_data_odometer">Đồng hồ quãng đường</string>
+    <string name="car_data_fuel">Nhiên liệu</string>
+    <string name="car_data_low">thấp</string>
+    <string name="car_data_compass">Hướng</string>
+    <string name="car_data_satellites">Vệ tinh GPS</string>
+    <string name="car_data_environment">Bên ngoài</string>
+    <string name="car_data_rain">mưa</string>
+    <string name="car_data_climate">Điều hòa</string>
+    <string name="car_data_steering">Vô lăng</string>
+    <string name="car_data_tyres">Áp suất lốp</string>
+    <string name="car_data_doors">Cửa</string>
+    <string name="car_data_hood">nắp capo</string>
+    <string name="car_data_trunk">cốp xe</string>
+    <string name="car_data_door">cửa</string>
+    <string name="car_data_closed">đã đóng hết</string>
+    <string name="car_data_lights">Đèn</string>
+    <string name="car_data_hazard">đèn khẩn cấp</string>
+    <string name="car_data_passenger">Hành khách</string>
+    <string name="car_data_toll">Thẻ thu phí</string>
+    <string name="car_data_yes">có</string>
+    <string name="car_data_no">không</string>
+    <string name="car_data_accelerometer">Cảm biến gia tốc</string>
+    <string name="car_data_gyroscope">Con quay hồi chuyển</string>
+    <string name="car_data_dtc">Mã lỗi</string>
     <string name="setup_toggle_force_h264_title">Buộc dùng video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Theo mặc định, AARE sử dụng codec tốt nhất mà xe và điện thoại đều hỗ trợ (H.265…). Bật tùy chọn này nếu hình ảnh trên xe bị lỗi.</string>
     <string name="common_ok">OK</string>
