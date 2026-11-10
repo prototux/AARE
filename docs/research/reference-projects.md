@@ -387,13 +387,13 @@ protobuf body (length excludes the 4-byte header).
 
 | id | message | direction | notes |
 |----|---------|-----------|-------|
-| 1 | WifiStartRequest `{ip_address, port, [status]}` | HU→MD | where the AAP TCP server is |
+| 1 | WifiStartRequest `{ip_address, port, [status]}` | HU→MD, or MD→HU | where the AAP TCP server is; an empty MD→HU one asks the HU to start (§6 step 3) |
 | 2 | WifiInfoRequest `{}` | MD→HU | asks for AP credentials |
 | 3 | WifiInfoResponse `{ssid, key/password, bssid, security_mode, access_point_type}` | HU→MD | `security_mode` on air: 0 UNKNOWN, 1 OPEN, 2 WEP_64, 3 WEP_128, 4 WPA_PERSONAL, **8 WPA2_PERSONAL**, 12 WPA_WPA2_PERSONAL, 20 WPA_ENTERPRISE, 24 WPA2_ENTERPRISE, 28 WPA_WPA2_ENTERPRISE, 32 WPA3_PERSONAL, 40 WPA2_WPA3_PERSONAL. aasdk's `aaw/WifiInfoResponse` wrongly reuses the in-session enum (WPA2_PERSONAL = 5); openauto compensates by sending its "WPA2_ENTERPRISE" (= 8). `access_point_type` 0 STATIC, 1 DYNAMIC |
 | 4 | WifiVersionRequest `{major, minor, supported_wifi_channel_type, supported_wifi_channels, car_info, wpp_info{ip,port}}` | HU→MD | optional; real HUs send it, dongles often don't. open-headunit announces 4.2: below 4.1 the phone ignores `wpp_info`, at exactly 4.1 an allow-list of makes applies |
 | 5 | WifiVersionResponse `{major, minor, device_serial, status, selected_wifi_channel_type, device_info, …}` | MD→HU | phones have answered status -8 (NO_SUPPORTED_WIFI_CHANNELS) and still completed |
 | 6 | WifiConnectionStatus `{status, error_message}` | MD→HU | 0 = joined the AP |
-| 7 | WifiStartResponse `{ip_address, port, status}` | MD→HU | acknowledges type 1 |
+| 7 | WifiStartResponse `{ip_address, port, status}` | MD→HU, or HU→MD | acknowledges type 1; HU→MD it answers the MD's type 1 with the HU's ip/port |
 | 8 / 9 | WifiPingRequest / Response `{timestamp}` | either | keepalive; echo payload |
 | 10 | WifiConnectionRejection `{reason: 1 MOBILE_DEVICE_ID_NOT_FOUND, 2 INVALID_SETUP_TOKEN}` | HU→MD over TCP only | |
 | 11 | WifiSetupInfo | | seen in captures, refused except over RFCOMM |
@@ -535,6 +535,20 @@ only, level 3.1 (480p) / 3.2 (720p) / 4.2 (1080p); max bitrates 4 / 6 / 8 Mbit/s
    {ip, port} → MD→2 WifiInfoRequest → HU→3 WifiInfoResponse {ssid, key, bssid, security_mode=8, ap type} →
    MD→7 WifiStartResponse → MD→6 WifiConnectionStatus{0}. Pings (8/9) may arrive anytime. A phone already on the
    network skips 2/3. openauto sends 4 and 1 back to back right after accept; the dongle sends only 1 and expects 2.
+
+   Phone-initiated variant (Android Auto 18.0): when the HU sends 4 but no 1, the phone sends an **empty** type 1
+   itself 5 s after a compatible type 5, but only if it already intends to start projection (set by a type 1 from
+   the HU, by the user starting wireless projection, or by a server flag that is off by default; on a plain
+   Bluetooth auto-connect it sends nothing). The HU answers with type 7 {ip, port, status}. On SUCCESS the exchange
+   continues as above with that ip/port, but the phone sends no type 7 of its own (type 6 still follows the join).
+   WIFI_NOT_YET_STARTED (-6) and PROJECTION_ALREADY_STARTED (-4) make the phone ask again every 2 s, until 50 s after
+   its first request; WIFI_DISABLED (-5) stops. Head units built on Google's receiver library may wait for this from a
+   phone the user has not yet allowed on the head unit (the decompiled head-unit app answers PROJECTION_ALREADY_STARTED until then; not observed). That
+   receiver also needs `phone_info.instance_id` (type 5 field 6 → 1) before it handles any phone message except
+   pings and version responses, and closes RFCOMM when 10 s pass without a phone type 8 (the window opens at its
+   type 4 and restarts with each ping; Android Auto pings every 1 s). On a Jancar HU built on this receiver (WPP 4.2),
+   tested with AARE, phone_info and the pings were enough: the HU sent its own type 1 about 1 s after the version
+   exchange. AARE does not send this request; a head unit that only starts on a phone request would still need it.
 4. **The HU (or dongle) hosts the Wi-Fi AP** (WPA2-PSK; 5 GHz ch 149/80 MHz preferred by OpenAutoLink;
    `supported_wifi_channel_type` in type 4 and the -8 status cover band mismatches). Alternatives: Wi-Fi Direct with
    the HU as group owner (open-headunit native mode); legacy third-party "phone hotspot" flows needed the Gearhead

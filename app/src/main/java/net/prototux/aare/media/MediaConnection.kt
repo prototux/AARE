@@ -85,6 +85,9 @@ internal class MediaConnection(
 
     private var browser: MediaBrowser? = null
 
+    /** Our browser is connected; [status] may still be [Status.Connecting] (root loading) or [Status.Failed] (root failed). */
+    val connected: Boolean get() = browser?.isConnected == true
+
     /** The app is a media3 MediaLibraryService, from its manifest (not [MediaBrowser.getConnectedToken]). */
     private var library = false
 

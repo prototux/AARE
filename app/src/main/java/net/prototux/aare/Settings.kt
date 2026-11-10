@@ -36,6 +36,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("head_unit_server_mirror", false)
         set(v) = prefs.edit { putBoolean("head_unit_server_mirror", v) }
 
+    /**
+     * Accept head-unit connections over loopback TCP ([TcpServer.PORT]) from an Android-Auto-in-the-
+     * browser bridge on this phone (webaa, paath — for cars without Android Auto, like Tesla). Any app
+     * on the phone can then reach the server, so it is off by default.
+     */
+    var headUnitServerLocalhost: Boolean
+        get() = prefs.getBoolean("hu_server_localhost", false)
+        set(v) = prefs.edit { putBoolean("hu_server_localhost", v) }
+
     /** Connect wirelessly to bonded head units that advertise wireless Android Auto. */
     var wireless: Boolean
         get() = prefs.getBoolean("wireless", true)
@@ -70,6 +79,15 @@ class Settings(context: Context) {
     var prefer60fps: Boolean
         get() = prefs.getBoolean("prefer_60fps", true)
         set(v) = prefs.edit { putBoolean("prefer_60fps", v) }
+
+    /**
+     * Force H.264 video even when the head unit and phone could both do a newer codec (H.265...).
+     * The newer codec is used automatically otherwise; this is the escape hatch for head units that
+     * advertise one but decode it poorly.
+     */
+    var forceH264: Boolean
+        get() = prefs.getBoolean("force_h264", false)
+        set(v) = prefs.edit { putBoolean("force_h264", v) }
 
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
@@ -120,6 +138,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("car_audio", true)
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
+    /**
+     * The phone's own Bluetooth MAC, for the car's in-session pairing handshake. Android hides it
+     * from apps on most devices, and some head units withhold the projected screen until they know
+     * which phone is connected, so the user can set it (Settings > About phone > Status). Empty: try
+     * to read it, else skip.
+     */
+    var phoneBluetoothAddress: String
+        get() = prefs.getString("phone_bt_address", "") ?: ""
+        set(v) = prefs.edit { putString("phone_bt_address", v) }
+
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)
@@ -142,6 +170,13 @@ class Settings(context: Context) {
     var carDataApp: Boolean
         get() = prefs.getBoolean("car_data_app", false)
         set(v) = prefs.edit { putBoolean("car_data_app", v) }
+    /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
+    var callBarOffsetX: Float
+        get() = prefs.getFloat("call_bar_x", 0f)
+        set(v) = prefs.edit { putFloat("call_bar_x", v) }
+    var callBarOffsetY: Float
+        get() = prefs.getFloat("call_bar_y", 0f)
+        set(v) = prefs.edit { putFloat("call_bar_y", v) }
 
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
