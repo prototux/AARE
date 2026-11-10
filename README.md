@@ -235,6 +235,37 @@ AARE can't show, with the reason. Two things make up for it:
     the picture is the phone's, in portrait unless you turn the phone;
   - while driving it is paused unless a navigation app is in front and guiding.
 
+### Running the apps Google locks to Android Auto (rooted phones)
+
+Three separate checks keep a non-Google host like AARE out of the apps that otherwise support
+Android Auto. Each is tied to Google's own signing certificate or to a signature-level permission
+that only Google-signed software can hold, so on a normal phone there is no way around them. On a
+**rooted phone**, the optional [AARE host-shims Xposed module](xposed/README.md) lifts each one, and
+the apps then run in AARE.
+
+1. **The Car App Library host check.** Navigation and other template apps built on `androidx.car.app`
+   check the host's signing certificate against an allowlist of Google's car apps; AARE's isn't on
+   it, so they refuse the connection (*"Unrecognized host"*). The module's `HostValidator` hook makes
+   them accept AARE.
+   *Impacted:* **Waze, 2GIS, Yandex Maps, EasyPark**, and newer builds of other template apps.
+2. **The media caller check.** Media apps hand their Android Auto browse tree only to callers whose
+   package — and, for many, whose signing certificate — is on an allowlist of Google's car apps. The
+   module makes AARE's requests pass that check, admitting AARE by **its own real certificate**, so
+   no Android Auto install is needed.
+   *Impacted:* **Spotify, YouTube Music, SoundCloud, Tidal, VRadio**, and other media apps that gate
+   on Android Auto.
+3. **Google Maps' private projection.** Maps doesn't use the public library at all: it renders
+   through an undocumented `ICarProjection` interface and checks a signature-level permission
+   (`CAPTURE_VIDEO_OUTPUT`) on whatever hosts it. AARE implements that interface, and the module
+   grants that one permission to AARE's own UID.
+   *Impacted:* **Google Maps**.
+
+> **A rooted phone is required, by design — Google's, not AARE's.** None of these checks exist for
+> safety or for the apps to function; they exist only to lock car projection to software Google has
+> signed, and to shut out every independent host. That is why there is no way around them without
+> root. On an unrooted phone these apps stay in the *can't show* list above, and only their
+> directions (through the notification path) and the phone-screen mirror are available.
+
 ### Voice assistant
 
 | Choice | What the voice button does |
