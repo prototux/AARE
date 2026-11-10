@@ -4,6 +4,7 @@ import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
+import net.prototux.aare.DiagLog
 import net.prototux.aare.aap.channels.AudioChannel
 import kotlin.math.abs
 
@@ -32,7 +33,13 @@ class CarAudioOut(
 
     @Volatile private var running = false
     private var thread: Thread? = null
-    private val baseBacklog = if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) MAX_QUEUED else LIVE_BACKLOG
+    private val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
+    private val baseBacklog = if (guidance) MAX_QUEUED else LIVE_BACKLOG
+    /**
+     * Silence that closes the car's stream. Prompts give the car's sound back quickly (Android Auto
+     * waits about 130 ms on guidance); music gets longer, so a pause between tracks doesn't.
+     */
+    private val silenceMs = if (guidance) GUIDANCE_SILENCE_MS else SILENCE_MS
     /** Until when (elapsedRealtime) to keep the larger backlog after the car reported an underflow. */
     @Volatile private var underflowUntil = 0L
     /** Whether we're actually feeding the car sound right now (read from [onUnderflow], written by the capture thread). */
@@ -56,6 +63,18 @@ class CarAudioOut(
         val quiet = now < underflowUntil
         underflowUntil = now + UNDERFLOW_HOLD_MS
         if (!quiet) Log.i(TAG,"car audio underflow on ${channel.streamType} (${channel.underflows} so far), keeping up to $UNDERFLOW_BACKLOG chunks")
+    }
+
+    /**
+     * The link to the car stalled (the car's ack window is full and sound piles up here): keep
+     * more for a while, so a few seconds of slow Wi-Fi delays the music instead of cutting it.
+     * Only for media: a late prompt is still a prompt, but its own backlog is already [MAX_QUEUED].
+     */
+    private fun onCongested(now: Long) {
+        if (guidance) return
+        val quiet = now < underflowUntil
+        underflowUntil = now + UNDERFLOW_HOLD_MS
+        if (!quiet) DiagLog.add("car audio: the link to the car is slow, holding up to ${UNDERFLOW_BACKLOG * 20} ms of ${channel.streamType.name.removePrefix("AUDIO_STREAM_").lowercase()} (${channel.droppedChunks} chunks lost so far)")
     }
 
     fun start() {
@@ -106,7 +125,7 @@ class CarAudioOut(
                 if (!playing && lastSound == now) {
                     focus.request(true)
                     playing = true
-                } else if (playing && now - lastSound > SILENCE_MS) {
+                } else if (playing && now - lastSound > silenceMs) {
                     channel.stopPlayback()
                     focus.request(false)
                     playing = false
@@ -136,6 +155,7 @@ class CarAudioOut(
                 // Catching up: send the backlog in order, as fast as the car's ack window allows.
                 queue(ts)
                 while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                if (queued.size >= baseBacklog) onCongested(now)
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
                 // through sendPcm so dropped chunks still count towards ack-less detection.
                 while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
@@ -160,12 +180,18 @@ class CarAudioOut(
     companion object {
         private const val TAG = "AareAudioOut"
         private const val SILENCE_MS = 3_000L
+        /** Long enough for the pause between two sentences of one prompt. */
+        private const val GUIDANCE_SILENCE_MS = 800L
         /** About 1 s of 20 ms chunks kept while waiting for the car's focus grant. */
         private const val MAX_QUEUED = 50
         /** Backlog kept once media plays (~240 ms). */
         private const val LIVE_BACKLOG = 12
-        /** Backlog after an underflow (~500 ms): more latency, fewer gaps. Bounded by [MAX_QUEUED]. */
-        private const val UNDERFLOW_BACKLOG = 25
+        /**
+         * Backlog after an underflow or a stalled link (~1 s): more latency, fewer gaps. A Wi-Fi
+         * stall seen in the car (2026-11-09) held the car's acks for up to 350 ms several times
+         * in a row. Bounded by [MAX_QUEUED].
+         */
+        private const val UNDERFLOW_BACKLOG = MAX_QUEUED
         private const val UNDERFLOW_HOLD_MS = 30_000L
         /** A head unit's end-of-stream underflow lands within this long of us stopping: not a real gap. */
         private const val IGNORE_UNDERFLOW_AFTER_STOP_MS = 1_000L

@@ -8,7 +8,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -99,11 +98,11 @@ fun CarShell(
     modifier: Modifier = Modifier,
 ) {
     if (state.carPlayStyle) {
-        CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
+        CarPlayShell(state, actions, appContent, navMap, overlay, modifier.rotaryWrap())
         return
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier).rotaryWrap()) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
@@ -149,7 +148,7 @@ private fun ContentArea(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
         modifier = modifier.fillMaxHeight().onFocusChanged { contentFocused = it.hasFocus }
-            .focusRequester(focusEntry).focusGroup(),
+            .focusRequester(focusEntry).rotaryArea(),
         label = "screen",
     ) { screen ->
         when (screen) {
@@ -230,7 +229,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp).rotaryArea(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val driverEnd: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -248,7 +247,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     } else {
         val fit = sideRailFit(area.height - 32.dp)
         Column(
-            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp),
+            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp).rotaryArea(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Clock()
@@ -400,7 +399,9 @@ internal fun Dashboard(
 private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val r = LocalCarDimens.current.cardRadius
     Box(
+        // Each card is its own pane for the knob: turning stays in it, tilting moves to the next card.
         modifier
+            .rotaryArea()
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },

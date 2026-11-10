@@ -199,6 +199,8 @@ class MediaPlaybackChannel(service: Service) : ServiceChannel(service, "playback
 class BluetoothChannel(service: Service, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
     interface Listener {
         fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {}
+        /** The channel is open: the place to send [requestPairing]. */
+        fun onOpened(channel: BluetoothChannel) {}
     }
 
     val carAddress: String = service.bluetoothService.carAddress
@@ -213,6 +215,8 @@ class BluetoothChannel(service: Service, private val listener: Listener) : Servi
         }
         send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(phoneAddress).setPairingMethod(method).build())
     }
+
+    override fun onOpened() = listener.onOpened(this)
 
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {

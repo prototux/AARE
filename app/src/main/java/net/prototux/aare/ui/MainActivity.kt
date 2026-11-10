@@ -336,7 +336,7 @@ private fun StatusCard(state: ProjectionService.State) {
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pill(stringResource(R.string.setup_preview_car_screen), Icons.Rounded.Tv) { ctx.startActivity(Intent(ctx, CarPreviewActivity::class.java)) }
-            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.stop(ctx) }
+            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.disconnect(ctx) }
         }
     }
 }
@@ -454,8 +454,10 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var pauseOnDisconnect by remember { mutableStateOf(settings.pauseMediaOnDisconnect) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
+    var btAddress by remember { mutableStateOf(settings.phoneBluetoothAddress) }
     val ctx = LocalContext.current
     val pinned = remember { net.prototux.aare.PinnedHeadUnits(ctx) }
     var pins by remember { mutableStateOf(pinned.all) }
@@ -468,6 +470,17 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_pause_disconnect_title), stringResource(R.string.setup_toggle_pause_disconnect_subtitle), pauseOnDisconnect) { pauseOnDisconnect = it; settings.pauseMediaOnDisconnect = it }
+            // Optional: Android hides the phone's own Bluetooth address, so the user copies it from
+            // the phone's settings. Stored only when it's a whole address (or cleared).
+            val btValid = btAddress.isBlank() || Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$").matches(btAddress.trim())
+            OutlinedTextField(btAddress, { v ->
+                btAddress = v
+                if (v.isBlank() || Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$").matches(v.trim())) settings.phoneBluetoothAddress = v.trim().uppercase()
+            }, Modifier.fillMaxWidth().padding(top = 8.dp), singleLine = true, isError = !btValid,
+                label = { Text(stringResource(R.string.setup_field_phone_bt_label)) },
+                placeholder = { Text("AA:BB:CC:DD:EE:FF") },
+                supportingText = { Text(stringResource(R.string.setup_field_phone_bt_hint)) })
         }
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
@@ -748,6 +761,8 @@ private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: I
 private fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
     val ctx = LocalContext.current
     var enabled by remember { mutableStateOf(settings.carAudio) }
+    var keepNotifications by remember { mutableStateOf(settings.keepNotificationsWhileCapturing) }
+    var mutePhone by remember { mutableStateOf(settings.mutePhoneWhileCapturing) }
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
@@ -777,6 +792,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
             Text(best?.let { stringResource(R.string.audio_using_method, it.label) } ?: stringResource(R.string.audio_no_method),
                 style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
         }
+        CarVoiceSection(settings, refresh)
         Section(stringResource(R.string.audio_section_methods)) {
             Check(CaptureMethod.AUDIO_POLICY.label,
                 if (policy) stringResource(R.string.audio_policy_ready)
@@ -810,14 +826,62 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 else stringResource(R.string.audio_playback_not_ready),
                 state.audioCapture) {
                 val mpm = ctx.getSystemService(MediaProjectionManager::class.java)
-                consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
-                    else mpm.createScreenCaptureIntent())
+                // Audio capture takes whatever app is shared: the shared app only picks the video,
+                // which car audio doesn't use. "A single app" avoids Android's screen-share
+                // protections, which mute notifications while the entire screen is shared; the
+                // phone screen needs the entire screen.
+                consent.launch(when {
+                    Build.VERSION.SDK_INT < 34 -> mpm.createScreenCaptureIntent()
+                    keepNotifications -> mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForUserChoice())
+                    else -> mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
+                })
+            }
+            Toggle(stringResource(R.string.audio_toggle_mute_phone_title), stringResource(R.string.audio_toggle_mute_phone_subtitle), mutePhone) {
+                mutePhone = it; settings.mutePhoneWhileCapturing = it
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                Toggle(stringResource(R.string.audio_toggle_keep_notifications_title),
+                    stringResource(if (keepNotifications) R.string.audio_toggle_keep_notifications_on else R.string.audio_toggle_keep_notifications_off),
+                    keepNotifications) {
+                    keepNotifications = it; settings.keepNotificationsWhileCapturing = it
+                }
+                if (state.audioCapture) Text(stringResource(R.string.audio_keep_notifications_next_time),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
 private const val SHIZUKU_REQUEST = 42
+
+/**
+ * Navigation voice through AARE's voice engine: whether it's on, whether AARE is the phone's voice
+ * engine (the one step only the user can do, in the system settings), and which engine speaks.
+ */
+@Composable
+private fun CarVoiceSection(settings: Settings, refresh: Int) {
+    val ctx = LocalContext.current
+    var enabled by remember { mutableStateOf(settings.carVoice) }
+    @Suppress("UNUSED_EXPRESSION") refresh
+    val isDefault = net.prototux.aare.tts.VoiceEngines.aareIsDefault(ctx)
+    val speaker = net.prototux.aare.tts.VoiceEngines.delegate(ctx, settings.voiceEngine)
+    Section(stringResource(R.string.voice_section_title)) {
+        Toggle(stringResource(R.string.voice_toggle_title), stringResource(R.string.voice_toggle_subtitle), enabled) {
+            enabled = it; settings.carVoice = it
+        }
+        if (!enabled) return@Section
+        Spacer(Modifier.height(4.dp))
+        Check(stringResource(R.string.voice_default_title),
+            if (isDefault) stringResource(R.string.voice_default_ready) else stringResource(R.string.voice_default_not_ready),
+            isDefault) {
+            runCatching { ctx.startActivity(net.prototux.aare.tts.VoiceEngines.settingsIntent()) }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(speaker?.let { stringResource(R.string.voice_speaks_with, it.label) } ?: stringResource(R.string.voice_no_engine),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (speaker == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 /** A labelled row of mutually exclusive options. */
 @Composable
