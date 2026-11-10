@@ -141,6 +141,8 @@ class CarSession(
     @Volatile private var encoder: VideoEncoder? = null
     @Volatile private var display: ProjectionDisplay? = null
     @Volatile private var touch: TouchMapper? = null
+    /** Overrides for this specific head unit from vehicles.json (density, margins…), matched at discovery. */
+    @Volatile private var vehicleOverride: VehicleOverride? = null
     /** The video codec matched to this head unit (phone-hardware ∩ car-advertised), chosen at discovery. */
     @Volatile private var videoCodec: VideoCodecKind = VideoCodecKind.H264
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
@@ -198,6 +200,11 @@ class CarSession(
 
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {
         headUnitName = AapSession.describe(response).substringBefore(" [").ifBlank { response.displayName }
+        response.headunitInfo.let { hu ->
+            vehicleOverride = VehicleOverrides.forHeadUnit(context,
+                make = hu.make.ifEmpty { response.make }, model = hu.model.ifEmpty { response.model }, name = headUnitName)
+            vehicleOverride?.let { Log.i(TAG, "vehicles.json override for \"$headUnitName\": $it") }
+        }
         CarData.discovered(response, owner = this)
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
         main.post {
@@ -355,7 +362,8 @@ class CarSession(
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
         override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, settings.maxVideoHeight, settings.prefer60fps, videoType(videoCodec))
+            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+                vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -412,8 +420,17 @@ class CarSession(
         videoConfig = config
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
-        val dpi = if (config.density > 0) config.density else defaultDensity(minOf(w, h))
-        val layout = ProjectionLayout.of(config, w, h)
+        val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
+        val layout = ProjectionLayout.of(config, w, h).let { base ->
+            val o = vehicleOverride
+            if (o?.widthMargin == null && o?.heightMargin == null) base
+            else {
+                // vehicles.json overrides the car's reported margins (split evenly, like the official phone).
+                val fw = (o.widthMargin ?: (base.marginLeft + base.marginRight)).coerceIn(0, w - 1)
+                val fh = (o.heightMargin ?: (base.marginTop + base.marginBottom)).coerceIn(0, h - 1)
+                base.copy(marginLeft = fw / 2, marginRight = fw - fw / 2, marginTop = fh / 2, marginBottom = fh - fh / 2)
+            }
+        }
         videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe()
         Log.i(TAG, "projection $videoDescription")
 
