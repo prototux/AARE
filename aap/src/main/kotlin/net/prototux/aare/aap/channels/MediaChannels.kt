@@ -45,13 +45,13 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     @Volatile protected var mediaSession = 0
     protected val unacked = AtomicInteger(0)
     /**
-     * Head units on newer protocol versions don't ack audio. If no ack ever comes after a
-     * generous number of messages, we stop counting rather than stall the stream.
+     * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
+     * mid-stream. Either way we eventually stop counting acks rather than stall the stream.
      */
     @Volatile var ackless = false
         private set
-    @Volatile private var ackSeen = false
-    private val sentSinceStart = AtomicInteger(0)
+    /** Messages tried (sent or dropped) since the last ack, or since the stream started. */
+    private val sinceAck = AtomicInteger(0)
 
     override fun onOpened() {
         send(MediaMsg.SETUP, Setup.newBuilder().setType(codec).build())
@@ -68,7 +68,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             }
             MediaMsg.ACK -> {
                 val ack = Ack.parseFrom(msg.bodyBytes())
-                ackSeen = true
+                sinceAck.set(0)
                 val n = if (ack.hasAck()) ack.ack else 1
                 // Never go negative: some head units ack frames sent before a restart.
                 unacked.updateAndGet { maxOf(0, it - n) }
@@ -92,7 +92,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected fun startStream(configIndex: Int) {
         mediaSession = sessionCounter.incrementAndGet()
         unacked.set(0)
-        sentSinceStart.set(0)
+        sinceAck.set(0)
         send(MediaMsg.START, Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex).build(), dataPriority)
         started = true
     }
@@ -104,12 +104,16 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     }
 
     /**
-     * Counts a message we tried to send (sent or dropped for lack of window). Head units on newer
-     * protocol versions may never ack: once well past the window without a single ack, stop
-     * waiting for acks. Dropped messages count too, or a full window would hide the problem.
+     * Counts a message we tried to send (sent or dropped for lack of window). Head units may stop
+     * acking: some never ack (newer protocol versions), some ack for a while then go quiet mid-
+     * stream (#82: music plays a second, then the in-flight window fills and never drains, so every
+     * chunk is dropped and the car falls silent until reconnect). Either way, once we are well past
+     * the window with no ack in sight, stop waiting for acks so the stream keeps flowing. The
+     * counter resets on every ack ([onMessage]), so a head unit that acks normally never trips it.
+     * Dropped messages count too, or a full, stuck window would hide the stall.
      */
     protected fun noteAttempt() {
-        if (!ackSeen && !ackless && sentSinceStart.incrementAndGet() > 2 * maxUnacked + ACKLESS_AFTER) {
+        if (!ackless && sinceAck.incrementAndGet() > 2 * maxUnacked + ACKLESS_AFTER) {
             ackless = true
             unacked.set(0)
         }

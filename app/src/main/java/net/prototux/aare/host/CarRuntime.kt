@@ -29,6 +29,7 @@ import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
@@ -50,6 +51,7 @@ import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
+import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -400,6 +402,9 @@ class CarRuntime(
         if (settings.browser) {
             entries += CarAppEntry(BROWSER_ID, context.packageName, context.getString(R.string.browser_app_label), builtinIcon(R.drawable.ic_car_browser), CarAppKind.BROWSER)
         }
+        if (settings.carDataApp) {
+            entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
+        }
         for (m in messaging) {
             if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(messagingId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MESSAGING)
@@ -478,7 +483,14 @@ class CarRuntime(
             kotlinx.coroutines.delay(1_500)
             val app = media.apps.value.firstOrNull { it.packageName == settings.lastMediaApp } ?: return@launch
             media.select(app)
-            kotlinx.coroutines.delay(1_500)
+            // A play before the app is connected is dropped (playPause then only connects).
+            val waitMs = 10_000L
+            if (!media.awaitConnection(waitMs)) {
+                val line = "resume music: ${app.label} wasn't ready, not playing (waited up to ${waitMs / 1_000} s)"
+                Log.w(TAG, line)
+                DiagLog.add(line)
+                return@launch
+            }
             if (media.playback.value?.playing != true) media.playPause()
         }
     }
@@ -665,6 +677,7 @@ class CarRuntime(
                             CarAppKind.MESSAGING -> MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
+                            CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
@@ -694,6 +707,7 @@ class CarRuntime(
         fun messagingId(pkg: String) = "messages:$pkg"
         const val PHONE_SCREEN_ID = "phone-screen"
         const val BROWSER_ID = "browser"
+        const val CAR_DATA_ID = "car-data"
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"
