@@ -320,6 +320,12 @@
     <!-- search: media search view -->
     <string name="search_parked_only">La búsqueda está disponible al estacionar</string>
 
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Navegador</string>
+    <string name="browser_app_row_subtitle">Un navegador web en la pantalla del coche, para cuando estés aparcado</string>
+    <string name="browser_url_label">Página de inicio</string>
+    <string name="browser_hint_parked">El navegador se pausa mientras conduces.</string>
+    <string name="browser_paused_driving">El navegador se pausa mientras conduces.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Datos del coche</string>
     <string name="setup_page_car_data_subtitle">Velocidad, marcha y sensores en vivo desde el coche</string>

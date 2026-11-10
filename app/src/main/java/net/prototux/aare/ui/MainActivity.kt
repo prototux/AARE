@@ -861,6 +861,8 @@ private fun AppsCard(settings: Settings) {
     val ctx = LocalContext.current
     var hidden by remember { mutableStateOf(settings.hiddenApps) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
+    var browser by remember { mutableStateOf(settings.browser) }
+    var browserUrl by remember { mutableStateOf(settings.browserUrl) }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
     val lists by produceState<LauncherLists?>(null) {
         value = withContext(Dispatchers.IO) {
@@ -904,8 +906,18 @@ private fun AppsCard(settings: Settings) {
             }
             AppGroup(stringResource(R.string.setup_app_group_aare))
             AppRow(null, stringResource(R.string.phone_section_title), stringResource(R.string.phone_app_row_subtitle), phoneScreen) { phoneScreen = it; settings.phoneScreen = it }
+            AppRow(null, stringResource(R.string.browser_app_label), stringResource(R.string.browser_app_row_subtitle), browser) { browser = it; settings.browser = it }
+            if (browser) {
+                OutlinedTextField(
+                    value = browserUrl, onValueChange = { browserUrl = it; settings.browserUrl = it },
+                    label = { Text(stringResource(R.string.browser_url_label)) }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                )
+                Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+            }
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen)
+        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
         }
@@ -921,7 +933,7 @@ private fun AppsCard(settings: Settings) {
 
 /** The order of the car's app list: the visible apps, with up and down buttons. */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean) {
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
     val all = buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -932,6 +944,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         Triple(CarRuntime.SETTINGS_ID, stringResource(R.string.setup_app_entry_settings), null),
         Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
+        if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
     )
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }

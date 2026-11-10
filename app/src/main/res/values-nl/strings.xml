@@ -320,6 +320,12 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Zoeken is beschikbaar tijdens parkeren</string>
 
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">Een webbrowser op het autoscherm, voor wanneer je geparkeerd staat</string>
+    <string name="browser_url_label">Startpagina</string>
+    <string name="browser_hint_parked">De browser is gepauzeerd tijdens het rijden.</string>
+    <string name="browser_paused_driving">De browser is gepauzeerd tijdens het rijden.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
     <string name="setup_page_car_data_subtitle">Snelheid, versnelling en sensoren live vanuit de auto</string>

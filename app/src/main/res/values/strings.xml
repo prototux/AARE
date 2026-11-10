@@ -275,6 +275,17 @@
     <string name="phone_hint_touch_capture">The picture uses the screen-capture permission (Car audio page, choose Entire screen).</string>
     <string name="phone_app_row_subtitle">The phone\'s own screen, for apps AARE can\'t host</string>
 
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>
+    <string name="browser_url_label">Home page</string>
+    <string name="browser_hint_parked">The browser is paused while driving.</string>
+    <string name="browser_paused_driving">The browser is paused while driving.</string>
+    <string name="browser_forward">Forward</string>
+    <string name="browser_reload">Reload</string>
+    <string name="browser_home">Home page</string>
+    <string name="browser_address_hint">Search or type a web address</string>
+
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>

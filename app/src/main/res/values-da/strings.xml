@@ -320,6 +320,12 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Søgning er tilgængelig, når bilen er parkeret</string>
 
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Browser</string>
+    <string name="browser_app_row_subtitle">En webbrowser på bilens skærm, til når du er parkeret</string>
+    <string name="browser_url_label">Startside</string>
+    <string name="browser_hint_parked">Browseren er sat på pause under kørsel.</string>
+    <string name="browser_paused_driving">Browseren er sat på pause under kørsel.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighed, gear og sensorer fra bilen i realtid</string>

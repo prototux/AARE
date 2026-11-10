@@ -320,6 +320,12 @@
     <!-- search: media search view -->
     <string name="search_parked_only">Vyhledávání je dostupné po zaparkování</string>
 
+    <!-- browser: the in-car WebView browser -->
+    <string name="browser_app_label">Prohlížeč</string>
+    <string name="browser_app_row_subtitle">Webový prohlížeč na obrazovce auta, pro chvíle, kdy jste zaparkováni</string>
+    <string name="browser_url_label">Domovská stránka</string>
+    <string name="browser_hint_parked">Prohlížeč je pozastaven během jízdy.</string>
+    <string name="browser_paused_driving">Prohlížeč je pozastaven během jízdy.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Data vozu</string>
     <string name="setup_page_car_data_subtitle">Rychlost, rychlostní stupeň a senzory z vozu naživo</string>
