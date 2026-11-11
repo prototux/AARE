@@ -91,22 +91,24 @@ object CarFocusVisibility {
 /**
  * One pane for the rotary knob, like Android Auto's focus areas: turning the knob (Tab and
  * Shift+Tab, see CarSession) moves focus only among this pane's items, looping from the last back
- * to the first, see [rotaryWrap]. Tilting the knob (the D-pad) still moves between panes.
+ * to the first, see [rotaryWrap]. Tilting the knob (the D-pad) still moves between panes, except
+ * in a pane laid out as a grid ([tiltWithin], a keyboard), where it moves from item to item and
+ * leaves at the edge.
  */
-fun Modifier.rotaryArea(): Modifier = composed {
+fun Modifier.rotaryArea(tiltWithin: Boolean = false): Modifier = composed {
     // Entering through a FocusRequester lands on the pane's first item (as the screen's starting
     // focus does); the node's own requestFocus doesn't, a group isn't focusable itself.
     val entry = remember { FocusRequester() }
-    focusRequester(entry) then RotaryAreaElement(entry)
+    focusRequester(entry) then RotaryAreaElement(entry, tiltWithin)
 }
 
-private data class RotaryAreaElement(val entry: FocusRequester) : ModifierNodeElement<RotaryAreaNode>() {
-    override fun create() = RotaryAreaNode(entry)
-    override fun update(node: RotaryAreaNode) { node.entry = entry }
+private data class RotaryAreaElement(val entry: FocusRequester, val tiltWithin: Boolean) : ModifierNodeElement<RotaryAreaNode>() {
+    override fun create() = RotaryAreaNode(entry, tiltWithin)
+    override fun update(node: RotaryAreaNode) { node.entry = entry; node.tiltWithin = tiltWithin }
 }
 
 /** A focus group whose focus state reads synchronously, unlike onFocusChanged's (dispatched later). */
-internal class RotaryAreaNode(var entry: FocusRequester) : DelegatingNode(), GlobalPositionAwareModifierNode, TraversableNode {
+internal class RotaryAreaNode(var entry: FocusRequester, var tiltWithin: Boolean = false) : DelegatingNode(), GlobalPositionAwareModifierNode, TraversableNode {
     val target = delegate(FocusTargetModifierNode(Focusability.Never))
     val hasFocus: Boolean get() = isAttached && target.focusState.hasFocus
     var bounds: Rect = Rect.Zero
@@ -222,6 +224,8 @@ private const val MAX_WRAP_STEPS = 200
 private fun tiltToPane(type: KeyEventType, dir: FocusDirection): Boolean {
     if (!CarFocusVisibility.rotary) return false
     val from = RotaryAreas.focused() ?: return false
+    // A keyboard: the tilt moves to the next key, and past its edge to whatever is that way.
+    if (from.tiltWithin) return false
     val panes = RotaryAreas.beside(from, dir)
     if (panes.isEmpty()) return false
     if (type != KeyEventType.KeyDown) return true
