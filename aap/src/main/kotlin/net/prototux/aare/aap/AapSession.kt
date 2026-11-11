@@ -310,8 +310,17 @@ class AapSession(
             }
             return
         }
+        if (msg.id == UNEXPECTED_MESSAGE) {
+            // The car's way of saying we sent something it didn't expect on this channel. The first
+            // few, then one in a hundred: a repeated one flooded the connection log on a drive.
+            val n = unexpectedCounts.merge(ch.id, 1, Int::plus) ?: 1
+            if (n <= 3 || n % 100 == 0) log.w("car says it got an unexpected message on channel ${ch.id} (${ch.name})" + if (n > 3) ", $n so far" else "")
+        }
         runHandler(ch) { ch.onMessage(msg) }
     }
+
+    /** "Unexpected message" answers per channel (reader thread only). */
+    private val unexpectedCounts = HashMap<Int, Int>()
 
     private inline fun runHandler(ch: ServiceChannel, block: () -> Unit) {
         try {
@@ -575,6 +584,7 @@ class AapSession(
     companion object {
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
+        private const val UNEXPECTED_MESSAGE = 0x00FF
 
         private fun now() = System.nanoTime() / 1_000_000
 

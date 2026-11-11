@@ -192,6 +192,7 @@ open class SessionLoopbackTest {
         assertTrue(SensorType.SENSOR_DRIVING_STATUS_DATA in hu.sensorRequests)
 
         // microphone
+        assertEquals(0, hu.micSetups.get())
         mic!!.openMic()
         assertTrue(micData.await(3, TimeUnit.SECONDS))
 
