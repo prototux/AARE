@@ -2,6 +2,7 @@ package net.prototux.aare.ui.car
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -87,7 +88,7 @@ private fun Choice(title: String, options: List<Pair<String, String>>, selected:
 
 @Composable
 private fun SwitchRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clickable { onChange(!checked) },
+    Row(Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).carFocusHighlight(RoundedCornerShape(16.dp)).clickable { onChange(!checked) },
         verticalAlignment = Alignment.CenterVertically) {
         Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         Switch(checked = checked, onCheckedChange = onChange)

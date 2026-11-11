@@ -263,7 +263,22 @@
     <string name="audio_root_ready">Ready, through root. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
     <string name="audio_shizuku_or_root_hint">On a rooted phone (KernelSU, Magisk, APatch…), tap to allow root. Otherwise install Shizuku and start it (wireless debugging, once per reboot).</string>
     <string name="audio_playback_ready">Ready. Media only: no navigation voice, some apps opt out, and the phone keeps playing too.</string>
-    <string name="audio_playback_not_ready">Works everywhere, with limits: media only, no navigation voice. Android asks to capture the screen: choose Entire screen (also used by the phone screen).</string>
+    <string name="audio_playback_not_ready">Works everywhere, with limits: media only, no navigation voice. Android calls this screen sharing, but AARE only takes the sound.</string>
+    <string name="audio_toggle_mute_phone_title">Silence the phone while the car plays</string>
+    <string name="audio_toggle_mute_phone_subtitle">Screen capture copies the sound, so the phone would keep playing too: its media volume goes to 0 while connected and comes back after</string>
+    <string name="audio_toggle_keep_notifications_title">Keep notifications while capturing audio</string>
+    <string name="audio_toggle_keep_notifications_on">When Android asks, choose \"A single app\" and pick any app: the sound is the same, and notifications stay on. Choose \"Entire screen\" only for the phone screen in the car.</string>
+    <string name="audio_toggle_keep_notifications_off">Asks for the entire screen, which the phone screen in the car needs. Android mutes notifications for as long as the screen is shared.</string>
+    <string name="audio_keep_notifications_next_time">Applies the next time you give screen capture: tap Screen capture above to give it again.</string>
+    <string name="tts_engine_label">AARE car voice</string>
+    <string name="voice_section_title">Navigation voice</string>
+    <string name="voice_toggle_title">Navigation voice in the car</string>
+    <string name="voice_toggle_subtitle">Prompts from apps that speak with the phone\'s voice engine (CoMaps, Organic Maps, OsmAnd…) go to the car\'s navigation channel, which lowers the music around them. No screen capture needed.</string>
+    <string name="voice_default_title">AARE is the phone\'s voice engine</string>
+    <string name="voice_default_ready">Ready. AARE speaks with the engine below; with no car connected, prompts play on the phone as usual.</string>
+    <string name="voice_default_not_ready">Tap, then choose \"AARE car voice\" as the preferred engine. AARE still speaks with your usual engine.</string>
+    <string name="voice_speaks_with">Speaks with: %1$s</string>
+    <string name="voice_no_engine">No other voice engine installed: install one (Speech Recognition and Synthesis from Google, Samsung text-to-speech…).</string>
     <string name="audio_notice_setup_hint">Open AARE on the phone and set up car audio to hear the phone in the car</string>
 
     <!-- phone: phone screen feature -->
@@ -306,7 +321,9 @@
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Car connection</string>
+    <string name="notif_channel_waiting">Waiting for the car</string>
     <string name="notif_action_stop">Stop</string>
+    <string name="notif_action_disconnect">Disconnect</string>
     <string name="notif_action_trust">Trust</string>
     <string name="notif_action_download_cert">Download certificate</string>
     <string name="notif_cert_download_title">Head unit rejected AARE\'s certificate</string>
@@ -318,6 +335,7 @@
     <string name="notif_cert_download_failed">Couldn\'t download the certificate: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Connecting wirelessly…</string>
     <string name="notif_status_not_connected">Not connected</string>
+    <string name="notif_status_wifi_off">Turn on Wi-Fi to connect to the car</string>
     <string name="notif_keeping_consent_suffix">%1$s · keeping the screen-capture consent for car audio (Stop releases it)</string>
     <string name="notif_cert_changed_title">Head unit certificate changed</string>
     <string name="notif_new_head_unit_title">New head unit</string>

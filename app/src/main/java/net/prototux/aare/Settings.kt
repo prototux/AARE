@@ -133,6 +133,19 @@ class Settings(context: Context) {
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO
         set(v) = prefs.edit { putString("car_theme", v) }
 
+    /**
+     * Send navigation prompts spoken through AARE's voice engine to the car's guidance channel
+     * (needs AARE chosen as the phone's voice engine). Independent of [carAudio].
+     */
+    var carVoice: Boolean
+        get() = prefs.getBoolean("car_voice", true)
+        set(v) = prefs.edit { putBoolean("car_voice", v) }
+
+    /** The engine AARE's voice engine speaks with (package name), or null for the best installed. */
+    var voiceEngine: String?
+        get() = prefs.getString("voice_engine", null)
+        set(v) = prefs.edit { if (v == null) remove("voice_engine") else putString("voice_engine", v) }
+
     /** Stream phone audio to the car (needs the screen-capture consent for audio). */
     var carAudio: Boolean
         get() = prefs.getBoolean("car_audio", true)
@@ -199,6 +212,20 @@ class Settings(context: Context) {
     var callBarOffsetY: Float
         get() = prefs.getFloat("call_bar_y", 0f)
         set(v) = prefs.edit { putFloat("call_bar_y", v) }
+
+    /** Phone media volume at 0 while the car plays a screen-capture copy of its sound (see PhoneMute). */
+    var mutePhoneWhileCapturing: Boolean
+        get() = prefs.getBoolean("mute_phone_capturing", true)
+        set(v) = prefs.edit { putBoolean("mute_phone_capturing", v) }
+
+    /**
+     * Let the user share "A single app" when giving the screen-capture consent for car audio, so
+     * Android doesn't mute notifications as it does while the entire screen is shared. Off: the
+     * consent is for the entire screen, which the phone screen needs.
+     */
+    var keepNotificationsWhileCapturing: Boolean
+        get() = prefs.getBoolean("keep_notifications_capturing", true)
+        set(v) = prefs.edit { putBoolean("keep_notifications_capturing", v) }
 
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean

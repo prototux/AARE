@@ -34,6 +34,7 @@ import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
+import net.prototux.aare.car.NextEvent
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
@@ -616,6 +617,15 @@ class CarRuntime(
         override fun endCall() = Calls.end(context)
         override fun navigateTo(place: String) {
             if (!this@CarRuntime.navigateTo(place)) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
+        }
+        override fun dismissEvent(event: NextEvent) {
+            if (ui.nextEvent == event) ui.nextEvent = null
+            scope.launch {
+                ui.nextEvent = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    DashboardInfo.dismiss(context, event)
+                    DashboardInfo.nextEvent(context)
+                }
+            }
         }
     }
 

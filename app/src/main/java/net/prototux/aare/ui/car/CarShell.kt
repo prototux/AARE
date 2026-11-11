@@ -8,7 +8,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -101,11 +100,11 @@ fun CarShell(
     modifier: Modifier = Modifier,
 ) {
     if (state.carPlayStyle) {
-        CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
+        CarPlayShell(state, actions, appContent, navMap, overlay, modifier.rotaryWrap())
         return
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier).rotaryWrap()) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
@@ -151,7 +150,7 @@ private fun ContentArea(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
         modifier = modifier.fillMaxHeight().onFocusChanged { contentFocused = it.hasFocus }
-            .focusRequester(focusEntry).focusGroup(),
+            .focusRequester(focusEntry).rotaryArea(),
         label = "screen",
     ) { screen ->
         when (screen) {
@@ -232,7 +231,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp).rotaryArea(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val driverEnd: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -250,7 +249,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     } else {
         val fit = sideRailFit(area.height - 32.dp)
         Column(
-            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp),
+            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp).rotaryArea(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Clock()
@@ -355,7 +354,7 @@ internal fun Dashboard(
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
-                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     latest != null -> Card(Modifier.fillMaxWidth().height(180.dp), onClick = {
                         state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
                     }) { LatestNotification(latest, state.drivingRestricted) }
@@ -375,7 +374,7 @@ internal fun Dashboard(
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
-                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     latest != null -> Card(Modifier.weight(0.9f).fillMaxHeight(), onClick = {
                         state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
                     }) { LatestNotification(latest, state.drivingRestricted) }
@@ -390,7 +389,7 @@ internal fun Dashboard(
                 } else {
                     Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                         MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
-                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, { actions.dismissEvent(event) }, Modifier.fillMaxSize()) }
                     }
                 }
             }
@@ -402,7 +401,9 @@ internal fun Dashboard(
 private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val r = LocalCarDimens.current.cardRadius
     Box(
+        // Each card is its own pane for the knob: turning stays in it, tilting moves to the next card.
         modifier
+            .rotaryArea()
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
@@ -578,7 +579,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
     val d = LocalCarDimens.current
     val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).carFocusHighlight(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = fg, modifier = Modifier.size(d.iconSize))
     }
 }
@@ -597,7 +598,7 @@ private fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier)
         // Already in the user's order (CarRuntime.applyApps).
         items(state.apps, key = { it.id }) { app ->
             Column(
-                Modifier.clip(RoundedCornerShape(24.dp)).clickable { actions.openApp(app) }.padding(12.dp),
+                Modifier.clip(RoundedCornerShape(24.dp)).carFocusHighlight(RoundedCornerShape(24.dp)).clickable { actions.openApp(app) }.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AppIcon(app, 80)
@@ -635,7 +636,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         notice.actions.forEach { (label, run) ->
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
+                modifier = Modifier.clip(RoundedCornerShape(20.dp)).carFocusHighlight(RoundedCornerShape(20.dp)).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }

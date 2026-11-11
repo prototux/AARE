@@ -134,7 +134,7 @@ private fun InCallCard(onHangUp: () -> Unit) {
         Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(14.dp))
         Text(stringResource(R.string.phone_call_in_progress), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
-        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(Color(0xFFD32F2F)).clickable(onClick = onHangUp),
+        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(Color(0xFFD32F2F)).carFocusHighlight(CircleShape).clickable(onClick = onHangUp),
             contentAlignment = Alignment.Center) {
             Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = Color.White)
         }
@@ -150,7 +150,7 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
             items(list) { c ->
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
-                        .clickable { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
+                        .carFocusHighlight(RoundedCornerShape(20.dp)).clickable { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val icon = when (c.type) {
@@ -185,11 +185,11 @@ private fun Keypad(onCall: (String) -> Unit) {
             Text(number.ifEmpty { " " }, style = MaterialTheme.typography.displaySmall, maxLines = 1)
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).carFocusHighlight(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Rounded.Backspace, stringResource(R.string.phone_keypad_delete))
                 }
                 Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(Color(0xFF2E7D32))
-                    .clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
+                    .carFocusHighlight(CircleShape).clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = Color.White)
                 }
             }
@@ -199,7 +199,7 @@ private fun Keypad(onCall: (String) -> Unit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { k ->
                         Box(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .clickable { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
+                            .carFocusHighlight(RoundedCornerShape(18.dp)).clickable { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
                             Text(k, style = MaterialTheme.typography.headlineSmall)
                         }
                     }

@@ -17,6 +17,21 @@ import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.navigation.model.PanModeDelegate
 import androidx.car.app.navigation.model.PlaceListNavigationTemplate
 import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate
+import android.os.SystemClock
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import net.prototux.aare.ui.car.CarFocusVisibility
+import net.prototux.aare.ui.car.CarKnobCapture
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -135,6 +150,19 @@ internal fun MapScaffold(
     val onMapDrag by rememberUpdatedState { if (panOffered) setPan(true) }
     // Like Android Auto, drags and flings move the map only where the app offers panning.
     val canPan by rememberUpdatedState(panOffered || panMode)
+    // A rotary knob in pan mode: tilts move the map, turns zoom, a press leaves pan mode.
+    val exitPan by rememberUpdatedState { setPan(false) }
+    val knobScope = rememberCoroutineScope()
+    val density = LocalDensity.current.density
+    if (panMode && CarFocusVisibility.rotary) DisposableEffect(host) {
+        val knob = MapKnob(host, knobScope, density, { registry.map }) { exitPan() }
+        val handler: (KeyEvent) -> Boolean? = knob::onKey
+        CarKnobCapture.handler = handler
+        onDispose {
+            knob.stop()
+            if (CarKnobCapture.handler === handler) CarKnobCapture.handler = null
+        }
+    }
     DisposableEffect(Unit) {
         onDispose { if (panState.value) delegate?.let { d -> safeCall("onPanModeChanged") { d.sendPanModeChanged(false, host.done) } } }
     }
@@ -249,6 +277,93 @@ private fun Modifier.mapGestures(host: TemplateHost, canPan: () -> Boolean, onDr
         }
     }
 }
+
+/**
+ * The knob on a map in pan mode, like Android Auto: a tilt moves the map that way (speeding up
+ * while held), a turn zooms around the map's centre (clockwise in), and a press leaves pan mode.
+ */
+private class MapKnob(
+    private val host: TemplateHost,
+    private val scope: CoroutineScope,
+    private val density: Float,
+    private val map: () -> Rect,
+    private val exit: () -> Unit,
+) {
+    private var held: Key? = null
+    private var job: Job? = null
+
+    fun onKey(e: KeyEvent): Boolean? {
+        val down = when (e.type) {
+            KeyEventType.KeyDown -> true
+            KeyEventType.KeyUp -> false
+            else -> return null
+        }
+        return when (e.key) {
+            Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown -> {
+                if (down) pan(e.key) else if (held == e.key) stop()
+                true
+            }
+            Key.Tab -> {
+                if (down) zoom(if (e.isShiftPressed) 1f / ZOOM_STEP else ZOOM_STEP)
+                true
+            }
+            Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
+                if (!down) exit()
+                true
+            }
+            else -> null
+        }
+    }
+
+    private fun pan(key: Key) {
+        if (held == key) return // the car repeating a held key
+        stop()
+        held = key
+        // Scroll distances: positive x shows what is to the east, as a drag to the left does.
+        val (x, y) = when (key) {
+            Key.DirectionLeft -> -1f to 0f
+            Key.DirectionRight -> 1f to 0f
+            Key.DirectionUp -> 0f to -1f
+            else -> 0f to 1f
+        }
+        // A nudge right away (a car may send the release with the press), then for as long as it's held.
+        val nudge = PAN_NUDGE_DP * density
+        safeCall("onScroll") { host.mapScroll(x * nudge, y * nudge) }
+        job = scope.launch {
+            val start = SystemClock.uptimeMillis()
+            var last = start
+            // Bounded: a lost release must not leave the map running.
+            while (last - start < PAN_MAX_HOLD_MS) {
+                delay(PAN_FRAME_MS)
+                val now = SystemClock.uptimeMillis()
+                val ramp = ((now - start) / PAN_RAMP_MS).coerceAtMost(1f)
+                val step = (PAN_MIN_DP_S + (PAN_MAX_DP_S - PAN_MIN_DP_S) * ramp) * density * (now - last) / 1000f
+                safeCall("onScroll") { host.mapScroll(x * step, y * step) }
+                last = now
+            }
+            if (held == key) held = null
+        }
+    }
+
+    private fun zoom(factor: Float) {
+        val m = map()
+        if (m.width <= 0f || m.height <= 0f) return
+        safeCall("onScale") { host.mapScale(m.width / 2f, m.height / 2f, factor) }
+    }
+
+    fun stop() {
+        job?.cancel(); job = null
+        held = null
+    }
+}
+
+private const val ZOOM_STEP = 1.25f
+private const val PAN_NUDGE_DP = 24f
+private const val PAN_MIN_DP_S = 250f
+private const val PAN_MAX_DP_S = 1000f
+private const val PAN_RAMP_MS = 1500f
+private const val PAN_FRAME_MS = 16L
+private const val PAN_MAX_HOLD_MS = 10_000L
 
 // ---------------------------------------------------------------- card placement
 

@@ -13,6 +13,7 @@ import android.os.ParcelUuid
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import net.prototux.aare.aap.AapLog
+import net.prototux.aare.aap.wireless.WirelessRetryPolicy
 
 /**
  * Notices a wireless head unit coming into Bluetooth range: when a bonded device connects (the
@@ -35,7 +36,7 @@ class WirelessAutoStarter(
     private val onHeadUnit: (BluetoothDevice) -> Unit,
 ) {
     private val context = context.applicationContext
-    private val sdpQueried = HashSet<String>()
+    private val policy = WirelessRetryPolicy()
     private var registered = false
 
     private val receiver = object : BroadcastReceiver() {
@@ -43,9 +44,12 @@ class WirelessAutoStarter(
             val device = deviceOf(intent) ?: return
             when (intent.action) {
                 BluetoothDevice.ACTION_ACL_CONNECTED -> onAclConnected(device)
-                BluetoothDevice.ACTION_UUID -> if (device.address in sdpQueried && isHeadUnit(device)) {
-                    log.i("wireless: ${device.address} offers Android Auto wireless (SDP)")
-                    onHeadUnit(device)
+                BluetoothDevice.ACTION_UUID -> if (isSdpPending(context, device.address)) {
+                    clearSdpPending(context, device.address)
+                    if (isHeadUnit(device)) {
+                        log.i("wireless: ${deviceLabel(device)} offers Android Auto wireless (SDP)")
+                        onHeadUnit(device)
+                    }
                 }
             }
         }
@@ -71,18 +75,20 @@ class WirelessAutoStarter(
 
     private fun onAclConnected(device: BluetoothDevice) {
         if (device.bondState != BluetoothDevice.BOND_BONDED) return
-        when {
-            isHeadUnit(device) -> {
-                log.i("wireless: head unit ${device.address} connected")
-                onHeadUnit(device)
-            }
-            // Phones cache SDP results from pairing time; refresh once, the answer is ACTION_UUID.
-            sdpQueried.add(device.address) -> device.fetchUuidsWithSdp()
+        if (isHeadUnit(device)) {
+            log.i("wireless: head unit ${deviceLabel(device)} connected")
+            onHeadUnit(device)
+        } else {
+            querySdpIfNeeded(context, device, log, "ACL_CONNECTED", policy)
         }
     }
 
     companion object {
         val ACTIONS = listOf(BluetoothDevice.ACTION_ACL_CONNECTED, BluetoothDevice.ACTION_UUID)
+        private const val SDP_PREFS = "wireless_sdp"
+        private const val KEY_TS = "ts:"
+        private const val KEY_PENDING = "pending:"
+        private const val BASE_UUID_SUFFIX = "-0000-1000-8000-00805f9b34fb"
 
         /**
          * For a manifest-declared receiver: the head unit [intent] (one of [ACTIONS]) is about, or
@@ -105,6 +111,82 @@ class WirelessAutoStarter(
                     }
                 }
                 else -> null
+            }
+        }
+
+        /**
+         * Runs `fetchUuidsWithSdp()` only when [policy] allows it (cached UUIDs are null/empty, or
+         * this bonded MAC has not been queried in the last ~24 h), and remembers the timestamp in
+         * SharedPreferences so the car's own HFP/A2DP Bluetooth isn't queried on every start.
+         */
+        @SuppressLint("MissingPermission")
+        fun querySdpIfNeeded(
+            context: Context,
+            device: BluetoothDevice,
+            log: AapLog,
+            trigger: String,
+            policy: WirelessRetryPolicy = WirelessRetryPolicy(),
+            nowMs: Long = System.currentTimeMillis(),
+        ): Boolean {
+            val bonded = runCatching { device.bondState == BluetoothDevice.BOND_BONDED }.getOrDefault(false)
+            val cached = runCatching { device.uuids }.getOrNull()
+            val lastMs = lastSdpQueryMs(context, device.address)
+            if (!policy.shouldQuerySdp(
+                    bonded = bonded,
+                    hasAaUuid = WirelessConnector.hasAaUuid(cached),
+                    cachedUuidsEmpty = cached.isNullOrEmpty(),
+                    lastQueriedAtMs = lastMs,
+                    nowMs = nowMs,
+                )
+            ) return false
+            recordSdpQuery(context, device.address, pending = true, nowMs = nowMs)
+            val started = runCatching { device.fetchUuidsWithSdp() }.getOrDefault(false)
+            if (!started) clearSdpPending(context, device.address)
+            log.i("wireless: $trigger ${deviceLabel(device)} uuids=${formatUuids(cached)} sdp=${if (started) "requested" else "refused"}")
+            return started
+        }
+
+        fun lastSdpQueryMs(context: Context, address: String): Long? {
+            val prefs = context.applicationContext.getSharedPreferences(SDP_PREFS, Context.MODE_PRIVATE)
+            val key = KEY_TS + address.uppercase()
+            return if (prefs.contains(key)) prefs.getLong(key, 0L) else null
+        }
+
+        fun recordSdpQuery(context: Context, address: String, pending: Boolean, nowMs: Long = System.currentTimeMillis()) {
+            val norm = address.uppercase()
+            context.applicationContext.getSharedPreferences(SDP_PREFS, Context.MODE_PRIVATE).edit()
+                .putLong(KEY_TS + norm, nowMs)
+                .putBoolean(KEY_PENDING + norm, pending)
+                .apply()
+        }
+
+        fun isSdpPending(context: Context, address: String): Boolean =
+            context.applicationContext.getSharedPreferences(SDP_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_PENDING + address.uppercase(), false)
+
+        fun clearSdpPending(context: Context, address: String) {
+            context.applicationContext.getSharedPreferences(SDP_PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(KEY_PENDING + address.uppercase(), false)
+                .apply()
+        }
+
+        @SuppressLint("MissingPermission")
+        fun deviceLabel(device: BluetoothDevice): String {
+            val name = runCatching { device.name }.getOrNull()?.takeIf { it.isNotBlank() } ?: "?"
+            return "$name (${device.address})"
+        }
+
+        fun formatUuids(uuids: Array<out ParcelUuid>?): String {
+            if (uuids.isNullOrEmpty()) return "[]"
+            return uuids.joinToString(prefix = "[", postfix = "]") { parcel ->
+                val u = parcel.uuid
+                val s = u.toString().lowercase()
+                when {
+                    u == WirelessConnector.AA_UUID -> "AA_WIRELESS"
+                    s == "669a0c20-0008-f4bd-e611-cb52007ae14d" -> "AA_WIRELESS_REV"
+                    s.startsWith("0000") && s.endsWith(BASE_UUID_SUFFIX) -> "0x" + s.substring(4, 8)
+                    else -> s
+                }
             }
         }
 

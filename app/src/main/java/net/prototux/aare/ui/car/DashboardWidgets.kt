@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Event
 import androidx.compose.material.icons.rounded.Navigation
@@ -40,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.R
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
@@ -63,16 +66,20 @@ internal fun WeatherChip(weather: Weather?) {
     }
 }
 
-/** The next calendar event, with a shortcut to navigate to its place. */
+/** The next calendar event, with a shortcut to navigate to its place and a button to hide it. */
 @Composable
-internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier) {
+internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, onDismiss: () -> Unit, modifier: Modifier) {
     val context = LocalContext.current
     val time = if (event.allDay) stringResource(R.string.dash_event_today) else DateFormat.getTimeFormat(context).format(event.startMs)
-    Column(modifier.padding(24.dp), verticalArrangement = Arrangement.Center) {
+    // The dismiss button also gives the knob somewhere to land when there's no place to navigate to.
+    Column(modifier.padding(start = 24.dp, end = 12.dp, top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Event, null, tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(10.dp))
-            Text(time, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(time, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+            Box(Modifier.size(48.dp).clip(CircleShape).carFocusHighlight(CircleShape).clickable(onClick = onDismiss), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         Spacer(Modifier.height(6.dp))
         Text(event.title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -80,7 +87,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-                    .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    .carFocusHighlight(RoundedCornerShape(20.dp)).clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Navigation, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))

@@ -34,6 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
+import net.prototux.aare.ui.car.CursorPane
 import net.prototux.aare.media.Placeholder
 import net.prototux.aare.notify.CarNotificationListener
 
@@ -66,7 +67,8 @@ internal fun MirrorScreen(runtime: CarRuntime, driving: Boolean, modifier: Modif
     }
 
     Box(modifier.background(Color.Black)) {
-        if (allowed) {
+        // On a car with a knob and no touch, a cursor stands in for the finger.
+        if (allowed) CursorPane(Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { ctx ->
                     var surface: Surface? = null
