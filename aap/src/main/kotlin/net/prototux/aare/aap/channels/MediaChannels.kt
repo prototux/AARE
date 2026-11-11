@@ -414,18 +414,26 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
      * when the head unit is too far behind: audio must stay in real time.
      */
     /** Whether [sendPcm] would send a chunk now rather than drop it. */
-    val hasRoom: Boolean get() = started && (ackless || unacked.get() < maxUnacked + SLACK)
+    val hasRoom: Boolean get() = started && (ackless || unacked.get() < window)
+
+    /** The car's window, but never more than [MAX_IN_FLIGHT]: the VW Play says 4096 and then can't take it. */
+    private val window: Int get() = minOf(maxUnacked + SLACK, MAX_IN_FLIGHT)
 
     fun sendPcm(buf: ByteArray, offset: Int, length: Int, timestampUs: Long): Boolean {
         if (!started) return false
-        if (!ackless && unacked.get() >= maxUnacked + SLACK) { droppedChunks++; noteAttempt(); return false }
+        if (!ackless && unacked.get() >= window) { droppedChunks++; noteAttempt(); return false }
         sendData(buf, offset, length, timestampUs, Priority.AUDIO)
         return true
     }
 
     companion object {
-        /** Head units ack audio in bursts; allow a little beyond the window before dropping. */
-        const val SLACK = 4
+        /**
+         * Beyond the head unit's window. Was 4 ("head units ack audio in bursts"), but the VW Play
+         * hung for good right after the first audio chunks: never exceed its window.
+         */
+        const val SLACK = 0
+        /** At most this many audio chunks waiting for an ack, whatever the head unit says. */
+        const val MAX_IN_FLIGHT = 8
     }
 }
 

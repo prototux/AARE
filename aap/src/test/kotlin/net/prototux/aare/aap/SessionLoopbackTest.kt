@@ -200,7 +200,11 @@ open class SessionLoopbackTest {
         assertEquals(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, audioFocus.poll(3, TimeUnit.SECONDS)!!.focusState)
         val media = audio.first { it.streamType.name.endsWith("MEDIA") }
         media.startPlayback()
-        repeat(5) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        repeat(5) {
+            val until = System.currentTimeMillis() + 2_000
+            while (!media.hasRoom && System.currentTimeMillis() < until) Thread.sleep(5)
+            assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L))
+        }
         Thread.sleep(300)
         assertEquals(5, hu.audioChunks.get())
 
@@ -246,7 +250,11 @@ open class SessionLoopbackTest {
         media.startPlayback()
 
         // Normal play: a few chunks, all acked. The stream stays ack-based.
-        repeat(3) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        repeat(3) {
+            val until = System.currentTimeMillis() + 2_000
+            while (!media.hasRoom && System.currentTimeMillis() < until) Thread.sleep(5)
+            assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L))
+        }
         Thread.sleep(300)
         assertFalse("ack-based while acks flow", media.ackless)
         val delivered = hu.audioChunks.get()

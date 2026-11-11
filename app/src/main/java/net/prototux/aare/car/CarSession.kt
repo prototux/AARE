@@ -148,6 +148,12 @@ class CarSession(
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
     @Volatile private var mediaFocus = false
+    /**
+     * True when the car hasn't answered our audio focus request yet after the first wait: some head
+     * units (VW Play / Visteon MIB Regio) never answer AudioFocusRequest at all, and waiting for an
+     * answer leaves the car silent forever. Any real answer from the car overrides this.
+     */
+    @Volatile private var mediaFocusAssumed = false
     /** The car lets navigation voice play (but not music). */
     @Volatile private var guidanceFocusState = false
     /**
@@ -308,6 +314,7 @@ class CarSession(
         // asking. Before mediaFocus changes, which a check reads.
         val asked = synchronized(focusLock) { mediaFocusRetry.onAnswered().also { scheduleFocusCheck() } }
         if (asked != null) DiagLog.add("audio focus: the car answered after $asked asks")
+        mediaFocusAssumed = false
         val state = notification.focusState
         if (!notification.unsolicited && guidancePlaying) {
             // A call or the car's own source taking over arrives as LOSS_TRANSIENT: not a grant.
@@ -693,6 +700,7 @@ class CarSession(
     private val mediaFocusRequests = object : CarAudioOut.Focus {
         override fun request(playing: Boolean) {
             mediaPlaying = playing
+            if (!playing) mediaFocusAssumed = false
             synchronized(focusLock) {
                 if (playing) mediaFocusRetry.onRequested(SystemClock.uptimeMillis()) else mediaFocusRetry.onWithdrawn()
                 scheduleFocusCheck()
@@ -701,7 +709,7 @@ class CarSession(
                 else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
             }
         }
-        override val granted: Boolean get() = mediaFocus
+        override val granted: Boolean get() = mediaFocus || mediaFocusAssumed
     }
 
     /**
@@ -735,7 +743,10 @@ class CarSession(
             // Gains at the release's priority: the send queue is ordered by priority, and one at the
             // default could overtake a release still queued.
             when (step) {
-                FocusRetry.Action.Ask -> aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+                FocusRetry.Action.Ask -> {
+                    aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+                    if (mediaPlaying && !mediaFocus) mediaFocusAssumed = true
+                }
                 FocusRetry.Action.Rearm -> {
                     aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
                     aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)

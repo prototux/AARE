@@ -74,12 +74,24 @@ class CarAudioOut(
             if (wanted) onFailed()
             return
         }
-        // ~20 ms chunks: small enough for low latency, big enough to keep the message rate sane.
-        val chunk = rate / 50 * channels * 2
+        // Android Auto's chunk size (see [chunkBytes]): the head unit may expect exactly that.
+        val chunk = chunkBytes(rate, channels)
         val buf = ByteArray(10 + chunk)
         var lastSound = 0L
         playing = false
         var frames = 0L
+        val clockStartUs = System.nanoTime() / 1_000
+        // Media goes out paced to real time; guidance keeps its start (queued while waiting for focus).
+        val realTime = channel.streamType == AudioStreamType.AUDIO_STREAM_MEDIA
+        val chunkNs = chunk / (2L * channels) * 1_000_000_000L / rate
+        var nextSendNs = 0L
+        fun pace() {
+            val now = System.nanoTime()
+            if (nextSendNs == 0L || now - nextSendNs > 200_000_000L) nextSendNs = now // (re)start, or fell behind: no catch-up burst
+            val wait = nextSendNs - now
+            if (wait > 0) Thread.sleep(wait / 1_000_000, (wait % 1_000_000).toInt())
+            nextSendNs += chunkNs * 9 / 10 // a little faster than real time, so a capture backlog drains slowly
+        }
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
         // The source ended by itself (its service or the audio server died), not by stop(): the
@@ -101,7 +113,10 @@ class CarAudioOut(
                 if (got < chunk) continue
                 val now = SystemClock.elapsedRealtime()
                 if (!isSilent(buf, 10, chunk)) lastSound = now
-                val ts = frames * 1_000_000L / rate
+                // On the same clock as the video (the encoder stamps System.nanoTime), as Android Auto
+                // does: a stream starting at 0 µs next to video at ~10^12 µs is a suspect for the
+                // VW Play hanging right after the first audio chunk.
+                val ts = clockStartUs + frames * 1_000_000L / rate
                 frames += chunk / (2 * channels)
                 if (!playing && lastSound == now) {
                     focus.request(true)
@@ -126,6 +141,15 @@ class CarAudioOut(
                 } else if (!focus.granted) {
                     // Focus lost mid-stream: drop, stale sound later would be worse.
                     queued.clear()
+                    continue
+                }
+                if (realTime) {
+                    // Music: never faster than real time and never a burst. The VW Play hung for good
+                    // right after a burst of 12 chunks at stream start; Android Auto sends one chunk
+                    // per chunk of time. Late or no room: drop, stay live.
+                    queued.clear()
+                    pace()
+                    if (channel.hasRoom) channel.sendPcm(buf.copyOf(), 10, chunk, ts)
                     continue
                 }
                 if (queued.isEmpty() && channel.hasRoom) {
@@ -169,6 +193,13 @@ class CarAudioOut(
         private const val UNDERFLOW_HOLD_MS = 30_000L
         /** A head unit's end-of-stream underflow lands within this long of us stopping: not a real gap. */
         private const val IGNORE_UNDERFLOW_AFTER_STOP_MS = 1_000L
+
+        /**
+         * Bytes per audio message, as Android Auto sends them: 2048 samples at 44.1 or 48 kHz, 1024
+         * otherwise (gearhead's CarAudioConfiguration sizing). AARE sent 20 ms chunks (3840 bytes at
+         * 48 kHz stereo), and the VW Play hung right after the first ones.
+         */
+        fun chunkBytes(rate: Int, channels: Int): Int = (if (rate == 44_100 || rate == 48_000) 2048 else 1024) * channels * 2
 
         /** Digital silence or noise floor (captures deliver zeros when nothing plays). */
         fun isSilent(b: ByteArray, off: Int, len: Int): Boolean {
