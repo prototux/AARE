@@ -38,6 +38,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import net.prototux.aare.ui.car.CarFocusVisibility
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,11 +82,29 @@ fun CarAppScreen(conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier
             conn.status == CarAppConnection.Status.FAILED -> AppMessage(conn, conn.error ?: stringResource(R.string.common_something_went_wrong), retry = { conn.connect() })
             template == null -> AppMessage(conn, null, retry = null)
             // A new screen (new template id) starts fresh; refreshes keep scroll position and input.
-            else -> androidx.compose.runtime.key(conn.templateId) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+            else -> {
+                // Knob: a press in the app usually brings a new template, and the item that had
+                // the focus goes with the old one. Focus would then start over from the rail;
+                // instead it goes to the new template's first item, as in Android Auto.
+                val entry = remember { FocusRequester() }
+                val focusedNow = remember { FocusHeld() }
+                val refocus = remember(template) { focusedNow.value }
+                LaunchedEffect(template) {
+                    if (!refocus || !CarFocusVisibility.keyInput) return@LaunchedEffect
+                    withFrameNanos { } // the new template laid out
+                    if (!focusedNow.value) runCatching { entry.requestFocus() }
+                }
+                Box(Modifier.fillMaxSize().onFocusChanged { focusedNow.value = it.hasFocus }.focusRequester(entry)) {
+                    androidx.compose.runtime.key(conn.templateId) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+                }
+            }
         }
         conn.alert?.let { AlertCard(it, conn, host, Modifier.align(Alignment.TopCenter)) }
     }
 }
+
+/** Whether the template holds the focus, read during composition (not state: no recomposition). */
+private class FocusHeld { var value = false }
 
 /** Templates drawn over the app's own map surface (see MapScaffold). */
 private fun usesMap(t: Template?): Boolean = t is NavigationTemplate || t is MapWithContentTemplate || t is PlaceListMapTemplate ||

@@ -118,7 +118,7 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
             Modifier.align(Alignment.TopCenter)
                 .offset { clamp(offset).let { IntOffset(it.x.roundToInt(), it.y.roundToInt()) } }
                 .onSizeChanged { barSize = it }
-                .rotaryArea()
+                .rotaryArea(floating = true)
                 .pointerInput(barSize, maxX, maxY) {
                     detectDragGestures(
                         onDrag = { _, drag -> offset = clamp(offset + drag) },

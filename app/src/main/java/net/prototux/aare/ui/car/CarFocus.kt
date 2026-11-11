@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
@@ -94,21 +95,24 @@ object CarFocusVisibility {
  * to the first, see [rotaryWrap]. Tilting the knob (the D-pad) still moves between panes, except
  * in a pane laid out as a grid ([tiltWithin], a keyboard), where it moves from item to item and
  * leaves at the edge.
+ *
+ * A [floating] pane lies over the others (the call strip): it isn't beside anything, so a tilt
+ * reaches it, and leaves it, by the panes' centres instead of their edges.
  */
-fun Modifier.rotaryArea(tiltWithin: Boolean = false): Modifier = composed {
+fun Modifier.rotaryArea(tiltWithin: Boolean = false, floating: Boolean = false): Modifier = composed {
     // Entering through a FocusRequester lands on the pane's first item (as the screen's starting
     // focus does); the node's own requestFocus doesn't, a group isn't focusable itself.
     val entry = remember { FocusRequester() }
-    focusRequester(entry) then RotaryAreaElement(entry, tiltWithin)
+    focusRequester(entry) then RotaryAreaElement(entry, tiltWithin, floating)
 }
 
-private data class RotaryAreaElement(val entry: FocusRequester, val tiltWithin: Boolean) : ModifierNodeElement<RotaryAreaNode>() {
-    override fun create() = RotaryAreaNode(entry, tiltWithin)
-    override fun update(node: RotaryAreaNode) { node.entry = entry; node.tiltWithin = tiltWithin }
+private data class RotaryAreaElement(val entry: FocusRequester, val tiltWithin: Boolean, val floating: Boolean) : ModifierNodeElement<RotaryAreaNode>() {
+    override fun create() = RotaryAreaNode(entry, tiltWithin, floating)
+    override fun update(node: RotaryAreaNode) { node.entry = entry; node.tiltWithin = tiltWithin; node.floating = floating }
 }
 
 /** A focus group whose focus state reads synchronously, unlike onFocusChanged's (dispatched later). */
-internal class RotaryAreaNode(var entry: FocusRequester, var tiltWithin: Boolean = false) : DelegatingNode(), GlobalPositionAwareModifierNode, TraversableNode {
+internal class RotaryAreaNode(var entry: FocusRequester, var tiltWithin: Boolean = false, var floating: Boolean = false) : DelegatingNode(), GlobalPositionAwareModifierNode, TraversableNode {
     val target = delegate(FocusTargetModifierNode(Focusability.Never))
     val hasFocus: Boolean get() = isAttached && target.focusState.hasFocus
     var bounds: Rect = Rect.Zero
@@ -138,23 +142,42 @@ internal object RotaryAreas {
         return focused.firstOrNull { it !in outer } ?: focused.lastOrNull()
     }
 
-    /** The innermost panes beside [from] towards [dir], nearest first (closest edge, then best lined up). */
+    /**
+     * The innermost panes beside [from] towards [dir], nearest first (closest edge, then best lined
+     * up). Floating panes, which overlap the others, are compared by their centres and come after
+     * the panes beside [from], so a tilt only lands on one where nothing else is that way.
+     */
     fun beside(from: RotaryAreaNode, dir: FocusDirection): List<RotaryAreaNode> {
         val f = from.bounds
         if (f.isEmpty) return emptyList()
         val outer = parents()
-        return areas.filter { it !== from && it.isAttached && it !in outer && !it.bounds.isEmpty }.mapNotNull { a ->
+        val candidates = areas.filter { it !== from && it.isAttached && it !in outer && !it.bounds.isEmpty }
+        fun score(a: RotaryAreaNode, byCentre: Boolean): Float? {
             val b = a.bounds
             val (gap, off) = when (dir) {
-                FocusDirection.Left -> (f.left - b.right) to (b.center.y - f.center.y)
-                FocusDirection.Right -> (b.left - f.right) to (b.center.y - f.center.y)
-                FocusDirection.Up -> (f.top - b.bottom) to (b.center.x - f.center.x)
-                else -> (b.top - f.bottom) to (b.center.x - f.center.x)
+                FocusDirection.Left -> (if (byCentre) f.center.x - b.center.x else f.left - b.right) to (b.center.y - f.center.y)
+                FocusDirection.Right -> (if (byCentre) b.center.x - f.center.x else b.left - f.right) to (b.center.y - f.center.y)
+                FocusDirection.Up -> (if (byCentre) f.center.y - b.center.y else f.top - b.bottom) to (b.center.x - f.center.x)
+                else -> (if (byCentre) b.center.y - f.center.y else b.top - f.bottom) to (b.center.x - f.center.x)
             }
-            // Beyond from's edge (a little overlap allowed), not merely overlapping it.
-            if (gap < -EDGE_SLACK) null else a to (13 * gap.coerceAtLeast(0f).let { it * it } + off * off)
-        }.sortedBy { it.second }.map { it.first }
+            // Beyond from's edge (a little overlap allowed), not merely overlapping it; by centre, that way at all.
+            if (if (byCentre) gap <= 0f else gap < -EDGE_SLACK) return null
+            return 13 * gap.coerceAtLeast(0f).let { it * it } + off * off
+        }
+        val (overlapping, beside) = candidates.partition { from.floating || it.floating }
+        fun ranked(list: List<RotaryAreaNode>, byCentre: Boolean) =
+            list.mapNotNull { a -> score(a, byCentre)?.let { a to it } }.sortedBy { it.second }.map { it.first }
+        return ranked(beside, false) + ranked(overlapping, true)
     }
+}
+
+/**
+ * Takes the knob's keys before panes and cursors (main thread): a hosted map in pan mode, where
+ * tilts move the map and turns zoom, like Android Auto. The handler returns null for a key it
+ * leaves alone.
+ */
+internal object CarKnobCapture {
+    var handler: ((KeyEvent) -> Boolean?)? = null
 }
 
 private object RotaryAreaKey
@@ -173,6 +196,8 @@ fun Modifier.rotaryWrap(): Modifier = composed {
     val focus = LocalFocusManager.current
     onPreviewKeyEvent { e ->
         // On a touch-only screen the knob drives a cursor, until a tilt takes it past the edge.
+        // Something that takes the knob for itself (a hosted map in pan mode) goes first.
+        CarKnobCapture.handler?.invoke(e)?.let { return@onPreviewKeyEvent it }
         CarCursors.active()?.onKey(e)?.let { return@onPreviewKeyEvent it }
         val tilt = when (e.key) {
             Key.DirectionLeft -> FocusDirection.Left
