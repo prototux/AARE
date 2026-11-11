@@ -361,9 +361,13 @@ class CarSession(
     }
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
-        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int {
+            val index = chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
                 vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
+            main.removeCallbacks(focusFallback)
+            main.postDelayed(focusFallback, FOCUS_ANSWER_MS)
+            return index
+        }
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -415,11 +419,18 @@ class CarSession(
     /** The configuration the projection runs with (main thread), for UI config updates. */
     private var videoConfig: VideoConfiguration? = null
 
+    /** A car that never answers the focus request would otherwise get no video, and stay black. */
+    private val focusFallback = Runnable {
+        if (video?.assumeProjectedIfUnanswered() == true) {
+            DiagLog.add("video focus: no answer from the car after ${FOCUS_ANSWER_MS / 1000} s, sending video anyway")
+        }
+    }
+
     private fun startProjection(config: VideoConfiguration, rightHandDrive: Boolean) {
         teardownVideo()
         videoConfig = config
         val (w, h) = resolution(config.codecResolution)
-        val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
+        val fps = fpsOf(config)
         val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
         val layout = ProjectionLayout.of(config, w, h).let { base ->
             val o = vehicleOverride
@@ -863,6 +874,7 @@ class CarSession(
         closed = true
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
+        main.removeCallbacks(focusFallback)
         main.removeCallbacks(focusCheck)
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
@@ -922,6 +934,11 @@ class CarSession(
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
+        /** How long the car gets to answer the video focus request before we send video anyway. */
+        private const val FOCUS_ANSWER_MS = 3_000L
+
+        /** A car that doesn't state a frame rate gets 30: protobuf would read the missing field as the enum's first value, 60. */
+        fun fpsOf(c: VideoConfiguration): Int = if (c.hasFrameRate() && c.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
 
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480
@@ -964,7 +981,7 @@ class CarSession(
                 val c = configs[i]
                 val s = shortSide(i)
                 val fits = s <= maxHeight
-                val fps60 = c.frameRate == VideoFrameRateType.VIDEO_FPS_60
+                val fps60 = fpsOf(c) == 60
                 return (if (fits) 1_000_000 else 0) + (if (fits) s else -s) * 10 + (if (fps60 == prefer60) 1 else 0)
             }
             return candidates.maxByOrNull(::score) ?: 0
