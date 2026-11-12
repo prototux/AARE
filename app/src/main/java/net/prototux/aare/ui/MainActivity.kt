@@ -27,6 +27,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -156,6 +157,7 @@ import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
+import net.prototux.aare.devlog.DevLog
 import net.prototux.aare.home.HomeStore
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
@@ -309,6 +311,7 @@ private fun Home() {
                             item { VehicleOverridesCard() }
                             item { CarQuirksCard(settings) }
                             item { LogCard() }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) item { DeveloperLogCard() }
                             item { SettingsBackupCard(settings) { settingsGeneration++ } }
                             item { CarButtonsCard(settings) }
                         }
@@ -2145,6 +2148,40 @@ private fun CarButtonsCard(settings: Settings) {
                 settings.carKeyMap = map
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun DeveloperLogCard() {
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    val scope = rememberCoroutineScope()
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                runCatching {
+                    ctx.contentResolver.openOutputStream(uri)?.use { DevLog.export(ctx, it) } ?: false
+                }
+            }
+            saved.onSuccess { if (!it) Toast.makeText(ctx, R.string.setup_dev_log_empty, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        }
+    }
+    Section(stringResource(R.string.setup_section_developer_log)) {
+        var enabled by remember { mutableStateOf(settings.developerMode) }
+        val path = remember { DevLog.folderPath(ctx) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_title), stringResource(R.string.setup_toggle_dev_log_subtitle, path), enabled) {
+            enabled = it; settings.developerMode = it
+            if (it) DevLog.start(ctx) else DevLog.stop(ctx)
+        }
+        var privacy by remember { mutableStateOf(settings.developerLogPrivacy) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_privacy_title), stringResource(R.string.setup_toggle_dev_log_privacy_subtitle), privacy) {
+            privacy = it; settings.developerLogPrivacy = it
+            if (settings.developerMode) DevLog.restart(ctx)
+        }
+        TextButton(onClick = { save.launch("aare-developer-log.txt") }) { Text(stringResource(R.string.setup_dev_log_save)) }
     }
 }
 
