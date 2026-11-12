@@ -150,3 +150,24 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+## Touchscreen calibration
+
+For head units whose touches still land in the wrong place after the automatic mapping
+(`TouchMapper`), *Car screen > Touchscreen calibration* lets the user measure the car: set the
+visible area from the phone (an L marks each corner on the car screen), touch 4 targets, then a
+centre target to confirm. The 4 raw touch-downs give a least-squares affine map from raw panel
+coordinates to the frame, which covers a wrong range or offset, swapped or mirrored axes and a
+slight tilt.
+
+Design choices:
+- **The phone drives every step.** The car's touches can't be trusted before calibrating, so while
+  the targets are up they go to the tool only, never to the car UI.
+- **Parked only.** It can't be started while the driving restrictions are on, and a run in progress
+  ends with nothing saved when they come on (`CarRuntime.onDrivingRestricted`).
+- **Nothing is kept without a confirming touch.** The new map must put the centre tap on the
+  centre target within 15 s; a miss, a timeout, a cancel or a video restart keeps the mapping in use
+  before. A tap that doesn't fit the other 3 is asked again.
+- **Saved per head unit.** Keyed by the head unit's name, like the known cars. The map and the
+  margins are fractions of the frame, not pixels.
+- **It wins over the automatic mapping and `vehicles.json` margins.** It is what the user measured
+  on that car; *Reset to the car's values* removes it.
