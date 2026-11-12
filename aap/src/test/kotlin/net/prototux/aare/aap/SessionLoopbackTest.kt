@@ -8,6 +8,7 @@ import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputRepor
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
 import aap_protobuf.service.navigationstatus.message.NavigationDestinationOuterClass.NavigationDestination
+import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
 import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.NavigationState
 import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
@@ -40,6 +41,10 @@ open class SessionLoopbackTest {
     /** Whether the simulated head unit leaves out fields that are 0, like a proto3 encoder. */
     protected open val omitZeroFields = false
 
+    /** The protocol minor version the simulated head unit announces (1.x). */
+    protected open val headUnitMinor = 6
+    private val modernNav get() = headUnitMinor >= 6
+
     private lateinit var hu: HeadUnitSimulator
     private lateinit var huSocket: Socket
     private lateinit var phone: AapSession
@@ -66,7 +71,7 @@ open class SessionLoopbackTest {
         val phoneSocket = server.accept()
         server.close()
 
-        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, omitZeroFields = omitZeroFields)
+        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, omitZeroFields = omitZeroFields, protocolMinor = headUnitMinor)
         val id = SelfSignedCertificate.generate("phone")
         phone = AapSession(
             InterruptibleCloseTransport(SocketTransport(phoneSocket)),
@@ -327,29 +332,56 @@ open class SessionLoopbackTest {
         assertTrue("still projecting", video!!.focused)
     }
 
+    /** A step whose state names [address], and whose older turn event names it as the road. */
+    private fun sendStep(address: String) = nav!!.update(
+        NavigationState.newBuilder().addDestinations(NavigationDestination.newBuilder().setAddress(address)).build(),
+        null, NavigationNextTurnEvent.newBuilder().setRoad(address).build(), null,
+    )
+
+    /** The next step the head unit got, in whichever form it reads. */
+    private fun receivedStep(seconds: Long): String? =
+        if (modernNav) hu.navStates.poll(seconds, TimeUnit.SECONDS)?.getDestinations(0)?.address
+        else hu.navTurns.poll(seconds, TimeUnit.SECONDS)?.road
+
     @Test
     fun navUpdateInsideRateLimitIsSentLate() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
-        fun step(address: String) = NavigationState.newBuilder()
-            .addDestinations(NavigationDestination.newBuilder().setAddress(address)).build()
         // The simulator asks for 500 ms between updates: the second one must be delayed, not dropped.
-        nav!!.update(step("first"), null, null, null)
-        nav!!.update(step("second"), null, null, null)
-        assertEquals("first", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
-        assertEquals("second", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
+        sendStep("first")
+        sendStep("second")
+        assertEquals("first", receivedStep(3))
+        assertEquals("second", receivedStep(3))
     }
 
     @Test
     fun heldNavUpdateIsDroppedWhenRerouting() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
-        fun step(address: String) = NavigationState.newBuilder()
-            .addDestinations(NavigationDestination.newBuilder().setAddress(address)).build()
-        nav!!.update(step("old route"), null, null, null)
-        nav!!.update(step("abandoned"), null, null, null)
+        sendStep("old route")
+        sendStep("abandoned")
         // The held step belongs to the route being left: it must not follow REROUTING.
         nav!!.status(NavigationStatus.NavigationStatusEnum.REROUTING)
-        assertEquals("old route", hu.navStates.poll(3, TimeUnit.SECONDS)!!.getDestinations(0).address)
-        assertEquals(null, hu.navStates.poll(1, TimeUnit.SECONDS))
+        assertEquals("old route", receivedStep(3))
+        assertEquals(null, receivedStep(1))
+    }
+
+    /** Only the messages the head unit's protocol version reads: it refuses the others (0xff). */
+    @Test
+    fun navSendsOnlyWhatTheHeadUnitReads() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        sendStep("only one form")
+        assertEquals("only one form", receivedStep(3))
+        if (modernNav) assertEquals(null, hu.navTurns.poll(1, TimeUnit.SECONDS))
+        else assertEquals(null, hu.navStates.poll(1, TimeUnit.SECONDS))
+    }
+
+    /** REROUTING only exists from protocol 1.6; Android Auto doesn't send it to older head units. */
+    @Test
+    fun reroutingOnlyToHeadUnitsThatKnowIt() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        nav!!.status(NavigationStatus.NavigationStatusEnum.REROUTING)
+        nav!!.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
+        if (modernNav) assertEquals(NavigationStatus.NavigationStatusEnum.REROUTING, hu.navStatuses.poll(3, TimeUnit.SECONDS))
+        assertEquals(NavigationStatus.NavigationStatusEnum.ACTIVE, hu.navStatuses.poll(3, TimeUnit.SECONDS))
     }
 }
 
@@ -359,4 +391,12 @@ open class SessionLoopbackTest {
  */
 class ZeroOmittingSessionLoopbackTest : SessionLoopbackTest() {
     override val omitZeroFields = true
+}
+
+/**
+ * The same sessions against a head unit on protocol 1.5, like the VW Play (Visteon MIB Regio):
+ * it reads only the older navigation turn and distance events.
+ */
+class ProtocolOneFiveSessionLoopbackTest : SessionLoopbackTest() {
+    override val headUnitMinor = 5
 }
