@@ -280,6 +280,8 @@
     <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked, and needs root or Shizuku. Use at your own risk.</string>
     <string name="standalone_toggle_title">Launch phone apps on the car screen</string>
     <string name="standalone_toggle_subtitle">Pick the apps below. Shown only when parked.</string>
+    <string name="standalone_keep_awake_title">No-sleep mode for standalone apps</string>
+    <string name="standalone_keep_awake_subtitle">Keeps the physical phone screen awake while an app is open. On affected Android 17 phones, virtual displays stop when the phone screen is off. Uses more battery.</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
