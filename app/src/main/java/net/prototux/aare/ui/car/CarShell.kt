@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -209,6 +211,8 @@ internal fun BarRevealButton(
         when { dragging -> 1.1f; pressed -> 0.9f; else -> 1f }, tween(120), label = "bar reveal scale",
     )
     val opacity by animateFloatAsState(if (pressed || dragging) 0.9f else 0.6f, tween(120), label = "bar reveal opacity")
+    val buttonColor = MaterialTheme.colorScheme.primaryContainer
+    val labelColor = MaterialTheme.colorScheme.onPrimaryContainer
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier
@@ -239,17 +243,35 @@ internal fun BarRevealButton(
             }
             .semantics { contentDescription = label },
         shape = CircleShape,
-        // Keep translucency off the elevated FAB's graphics layer: some head units clip that
-        // layer's lower shadow and make the circular surface look cut off.
-        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = opacity),
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = opacity),
+        // Draw the visible circle ourselves. Some head-unit renderers facet or clip a translucent
+        // elevated Surface; Canvas' circle primitive stays round and its inset shadow cannot clip.
+        containerColor = Color.Transparent,
+        contentColor = Color.Transparent,
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+        ),
         interactionSource = interactionSource,
     ) {
-        Text(
-            "B",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
-        )
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val radius = (size.minDimension - 8.dp.toPx()) / 2f
+                drawCircle(
+                    color = Color.Black.copy(alpha = 0.16f * opacity),
+                    radius = radius,
+                    center = Offset(center.x, center.y + 2.dp.toPx()),
+                )
+                drawCircle(color = buttonColor.copy(alpha = opacity), radius = radius)
+            }
+            Text(
+                "B",
+                color = labelColor.copy(alpha = opacity),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+            )
+        }
     }
 }
 
