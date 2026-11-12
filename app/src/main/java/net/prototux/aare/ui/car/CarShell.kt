@@ -243,8 +243,8 @@ internal fun BarRevealButton(
             }
             .semantics { contentDescription = label },
         shape = CircleShape,
-        // Draw the visible circle ourselves. Some head-unit renderers facet or clip a translucent
-        // elevated Surface; Canvas' circle primitive stays round and its inset shadow cannot clip.
+        // Draw one flat visible circle ourselves. Some head-unit renderers facet or clip a
+        // translucent elevated Surface, and offset faux shadows look uneven on low-DPI displays.
         containerColor = Color.Transparent,
         contentColor = Color.Transparent,
         elevation = FloatingActionButtonDefaults.elevation(
@@ -258,11 +258,6 @@ internal fun BarRevealButton(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 val radius = (size.minDimension - 8.dp.toPx()) / 2f
-                drawCircle(
-                    color = Color.Black.copy(alpha = 0.16f * opacity),
-                    radius = radius,
-                    center = Offset(center.x, center.y + 2.dp.toPx()),
-                )
                 drawCircle(color = buttonColor.copy(alpha = opacity), radius = radius)
             }
             Text(
