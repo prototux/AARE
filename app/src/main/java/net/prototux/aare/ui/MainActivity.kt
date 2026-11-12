@@ -130,6 +130,7 @@ import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
+import net.prototux.aare.devlog.DevLog
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
 import net.prototux.aare.host.Assistants
@@ -253,6 +254,7 @@ private fun Home() {
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { LogCard() }
+                            item { DeveloperLogCard() }
                         }
                         Page.ABOUT -> item { AboutScreen() }
                     }
@@ -1437,6 +1439,39 @@ private fun LogCard() {
                 TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
             }
         }
+    }
+}
+
+@Composable
+private fun DeveloperLogCard() {
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    val scope = rememberCoroutineScope()
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                runCatching {
+                    ctx.contentResolver.openOutputStream(uri)?.use { DevLog.export(ctx, it) } ?: false
+                }
+            }
+            saved.onSuccess { if (!it) Toast.makeText(ctx, R.string.setup_dev_log_empty, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        }
+    }
+    Section(stringResource(R.string.setup_section_developer_log)) {
+        var enabled by remember { mutableStateOf(settings.developerMode) }
+        val path = remember { DevLog.folderPath(ctx) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_title), stringResource(R.string.setup_toggle_dev_log_subtitle, path), enabled) {
+            enabled = it; settings.developerMode = it
+            if (it) DevLog.start(ctx) else DevLog.stop(ctx)
+        }
+        var privacy by remember { mutableStateOf(settings.developerLogPrivacy) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_privacy_title), stringResource(R.string.setup_toggle_dev_log_privacy_subtitle), privacy) {
+            privacy = it; settings.developerLogPrivacy = it
+            if (settings.developerMode) DevLog.restart(ctx)
+        }
+        TextButton(onClick = { save.launch("aare-developer-log.txt") }) { Text(stringResource(R.string.setup_dev_log_save)) }
     }
 }
 
