@@ -214,7 +214,6 @@ internal fun BarRevealButton(
         modifier = modifier
             .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
             .size(d.touchTarget)
-            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = opacity }
             .pointerInput(travelX, travelY, positionKey) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = {
@@ -240,11 +239,17 @@ internal fun BarRevealButton(
             }
             .semantics { contentDescription = label },
         shape = CircleShape,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        // Keep translucency off the elevated FAB's graphics layer: some head units clip that
+        // layer's lower shadow and make the circular surface look cut off.
+        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = opacity),
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = opacity),
         interactionSource = interactionSource,
     ) {
-        Text("B", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            "B",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+        )
     }
 }
 
