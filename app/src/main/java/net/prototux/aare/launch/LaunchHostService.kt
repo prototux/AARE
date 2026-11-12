@@ -1,18 +1,24 @@
 package net.prototux.aare.launch
 
 import android.annotation.SuppressLint
-import android.app.ActivityOptions
+import android.content.AttributionSource
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.os.Binder
 import android.os.Build
+import android.os.Process
+import android.system.Os
 import android.util.Log
 import android.view.InputEvent
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
+import androidx.annotation.RequiresApi
 import org.lsposed.hiddenapibypass.HiddenApiBypass
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 /**
@@ -41,45 +47,55 @@ class LaunchHostService : ILaunchHost.Stub {
     }
 
     override fun start(surface: Surface, width: Int, height: Int, dpi: Int, packageName: String): Int {
-        stop()
-        val ctx = injectedContext ?: systemContext() ?: return -1
-        val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
-        display = vd
-        displayId = vd.display.displayId
-        if (!launch(ctx, packageName, displayId)) {
-            Log.w(TAG, "created display ${displayId} but could not launch $packageName on it")
+        return asHelper {
+            stopDisplay()
+            val ctx = shellContext() ?: return@asHelper -1
+            val vd = createDisplay(ctx, surface, width, height, dpi) ?: return@asHelper -1
+            display = vd
+            displayId = vd.display.displayId
+            if (!launch(ctx, packageName, displayId)) {
+                Log.w(TAG, "created display ${displayId} but could not launch $packageName on it")
+                stopDisplay()
+                return@asHelper -1
+            }
+            displayId
         }
-        return displayId
     }
 
     override fun resize(surface: Surface, width: Int, height: Int, dpi: Int) {
-        val vd = display ?: return
-        runCatching { vd.resize(width, height, dpi) }
-        runCatching { vd.surface = surface }
+        asHelper {
+            val vd = display ?: return@asHelper
+            runCatching { vd.resize(width, height, dpi) }
+            runCatching { vd.surface = surface }
+        }
     }
 
-    override fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {
-        val ev = MotionEvent.obtain(downTime, eventTime, action, x, y, 0)
+    override fun touch(event: MotionEvent) = asHelper {
+        // Keep the full pointer set and encoded action index so apps can recognize pinch, rotate,
+        // two-finger pan and any other gesture from the same events they receive on the phone.
+        val ev = MotionEvent.obtain(event)
         ev.source = SOURCE_TOUCHSCREEN
         setDisplayId(ev, displayId)
         inject(ev)
         ev.recycle()
     }
 
-    override fun key(eventTime: Long, action: Int, keyCode: Int) {
+    override fun key(eventTime: Long, action: Int, keyCode: Int) = asHelper {
         val ev = KeyEvent(eventTime, eventTime, action, keyCode, 0, 0, -1, 0, 0, SOURCE_KEYBOARD)
         setDisplayId(ev, displayId)
         inject(ev)
     }
 
-    override fun stop() {
+    override fun stop() = asHelper { stopDisplay() }
+
+    private fun stopDisplay() {
         display?.let { runCatching { it.release() } }
         display = null
         displayId = -1
     }
 
     override fun destroy() {
-        stop()
+        asHelper { stopDisplay() }
         exitProcess(0)
     }
 
@@ -87,16 +103,18 @@ class LaunchHostService : ILaunchHost.Stub {
 
     /** Build the virtual display. Trusted + its own display group lets an arbitrary app run and focus on it. */
     private fun createDisplay(ctx: Context, surface: Surface, w: Int, h: Int, dpi: Int): VirtualDisplay? {
-        val dm = ctx.getSystemService(DisplayManager::class.java) ?: return null
-        // Preferred flags for hosting a foreign app interactively; fall back to the plain public ones
-        // if the framework rejects the hidden bits for this uid/version.
-        for (flags in intArrayOf(FULL_FLAGS, FLAG_PUBLIC or FLAG_PRESENTATION)) {
-            val vd = runCatching { dm.createVirtualDisplay("AARE app", w, h, dpi.coerceAtLeast(120), surface, flags) }
-                .onFailure { Log.w(TAG, "createVirtualDisplay(flags=$flags) failed: ${it.message}") }
-                .getOrNull()
-            if (vd != null) return vd
-        }
-        return null
+        // ContextWrapper.getSystemService() delegates to its base context, so the returned manager
+        // would still carry AARE's package as the Android 17 display owner. Construct the manager
+        // with our shell-attributed wrapper, as scrcpy does for its interactive virtual display.
+        val dm = runCatching {
+            DisplayManager::class.java.getDeclaredConstructor(Context::class.java)
+                .apply { isAccessible = true }.newInstance(ctx)
+        }.onFailure { Log.w(TAG, "could not construct shell DisplayManager", it) }.getOrNull()
+            ?: return null
+        val flags = displayFlags()
+        return runCatching { dm.createVirtualDisplay("AARE app", w, h, dpi.coerceAtLeast(120), surface, flags) }
+            .onFailure { Log.w(TAG, "createVirtualDisplay(flags=$flags) failed", it) }
+            .getOrNull()
     }
 
     /** Launch [pkg]'s main activity onto [onDisplay]. */
@@ -104,10 +122,30 @@ class LaunchHostService : ILaunchHost.Stub {
     private fun launch(ctx: Context, pkg: String, onDisplay: Int): Boolean = runCatching {
         val intent = ctx.packageManager.getLaunchIntentForPackage(pkg)
             ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK) ?: return false
-        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay)
-        ctx.startActivity(intent, opts.toBundle())
+        val component = intent.component ?: return false
+        val command = mutableListOf(
+            "cmd", "activity", "start-activity",
+            "--user", (Process.myUid() / PER_USER_RANGE).toString(),
+            "--display", onDisplay.toString(),
+        )
+        intent.action?.let { command += listOf("-a", it) }
+        intent.categories.orEmpty().forEach { command += listOf("-c", it) }
+        command += listOf("-f", "0x${intent.flags.toString(16)}", "-n", component.flattenToString())
+        val process = ProcessBuilder(command).redirectErrorStream(true).start()
+        if (!process.waitFor(5, TimeUnit.SECONDS)) {
+            process.destroy()
+            Log.w(TAG, "activity command timed out for $pkg")
+            return false
+        }
+        val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+        if (process.exitValue() != 0 || output.contains("Error:", ignoreCase = true) ||
+            output.contains("Exception", ignoreCase = true)) {
+            Log.w(TAG, "activity command failed for $pkg (${process.exitValue()}): $output")
+            return false
+        }
+        Log.i(TAG, "launched $pkg on display $onDisplay: $output")
         true
-    }.onFailure { Log.w(TAG, "startActivity($pkg) failed: ${it.message}") }.getOrDefault(false)
+    }.onFailure { Log.w(TAG, "startActivity($pkg) failed", it) }.getOrDefault(false)
 
     /** Inject one event into the launched app's display via InputManager's hidden injectInputEvent. */
     private fun inject(event: InputEvent) {
@@ -122,13 +160,53 @@ class LaunchHostService : ILaunchHost.Stub {
     private val inputManager: Any? by lazy {
         runCatching {
             val cls = Class.forName("android.hardware.input.InputManager")
-            cls.getMethod("getInstance").invoke(null)
-        }.onFailure { Log.w(TAG, "InputManager.getInstance failed: ${it.message}") }.getOrNull()
+            cls.getDeclaredConstructor(Context::class.java).apply { isAccessible = true }
+                .newInstance(shellContext() ?: error("no shell context"))
+        }.onFailure { Log.w(TAG, "could not construct shell InputManager", it) }.getOrNull()
     }
 
     private fun setDisplayId(event: InputEvent, id: Int) {
         if (id < 0) return
         runCatching { event.javaClass.getMethod("setDisplayId", Int::class.javaPrimitiveType).invoke(event, id) }
+    }
+
+    /**
+     * A binder call keeps the caller's identity. Without clearing it, framework services check
+     * AARE's app uid instead of this privileged helper's shell uid and reject display creation,
+     * activity launch and input injection. Root helpers drop to shell too: Android grants these
+     * capabilities to uid 2000, not implicitly to uid 0.
+     */
+    private inline fun <T> asHelper(block: () -> T): T {
+        val identity = Binder.clearCallingIdentity()
+        try {
+            if (Process.myUid() == 0) Os.setgid(SHELL_UID).also { Os.setuid(SHELL_UID) }
+            return block()
+        } finally {
+            Binder.restoreCallingIdentity(identity)
+        }
+    }
+
+    /** A context whose package attribution matches the shell uid used by DisplayManagerService. */
+    private fun shellContext(): Context? {
+        if (Process.myUid() != SHELL_UID) {
+            Log.w(TAG, "launcher helper has uid ${Process.myUid()}, expected shell")
+            return null
+        }
+        val base = injectedContext ?: systemContext() ?: return null
+        val packageContext = runCatching {
+            base.createPackageContext(SHELL_PACKAGE, Context.CONTEXT_IGNORE_SECURITY)
+        }.onFailure { Log.w(TAG, "could not create shell package context", it) }.getOrNull()
+            ?: return null
+        return ShellContext(packageContext)
+    }
+
+    private class ShellContext(base: Context) : ContextWrapper(base) {
+        override fun getPackageName() = SHELL_PACKAGE
+        override fun getOpPackageName() = SHELL_PACKAGE
+        override fun getApplicationContext(): Context = this
+        @RequiresApi(Build.VERSION_CODES.S)
+        override fun getAttributionSource(): AttributionSource =
+            AttributionSource.Builder(Process.myUid()).setPackageName(SHELL_PACKAGE).build()
     }
 
     /** The system context of this (app_process) process, when Shizuku did not inject one. */
@@ -154,13 +232,31 @@ class LaunchHostService : ILaunchHost.Stub {
         const val SOURCE_TOUCHSCREEN = 0x00001002 // InputDevice.SOURCE_TOUCHSCREEN
         const val SOURCE_KEYBOARD = 0x00000101 // InputDevice.SOURCE_KEYBOARD
         const val INJECT_INPUT_EVENT_MODE_ASYNC = 0
+        const val SHELL_UID = 2000
+        const val PER_USER_RANGE = 100_000
+        const val SHELL_PACKAGE = "com.android.shell"
 
-        // VirtualDisplay flags (public + hidden bits). Hidden ones let a foreign app run and take focus.
+        // VirtualDisplay flags used by scrcpy's interactive new-display implementation.
         const val FLAG_PUBLIC = 1 shl 0
         const val FLAG_PRESENTATION = 1 shl 1
+        const val FLAG_OWN_CONTENT_ONLY = 1 shl 3
+        const val FLAG_SUPPORTS_TOUCH = 1 shl 6
+        const val FLAG_ROTATES_WITH_CONTENT = 1 shl 7
+        const val FLAG_DESTROY_CONTENT_ON_REMOVAL = 1 shl 8
         const val FLAG_TRUSTED = 1 shl 10 // hidden, API 29+
         const val FLAG_OWN_DISPLAY_GROUP = 1 shl 11 // hidden, API 31+
         const val FLAG_ALWAYS_UNLOCKED = 1 shl 12 // hidden, API 30+
-        const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
+        const val FLAG_TOUCH_FEEDBACK_DISABLED = 1 shl 13
+        const val FLAG_OWN_FOCUS = 1 shl 14
+        const val FLAG_DEVICE_DISPLAY_GROUP = 1 shl 15
+
+        fun displayFlags(sdk: Int = Build.VERSION.SDK_INT): Int {
+            var flags = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or
+                FLAG_SUPPORTS_TOUCH or FLAG_ROTATES_WITH_CONTENT or FLAG_DESTROY_CONTENT_ON_REMOVAL
+            if (sdk >= 33) flags = flags or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or
+                FLAG_ALWAYS_UNLOCKED or FLAG_TOUCH_FEEDBACK_DISABLED
+            if (sdk >= 34) flags = flags or FLAG_OWN_FOCUS or FLAG_DEVICE_DISPLAY_GROUP
+            return flags
+        }
     }
 }
