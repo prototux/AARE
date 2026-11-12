@@ -291,6 +291,7 @@ class Settings(context: Context) {
 
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
+        private const val TOUCH_CALIBRATION = "touch_calibration:"
         const val RAIL_AUTO = "auto"
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
@@ -304,6 +305,17 @@ class Settings(context: Context) {
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"
     }
+
+    /** The touch calibration the user measured for a head unit (by its name, like [knownCars]). */
+    fun touchCalibration(car: String): net.prototux.aare.car.calibration.TouchCalibration? =
+        net.prototux.aare.car.calibration.TouchCalibration.decode(prefs.getString(TOUCH_CALIBRATION + car, null))
+
+    fun setTouchCalibration(car: String, c: net.prototux.aare.car.calibration.TouchCalibration?) =
+        prefs.edit { if (c == null) remove(TOUCH_CALIBRATION + car) else putString(TOUCH_CALIBRATION + car, c.encode()) }
+
+    /** Head units with a saved touch calibration. */
+    val calibratedCars: List<String>
+        get() = prefs.all.keys.filter { it.startsWith(TOUCH_CALIBRATION) }.map { it.removePrefix(TOUCH_CALIBRATION) }.sorted()
 
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.registerOnSharedPreferenceChangeListener(l)
     fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.unregisterOnSharedPreferenceChangeListener(l)

@@ -61,6 +61,8 @@ import net.prototux.aare.aap.channels.NavigationStatusChannel
 import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.DiagLog
+import net.prototux.aare.car.calibration.CalibrationController
+import net.prototux.aare.ui.car.CalibrationOverlay
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
@@ -414,6 +416,20 @@ class CarSession(
 
     /** The configuration the projection runs with (main thread), for UI config updates. */
     private var videoConfig: VideoConfiguration? = null
+    private var lastRightHandDrive = false
+    /** The running projection, for the calibration tool (main thread). */
+    private var calibrationFrame: CalibrationController.Projection? = null
+
+    private val calibration = CalibrationController(object : CalibrationController.Host {
+        override val car get() = runtime.ui.headUnitName.ifBlank { headUnitName }
+        override val driving get() = runtime.ui.drivingRestricted
+        override val projection get() = calibrationFrame
+        override fun apply(c: net.prototux.aare.car.calibration.TouchCalibration?) {
+            settings.setTouchCalibration(car, c)
+            // Lay out again: the saved visible area moves the UI, the mapper takes the calibration.
+            videoConfig?.let { if (!closed) startProjection(it, lastRightHandDrive) }
+        }
+    }, CalibrationController.Scheduler.of(main))
 
     private fun startProjection(config: VideoConfiguration, rightHandDrive: Boolean) {
         teardownVideo()
@@ -421,7 +437,7 @@ class CarSession(
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
         val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
-        val layout = ProjectionLayout.of(config, w, h).let { base ->
+        val carLayout = ProjectionLayout.of(config, w, h).let { base ->
             val o = vehicleOverride
             if (o?.widthMargin == null && o?.heightMargin == null) base
             else {
@@ -431,6 +447,14 @@ class CarSession(
                 base.copy(marginLeft = fw / 2, marginRight = fw - fw / 2, marginTop = fh / 2, marginBottom = fh - fh / 2)
             }
         }
+        lastRightHandDrive = rightHandDrive
+        // A calibration the user saved for this car, at this resolution, brings its own visible area.
+        val calCar = runtime.ui.headUnitName.ifBlank { headUnitName }
+        val saved = settings.touchCalibration(calCar)?.let { c ->
+            c.takeIf { it.fits(w, h) }.also { if (it == null) DiagLog.add("calibration: the one saved for $calCar is for ${c.width}x${c.height}, not ${w}x$h: not used") }
+        }
+        val layout = saved?.margins(w, h)?.let { m -> carLayout.withMargins(m[0], m[1], m[2], m[3]) } ?: carLayout
+        if (saved != null) DiagLog.add("calibration: using the one saved for $calCar: ${saved.describe()}")
         videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe()
         Log.i(TAG, "projection $videoDescription")
 
@@ -484,6 +508,8 @@ class CarSession(
                 with(d) {
                     runtime.Root(Modifier.padding(start = layout.padLeft.toDp(), top = layout.padTop.toDp(), end = layout.padRight.toDp(), bottom = layout.padBottom.toDp()))
                 }
+                // Over the whole frame, margins included: its first step moves them.
+                CalibrationOverlay(Modifier.fillMaxSize())
             }
         }
         display = pd
@@ -491,7 +517,8 @@ class CarSession(
         // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
         // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout)
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout, saved)
+        calibrationFrame = CalibrationController.Projection(w, h, carLayout, saved).also { calibration.onProjection(it) }
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
@@ -508,7 +535,10 @@ class CarSession(
 
     private val inputListener = object : InputChannel.Listener {
         override fun onInput(report: InputReport) {
-            if (report.hasTouchEvent()) {
+            if (report.hasTouchEvent() && calibration.capturing) {
+                // The calibration tool takes the raw touches; the car UI gets none meanwhile.
+                calibration.onTouchFromReader(report.touchEvent)
+            } else if (report.hasTouchEvent()) {
                 val ev = touch?.map(report.touchEvent) ?: return
                 display?.dispatchTouch(ev)
             }
@@ -871,6 +901,7 @@ class CarSession(
         drivingMode.stop()
         cluster?.stop()
         micRouter.shutdown()
+        calibration.close()
         teardownVideo()
         runtime.stop()
         CarData.reset(owner = this)
