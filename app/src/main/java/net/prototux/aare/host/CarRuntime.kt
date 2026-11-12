@@ -284,6 +284,11 @@ class CarRuntime(
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
         ui.carPlayStyle = settings.carStyle == Settings.STYLE_CARPLAY
         ui.darkBar = settings.darkBar
+        val barHidden = settings.hideBar
+        if (ui.barHidden != barHidden) {
+            ui.barHidden = barHidden
+            ui.barTemporarilyVisible = false
+        }
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -295,6 +300,7 @@ class CarRuntime(
             }
         }
         ui.railBottom = position == Settings.RAIL_BOTTOM
+        ui.railPosition = position
         ui.driverOnRight = rightHandDrive
         ui.railOnRight = when (position) {
             Settings.RAIL_LEFT -> false
@@ -305,7 +311,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "car_style", "dark_bar", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "car_style", "dark_bar", "hide_bar", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }

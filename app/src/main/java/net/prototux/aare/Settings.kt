@@ -93,7 +93,25 @@ class Settings(context: Context) {
     var railPosition: String
         get() = prefs.getString("rail_position", null)
             ?: if (prefs.contains("rail_right")) (if (prefs.getBoolean("rail_right", false)) RAIL_RIGHT else RAIL_LEFT) else RAIL_AUTO
-        set(v) = prefs.edit { putString("rail_position", v); remove("rail_right") }
+        set(v) = prefs.edit {
+            putString("rail_position", v)
+            remove("rail_right")
+            // Choosing a predefined bar position also restores the reveal button's matching anchor.
+            remove("bar_button_x")
+            remove("bar_button_y")
+        }
+
+    /** User-dragged reveal-button position as screen-relative fractions, or null at its bar anchor. */
+    val barButtonPosition: Pair<Float, Float>?
+        get() {
+            val x = prefs.getFloat("bar_button_x", Float.NaN)
+            val y = prefs.getFloat("bar_button_y", Float.NaN)
+            return if (x.isFinite() && y.isFinite()) x.coerceIn(0f, 1f) to y.coerceIn(0f, 1f) else null
+        }
+
+    fun saveBarButtonPosition(x: Float, y: Float) {
+        prefs.edit { putFloat("bar_button_x", x.coerceIn(0f, 1f)); putFloat("bar_button_y", y.coerceIn(0f, 1f)) }
+    }
 
     /** The car screen's layout: [STYLE_AUTO] (Android Auto's) or [STYLE_CARPLAY] (an easter egg). */
     var carStyle: String
@@ -127,6 +145,11 @@ class Settings(context: Context) {
     var darkBar: Boolean
         get() = prefs.getBoolean("dark_bar", false)
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
+
+    /** Hide the car screen's bar, leaving a floating button that reveals it temporarily. */
+    var hideBar: Boolean
+        get() = prefs.getBoolean("hide_bar", false)
+        set(v) = prefs.edit { putBoolean("hide_bar", v) }
 
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String

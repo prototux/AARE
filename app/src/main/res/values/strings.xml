@@ -153,6 +153,8 @@
     <string name="setup_choice_bottom">Bottom</string>
     <string name="setup_toggle_dark_bar_title">Dark bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Keep the bar dark even with day colors</string>
+    <string name="setup_toggle_hide_bar_title">Hide bar</string>
+    <string name="setup_toggle_hide_bar_subtitle">Use the floating B button to show apps and notifications temporarily. Long-press and drag it to move it.</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="setup_choice_wallpaper">Wallpaper</string>
     <string name="setup_wallpaper_none">None</string>
@@ -191,6 +193,8 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Dark bar, even with day colors</string>
+    <string name="setup_switch_hide_bar">Hide bar; tap the floating B button to show it, or long-press and drag to move it</string>
+    <string name="bar_reveal">Show bar temporarily. Long-press and drag to move.</string>
     <string name="setup_switch_passenger">Passenger mode: no driving restrictions (the driver must not use the screen)</string>
     <string name="setup_switch_message_notifications">Message notifications</string>
     <string name="setup_switch_audio_next_connection">Phone audio in the car (next connection)</string>

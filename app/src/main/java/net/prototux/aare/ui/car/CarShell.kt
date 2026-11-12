@@ -1,14 +1,19 @@
 package net.prototux.aare.ui.car
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +52,8 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +67,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -69,19 +78,28 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.Settings
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
+import kotlin.math.roundToInt
 
 /**
  * Root of the car screen: a rail on the driver's side and the content area.
@@ -100,6 +118,12 @@ fun CarShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
+    LaunchedEffect(state.barHidden, state.barTemporarilyVisible) {
+        if (state.barHidden && state.barTemporarilyVisible) {
+            delay(4_000)
+            state.barTemporarilyVisible = false
+        }
+    }
     if (state.carPlayStyle) {
         CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
         return
@@ -109,7 +133,26 @@ fun CarShell(
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
-            if (portrait || state.railBottom) {
+            val horizontal = portrait || state.railBottom
+            if (state.barHidden) {
+                ContentArea(state, actions, appContent, navMap, Modifier.fillMaxSize())
+                if (state.barTemporarilyVisible) {
+                    if (horizontal) {
+                        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { Rail(state, actions, horizontal = true, area) }
+                    } else {
+                        val alignment = if (state.railOnRight) Alignment.CenterEnd else Alignment.CenterStart
+                        Box(Modifier.align(alignment).fillMaxHeight()) { Rail(state, actions, horizontal = false, area) }
+                    }
+                } else {
+                    BarRevealButton(
+                        onClick = { state.barTemporarilyVisible = true },
+                        area = area,
+                        defaultX = barButtonDefaultX(state.railBottom, state.railOnRight),
+                        positionKey = state.railPosition,
+                        modifier = Modifier.align(Alignment.TopStart),
+                    )
+                }
+            } else if (horizontal) {
                 Column(Modifier.fillMaxSize()) {
                     ContentArea(state, actions, appContent, navMap, Modifier.weight(1f))
                     Rail(state, actions, horizontal = true, area)
@@ -124,6 +167,105 @@ fun CarShell(
             overlay(Modifier.align(Alignment.BottomCenter))
             NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+        }
+    }
+}
+
+internal fun barButtonDefaultX(railBottom: Boolean, railOnRight: Boolean) = when {
+    railBottom -> 0.5f
+    railOnRight -> 1f
+    else -> 0f
+}
+
+/** A car-sized Material floating action button that restores a deliberately hidden bar. */
+@Composable
+internal fun BarRevealButton(
+    onClick: () -> Unit,
+    area: DpSize,
+    defaultX: Float,
+    positionKey: String,
+    modifier: Modifier = Modifier,
+) {
+    val d = LocalCarDimens.current
+    val label = stringResource(R.string.bar_reveal)
+    val context = LocalContext.current
+    val settings = remember(context) { Settings(context) }
+    val density = LocalDensity.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    var dragging by remember { mutableStateOf(false) }
+    var customPosition by remember(positionKey) {
+        mutableStateOf(settings.barButtonPosition?.let { Offset(it.first, it.second) })
+    }
+    val defaultPosition = Offset(defaultX, 0f)
+    val shownPosition = customPosition ?: defaultPosition
+    val marginPx = with(density) { 16.dp.toPx() }
+    val buttonPx = with(density) { d.touchTarget.toPx() }
+    val widthPx = with(density) { area.width.toPx() }
+    val heightPx = with(density) { area.height.toPx() }
+    val travelX = (widthPx - buttonPx - marginPx * 2).coerceAtLeast(0f)
+    val travelY = (heightPx - buttonPx - marginPx * 2).coerceAtLeast(0f)
+    val x = marginPx + shownPosition.x * travelX
+    val y = marginPx + shownPosition.y * travelY
+    val scale by animateFloatAsState(
+        when { dragging -> 1.1f; pressed -> 0.9f; else -> 1f }, tween(120), label = "bar reveal scale",
+    )
+    val opacity by animateFloatAsState(if (pressed || dragging) 0.9f else 0.6f, tween(120), label = "bar reveal opacity")
+    val buttonColor = MaterialTheme.colorScheme.primaryContainer
+    val labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+    FloatingActionButton(
+        onClick = onClick,
+        modifier = modifier
+            .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
+            .size(d.touchTarget)
+            .pointerInput(travelX, travelY, positionKey) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = {
+                        dragging = true
+                        customPosition = customPosition ?: defaultPosition
+                    },
+                    onDrag = { change, drag ->
+                        change.consume()
+                        val current = customPosition ?: defaultPosition
+                        val nextX = (current.x * travelX + drag.x).coerceIn(0f, travelX)
+                        val nextY = (current.y * travelY + drag.y).coerceIn(0f, travelY)
+                        customPosition = Offset(
+                            if (travelX > 0f) nextX / travelX else defaultX,
+                            if (travelY > 0f) nextY / travelY else 0f,
+                        )
+                    },
+                    onDragEnd = {
+                        dragging = false
+                        customPosition?.let { settings.saveBarButtonPosition(it.x, it.y) }
+                    },
+                    onDragCancel = { dragging = false },
+                )
+            }
+            .semantics { contentDescription = label },
+        shape = CircleShape,
+        // Draw one flat visible circle ourselves. Some head-unit renderers facet or clip a
+        // translucent elevated Surface, and offset faux shadows look uneven on low-DPI displays.
+        containerColor = Color.Transparent,
+        contentColor = Color.Transparent,
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+        ),
+        interactionSource = interactionSource,
+    ) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.fillMaxSize()) {
+                val radius = (size.minDimension - 8.dp.toPx()) / 2f
+                drawCircle(color = buttonColor.copy(alpha = opacity), radius = radius)
+            }
+            Text(
+                "B",
+                color = labelColor.copy(alpha = opacity),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.graphicsLayer { scaleX = scale; scaleY = scale },
+            )
         }
     }
 }
