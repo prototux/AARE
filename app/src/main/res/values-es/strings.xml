@@ -448,6 +448,13 @@
     <string name="update_available_title">Actualización disponible: %1$s</string>
     <string name="update_available_subtitle">Tienes %1$s. Toca para ver la versión.</string>
     <string name="setup_log_save">Guardar</string>
+    <string name="setup_section_developer_log">Registro de desarrollador</string>
+    <string name="setup_toggle_dev_log_title">Modo desarrollador</string>
+    <string name="setup_toggle_dev_log_subtitle">Escribe todo lo que AARE registra en archivos de texto en %1$s (hasta 50 MB). Al desactivarlo se eliminan: guárdalos antes.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ocultar datos personales</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Enmascara las direcciones, los nombres de redes y dispositivos y otros datos personales que reconoce. Lee el archivo antes de compartirlo.</string>
+    <string name="setup_dev_log_save">Guardar registro de desarrollador</string>
+    <string name="setup_dev_log_empty">Aún no hay registro de desarrollador</string>
     <string name="setup_toggle_verbose_log_title">Registro detallado del protocolo</string>
     <string name="setup_toggle_verbose_log_subtitle">Guarda en este registro la traza completa del protocolo con la unidad central, para adjuntarla a un informe de error. Genera mucho registro; déjalo desactivado si no lo necesitas.</string>
     <string name="setup_nothing_to_open">Este teléfono no tiene ninguna app que pueda abrir esto</string>

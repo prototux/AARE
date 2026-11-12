@@ -449,6 +449,13 @@
     <string name="update_available_title">Opdatering tilgængelig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryk for at se udgivelsen.</string>
     <string name="setup_log_save">Gem</string>
+    <string name="setup_section_developer_log">Udviklerlog</string>
+    <string name="setup_toggle_dev_log_title">Udviklertilstand</string>
+    <string name="setup_toggle_dev_log_subtitle">Skriver alt, hvad AARE logger, til tekstfiler i %1$s (op til 50 MB). Hvis du slår den fra, slettes de: gem dem først.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Skjul personlige data</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskerer adresser, navne på netværk og enheder og andre personlige data, den genkender. Læs filen, før du deler den.</string>
+    <string name="setup_dev_log_save">Gem udviklerlog</string>
+    <string name="setup_dev_log_empty">Ingen udviklerlog endnu</string>
     <string name="setup_toggle_verbose_log_title">Detaljeret protokollog</string>
     <string name="setup_toggle_verbose_log_subtitle">Optag den fulde protokolsporing for bilenheden i denne log, så den kan vedhæftes en fejlrapport. Logger meget; lad den være slået fra ellers.</string>
     <string name="setup_nothing_to_open">Denne telefon har ingen app, der kan åbne dette</string>

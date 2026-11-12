@@ -448,6 +448,13 @@
     <string name="update_available_title">Päivitys saatavilla — %1$s</string>
     <string name="update_available_subtitle">Käytössäsi on %1$s. Napauta nähdäksesi julkaisun.</string>
     <string name="setup_log_save">Tallenna</string>
+    <string name="setup_section_developer_log">Kehittäjäloki</string>
+    <string name="setup_toggle_dev_log_title">Kehittäjätila</string>
+    <string name="setup_toggle_dev_log_subtitle">Kirjoittaa kaiken, mitä AARE kirjaa, tekstitiedostoihin polussa %1$s (enintään 50 MB). Kun poistat tilan käytöstä, tiedostot poistetaan: tallenna ne ensin.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Piilota henkilötiedot</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Peittää osoitteet, verkkojen ja laitteiden nimet sekä muut tunnistamansa henkilötiedot. Lue tiedosto ennen sen jakamista.</string>
+    <string name="setup_dev_log_save">Tallenna kehittäjäloki</string>
+    <string name="setup_dev_log_empty">Ei vielä kehittäjälokia</string>
     <string name="setup_toggle_verbose_log_title">Yksityiskohtainen protokollaloki</string>
     <string name="setup_toggle_verbose_log_subtitle">Tallentaa koko soittolaitteen protokollajäljen tähän lokiin, liitettäväksi vikailmoitukseen. Kirjaa paljon; jätä muuten pois päältä.</string>
     <string name="setup_nothing_to_open">Puhelimessa ei ole sovellusta, joka voisi avata tämän</string>

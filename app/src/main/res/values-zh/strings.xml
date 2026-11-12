@@ -432,6 +432,13 @@
     <string name="update_available_title">有可用更新 — %1$s</string>
     <string name="update_available_subtitle">当前版本为 %1$s。点按查看该版本。</string>
     <string name="setup_log_save">保存</string>
+    <string name="setup_section_developer_log">开发者日志</string>
+    <string name="setup_toggle_dev_log_title">开发者模式</string>
+    <string name="setup_toggle_dev_log_subtitle">将 AARE 记录的所有内容写入 %1$s 中的文本文件（最多 50 MB）。关闭后这些文件会被删除：请先保存。</string>
+    <string name="setup_toggle_dev_log_privacy_title">隐藏个人数据</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">遮盖其识别出的地址、网络和设备名称以及其他个人数据。分享前请先查看该文件。</string>
+    <string name="setup_dev_log_save">保存开发者日志</string>
+    <string name="setup_dev_log_empty">暂无开发者日志</string>
     <string name="setup_toggle_verbose_log_title">详细协议日志</string>
     <string name="setup_toggle_verbose_log_subtitle">在此日志中记录完整的车机协议跟踪，用于附加到错误报告。会产生大量日志；平时请保持关闭。</string>
     <string name="setup_nothing_to_open">此手机没有可打开此内容的应用</string>

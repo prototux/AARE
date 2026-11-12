@@ -448,6 +448,13 @@
     <string name="update_available_title">Actualizare disponibilă — %1$s</string>
     <string name="update_available_subtitle">Ai %1$s. Apasă pentru a vedea versiunea.</string>
     <string name="setup_log_save">Salvează</string>
+    <string name="setup_section_developer_log">Jurnal pentru dezvoltatori</string>
+    <string name="setup_toggle_dev_log_title">Mod dezvoltator</string>
+    <string name="setup_toggle_dev_log_subtitle">Scrie tot ce înregistrează AARE în fișiere text în %1$s (până la 50 MB). Dezactivarea le șterge: salvează-le mai întâi.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ascunde datele personale</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maschează adresele, numele rețelelor și ale dispozitivelor și alte date personale pe care le recunoaște. Citește fișierul înainte să îl distribui.</string>
+    <string name="setup_dev_log_save">Salvează jurnalul pentru dezvoltatori</string>
+    <string name="setup_dev_log_empty">Încă nu există jurnal pentru dezvoltatori</string>
     <string name="setup_toggle_verbose_log_title">Jurnal detaliat al protocolului</string>
     <string name="setup_toggle_verbose_log_subtitle">Înregistrează traseul complet al protocolului cu unitatea multimedia în acest jurnal, pentru a-l atașa la un raport de eroare. Înregistrează mult; lasă-l dezactivat altfel.</string>
     <string name="setup_nothing_to_open">Acest telefon nu are nicio aplicație care poate deschide asta</string>

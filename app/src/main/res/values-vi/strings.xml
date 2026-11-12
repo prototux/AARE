@@ -448,6 +448,13 @@
     <string name="update_available_title">Có cập nhật mới — %1$s</string>
     <string name="update_available_subtitle">Bạn đang dùng %1$s. Nhấn để xem bản phát hành.</string>
     <string name="setup_log_save">Lưu</string>
+    <string name="setup_section_developer_log">Nhật ký nhà phát triển</string>
+    <string name="setup_toggle_dev_log_title">Chế độ nhà phát triển</string>
+    <string name="setup_toggle_dev_log_subtitle">Ghi mọi thứ AARE ghi nhật ký vào các tệp văn bản trong %1$s (tối đa 50 MB). Tắt chế độ này sẽ xóa các tệp: hãy lưu chúng trước.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ẩn dữ liệu cá nhân</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Che các địa chỉ, tên mạng và thiết bị cùng các dữ liệu cá nhân khác mà nó nhận ra. Hãy đọc tệp trước khi chia sẻ.</string>
+    <string name="setup_dev_log_save">Lưu nhật ký nhà phát triển</string>
+    <string name="setup_dev_log_empty">Chưa có nhật ký nhà phát triển</string>
     <string name="setup_toggle_verbose_log_title">Nhật ký giao thức chi tiết</string>
     <string name="setup_toggle_verbose_log_subtitle">Ghi lại toàn bộ dấu vết giao thức của màn hình xe vào nhật ký này, để đính kèm vào báo cáo lỗi. Ghi rất nhiều; nếu không cần thì nên để tắt.</string>
     <string name="setup_nothing_to_open">Điện thoại này không có ứng dụng nào để mở nội dung này</string>

@@ -449,6 +449,13 @@
     <string name="update_available_title">Uppdatering tillgänglig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryck för att visa versionen.</string>
     <string name="setup_log_save">Spara</string>
+    <string name="setup_section_developer_log">Utvecklarlogg</string>
+    <string name="setup_toggle_dev_log_title">Utvecklarläge</string>
+    <string name="setup_toggle_dev_log_subtitle">Skriver allt som AARE loggar till textfiler i %1$s (upp till 50 MB). Om du stänger av det raderas de: spara dem först.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Dölj personuppgifter</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskerar adresser, namn på nätverk och enheter och andra personuppgifter som den känner igen. Läs filen innan du delar den.</string>
+    <string name="setup_dev_log_save">Spara utvecklarlogg</string>
+    <string name="setup_dev_log_empty">Ingen utvecklarlogg ännu</string>
     <string name="setup_toggle_verbose_log_title">Detaljerad protokollogg</string>
     <string name="setup_toggle_verbose_log_subtitle">Spela in hela head unit-protokollspåret i den här loggen, för att bifoga i en felrapport. Loggar mycket; lämna av annars.</string>
     <string name="setup_nothing_to_open">Den här telefonen har ingen app som kan öppna detta</string>

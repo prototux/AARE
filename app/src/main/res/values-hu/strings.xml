@@ -449,6 +449,13 @@
     <string name="update_available_title">Elérhető frissítés — %1$s</string>
     <string name="update_available_subtitle">A jelenlegi verziód: %1$s. Koppints a kiadás megtekintéséhez.</string>
     <string name="setup_log_save">Mentés</string>
+    <string name="setup_section_developer_log">Fejlesztői napló</string>
+    <string name="setup_toggle_dev_log_title">Fejlesztői mód</string>
+    <string name="setup_toggle_dev_log_subtitle">Mindent szöveges fájlokba ír, amit az AARE naplóz, ide: %1$s (legfeljebb 50 MB). Kikapcsoláskor törlődnek: előbb mentsd el őket.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Személyes adatok elrejtése</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Elfedi a címeket, a hálózatok és eszközök nevét, valamint a felismert egyéb személyes adatokat. Megosztás előtt olvasd át a fájlt.</string>
+    <string name="setup_dev_log_save">Fejlesztői napló mentése</string>
+    <string name="setup_dev_log_empty">Még nincs fejlesztői napló</string>
     <string name="setup_toggle_verbose_log_title">Részletes protokollnapló</string>
     <string name="setup_toggle_verbose_log_subtitle">A teljes fejegység-protokoll naplózása ebbe a naplóba, hogy csatolni lehessen egy hibajelentéshez. Sokat naplóz; egyébként hagyd kikapcsolva.</string>
     <string name="setup_nothing_to_open">Ezen a telefonon nincs olyan alkalmazás, amely meg tudná nyitni ezt</string>
