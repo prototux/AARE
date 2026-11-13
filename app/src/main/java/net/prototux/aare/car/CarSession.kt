@@ -370,6 +370,9 @@ class CarSession(
                 if (closed) return@post
                 try {
                     startProjection(config, rightHandDrive)
+                    videoFocusAsks = 0
+                    main.removeCallbacks(videoFocusCheck)
+                    main.postDelayed(videoFocusCheck, VIDEO_FOCUS_RETRY_MS)
                 } catch (e: Exception) {
                     // Never crash the app over one car: end this session and say why.
                     Log.e(TAG, "can't start the projection", e)
@@ -719,6 +722,25 @@ class CarSession(
     private val focusLock = Any()
     private val focusCheck = Runnable { checkMediaFocus() }
 
+    // The head unit normally answers the focus request sent with START. Some setups (Mazda with an
+    // AAWireless dongle) sometimes never do, and the car screen stays black until the driver
+    // switches to the car's own screen and back: ask again a few times while it has said nothing.
+    private var videoFocusAsks = 0
+    private val videoFocusCheck = object : Runnable {
+        override fun run() {
+            val ch = video ?: return
+            if (closed || ch.focusHeard) return
+            if (videoFocusAsks >= VIDEO_FOCUS_RETRIES) {
+                Log.w(TAG, "video focus: the car never answered")
+                return
+            }
+            videoFocusAsks++
+            Log.i(TAG, "video focus: no answer from the car, asking again ($videoFocusAsks/$VIDEO_FOCUS_RETRIES)")
+            ch.requestProjectedFocus()
+            main.postDelayed(this, VIDEO_FOCUS_RETRY_MS)
+        }
+    }
+
     /** With focusLock held. Times are uptimeMillis, the handler's clock. */
     private fun scheduleFocusCheck() {
         main.removeCallbacks(focusCheck)
@@ -868,6 +890,7 @@ class CarSession(
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
+        main.removeCallbacks(videoFocusCheck)
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
@@ -918,6 +941,8 @@ class CarSession(
 
     companion object {
         private const val TAG = "AareSession"
+        private const val VIDEO_FOCUS_RETRY_MS = 3_000L
+        private const val VIDEO_FOCUS_RETRIES = 3
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
         const val KEYCODE_RADIO = 65539

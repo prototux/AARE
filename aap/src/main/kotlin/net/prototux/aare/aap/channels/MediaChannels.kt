@@ -192,6 +192,9 @@ class VideoChannel(
     @Volatile private var startIndex = 0
     @Volatile var focused = false
         private set
+    /** The head unit has sent a focus notification or request since the stream started. */
+    @Volatile var focusHeard = false
+        private set
 
     private class Pending(val buf: ByteArray, val offset: Int, val length: Int, val ptsUs: Long, val key: Boolean, val recycle: (ByteArray) -> Unit)
     private val pending = ArrayDeque<Pending>()
@@ -224,6 +227,7 @@ class VideoChannel(
         val index = listener.chooseConfiguration(configs, configIndices).coerceIn(0, configs.size - 1)
         chosen = configs[index]
         startIndex = index
+        focusHeard = false
         synchronized(lock) { sentAt.clear() }
         startStream(index)
         listener.onVideoStart(index, configs[index])
@@ -263,6 +267,7 @@ class VideoChannel(
     }
 
     private fun setFocus(mode: VideoFocusMode) {
+        focusHeard = true
         val projected = isProjected(mode)
         val changed = projected != focused
         focused = projected
