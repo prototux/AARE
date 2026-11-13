@@ -70,6 +70,16 @@ class ProjectionDisplay(
         display.surface = surface
     }
 
+    /** Forces a redraw of the presentation window so a new buffer is produced for the encoder. */
+    fun invalidate() {
+        main.post {
+            presentation?.window?.decorView?.let {
+                it.invalidate()
+                it.postInvalidate()
+            }
+        }
+    }
+
     fun dispatchTouch(event: MotionEvent) {
         main.post {
             if (event.actionMasked == MotionEvent.ACTION_DOWN) CarFocusVisibility.keyInput = false

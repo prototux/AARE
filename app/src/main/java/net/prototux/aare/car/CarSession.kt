@@ -383,12 +383,16 @@ class CarSession(
             Log.i(TAG, "video focus: ${if (projected) "projected" else "native"}")
             main.post {
                 encoder?.setSuspended(!projected)
-                if (projected) encoder?.requestKeyFrame()
+                if (projected) {
+                    encoder?.requestKeyFrame()
+                    display?.invalidate()
+                }
             }
         }
 
         override fun onKeyFrameNeeded() {
             encoder?.requestKeyFrame()
+            display?.invalidate()
         }
 
         override fun onUiConfig(config: UiConfig) {
