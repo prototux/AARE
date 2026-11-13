@@ -92,6 +92,9 @@ internal class MediaDiscovery(private val context: Context, private val scope: C
             try {
                 val appInfo = pm.appInfo(si.packageName)
                 if (declaresCarMedia(pm, appInfo)) car += si.packageName
+                // Android Auto support declared, but not for media (Signal, Molly: messages): its
+                // media browser is its own, for voice notes say, and refuses other apps.
+                else if (appInfo.metaData?.containsKey(META_CAR_APPLICATION) == true) return@mapNotNull null
                 MediaApp(
                     packageName = si.packageName,
                     service = ComponentName(si.packageName, si.name),
