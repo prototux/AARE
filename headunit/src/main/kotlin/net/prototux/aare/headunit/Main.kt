@@ -3,6 +3,7 @@ package net.prototux.aare.headunit
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
+import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.SocketTransport
 import net.prototux.aare.aap.cert.SelfSignedCertificate
@@ -69,6 +70,10 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --headless DIR         no window: save a PNG of the screen to DIR every few seconds (for tests)
   --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N
                          dpad:up|down|left|right|center  reverse:SECS  night  day  park  drive
+                         test events: bye  longkey:CODE  plaintext  unknown-channel  unknown-control
+                         navfocus  open-ch0  garbage:CH  badctl:CH (CH a channel number or "sensors")
+                         phoneinput  uiconfig  audiofocus:gain|loss|loss-transient|loss-transient-can-duck
+                         videofocus:native|projected  ackoff  ackon (audio acks)
 
 Testing a phone app (all off by default; channels: 1 video, 2 media, 3 guidance, 4 system, 5 mic,
 6 input, 7 sensors, 8 nav, 9 playback, 10 bluetooth, 11 cluster, 12 AAC sink, 13 unknown service,
@@ -420,6 +425,28 @@ private class DesktopHeadUnit(val opts: Map<String, String>, sim: Sim) {
                     what == "park" -> unit.setDriving(false).also { driving = false }
                     what == "drive" -> unit.setDriving(true).also { driving = true }
                     what.startsWith("reverse:") -> unit.reverse(what.removePrefix("reverse:").toDouble())
+                    what == "bye" -> unit.byeBye()
+                    what.startsWith("longkey:") -> what.removePrefix("longkey:").toIntOrNull()?.let {
+                        unit.key(it, true, longPress = true); unit.key(it, false, longPress = true)
+                    } ?: println("script: bad key in $what")
+                    what == "plaintext" -> unit.plaintextFrame()
+                    what == "unknown-channel" -> unit.unknownChannelFrame()
+                    what == "unknown-control" -> unit.unknownControl()
+                    what == "navfocus" -> unit.navFocus()
+                    what == "open-ch0" -> unit.openResponseOnControl()
+                    what.startsWith("garbage:") -> unit.channelId(what.removePrefix("garbage:"))?.let(unit::garbage) ?: println("script: bad channel in $what")
+                    what.startsWith("badctl:") -> unit.channelId(what.removePrefix("badctl:"))?.let(unit::badControl) ?: println("script: bad channel in $what")
+                    what == "phoneinput" -> unit.phoneInput()
+                    what == "uiconfig" -> unit.uiConfig()
+                    what.startsWith("audiofocus:") -> Sim.AUDIO_FOCUS_STATES[what.removePrefix("audiofocus:")]?.let(unit::audioFocus)
+                        ?: println("script: bad focus state in $what")
+                    what.startsWith("videofocus:") -> when (what.removePrefix("videofocus:")) {
+                        "native" -> unit.videoFocus(VideoFocusMode.VIDEO_FOCUS_NATIVE)
+                        "projected" -> unit.videoFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED)
+                        else -> println("script: bad focus in $what")
+                    }
+                    what == "ackoff" -> unit.noAudioAck = true
+                    what == "ackon" -> unit.noAudioAck = false
                 }
             }
         }

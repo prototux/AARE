@@ -1,5 +1,6 @@
 package net.prototux.aare.headunit
 
+import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 
@@ -43,6 +44,14 @@ data class Sim(
     data class WifiProjection(val ssid: String, val bssid: String)
 
     companion object {
+        /** `--script audiofocus:STATE` names. */
+        val AUDIO_FOCUS_STATES = mapOf(
+            "gain" to AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN,
+            "loss" to AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS,
+            "loss-transient" to AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT,
+            "loss-transient-can-duck" to AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK,
+        )
+
         /** Reads the options (as parsed from the command line); throws IllegalArgumentException with a message for the user. */
         fun parse(o: Map<String, String>): Sim {
             val d = Sim()

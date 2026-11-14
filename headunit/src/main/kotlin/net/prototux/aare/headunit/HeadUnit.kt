@@ -22,6 +22,7 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.UpdateUiConfigRequest
 import aap_protobuf.service.genericnotification.GenericNotificationServiceOuterClass.GenericNotificationService
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
@@ -31,8 +32,10 @@ import aap_protobuf.service.inputsource.message.RelativeEventOuterClass.Relative
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
+import aap_protobuf.service.media.shared.message.InsetsOuterClass.Insets
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
+import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.MediaSinkServiceOuterClass.MediaSinkService
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import aap_protobuf.service.media.sink.message.DisplayTypeOuterClass.DisplayType
@@ -54,6 +57,7 @@ import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.N
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnDistanceEventOuterClass.NavigationNextTurnDistanceEvent
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
 import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
+import aap_protobuf.service.phonestatus.message.PhoneStatusInputOuterClass.PhoneStatusInput
 import aap_protobuf.service.sensorsource.SensorSourceServiceOuterClass.SensorSourceService
 import aap_protobuf.service.sensorsource.message.DrivingStatusDataOuterClass.DrivingStatusData
 import aap_protobuf.service.sensorsource.message.GearDataOuterClass.GearData
@@ -71,6 +75,7 @@ import aap_protobuf.service.wifiprojection.WifiProjectionServiceOuterClass.WifiP
 import aap_protobuf.service.wifiprojection.message.AccessPointTypeOuterClass.AccessPointType
 import aap_protobuf.service.wifiprojection.message.WifiCredentialsResponseOuterClass.WifiCredentialsResponse
 import aap_protobuf.service.wifiprojection.message.WifiSecurityModeOuterClass.WifiSecurityMode
+import aap_protobuf.shared.InstrumentClusterInputOuterClass.InstrumentClusterInput
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import com.google.protobuf.MessageLite
 import net.prototux.aare.aap.AapMessage
@@ -84,6 +89,7 @@ import net.prototux.aare.aap.MediaMsg
 import net.prototux.aare.aap.MediaPlaybackMsg
 import net.prototux.aare.aap.NavStatusMsg
 import net.prototux.aare.aap.PhoneIdentity
+import net.prototux.aare.aap.PhoneStatusMsg
 import net.prototux.aare.aap.SensorMsg
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.WifiProjectionMsg
@@ -186,8 +192,8 @@ class HeadUnit(
     @Volatile var driving = true
         private set
     @Volatile private var lastFix: Fix? = null
-    /** Leave audio DATA unacked (--no-audio-ack). */
-    private val noAudioAck = config.sim.noAudioAck
+    /** Leave audio DATA unacked (--no-audio-ack; the script's ackoff/ackon switch it). */
+    @Volatile var noAudioAck = config.sim.noAudioAck
 
     var phoneName: String = ""
         private set
@@ -263,6 +269,81 @@ class HeadUnit(
         focus(VideoFocusMode.VIDEO_FOCUS_NATIVE)
         timer.schedule({ focus(VideoFocusMode.VIDEO_FOCUS_PROJECTED) }, (seconds * 1000).toLong(), TimeUnit.MILLISECONDS)
     }
+
+    // ------------------------------------------------------------------ test events (--script)
+
+    /** A channel given to a script event: a number, or "sensors". */
+    fun channelId(arg: String): Int? = if (arg == "sensors") chSensors else arg.toIntOrNull()?.takeIf { it in 0..255 }
+
+    /** A ping request in the clear on the control channel, after TLS is up. */
+    fun plaintextFrame() {
+        if (tlsUp) write(0, control = false, encrypted = false, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** A well-formed encrypted message on a channel nobody opened. */
+    fun unknownChannelFrame() {
+        if (tlsUp) write(UNKNOWN_CHANNEL, control = false, encrypted = true, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** A control message id no version of the protocol defines. */
+    fun unknownControl() {
+        if (tlsUp) write(0, control = false, encrypted = true, AapMessage.plaintext(UNKNOWN_CONTROL_ID, ByteArray(0)))
+    }
+
+    /** NAV_FOCUS_NOTIFICATION (projected) the phone didn't ask for. */
+    fun navFocus() {
+        if (tlsUp) send(0, ControlMsg.NAV_FOCUS_NOTIFICATION, NavFocusNotification.newBuilder().setFocusType(NavFocusType.NAV_FOCUS_PROJECTED).build())
+    }
+
+    /** A CHANNEL_OPEN_RESPONSE on the control channel, which is never opened. */
+    fun openResponseOnControl() {
+        if (tlsUp) send(0, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build())
+    }
+
+    /** Bytes that are no protobuf, under an id the phone parses on [channel]. */
+    fun garbage(channel: Int) {
+        if (!tlsUp) return
+        val id = when (channel) {
+            chSensors -> SensorMsg.BATCH
+            chInput -> InputMsg.INPUT_REPORT
+            chVideo, chMedia, chGuidance, chSystem, chCluster, chAac -> MediaMsg.ACK
+            chMic -> MediaMsg.MICROPHONE_RESPONSE
+            chBluetooth -> BluetoothMsg.PAIRING_RESPONSE
+            chPhone -> PhoneStatusMsg.INPUT
+            else -> SensorMsg.REQUEST
+        }
+        // A field tag with wire type 7, which doesn't exist: every parser rejects it.
+        write(channel, control = false, encrypted = true, AapMessage.plaintext(id, byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xff.toByte(), 0x7f)))
+    }
+
+    /** A channel-control frame on a service channel with an id other than open/close (a ping request). */
+    fun badControl(channel: Int) {
+        if (tlsUp) write(channel, control = true, encrypted = true, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** The car's call button (PhoneStatusInput CALL). */
+    fun phoneInput() {
+        if (tlsUp) send(chPhone, PhoneStatusMsg.INPUT, PhoneStatusInput.newBuilder()
+            .setInput(InstrumentClusterInput.newBuilder().setAction(InstrumentClusterInput.InstrumentClusterAction.CALL)).build())
+    }
+
+    /** New content insets for the running projection (UPDATE_UI_CONFIG_REQUEST on the video channel). */
+    fun uiConfig() {
+        if (!tlsUp) return
+        val insets = Insets.newBuilder().setTop(32).setBottom(32).setLeft(96).setRight(96)
+        send(chVideo, MediaMsg.UPDATE_UI_CONFIG_REQUEST, UpdateUiConfigRequest.newBuilder()
+            .setUiConfig(UiConfig.newBuilder().setContentInsets(insets).setStableContentInsets(insets)).build())
+    }
+
+    fun audioFocus(state: AudioFocusStateType) {
+        if (tlsUp) send(0, ControlMsg.AUDIO_FOCUS_NOTIFICATION, AudioFocusNotification.newBuilder().setFocusState(state).setUnsolicited(true).build())
+    }
+
+    fun videoFocus(mode: VideoFocusMode) {
+        if (tlsUp) send(chVideo, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder().setFocus(mode).setUnsolicited(true).build())
+    }
+
+    private fun ping() = PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1000).build()
 
     // ------------------------------------------------------------------ sensors
 
@@ -617,10 +698,12 @@ class HeadUnit(
         }
     }
 
-    private fun sendRaw(channel: Int, plain: ByteArray) {
+    private fun sendRaw(channel: Int, plain: ByteArray) = write(channel, control = false, encrypted = tlsUp, plain)
+
+    private fun write(channel: Int, control: Boolean, encrypted: Boolean, plain: ByteArray) {
         if (closed.get()) return
         try {
-            synchronized(writeLock) { writer.write(channel, false, tlsUp, plain) }
+            synchronized(writeLock) { writer.write(channel, control, encrypted, plain) }
         } catch (e: Exception) {
             close("send failed: ${e.message}")
         }
@@ -638,6 +721,9 @@ class HeadUnit(
         const val KEYCODE_ROTARY = 65536
         val SUPPORTED_KEYS = listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 126, 127, 65536, 65537, 65538)
 
+        /** Channel and control id the script's unknown-channel / unknown-control events use. */
+        const val UNKNOWN_CHANNEL = 99
+        const val UNKNOWN_CONTROL_ID = 0x7fff
         /** A fake: what --wifi-projection answers a phone asking for the car's Wi-Fi credentials. */
         const val FAKE_WIFI_PASSWORD = "aare-test-password"
     }

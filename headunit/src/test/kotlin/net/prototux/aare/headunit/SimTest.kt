@@ -1,5 +1,6 @@
 package net.prototux.aare.headunit
 
+import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.AapSession
@@ -67,6 +68,12 @@ class SimTest {
         }
         val s = Sim.parse(mapOf("aac-sink" to "true", "unknown-service" to "true"))
         assertTrue(s.aacSink && s.unknownService)
+    }
+
+    @Test
+    fun audioFocusNames() {
+        assertEquals(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK, Sim.AUDIO_FOCUS_STATES["loss-transient-can-duck"])
+        assertEquals(setOf("gain", "loss", "loss-transient", "loss-transient-can-duck"), Sim.AUDIO_FOCUS_STATES.keys)
     }
 
     @Test
