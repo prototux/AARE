@@ -207,6 +207,21 @@ cards, a dock with app pages, or a bottom bar with the app grid); either can be 
 own. The accent colour can be the theme's, the phone's or amber, red, green, cyan, blue or white;
 on Night and Retro it colours everything (a red Night, an amber Retro). AARE is not affiliated with Google or Apple.
 
+> [!NOTE]
+> The pictures below are **mockups**, not screenshots of a car: a test draws them on a computer
+> (`tools/mockups.sh`) with made-up apps, music and calendar, generated icons and a drawn
+> stand-in for the map. The real car screen can look a bit different (fonts, the navigation app's
+> map, the phone's status and colours).
+
+| | |
+|---|---|
+| ![AARE, night](docs/screenshots/styles/aare.png) **AARE** | ![AARE, day](docs/screenshots/styles/aareDay.png) **AARE** by day |
+| ![Android Auto](docs/screenshots/styles/androidAuto.png) **Android Auto** | ![Android Auto (2019)](docs/screenshots/styles/androidAuto2019.png) **Android Auto (2019)** |
+| ![CarPlay, night](docs/screenshots/styles/carPlay.png) **CarPlay** | ![CarPlay, day](docs/screenshots/styles/carPlayDay.png) **CarPlay** by day |
+| ![Material You](docs/screenshots/styles/materialYou.png) **Material You** (here Material's default colours) | ![High contrast](docs/screenshots/styles/highContrast.png) **High contrast** |
+| ![Night, amber](docs/screenshots/styles/nightAmber.png) **Night** | ![Night, red](docs/screenshots/styles/nightRed.png) **Night**, red accent |
+| ![Retro, green](docs/screenshots/styles/retro.png) **Retro** | ![Retro, amber](docs/screenshots/styles/retroAmber.png) **Retro**, amber accent |
+
 | | |
 |---|---|
 | ![The voice assistant (Lapin) listening over the map](docs/screenshots/assistant.png) | ![All apps](docs/screenshots/menu.png) |

@@ -1,5 +1,7 @@
 [versions]
 agp = "9.5.1"
+# Car screen mockups for the README, drawn on the JVM in the unit tests (no emulator).
+paparazzi = "2.0.0-alpha05.1"
 kotlin = "2.4.21"
 composeBom = "2026.09.00"
 coreKtx = "1.19.1"
@@ -44,4 +46,5 @@ libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "li
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
