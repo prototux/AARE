@@ -57,9 +57,9 @@ data class OssComponent(val name: String, val licence: String, val url: String)
 data class OssGroup(val titleRes: Int, val components: List<OssComponent>)
 
 /**
- * Every FOSS component the phone app actually ships, grouped the way gradle/libs.versions.toml and
- * each shipped module's build.gradle.kts (app, aap) resolve it: runtime dependencies
- * (implementation/api) only, not test- or debug-only ones, and not build plugins. The :xposed and
+ * Every FOSS component the phone app actually ships: the runtime dependencies of the shipped
+ * modules (app, aap), and what they bring in themselves (`./build.sh :app:dependencies
+ * --configuration releaseRuntimeClasspath`), not test- or debug-only ones, and not build plugins. The :xposed and
  * :headunit modules aren't part of the phone app's APK, so their dependencies (including
  * io.github.libxposed:api, compileOnly and never bundled even in :xposed's own APK) aren't listed
  * here.
@@ -81,6 +81,16 @@ object AboutOss {
                 OssComponent("Protocol Buffers (protobuf-javalite)", "BSD-3-Clause", "https://github.com/protocolbuffers/protobuf"),
                 OssComponent("Shizuku API", "MIT", "https://github.com/RikkaApps/Shizuku-API"),
                 OssComponent("Android Hidden API Bypass", "Apache-2.0", "https://github.com/LSPosed/AndroidHiddenApiBypass"),
+                // Brought in by the libraries above.
+                OssComponent("Kotlin standard library (JetBrains)", "Apache-2.0", "https://github.com/JetBrains/kotlin"),
+                OssComponent("kotlinx.serialization", "Apache-2.0", "https://github.com/Kotlin/kotlinx.serialization"),
+                OssComponent("Guava (Google)", "Apache-2.0", "https://github.com/google/guava"),
+                OssComponent("JSR 305 annotations", "Apache-2.0", "https://github.com/findbugsproject/findbugs"),
+                OssComponent("Error Prone annotations", "Apache-2.0", "https://github.com/google/error-prone"),
+                OssComponent("J2ObjC annotations", "Apache-2.0", "https://github.com/google/j2objc"),
+                OssComponent("JetBrains annotations", "Apache-2.0", "https://github.com/JetBrains/java-annotations"),
+                OssComponent("JSpecify annotations", "Apache-2.0", "https://github.com/jspecify/jspecify"),
+                OssComponent("Checker Framework qualifiers", "MIT", "https://github.com/typetools/checker-framework"),
             ),
         ),
         OssGroup(
