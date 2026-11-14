@@ -20,24 +20,31 @@ class PairingCheckTest {
     }
 
     @Test
-    fun matchingPasskeyIsZeroPadded() {
-        assertEquals(PairingCheck.Decision(null, MessageStatus.STATUS_SUCCESS),
-            PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "001234"))
+    fun passkeysAreComparedAsNumbers() {
+        val match = PairingCheck.Decision(null, MessageStatus.STATUS_SUCCESS)
+        assertEquals(match, PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "001234"))
+        assertEquals(match, PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "1234"))
+        assertEquals(match, PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 123456, "123 456"))
     }
 
     @Test
     fun differentPasskeyIsAMismatch() {
         assertEquals(PairingCheck.Decision(null, MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH),
-            PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "1234"))
+            PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "1235"))
     }
 
     @Test
-    fun otherVariantsAreAnInvalidMethod() {
-        // Consent (3) needs no auth data from the car; passkey entry (1) does.
-        assertEquals(PairingCheck.Decision(null, MessageStatus.STATUS_BLUETOOTH_INVALID_PAIRING_METHOD),
-            PairingCheck.decide(3, Int.MIN_VALUE, null))
-        assertNull(PairingCheck.decide(1, Int.MIN_VALUE, null))
-        assertEquals(PairingCheck.Decision(null, MessageStatus.STATUS_BLUETOOTH_INVALID_PAIRING_METHOD),
-            PairingCheck.decide(1, Int.MIN_VALUE, "123456"))
+    fun aPasskeyThatIsNoNumberGetsNoAnswer() {
+        assertNull(PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "abc"))
+        assertNull(PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, Int.MIN_VALUE, "123456"))
+        assertNull(PairingCheck.decide(PairingCheck.VARIANT_PASSKEY_CONFIRMATION, 1234, "1".repeat(19)))
+    }
+
+    @Test
+    fun otherVariantsGetNoAnswer() {
+        // Consent (3) and passkey entry (1): nothing the car's data can check.
+        assertNull(PairingCheck.decide(3, Int.MIN_VALUE, null))
+        assertNull(PairingCheck.decide(3, Int.MIN_VALUE, "123456"))
+        assertNull(PairingCheck.decide(1, Int.MIN_VALUE, "123456"))
     }
 }

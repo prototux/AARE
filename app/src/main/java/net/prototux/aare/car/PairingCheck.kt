@@ -1,7 +1,6 @@
 package net.prototux.aare.car
 
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
-import java.util.Locale
 
 /**
  * The phone's half of the car's Bluetooth authentication. Android's
@@ -13,27 +12,27 @@ object PairingCheck {
     const val VARIANT_PIN = 0
     const val VARIANT_PASSKEY_CONFIRMATION = 2
 
-    /** Variants waited for the car's auth data on (PIN, passkey, display passkey/PIN, 16-digit PIN). */
-    private val NEEDS_AUTH_DATA = setOf(0, 1, 2, 4, 5, 7)
-
     /** [pin] is the PIN to enter for the car, null for none; [result] is what to answer the car. */
     data class Decision(val pin: String?, val result: MessageStatus)
 
     /**
      * [variant] is null until Android's pairing request for the car came in; [authData] is null
-     * until the car sent its own. Null while one of them is still needed.
+     * until the car sent its own. Null while one of them is still needed, and for anything the
+     * car's data can't check (consent and the other variants, a passkey that isn't a number):
+     * then nothing is entered and the car gets no answer, which is what head units got before.
      */
     fun decide(variant: Int?, passkey: Int, authData: String?): Decision? {
-        if (variant == null) return null
-        if (variant in NEEDS_AUTH_DATA && authData == null) return null
+        if (variant == null || authData == null) return null
         return when (variant) {
             // Success is answered once the PIN is entered, whether Android took it or not.
             VARIANT_PIN -> Decision(authData, MessageStatus.STATUS_SUCCESS)
-            // The car shows the passkey zero-padded to six digits.
-            VARIANT_PASSKEY_CONFIRMATION -> Decision(null,
-                if (String.format(Locale.US, "%06d", passkey) == authData) MessageStatus.STATUS_SUCCESS
-                else MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH)
-            else -> Decision(null, MessageStatus.STATUS_BLUETOOTH_INVALID_PAIRING_METHOD)
+            VARIANT_PASSKEY_CONFIRMATION -> {
+                // Compared as numbers: the car may pad, space or group the digits it shows.
+                val theirs = authData.filter { it in '0'..'9' }.takeIf { it.isNotEmpty() && it.length <= 18 }?.toLong()
+                if (passkey < 0 || theirs == null) null
+                else Decision(null, if (theirs == passkey.toLong()) MessageStatus.STATUS_SUCCESS else MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH)
+            }
+            else -> null
         }
     }
 }

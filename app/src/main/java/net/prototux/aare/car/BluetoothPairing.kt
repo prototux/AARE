@@ -70,6 +70,13 @@ class BluetoothPairing(private val context: Context, private val channel: Blueto
         if (!d.address.equals(channel.carAddress, ignoreCase = true)) return
         val v = i.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, Int.MIN_VALUE)
         if (v == Int.MIN_VALUE) return
+        if (v != PairingCheck.VARIANT_PIN && v != PairingCheck.VARIANT_PASSKEY_CONFIRMATION) {
+            // Consent and the like: nothing to check, the car gets no answer. Auth data the car
+            // sent for an earlier pairing must not be matched with the next one.
+            DiagLog.add("car bluetooth: pairing variant $v, nothing to check against the car")
+            variant = null; passkey = Int.MIN_VALUE; authData = null; device = null
+            return
+        }
         variant = v
         passkey = i.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY, Int.MIN_VALUE)
         device = d
@@ -81,7 +88,6 @@ class BluetoothPairing(private val context: Context, private val channel: Blueto
     private fun authenticateIfReady() {
         val decision = PairingCheck.decide(variant, passkey, authData) ?: return
         val d = device
-        val v = variant
         // One answer per pairing: the next one starts from scratch.
         variant = null; passkey = Int.MIN_VALUE; authData = null; device = null
         val pin = decision.pin
@@ -90,8 +96,7 @@ class BluetoothPairing(private val context: Context, private val channel: Blueto
             if (entered) "entered the car's PIN" else "couldn't enter the car's PIN; type it in Android's dialog"
         } else when (decision.result) {
             MessageStatus.STATUS_SUCCESS -> "the car's passkey matches; confirm it on the phone"
-            MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH -> "the car's passkey doesn't match the phone's; don't confirm"
-            else -> "pairing variant $v isn't one the car's passkey or PIN can check"
+            else -> "the car's passkey doesn't match the phone's; don't confirm"
         }
         DiagLog.add("car bluetooth: $line")
         if (!channel.sendAuthenticationResult(decision.result)) Log.i(TAG, "auth result not sent: head unit before protocol 1.5")
