@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">%1$d Regel(n) geladen</string>
     <string name="vehicles_import">Datei importieren…</string>
     <string name="vehicles_template">Vorlage schreiben</string>
+    <string name="vehicles_malformed_at">vehicles.json hat einen Fehler in Zeile %1$d, Spalte %2$d (%3$s): Die Regeln darin werden ignoriert.</string>
+    <string name="vehicles_malformed">vehicles.json kann nicht verwendet werden (%1$s): Die Regeln darin werden ignoriert.</string>
     <string name="setup_toggle_force_h264_title">H.264-Video erzwingen</string>
     <string name="setup_toggle_force_h264_subtitle">Standardmäßig verwendet AARE den besten Codec, den Auto und Telefon gemeinsam unterstützen (H.265…). Aktivieren Sie dies, wenn das Bild im Auto ruckelt oder gestört ist.</string>
     <string name="common_ok">OK</string>

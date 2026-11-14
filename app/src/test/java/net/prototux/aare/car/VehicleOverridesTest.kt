@@ -1,7 +1,9 @@
 package net.prototux.aare.car
 
+import org.json.JSONException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -74,4 +76,45 @@ class VehicleOverridesTest {
         val vwPlay = rules.single { it.matches("Volkswagen", "VW_7_A0_HATCHBACK", "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio") }
         assertEquals(false, vwPlay.override.micSetup)
     }
+
+    /** Android's org.json quotes the whole input after the position: the problem keeps neither. */
+    @Test fun anAndroidSyntaxErrorGivesLineAndColumnButNotTheFile() {
+        val text = "{\"rules\":[\n{\"match\":"
+        val end = VehicleOverrides.problem(JSONException("Unterminated object at character 23 of {\"rules\":[\n{\"match\":"), text)
+        assertEquals(JsonProblem(2, 10, "Unterminated object"), end)
+        assertFalse(end.toString().contains("match"))
+        assertEquals(JsonProblem(2, 3, "Expected literal value"), VehicleOverrides.problem(JSONException("Expected literal value at character 13 of $text"), text))
+    }
+
+    @Test fun aReasonThatQuotesTheFileIsCut() {
+        val p = VehicleOverrides.problem(JSONException("Expected ':' after Secret Car at character 15 of {\"Secret Car\" 1}"), "{\"Secret Car\" 1}")
+        assertEquals(JsonProblem(1, 16, "Expected ':'"), p)
+        assertFalse(p.toString().contains("Secret"))
+    }
+
+    /** The JVM's org.json (unit tests) writes the line and column itself. */
+    @Test fun aJvmSyntaxErrorGivesLineAndColumnButNotTheFile() {
+        val p = VehicleOverrides.problem("{\"rules\": [\n  {\"match\": {\"make\" \"Secret Car\"}}\n]}")!!
+        assertEquals(JsonProblem(2, 21, "Expected a ':' after a key"), p)
+        assertFalse(p.toString().contains("Secret"))
+        assertFalse(p.toString().contains("match"))
+    }
+
+    @Test fun aTopLevelArrayIsNotAJsonObject() {
+        val p = VehicleOverrides.problem(
+            JSONException("Value [{\"make\":\"Secret Car\"}] of type org.json.JSONArray cannot be converted to JSONObject"),
+            "[{\"make\":\"Secret Car\"}]",
+        )
+        assertEquals(JsonProblem(null, null, "not a JSON object"), p)
+        assertFalse(p.toString().contains("Secret"))
+    }
+
+    @Test fun anUnknownMessageIsNotQuoted() {
+        val p = VehicleOverrides.problem(JSONException("Something odd about Secret Car"), "Secret Car")
+        assertEquals(JsonProblem(null, null, "not valid JSON"), p)
+        assertFalse(p.toString().contains("Secret"))
+    }
+
+    @Test fun aValidFileHasNoProblem() =
+        assertNull(VehicleOverrides.problem(VehicleOverrides.template()))
 }
