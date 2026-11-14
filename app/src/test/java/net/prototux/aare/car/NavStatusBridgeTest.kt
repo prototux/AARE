@@ -6,6 +6,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOute
 import androidx.car.app.navigation.model.Maneuver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NavStatusBridgeTest {
@@ -49,5 +50,29 @@ class NavStatusBridgeTest {
         assertEquals(TurnSide.RIGHT, NavStatusBridge.sideOf(Maneuver.TYPE_FERRY_BOAT_RIGHT))
         assertEquals(TurnSide.UNSPECIFIED, NavStatusBridge.sideOf(Maneuver.TYPE_MERGE_SIDE_UNSPECIFIED))
         assertEquals(TurnSide.UNSPECIFIED, NavStatusBridge.sideOf(Maneuver.TYPE_STRAIGHT))
+    }
+
+    @Test
+    fun keepingToASideIsStraightWithoutSide() {
+        for (type in listOf(Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_KEEP_RIGHT)) {
+            assertEquals(NextTurnEnum.STRAIGHT, NavStatusBridge.legacyEvent(type))
+            assertEquals(TurnSide.UNSPECIFIED, NavStatusBridge.sideOf(type))
+        }
+    }
+
+    @Test
+    fun legacyTurnFillsEveryField() {
+        val turn = NavStatusBridge.legacyTurn("", Maneuver.TYPE_UNKNOWN, 0, -1).build()
+        assertTrue(turn.hasRoad() && turn.hasEvent() && turn.hasTurnSide() && turn.hasTurnNumber() && turn.hasTurnAngle())
+        assertEquals("", turn.road)
+        assertEquals(NextTurnEnum.UNKNOWN, turn.event)
+        assertEquals(TurnSide.UNSPECIFIED, turn.turnSide)
+        assertEquals(0, turn.turnNumber)
+        assertEquals(0, turn.turnAngle)
+
+        val roundabout = NavStatusBridge.legacyTurn("Main St", Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW_WITH_ANGLE, 2, 135).build()
+        assertEquals(TurnSide.RIGHT, roundabout.turnSide)
+        assertEquals(2, roundabout.turnNumber)
+        assertEquals(135, roundabout.turnAngle)
     }
 }
