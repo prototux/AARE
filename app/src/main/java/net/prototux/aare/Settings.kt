@@ -226,6 +226,14 @@ class Settings(context: Context) {
     var standaloneAppPackages: Set<String>
         get() = prefs.getStringSet("standalone_app_pkgs", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("standalone_app_pkgs", HashSet(v)) }
+
+    /**
+     * Launched apps the user marked as navigation apps, besides the known ones (KNOWN_NAVIGATION): they
+     * take the car's navigation slot, receive "navigate to" and stay on screen while driving.
+     */
+    var standaloneNavigationPackages: Set<String>
+        get() = prefs.getStringSet("standalone_nav_pkgs", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("standalone_nav_pkgs", HashSet(v)) }
     /** Show a web browser (a WebView) on the car screen. Off by default; paused while driving. */
     var browser: Boolean
         get() = prefs.getBoolean("browser", false)

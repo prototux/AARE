@@ -93,6 +93,10 @@ class AppLauncher(private val context: Context) {
     }
     fun key(eventTime: Long, action: Int, keyCode: Int) { runCatching { host?.key(eventTime, action, keyCode) } }
 
+    /** Open [uri] in [pkg] on the launched app's display (see [ILaunchHost.view]). False if it couldn't. */
+    fun view(uri: String, pkg: String): Boolean =
+        runCatching { host?.view(uri, pkg) == true }.onFailure { Log.w(TAG, "view", it) }.getOrDefault(false)
+
     fun release() {
         runCatching { host?.stop() }
         if (didBind) runCatching { Shizuku.unbindUserService(args, connection, true) }
