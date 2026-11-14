@@ -422,6 +422,8 @@ internal class MediaConnection(
 
         /** Non-fatal errors the app sends to controllers (e.g. "sign in"); shown for a while. */
         override fun onError(controller: MediaController, sessionError: SessionError) {
+            val component = app.service.flattenToString()
+            if (component in TOAST_GUARDRAIL_COMPONENTS && !toastGuardrail.allow(component)) return
             val (label, intent) = errorAction(sessionError.extras)
             notice = MediaError(sessionError.message.takeIf { it.isNotBlank() && it != DEFAULT_SESSION_MESSAGE }
                 ?: errorText(context, sessionError.code, app.label), label, intent)
@@ -580,6 +582,9 @@ internal class MediaConnection(
 
         /** media3's placeholder message when a session sends an error without one. */
         private const val DEFAULT_SESSION_MESSAGE = "no error message provided"
+
+        /** Shared across every connection: a component that spams errors stays capped everywhere, not just per connection. */
+        private val toastGuardrail = ToastGuardrail()
 
         private val TRANSPORT_COMMANDS = setOf(
             Player.COMMAND_PLAY_PAUSE,
