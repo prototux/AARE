@@ -15,6 +15,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.constraints.ConstraintManager
+import androidx.car.app.model.Alert
 import androidx.car.app.navigation.model.Trip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -255,6 +256,30 @@ class CarRuntime(
         ui.trip = trip
         ui.tripPackage = app.info.packageName
         onTrip?.invoke(app, trip)
+    }
+
+    /** Heads-up notices standing in for apps' alerts while the app's screen isn't up. */
+    private val alertNotices = HashMap<CarAppConnection, CarNotice>()
+
+    override fun alertChanged(app: CarAppConnection, alert: Alert?) {
+        alertNotices.remove(app)?.let { ui.notices.remove(it) }
+        if (alert == null || app.cluster) return
+        if (!AppQuirks.NAVIGATION_ALERTS_AS_NOTIFICATIONS.matches(app.info.packageName, app.info.versionCode)) return
+        // These apps' alerts ("Accept new route?") also reach a driver who
+        // isn't looking at the app (its dashboard card, another app): on its screen, its own card shows it.
+        val id = idOf(app) ?: return
+        if ((ui.screen as? CarScreen.App)?.appId == id) return
+        val duration = alert.durationMillis.takeIf { it > 0 } ?: ALERT_NOTICE_MS
+        val actions = alert.actions.take(2).map { action ->
+            (action.title?.toString() ?: context.getString(R.string.common_ok)) to { app.alertAction(alert, action) }
+        }
+        val n = CarNotice("n${++noticeSeq}", alert.title.toString(), alert.subtitle?.toString().orEmpty(), app.info.icon, actions)
+        ui.notices.add(n)
+        alertNotices[app] = n
+        main.postDelayed({
+            ui.notices.remove(n)
+            if (alertNotices[app] === n) app.alertTimedOut(alert)
+        }, duration)
     }
 
     /** The instrument cluster's session of [nav], if the app has one (FEATURE_CLUSTER). */
@@ -757,6 +782,8 @@ class CarRuntime(
 
     companion object {
         private const val TAG = "AareRuntime"
+        /** How long an app's alert shows as a notice when it gives no duration. */
+        private const val ALERT_NOTICE_MS = 10_000L
         fun carId(app: CarAppInfo) = "car:${app.service.flattenToShortString()}"
         fun mediaId(pkg: String) = "media:$pkg"
         fun messagingId(pkg: String) = "messages:$pkg"

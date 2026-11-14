@@ -35,7 +35,9 @@ import androidx.car.app.hardware.ICarHardwareResult
 import androidx.car.app.media.CarAudioCallback
 import androidx.car.app.media.OpenMicrophoneRequest
 import androidx.car.app.media.OpenMicrophoneResponse
+import androidx.car.app.model.Action
 import androidx.car.app.model.Alert
+import androidx.car.app.model.AlertCallback
 import androidx.car.app.model.Template
 import androidx.car.app.model.TemplateInfo
 import androidx.car.app.model.TemplateWrapper
@@ -87,8 +89,14 @@ class CarAppConnection(
         private set
     var templateId by mutableStateOf<String?>(null)
         private set
-    var alert by mutableStateOf<Alert?>(null)
-        private set
+    private var alertState by mutableStateOf<Alert?>(null)
+    var alert: Alert?
+        get() = alertState
+        private set(value) {
+            if (value === alertState) return
+            alertState = value
+            env.alertChanged(this, value)
+        }
     var navigating by mutableStateOf(false)
         private set
     var trip by mutableStateOf<Trip?>(null)
@@ -195,6 +203,20 @@ class CarAppConnection(
         val a = alert ?: return
         alert = null
         runCatching { a.callbackDelegate?.sendDismiss(templateDone) }
+    }
+
+    /** The driver picked [action] of alert [a] outside the app's screen (its heads-up notice). */
+    fun alertAction(a: Alert, action: Action) {
+        if (alert !== a) return
+        runCatching { action.onClickDelegate?.sendClick(templateDone) }
+        dismissAlert()
+    }
+
+    /** Alert [a] ran out of time outside the app's screen. */
+    fun alertTimedOut(a: Alert) {
+        if (alert !== a) return
+        runCatching { a.callbackDelegate?.sendCancel(AlertCallback.REASON_TIMEOUT, templateDone) }
+        dismissAlert()
     }
 
     fun release() {
