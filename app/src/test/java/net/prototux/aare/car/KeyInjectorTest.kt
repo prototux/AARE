@@ -12,6 +12,7 @@ class KeyInjectorTest {
         val tasks = ArrayList<Pair<Long, Runnable>>()
         override fun postDelayed(task: Runnable, delayMs: Long) { tasks += now + delayMs to task }
         override fun cancel(task: Runnable) { tasks.removeAll { it.second === task } }
+        override fun uptimeMillis() = now
         fun advance(ms: Long) {
             now += ms
             tasks.filter { it.first <= now }.forEach { tasks.remove(it); it.second.run() }
@@ -80,7 +81,50 @@ class KeyInjectorTest {
         injector.onKey(KeyEvent.KEYCODE_B, down = true, metaState = 0, carLongPress = false)
         injector.onKey(KeyEvent.KEYCODE_A, down = false, metaState = 0, carLongPress = false)
         clock.advance(500)
-        assertEquals(CarKey(KeyEvent.KEYCODE_B, true, repeat = 1, longPress = true), keys.last())
+        assertEquals(CarKey(KeyEvent.KEYCODE_B, true, repeat = 1, longPress = true, downTime = 300), keys.last())
+    }
+
+    @Test
+    fun repeatsAndTheUpCarryTheFirstDownsTime() {
+        clock.advance(1000)
+        injector.onKey(KeyEvent.KEYCODE_ENTER, down = true, metaState = 0, carLongPress = false)
+        clock.advance(100)
+        injector.onKey(KeyEvent.KEYCODE_ENTER, down = true, metaState = 0, carLongPress = false)
+        clock.advance(500) // the long press fires on the way
+        injector.onKey(KeyEvent.KEYCODE_ENTER, down = true, metaState = 0, carLongPress = true)
+        injector.onKey(KeyEvent.KEYCODE_ENTER, down = false, metaState = 0, carLongPress = false)
+        assertEquals(5, keys.size)
+        assertEquals(listOf(1000L), keys.map { it.downTime }.distinct())
+        // The next press is a hold of its own.
+        clock.advance(100)
+        injector.onKey(KeyEvent.KEYCODE_ENTER, down = true, metaState = 0, carLongPress = false)
+        assertEquals(1700, keys.last().downTime)
+    }
+
+    @Test
+    fun focusKeysGetNoSyntheticLongPress() {
+        for (code in listOf(
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyInjector.KEYCODE_ROTARY_CONTROLLER, KeyEvent.KEYCODE_NAVIGATE_NEXT,
+        )) {
+            keys.clear()
+            injector.onKey(code, down = true, metaState = 0, carLongPress = false)
+            assertEquals("keycode $code", 0, clock.tasks.size)
+            clock.advance(1000)
+            // The car's repeats step on, and its own long press still goes through.
+            injector.onKey(code, down = true, metaState = 0, carLongPress = false)
+            injector.onKey(code, down = true, metaState = 0, carLongPress = true)
+            injector.onKey(code, down = false, metaState = 0, carLongPress = false)
+            assertEquals("keycode $code", listOf(0, 1, 2, 0), keys.map { it.repeat })
+            assertEquals("keycode $code", listOf(false, false, true, false), keys.map { it.longPress })
+        }
+    }
+
+    @Test
+    fun theCenterKeyKeepsItsSyntheticLongPress() {
+        injector.onKey(KeyEvent.KEYCODE_DPAD_CENTER, down = true, metaState = 0, carLongPress = false)
+        clock.advance(500)
+        assertEquals(CarKey(KeyEvent.KEYCODE_DPAD_CENTER, true, repeat = 1, longPress = true), keys.last())
     }
 
     @Test
@@ -144,10 +188,10 @@ class KeyInjectorTest {
         assertEquals(
             listOf(
                 CarKey(KeyEvent.KEYCODE_HOME, true), CarKey(KeyEvent.KEYCODE_HOME, false),
-                CarKey(KeyEvent.KEYCODE_HOME, true),
-                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true),
-                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true),
-                CarKey(KeyEvent.KEYCODE_HOME, false),
+                CarKey(KeyEvent.KEYCODE_HOME, true, downTime = 2000),
+                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true, downTime = 2000),
+                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true, downTime = 2000),
+                CarKey(KeyEvent.KEYCODE_HOME, false, downTime = 2000),
             ),
             home,
         )

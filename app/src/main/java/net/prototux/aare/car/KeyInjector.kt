@@ -5,7 +5,8 @@ import android.view.KeyEvent
 /**
  * One car key as AARE acts on it. [repeat] counts the downs of one hold, as on Android; [longPress]
  * marks a down that is a long press (the system long-press timeout passed, or the car flagged it),
- * and an up the car flagged as the end of one.
+ * and an up the car flagged as the end of one. [downTime] is when the hold's first down came: the
+ * repeats and the up carry it too, as Android's own key events do.
  */
 internal data class CarKey(
     val code: Int,
@@ -13,6 +14,7 @@ internal data class CarKey(
     val metaState: Int = 0,
     val repeat: Int = 0,
     val longPress: Boolean = false,
+    val downTime: Long = 0,
 )
 
 /**
@@ -25,6 +27,10 @@ internal data class CarKey(
  * - the up ends the hold and cancels a long press still to come.
  * A down the car flags as a long press itself goes through as one (once per hold) and cancels the
  * synthetic one. Treating it as a plain click instead would click mid-hold and again on the up.
+ *
+ * The focus keys ([FOCUS_KEYS]: the D-pad arrows, the rotary controller, the navigation keys) get
+ * no synthetic long press: held, they step the focus with the car's repeats, and a long press on
+ * top would act on whatever the focus landed on. The car's own longpress flag still goes through.
  *
  * Keys in [carLongPressOnly] (HOME) get no hold: they go through as the car sends them, with its own
  * longpress flag. A car whose key-up comes late would otherwise turn a short HOME press into a long
@@ -39,10 +45,12 @@ internal class KeyInjector(
     interface Scheduler {
         fun postDelayed(task: Runnable, delayMs: Long)
         fun cancel(task: Runnable)
+        /** The clock the key events' times come from (the uptime on Android). */
+        fun uptimeMillis(): Long
     }
 
     /** A key being held: fires its long press once, unless the up comes first. */
-    private inner class Hold(private val first: CarKey) : Runnable {
+    private inner class Hold(val first: CarKey) : Runnable {
         var repeats = 0
         var longFired = false
         override fun run() {
@@ -53,32 +61,37 @@ internal class KeyInjector(
 
     private val held = HashMap<Int, Hold>()
 
+    /** When each [carLongPressOnly] key still down went down. */
+    private val passedDown = HashMap<Int, Long>()
+
     fun onKey(code: Int, down: Boolean, metaState: Int, carLongPress: Boolean) {
         val meta = metaStateFor(code, metaState)
+        val now = scheduler.uptimeMillis()
         if (code in carLongPressOnly) {
-            emit(CarKey(code, down, meta, longPress = carLongPress))
+            val downTime = if (down) passedDown.getOrPut(code) { now } else passedDown.remove(code) ?: now
+            emit(CarKey(code, down, meta, longPress = carLongPress, downTime = downTime))
             return
         }
         if (!down) {
-            held.remove(code)?.let(scheduler::cancel)
-            emit(CarKey(code, false, meta, longPress = carLongPress))
+            val hold = held.remove(code)?.also(scheduler::cancel)
+            emit(CarKey(code, false, meta, longPress = carLongPress, downTime = hold?.first?.downTime ?: now))
             return
         }
         val hold = held[code]
         if (carLongPress) {
             // The car reports the long press itself: one long press per hold, whoever sees it first.
-            val h = hold ?: Hold(CarKey(code, true, meta)).also { held[code] = it }
+            val h = hold ?: Hold(CarKey(code, true, meta, downTime = now)).also { held[code] = it }
             scheduler.cancel(h)
-            emit(CarKey(code, true, meta, repeat = ++h.repeats, longPress = !h.longFired))
+            emit(CarKey(code, true, meta, repeat = ++h.repeats, longPress = !h.longFired, downTime = h.first.downTime))
             h.longFired = true
             return
         }
         if (hold == null) {
-            val first = CarKey(code, true, meta)
-            held[code] = Hold(first).also { scheduler.postDelayed(it, longPressTimeoutMs) }
+            val first = CarKey(code, true, meta, downTime = now)
+            held[code] = Hold(first).also { if (code !in FOCUS_KEYS) scheduler.postDelayed(it, longPressTimeoutMs) }
             emit(first)
         } else {
-            emit(CarKey(code, true, meta, repeat = ++hold.repeats))
+            emit(CarKey(code, true, meta, repeat = ++hold.repeats, downTime = hold.first.downTime))
         }
     }
 
@@ -86,6 +99,7 @@ internal class KeyInjector(
     fun clear() {
         held.values.forEach(scheduler::cancel)
         held.clear()
+        passedDown.clear()
     }
 
     companion object {
@@ -95,6 +109,16 @@ internal class KeyInjector(
         private val NO_META = setOf(
             KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER, KEYCODE_ROTARY_CONTROLLER,
+        )
+
+        /** Keys that move the focus: no synthetic long press while they are held. */
+        val FOCUS_KEYS = setOf(
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT, KEYCODE_ROTARY_CONTROLLER,
+            KeyEvent.KEYCODE_NAVIGATE_PREVIOUS, KeyEvent.KEYCODE_NAVIGATE_NEXT,
+            KeyEvent.KEYCODE_NAVIGATE_IN, KeyEvent.KEYCODE_NAVIGATE_OUT,
+            KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN,
+            KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT,
         )
 
         /** The metastate a car key goes on with: cleared on navigation keys. */

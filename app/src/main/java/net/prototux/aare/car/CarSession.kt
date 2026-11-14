@@ -630,6 +630,7 @@ class CarSession(
     private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
         override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
         override fun cancel(task: Runnable) = main.removeCallbacks(task)
+        override fun uptimeMillis() = SystemClock.uptimeMillis()
     }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
 
     private val inputListener = object : InputChannel.Listener {
@@ -702,9 +703,9 @@ class CarSession(
     /** A key for the car screen itself: the D-pad, Enter, letters... */
     private fun dispatchCarKey(key: CarKey) {
         val d = display ?: return
-        val t = SystemClock.uptimeMillis()
         val flags = if (key.down && key.longPress) KeyEvent.FLAG_LONG_PRESS else 0
-        d.dispatchKey(KeyEvent(t, t, if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
+        d.dispatchKey(KeyEvent(key.downTime, SystemClock.uptimeMillis(),
+            if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
             key.repeat, key.metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags))
         // With a touchpad for navigation, the car is asked for its select feedback.
         if (key.code == KeyEvent.KEYCODE_DPAD_CENTER && !key.down && touchpad != null) input?.sendFeedback(FeedbackEvent.FEEDBACK_SELECT)
