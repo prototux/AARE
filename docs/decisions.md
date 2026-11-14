@@ -151,7 +151,7 @@ stands in when nothing is left, and the last card can't be hidden.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
 
-## Car text size and control size (F09)
+## Car text size and control size
 
 Two independent settings scale the car screen: text size (a font-scale multiplier on
 `LocalDensity`) and control size (a multiplier on `CarDimens`' touch targets, rail width, gutter

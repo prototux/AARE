@@ -39,7 +39,7 @@ data class CarDimens(
 val LocalCarDimens = staticCompositionLocalOf { CarDimens() }
 
 /**
- * [CarDimens] scaled by the control-size setting (F09): touch targets, the rail and icons grow
+ * [CarDimens] scaled by the control-size setting: touch targets, the rail and icons grow
  * together; corner radii stay a theme's own (a shape choice, not a control size).
  */
 fun CarDimens.scaled(factor: Float): CarDimens = if (factor == 1f) this else copy(
@@ -50,12 +50,12 @@ fun CarDimens.scaled(factor: Float): CarDimens = if (factor == 1f) this else cop
 )
 
 /**
- * The control-size setting's current multiplier (F09), ambient so it survives a nested [CarTheme]
+ * The control-size setting's current multiplier, ambient so it survives a nested [CarTheme]
  * (the dark-bar rail calls it again for night colours) without being reset by [theme]'s own dimens.
  */
 val LocalCarControlScale = staticCompositionLocalOf { 1f }
 
-/** The car screen's text-size setting (F09): a font-scale multiplier on top of the car type scale. */
+/** The car screen's text-size setting: a font-scale multiplier on top of the car type scale. */
 enum class CarTextSize(val id: String, @StringRes val labelRes: Int, val fontScale: Float) {
     DEFAULT("default", R.string.setup_choice_size_default, 1f),
     LARGER("larger", R.string.setup_choice_size_larger, 1.15f),
@@ -66,7 +66,7 @@ enum class CarTextSize(val id: String, @StringRes val labelRes: Int, val fontSca
     }
 }
 
-/** The car screen's control-size setting (F09): a multiplier on [CarDimens], independent of text size. */
+/** The car screen's control-size setting: a multiplier on [CarDimens], independent of text size. */
 enum class CarControlSize(val id: String, @StringRes val labelRes: Int, val scale: Float) {
     DEFAULT("default", R.string.setup_choice_size_default, 1f),
     LARGER("larger", R.string.setup_choice_size_larger, 1.15f),

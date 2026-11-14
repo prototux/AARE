@@ -126,12 +126,12 @@ class Settings(context: Context) {
 
     private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
 
-    /** The car screen's text size, an id from `CarTextSize` (F09): default, larger or largest. */
+    /** The car screen's text size, an id from `CarTextSize`: default, larger or largest. */
     var carTextSize: String
         get() = prefs.getString("car_text_size", null) ?: "default"
         set(v) = prefs.edit { putString("car_text_size", v) }
 
-    /** The car screen's control (touch target) size, an id from `CarControlSize` (F09). Independent of [carTextSize]. */
+    /** The car screen's control (touch target) size, an id from `CarControlSize`. Independent of [carTextSize]. */
     var carControlSize: String
         get() = prefs.getString("car_control_size", null) ?: "default"
         set(v) = prefs.edit { putString("car_control_size", v) }

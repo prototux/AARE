@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-/** F09: text size and control size are independent settings, each resolved from a stored id. */
+/** Text size and control size are independent settings, each resolved from a stored id. */
 class CarScaleTest {
     @Test
     fun unknownOrMissingIdFallsBackToDefault() {
