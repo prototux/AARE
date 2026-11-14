@@ -1,0 +1,11 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.shared.message;
+
+// AARE: UI actions a head unit lets the phone take (UiConfig field
+// 6) and that the phone reports in ACTION_TAKEN_NOTIFICATION.
+enum UiAction {
+  ACTION_UNKNOWN = 0;
+  ACTION_RESIZE_TO_SMALLER = 1;
+  ACTION_RESIZE_TO_LARGER = 2;
+}

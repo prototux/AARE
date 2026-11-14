@@ -15,6 +15,10 @@ import "aap_protobuf/service/genericnotification/GenericNotificationService.prot
 import "aap_protobuf/service/phonestatus/PhoneStatusService.proto";
 import "aap_protobuf/service/mediaplayback/MediaPlaybackStatusService.proto";
 import "aap_protobuf/service/radio/RadioService.proto";
+import "aap_protobuf/service/carcontrol/CarControlService.proto";
+import "aap_protobuf/service/carlocalmedia/CarLocalMediaService.proto";
+import "aap_protobuf/service/bufferedmedia/BufferedMediaService.proto";
+import "aap_protobuf/service/carintent/CarIntentService.proto";
 
 package aap_protobuf.service;
 
@@ -34,4 +38,9 @@ message Service
     optional vendorextension.VendorExtensionService vendor_extension_service = 12;
     optional genericnotification.GenericNotificationService generic_notification_service = 13;
     optional wifiprojection.WifiProjectionService wifi_projection_service = 14;
+    // 15-18. AARE doesn't offer these services.
+    optional carcontrol.CarControlService car_control_service = 15;
+    optional carlocalmedia.CarLocalMediaService car_local_media_service = 16;
+    optional bufferedmedia.BufferedMediaService buffered_media_service = 17;
+    optional carintent.CarIntentService car_intent_service = 18;
 }
