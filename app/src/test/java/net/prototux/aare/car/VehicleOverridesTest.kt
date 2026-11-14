@@ -178,4 +178,44 @@ class VehicleOverridesTest {
         val vwPlay = rules.single { it.matches("Volkswagen", "VW_7_A0_HATCHBACK", "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio") }
         assertEquals(false, vwPlay.override.micSetup)
     }
+
+    private val builtIn by lazy { VehicleOverrides.parse(java.io.File("src/main/assets/vehicles.json").readText()) }
+    private fun shipped(id: HeadUnitIdentity) = VehicleOverrides.resolve(emptyList(), builtIn, id)
+
+    /** Built-in lists, as the file carries them. */
+    @Test fun theBuiltInRulesCarryAndroidAutosLists() {
+        // Pixel aspect only before protocol 1.2.
+        val outlander = hu(make = "MITSUBISHI MOTORS", model = "PHEV4B00EU", year = "2016", headUnitMake = "", headUnitModel = "", protocol = 1 to 1)
+        assertEquals(1.15f, shipped(outlander)!!.pixelAspect!!, 1e-6f)
+        assertEquals(null, shipped(outlander.copy(protocol = 1 to 2))?.pixelAspect)
+        assertEquals(null, shipped(outlander.copy(year = "2015"))?.pixelAspect)
+        assertEquals(1.1515f, shipped(hu(make = "Pioneer", model = "Car Navigation - High", year = "2016", protocol = 1 to 0))!!.pixelAspect!!, 1e-6f)
+        // 800x480 for Subaru's Harman units.
+        assertEquals(setOf("800x480"), shipped(hu(make = "Subaru", headUnitMake = "HARMAN"))!!.videoResolutions)
+        // Mixed navigation voice, by protocol version.
+        assertEquals(true, shipped(hu(make = "KIA", headUnitModel = "avn_40", protocol = 1 to 0))!!.singleChannelCapture)
+        assertEquals(null, shipped(hu(make = "KIA", headUnitModel = "avn_40", protocol = 1 to 1))?.singleChannelCapture)
+        // EV fuel type.
+        assertEquals(true, shipped(hu(make = "Hyundai", model = "NEev"))!!.forceElectric)
+        // Start silence.
+        assertEquals(8, shipped(hu(make = "BMW", headUnitMake = "BMW", headUnitModel = "MGU21"))!!.wifiMediaStartSilence)
+        assertEquals(8, shipped(hu(headUnitMake = "HMG", headUnitModel = "connect_s"))!!.wifiGuidanceStartSilence)
+        // Focus.
+        assertEquals(true, shipped(hu(headUnitMake = "ZJ"))!!.mediaOnGainTransient)
+        assertEquals(false, shipped(hu(make = "SYNC"))!!.pauseOnGuidanceOnly)
+        // Wireless, and the SYNC 1.0 head unit gets both its rules.
+        assertEquals(false, shipped(hu(headUnitMake = "ALPINE", headUnitModel = "iLX-705D"))!!.wireless)
+        assertEquals(false, shipped(hu(year = "2021", headUnitMake = "Pioneer", headUnitModel = "9inch Display Audio"))!!.wireless)
+        assertEquals(null, shipped(hu(year = "2019", headUnitMake = "Pioneer", headUnitModel = "9inch Display Audio"))?.wireless)
+        shipped(hu(make = "SYNC", protocol = 1 to 0))!!.let {
+            assertEquals(true, it.singleChannelCapture)
+            assertEquals(false, it.pauseOnGuidanceOnly)
+        }
+        // Exit to car.
+        assertEquals(false, shipped(hu(make = "Xiaomi"))!!.exitToCar)
+        assertEquals("default", shipped(hu(make = "Chevrolet"))!!.exitLabel)
+        assertEquals("make", shipped(hu(make = "Land Rover"))!!.exitLabel)
+        // An ordinary car gets nothing.
+        assertEquals(null, shipped(hu()))
+    }
 }

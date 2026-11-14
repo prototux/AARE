@@ -85,3 +85,12 @@ lists what AARE leaves closed, and `vehicles.json: opening/not opening …` what
 
 Closing a service AARE needs (`video`, `input`) breaks the projection: these keys are for a head
 unit that hangs up or shows nothing because of one channel.
+
+## Built-in rules
+
+Most built-in rules copy known car lists (marked so in the file): pixel aspect for
+older Mitsubishi, Pioneer and Kenwood head units, 800x480 for Subaru's Harman units, mixed
+navigation voice for some early Kia, Hyundai, Ford SYNC and Volkswagen units, EV fuel type for some
+Hyundai, Kia and Genesis models, start silence for some Uconnect, BMW and Hyundai units, the
+head units it doesn't connect to wirelessly, and how it names "Exit to car". To undo one for your
+car, set the key back in your own file (`"wireless": true`, `"pixelAspect": 1`…).
