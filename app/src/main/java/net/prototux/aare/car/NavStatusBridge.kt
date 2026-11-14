@@ -122,7 +122,7 @@ class NavStatusBridge(
         // The older events most head units still use for their cluster.
         val turn = NavigationNextTurnEvent.newBuilder().setRoad(road)
         maneuver?.let { m ->
-            turn.setEvent(legacyEvent(protocolType(m.type))).setTurnSide(sideOf(m.type))
+            turn.setEvent(legacyEvent(m.type)).setTurnSide(sideOf(m.type))
             if (m.roundaboutExitNumber > 0) turn.setTurnNumber(m.roundaboutExitNumber)
             if (m.roundaboutExitAngle > 0) turn.setTurnAngle(m.roundaboutExitAngle)
             if (channel.wantsImages) {
@@ -206,8 +206,10 @@ class NavStatusBridge(
         PhoneGuidance.DistanceUnit.YARDS -> 7
     }
 
+    /** A type the protocol doesn't have leaves the maneuver empty. */
     private fun maneuverOf(m: Maneuver): NavigationManeuver = NavigationManeuver.newBuilder().apply {
-        setType(NavigationManeuver.NavigationType.forNumber(protocolType(m.type)) ?: NavigationManeuver.NavigationType.UNKNOWN)
+        val type = protocolType(m.type) ?: return@apply
+        setType(type)
         if (m.roundaboutExitNumber > 0) setRoundaboutExitNumber(m.roundaboutExitNumber)
         if (m.roundaboutExitAngle > 0) setRoundaboutExitAngle(m.roundaboutExitAngle)
     }.build()
@@ -222,26 +224,11 @@ class NavStatusBridge(
         private const val TAG = "AareNavStatus"
 
         /**
-         * Car App Library maneuver types newer than the protocol's list (43..50: roundabout enter
-         * or exit with a direction, ferries with a side), by their library name.
+         * The protocol's NavigationType for a Maneuver.TYPE_*: the same numbers, passed on as is like
+         * 43..50 included. Null for a number the protocol doesn't have.
          */
-        private val NEWER_TYPES = mapOf(
-            43 to "ROUNDABOUT_ENTER_CW", 44 to "ROUNDABOUT_EXIT_CW",
-            45 to "ROUNDABOUT_ENTER_CCW", 46 to "ROUNDABOUT_EXIT_CCW",
-            47 to "FERRY_BOAT_LEFT", 48 to "FERRY_BOAT_RIGHT",
-            49 to "FERRY_TRAIN_LEFT", 50 to "FERRY_TRAIN_RIGHT",
-        )
-
-        /** The protocol's NavigationType number for a Maneuver.TYPE_* (the newer ones lose their side). */
-        private fun protocolType(type: Int): Int {
-            val n = NEWER_TYPES[type] ?: return type
-            return when {
-                n.startsWith("ROUNDABOUT_ENTER") -> NavigationManeuver.NavigationType.ROUNDABOUT_ENTER_VALUE
-                n.startsWith("ROUNDABOUT_EXIT") -> NavigationManeuver.NavigationType.ROUNDABOUT_EXIT_VALUE
-                n.startsWith("FERRY_BOAT") -> NavigationManeuver.NavigationType.FERRY_BOAT_VALUE
-                else -> NavigationManeuver.NavigationType.FERRY_TRAIN_VALUE
-            }
-        }
+        internal fun protocolType(type: Int): NavigationManeuver.NavigationType? =
+            NavigationManeuver.NavigationType.forNumber(type)
 
         fun metersOf(d: Distance): Double = d.displayDistance * when (d.displayUnit) {
             Distance.UNIT_KILOMETERS, Distance.UNIT_KILOMETERS_P1 -> 1000.0
@@ -256,44 +243,62 @@ class NavStatusBridge(
             else -> d.displayDistance.toLong().toString()
         }
 
-        private fun sideOf(type: Int): NavigationNextTurnEvent.TurnSide {
-            val name = maneuverName(type)
-            return when {
-                "LEFT" in name || "_CW" in name && "CCW" !in name -> NavigationNextTurnEvent.TurnSide.LEFT
-                "RIGHT" in name || "CCW" in name -> NavigationNextTurnEvent.TurnSide.RIGHT
-                else -> NavigationNextTurnEvent.TurnSide.UNSPECIFIED
-            }
+        /** Clockwise roundabouts are driven on the left, so their side is LEFT (and CCW RIGHT). */
+        private val LEFT_TYPES = setOf(
+            Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_NORMAL_LEFT,
+            Maneuver.TYPE_TURN_SHARP_LEFT, Maneuver.TYPE_U_TURN_LEFT, Maneuver.TYPE_ON_RAMP_SLIGHT_LEFT,
+            Maneuver.TYPE_ON_RAMP_NORMAL_LEFT, Maneuver.TYPE_ON_RAMP_SHARP_LEFT, Maneuver.TYPE_ON_RAMP_U_TURN_LEFT,
+            Maneuver.TYPE_OFF_RAMP_SLIGHT_LEFT, Maneuver.TYPE_OFF_RAMP_NORMAL_LEFT, Maneuver.TYPE_FORK_LEFT,
+            Maneuver.TYPE_MERGE_LEFT, Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CW,
+            Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CW_WITH_ANGLE, Maneuver.TYPE_DESTINATION_LEFT,
+            Maneuver.TYPE_ROUNDABOUT_ENTER_CW, Maneuver.TYPE_ROUNDABOUT_EXIT_CW, Maneuver.TYPE_FERRY_BOAT_LEFT,
+            Maneuver.TYPE_FERRY_TRAIN_LEFT,
+        )
+        private val RIGHT_TYPES = setOf(
+            Maneuver.TYPE_KEEP_RIGHT, Maneuver.TYPE_TURN_SLIGHT_RIGHT, Maneuver.TYPE_TURN_NORMAL_RIGHT,
+            Maneuver.TYPE_TURN_SHARP_RIGHT, Maneuver.TYPE_U_TURN_RIGHT, Maneuver.TYPE_ON_RAMP_SLIGHT_RIGHT,
+            Maneuver.TYPE_ON_RAMP_NORMAL_RIGHT, Maneuver.TYPE_ON_RAMP_SHARP_RIGHT, Maneuver.TYPE_ON_RAMP_U_TURN_RIGHT,
+            Maneuver.TYPE_OFF_RAMP_SLIGHT_RIGHT, Maneuver.TYPE_OFF_RAMP_NORMAL_RIGHT, Maneuver.TYPE_FORK_RIGHT,
+            Maneuver.TYPE_MERGE_RIGHT, Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW,
+            Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW_WITH_ANGLE, Maneuver.TYPE_DESTINATION_RIGHT,
+            Maneuver.TYPE_ROUNDABOUT_ENTER_CCW, Maneuver.TYPE_ROUNDABOUT_EXIT_CCW, Maneuver.TYPE_FERRY_BOAT_RIGHT,
+            Maneuver.TYPE_FERRY_TRAIN_RIGHT,
+        )
+
+        internal fun sideOf(type: Int): NavigationNextTurnEvent.TurnSide = when (type) {
+            in LEFT_TYPES -> NavigationNextTurnEvent.TurnSide.LEFT
+            in RIGHT_TYPES -> NavigationNextTurnEvent.TurnSide.RIGHT
+            else -> NavigationNextTurnEvent.TurnSide.UNSPECIFIED
         }
 
-        private fun legacyEvent(type: Int): NavigationNextTurnEvent.NextTurnEnum {
-            val n = maneuverName(type)
-            return when {
-                n == "DEPART" -> NavigationNextTurnEvent.NextTurnEnum.DEPART
-                n == "NAME_CHANGE" -> NavigationNextTurnEvent.NextTurnEnum.NAME_CHANGE
-                n.startsWith("KEEP") || n.startsWith("TURN_SLIGHT") -> NavigationNextTurnEvent.NextTurnEnum.SLIGHT_TURN
-                n.startsWith("TURN_NORMAL") -> NavigationNextTurnEvent.NextTurnEnum.TURN
-                n.startsWith("TURN_SHARP") -> NavigationNextTurnEvent.NextTurnEnum.SHARP_TURN
-                n.startsWith("U_TURN") -> NavigationNextTurnEvent.NextTurnEnum.U_TURN
-                n.startsWith("ON_RAMP") -> NavigationNextTurnEvent.NextTurnEnum.ON_RAMP
-                n.startsWith("OFF_RAMP") -> NavigationNextTurnEvent.NextTurnEnum.OFF_RAMP
-                n.startsWith("FORK") -> NavigationNextTurnEvent.NextTurnEnum.FORK
-                n.startsWith("MERGE") -> NavigationNextTurnEvent.NextTurnEnum.MERGE
-                n == "ROUNDABOUT_ENTER" -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_ENTER
-                n == "ROUNDABOUT_EXIT" -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_EXIT
-                n.startsWith("ROUNDABOUT") -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_ENTER_AND_EXIT
-                n == "STRAIGHT" -> NavigationNextTurnEvent.NextTurnEnum.STRAIGHT
-                n == "FERRY_BOAT" -> NavigationNextTurnEvent.NextTurnEnum.FERRY_BOAT
-                n == "FERRY_TRAIN" -> NavigationNextTurnEvent.NextTurnEnum.FERRY_TRAIN
-                n.startsWith("DESTINATION") -> NavigationNextTurnEvent.NextTurnEnum.DESTINATION
-                else -> NavigationNextTurnEvent.NextTurnEnum.UNKNOWN
-            }
+        /** The deprecated event's coarser kind of turn for a Maneuver.TYPE_* (the side goes apart). */
+        internal fun legacyEvent(type: Int): NavigationNextTurnEvent.NextTurnEnum = when (type) {
+            Maneuver.TYPE_DEPART -> NavigationNextTurnEvent.NextTurnEnum.DEPART
+            Maneuver.TYPE_NAME_CHANGE -> NavigationNextTurnEvent.NextTurnEnum.NAME_CHANGE
+            Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_KEEP_RIGHT,
+            Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_SLIGHT_RIGHT,
+            -> NavigationNextTurnEvent.NextTurnEnum.SLIGHT_TURN
+            Maneuver.TYPE_TURN_NORMAL_LEFT, Maneuver.TYPE_TURN_NORMAL_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.TURN
+            Maneuver.TYPE_TURN_SHARP_LEFT, Maneuver.TYPE_TURN_SHARP_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.SHARP_TURN
+            Maneuver.TYPE_U_TURN_LEFT, Maneuver.TYPE_U_TURN_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.U_TURN
+            in Maneuver.TYPE_ON_RAMP_SLIGHT_LEFT..Maneuver.TYPE_ON_RAMP_U_TURN_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.ON_RAMP
+            in Maneuver.TYPE_OFF_RAMP_SLIGHT_LEFT..Maneuver.TYPE_OFF_RAMP_NORMAL_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.OFF_RAMP
+            Maneuver.TYPE_FORK_LEFT, Maneuver.TYPE_FORK_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.FORK
+            Maneuver.TYPE_MERGE_LEFT, Maneuver.TYPE_MERGE_RIGHT, Maneuver.TYPE_MERGE_SIDE_UNSPECIFIED,
+            -> NavigationNextTurnEvent.NextTurnEnum.MERGE
+            Maneuver.TYPE_ROUNDABOUT_ENTER_CW, Maneuver.TYPE_ROUNDABOUT_ENTER_CCW,
+            -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_ENTER
+            Maneuver.TYPE_ROUNDABOUT_EXIT_CW, Maneuver.TYPE_ROUNDABOUT_EXIT_CCW,
+            -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_EXIT
+            in Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CW..Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW_WITH_ANGLE,
+            -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_ENTER_AND_EXIT
+            Maneuver.TYPE_STRAIGHT -> NavigationNextTurnEvent.NextTurnEnum.STRAIGHT
+            Maneuver.TYPE_FERRY_BOAT, Maneuver.TYPE_FERRY_BOAT_LEFT, Maneuver.TYPE_FERRY_BOAT_RIGHT,
+            -> NavigationNextTurnEvent.NextTurnEnum.FERRY_BOAT
+            Maneuver.TYPE_FERRY_TRAIN, Maneuver.TYPE_FERRY_TRAIN_LEFT, Maneuver.TYPE_FERRY_TRAIN_RIGHT,
+            -> NavigationNextTurnEvent.NextTurnEnum.FERRY_TRAIN
+            in Maneuver.TYPE_DESTINATION..Maneuver.TYPE_DESTINATION_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.DESTINATION
+            else -> NavigationNextTurnEvent.NextTurnEnum.UNKNOWN
         }
-
-        /**
-         * Maneuver.TYPE_* and the protocol's NavigationType share numbers up to 42; use the
-         * protocol's names, and the library's for the newer ones (they carry the turn side).
-         */
-        private fun maneuverName(type: Int): String =
-            NEWER_TYPES[type] ?: NavigationManeuver.NavigationType.forNumber(type)?.name ?: "UNKNOWN"
     }
 }
