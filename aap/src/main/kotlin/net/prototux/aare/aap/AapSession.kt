@@ -217,7 +217,23 @@ class AapSession(
     fun sendRaw(channel: Int, plain: ByteArray, length: Int = plain.size, control: Boolean = false,
                 encrypted: Boolean = true, priority: Int = Priority.CONTROL, onSent: (() -> Unit)? = null) {
         if (closed.get()) return
+        if (!control && length >= 2) trace("tx", channel, ((plain[0].toInt() and 0xff) shl 8) or (plain[1].toInt() and 0xff))
         queue.offer(Outgoing(priority, seq.incrementAndGet(), channel, control, encrypted, plain, length, onSent))
+    }
+
+    /** The last messages [trace] showed as sent, for a head unit's "unexpected message" answer. */
+    private val recentlySent = ArrayDeque<String>()
+
+    /** Logs a message the verbose log keeps ([ProtocolTrace]): "tx video START", "rx AUDIO_FOCUS_NOTIFICATION"… */
+    private fun trace(direction: String, channel: Int, id: Int) {
+        val channelName = if (channel == 0) null else channels[channel]?.name ?: return
+        if (!ProtocolTrace.shown(channelName, id)) return
+        val what = (channelName?.let { "$it " } ?: "") + ProtocolTrace.name(channelName, id)
+        if (direction == "tx") synchronized(recentlySent) {
+            recentlySent.addLast(what)
+            if (recentlySent.size > 4) recentlySent.removeFirst()
+        }
+        log.d("$direction $what")
     }
 
     fun send(channel: Int, id: Int, body: MessageLite, control: Boolean = false, priority: Int = Priority.CONTROL) {
@@ -321,6 +337,7 @@ class AapSession(
             }
             return
         }
+        trace("rx", msg.channel, msg.id)
         runHandler(ch) { ch.onMessage(msg) }
     }
 
@@ -336,7 +353,7 @@ class AapSession(
     // ------------------------------------------------------------------ control channel
 
     private fun handleControl(msg: AapMessage) {
-        log.d("rx $msg")
+        trace("rx", 0, msg.id)
         // Until service discovery only the version and TLS handshake messages make sense.
         if (state.ordinal < State.DISCOVERY.ordinal &&
             msg.id != ControlMsg.VERSION_REQUEST && msg.id != ControlMsg.ENCAPSULATED_SSL &&
@@ -387,6 +404,9 @@ class AapSession(
             }
             ControlMsg.BYEBYE_RESPONSE -> close("session ended", null)
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
+            // It doesn't say which: the last ones sent are the suspects (#100: a protocol 1.3 unit).
+            ControlMsg.UNEXPECTED_MESSAGE -> log.w("head unit refused a message (unexpected message); last sent: " +
+                synchronized(recentlySent) { recentlySent.joinToString() }.ifEmpty { "nothing logged" })
             else -> log.d("unhandled control message $msg")
         }
     }
