@@ -9,9 +9,10 @@ This is separate from `CarControlProvider`, which lets an assistant *running on 
 (Lapin, for example) call the full car-tools API directly. A link is for everything else: an
 assistant with no code path into AARE, only a reply the user can tap.
 
-Links are **off by default**: turn on *Links from apps* in AARE's voice assistant settings. Any
-app on the phone can open an `aare://` link, so the driver decides whether replies may drive the
-car screen; with the setting off, every link is ignored (and logged).
+Links are **off by default**: turn on *Links from the assistant* in AARE's voice assistant
+settings. With the setting off, every link is ignored (and logged). Even with it on, only the
+assistant chosen there (or, with none chosen, the phone's default digital assistant) can open one:
+see [Who may open a link](#who-may-open-a-link).
 
 ## Format
 
@@ -24,9 +25,9 @@ aare://call?n=<phone number>
 
 | Link | Parameter | Does |
 |---|---|---|
-| `navigate` | `q` (required) | Starts navigation to `q` in the car's navigation app, same as the `car_navigate` tool. |
+| `navigate` | `q` (required) | Asks the driver on the car screen, then starts navigation to `q` in the car's navigation app, same as the `car_navigate` tool. |
 | `play` | `action` (optional, default `play`; `q` also accepted) | `play`, `pause`, `next` or `previous`, same as the `car_media` tool. |
-| `open` | `app` (optional, `q` also accepted) | Shows that app on the car screen, same as the `car_open` tool (matches by name, same as asking the voice assistant). |
+| `open` | `app` (required, `q` also accepted) | Asks the driver on the car screen, then shows that app, same as the `car_open` tool (matches by name, same as asking the voice assistant). |
 | `call` | `n` (required) | Asks the driver to confirm on the car screen before dialling; never dials straight from the link. Only digits and a leading `+` are kept. |
 
 Anything else — an unknown host, a different scheme, a missing required parameter, a `play`
@@ -38,15 +39,26 @@ whatever the link asks for.
 
 - Only while a car session is already running (`CarRuntime.active`): a link opened with no car
   connected is ignored, so it can't be used to wake one up or act on a session that isn't there.
-- `call` always shows a confirmation on the car screen first; the other three run straight away,
-  the same way saying "navigate to the airport" to the in-car assistant would.
+- `navigate`, `open` and `call` always show a confirmation on the car screen first (10 seconds,
+  "Asked by a link in an assistant's reply"); nothing happens unless the driver taps it. Only
+  `play` runs straight away.
+- The diagnostic log records the action kind (`navigate`, `call`…) or why a link was refused,
+  never the link itself: it can hold a destination or a phone number.
 
-## What AARE can and can't check about the caller
+## Who may open a link
 
-Android does not reliably tell an exported activity who started it for an ordinary link tap
-(`ACTION_VIEW`, not `startActivityForResult`): `Activity.getCallingPackage()` is null, and
-`Activity.getReferrer()` is only set when the caller supplied `EXTRA_REFERRER`, which notification
-actions and most browsers don't for a custom scheme. So, like any `http://` link on the phone, any
-app can launch this one — AARE cannot confirm a given `aare://` link truly came from an
-assistant's reply rather than some other app. The defence is in what the link is allowed to do
-(the allowlist above), not in who opened it.
+The activity is exported, since another app has to start it, but it is not `BROWSABLE`: no web
+page can open an `aare://` link, AARE's own browser included.
+
+It then acts only when the app that started it is the assistant `CarControlProvider` already
+trusts (`Assistants.authorized`: the one chosen in AARE, else the phone's default digital
+assistant setting). The caller is what Android itself reports, in this order:
+
+1. `getCallingPackage()`, set when the assistant uses `startActivityForResult`;
+2. else `getReferrer()` when Android filled it in (`android-app://<package>`): the app that called
+   `startActivity`, or the one that created the notification's `PendingIntent`.
+
+A referrer the intent carries itself (`EXTRA_REFERRER`, `EXTRA_REFERRER_NAME`) is any string the
+sender likes, so a link carrying one is refused, as is a link with no known caller and any link
+started by AARE's own package. An assistant that opens links through a chooser, or through
+another app that forwards them, shows up as that other app and is refused too.

@@ -630,7 +630,9 @@ An assistant with no code path into AARE — one that answers in a notification,
 contains a link rather than calling a tool directly — can still trigger `car_navigate`,
 `car_media`, `car_open` and a confirmed phone call through an `aare://` link in that reply. See
 [docs/assistant-links.md](docs/assistant-links.md) for the link format and what AARE checks
-before acting on one. Off by default: *Links from apps* in the voice assistant settings.
+before acting on one. Off by default: *Links from the assistant* in the voice assistant settings.
+Only the chosen assistant can open such a link (not other apps, not web pages), and navigating,
+opening an app or calling waits for the driver to confirm on the car screen.
 
 ### Car apps that only trust Google
 

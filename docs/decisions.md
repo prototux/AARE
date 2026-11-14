@@ -160,10 +160,13 @@ by a pure parser (`AssistantLinks.parse`, unit-tested) that doubles as the whole
 
 - `java.net.URI` + manual query decoding instead of `android.net.Uri`: this module's unit tests
   don't pull in Robolectric, and the Android stub jar's `Uri` returns nulls without it.
-- Safety is in what the link can do, not in checking who opened it: Android gives an exported
-  activity no reliable way to tell a user's tap on an assistant's link from any other app
-  launching the same intent (documented in docs/assistant-links.md). So the gate is the allowlist
-  itself (four actions, nothing else), requiring an already-running car session, and always
-  confirming a call on the car screen before dialling.
+- Only the chosen assistant may open a link (review fix): no `BROWSABLE`, so no web page can
+  start it (AARE's browser included), and the caller Android reports (`getCallingPackage()`, else
+  the system-filled referrer, never `EXTRA_REFERRER`) must be the package `Assistants.authorized`
+  returns, the same app `CarControlProvider` accepts. Rejected: trusting the allowlist alone with
+  any caller allowed, which let any app or page start navigation on the car screen.
+- `navigate`, `open` and `call` wait for the driver to confirm on the car screen; only `play` runs
+  straight away. A link also needs an already-running car session.
+- The log records the action kind, never the link (destination, phone number).
 - `open`/`play` accept `app`/`action` with `q` as a fallback alias, so the three link patterns in
   the feature request (`?q=`) and the more specific parameter names both work.
