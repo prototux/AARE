@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Definições</string>
     <string name="setup_app_entry_notifications">Notificações</string>
     <string name="setup_section_app_order">Ordem no carro</string>
+    <string name="setup_section_car_rail">Barra do carro</string>
+    <string name="setup_car_rail_hint">Escolha que aplicações ficam na barra (ou na barra de tarefas) e por que ordem. Nada escolhido: a barra mantém o seu conjunto integrado (navegação, música, aplicações recentes, telefone).</string>
+    <string name="setup_toggle_compact_rail_title">Barra compacta</string>
+    <string name="setup_toggle_compact_rail_subtitle">Uma barra mais estreita, com ícones mais pequenos e espaçamento mais apertado</string>
     <string name="setup_section_connection_log">Registo de ligação</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Não afiliada com a Google. Android Auto é uma marca comercial da Google LLC.</string>
     <string name="setup_choice_style">Estilo</string>

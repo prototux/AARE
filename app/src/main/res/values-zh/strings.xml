@@ -117,6 +117,10 @@
     <string name="setup_app_entry_settings">设置</string>
     <string name="setup_app_entry_notifications">通知</string>
     <string name="setup_section_app_order">车机中的排列顺序</string>
+    <string name="setup_section_car_rail">车机状态栏</string>
+    <string name="setup_car_rail_hint">选择状态栏（或任务栏）上显示哪些应用及其顺序。未选择时，状态栏保留内置组合（导航、音乐、最近使用的应用、电话）。</string>
+    <string name="setup_toggle_compact_rail_title">紧凑状态栏</string>
+    <string name="setup_toggle_compact_rail_subtitle">更窄的状态栏，图标更小、间距更紧凑</string>
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · 与 Google 无关联。Android Auto 是 Google LLC 的商标。</string>
     <string name="setup_choice_style">样式</string>

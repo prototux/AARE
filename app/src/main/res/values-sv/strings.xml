@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Inställningar</string>
     <string name="setup_app_entry_notifications">Aviseringar</string>
     <string name="setup_section_app_order">Ordning i bilen</string>
+    <string name="setup_section_car_rail">Bilens fält</string>
+    <string name="setup_car_rail_hint">Välj vilka appar som sitter på fältet (eller aktivitetsfältet) och i vilken ordning. Inget valt: fältet behåller sin inbyggda uppsättning (navigering, musik, senaste appar, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakt fält</string>
+    <string name="setup_toggle_compact_rail_subtitle">Ett smalare fält, med mindre ikoner och tätare avstånd</string>
     <string name="setup_section_connection_log">Anslutningslogg</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Inte anknuten till Google. Android Auto är ett varumärke som tillhör Google LLC.</string>
     <string name="setup_choice_style">Stil</string>

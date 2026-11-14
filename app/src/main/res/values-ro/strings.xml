@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Setări</string>
     <string name="setup_app_entry_notifications">Notificări</string>
     <string name="setup_section_app_order">Ordinea în mașină</string>
+    <string name="setup_section_car_rail">Bara mașinii</string>
+    <string name="setup_car_rail_hint">Alege ce aplicații stau pe bară (sau pe bara de activități) și în ce ordine. Dacă nu alegi nimic, bara își păstrează setul integrat (navigare, muzică, aplicații recente, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Bară compactă</string>
+    <string name="setup_toggle_compact_rail_subtitle">O bară mai îngustă, cu pictograme mai mici și spațiere mai strânsă</string>
     <string name="setup_section_connection_log">Jurnal de conectare</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nu este afiliat cu Google. Android Auto este o marcă înregistrată a Google LLC.</string>
     <string name="setup_choice_style">Stil</string>

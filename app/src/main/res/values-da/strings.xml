@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Indstillinger</string>
     <string name="setup_app_entry_notifications">Notifikationer</string>
     <string name="setup_section_app_order">Rækkefølge i bilen</string>
+    <string name="setup_section_car_rail">Bilens bar</string>
+    <string name="setup_car_rail_hint">Vælg hvilke apps der sidder på baren (eller proceslinjen) og i hvilken rækkefølge. Intet valgt: baren beholder sit indbyggede sæt (navigation, musik, seneste apps, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakt bar</string>
+    <string name="setup_toggle_compact_rail_subtitle">En smallere bar med mindre ikoner og tættere afstand</string>
     <string name="setup_section_connection_log">Forbindelseslog</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemærke tilhørende Google LLC.</string>
     <string name="setup_choice_style">Stil</string>

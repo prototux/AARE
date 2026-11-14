@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Налаштування</string>
     <string name="setup_app_entry_notifications">Сповіщення</string>
     <string name="setup_section_app_order">Порядок в автомобілі</string>
+    <string name="setup_section_car_rail">Панель в автомобілі</string>
+    <string name="setup_car_rail_hint">Виберіть, які застосунки будуть на панелі (або панелі завдань) і в якому порядку. Нічого не вибрано: панель зберігає вбудований набір (навігація, музика, нещодавні застосунки, телефон).</string>
+    <string name="setup_toggle_compact_rail_title">Компактна панель</string>
+    <string name="setup_toggle_compact_rail_subtitle">Вужча панель із меншими значками та щільнішими відступами</string>
     <string name="setup_section_connection_log">Журнал з\'єднань</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Не пов\'язано з Google. Android Auto є торговою маркою Google LLC.</string>
     <string name="setup_choice_style">Стиль</string>

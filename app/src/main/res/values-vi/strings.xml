@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Cài đặt</string>
     <string name="setup_app_entry_notifications">Thông báo</string>
     <string name="setup_section_app_order">Thứ tự trên xe</string>
+    <string name="setup_section_car_rail">Thanh công cụ trên xe</string>
+    <string name="setup_car_rail_hint">Chọn ứng dụng nào nằm trên thanh công cụ (hoặc thanh tác vụ) và theo thứ tự nào. Không chọn gì: thanh công cụ giữ bộ mặc định (dẫn đường, nhạc, ứng dụng gần đây, điện thoại).</string>
+    <string name="setup_toggle_compact_rail_title">Thanh công cụ thu gọn</string>
+    <string name="setup_toggle_compact_rail_subtitle">Thanh hẹp hơn, biểu tượng nhỏ hơn và khoảng cách gọn hơn</string>
     <string name="setup_section_connection_log">Nhật ký kết nối</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Không liên kết với Google. Android Auto là thương hiệu của Google LLC.</string>
     <string name="setup_choice_style">Kiểu</string>

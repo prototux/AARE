@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Einstellungen</string>
     <string name="setup_app_entry_notifications">Benachrichtigungen</string>
     <string name="setup_section_app_order">Reihenfolge im Auto</string>
+    <string name="setup_section_car_rail">Leiste im Auto</string>
+    <string name="setup_car_rail_hint">Wähle, welche Apps auf der Leiste (oder der Taskleiste) sitzen und in welcher Reihenfolge. Nichts gewählt: Die Leiste behält ihre eingebaute Auswahl (Navigation, Musik, zuletzt genutzte Apps, Telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakte Leiste</string>
+    <string name="setup_toggle_compact_rail_subtitle">Eine schmalere Leiste mit kleineren Symbolen und engeren Abständen</string>
     <string name="setup_section_connection_log">Verbindungsprotokoll</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nicht mit Google verbunden. Android Auto ist eine Marke von Google LLC.</string>
     <string name="setup_choice_style">Stil</string>

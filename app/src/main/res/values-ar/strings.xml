@@ -117,6 +117,10 @@
     <string name="setup_app_entry_settings">الإعدادات</string>
     <string name="setup_app_entry_notifications">الإشعارات</string>
     <string name="setup_section_app_order">الترتيب في السيارة</string>
+    <string name="setup_section_car_rail">شريط السيارة</string>
+    <string name="setup_car_rail_hint">اختر التطبيقات التي تظهر على الشريط (أو شريط المهام) وترتيبها. إن لم تختر شيئًا، يحتفظ الشريط بمجموعته المدمجة (الملاحة، الموسيقى، التطبيقات الأخيرة، الهاتف).</string>
+    <string name="setup_toggle_compact_rail_title">شريط مضغوط</string>
+    <string name="setup_toggle_compact_rail_subtitle">شريط أضيق، بأيقونات أصغر ومسافات أقل</string>
     <string name="setup_section_connection_log">سجل الاتصال</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · غير مرتبط بشركة Google. Android Auto علامة تجارية مملوكة لشركة Google LLC.</string>
     <string name="setup_choice_style">النمط</string>
