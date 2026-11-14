@@ -235,6 +235,7 @@ class CarSession(
         val inputServices = ArrayList<Service>()
         var mainDisplayId = 0
         val quirks = vehicleOverride
+        session.sensorChannelFirst = quirks?.sensorChannelFirst == true
         for (s in response.channelsList) {
             val kind = AapSession.serviceKind(s)
             if (quirks?.skips(kind) == true) {

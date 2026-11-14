@@ -142,7 +142,7 @@ class PhoneStatusBridge(
         lastBattery = percent
         lastCritical = critical
         if (firstBattery < 0) { firstBattery = percent; firstBatteryAtMs = SystemClock.elapsedRealtime() }
-        if (!aap.sendBatteryStatus(percent, critical, timeRemainingS(percent))) Log.d(TAG, "head unit too old for battery status")
+        aap.sendBatteryStatus(percent, critical, timeRemainingS(percent))
     }
 
     /**
