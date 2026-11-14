@@ -210,6 +210,15 @@ class CarAppConnection(
 
     fun surfaceAvailable(owner: Any, s: Surface, width: Int, height: Int, dpi: Int) {
         surfaceOwner?.takeIf { it !== owner }?.let { surfaceDestroyed(it) }
+        // The same surface at a new size (the map area resized: a card opened, the dashboard's map
+        // card going full screen). Apps that render through a VirtualDisplay of their own size it
+        // once, when the surface comes, and never follow a second onSurfaceAvailable: their map
+        // froze. Telling them the old surface is gone first makes them build it afresh.
+        val previous = surface
+        if (surfaceOwner === owner && previous != null &&
+            (previous.width != width || previous.height != height || previous.dpi != dpi)) {
+            surfaceCallback?.let { cb -> call("onSurfaceDestroyed") { cb.onSurfaceDestroyed(Bundleable.create(previous), it) } }
+        }
         surfaceOwner = owner
         surface = SurfaceContainer(s, width, height, dpi)
         sendSurface()
