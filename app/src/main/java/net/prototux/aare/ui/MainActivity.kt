@@ -138,7 +138,6 @@ import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
-import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
@@ -640,7 +639,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var theme by remember { mutableStateOf(settings.carTheme) }
     var themeId by remember { mutableStateOf(settings.carThemeId) }
     var layoutId by remember { mutableStateOf(settings.carLayoutId) }
-    var accent by remember { mutableStateOf(settings.phoneAccent) }
+    var accent by remember { mutableStateOf(settings.carAccent) }
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
@@ -667,15 +666,12 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
         .split(':').any { ComponentName.unflattenFromString(it) == ComponentName(ctx, MirrorTouchService::class.java) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_look)) {
-            StyleChoices(themeId, layoutId, choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) }) { t, l ->
-                themeId = t; layoutId = l
-                settings.carThemeId = t; settings.carLayoutId = l
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !CarThemes.byId(themeId).phoneColors) {
-                Toggle(stringResource(R.string.setup_toggle_phone_accent_title), stringResource(R.string.setup_toggle_phone_accent_subtitle), accent) {
-                    accent = it; settings.phoneAccent = it
-                }
-            }
+            StyleChoices(
+                themeId, layoutId, accent,
+                choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) },
+                onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
+                onAccent = { accent = it; settings.carAccent = it },
+            )
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
                 theme = it; settings.carTheme = it

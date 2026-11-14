@@ -19,10 +19,10 @@ class CarThemeContrastTest {
         return (hi + 0.05) / (lo + 0.05)
     }
 
-    private fun failures(theme: CarThemeSpec): List<String> = buildList {
+    private fun failures(theme: CarThemeSpec, label: String = theme.id): List<String> = buildList {
         fun check(mode: String, what: String, fg: Color, bg: Color, min: Double) {
             val c = contrast(fg, bg)
-            if (c < min) add("${theme.id} $mode: $what %.2f < $min".format(c))
+            if (c < min) add("$label $mode: $what %.2f < $min".format(c))
         }
         fun scheme(mode: String, s: ColorScheme, x: CarColors) {
             for ((name, bg) in listOf("background" to s.background, "surfaceContainer" to s.surfaceContainer,
@@ -47,6 +47,13 @@ class CarThemeContrastTest {
     @Test
     fun everyThemeIsReadableDayAndNight() {
         val all = CarThemes.all.flatMap(::failures)
+        assertTrue(all.joinToString("\n"), all.isEmpty())
+    }
+
+    /** Single-colour themes take their every colour from the accent, so check them all. */
+    @Test
+    fun everyThemeIsReadableWithEveryAccent() {
+        val all = CarThemes.all.flatMap { theme -> CarAccents.all.flatMap { failures(theme.withAccent(it), "${theme.id}+${it.id}") } }
         assertTrue(all.joinToString("\n"), all.isEmpty())
     }
 

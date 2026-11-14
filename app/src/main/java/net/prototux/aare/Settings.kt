@@ -110,10 +110,13 @@ class Settings(context: Context) {
 
     private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
 
-    /** Take the theme's accent colours from the phone's (Material You, Android 12 and later). */
-    var phoneAccent: Boolean
-        get() = prefs.getBoolean("style_phone_accent", false)
-        set(v) = prefs.edit { putBoolean("style_phone_accent", v) }
+    /**
+     * The accent colour, an id from `CarAccents`: the theme's own ("theme"), the phone's ("phone",
+     * Android 12 and later) or a colour. On a single-colour theme it colours everything.
+     */
+    var carAccent: String
+        get() = prefs.getString("style_accent", null) ?: "theme"
+        set(v) = prefs.edit { putString("style_accent", v) }
 
     /**
      * Passenger mode: ignore the car's "driving" signal, so a passenger can type a destination or

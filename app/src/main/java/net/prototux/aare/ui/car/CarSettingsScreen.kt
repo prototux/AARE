@@ -1,6 +1,5 @@
 package net.prototux.aare.ui.car
 
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.media.Pill
-import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -43,7 +41,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var themeId by remember { mutableStateOf(settings.carThemeId) }
     var layoutId by remember { mutableStateOf(settings.carLayoutId) }
-    var accent by remember { mutableStateOf(settings.phoneAccent) }
+    var accent by remember { mutableStateOf(settings.carAccent) }
     var banners by remember { mutableStateOf(settings.messageBanners) }
     var aloud by remember { mutableStateOf(settings.readMessagesAloud) }
     var audio by remember { mutableStateOf(settings.carAudio) }
@@ -67,14 +65,12 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             }
         }
         item {
-            StyleChoices(themeId, layoutId, choice = { title, options, selected, onSelect -> Choice(title, options, selected, onSelect) }) { t, l ->
-                themeId = t; layoutId = l
-                settings.carThemeId = t; settings.carLayoutId = l
-            }
-        }
-        // Pointless with Material You, whose colours are all the phone's already.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !CarThemes.byId(themeId).phoneColors) {
-            item { SwitchRow(stringResource(R.string.setup_switch_phone_accent), accent) { accent = it; settings.phoneAccent = it } }
+            StyleChoices(
+                themeId, layoutId, accent,
+                choice = { title, options, selected, onSelect -> Choice(title, options, selected, onSelect) },
+                onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
+                onAccent = { accent = it; settings.carAccent = it },
+            )
         }
         item { SwitchRow(stringResource(R.string.setup_switch_dark_bar), darkBar) { darkBar = it; settings.darkBar = it } }
         item { SwitchRow(stringResource(R.string.setup_switch_media_first), mediaFirst) { mediaFirst = it; settings.dashboardMediaFirst = it } }

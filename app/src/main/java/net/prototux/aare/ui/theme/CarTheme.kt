@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.theme
 
+import androidx.annotation.StringRes
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -12,11 +13,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 
 /**
  * Car-screen sizes. Car screens are viewed from ~70 cm at a glance, so sizes follow the car-UI rule
@@ -62,8 +67,9 @@ val LocalCarColors = staticCompositionLocalOf { AareTheme.nightColors }
 data class CarThemeSpec(
     /** Stored in the settings: never change it once released. */
     val id: String,
-    /** Shown in the settings, not translated: a name like "AARE" or "CarPlay". */
+    /** Shown in the settings: a name like "AARE" or "CarPlay", or [nameRes] if set (a word to translate). */
     val name: String,
+    @StringRes val nameRes: Int = 0,
     val day: ColorScheme,
     val night: ColorScheme,
     val dayColors: CarColors,
@@ -78,7 +84,31 @@ data class CarThemeSpec(
      * and [night] are only the stand-in for older phones.
      */
     val phoneColors: Boolean = false,
+    /**
+     * A single-colour theme: everything in one accent colour, by default the accent with this id
+     * (`CarAccents`), or the one the settings pick. [day] and [night] are then rebuilt by `tinted`.
+     */
+    val singleColor: String? = null,
+    /** An outline around the dashboard cards, in the outline colour (0: none). */
+    val cardBorder: Dp = 0.dp,
+    /** A phosphor-like halo around text, in the accent colour (single-colour themes). */
+    val glow: Boolean = false,
+    /** App icons drawn in the accent colour instead of their own (single-colour themes). */
+    val tintIcons: Boolean = false,
+    /** The clock on a seven-segment display ([SegmentFont]), its unlit segments faintly behind. */
+    val segmentClock: Boolean = false,
 )
+
+/**
+ * DSEG7 Classic, a seven-segment display font (SIL Open Font License 1.1, bundled with its licence
+ * in assets/licenses). Digits and a few capitals only: for the clock, never for running text.
+ * Its "!" is a blank as wide as a digit, to line up with the unlit "88:88".
+ */
+val SegmentFont = FontFamily(Font(R.font.dseg7_classic_regular))
+
+/** [CarThemeSpec.name], translated when the name is a word. */
+@Composable
+fun CarThemeSpec.label(): String = if (nameRes != 0) stringResource(nameRes) else name
 
 val LocalCarTheme = staticCompositionLocalOf { AareTheme }
 

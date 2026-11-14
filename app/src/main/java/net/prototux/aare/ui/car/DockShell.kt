@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarTheme
+import net.prototux.aare.ui.theme.appIconFilter
 
 /**
  * The dock layout, like CarPlay's: a dock on the driver's side with the time, three apps, voice and
@@ -57,7 +59,9 @@ internal fun DockShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    // A Surface, not a background: it also sets the content colour, which text without its own
+    // colour (song titles, events) takes. Without it that text is black, unreadable at night.
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
@@ -196,7 +200,7 @@ private fun DockIcon(app: CarAppEntry, sizeDp: Int, onClick: (() -> Unit)?) {
     val m = Modifier.size(sizeDp.dp).clip(shape).background(MaterialTheme.colorScheme.secondaryContainer)
     Box(if (onClick != null) m.clickable(onClick = onClick) else m, contentAlignment = Alignment.Center) {
         val icon = app.icon
-        if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(shape))
+        if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(shape), colorFilter = appIconFilter())
         else Text(app.label.take(1), color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = (sizeDp / 2.5f).sp, fontWeight = FontWeight.SemiBold)
     }
 }
