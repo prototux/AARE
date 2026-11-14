@@ -3,6 +3,7 @@ package net.prototux.aare.aap
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
+import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
@@ -13,6 +14,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.N
 import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
+import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import net.prototux.aare.aap.channels.AudioChannel
 import net.prototux.aare.aap.channels.InputChannel
@@ -355,6 +357,21 @@ open class SessionLoopbackTest {
         // close() is interruptible: it must still reach onClosed.
         assertTrue("onClosed after the grace period", closed.await(3, TimeUnit.SECONDS))
         assertEquals(null, closeError)
+    }
+
+    @Test
+    fun sensorChannelOpensFirst() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        assertEquals("first open request", hu.sensors, hu.openOrder.poll())
+        assertEquals(setOf(1, 2, 3, 4, 5, 6, 7, 8, 9), hu.openedChannels.toSet())
+    }
+
+    @Test
+    fun duplicateOpenResponseIsAnsweredWithUnexpectedMessage() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        hu.send(hu.input, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
+        assertEquals(hu.input, hu.unexpectedReplies.poll(3, TimeUnit.SECONDS))
+        assertFalse("session must go on", closed.await(500, TimeUnit.MILLISECONDS))
     }
 
     @Test

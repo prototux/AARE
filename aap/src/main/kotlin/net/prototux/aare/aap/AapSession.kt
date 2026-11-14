@@ -19,6 +19,8 @@ import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.Se
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.VoiceSessionNotificationOuterClass.VoiceSessionNotification
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
+import com.google.protobuf.CodedInputStream
+import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.MessageLite
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -28,6 +30,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 /** The phone's TLS identity. */
 class PhoneIdentity(val certificate: X509Certificate, val privateKey: PrivateKey, val chain: List<X509Certificate> = emptyList())
@@ -158,6 +161,12 @@ class AapSession(
     }
     private val channels = java.util.concurrent.ConcurrentHashMap<Int, ServiceChannel>()
     private var pendingOpens = 0
+    /** Channels whose open request awaits its response. */
+    private val awaitingOpen = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
+    /** Channels opened only once the sensor channel has been answered (see [onServiceDiscovery]). */
+    private val deferredOpens = AtomicReference<List<ServiceChannel>?>(null)
+    /** Channels that sent data before they were open, logged once each (reader thread only). */
+    private val earlyData = HashSet<Int>()
     /**
      * Set once the head unit said bye-bye: it may hang up before our response is written, and
      * that EOF or broken pipe is then the orderly end it announced, not a failure.
@@ -315,18 +324,7 @@ class AapSession(
         if (msg.control) {
             // Channel-control messages on a service channel: channel open response, ping on old units.
             when (msg.id) {
-                ControlMsg.CHANNEL_OPEN_RESPONSE -> {
-                    val status = ChannelOpenResponse.parseFrom(msg.bodyBytes()).status
-                    if (status == MessageStatus.STATUS_SUCCESS) {
-                        ch.opened = true
-                        log.i("channel ${ch.id} (${ch.name}) open")
-                        runHandler(ch) { ch.onOpened() }
-                    } else {
-                        log.w("head unit refused channel ${ch.id} (${ch.name}): $status")
-                    }
-                    // <= 0 and state guard: a duplicate open-response must not wedge OPENING forever.
-                    if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
-                }
+                ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
                     ch.opened = false
                     runHandler(ch) { ch.onClosed() }
@@ -335,7 +333,40 @@ class AapSession(
             }
             return
         }
+        // A channel's data counts only once the channel is open.
+        if (!ch.opened) {
+            if (earlyData.add(ch.id)) log.w("dropping data on channel ${ch.id} (${ch.name}) before it is open: $msg")
+            return
+        }
         runHandler(ch) { ch.onMessage(msg) }
+    }
+
+    private fun onChannelOpenResponse(ch: ServiceChannel, msg: AapMessage) {
+        if (ch.id !in awaitingOpen) {
+            // An open response for a channel that isn't being opened (a
+            // duplicate, or one never asked for) gets UNEXPECTED_MESSAGE on that channel, in the clear.
+            log.w("unexpected channel open response on channel ${ch.id} (${ch.name})")
+            sendRaw(ch.id, AapMessage.plaintext(ControlMsg.UNEXPECTED_MESSAGE, ByteArray(0)), encrypted = false)
+            return
+        }
+        val body = msg.bodyBytes()
+        val accepted = try {
+            openAccepted(body)
+        } catch (e: InvalidProtocolBufferException) {
+            log.w("dropping malformed channel open response on channel ${ch.id} (${ch.name})", e)
+            return
+        }
+        awaitingOpen.remove(ch.id)
+        if (accepted) {
+            ch.opened = true
+            log.i("channel ${ch.id} (${ch.name}) open")
+            runHandler(ch) { ch.onOpened() }
+        } else {
+            val resp = ChannelOpenResponse.parseFrom(body)
+            log.w("head unit refused channel ${ch.id} (${ch.name}): ${if (resp.hasStatus()) resp.status else "unknown status"}")
+        }
+        if (ch.service.hasSensorSourceService()) openDeferred()
+        if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
     }
 
     private inline fun runHandler(ch: ServiceChannel, block: () -> Unit) {
@@ -510,9 +541,17 @@ class AapSession(
         for (ch in wanted) {
             ch.attach(this)
             channels[ch.id] = ch
-            send(ch.id, ControlMsg.CHANNEL_OPEN_REQUEST,
-                ChannelOpenRequest.newBuilder().setPriority(ch.openPriority).setServiceId(ch.id).build(),
-                control = true)
+        }
+        // The sensor channel first, the others after it (once its
+        // startup checks pass; here once the head unit has answered the sensor channel, or after
+        // DEFERRED_OPEN_MS if it doesn't).
+        val sensors = wanted.filter { it.service.hasSensorSourceService() }
+        if (sensors.isEmpty() || sensors.size == wanted.size) {
+            wanted.forEach(::requestOpen)
+        } else {
+            deferredOpens.set(wanted - sensors.toSet())
+            sensors.forEach(::requestOpen)
+            schedule({ openDeferred() }, DEFERRED_OPEN_MS, TimeUnit.MILLISECONDS)
         }
         if (wanted.isEmpty()) {
             enterRunning()
@@ -525,6 +564,19 @@ class AapSession(
             }, 10, TimeUnit.SECONDS)
         }
         startKeepAlive()
+    }
+
+    private fun requestOpen(ch: ServiceChannel) {
+        awaitingOpen.add(ch.id)
+        send(ch.id, ControlMsg.CHANNEL_OPEN_REQUEST,
+            ChannelOpenRequest.newBuilder().setPriority(ch.openPriority).setServiceId(ch.id).build(),
+            control = true)
+    }
+
+    /** Opens the channels held back for the sensor channel, once (reader or timer thread). */
+    private fun openDeferred() {
+        if (closed.get()) return
+        deferredOpens.getAndSet(null)?.forEach(::requestOpen)
     }
 
     /** From the reader or, on an open timeout, the timer: [Callbacks.onRunning] must still run once. */
@@ -601,6 +653,8 @@ class AapSession(
     companion object {
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
+        /** Longest wait for the sensor channel's answer before opening the other channels. */
+        private const val DEFERRED_OPEN_MS = 1_000L
 
         private fun now() = System.nanoTime() / 1_000_000
 
@@ -621,6 +675,24 @@ class AapSession(
                 hu.headUnitModel.ifEmpty { r.headUnitModel }).filter { it.isNotEmpty() }.joinToString(" ")
             val services = r.channelsList.joinToString { serviceKind(it) + "#" + it.id }
             return "$name [${r.displayName}] services: $services"
+        }
+
+        /**
+         * Whether a channel open response accepts the channel. Only SUCCESS
+         * does, so a status this build doesn't know (which protobuf keeps as an unknown field and
+         * would read as the SUCCESS default) leaves the channel closed. A response with no status
+         * at all still counts as SUCCESS: proto3 head units (Ford SYNC 4, #74) leave the 0 out.
+         */
+        internal fun openAccepted(body: ByteArray): Boolean {
+            val resp = ChannelOpenResponse.parseFrom(body)
+            if (resp.hasStatus()) return resp.status == MessageStatus.STATUS_SUCCESS
+            val input = CodedInputStream.newInstance(body)
+            while (true) {
+                val tag = input.readTag()
+                if (tag == 0) return true
+                if (tag ushr 3 == 1) return false
+                input.skipField(tag)
+            }
         }
 
         fun serviceKind(s: Service): String = when {
