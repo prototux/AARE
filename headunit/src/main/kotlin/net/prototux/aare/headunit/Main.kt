@@ -70,6 +70,22 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N
                          dpad:up|down|left|right|center  reverse:SECS  night  day  park  drive
 
+Testing a phone app (all off by default; channels: 1 video, 2 media, 3 guidance, 4 system, 5 mic,
+6 input, 7 sensors, 8 nav, 9 playback, 10 bluetooth, 11 cluster, 12 AAC sink, 13 unknown service,
+14 wifi projection, 15 phone status):
+  --name S               display name (default "AARE desktop head unit")
+  --make S --model S --year S   the car (default AARE, Desktop, 2026)
+  --hu-make S --hu-model S --hu-sw S   the head unit (default AARE, desktop head unit, 1.0)
+  --vehicle-id S         also send a vehicle id
+  --car-bt-address MAC   the Bluetooth service's car address (default SKIP_THIS_BLUETOOTH); then pairing
+                         requests are answered: success, already paired
+  --aac-sink             also list an AAC media sink (listed only: its setup is never answered)
+  --unknown-service      also list a generic notification service
+  --video-codec C        h264 (default), h265 or vp9: the only codec the video sink offers (the offer
+                         only: the window still decodes H.264 only)
+  --wifi-projection SSID,BSSID   also list a Wi-Fi projection service with that BSSID; for phones that ask
+                         for credentials, answer with the SSID and a fixed fake password
+
 Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · numpad 8/4/6/2 + 5 D-pad
       Enter select · K play/pause · , . prev/next
       N night/day · P parked/driving · Space pause the drive"""
@@ -87,13 +103,20 @@ fun main(args: Array<String>) {
         exitProcess(2)
     }
     if (opts.containsKey("gps-only")) return gpsOnly(opts)
+    val sim = try {
+        Sim.parse(opts)
+    } catch (e: IllegalArgumentException) {
+        System.err.println(e.message)
+        exitProcess(2)
+    }
+    if (sim != Sim()) println("test options: $sim")
     if (!VideoDecoder.available()) {
         System.err.println("ffmpeg not found: install it (it decodes the car screen).")
         return
     }
     if (opts.containsKey("headless")) System.setProperty("java.awt.headless", "true")
     else runCatching { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()) }
-    SwingUtilities.invokeLater { DesktopHeadUnit(opts).show() }
+    SwingUtilities.invokeLater { DesktopHeadUnit(opts, sim).show() }
 }
 
 /**
@@ -144,7 +167,7 @@ internal fun pkcs8KeyDer(pem: String): ByteArray {
 }
 
 /** The window, the connection loop and the simulated drive. */
-private class DesktopHeadUnit(val opts: Map<String, String>) {
+private class DesktopHeadUnit(val opts: Map<String, String>, sim: Sim) {
     val portrait = opts.containsKey("portrait")
     val res = (opts["res"] ?: if (portrait) "720x1280" else "1280x720").split("x").map { it.toInt() }
         .let { if (portrait && it[0] > it[1]) it.reversed() else it }
@@ -157,6 +180,8 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         rightHandDrive = opts.containsKey("rhd"),
         cluster = opts.containsKey("cluster"),
         noTouch = opts.containsKey("no-touch"),
+        name = opts["name"] ?: HeadUnit.Options().name,
+        sim = sim,
     )
     val identity: PhoneIdentity = loadIdentity()
     val route: RouteDrive? = opts["route"].let { r -> if (r == "none") null else runCatching { RouteDrive.load(r ?: "paris-marseille") }.getOrNull() }

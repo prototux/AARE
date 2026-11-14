@@ -2,6 +2,7 @@ package net.prototux.aare.headunit
 
 import aap_protobuf.service.ServiceOuterClass.Service
 import aap_protobuf.service.bluetooth.BluetoothServiceOuterClass.BluetoothService
+import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestOuterClass.AudioFocusRequest
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
@@ -21,6 +22,7 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.genericnotification.GenericNotificationServiceOuterClass.GenericNotificationService
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.KeyEventOuterClass.KeyEvent
@@ -65,9 +67,14 @@ import aap_protobuf.service.sensorsource.message.SensorRequestOuterClass.SensorR
 import aap_protobuf.service.sensorsource.message.SensorResponseOuterClass.SensorResponse
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import aap_protobuf.service.sensorsource.message.SpeedDataOuterClass.SpeedData
+import aap_protobuf.service.wifiprojection.WifiProjectionServiceOuterClass.WifiProjectionService
+import aap_protobuf.service.wifiprojection.message.AccessPointTypeOuterClass.AccessPointType
+import aap_protobuf.service.wifiprojection.message.WifiCredentialsResponseOuterClass.WifiCredentialsResponse
+import aap_protobuf.service.wifiprojection.message.WifiSecurityModeOuterClass.WifiSecurityMode
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import com.google.protobuf.MessageLite
 import net.prototux.aare.aap.AapMessage
+import net.prototux.aare.aap.BluetoothMsg
 import net.prototux.aare.aap.ControlMsg
 import net.prototux.aare.aap.Cryptor
 import net.prototux.aare.aap.FrameReader
@@ -79,6 +86,7 @@ import net.prototux.aare.aap.NavStatusMsg
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.SensorMsg
 import net.prototux.aare.aap.Transport
+import net.prototux.aare.aap.WifiProjectionMsg
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -111,6 +119,8 @@ class HeadUnit(
          * so the phone drives the UI entirely from keys and rotary detents.
          */
         val noTouch: Boolean = false,
+        /** Test-harness identity and discovery variants (all off by default). */
+        val sim: Sim = Sim(),
     )
 
     interface Listener {
@@ -147,6 +157,10 @@ class HeadUnit(
     private val chPlayback = 9
     private val chBluetooth = 10
     private val chCluster = 11
+    // Only listed with the matching test option (--aac-sink, --unknown-service, --wifi-projection).
+    private val chAac = 12
+    private val chUnknown = 13
+    private val chWifi = 14
     private val chPhone = 15
     private val phoneText = PhoneStatusText()
 
@@ -314,6 +328,14 @@ class HeadUnit(
             chNav -> navigation(m)
             chPlayback -> playback(m)
             chPhone -> if (m.id == net.prototux.aare.aap.PhoneStatusMsg.STATUS) ui.phone(phoneText.status(m.bodyBytes()))
+            // Only with a real car address: the plain head unit never answered pairing requests.
+            chBluetooth -> if (m.id == BluetoothMsg.PAIRING_REQUEST && config.sim.carBtAddress != null) send(chBluetooth, BluetoothMsg.PAIRING_RESPONSE,
+                BluetoothPairingResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).setAlreadyPaired(true).build())
+            chWifi -> config.sim.wifiProjection?.let { w ->
+                if (m.id == WifiProjectionMsg.CREDENTIALS_REQUEST) send(chWifi, WifiProjectionMsg.CREDENTIALS_RESPONSE, WifiCredentialsResponse.newBuilder()
+                    .setCarWifiSsid(w.ssid).setCarWifiPassword(FAKE_WIFI_PASSWORD).setCarWifiSecurityMode(WifiSecurityMode.WPA2_PERSONAL)
+                    .setAccessPointType(AccessPointType.STATIC).build())
+            }
         }
     }
 
@@ -507,20 +529,24 @@ class HeadUnit(
 
     internal fun discovery(): ServiceDiscoveryResponse {
         val res = codecSize.first
+        val sim = config.sim
         fun audio(id: Int, type: AudioStreamType, rate: Int, ch: Int) = Service.newBuilder().setId(id).setMediaSinkService(
             MediaSinkService.newBuilder().setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type).addAudioConfigs(pcm(rate, ch)))
         return ServiceDiscoveryResponse.newBuilder()
-            .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake("AARE").setModel("Desktop").setYear("2026")
-                .setHeadUnitMake("AARE").setHeadUnitModel("desktop head unit").setHeadUnitSoftwareVersion("1.0"))
+            .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake(sim.make).setModel(sim.model).setYear(sim.year)
+                .setHeadUnitMake(sim.huMake).setHeadUnitModel(sim.huModel).setHeadUnitSoftwareVersion(sim.huSoftwareVersion)
+                .apply { sim.vehicleId?.let { setVehicleId(it) } })
             .setDisplayName(config.name)
             .setDriverPosition(if (config.rightHandDrive) DriverPosition.DRIVER_POSITION_RIGHT else DriverPosition.DRIVER_POSITION_LEFT)
             .setConnectionConfiguration(ConnectionConfiguration.newBuilder().setPingConfiguration(
                 PingConfiguration.newBuilder().setIntervalMs(1000).setTimeoutMs(3000).setTrackedPingCount(5).setHighLatencyThresholdMs(200)))
             .addChannels(Service.newBuilder().setId(chVideo).setMediaSinkService(MediaSinkService.newBuilder()
-                .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
+                .setAvailableType(sim.videoCodec)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)
                     .setFrameRate(if (config.fps60) VideoFrameRateType.VIDEO_FPS_60 else VideoFrameRateType.VIDEO_FPS_30)
-                    .setDensity(config.dpi).setWidthMargin(0).setHeightMargin(0))))
+                    .setDensity(config.dpi).setWidthMargin(0).setHeightMargin(0)
+                    // A config with no codec reads as H.264: only another codec is spelled out.
+                    .apply { if (sim.videoCodec != MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP) setVideoCodecType(sim.videoCodec) })))
             .apply {
                 if (config.cluster) addChannels(Service.newBuilder().setId(chCluster).setMediaSinkService(MediaSinkService.newBuilder()
                     .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
@@ -550,7 +576,13 @@ class HeadUnit(
             .addChannels(Service.newBuilder().setId(chPlayback).setMediaPlaybackService(MediaPlaybackStatusService.getDefaultInstance()))
             .addChannels(Service.newBuilder().setId(chPhone).setPhoneStatusService(
                 aap_protobuf.service.phonestatus.PhoneStatusServiceOuterClass.PhoneStatusService.getDefaultInstance()))
-            .addChannels(Service.newBuilder().setId(chBluetooth).setBluetoothService(BluetoothService.newBuilder().setCarAddress("SKIP_THIS_BLUETOOTH")))
+            .addChannels(Service.newBuilder().setId(chBluetooth).setBluetoothService(BluetoothService.newBuilder().setCarAddress(sim.carBtAddress ?: "SKIP_THIS_BLUETOOTH")))
+            .apply {
+                if (sim.aacSink) addChannels(Service.newBuilder().setId(chAac).setMediaSinkService(MediaSinkService.newBuilder()
+                    .setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC).setAudioType(AudioStreamType.AUDIO_STREAM_MEDIA).addAudioConfigs(pcm(48_000, 2))))
+                if (sim.unknownService) addChannels(Service.newBuilder().setId(chUnknown).setGenericNotificationService(GenericNotificationService.getDefaultInstance()))
+                sim.wifiProjection?.let { addChannels(Service.newBuilder().setId(chWifi).setWifiProjectionService(WifiProjectionService.newBuilder().setCarWifiBssid(it.bssid))) }
+            }
             .build()
     }
 
@@ -581,5 +613,8 @@ class HeadUnit(
     companion object {
         const val KEYCODE_ROTARY = 65536
         val SUPPORTED_KEYS = listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 126, 127, 65536, 65537, 65538)
+
+        /** A fake: what --wifi-projection answers a phone asking for the car's Wi-Fi credentials. */
+        const val FAKE_WIFI_PASSWORD = "aare-test-password"
     }
 }
