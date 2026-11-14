@@ -118,6 +118,7 @@
     <string name="setup_app_entry_phone">Điện thoại</string>
     <string name="setup_app_entry_settings">Cài đặt</string>
     <string name="setup_app_entry_notifications">Thông báo</string>
+    <string name="launcher_search_hint">Tìm ứng dụng</string>
     <string name="setup_section_app_order">Thứ tự trên xe</string>
     <string name="setup_section_connection_log">Nhật ký kết nối</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Không liên kết với Google. Android Auto là thương hiệu của Google LLC.</string>

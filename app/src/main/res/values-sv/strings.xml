@@ -118,6 +118,7 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Inställningar</string>
     <string name="setup_app_entry_notifications">Aviseringar</string>
+    <string name="launcher_search_hint">Sök appar</string>
     <string name="setup_section_app_order">Ordning i bilen</string>
     <string name="setup_section_connection_log">Anslutningslogg</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Inte anknuten till Google. Android Auto är ett varumärke som tillhör Google LLC.</string>

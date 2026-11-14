@@ -118,6 +118,7 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Beállítások</string>
     <string name="setup_app_entry_notifications">Értesítések</string>
+    <string name="launcher_search_hint">Alkalmazások keresése</string>
     <string name="setup_section_app_order">Sorrend az autóban</string>
     <string name="setup_section_connection_log">Kapcsolati napló</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nem áll kapcsolatban a Google-lel. Az Android Auto a Google LLC védjegye.</string>

@@ -210,6 +210,7 @@
     <string name="setup_app_entry_phone">Phone</string>
     <string name="setup_app_entry_settings">Settings</string>
     <string name="setup_app_entry_notifications">Notifications</string>
+    <string name="launcher_search_hint">Search apps</string>
     <string name="setup_section_app_order">Order in the car</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_log_save">Save</string>

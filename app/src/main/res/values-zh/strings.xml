@@ -116,6 +116,7 @@
     <string name="setup_app_entry_phone">电话</string>
     <string name="setup_app_entry_settings">设置</string>
     <string name="setup_app_entry_notifications">通知</string>
+    <string name="launcher_search_hint">搜索应用</string>
     <string name="setup_section_app_order">车机中的排列顺序</string>
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · 与 Google 无关联。Android Auto 是 Google LLC 的商标。</string>
