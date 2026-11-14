@@ -83,6 +83,7 @@ import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
+import net.prototux.aare.ui.theme.appIconFilter
 
 /**
  * Root of the car screen: a rail on the driver's side and the content area.
@@ -319,7 +320,7 @@ private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
         Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(LocalCarTheme.current.appIcon))
+        Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
     }
 }
 
@@ -408,10 +409,12 @@ internal fun Dashboard(
 @Composable
 private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val r = LocalCarDimens.current.cardRadius
+    val border = LocalCarTheme.current.cardBorder
     Box(
         modifier
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
+            .let { if (border > 0.dp) it.border(border, MaterialTheme.colorScheme.outline, RoundedCornerShape(r)) else it }
             .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
     ) { content() }
 }
@@ -490,7 +493,7 @@ private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
 fun AppIcon(app: CarAppEntry, sizeDp: Int) {
     Box(contentAlignment = Alignment.BottomEnd) {
         if (app.icon != null) {
-            Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(LocalCarTheme.current.appIcon))
+            Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
         } else {
             Box(Modifier.size(sizeDp.dp).clip(LocalCarTheme.current.appIcon).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                 Text(app.label.take(1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)

@@ -2,10 +2,9 @@ package net.prototux.aare.ui.theme
 
 import android.content.Context
 import android.os.Build
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.ui.graphics.luminance
+import net.prototux.aare.R
 
 /** This theme with the phone's own colours if it takes them (Material You), else unchanged. */
 fun CarThemeSpec.forPhone(context: Context): CarThemeSpec {
@@ -13,26 +12,23 @@ fun CarThemeSpec.forPhone(context: Context): CarThemeSpec {
     return copy(day = dynamicLightColorScheme(context), night = dynamicDarkColorScheme(context))
 }
 
-/**
- * This theme with the phone's accent colours (Material You, from its wallpaper) instead of its own.
- * Only the accents change: the surfaces, the text colours and the call colours stay the theme's.
- * Unchanged before Android 12, which has no such colours.
- */
-fun CarThemeSpec.withPhoneAccent(context: Context): CarThemeSpec {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return this
+/** The phone's accent (Material You), or null before Android 12. */
+fun CarAccents.fromPhone(context: Context): CarAccent? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
     val dark = dynamicDarkColorScheme(context)
     val light = dynamicLightColorScheme(context)
-    // By the scheme's own background, not day or night: some themes stay dark in the day.
-    fun ColorScheme.accented(): ColorScheme {
-        val from = if (background.luminance() < 0.5f) dark else light
-        return copy(
-            primary = from.primary,
-            onPrimary = from.onPrimary,
-            primaryContainer = from.primaryContainer,
-            onPrimaryContainer = from.onPrimaryContainer,
-            tertiary = from.tertiary,
-            onTertiary = from.onTertiary,
-        )
-    }
-    return copy(day = day.accented(), night = night.accented())
+    return CarAccent(
+        PHONE, R.string.accent_phone,
+        dark = AccentTones(dark.primary, dark.onPrimary, dark.primaryContainer, dark.onPrimaryContainer),
+        light = AccentTones(light.primary, light.onPrimary, light.primaryContainer, light.onPrimaryContainer),
+    )
 }
+
+/** This theme with the accent the settings store under [id] ([CarAccents.THEME], [CarAccents.PHONE] or a colour's). */
+fun CarThemeSpec.withAccent(id: String, context: Context): CarThemeSpec = withAccent(
+    when (id) {
+        CarAccents.THEME -> null
+        CarAccents.PHONE -> CarAccents.fromPhone(context)
+        else -> CarAccents.byId(id)
+    },
+)
