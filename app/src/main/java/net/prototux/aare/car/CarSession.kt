@@ -440,7 +440,7 @@ class CarSession(
             display?.invalidate()
         }
 
-        override fun onUiConfig(config: UiConfig) {
+        override fun onUiConfig(config: UiConfig, applied: () -> Unit) {
             // New insets or margins: lay the projection out again with them.
             main.post {
                 if (closed) return@post
@@ -448,6 +448,7 @@ class CarSession(
                 Log.i(TAG, "UI config update from the head unit")
                 try {
                     startProjection(last.toBuilder().setUiConfig(config).build(), rightHandDrive)
+                    applied()
                 } catch (e: Exception) {
                     Log.e(TAG, "can't apply the new UI config, keeping the old one", e)
                     try {

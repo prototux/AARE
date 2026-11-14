@@ -1,10 +1,13 @@
 package net.prototux.aare.aap
 
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.UpdateUiConfigRequest
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
+import aap_protobuf.service.media.shared.message.InsetsOuterClass.Insets
 import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
+import aap_protobuf.service.media.shared.message.UiThemeOuterClass.UiTheme
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import net.prototux.aare.aap.cert.SelfSignedCertificate
@@ -55,6 +58,8 @@ class MediaStreamTest {
         val focused = CountDownLatch(1)
         /** UI configs handed to the phone's layout, in order. */
         val laidOut = LinkedBlockingQueue<UiConfig>()
+        /** Video frames the head unit had when each layout was done. */
+        val framesWhenLaidOut = LinkedBlockingQueue<Int>()
 
         init {
             val server = ServerSocket(0)
@@ -127,8 +132,20 @@ class MediaStreamTest {
                 }.start()
             }
             override fun onKeyFrameNeeded() {}
+            override fun onUiConfig(config: UiConfig, applied: () -> Unit) {
+                laidOut.add(config)
+                // Laid out a little later, on another thread, as on the phone's main thread.
+                Thread {
+                    Thread.sleep(100)
+                    framesWhenLaidOut.add(hu.videoFrames.get())
+                    applied()
+                }.start()
+            }
         }
     }
+
+    private fun insets(top: Int) = Insets.newBuilder().setTop(top).setBottom(0).setLeft(0).setRight(0).build()
+    private fun uiRequest(ui: UiConfig) = UpdateUiConfigRequest.newBuilder().setUiConfig(ui).build()
 
     @Test
     fun videoStartsWhateverTheConfigStatus() {
@@ -214,5 +231,37 @@ class MediaStreamTest {
         assertTrue(guidance.enableMediaStats)
         assertEquals(500_000_000, guidance.mediaStatsReportInterval.nanos)
         assertEquals(400_000_000, guidance.audioBufferLimit.nanos)
+    }
+
+    @Test
+    fun uiConfigUpdateIsMergedAndConfirmedAfterAFrame() {
+        // A 1.6 head unit sends only what changes: the margins it started with stay.
+        val link = Link(uiConfig = UiConfig.newBuilder().setMargins(insets(10)).build())
+        assertTrue(link.focused.await(5, TimeUnit.SECONDS))
+        assertTrue(link.hu.firstVideoFrame.await(5, TimeUnit.SECONDS))
+        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setContentInsets(insets(30)).build()))
+
+        val reply = link.hu.uiConfigReplies.poll(3, TimeUnit.SECONDS)!!
+        assertEquals("merged into the config in use", 10, reply.margins.top)
+        assertEquals(30, reply.contentInsets.top)
+        assertEquals(reply, link.laidOut.poll())
+        assertEquals(reply, link.video!!.chosen!!.uiConfig)
+        val laidOutAt = link.framesWhenLaidOut.poll()!!
+        assertTrue("the reply follows a frame sent after the layout", link.hu.framesAtUiConfigReply.poll()!! > laidOutAt)
+
+        // A 1.6 head unit may not set the theme this way: refused, no reply, layout unchanged.
+        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setUiTheme(UiTheme.UI_THEME_DARK).build()))
+        assertEquals(null, link.hu.uiConfigReplies.poll(500, TimeUnit.MILLISECONDS))
+        assertEquals(null, link.laidOut.poll())
+    }
+
+    @Test
+    fun uiConfigUpdateReplacesFromProtocolFourThree() {
+        val link = Link(major = 4, minor = 3, uiConfig = UiConfig.newBuilder().setMargins(insets(10)).build())
+        assertTrue(link.focused.await(5, TimeUnit.SECONDS))
+        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setContentInsets(insets(30)).build()))
+        val reply = link.hu.uiConfigReplies.poll(3, TimeUnit.SECONDS)!!
+        assertFalse("a 4.3 head unit sends the whole config", reply.hasMargins())
+        assertEquals(30, reply.contentInsets.top)
     }
 }

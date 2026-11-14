@@ -26,6 +26,7 @@ import net.prototux.aare.aap.MediaMsg
 import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import java.util.ArrayDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -269,8 +270,12 @@ class VideoChannel(
         /** Frames were dropped to catch up: the next frame sent must be a key frame. */
         fun onKeyFrameNeeded()
 
-        /** The head unit changed the UI layout (insets, margins, theme) of the running stream. */
-        fun onUiConfig(config: UiConfig) {}
+        /**
+         * The head unit changed the UI layout (insets, margins) of the running stream: lay the
+         * projection out with [config], then call [applied]. The head unit gets its reply once a
+         * frame has followed.
+         */
+        fun onUiConfig(config: UiConfig, applied: () -> Unit) = applied()
     }
 
     val configs: List<VideoConfiguration> = service.mediaSinkService.videoConfigsList
@@ -288,6 +293,10 @@ class VideoChannel(
     private val pending = ArrayDeque<Pending>()
     private val lock = Any()
     @Volatile private var codecConfig: ByteArray? = null
+    /** A UI config request that came before the configuration was chosen: applied once it is. */
+    @Volatile private var earlyUiRequest: UpdateUiConfigRequest? = null
+    /** Applied UI configs, confirmed to the head unit after the next frame sent. */
+    private val uiReplies = ConcurrentLinkedQueue<UiConfig>()
     private var needKeyFrame = true
     @Volatile var droppedFrames = 0L
         private set
@@ -329,6 +338,7 @@ class VideoChannel(
         synchronized(lock) { sentAt.clear() }
         startStream(index)
         listener.onVideoStart(index, configs[index])
+        earlyUiRequest?.let { earlyUiRequest = null; onUiConfigRequest(it) }
         // Ask to be shown; head units answer with a focus notification. At the data priority so
         // it follows START: the head unit must not be asked to show a stream it hasn't started.
         send(MediaMsg.VIDEO_FOCUS_REQUEST, VideoFocusRequestNotification.newBuilder()
@@ -351,18 +361,35 @@ class VideoChannel(
                     .setUnsolicited(false).build())
                 setFocus(r.mode)
             }
-            MediaMsg.UPDATE_UI_CONFIG_REQUEST -> {
-                // The head unit changes the layout at runtime (insets, theme): apply it and
-                // confirm with the config we now use, like the official phone.
-                val ui = UpdateUiConfigRequest.parseFrom(msg.bodyBytes()).uiConfig
-                chosen = chosen?.toBuilder()?.setUiConfig(ui)?.build()
-                listener.onUiConfig(ui)
-                send(MediaMsg.UPDATE_UI_CONFIG_REPLY, UpdateUiConfigReply.newBuilder().setUiConfig(ui).build())
-            }
+            MediaMsg.UPDATE_UI_CONFIG_REQUEST -> onUiConfigRequest(UpdateUiConfigRequest.parseFrom(msg.bodyBytes()))
             MediaMsg.UPDATE_UI_CONFIG_REPLY -> Unit
             else -> Unit
         }
     }
+
+    /**
+     * The head unit changes the layout at runtime (insets, margins), as [UiConfigUpdate] says. As
+     * the reply carries the config now in use and goes only once the
+     * projection is laid out with it and a frame has followed; a request it refuses gets no reply
+     * (ending the session over it is one option; AARE only logs it).
+     */
+    private fun onUiConfigRequest(request: UpdateUiConfigRequest) {
+        val current = chosen ?: run { earlyUiRequest = request; return }
+        val ui = current.uiConfig.takeIf { current.hasUiConfig() }
+        when (val r = UiConfigUpdate.apply(ui, request, session.headUnitAtLeast(4, 3))) {
+            is UiConfigUpdate.Refused -> session.log.w("video: UI config update refused, ${r.why}")
+            is UiConfigUpdate.Accepted -> {
+                chosen = current.toBuilder().setUiConfig(r.config).build()
+                listener.onUiConfig(r.config) {
+                    // Nothing on the car's screen to wait for: confirm at once.
+                    if (started && focused) uiReplies.add(r.config) else sendUiConfigReply(r.config)
+                }
+            }
+        }
+    }
+
+    private fun sendUiConfigReply(config: UiConfig) =
+        send(MediaMsg.UPDATE_UI_CONFIG_REPLY, UpdateUiConfigReply.newBuilder().setUiConfig(config).build(), dataPriority)
 
     private fun setFocus(mode: VideoFocusMode) {
         focusHeard = true
@@ -455,6 +482,9 @@ class VideoChannel(
                 sendLatencyMs = (System.nanoTime() - t) / 1_000_000
                 p.recycle(p.buf)
             }
+            // Layout changes applied since the last frame are confirmed behind this one.
+            var reply = uiReplies.poll()
+            while (reply != null) { sendUiConfigReply(reply); reply = uiReplies.poll() }
         }
         pendingFrames = pending.size
     }
@@ -462,6 +492,7 @@ class VideoChannel(
     override fun onClosed() {
         super.onClosed()
         focused = false
+        uiReplies.clear(); earlyUiRequest = null
         synchronized(lock) { while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) }; sentAt.clear(); pendingFrames = 0 }
     }
 
