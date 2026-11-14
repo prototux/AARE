@@ -140,11 +140,12 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected abstract val dataPriority: Int
 
     /**
-     * Whether this stream runs in "drop overflow" mode for this head unit (video
-     * to 6.0 and later, audio to 5.0 and later): its START says so (field 3 = 2) and carries media
-     * options (field 4), and from then on sends without waiting for acks and ignores
-     * those that come; the head unit drops what it can't take. Valid once the channel is attached
-     * (the head unit's version is known before any channel opens).
+     * Whether this stream runs in "drop overflow" mode: its START says so (field 3 = 2) and
+     * carries media options (field 4), and from then on it sends without waiting for acks and
+     * ignores those that come; the head unit drops what it can't take. Only when asked for this
+     * car (vehicles.json `dropOverflow`), and only to head units new enough for it (video 6.0 and
+     * later, audio 5.0 and later): every other head unit keeps the ack-paced stream. Valid once the
+     * channel is attached (the head unit's version is known before any channel opens).
      */
     abstract val dropsOverflow: Boolean
 
@@ -255,6 +256,8 @@ class VideoChannel(
     private val listener: Listener,
     /** H.264 Baseline unless the head unit only offers H.265 and the phone can encode it. */
     val codec: MediaCodecType = MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP,
+    /** Allow drop overflow mode on this head unit (see [dropsOverflow]); off by default. */
+    private val allowDropOverflow: Boolean = false,
 ) : MediaSinkChannel(service, "video", codec) {
 
     interface Listener {
@@ -318,7 +321,7 @@ class VideoChannel(
 
     override val openPriority = 0
     override val dataPriority = Priority.VIDEO
-    override val dropsOverflow: Boolean get() = session.headUnitAtLeast(6, 0)
+    override val dropsOverflow: Boolean get() = allowDropOverflow && session.headUnitAtLeast(6, 0)
     override fun startMediaOptions() = StartMediaOptions.video()
 
     override fun onConfig(cfg: Config) {
@@ -497,7 +500,12 @@ class VideoChannel(
 }
 
 /** One of the head unit's audio outputs: media, guidance (navigation voice), system sounds, telephony. */
-class AudioChannel(service: Service, private val listener: Listener? = null) :
+class AudioChannel(
+    service: Service,
+    private val listener: Listener? = null,
+    /** Allow drop overflow mode on this head unit (see [dropsOverflow]); off by default. */
+    private val allowDropOverflow: Boolean = false,
+) :
     MediaSinkChannel(service, "audio:${service.mediaSinkService.audioType}", MediaCodecType.MEDIA_CODEC_AUDIO_PCM) {
 
     interface Listener {
@@ -508,7 +516,7 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
 
     val streamType: AudioStreamType = service.mediaSinkService.audioType
     override val dataPriority = Priority.AUDIO
-    override val dropsOverflow: Boolean get() = session.headUnitAtLeast(5, 0)
+    override val dropsOverflow: Boolean get() = allowDropOverflow && session.headUnitAtLeast(5, 0)
     override fun startMediaOptions() = StartMediaOptions.audio(streamType, session.headUnitVersion?.first ?: 0)
     /** Underflows the car reported on this stream (0x800B). */
     @Volatile var underflows = 0

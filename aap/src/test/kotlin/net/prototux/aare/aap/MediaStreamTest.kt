@@ -49,6 +49,8 @@ class MediaStreamTest {
         minor: Int = 6,
         videoConfigStatus: Config.Status = Config.Status.STATUS_READY,
         uiConfig: UiConfig? = null,
+        /** Drop overflow mode allowed for this car (vehicles.json), off as by default. */
+        dropOverflow: Boolean = false,
     ) {
         val hu: HeadUnitSimulator
         @Volatile var video: VideoChannel? = null
@@ -78,8 +80,8 @@ class MediaStreamTest {
                     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> =
                         response.channelsList.mapNotNull { s ->
                             when {
-                                s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> VideoChannel(s, Listener()).also { video = it }
-                                s.hasMediaSinkService() -> AudioChannel(s).also { audio += it }
+                                s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> VideoChannel(s, Listener(), allowDropOverflow = dropOverflow).also { video = it }
+                                s.hasMediaSinkService() -> AudioChannel(s, allowDropOverflow = dropOverflow).also { audio += it }
                                 else -> null
                             }
                         }
@@ -172,7 +174,8 @@ class MediaStreamTest {
 
     @Test
     fun olderHeadUnitsGetPlainStarts() {
-        val link = Link(major = 1, minor = 6)
+        // Even with drop overflow allowed for the car: a 1.6 head unit is too old for it.
+        val link = Link(major = 1, minor = 6, dropOverflow = true)
         assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
         val video = link.start(link.hu.video)
         assertFalse(video.hasAckMode())
@@ -185,9 +188,21 @@ class MediaStreamTest {
     }
 
     @Test
+    fun dropOverflowIsOffUnlessAllowedForTheCar() {
+        val link = Link(major = 6, minor = 0)
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        assertFalse(link.start(link.hu.video).hasAckMode())
+        assertFalse(link.start(link.hu.video).hasMediaOptions())
+        val media = link.startAudio("MEDIA")
+        assertFalse(link.start(link.hu.mediaAudio).hasAckMode())
+        assertFalse("acks pace the stream, as before", media.ackless)
+        assertFalse(link.video!!.ackless)
+    }
+
+    @Test
     fun audioDropsOverflowFromProtocolFive() {
         // 5.x: audio in drop overflow mode with media options (no statistics yet); video unchanged.
-        val link = Link(major = 5, minor = 0)
+        val link = Link(major = 5, minor = 0, dropOverflow = true)
         assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
         assertFalse(link.start(link.hu.video).hasAckMode())
         val media = link.startAudio("MEDIA")
@@ -208,7 +223,7 @@ class MediaStreamTest {
 
     @Test
     fun videoDropsOverflowFromProtocolSix() {
-        val link = Link(major = 6, minor = 0)
+        val link = Link(major = 6, minor = 0, dropOverflow = true)
         link.hu.ackVideo = false
         assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
         val start = link.start(link.hu.video)

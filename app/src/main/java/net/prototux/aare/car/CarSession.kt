@@ -248,9 +248,9 @@ class CarSession(
                         0 -> if (video == null) {
                             mainDisplayId = s.mediaSinkService.displayId
                             videoCodec = pickVideoCodec(s.mediaSinkService.videoConfigsList)
-                            video = VideoChannel(s, videoListener(rhd), videoType(videoCodec)).also { channels += it }
+                            video = VideoChannel(s, videoListener(rhd), videoType(videoCodec), allowDropOverflow = quirks?.dropOverflow == true).also { channels += it }
                         }
-                        1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s) }
+                        1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s, allowDropOverflow = quirks?.dropOverflow == true) }
                     }
                 }
                 s.hasMediaSinkService() -> {
@@ -266,7 +266,7 @@ class CarSession(
                         sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
                             Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
                                 "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
-                        else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
+                        else -> AudioChannel(s, audioListener, allowDropOverflow = quirks?.dropOverflow == true).also { audio += it; channels += it }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
