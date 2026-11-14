@@ -38,7 +38,9 @@ import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFo
 import aap_protobuf.service.media.video.message.VideoFocusNotificationOuterClass.VideoFocusNotification
 import aap_protobuf.service.media.video.message.VideoFocusRequestNotificationOuterClass.VideoFocusRequestNotification
 import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.NavigationStatusService
+import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
 import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.NavigationState
+import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
 import aap_protobuf.service.radio.RadioServiceOuterClass.RadioService
 import aap_protobuf.service.radio.message.RadioPropertiesOuterClass.RadioProperties
 import aap_protobuf.service.radio.message.RadioTypeOuterClass.RadioType
@@ -89,6 +91,8 @@ class HeadUnitSimulator(
      * does, even the ones aasdk's definitions call required.
      */
     omitZeroFields: Boolean = false,
+    /** The protocol minor version the head unit announces (1.x). */
+    private val protocolMinor: Int = 6,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -124,13 +128,17 @@ class HeadUnitSimulator(
     val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
     /** Navigation states the phone sent, in order. */
     val navStates = LinkedBlockingQueue<NavigationState>()
+    /** The older turn events the phone sent, in order. */
+    val navTurns = LinkedBlockingQueue<NavigationNextTurnEvent>()
+    /** Navigation statuses the phone sent, in order. */
+    val navStatuses = LinkedBlockingQueue<NavigationStatus.NavigationStatusEnum>()
     /** False plays a head unit that never answers the phone's bye-bye. */
     @Volatile var answerByeBye = true
 
     fun start() {
         Thread({
             try {
-                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, 1, 0, 6))
+                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, 1, 0, protocolMinor.toByte()))
                 while (true) handle(reader.read())
             } catch (e: Throwable) {
                 if (byeBye.count > 0L) error = e
@@ -167,7 +175,11 @@ class HeadUnitSimulator(
                 }
                 send(sensors, SensorMsg.BATCH, batch.build())
             }
-            navStatus -> if (m.id == NavStatusMsg.STATE) navStates.add(NavigationState.parseFrom(m.bodyBytes()))
+            navStatus -> when (m.id) {
+                NavStatusMsg.STATE -> navStates.add(NavigationState.parseFrom(m.bodyBytes()))
+                NavStatusMsg.TURN_EVENT -> navTurns.add(NavigationNextTurnEvent.parseFrom(m.bodyBytes()))
+                NavStatusMsg.STATUS -> navStatuses.add(NavigationStatus.parseFrom(m.bodyBytes()).status)
+            }
         }
     }
 
