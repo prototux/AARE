@@ -105,6 +105,8 @@ class CarRuntime(
     var onPhoneGuidance: ((PhoneGuidance?) -> Unit)? = null
     /** Hands the screen back to the car's own UI; null (no "Exit to car" entry) without a head unit. Set before [start]. */
     var exitToCar: (() -> Unit)? = null
+    /** The driving restrictions came on or went off (the car's signal, or the passenger-mode setting). */
+    var onDrivingRestricted: (() -> Unit)? = null
 
     // ------------------------------------------------------------------ HostEnvironment
 
@@ -289,7 +291,11 @@ class CarRuntime(
         }
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
-        ui.drivingRestricted = carDriving && !settings.ignoreDriving
+        val restricted = carDriving && !settings.ignoreDriving
+        if (ui.drivingRestricted != restricted) {
+            ui.drivingRestricted = restricted
+            onDrivingRestricted?.invoke()
+        }
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
