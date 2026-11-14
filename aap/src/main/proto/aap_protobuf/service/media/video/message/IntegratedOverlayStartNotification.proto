@@ -1,0 +1,10 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_INTEGRATED_OVERLAY_START_NOTIFICATION (head unit -> phone);
+// read by the phone. The field name is AARE's guess: the value is handed to the overlay
+// listeners.
+message IntegratedOverlayStartNotification {
+    optional int32 content_type = 1;
+}
