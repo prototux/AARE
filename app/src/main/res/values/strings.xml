@@ -37,6 +37,8 @@
     <string name="setup_page_advanced_subtitle">Head unit server, certificates, log</string>
     <string name="setup_page_car_data_title">Car data</string>
     <string name="setup_page_car_data_subtitle">Live speed, gear and sensors from the car</string>
+    <string name="setup_page_about_title">About</string>
+    <string name="setup_page_about_subtitle">What AARE is, the project links, and who helped build it</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Connect to a car to see its data.</string>
@@ -87,6 +89,19 @@
     <string name="car_data_app_label">Car data</string>
     <string name="car_data_show_in_car_title">Show on the car screen</string>
     <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">What AARE is</string>
+    <string name="about_text">AARE is an open-source reimplementation of the phone side of Android Auto: it speaks the Android Auto projection protocol directly to the car\'s head unit, draws the car screen itself, and runs navigation, media and messaging apps without needing Google Play Services. AARE %1$s is free software, licensed GPL-3.0-or-later.</string>
+    <string name="about_section_links_title">Project</string>
+    <string name="about_link_repository">Repository</string>
+    <string name="about_link_issues">Issues</string>
+    <string name="about_link_discussions">Discussions</string>
+    <string name="about_section_thanks_title">Thanks</string>
+    <string name="about_thanks_security_review">Security review</string>
+    <string name="about_thanks_code_and_docs">Code and docs</string>
+    <string name="about_thanks_head_unit_reports">Head-unit reports</string>
+    <string name="about_thanks_tips">Tips</string>
 
     <!-- vehicles: per-car overrides from vehicles.json -->
     <string name="vehicles_section_title">Per-vehicle overrides</string>
