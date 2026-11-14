@@ -61,6 +61,15 @@ class CarAppListingTest {
     }
 
     @Test
+    fun aSettingsScreenThatIsAlsoAnAppIsListed() {
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_POI)))
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_NAVIGATION)))
+        // A feature (the cluster) or a non-Car-App category doesn't make a settings screen an app.
+        assertFalse(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_CLUSTER)))
+        assertFalse(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, "android.intent.category.DEFAULT")))
+    }
+
+    @Test
     fun messagingAppsAreListedWithoutTheGoogleApp() {
         // AARE runs on phones without the Google app.
         assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_MESSAGING)))

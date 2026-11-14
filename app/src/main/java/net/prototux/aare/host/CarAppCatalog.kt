@@ -28,6 +28,8 @@ data class CarAppInfo(
 
     companion object {
         const val SERVICE_ACTION = "androidx.car.app.CarAppService"
+        /** Every Car App Library category starts with this; FEATURE_ ones are features, not kinds of app. */
+        const val CATEGORY_PREFIX = "androidx.car.app.category."
         const val CATEGORY_NAVIGATION = "androidx.car.app.category.NAVIGATION"
         const val CATEGORY_POI = "androidx.car.app.category.POI"
         const val CATEGORY_IOT = "androidx.car.app.category.IOT"
@@ -56,8 +58,8 @@ internal fun decideIsNavigation(categories: Set<String>, requestedPermissions: S
 
 /**
  * Whether a Car App Library service is one of the car's apps: not
- * a service it never shows ([AppQuirks.HIDDEN_CAR_APP_SERVICES]) and not a settings screen
- * (SETTINGS category).
+ * a service it never shows ([AppQuirks.HIDDEN_CAR_APP_SERVICES]) and not only a settings screen
+ * (SETTINGS as its one kind of app; a service that also declares, say, POI is still that app).
  *
  * Messaging apps (MESSAGING category) are also hidden while the Google app isn't
  * installed and enabled. AARE deliberately doesn't: it's meant for phones without Google services
@@ -65,7 +67,13 @@ internal fun decideIsNavigation(categories: Set<String>, requestedPermissions: S
  */
 internal fun listedAsCarApp(packageName: String, serviceClass: String, categories: Set<String>): Boolean =
     "$packageName/$serviceClass" !in AppQuirks.HIDDEN_CAR_APP_SERVICES &&
-        CarAppInfo.CATEGORY_SETTINGS !in categories
+        !isSettingsOnly(categories)
+
+private fun isSettingsOnly(categories: Set<String>): Boolean =
+    CarAppInfo.CATEGORY_SETTINGS in categories && categories.none {
+        it != CarAppInfo.CATEGORY_SETTINGS && it.startsWith(CarAppInfo.CATEGORY_PREFIX) &&
+            !it.startsWith(CarAppInfo.CATEGORY_PREFIX + "FEATURE_")
+    }
 
 /** Finds Car App Library apps: services answering `androidx.car.app.CarAppService`. */
 object CarAppCatalog {
