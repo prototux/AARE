@@ -175,6 +175,15 @@ class Settings(context: Context) {
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO
         set(v) = prefs.edit { putString("car_theme", v) }
 
+    /**
+     * Where [THEME_AUTO] takes night mode from: the car's own day/night signal ([NIGHT_SOURCE_CAR],
+     * the default) or the phone's ambient light sensor ([NIGHT_SOURCE_LIGHT_SENSOR], with
+     * hysteresis — see `LightNightDecider`). Has no effect with [THEME_DARK] or [THEME_LIGHT].
+     */
+    var nightSource: String
+        get() = prefs.getString("night_source", NIGHT_SOURCE_CAR) ?: NIGHT_SOURCE_CAR
+        set(v) = prefs.edit { putString("night_source", v) }
+
     /** Stream phone audio to the car (needs the screen-capture consent for audio). */
     var carAudio: Boolean
         get() = prefs.getBoolean("car_audio", true)
@@ -365,6 +374,8 @@ class Settings(context: Context) {
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
+        const val NIGHT_SOURCE_CAR = "car"
+        const val NIGHT_SOURCE_LIGHT_SENSOR = "light_sensor"
         const val WALLPAPER_CUSTOM = "custom"
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"

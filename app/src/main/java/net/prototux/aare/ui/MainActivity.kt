@@ -684,6 +684,7 @@ private fun Toggle(title: String, subtitle: String, checked: Boolean, onChange: 
 private fun CarScreenSettings(settings: Settings, refresh: Int) {
     val ctx = LocalContext.current
     var theme by remember { mutableStateOf(settings.carTheme) }
+    var nightSource by remember { mutableStateOf(settings.nightSource) }
     var themeId by remember { mutableStateOf(settings.carThemeId) }
     var layoutId by remember { mutableStateOf(settings.carLayoutId) }
     var accent by remember { mutableStateOf(settings.carAccent) }
@@ -721,6 +722,14 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
                 theme = it; settings.carTheme = it
+            }
+            // Only matters with "Car's day/night": a fixed theme has no night mode to source.
+            if (theme == Settings.THEME_AUTO) {
+                Spacer(Modifier.height(12.dp))
+                Choices(stringResource(R.string.setup_choice_night_source), listOf(
+                    Settings.NIGHT_SOURCE_CAR to stringResource(R.string.setup_choice_night_source_car),
+                    Settings.NIGHT_SOURCE_LIGHT_SENSOR to stringResource(R.string.setup_choice_night_source_light_sensor),
+                ), nightSource) { nightSource = it; settings.nightSource = it }
             }
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
