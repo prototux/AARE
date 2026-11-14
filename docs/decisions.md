@@ -150,3 +150,14 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+## Car apps' own colours
+
+A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
+else on its application, else its application theme) with `carColorPrimary`/`carColorPrimaryDark`
+and `carColorSecondary`/`carColorSecondaryDark`. CarColor.PRIMARY and SECONDARY in that app's
+templates take those colours (day or night variant), for every app and API level. Everything else
+on the car screen, and a pair the app doesn't set, keeps the car theme and its accent: the app's
+colours only reach what the app itself asked to be coloured. The theme *style* an app can report
+from Car App Library 1.9 (`getAppTheme`) only changes progress-bar end caps, which the library
+version AARE builds against can't express, so it isn't asked.
+

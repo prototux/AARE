@@ -54,6 +54,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import net.prototux.aare.R
 import net.prototux.aare.car.CarData
+import net.prototux.aare.host.templates.AppThemeColors
 
 /**
  * One hosted Car App Library app: binds its CarAppService and plays the part Android Auto plays.
@@ -100,6 +101,8 @@ class CarAppConnection(
         private set
     var libraryVersion: String = ""
         private set
+    /** The app's car theme colours, read once (main thread, on first draw). */
+    val themeColors: AppThemeColors by lazy { CarAppTheme.load(context, info.service) }
 
     private val main = Handler(Looper.getMainLooper())
     private var carApp: ICarApp? = null

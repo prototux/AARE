@@ -57,16 +57,16 @@ import net.prototux.aare.ui.theme.LocalCarColors
 internal val ColorScheme.isNight: Boolean get() = background.luminance() < 0.5f
 
 /**
- * Maps a CarColor to the theme. PRIMARY/SECONDARY are the app's accent colours in Android Auto;
- * we cannot read the app's car theme, so they map to the theme's accent and second accent.
- * DEFAULT, null or unknown types give [default].
+ * Maps a CarColor to the theme. PRIMARY/SECONDARY are the app's own accent colours, from its car
+ * theme ([app]), in their day or night variant; where the app doesn't set them, the theme's accent
+ * and second accent. DEFAULT, null or unknown types give [default].
  */
-internal fun CarColor?.resolve(scheme: ColorScheme, colors: CarColors, default: Color): Color {
+internal fun CarColor?.resolve(scheme: ColorScheme, colors: CarColors, default: Color, app: AppThemeColors = AppThemeColors.NONE): Color {
     if (this == null) return default
     val night = scheme.isNight
     return when (type) {
-        CarColor.TYPE_PRIMARY -> scheme.primary
-        CarColor.TYPE_SECONDARY -> scheme.tertiary
+        CarColor.TYPE_PRIMARY -> app.primary?.let { Color(it.pick(night)) } ?: scheme.primary
+        CarColor.TYPE_SECONDARY -> app.secondary?.let { Color(it.pick(night)) } ?: scheme.tertiary
         CarColor.TYPE_RED -> colors.red
         CarColor.TYPE_GREEN -> colors.green
         CarColor.TYPE_BLUE -> colors.blue
@@ -79,7 +79,8 @@ internal fun CarColor?.resolve(scheme: ColorScheme, colors: CarColors, default: 
 /** [CarColor.resolve] against the current MaterialTheme. */
 @Composable
 @ReadOnlyComposable
-internal fun carColor(color: CarColor?, default: Color): Color = color.resolve(MaterialTheme.colorScheme, LocalCarColors.current, default)
+internal fun carColor(color: CarColor?, default: Color): Color =
+    color.resolve(MaterialTheme.colorScheme, LocalCarColors.current, default, LocalTemplateHost.current.appColors)
 
 /** A CarColor that asks for something other than the default look. */
 internal fun CarColor?.isSet(): Boolean = this != null && type != CarColor.TYPE_DEFAULT
@@ -151,8 +152,9 @@ private fun StyledText(
     val hasTimer = remember(cs) { cs is Spanned && cs.getSpans(0, cs.length, TimerSpan::class.java).isNotEmpty() }
     val now = elapsedTicker(hasTimer)
     val colors = LocalCarColors.current
-    val styled = remember(cs, scheme, colors, content, now) {
-        styleCarText(cs, scheme, colors, content, now) { host.click(it) }
+    val app = host.appColors
+    val styled = remember(cs, scheme, colors, app, content, now) {
+        styleCarText(cs, scheme, colors, app, content, now) { host.click(it) }
     }
     val iconSize = with(LocalDensity.current) { (if (style.fontSize.isSpecified) style.fontSize else 24.sp).toDp() * 1.15f }
     val inline = styled.icons.associate { (id, span) ->
@@ -203,6 +205,7 @@ private fun styleCarText(
     cs: CharSequence,
     scheme: ColorScheme,
     colors: CarColors,
+    app: AppThemeColors,
     default: Color,
     nowElapsed: Long,
     onClick: (OnClickDelegate) -> Unit,
@@ -261,7 +264,7 @@ private fun styleCarText(
         val e = outIndex[en]
         if (a >= e) continue
         when (s) {
-            is ForegroundCarColorSpan -> b.addStyle(SpanStyle(color = s.color.resolve(scheme, colors, default)), a, e)
+            is ForegroundCarColorSpan -> b.addStyle(SpanStyle(color = s.color.resolve(scheme, colors, default, app)), a, e)
             is ClickableSpan -> {
                 val delegate = s.onClickDelegate
                 b.addLink(
