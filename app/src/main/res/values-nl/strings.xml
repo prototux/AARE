@@ -305,6 +305,11 @@
     <string name="media_search_app">%1$s doorzoeken</string>
     <string name="media_action_search">Zoeken</string>
     <string name="media_action_browse">Bladeren</string>
+    <string name="media_action_show_video">Video tonen</string>
+    <string name="media_video_close">Terug naar de speler</string>
+    <string name="media_video_full_screen">Volledig scherm</string>
+    <string name="media_video_exit_full_screen">Volledig scherm verlaten</string>
+    <string name="media_video_paused_driving">Video gepauzeerd tijdens het rijden; het geluid gaat door.</string>
     <string name="media_now_playing_label">Nu afspelend</string>
     <string name="media_nothing_here">Niets hier</string>
     <string name="media_couldnt_load_more">Kon niet meer laden</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Geen Android Auto-app · gebruik tijdens parkeren</string>
     <string name="standalone_starting">Starten…</string>
     <string name="standalone_paused_driving">Gepauzeerd tijdens het rijden.</string>
+    <string name="standalone_media_video_title">Video uit media-apps</string>
+    <string name="standalone_media_video_subtitle">Voegt \"Video tonen\" toe aan het mediascherm van de auto: de media-app opent op het autoscherm voor zijn video. Alleen geparkeerd; de hoes komt terug zodra je rijdt.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Een webbrowser op het autoscherm, voor wanneer je geparkeerd staat</string>

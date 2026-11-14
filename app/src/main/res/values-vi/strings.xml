@@ -305,6 +305,11 @@
     <string name="media_search_app">Tìm trong %1$s</string>
     <string name="media_action_search">Tìm kiếm</string>
     <string name="media_action_browse">Duyệt</string>
+    <string name="media_action_show_video">Hiện video</string>
+    <string name="media_video_close">Quay lại trình phát</string>
+    <string name="media_video_full_screen">Toàn màn hình</string>
+    <string name="media_video_exit_full_screen">Thoát toàn màn hình</string>
+    <string name="media_video_paused_driving">Video tạm dừng khi đang lái xe; âm thanh vẫn phát.</string>
     <string name="media_now_playing_label">Đang phát</string>
     <string name="media_nothing_here">Không có gì ở đây</string>
     <string name="media_couldnt_load_more">Không thể tải thêm</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Không phải ứng dụng Android Auto · dùng khi đã đỗ xe</string>
     <string name="standalone_starting">Đang khởi động…</string>
     <string name="standalone_paused_driving">Tạm dừng khi đang lái xe.</string>
+    <string name="standalone_media_video_title">Video từ ứng dụng đa phương tiện</string>
+    <string name="standalone_media_video_subtitle">Thêm \"Hiện video\" vào màn hình đa phương tiện của xe: ứng dụng đa phương tiện mở trên màn hình xe để phát video. Chỉ khi đỗ xe; ảnh bìa sẽ trở lại khi bạn lái.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Trình duyệt</string>
     <string name="browser_app_row_subtitle">Trình duyệt web trên màn hình xe, dùng khi bạn đã đỗ xe</string>

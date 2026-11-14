@@ -305,6 +305,11 @@
     <string name="media_search_app">Szukaj w %1$s</string>
     <string name="media_action_search">Szukaj</string>
     <string name="media_action_browse">Przeglądaj</string>
+    <string name="media_action_show_video">Pokaż wideo</string>
+    <string name="media_video_close">Wróć do odtwarzacza</string>
+    <string name="media_video_full_screen">Pełny ekran</string>
+    <string name="media_video_exit_full_screen">Zamknij pełny ekran</string>
+    <string name="media_video_paused_driving">Wideo wstrzymane podczas jazdy; dźwięk gra dalej.</string>
     <string name="media_now_playing_label">Teraz odtwarzane</string>
     <string name="media_nothing_here">Nic tu nie ma</string>
     <string name="media_couldnt_load_more">Nie można wczytać więcej</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Nie jest aplikacją Android Auto · użycie po zaparkowaniu</string>
     <string name="standalone_starting">Uruchamianie…</string>
     <string name="standalone_paused_driving">Wstrzymane podczas jazdy.</string>
+    <string name="standalone_media_video_title">Wideo z aplikacji multimedialnych</string>
+    <string name="standalone_media_video_subtitle">Dodaje „Pokaż wideo” do ekranu multimediów w aucie: aplikacja multimedialna otwiera się na ekranie auta, by pokazać swoje wideo. Tylko na postoju; podczas jazdy wraca okładka.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Przeglądarka</string>
     <string name="browser_app_row_subtitle">Przeglądarka internetowa na ekranie samochodu, na czas postoju</string>

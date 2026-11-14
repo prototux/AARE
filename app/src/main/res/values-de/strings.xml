@@ -305,6 +305,11 @@
     <string name="media_search_app">%1$s durchsuchen</string>
     <string name="media_action_search">Suche</string>
     <string name="media_action_browse">Durchsuchen</string>
+    <string name="media_action_show_video">Video anzeigen</string>
+    <string name="media_video_close">Zurück zum Player</string>
+    <string name="media_video_full_screen">Vollbild</string>
+    <string name="media_video_exit_full_screen">Vollbild beenden</string>
+    <string name="media_video_paused_driving">Video während der Fahrt pausiert; der Ton läuft weiter.</string>
     <string name="media_now_playing_label">Läuft gerade</string>
     <string name="media_nothing_here">Hier ist nichts</string>
     <string name="media_couldnt_load_more">Konnte nicht mehr laden</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
     <string name="standalone_paused_driving">Während der Fahrt pausiert.</string>
+    <string name="standalone_media_video_title">Video aus Medien-Apps</string>
+    <string name="standalone_media_video_subtitle">Fügt „Video anzeigen“ zum Medienbildschirm im Auto hinzu: Die Medien-App öffnet sich für ihr Video auf dem Autobildschirm. Nur beim Parken; beim Fahren kommt das Cover zurück.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Ein Webbrowser auf dem Autobildschirm, für wenn du geparkt bist</string>

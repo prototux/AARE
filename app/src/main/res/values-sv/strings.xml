@@ -305,6 +305,11 @@
     <string name="media_search_app">Sök i %1$s</string>
     <string name="media_action_search">Sök</string>
     <string name="media_action_browse">Bläddra</string>
+    <string name="media_action_show_video">Visa video</string>
+    <string name="media_video_close">Tillbaka till spelaren</string>
+    <string name="media_video_full_screen">Helskärm</string>
+    <string name="media_video_exit_full_screen">Avsluta helskärm</string>
+    <string name="media_video_paused_driving">Video pausad under körning; ljudet fortsätter.</string>
     <string name="media_now_playing_label">Spelas nu</string>
     <string name="media_nothing_here">Inget här</string>
     <string name="media_couldnt_load_more">Kunde inte ladda mer</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Inte en Android Auto-app · användning vid parkering</string>
     <string name="standalone_starting">Startar…</string>
     <string name="standalone_paused_driving">Pausad under körning.</string>
+    <string name="standalone_media_video_title">Video från medieappar</string>
+    <string name="standalone_media_video_subtitle">Lägger till \"Visa video\" på bilens medieskärm: medieappen öppnas på bilskärmen för sin video. Bara parkerad; skivomslaget kommer tillbaka när du kör.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Webbläsare</string>
     <string name="browser_app_row_subtitle">En webbläsare på bilens skärm, för när du är parkerad</string>

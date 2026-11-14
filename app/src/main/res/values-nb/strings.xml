@@ -305,6 +305,11 @@
     <string name="media_search_app">Søk i %1$s</string>
     <string name="media_action_search">Søk</string>
     <string name="media_action_browse">Bla gjennom</string>
+    <string name="media_action_show_video">Vis video</string>
+    <string name="media_video_close">Tilbake til spilleren</string>
+    <string name="media_video_full_screen">Fullskjerm</string>
+    <string name="media_video_exit_full_screen">Avslutt fullskjerm</string>
+    <string name="media_video_paused_driving">Video satt på pause under kjøring; lyden fortsetter.</string>
     <string name="media_now_playing_label">Spiller nå</string>
     <string name="media_nothing_here">Ingenting her</string>
     <string name="media_couldnt_load_more">Kunne ikke laste mer</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Ikke en Android Auto-app · bruk ved parkering</string>
     <string name="standalone_starting">Starter…</string>
     <string name="standalone_paused_driving">Satt på pause under kjøring.</string>
+    <string name="standalone_media_video_title">Video fra mediaapper</string>
+    <string name="standalone_media_video_subtitle">Legger til \"Vis video\" på bilens mediaskjerm: mediaappen åpnes på bilskjermen for videoen sin. Bare parkert; albumomslaget kommer tilbake når du kjører.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Nettleser</string>
     <string name="browser_app_row_subtitle">En nettleser på bilskjermen, for når du er parkert</string>
