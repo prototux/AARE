@@ -6,7 +6,9 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
+import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
@@ -295,6 +297,7 @@ class CarSession(
         mainInput?.let { s ->
             InputChannel(s, inputListener).also { ch ->
                 ch.touchScreen?.let { touchSize = it.width to it.height }
+                setUpInput(ch)
                 channels += ch
                 Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
@@ -588,6 +591,41 @@ class CarSession(
 
     @Volatile private var touchSize: Pair<Int, Int>? = null
 
+    /** The car's input channel, for input feedback. */
+    @Volatile private var input: InputChannel? = null
+    /** Focus navigation by the car's touchpad, when the car says its touchpad is for that. */
+    @Volatile private var touchpad: TouchpadNavigator? = null
+
+    /** Keeps the car's input channel and sets up its touchpad, if it has one. */
+    private fun setUpInput(ch: InputChannel) {
+        input = ch
+        val pad = ch.touchPad ?: return
+        // A touchpad is used only to move the focus, and only one the car marks for
+        // UI navigation; another pad's events go to apps that read touchpads, which AARE has none of.
+        val line = if (pad.uiNavigation) {
+            val thresholds = TouchpadThresholds.of(pad)
+            touchpad = TouchpadNavigator(thresholds) { code -> display?.moveFocus(code) == true }
+            "focus navigation, step ${thresholds.move}/${thresholds.multiMove}"
+        } else "not for UI navigation: ignored"
+        val physical = if (pad.physicalWidth != 0 && pad.physicalHeight != 0) " (${pad.physicalWidth}x${pad.physicalHeight} mm)" else ""
+        Log.i(TAG, "input: touchpad ${pad.width}x${pad.height}$physical sensitivity ${pad.sensitivity}: $line")
+        DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
+    }
+
+    /** A touchpad report (reader thread). */
+    private fun onTouchpad(ev: TouchEvent) {
+        val nav = touchpad ?: return
+        // Drop a report without pointers or naming a pointer it doesn't carry.
+        if (ev.pointerDataCount == 0 || ev.actionIndex >= ev.pointerDataCount) return
+        val p = ev.getPointerData(0)
+        val action = ev.action.number
+        main.post {
+            if (closed || display == null) return@post
+            // The car can click or buzz on each step.
+            if (nav.onEvent(action, p.x.toFloat(), p.y.toFloat())) input?.sendFeedback(FeedbackEvent.FEEDBACK_FOCUS_CHANGE)
+        }
+    }
+
     /** The car's keys, with metastate and long presses injected on the main thread. */
     private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
         override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
@@ -622,6 +660,7 @@ class CarSession(
                     }
                 }
             }
+            if (report.hasTouchpadEvent()) onTouchpad(report.touchpadEvent)
         }
     }
 
@@ -667,6 +706,8 @@ class CarSession(
         val flags = if (key.down && key.longPress) KeyEvent.FLAG_LONG_PRESS else 0
         d.dispatchKey(KeyEvent(t, t, if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
             key.repeat, key.metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags))
+        // With a touchpad for navigation, the car is asked for its select feedback.
+        if (key.code == KeyEvent.KEYCODE_DPAD_CENTER && !key.down && touchpad != null) input?.sendFeedback(FeedbackEvent.FEEDBACK_SELECT)
     }
 
     /**
