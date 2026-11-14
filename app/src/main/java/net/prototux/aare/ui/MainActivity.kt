@@ -1451,6 +1451,7 @@ private fun LicenceLine() {
 }
 
 /** The About page: what AARE is, links to the project, and everyone who helped build it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AboutScreen() {
     val ctx = LocalContext.current
@@ -1459,7 +1460,7 @@ private fun AboutScreen() {
     }
     Spacer(Modifier.height(16.dp))
     Section(stringResource(R.string.about_section_links_title)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Pill(stringResource(R.string.about_link_repository), Icons.Rounded.Code) {
                 ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.REPOSITORY)))
             }
