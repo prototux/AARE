@@ -125,6 +125,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
@@ -824,6 +825,7 @@ private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: I
 private fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
     val ctx = LocalContext.current
     var enabled by remember { mutableStateOf(settings.carAudio) }
+    var carMic by remember { mutableStateOf(settings.carMicForPhoneApps) }
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
@@ -889,6 +891,19 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 val mpm = ctx.getSystemService(MediaProjectionManager::class.java)
                 consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
                     else mpm.createScreenCaptureIntent())
+            }
+        }
+        Section(stringResource(R.string.audio_section_car_mic)) {
+            Toggle(stringResource(R.string.audio_toggle_car_mic_title), stringResource(R.string.audio_toggle_car_mic_subtitle), carMic) {
+                carMic = it; settings.carMicForPhoneApps = it
+            }
+            if (carMic) {
+                val ready = CarMicForApps.available()
+                Text(stringResource(when {
+                    ready -> R.string.audio_car_mic_ready
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> R.string.audio_car_mic_needs_android10
+                    else -> R.string.audio_car_mic_needs_shizuku
+                }), style = MaterialTheme.typography.bodyMedium, color = if (ready) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
             }
         }
     }

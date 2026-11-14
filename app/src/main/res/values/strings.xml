@@ -319,6 +319,12 @@
     <string name="audio_playback_ready">Ready. Media only: no navigation voice, some apps opt out, and the phone keeps playing too.</string>
     <string name="audio_playback_not_ready">Works everywhere, with limits: media only, no navigation voice. Android asks to capture the screen: choose Entire screen (also used by the phone screen).</string>
     <string name="audio_notice_setup_hint">Open AARE on the phone and set up car audio to hear the phone in the car</string>
+    <string name="audio_section_car_mic">Car microphone</string>
+    <string name="audio_toggle_car_mic_title">Car microphone for phone apps</string>
+    <string name="audio_toggle_car_mic_subtitle">While connected to a car with a microphone, voice typing, voice recorders and voice messages on the phone hear the car instead of the phone. Calls keep their own microphone. Needs Shizuku.</string>
+    <string name="audio_car_mic_ready">Ready: takes effect at the next connection.</string>
+    <string name="audio_car_mic_needs_android10">Needs Android 10 or newer.</string>
+    <string name="audio_car_mic_needs_shizuku">Needs Shizuku, running and allowed for AARE (see the Shizuku method above).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Phone screen</string>

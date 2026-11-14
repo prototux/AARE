@@ -69,6 +69,7 @@ import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CarAudioOut
+import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.audio.PcmSource
 import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuPolicySource
@@ -155,6 +156,8 @@ class CarSession(
     @Volatile private var videoCodec: VideoCodecKind = VideoCodecKind.H264
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
+    /** The car's mic for the phone's own apps (Settings.carMicForPhoneApps); null when off or the car has none. */
+    private var phoneAppsMic: CarMicForApps? = null
     @Volatile private var mediaFocus = false
     /** The car lets navigation voice play (but not music). */
     @Volatile private var guidanceFocusState = false
@@ -338,6 +341,10 @@ class CarSession(
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
+            if (settings.carMicForPhoneApps) mic?.let { m ->
+                val cfg = m.config
+                phoneAppsMic = CarMicForApps(context, micRouter, cfg?.samplingRate ?: 16_000, cfg?.numberOfChannels ?: 1).also { it.start() }
+            }
         }
     }
 
@@ -978,6 +985,7 @@ class CarSession(
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
+        phoneAppsMic?.stop(); phoneAppsMic = null
         micRouter.shutdown()
         teardownVideo()
         runtime.stop()

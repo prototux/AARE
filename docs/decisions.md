@@ -150,3 +150,26 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Car microphone for phone apps
+
+Opt-in (`Settings.carMicForPhoneApps`, off by default), Shizuku on Android 10+. The Shizuku helper
+registers, as the shell, an audio policy with an injection (recorder) mix matched to the
+DEFAULT, MIC, VOICE_RECOGNITION and UNPROCESSED capture presets, and watches the phone's recordings
+(`AudioManager` recording callbacks: the shell sees each app's uid). When another app records with
+one of those sources, AARE opens the car's mic (shared with car apps in `MicRouter`), pipes its PCM
+to the helper, and the helper plays it into the mix; 1.5 s after the last such recording stops, the
+car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInjector.kt`.
+
+- Lazy, not always on: the mix's track plays only while the car's mic delivers. Android moves a
+  matching recording to the mix only while its track plays, so the recording starts on the phone's
+  mic and moves to the car's a moment later (the input is reopened under it; apps on AAudio may see
+  a disconnect). Keeping a silent track playing for the whole session would avoid the move, but
+  apps would record silence whenever the car refuses or lacks a mic, and the phone would run an
+  audio path all drive long.
+- Not VOICE_COMMUNICATION (calls and VoIP keep their own route), not CAMCORDER, not hotword.
+  AARE's own recordings are excluded by uid where the platform's recorder mixes take a uid rule;
+  where they don't, they could only ever hear the car's mic, so there is no loop.
+- No voice-session message to the car for phone apps (car apps send one): it announces an assistant
+  session, which head units may answer with their own UI or by lowering their sound; a voice note
+  in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
