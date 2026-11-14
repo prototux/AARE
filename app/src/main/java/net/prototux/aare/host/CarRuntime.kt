@@ -18,13 +18,13 @@ import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.navigation.model.Trip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -44,7 +44,7 @@ import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.launch.StandaloneDisplay
 import net.prototux.aare.launch.isNavigationApp
 import net.prototux.aare.launch.isStandaloneNavigation
-import net.prototux.aare.launch.pauseStandalonePlayback
+import net.prototux.aare.launch.StandalonePlaybackGuard
 import net.prototux.aare.launch.standaloneDisplay
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.car.BrowserScreen
@@ -354,6 +354,11 @@ class CarRuntime(
         })
         scope.launch { media.apps.collectLatest { refreshApps() } }
         scope.launch { watchCalls() }
+        // Parked-only launched apps stay paused while driving (not in passenger mode), on screen or not.
+        scope.launch {
+            snapshotFlow { if (ui.drivingRestricted) parkedOnlyPackages() else emptySet() }
+                .collect { playbackGuard.keepPaused(it) }
+        }
         scope.launch { watchDashboardInfo() }
         scope.launch {
             CarNotificationListener.guidance.collect { g ->
@@ -378,12 +383,28 @@ class CarRuntime(
         running.remove(this)
         runCatching { context.unregisterReceiver(packageReceiver) }
         settings.unregisterListener(settingsListener)
+        playbackGuard.release()
         connections.values.forEach { it.release() }
         connections.clear()
         finished.clear()
         clusterConnections.values.forEach { it.release() }
         clusterConnections.clear()
         if (ownsMedia) media.release()
+    }
+
+    private val playbackGuard = StandalonePlaybackGuard(context)
+
+    /**
+     * The launched apps whose rule pauses them while driving. Not one that is also a hosted media app:
+     * its sound is allowed while driving, through the car's media screen.
+     */
+    private fun parkedOnlyPackages(): Set<String> {
+        val rules = settings.standaloneDrivingRules
+        val hostedMedia = ui.apps.filter { it.kind == CarAppKind.MEDIA }.mapTo(HashSet()) { it.packageName }
+        return ui.apps.filter {
+            it.kind == CarAppKind.STANDALONE && it.packageName !in hostedMedia &&
+                standaloneDisplay(rules[it.packageName], drivingRestricted = true, navigation = it.isNavigation) == StandaloneDisplay.PAUSED
+        }.mapTo(HashSet()) { it.packageName }
     }
 
     /** Rescans car apps (package manager work and icons on a background thread). */
@@ -744,12 +765,9 @@ class CarRuntime(
                                 // isNavigation: a navigation app with the navigation rule, shown while driving.
                                 val shown = standaloneDisplay(settings.standaloneDrivingRules[app.packageName],
                                     ui.drivingRestricted, navigation = app.isNavigation)
+                                // Parked only also means its sound stops: see playbackGuard.
                                 StandaloneAppScreen(this, shown != StandaloneDisplay.SHOWN, app.packageName, mod,
                                     audioOnly = shown == StandaloneDisplay.AUDIO_ONLY)
-                                // Parked only means paused, not just hidden: a video's sound stops too.
-                                if (shown == StandaloneDisplay.PAUSED) {
-                                    LaunchedEffect(app.packageName) { pauseStandalonePlayback(context, app.packageName) }
-                                }
                             }
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)

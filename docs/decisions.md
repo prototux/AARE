@@ -160,7 +160,10 @@ the app while driving and makes it the car's navigation app. There is no "allowe
 apps: a passenger who wants one while driving uses passenger mode (ignore driving), which lifts
 every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
 the app's media session as well as hiding its screen (before, the card said "paused" while the
-sound went on), which is what tells it apart from "audio only".
+sound went on), which is what tells it apart from "audio only". `StandalonePlaybackGuard` pauses
+it when driving starts and again each time it starts playing until driving ends (an autoplayed
+next track or video), whether or not its screen is open; not for a package that is also a hosted
+media app, whose sound is allowed while driving.
 
 ## Phone navigation apps launched on the car screen
 
