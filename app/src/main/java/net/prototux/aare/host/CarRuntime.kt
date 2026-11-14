@@ -467,8 +467,8 @@ class CarRuntime(
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.weather(where) }?.let { ui.weather = it; lastWeather = now }
                 }
             }
-            ui.nextEvent = if (DashCard.CALENDAR in ui.dashboardCards)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvent(context) } else null
+            ui.nextEvents = if (DashCard.CALENDAR in ui.dashboardCards)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvents(context, settings.calendarAgendaCount) } else emptyList()
             kotlinx.coroutines.delay(5 * 60_000)
         }
     }
