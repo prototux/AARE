@@ -150,3 +150,15 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+## Calls through messaging apps from the car's contacts
+
+The car's contact list also offers a call through a messaging app (`VoipCalls.CALL_MIME_TYPES`:
+WhatsApp, by its `vnd.com.whatsapp.voip.call` contact rows) when that app has a self-managed phone
+account (it hands its calls to Android's telephony; Android 11+). The entry shows the app's name and
+icon with the phone number of the app's own copy of the contact; a tap opens that contact row in
+the app (`ACTION_VIEW` on the data row, typed with its MIME type), which starts the call. If the app
+hasn't the microphone permission, the car screen says so and a phone notification opens its
+settings; the call still starts. Google-only calling apps aren't listed. Not done: VoIP calls
+don't show in the car's in-call card (it follows the telephony call state), and the phone may hold
+the app's call screen back while AARE isn't in the foreground.
+

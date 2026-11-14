@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.CallLog
 import android.provider.ContactsContract
+import android.provider.ContactsContract.CommonDataKinds.Phone
 import android.telephony.TelephonyManager
 import android.text.format.DateUtils
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,14 +60,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.prototux.aare.R
 import net.prototux.aare.car.Calls
+import net.prototux.aare.car.VoipApp
+import net.prototux.aare.car.VoipCalls
+import net.prototux.aare.car.VoipTarget
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.Pill
 import net.prototux.aare.media.Placeholder
 import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
 
-/** One number to call: a recent call or a contact. */
-private class Callee(val name: String, val number: String, val detail: String, val type: Int = 0)
+/** One number to call: a recent call or a contact, or a contact through a calling app ([voip]). */
+internal data class Callee(val name: String, val number: String, val detail: String, val type: Int = 0, val voip: VoipTarget? = null)
 
 private enum class PhoneTab(val labelRes: Int) { RECENTS(R.string.phone_tab_recents), CONTACTS(R.string.phone_tab_contacts), KEYPAD(R.string.phone_tab_keypad) }
 
@@ -94,8 +100,10 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
     LaunchedEffect(inCall) { if (!inCall) reload++ }
     val callingTitle = context.getString(R.string.phone_notice_calling_title)
     val call: (Callee) -> Unit = { c ->
-        // An empty tel: places no call; it would only show a "Calling" banner with no name.
-        if (c.number.isNotBlank()) {
+        val voip = c.voip
+        if (voip != null) {
+            callThroughApp(context, runtime, c.name, voip)
+        } else if (c.number.isNotBlank()) { // an empty tel: places no call, only a "Calling" banner with no name
             Calls.place(context, c.number)
             runtime.notice(callingTitle, c.name.ifBlank { c.number })
         }
@@ -121,6 +129,25 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
                 PhoneTab.KEYPAD -> Keypad { number -> call(Callee("", number, "")) }
             }
         }
+    }
+}
+
+/**
+ * A call through a messaging app. Without the microphone permission the other side wouldn't hear
+ * the driver: the car screen says so and the phone gets a notification that opens the app's
+ * settings. The call is still started.
+ */
+private fun callThroughApp(context: Context, runtime: CarRuntime, name: String, voip: VoipTarget) {
+    val app = voip.app
+    val micOk = VoipCalls.hasMicrophone(context, app.packageName)
+    if (!micOk) {
+        runtime.notice(context.getString(R.string.voip_mic_title, app.label), context.getString(R.string.voip_mic_car_text), app.icon)
+        VoipCalls.askForMicrophone(context, voip)
+    }
+    when {
+        !VoipCalls.place(context, voip) ->
+            runtime.notice(context.getString(R.string.voip_call_failed_title, app.label), context.getString(R.string.voip_call_failed_text), app.icon)
+        micOk -> runtime.notice(context.getString(R.string.phone_notice_calling_title), "$name · ${app.label}", app.icon)
     }
 }
 
@@ -160,8 +187,10 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
                         else -> Icons.Rounded.Person
                     }
                     val missed = c.type == CallLog.Calls.MISSED_TYPE
+                    val appIcon = remember(c.voip) { c.voip?.app?.icon?.asImageBitmap() }
                     Box(Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
-                        Icon(icon, null, tint = if (missed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer)
+                        if (appIcon != null) Image(appIcon, c.voip?.app?.label, Modifier.size(36.dp))
+                        else Icon(icon, null, tint = if (missed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
@@ -228,25 +257,59 @@ private fun recents(context: Context): List<Callee> = runCatching {
     out
 }.getOrDefault(emptyList())
 
-/** Favourite (starred) contacts, or all of them if there are none. */
+/**
+ * Favourite (starred) contacts, or all of them if there are none: their phone numbers, and their
+ * calls through the calling apps that can take them ([VoipCalls.available]).
+ */
 private fun contacts(context: Context): List<Callee> = runCatching {
+    val apps = VoipCalls.available(context)
+    val mimeTypes = listOf(Phone.CONTENT_ITEM_TYPE) + VoipCalls.CALL_MIME_TYPES.filterValues { it in apps }.keys
+    val inMimeTypes = "${ContactsContract.Data.MIMETYPE} IN (${mimeTypes.joinToString { "?" }})"
     fun query(starred: Boolean): List<Callee> {
-        val out = ArrayList<Callee>()
-        val seen = HashSet<String>()
-        context.contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER,
-                ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.LABEL),
-            if (starred) "${ContactsContract.CommonDataKinds.Phone.STARRED} = 1" else null, null,
-            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC")?.use { c ->
-            while (c.moveToNext() && out.size < 200) {
-                val name = c.getString(0).orEmpty()
-                val number = c.getString(1)?.takeIf { it.isNotBlank() } ?: continue
-                if (!seen.add(name + number.filter(Char::isDigit))) continue
-                val type = ContactsContract.CommonDataKinds.Phone.getTypeLabel(context.resources, c.getInt(2), c.getString(3)).toString()
-                out += Callee(name, number, "$type · $number")
+        val rows = ArrayList<ContactRow>()
+        context.contentResolver.query(ContactsContract.Data.CONTENT_URI,
+            arrayOf(ContactsContract.Data.DISPLAY_NAME, ContactsContract.Data.MIMETYPE, ContactsContract.Data._ID,
+                ContactsContract.Data.RAW_CONTACT_ID, Phone.NUMBER, Phone.TYPE, Phone.LABEL),
+            if (starred) "$inMimeTypes AND ${ContactsContract.Data.STARRED} = 1" else inMimeTypes, mimeTypes.toTypedArray(),
+            "${ContactsContract.Data.DISPLAY_NAME} COLLATE NOCASE ASC")?.use { c ->
+            while (c.moveToNext()) {
+                val mime = c.getString(1) ?: continue
+                val type = if (mime == Phone.CONTENT_ITEM_TYPE) Phone.getTypeLabel(context.resources, c.getInt(5), c.getString(6)).toString() else ""
+                rows += ContactRow(c.getString(0).orEmpty(), mime, c.getLong(2), c.getLong(3), c.getString(4), type)
             }
         }
-        return out
+        return contactCallees(rows, apps)
     }
     query(starred = true).ifEmpty { query(starred = false) }
 }.getOrDefault(emptyList())
+
+/** A contact data row: a phone number ([typeLabel] its type), or a calling app's row for the contact. */
+internal data class ContactRow(val name: String, val mimeType: String, val dataId: Long, val rawContactId: Long, val data1: String?, val typeLabel: String = "")
+
+/**
+ * The car's contact list from the contacts' [rows] (sorted by name): their phone numbers, and
+ * their calls through [apps] (by package; other apps' rows are left out). A calling app keeps its own
+ * copy of the contact, with the phone number it calls: that number is shown with the app's name.
+ * Duplicates (same name and digits, and app) go, and the list stops at [limit].
+ */
+internal fun contactCallees(rows: List<ContactRow>, apps: Map<String, VoipApp>, limit: Int = 200): List<Callee> {
+    val phoneOfRawContact = rows.filter { it.mimeType == Phone.CONTENT_ITEM_TYPE && !it.data1.isNullOrBlank() }
+        .associate { it.rawContactId to it.data1!! }
+    val out = ArrayList<Callee>()
+    val seen = HashSet<String>()
+    for (r in rows) {
+        if (out.size >= limit) break
+        if (r.mimeType == Phone.CONTENT_ITEM_TYPE) {
+            val number = r.data1?.takeIf { it.isNotBlank() } ?: continue
+            if (!seen.add(r.name + number.filter(Char::isDigit))) continue
+            out += Callee(r.name, number, "${r.typeLabel} · $number")
+        } else {
+            val app = VoipCalls.CALL_MIME_TYPES[r.mimeType]?.let(apps::get) ?: continue
+            // the app's own row holds an id of its own ("123@s.example.net"), not something to show
+            val number = phoneOfRawContact[r.rawContactId] ?: r.data1?.substringBefore('@')?.takeIf { it.isNotBlank() } ?: continue
+            if (!seen.add(app.packageName + r.name + number.filter(Char::isDigit))) continue
+            out += Callee(r.name, number, "${app.label} · $number", voip = VoipTarget(r.dataId, r.mimeType, app))
+        }
+    }
+    return out
+}
