@@ -141,6 +141,10 @@ APKs hold no key. Run it again with `-v` to see the certificates and the salt an
 each dex. If there are none, the layout changed in that Android Auto build (the docstring at the top of
 `extract_key.py` says what it looks for): open an issue with the Android Auto version.
 
+The certificate has an end date, shown under *Advanced > Phone certificates* ("until …"). Expect
+head units to refuse it after that date: download or extract it again from a newer Android Auto
+([discussion](https://github.com/prototux/AARE/discussions/60)).
+
 ## Using it
 
 1. Open AARE on the phone and finish *Finish setting up*: permissions, notification access (for
@@ -437,6 +441,7 @@ Other tools:
 | Factory unit of a 2023 Skoda Octavia V, MIB3 (VW Group) | Pixel 10, GrapheneOS, no Google services | USB and wireless | not stated | **Works after [AA key extraction](#aa-key-extraction)** (reported by a user, not tested by the maintainers): with AARE's own self-signed certificate the unit rejected the connection (`AUTH_COMPLETE` status -3, [#48](https://github.com/prototux/AARE/issues/48)); with the extracted certificate it connects. Known issue: the UI ignores the unit's video margins, so the layout is off ([#55](https://github.com/prototux/AARE/issues/55)). |
 | Factory Denso unit of a 2024 Toyota RAV4 | — | — | not stated | **Rejected:** the self-signed certificate ([#46](https://github.com/prototux/AARE/issues/46)). |
 | Factory unit of a 2024 Ford Transit | — | — | not stated | **Rejected:** status -3 ([#44](https://github.com/prototux/AARE/issues/44)). |
+| Factory unit of a 2021 Ford Transit Custom | GrapheneOS, no Google services | USB | not stated | **Works after [AA key extraction](#aa-key-extraction)** ([discussion](https://github.com/prototux/AARE/discussions/60)), with Vela Maps; it took a few replugs the first time. Known issue: Vela Maps sometimes needs opening on the phone first. |
 | Continental NAC Wave 4.4 (HW2019), the factory unit of a 2019 Citroën C5 Aircross | Fairphone (Gen 6) | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)**, as well as Android Auto ([#81](https://github.com/prototux/AARE/issues/81)). |
 | Volkswagen VW3166 LGE ICAS3 (smaller screen), the factory unit of a 2021 VW ID.4 | Fairphone 4, /e/OS, Shizuku, no Google services | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#68](https://github.com/prototux/AARE/issues/68)); the 1.2.0 margin fix ([#61](https://github.com/prototux/AARE/pull/61)) corrected the earlier zoomed-in layout. |
 | Panasonic T1 (8614002A81), the factory unit of a 2023 Toyota Corolla Touring Sports | Samsung Galaxy A7 (2018), Android 10 | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#79](https://github.com/prototux/AARE/issues/79)); Vela maps and Symfonium audio work. Known issue: navigation lost location once the phone locked ([#87](https://github.com/prototux/AARE/issues/87), fixed in [#94](https://github.com/prototux/AARE/pull/94)). |
