@@ -293,6 +293,9 @@ class ProjectionService : Service() {
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
             while (true) {
+                // Checked before each announce and wait too: wireless turned off during an attempt
+                // ends the series now, so the idle stop can run, instead of after one more wait.
+                if (session == null && !reconnectWanted(address, linkDropped = true)) { endReconnecting("the car went away or wireless was turned off"); return@launch }
                 val attempt = reconnectsUsed + 1
                 val wait = WirelessReconnect.delayBefore(attempt) ?: break
                 reconnectsUsed = attempt
