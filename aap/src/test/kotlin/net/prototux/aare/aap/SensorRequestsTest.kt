@@ -22,17 +22,18 @@ class SensorRequestsTest {
 
     @Test
     fun nothingGoesOutBeforeTheChannelOpens() {
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
+        requests.request(order)
         assertTrue(sent.isEmpty())
         requests.start()
         assertEquals(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L), sent)
     }
 
     @Test
-    fun oneRequestAtATimeUntilAnswered() {
+    fun oneRequestAtATimeInOrderUntilAnswered() {
         requests.start()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_ACCELEROMETER_DATA))
-        assertEquals(1, sent.size)
+        // Asked for out of order: they still go out driving status first.
+        requests.request(listOf(SensorType.SENSOR_ACCELEROMETER_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_DRIVING_STATUS_DATA))
+        assertEquals(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L), sent)
         requests.answered()
         assertEquals(SensorType.SENSOR_NIGHT_MODE to 0L, sent[1])
         requests.answered()
@@ -42,9 +43,9 @@ class SensorRequestsTest {
     }
 
     @Test
-    fun aSilentCarDoesNotHoldTheQueueForever() {
+    fun aSilentCarDoesNotHoldTheQueue() {
         requests.start()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
+        requests.request(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
         assertEquals(1, sent.size)
         timeouts[0]() // the driving status request's timeout
         assertEquals(SensorType.SENSOR_SPEED to 0L, sent[1])
@@ -55,35 +56,38 @@ class SensorRequestsTest {
     }
 
     @Test
-    fun aSensorNobodyNeedsIsStopped() {
+    fun aSensorIsAskedForOnceAndNeverStopped() {
         requests.start()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
+        requests.request(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
         requests.answered(); requests.answered()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
-        assertEquals(SensorType.SENSOR_SPEED to SensorRequests.STOP, sent.last())
+        requests.request(listOf(SensorType.SENSOR_SPEED))
         requests.answered()
-        assertEquals(mapOf(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L), requests.running())
-        // Wanted again: started again.
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
-        assertEquals(SensorType.SENSOR_SPEED to 0L, sent.last())
+        assertEquals(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L, SensorType.SENSOR_SPEED to 0L), sent)
+        assertTrue(sent.none { it.second < 0 })
     }
 
     @Test
-    fun runningSensorsAreNotAskedForTwiceAndUnofferedOnesNever() {
+    fun sensorsTheCarDoesNotOfferAreNeverAskedFor() {
         requests.start()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_TOLL_CARD))
-        requests.answered()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
-        assertEquals(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L), sent)
+        requests.request(listOf(SensorType.SENSOR_TOLL_CARD))
+        assertTrue(sent.isEmpty())
     }
 
     @Test
-    fun stopForgetsWhatRan() {
+    fun anAnswerWithNothingPendingIsIgnored() {
         requests.start()
-        requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
+        requests.answered()
+        requests.request(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
+        assertEquals(1, sent.size)
+    }
+
+    @Test
+    fun stopForgetsTheSession() {
+        requests.start()
+        requests.request(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
         requests.answered()
         requests.stop()
-        assertTrue(requests.running().isEmpty())
+        requests.request(listOf(SensorType.SENSOR_DRIVING_STATUS_DATA))
         requests.start()
         assertEquals(2, sent.size)
     }

@@ -59,7 +59,6 @@ open class SessionLoopbackTest {
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null
     private var nav: NavigationStatusChannel? = null
-    private var sensorChannel: SensorChannel? = null
     private val audio = mutableListOf<AudioChannel>()
     private val encoding = AtomicBoolean(false)
     @Volatile private var closeError: Throwable? = null
@@ -104,7 +103,7 @@ open class SessionLoopbackTest {
                     })
                     s.hasSensorSourceService() -> SensorChannel(s, object : SensorChannel.Listener {
                         override fun onSensors(batch: SensorBatch) { sensors.add(batch) }
-                    }).also { sensorChannel = it }
+                    })
                     s.hasNavigationStatusService() -> NavigationStatusChannel(s).also { nav = it }
                     s.hasMediaPlaybackService() -> MediaPlaybackChannel(s)
                     else -> null
@@ -192,16 +191,13 @@ open class SessionLoopbackTest {
         assertTrue("expected a relative (rotary) event", rotate.hasRelativeEvent())
         assertEquals(1, rotate.relativeEvent.getData(0).delta)
 
-        // sensors: only driving status at setup; night mode once something
-        // wants it, and stopped (-1) when nothing does any more
-        assertEquals(SensorType.SENSOR_DRIVING_STATUS_DATA to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
+        // sensors: every one the car offers is requested at setup, driving status first, one at a
+        // time (each after the previous answer), and answered with data
+        for (type in listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_LOCATION)) {
+            assertEquals(type to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
+        }
         assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.drivingStatusDataCount > 0)
-        sensorChannel!!.want(setOf(SensorType.SENSOR_NIGHT_MODE))
-        assertEquals(SensorType.SENSOR_NIGHT_MODE to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
         assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.nightModeDataCount > 0)
-        sensorChannel!!.want(emptySet())
-        assertEquals(SensorType.SENSOR_NIGHT_MODE to -1L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
-        assertFalse(SensorType.SENSOR_LOCATION in hu.sensorRequests)
 
         // microphone
         mic!!.openMic()

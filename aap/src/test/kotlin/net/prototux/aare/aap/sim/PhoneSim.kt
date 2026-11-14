@@ -82,7 +82,7 @@ fun main(args: Array<String>) {
                                 })
                                 s.hasSensorSourceService() -> SensorChannel(s, object : SensorChannel.Listener {
                                     override fun onSensors(batch: SensorBatch) = println("sensors: ${batch.toString().replace('\n', ' ')}")
-                                }).also { it.want(it.available.toSet()) } // the sim shows every sensor
+                                })
                                 s.hasNavigationStatusService() -> NavigationStatusChannel(s)
                                 s.hasMediaPlaybackService() -> MediaPlaybackChannel(s)
                                 else -> null

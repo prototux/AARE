@@ -3,13 +3,13 @@ package net.prototux.aare.aap.channels
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 
 /**
- * Which sensors the car is asked for, and when. One request at a time,
- * the next only once the car answered the last (a SensorResponse doesn't say which sensor it is
- * for) or [TIMEOUT_MS] went by; a sensor is started when something [want]s it and stopped (period
- * [STOP]) when nothing does any more.
+ * Sends the sensor requests one at a time: the next goes only once the car answered the last (a
+ * SensorResponse or SensorError doesn't say which sensor it is for) or [TIMEOUT_MS] went by, so a
+ * head unit that handles one request at a time isn't flooded at setup. A sensor once asked for
+ * keeps running for the whole session.
  *
- * Thread-safe: [want] comes from the app, [answered] from the reader thread, timeouts from the
- * session's timer.
+ * Thread-safe: [request] may come from any thread, [answered] from the reader thread, timeouts
+ * from the session's timer.
  */
 internal class SensorRequests(
     /** Every sensor the car offers, in the order requests go out when several are due. */
@@ -21,11 +21,11 @@ internal class SensorRequests(
     private val log: (String) -> Unit = {},
 ) {
     private var started = false
-    private var wanted: Set<SensorType> = emptySet()
-    /** The period each running sensor was last asked for; a stopped one isn't here. */
-    private val running = HashMap<SensorType, Long>()
-    private var pending: Pair<SensorType, Long>? = null
-    /** Tells a timeout from an earlier request apart from one for the current request. */
+    private val queue = ArrayDeque<SensorType>()
+    /** Asked for (or queued) this session: never asked for twice. */
+    private val requested = HashSet<SensorType>()
+    private var pending: SensorType? = null
+    /** Tells a timeout of an earlier request apart from one of the current request. */
     private var generation = 0
 
     /** The channel is open: requests may go out. */
@@ -34,59 +34,49 @@ internal class SensorRequests(
         pump()
     }
 
-    /** The sensors AARE needs now (others the car offers are stopped if they run). */
-    @Synchronized fun want(types: Set<SensorType>) {
-        wanted = types.filterTo(HashSet()) { it in order }
+    /** Asks for [types] the car offers and that weren't asked for yet, in [order]. */
+    @Synchronized fun request(types: Collection<SensorType>) {
+        for (t in order) if (t in types && requested.add(t)) queue.addLast(t)
         pump()
     }
 
     /** The car answered the request in flight (whatever the status: a refused sensor stays silent). */
     @Synchronized fun answered() {
-        if (pending == null) log("sensor response with no request pending")
-        done()
+        if (pending == null) {
+            log("sensor answer with no request pending")
+            return
+        }
+        pending = null
+        pump()
     }
 
     @Synchronized fun stop() {
         started = false
         pending = null
-        running.clear()
+        queue.clear()
+        requested.clear()
         generation++
-    }
-
-    /** Only for tests and logs: the period each sensor runs at. */
-    @Synchronized fun running(): Map<SensorType, Long> = HashMap(running)
-
-    private fun done() {
-        val (type, period) = pending ?: return
-        pending = null
-        if (period == STOP) running.remove(type) else running[type] = period
-        pump()
     }
 
     private fun pump() {
         if (!started || pending != null) return
-        val type = order.firstOrNull { desired(it) != running[it] } ?: return
-        val period = desired(type) ?: STOP
-        pending = type to period
+        val type = queue.removeFirstOrNull() ?: return
+        pending = type
         val gen = ++generation
-        send(type, period)
+        send(type, periodOf(type))
         schedule {
             synchronized(this@SensorRequests) {
                 if (gen != generation || pending == null) return@synchronized
-                // Counted as done anyway: asking again would repeat forever on a car that never answers.
+                // Counted as answered anyway: one silent request must not hold back the others.
                 log("no answer to the request for ${type.name} within $TIMEOUT_MS ms")
-                done()
+                pending = null
+                pump()
             }
         }
     }
 
-    /** The period [type] should run at, or null if it should be stopped. */
-    private fun desired(type: SensorType): Long? = if (type in wanted) periodOf(type) else null
-
     companion object {
-        /** How long to wait for a SensorResponse before moving on. */
+        /** How long to wait for the car's answer before the next request. */
         const val TIMEOUT_MS = 2_000L
-        /** min_update_period that stops a sensor. */
-        const val STOP = -1L
     }
 }

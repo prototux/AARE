@@ -174,8 +174,6 @@ class HeadUnitSimulator(
                 sensorRequests.add(req.type)
                 sensorRequestLog.add(req.type to req.minUpdatePeriod)
                 send(sensors, SensorMsg.RESPONSE, SensorResponse.newBuilder().apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build())
-                // A stop request (period -1) gets no data.
-                if (req.minUpdatePeriod < 0) return
                 val batch = SensorBatch.newBuilder()
                 when (req.type) {
                     SensorType.SENSOR_NIGHT_MODE -> batch.addNightModeData(NightModeData.newBuilder().setNightMode(true))
