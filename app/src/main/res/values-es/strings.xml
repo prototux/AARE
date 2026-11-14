@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Próximo evento del calendario</string>
     <string name="dash_card_notification">Última notificación</string>
     <string name="dash_card_weather">Tiempo</string>
+    <string name="rail_widgets_title">Widgets de la barra/barra de tareas</string>
+    <string name="rail_widgets_hint">Pequeños elementos de estado en la barra (o la barra de tareas). Se colocan junto al reloj, en este orden.</string>
+    <string name="rail_widget_clock">Reloj</string>
+    <string name="rail_widget_temperature">Temperatura exterior</string>
+    <string name="rail_widget_battery">Batería del teléfono</string>
+    <string name="rail_widget_weather">Tiempo</string>
     <string name="setup_choice_wallpaper">Fondo de pantalla</string>
     <string name="setup_wallpaper_none">Ninguno</string>
     <string name="setup_wallpaper_photo">Foto</string>

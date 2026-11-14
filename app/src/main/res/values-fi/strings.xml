@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Seuraava kalenteritapahtuma</string>
     <string name="dash_card_notification">Viimeisin ilmoitus</string>
     <string name="dash_card_weather">Sää</string>
+    <string name="rail_widgets_title">Listan/tehtäväpalkin widgetit</string>
+    <string name="rail_widgets_hint">Pieniä tilakohteita listassa (tai tehtäväpalkissa). Ne asettuvat kellon viereen tässä järjestyksessä.</string>
+    <string name="rail_widget_clock">Kello</string>
+    <string name="rail_widget_temperature">Ulkolämpötila</string>
+    <string name="rail_widget_battery">Puhelimen akku</string>
+    <string name="rail_widget_weather">Sää</string>
     <string name="setup_choice_wallpaper">Taustakuva</string>
     <string name="setup_wallpaper_none">Ei mitään</string>
     <string name="setup_wallpaper_photo">Valokuva</string>

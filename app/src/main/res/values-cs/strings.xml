@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Další událost v kalendáři</string>
     <string name="dash_card_notification">Poslední oznámení</string>
     <string name="dash_card_weather">Počasí</string>
+    <string name="rail_widgets_title">Widgety lišty/hlavního panelu</string>
+    <string name="rail_widgets_hint">Malé stavové položky na liště (nebo hlavním panelu). Řadí se vedle hodin v tomto pořadí.</string>
+    <string name="rail_widget_clock">Hodiny</string>
+    <string name="rail_widget_temperature">Venkovní teplota</string>
+    <string name="rail_widget_battery">Baterie telefonu</string>
+    <string name="rail_widget_weather">Počasí</string>
     <string name="setup_choice_wallpaper">Tapeta</string>
     <string name="setup_wallpaper_none">Žádná</string>
     <string name="setup_wallpaper_photo">Fotka</string>

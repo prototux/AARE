@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Następne wydarzenie w kalendarzu</string>
     <string name="dash_card_notification">Ostatnie powiadomienie</string>
     <string name="dash_card_weather">Pogoda</string>
+    <string name="rail_widgets_title">Widżety listwy/paska zadań</string>
+    <string name="rail_widgets_hint">Małe elementy stanu na listwie (lub pasku zadań). Ustawiają się obok zegara, w tej kolejności.</string>
+    <string name="rail_widget_clock">Zegar</string>
+    <string name="rail_widget_temperature">Temperatura zewnętrzna</string>
+    <string name="rail_widget_battery">Bateria telefonu</string>
+    <string name="rail_widget_weather">Pogoda</string>
     <string name="setup_choice_wallpaper">Tapeta</string>
     <string name="setup_wallpaper_none">Brak</string>
     <string name="setup_wallpaper_photo">Zdjęcie</string>

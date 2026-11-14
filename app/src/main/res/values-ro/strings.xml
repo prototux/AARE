@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Următorul eveniment din calendar</string>
     <string name="dash_card_notification">Ultima notificare</string>
     <string name="dash_card_weather">Vremea</string>
+    <string name="rail_widgets_title">Widgeturi bară/bară de activități</string>
+    <string name="rail_widgets_hint">Elemente mici de stare pe bară (sau pe bara de activități). Se așază lângă ceas, în această ordine.</string>
+    <string name="rail_widget_clock">Ceas</string>
+    <string name="rail_widget_temperature">Temperatura exterioară</string>
+    <string name="rail_widget_battery">Bateria telefonului</string>
+    <string name="rail_widget_weather">Vremea</string>
     <string name="setup_choice_wallpaper">Fundal</string>
     <string name="setup_wallpaper_none">Niciunul</string>
     <string name="setup_wallpaper_photo">Fotografie</string>
