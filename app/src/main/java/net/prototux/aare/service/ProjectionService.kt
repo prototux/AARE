@@ -15,6 +15,7 @@ import android.hardware.usb.UsbAccessory
 import android.hardware.usb.UsbManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -214,7 +215,8 @@ class ProjectionService : Service() {
         // version responses until phone_info carries an instance id.
         val connector = WirelessConnector(this, DiagAapLog,
             WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
-                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull())))
+                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull(),
+                phoneWifiFrequencies = ::phoneWifiFrequencies)))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
@@ -256,6 +258,18 @@ class ProjectionService : Service() {
                 }
             }
         }
+    }
+
+    /** The frequencies of the Wi-Fi bands this phone supports, for the bootstrap's (logged only) channel check. */
+    private fun phoneWifiFrequencies(): Set<Int>? {
+        val wifi = getSystemService(WifiManager::class.java) ?: return null
+        return runCatching {
+            net.prototux.aare.aap.wireless.WirelessBootstrap.bandFrequencies(
+                band24GHz = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) wifi.is24GHzBandSupported() else true,
+                band5GHz = wifi.is5GHzBandSupported(),
+                band6GHz = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wifi.is6GHzBandSupported(),
+            )
+        }.getOrNull()
     }
 
     /**

@@ -148,8 +148,9 @@ class WirelessBootstrap(
          */
         val pingIntervalMs: Long = 1_000,
         /**
-         * The frequencies (MHz) the phone's Wi-Fi can use right now, for the channel check of the
-         * version exchange (see [versionStatus], only logged); null when unknown, which skips it.
+         * The frequencies (MHz) the phone's Wi-Fi can use (see [bandFrequencies]), for the channel
+         * check of the version exchange (see [versionStatus], only logged); null when unknown, which
+         * skips it.
          */
         val phoneWifiFrequencies: () -> Set<Int>? = { null },
         /**
@@ -692,5 +693,15 @@ class WirelessBootstrap(
          */
         internal fun channelsUsable(headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Boolean =
             phoneFrequencies == null || headUnitChannels.any { it < 2400 || it == 5000 || it in phoneFrequencies }
+
+        /**
+         * Every frequency (MHz) of the Wi-Fi bands a phone supports, for [Options.phoneWifiFrequencies]:
+         * apps only learn the bands, not which channels the phone may use where it is.
+         */
+        fun bandFrequencies(band24GHz: Boolean, band5GHz: Boolean, band6GHz: Boolean): Set<Int> = buildSet {
+            if (band24GHz) addAll(2400..2500)
+            if (band5GHz) addAll(5150..5895)
+            if (band6GHz) addAll(5925..7125)
+        }
     }
 }

@@ -723,6 +723,18 @@ class WirelessBootstrapTest {
     }
 
     @Test
+    fun theSupportedBandsGiveTheirFrequencies() {
+        val noFiveGHz = WirelessBootstrap.bandFrequencies(band24GHz = true, band5GHz = false, band6GHz = false)
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(2437), noFiveGHz))
+        assertFalse(WirelessBootstrap.channelsUsable(listOf(5180, 5745), noFiveGHz))
+        val dualBand = WirelessBootstrap.bandFrequencies(band24GHz = true, band5GHz = true, band6GHz = false)
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(5180), dualBand))
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(5825), dualBand))
+        assertFalse(WirelessBootstrap.channelsUsable(listOf(5955), dualBand))
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(5955), WirelessBootstrap.bandFrequencies(false, false, true)))
+    }
+
+    @Test
     fun channelCheckRules() {
         val phone = setOf(2412, 5180)
         assertTrue(WirelessBootstrap.channelsUsable(listOf(5745, 5180), phone))

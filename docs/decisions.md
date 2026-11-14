@@ -158,8 +158,8 @@ only adds a fallback or only applies after a failure.
 
 - Version response: always SUCCESS, echoing the head unit's version (1.0 when it sends none). A
   stricter answer (refusing WPP 2, 3 and 7+, or below 4.5 head units whose Wi-Fi channels the phone
-  can't use) is only logged. The channel check has a hook (`Options.phoneWifiFrequencies`) that is
-  not fed: the phone's usable channels have no public API.
+  can't use) is only logged. The channel check takes every frequency of the Wi-Fi bands the phone
+  supports: apps can't read the channels it may use where it is.
 - Our own WifiStartRequest is never sent on a first attempt. Only after an attempt where the head
   unit answered the version exchange and then sent no WifiStartRequest before the message timeout,
   the connector's redials to that head unit ask it to start (5 s after the version exchange, again
