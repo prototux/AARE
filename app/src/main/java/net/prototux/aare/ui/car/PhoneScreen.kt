@@ -48,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +60,7 @@ import net.prototux.aare.car.Calls
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.Pill
 import net.prototux.aare.media.Placeholder
+import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** One number to call: a recent call or a contact. */
@@ -134,9 +134,9 @@ private fun InCallCard(onHangUp: () -> Unit) {
         Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(14.dp))
         Text(stringResource(R.string.phone_call_in_progress), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
-        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(Color(0xFFD32F2F)).clickable(onClick = onHangUp),
+        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(LocalCarColors.current.decline).clickable(onClick = onHangUp),
             contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = Color.White)
+            Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = LocalCarColors.current.onCall)
         }
     }
 }
@@ -188,9 +188,9 @@ private fun Keypad(onCall: (String) -> Unit) {
                 Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Rounded.Backspace, stringResource(R.string.phone_keypad_delete))
                 }
-                Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(Color(0xFF2E7D32))
+                Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(LocalCarColors.current.accept)
                     .clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = Color.White)
+                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = LocalCarColors.current.onCall)
                 }
             }
         }
