@@ -105,6 +105,8 @@ class CarRuntime(
     var onPhoneGuidance: ((PhoneGuidance?) -> Unit)? = null
     /** Hands the screen back to the car's own UI; null (no "Exit to car" entry) without a head unit. Set before [start]. */
     var exitToCar: (() -> Unit)? = null
+    /** The "Exit to car" entry's label after the car (see ExitLabel), or null for the generic one. Main thread, then [refreshApps]. */
+    var exitLabel: String? = null
 
     // ------------------------------------------------------------------ HostEnvironment
 
@@ -438,7 +440,7 @@ class CarRuntime(
         entries.sortWith(compareBy<CarAppEntry>({ order[orderKey(it)] ?: Int.MAX_VALUE }, { it.label.lowercase() }))
         // Not an app, so outside the user's order: always last, like Android Auto's "Exit".
         if (exitToCar != null) {
-            entries += CarAppEntry(EXIT_ID, context.packageName, context.getString(R.string.dash_menu_exit_to_car),
+            entries += CarAppEntry(EXIT_ID, context.packageName, exitLabel ?: context.getString(R.string.dash_menu_exit_to_car),
                 builtinIcon(R.drawable.ic_car_exit), CarAppKind.EXIT)
         }
         ui.apps.clear()

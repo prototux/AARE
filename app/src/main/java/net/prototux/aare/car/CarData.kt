@@ -105,8 +105,11 @@ object CarData {
     fun addListener(l: Listener) { listeners.addIfAbsent(l) }
     fun removeListener(l: Listener) { listeners.remove(l) }
 
-    /** A new car: its identity and the sensors and fuels it advertises. Forgets the previous car's values. */
-    fun discovered(response: ServiceDiscoveryResponse, owner: Any? = null) {
+    /**
+     * A new car: its identity and the sensors and fuels it advertises. Forgets the previous car's
+     * values. [forceElectric]: see [fuelTypes].
+     */
+    fun discovered(response: ServiceDiscoveryResponse, owner: Any? = null, forceElectric: Boolean = false) {
         val hu = response.headunitInfo
         val sensors = response.channelsList.firstOrNull { it.hasSensorSourceService() }?.sensorSourceService
         synchronized(lock) {
@@ -117,11 +120,22 @@ object CarData {
                     hu.year.ifEmpty { response.year }.trim().toIntOrNull()),
                 // sensor_type is optional: an unknown type parses as unset and would read as the default (location).
                 advertised = sensors?.sensorsList?.filter { it.hasSensorType() }?.map { it.sensorType }?.toSet().orEmpty(),
-                fuelTypes = sensors?.supportedFuelTypesList?.map { it.number }.orEmpty(),
+                fuelTypes = fuelTypes(sensors?.supportedFuelTypesList?.map { it.number }.orEmpty(), forceElectric),
                 evConnectorTypes = sensors?.supportedEvConnectorTypesList?.map { it.number }.orEmpty(),
             )
         }
     }
+
+    /** AAP's FUEL_TYPE_UNKNOWN and FUEL_TYPE_ELECTRIC. */
+    private const val FUEL_UNKNOWN = 0
+    private const val FUEL_ELECTRIC = 10
+
+    /**
+     * The fuel types to tell apps. Some electric cars report none, or an unknown one (vehicles.json
+     * `forceElectric`): those are made electric, so EV charging apps work.
+     */
+    fun fuelTypes(reported: List<Int>, forceElectric: Boolean): List<Int> =
+        if (forceElectric && (reported.isEmpty() || FUEL_UNKNOWN in reported)) listOf(FUEL_ELECTRIC) else reported
 
     /** The car is gone, but only if [owner] still owns it: a session tearing down after a new one already reconnected must not wipe its data. */
     fun reset(owner: Any? = null) {
