@@ -150,3 +150,22 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Wireless bootstrap and USB: head unit compatibility choices, with these exceptions
+
+The WPP exchange works as follows (version status, missing major, quotes, connection
+status, our own WifiStartRequest, info-request retries, first-message timeouts, 1024-byte frames)
+and so does USB accessory matching (by model only) and the openAccessory retry. Deliberate
+differences:
+
+- Our own WifiStartRequest is always sent to a waiting head unit after a compatible version
+  exchange. It is only sent when the user means to project; AARE only dials when it
+  does.
+- The version exchange's channel check is implemented in `WirelessBootstrap` but not fed: Android
+  Auto asks the system Wi-Fi scanner for the usable channels, which has no public equivalent. With
+  nothing known the check is skipped, the same as without a scanner.
+- The wireless AAP socket keeps its big buffers and gets no 10 s read timeout: the ping watchdog
+  allows 20 s of silence for head units that go off channel to scan. TCP keepalive is off, as in
+  (the first probe would come after hours anyway).
+- A port we cannot dial (outside 0-65535) is refused even below WPP 4.5, where it
+  not check the port.
