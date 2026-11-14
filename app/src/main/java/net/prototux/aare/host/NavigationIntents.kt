@@ -43,7 +43,7 @@ fun isNavigationData(data: String?): Boolean =
 
 /**
  * A Car App Library navigation intent's data as a Google Maps URL, the form a car
- * app's own navigation request on: `geo:lat,lng` or `geo:0,0?q=...` becomes
+ * app's own navigation request takes: `geo:lat,lng` or `geo:0,0?q=...` becomes
  * `https://maps.google.com/maps?nav=1&q=...`. Null when it has neither a place nor a query.
  */
 fun mapsUrlOf(geo: String): String? {

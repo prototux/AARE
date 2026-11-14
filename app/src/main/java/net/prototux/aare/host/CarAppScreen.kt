@@ -224,7 +224,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
 }
 
 /**
- * The dashboard card of a navigation app that runs full screen only, run
+ * The dashboard card of a navigation app that runs full screen only: for
  * versions older than the one it knows works on its dashboard ([AppQuirks.dashboardNavigationSupported]):
  * the app's icon and name, and a tap opens it.
  */

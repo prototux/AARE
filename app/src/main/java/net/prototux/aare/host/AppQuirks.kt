@@ -95,7 +95,7 @@ object AppQuirks {
     )
 
     /**
-     * The navigation apps a minimum version is known for, for the dashboard's map
+     * The navigation apps with a known minimum version, for the dashboard's map
      * card. Below it the app still works, full screen only.
      */
     val DASHBOARD_NAVIGATION_MIN_VERSIONS = AppList.of(

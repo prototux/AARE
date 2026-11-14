@@ -32,8 +32,8 @@ interface TemplateHost {
     val appLabel: String
 
     /**
-     * Tint the app's own icons with the text colour, whatever they look like: this is done
-     * this for a few apps whose icons only work tinted ([net.prototux.aare.host.AppQuirks.FORCE_ICON_TINT]).
+     * Tint the app's own icons with the text colour, whatever they look like. This is done
+     * for a few apps whose icons only work tinted ([net.prototux.aare.host.AppQuirks.FORCE_ICON_TINT]).
      */
     val forceIconTint: Boolean get() = false
 
