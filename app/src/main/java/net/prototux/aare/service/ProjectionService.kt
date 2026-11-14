@@ -40,6 +40,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.aap.CertificateRefusal
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
@@ -102,6 +103,8 @@ class ProjectionService : Service() {
     private var destroyed = false
     /** The download prompt is shown at most once per service lifetime, until a Google cert arrives. */
     private var certDownloadPrompted = false
+    /** Hang-ups in a row during the TLS handshake while a valid Google-issued certificate was offered. */
+    private var handshakeHangUps = 0
     /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
     private var lastSessionWireless = false
     private var lastWirelessAddress: String? = null
@@ -373,7 +376,7 @@ class ProjectionService : Service() {
             updateNotification(status)
         }
 
-        override fun onEnded(session: CarSession, reason: String, certificateRejected: Boolean, pinRefusal: PinRefusal?) {
+        override fun onEnded(session: CarSession, reason: String, certificateRefusal: CertificateRefusal?, pinRefusal: PinRefusal?) {
             if (destroyed || this@ProjectionService.session !== session) return
             this@ProjectionService.session = null
             releaseWakeLock()
@@ -390,15 +393,20 @@ class ProjectionService : Service() {
             }
             // A changed certificate gets the same Trust prompt as a new head unit, saying it changed.
             val why = when {
-                pinRefusal == null -> reason
-                pinRefusal.changed -> getString(R.string.notif_cert_changed_message)
-                else -> getString(R.string.notif_cert_untrusted_message)
+                pinRefusal?.changed == true -> getString(R.string.notif_cert_changed_message)
+                pinRefusal != null -> getString(R.string.notif_cert_untrusted_message)
+                else -> reason
             }
             pinRefusal?.let { notifyUntrusted(it) }
-            if (certificateRejected) {
+            if (certificateRefusal == null) handshakeHangUps = 0
+            if (certificateRefusal != null && keepAfterHangUp(certificateRefusal)) {
+                log("head unit ${certificateRefusal}; offering \"${_state.value.certificate}\" again, as every head unit " +
+                    "accepts a valid Google-issued certificate: this looks like a dropped link, not a refusal")
+            } else if (certificateRefusal != null) {
                 // Offer the next certificate next time: strict head units only accept Google-issued ones.
+                handshakeHangUps = 0
                 settings.certificateIndex = settings.certificateIndex + 1
-                log("head unit rejected the certificate; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
+                log("head unit ${certificateRefusal}; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
                 // Strict head units accept only a Google-issued certificate. If we don't have one yet,
                 // offer to fetch it, so the user needn't open Advanced before connecting.
                 if (!certs.hasGoogleCertificate() && !certDownloadPrompted) {
@@ -423,6 +431,20 @@ class ProjectionService : Service() {
                 main.postDelayed({ if (idle()) stopEverything() }, 3_000)
             }
         }
+    }
+
+    /**
+     * Whether to offer the same certificate again after [refusal]: a head unit that only hung up
+     * during the TLS handshake while it was offered a valid Google-issued certificate (which every
+     * head unit accepts) more likely lost the link, e.g. the cable was replugged at that moment,
+     * than refused it. Once only: a second hang-up in a row moves on, so a head unit that does
+     * refuse that certificate silently still gets the next one.
+     */
+    private fun keepAfterHangUp(refusal: CertificateRefusal): Boolean {
+        if (refusal.explicit) return false
+        val offered = certs.entries().firstOrNull { it.name == _state.value.certificate } ?: return false
+        if (!offered.isGoogleIssued || !offered.notAfter.after(java.util.Date())) return false
+        return handshakeHangUps++ == 0
     }
 
     /** Waits for the head unit of a dropped USB link to come back, then reconnects (see [UsbReattach.next]). */
