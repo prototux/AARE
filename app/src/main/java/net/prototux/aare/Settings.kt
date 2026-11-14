@@ -309,6 +309,26 @@ class Settings(context: Context) {
     val instanceId: String
         get() = prefs.getString("instance_id", null) ?: UUID.randomUUID().toString().also { prefs.edit { putString("instance_id", it) } }
 
+    /**
+     * Replace the downloaded certificate when a newer one is published (see CertificateUpdates).
+     * Off by default: it means a daily request to a third-party repository.
+     */
+    var certAutoUpdate: Boolean
+        get() = prefs.getBoolean("cert_auto_update", false)
+        set(v) = prefs.edit { putBoolean("cert_auto_update", v) }
+
+    // Certificate-update state (see CertificateUpdates): when the repository was last asked, and
+    // the expiry warning already notified and the one dismissed, as "name|expired" keys.
+    var certUpdateLastCheckMs: Long
+        get() = prefs.getLong("cert_update_last_check_ms", 0)
+        set(v) = prefs.edit { putLong("cert_update_last_check_ms", v) }
+    var certExpiryNotified: String?
+        get() = prefs.getString("cert_expiry_notified", null)
+        set(v) = prefs.edit { putString("cert_expiry_notified", v) }
+    var certExpiryDismissed: String?
+        get() = prefs.getString("cert_expiry_dismissed", null)
+        set(v) = prefs.edit { putString("cert_expiry_dismissed", v) }
+
     /** Index of the certificate to offer first (rotates after a head unit rejects one). */
     var certificateIndex: Int
         get() = prefs.getInt("cert_index", 0)

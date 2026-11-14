@@ -70,6 +70,7 @@ import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tv
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -123,6 +124,7 @@ import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
+import net.prototux.aare.cert.CertificateUpdates
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
 import net.prototux.aare.host.Assistants
@@ -191,7 +193,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -210,6 +212,7 @@ private fun Home() {
             ) {
                 item { Header() }
                 item { UpdateBanner() }
+                item { CertificateExpiryBanner() }
                 item { StatusCard(state) }
                 item { Setup(state, refresh, { refresh++ }) { page = it } }
                 item {
@@ -310,6 +313,34 @@ private fun UpdateBanner() {
             }
             IconButton(onClick = { UpdateChecker.dismiss(ctx) }) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+        }
+    }
+}
+
+/** The Google-issued certificate expires soon or has expired (see CertificateUpdates): tap to download a newer one. */
+@Composable
+private fun CertificateExpiryBanner() {
+    val ctx = LocalContext.current
+    val expiring by CertificateUpdates.expiring.collectAsState()
+    expiring?.let { e ->
+        val date = DateFormat.getDateInstance().format(e.notAfter)
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.errorContainer)
+                .clickable { ctx.startService(Intent(ctx, ProjectionService::class.java).setAction(ProjectionService.ACTION_DOWNLOAD_CERT)) }
+                .padding(start = 18.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Warning, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(if (e.expired) R.string.cert_expired_banner_title else R.string.cert_expiring_banner_title, date),
+                    style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(stringResource(R.string.cert_expiry_banner_subtitle),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+            }
+            IconButton(onClick = { CertificateUpdates.dismiss(ctx) }) {
+                Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         }
     }
@@ -1149,6 +1180,8 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
     var error by remember { mutableStateOf<String?>(null) }
     var p12 by rememberSaveable { mutableStateOf<Uri?>(null) }
     var downloading by remember { mutableStateOf(false) }
+    val settings = remember { Settings(ctx) }
+    var autoUpdate by remember { mutableStateOf(settings.certAutoUpdate) }
     val scope = rememberCoroutineScope()
     val keyPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { keyUri ->
         val certUri = pickCert ?: return@rememberLauncherForActivityResult
@@ -1192,12 +1225,16 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
                         val d = withContext(Dispatchers.IO) { CertificateDownload.fetch() }
                         certs.importDownloaded(d)
                         entries = certs.entries()
+                        CertificateUpdates.refresh(ctx)
                     }.exceptionOrNull()?.let { downloadError(ctx, it) }
                     downloading = false
                 }
             }) { Text(stringResource(if (downloading) R.string.cert_action_downloading else R.string.cert_action_download)) }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+        Toggle(stringResource(R.string.cert_auto_update_title), stringResource(R.string.cert_auto_update_subtitle), autoUpdate) {
+            autoUpdate = it; settings.certAutoUpdate = it; CertificateUpdates.refresh(ctx)
+        }
     }
     p12?.let { uri ->
         var password by remember { mutableStateOf("") }

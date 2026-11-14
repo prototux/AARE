@@ -12,6 +12,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
+import java.util.Date
 
 /**
  * Fetches the phone certificate and key extracted from the latest Android Auto app, as published
@@ -39,12 +40,19 @@ object CertificateDownload {
 
     /** Blocking: call it off the main thread. Throws [Unavailable], another [IOException] or [Invalid]. */
     fun fetch(): Downloaded {
-        val version = JSONObject(get("$BASE/metadata.json")).optString("version").ifBlank { "latest" }
+        val version = latestVersion()
         val cert = get("$BASE/certificate.pem")
         val key = get("$BASE/private-key.pem")
         runCatching { check(cert, key) }.onFailure { throw Invalid(it.message ?: it.toString()) }
         return Downloaded(version, cert, key)
     }
+
+    /** The version the repository serves now (the Android Auto build it comes from), without the files. Blocking. */
+    fun latestVersion(): String = JSONObject(get("$BASE/metadata.json")).optString("version").ifBlank { "latest" }
+
+    /** When the leaf certificate of [certPem] expires. */
+    internal fun notAfter(certPem: String): Date =
+        (CertificateFactory.getInstance("X.509").generateCertificate(certPem.byteInputStream()) as X509Certificate).notAfter
 
     /** Checks that [certPem] is issued by the CA with SHA-256 [caSha256] and that [keyPem] is its key. */
     internal fun check(certPem: String, keyPem: String, caSha256: String = GAL_CA_SHA256) {

@@ -214,6 +214,11 @@
     <string name="cert_action_remove">Remove</string>
     <string name="cert_action_import">Import certificate…</string>
     <string name="cert_action_download">Download certificate</string>
+    <string name="cert_auto_update_title">Update the downloaded certificate automatically</string>
+    <string name="cert_auto_update_subtitle">Once a day, never while connected, AARE asks the same repository for a newer certificate and uses it. Either way, AARE warns two weeks before Google\'s certificate expires.</string>
+    <string name="cert_expiring_banner_title">Google\'s certificate expires on %1$s</string>
+    <string name="cert_expired_banner_title">Google\'s certificate expired on %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Cars that only accept it will refuse AARE. Tap to download a newer one.</string>
     <string name="cert_action_downloading">Downloading…</string>
     <string name="cert_download_unavailable">The certificate repository is gone (deleted or taken down): %1$s. Extract the certificate from the Android Auto app instead (see the README).</string>
     <string name="cert_download_network">Couldn\'t download the certificate: %1$s. Check the connection and try again.</string>
@@ -325,6 +330,12 @@
     <string name="notif_action_stop">Stop</string>
     <string name="notif_action_trust">Trust</string>
     <string name="notif_action_download_cert">Download certificate</string>
+    <string name="notif_cert_updated_title">Certificate updated</string>
+    <string name="notif_cert_updated_message">AARE downloaded a newer Android Auto certificate, valid until %1$s.</string>
+    <string name="notif_cert_expiring_title">Certificate expiring soon</string>
+    <string name="notif_cert_expiring_text">%1$s expires on %2$s. Cars that only accept Google\'s certificate will refuse AARE after that: download a newer one.</string>
+    <string name="notif_cert_expired_title">Certificate expired</string>
+    <string name="notif_cert_expired_text">%1$s expired on %2$s. Cars that only accept Google\'s certificate refuse AARE now: download a newer one.</string>
     <string name="notif_cert_download_title">Head unit rejected AARE\'s certificate</string>
     <string name="notif_cert_download_message">This head unit only accepts Google\'s certificate. Download the one from the latest Android Auto app, then reconnect.</string>
     <string name="notif_cert_download_progress">Downloading Android Auto\'s certificate…</string>
