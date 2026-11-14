@@ -5,6 +5,8 @@
     <string name="mirror_locked_placeholder">تتوقف شاشة الهاتف مؤقتًا أثناء قفل الهاتف. افتح قفل الهاتف لعرضها.</string>
     <string name="mirror_driving_no_accessibility">تتوقف شاشة الهاتف مؤقتًا أثناء القيادة. لعرض تطبيقات التنقّل أثناء القيادة، فعِّل AARE في إعدادات إمكانية الوصول في الهاتف: فهذا يُعلم AARE بالتطبيق المفتوح حاليًا.</string>
     <string name="mirror_driving_nav_only">تتوقف شاشة الهاتف مؤقتًا أثناء القيادة. وتعرض تطبيقات التنقّل فقط.</string>
+    <string name="mirror_need_screen_capture">تحتاج شاشة الهاتف إلى إذن Android لتسجيل الشاشة. على الهاتف، افتح إعدادات صوت السيارة في AARE، ثم اضغط على إذن تسجيل الشاشة واختر الشاشة بالكامل.</string>
+    <string name="mirror_capture_failed">رفض Android مشاركة شاشة الهاتف. على الهاتف، اضغط مرة أخرى على إذن تسجيل الشاشة في إعدادات صوت السيارة في AARE واختر الشاشة بالكامل.</string>
     <string name="mirror_need_accessibility">لاستخدام الهاتف من السيارة، فعِّل AARE في إعدادات إمكانية الوصول في الهاتف.</string>
 
     <string name="common_back">رجوع</string>
@@ -49,6 +51,8 @@
     <string name="setup_toggle_wireless_subtitle">الاتصال بالسيارات المقترنة عبر Wi-Fi عند دخولها نطاق Bluetooth</string>
     <string name="setup_toggle_resume_music_title">استئناف الموسيقى</string>
     <string name="setup_toggle_resume_music_subtitle">تشغيل آخر تطبيق موسيقى كان يعمل عند اتصال السيارة</string>
+    <string name="setup_bt_address_label">عنوان Bluetooth للهاتف (اختياري)</string>
+    <string name="setup_bt_address_hint">تعرض بعض وحدات التحكم شاشة سوداء حتى تعرف الهاتف المتصل. تجده في الإعدادات &gt; حول الهاتف &gt; الحالة. اتركه فارغًا إذا كانت سيارتك تعمل بالفعل.</string>
     <string name="setup_section_location">الموقع</string>
     <string name="setup_toggle_car_gps_title">استخدام نظام GPS في السيارة</string>
     <string name="setup_toggle_car_gps_subtitle">أثناء الاتصال، ترى التطبيقات على الهاتف موضع السيارة بدلًا من موضع الهاتف نفسه، لتجنّب الخلط بين الموضعين في تطبيقات التنقّل</string>
@@ -88,7 +92,7 @@
     <string name="setup_toggle_calendar_title">الحدث القادم في التقويم</string>
     <string name="setup_toggle_calendar_subtitle">تحت الموسيقى، مع اختصار للتنقّل إلى مكانه</string>
     <string name="setup_toggle_media_first_title">الموسيقى أولًا</string>
-    <string name="setup_toggle_media_first_subtitle">في الشاشة الرئيسية، تأخذ الموسيقى مكان الخريطة (يسارًا أو في الأعلى) وتأتي الخريطة بعدها</string>
+    <string name="setup_toggle_media_first_subtitle">في الشاشة الرئيسية، تأتي الموسيقى أولًا (أول عنصر في الصف، أو في الأعلى) وتأتي الخريطة بعدها</string>
     <string name="setup_section_driving">القيادة</string>
     <string name="setup_toggle_passenger_title">وضع الراكب</string>
     <string name="setup_toggle_passenger_subtitle">تجاهل حالة قيادة السيارة: تبقى الكتابة والقوائم الطويلة وشاشة الهاتف متاحة أثناء الحركة، لاستخدام الراكب. يجب ألا يستخدم السائق الشاشة أثناء القيادة.</string>
@@ -149,6 +153,8 @@
     <string name="huserver_toggle_lanonce_subtitle">أكثر أمانًا: يجب السماح بالشبكة من جديد في كل جلسة. أوقف هذا الخيار لوحدات التحكم التي تعيد الاتصال تلقائيًا، مثل openauto أو Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">شاشة الهاتف على الخادم</string>
     <string name="huserver_toggle_mirror_subtitle">تقديم "شاشة الهاتف" أيضًا لأي شخص يتصل هنا. غير آمن: فسيرى شاشة الهاتف ويمكنه النقر عليها، فاتركه موقوفًا إلا إذا كنت تثق بوحدة التحكم.</string>
+    <string name="huserver_toggle_localhost_title">السماح بـ localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">قبول اتصال من تطبيق Android Auto في المتصفح على هذا الهاتف، للسيارات التي لا تدعم Android Auto (مثل Tesla). يمكن لأي تطبيق على الهاتف الاتصال، فاتركه موقوفًا إلا إذا كنت تستخدم أحدها.</string>
 
     <string name="msg_settings_title">الرسائل</string>
     <string name="msg_page_subtitle">الإشعارات المنبثقة والقراءة بصوت عالٍ</string>
@@ -177,6 +183,10 @@
     <string name="audio_no_method">لم يتم إعداد طريقة حتى الآن: اختر واحدة أدناه.</string>
     <string name="audio_section_methods">الطرق، الأفضل أولًا</string>
     <string name="audio_policy_ready">جاهز. تُرسل الموسيقى وصوت التنقّل إلى السيارة بشكل منفصل، ويبقى الهاتف صامتًا.</string>
+    <string name="audio_method_policy">توجيه صوت النظام (مثل Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku، مع فصل الموسيقى عن التنقّل (مثل Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku أو root</string>
+    <string name="audio_method_playback_capture">إذن تسجيل الشاشة</string>
     <string name="audio_policy_not_ready">كما في Android Auto: الموسيقى وصوت التنقّل منفصلان، ومكبر صوت الهاتف موقوف. يتطلب هاتفًا بصلاحيات root: ثبّت AARE كتطبيق نظام باستخدام وحدة Magisk (راجع ملف README).</string>
     <string name="audio_shizuku_ready">جاهز. كل ما يشغّله الهاتف يصل إلى السيارة، بما فيه صوت التنقّل؛ ويبقى الهاتف صامتًا.</string>
     <string name="audio_shizuku_needs_android12">يتطلب Android 12 أو إصدارًا أحدث.</string>
@@ -205,6 +215,14 @@
     <string name="notif_channel_connection">اتصال السيارة</string>
     <string name="notif_action_stop">إيقاف</string>
     <string name="notif_action_trust">وثوق</string>
+    <string name="notif_action_download_cert">تنزيل الشهادة</string>
+    <string name="notif_cert_download_title">رفضت وحدة التحكم شهادة AARE</string>
+    <string name="notif_cert_download_message">تقبل وحدة التحكم هذه فقط شهادة Google. نزّل الشهادة من أحدث تطبيق Android Auto، ثم أعد الاتصال.</string>
+    <string name="notif_cert_download_progress">جارٍ تنزيل شهادة Android Auto…</string>
+    <string name="notif_cert_download_ready_title">الشهادة جاهزة</string>
+    <string name="notif_cert_download_ready_message">أُضيفت شهادة Android Auto. أعد الاتصال بوحدة التحكم لاستخدامها.</string>
+    <string name="notif_cert_download_reconnecting">أُضيفت شهادة Android Auto. جارٍ إعادة الاتصال بوحدة التحكم…</string>
+    <string name="notif_cert_download_failed">تعذّر تنزيل الشهادة: %1$s</string>
     <string name="notif_status_connecting_wirelessly">جارٍ الاتصال لاسلكيًا…</string>
     <string name="notif_status_not_connected">غير متصل</string>
     <string name="notif_keeping_consent_suffix">%1$s · الاحتفاظ بإذن تسجيل الشاشة لصوت السيارة (الإيقاف يُلغيه)</string>
@@ -317,6 +335,8 @@
     <string name="standalone_section_warning">هذه ليست تطبيقات Android Auto: يعرض AARE شاشة الهاتف العادية، فقط أثناء التوقف، ويحتاج إلى root أو Shizuku. استخدمها على مسؤوليتك الخاصة.</string>
     <string name="standalone_toggle_title">تشغيل تطبيقات الهاتف على شاشة السيارة</string>
     <string name="standalone_toggle_subtitle">اختر التطبيقات أدناه. تظهر فقط عند التوقف.</string>
+    <string name="standalone_keep_awake_title">وضع منع السكون للتطبيقات المستقلة</string>
+    <string name="standalone_keep_awake_subtitle">يُبقي شاشة الهاتف الفعلية مستيقظة أثناء فتح تطبيق. على هواتف Android 17 المتأثرة، تتوقف الشاشات الافتراضية عند إيقاف شاشة الهاتف. يستهلك بطارية أكثر.</string>
     <string name="standalone_need_root">يحتاج إلى root أو Shizuku. أعدّ أحدهما في صفحة صوت السيارة، ثم عد إلى هنا.</string>
     <string name="standalone_not_native">ليس تطبيق Android Auto · استخدام أثناء التوقف</string>
     <string name="standalone_starting">جارٍ البدء…</string>
@@ -327,6 +347,10 @@
     <string name="browser_url_label">الصفحة الرئيسية</string>
     <string name="browser_hint_parked">يتم إيقاف المتصفح مؤقتًا أثناء القيادة.</string>
     <string name="browser_paused_driving">يتم إيقاف المتصفح مؤقتًا أثناء القيادة.</string>
+    <string name="browser_forward">إلى الأمام</string>
+    <string name="browser_reload">إعادة التحميل</string>
+    <string name="browser_home">الصفحة الرئيسية</string>
+    <string name="browser_address_hint">ابحث أو اكتب عنوان ويب</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">بيانات السيارة</string>
     <string name="setup_page_car_data_subtitle">السرعة والترس والحساسات المباشرة من السيارة</string>
@@ -377,6 +401,14 @@
     <string name="car_data_accelerometer">مقياس التسارع</string>
     <string name="car_data_gyroscope">الجيروسكوب</string>
     <string name="car_data_dtc">أكواد الأعطال</string>
+    <string name="car_data_app_label">بيانات السيارة</string>
+    <string name="car_data_show_in_car_title">إظهار على شاشة السيارة</string>
+    <string name="car_data_show_in_car_subtitle">أضف تطبيق تشخيص في السيارة لرؤية هذه البيانات المباشرة</string>
+    <string name="vehicles_section_title">تجاوزات خاصة بكل سيارة</string>
+    <string name="vehicles_hint">عدّل كثافة سيارة معيّنة أو حدود منطقتها المرئية دون إصدار بناء جديد. حرّر ملف vehicles.json باستخدام مدير ملفات، مع مطابقة السيارة حسب الشركة المصنّعة/الطراز/الاسم.</string>
+    <string name="vehicles_rule_count">القواعد المحمّلة: %1$d</string>
+    <string name="vehicles_import">استيراد ملف…</string>
+    <string name="vehicles_template">كتابة نموذج</string>
     <string name="setup_toggle_force_h264_title">فرض ترميز H.264 للفيديو</string>
     <string name="setup_toggle_force_h264_subtitle">بشكل افتراضي، يستخدم AARE أفضل ترميز مشترك بين السيارة والهاتف (H.265…). فعّل هذا الخيار إذا كانت صورة السيارة بها تشويش.</string>
     <string name="common_ok">OK</string>

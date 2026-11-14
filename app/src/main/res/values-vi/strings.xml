@@ -5,6 +5,8 @@
     <string name="mirror_locked_placeholder">Màn hình điện thoại tạm dừng khi điện thoại đang khóa. Mở khóa điện thoại để hiển thị.</string>
     <string name="mirror_driving_no_accessibility">Màn hình điện thoại tạm dừng khi đang lái xe. Để hiển thị ứng dụng điều hướng khi lái xe, hãy bật AARE trong cài đặt trợ năng của điện thoại: điều này giúp AARE biết ứng dụng nào đang mở.</string>
     <string name="mirror_driving_nav_only">Màn hình điện thoại tạm dừng khi đang lái xe. Nó chỉ hiển thị ứng dụng điều hướng.</string>
+    <string name="mirror_need_screen_capture">Màn hình điện thoại cần quyền ghi màn hình của Android. Trên điện thoại, mở cài đặt Âm thanh xe hơi của AARE, nhấn Quyền ghi màn hình và chọn Toàn bộ màn hình.</string>
+    <string name="mirror_capture_failed">Android đã từ chối chia sẻ màn hình điện thoại. Trên điện thoại, nhấn lại Quyền ghi màn hình trong cài đặt Âm thanh xe hơi của AARE và chọn Toàn bộ màn hình.</string>
     <string name="mirror_need_accessibility">Để dùng điện thoại từ xe, hãy bật AARE trong cài đặt trợ năng của điện thoại.</string>
 
     <!-- common: shared across screens -->
@@ -51,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
     <string name="setup_toggle_resume_music_title">Tiếp tục nhạc</string>
     <string name="setup_toggle_resume_music_subtitle">Bật lại ứng dụng nhạc vừa phát khi xe kết nối</string>
+    <string name="setup_bt_address_label">Địa chỉ Bluetooth điện thoại (không bắt buộc)</string>
+    <string name="setup_bt_address_hint">Một số đầu đĩa hiển thị màn hình đen cho đến khi biết điện thoại nào đang kết nối. Bạn có thể tìm thấy nó trong Cài đặt &gt; Giới thiệu về điện thoại &gt; Trạng thái. Để trống nếu xe của bạn đã hoạt động tốt.</string>
     <string name="setup_section_location">Vị trí</string>
     <string name="setup_toggle_car_gps_title">Dùng GPS của xe</string>
     <string name="setup_toggle_car_gps_subtitle">Khi đang kết nối, các ứng dụng trên điện thoại sẽ thấy vị trí của xe thay vì vị trí của điện thoại, để ứng dụng điều hướng không lẫn hai vị trí này</string>
@@ -90,7 +94,7 @@
     <string name="setup_toggle_calendar_title">Sự kiện lịch kế tiếp</string>
     <string name="setup_toggle_calendar_subtitle">Dưới phần nhạc, có lối tắt để điều hướng đến địa điểm đó</string>
     <string name="setup_toggle_media_first_title">Ưu tiên nhạc</string>
-    <string name="setup_toggle_media_first_subtitle">Trên màn hình chính, phần nhạc nằm ở vị trí của bản đồ (bên trái hoặc phía trên) và bản đồ nằm sau đó</string>
+    <string name="setup_toggle_media_first_subtitle">Trên màn hình chính, nhạc đứng trước (đứng đầu hàng, hoặc ở trên) và bản đồ đứng sau</string>
     <string name="setup_section_driving">Lái xe</string>
     <string name="setup_toggle_passenger_title">Chế độ hành khách</string>
     <string name="setup_toggle_passenger_subtitle">Bỏ qua trạng thái lái xe của ô tô: nhập văn bản, danh sách dài và màn hình điện thoại vẫn khả dụng khi xe đang di chuyển, dành cho hành khách. Người lái không được dùng màn hình khi đang lái xe.</string>
@@ -153,6 +157,8 @@
     <string name="huserver_toggle_lanonce_subtitle">An toàn hơn: mạng phải được cho phép lại ở mỗi phiên. Hãy tắt tùy chọn này cho các đầu đĩa tự kết nối lại, như openauto hoặc Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Màn hình điện thoại trên máy chủ</string>
     <string name="huserver_toggle_mirror_subtitle">Cũng cung cấp "Màn hình điện thoại" cho bất kỳ ai kết nối vào đây. Rủi ro: họ có thể thấy màn hình điện thoại và chạm vào nó, vì vậy hãy để tắt trừ khi bạn tin tưởng đầu đĩa này.</string>
+    <string name="huserver_toggle_localhost_title">Cho phép localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Chấp nhận kết nối từ một ứng dụng kiểu Android Auto trong trình duyệt trên điện thoại này, dùng cho xe không có Android Auto (ví dụ: Tesla). Bất kỳ ứng dụng nào trên điện thoại cũng có thể kết nối, vì vậy hãy để tắt trừ khi bạn dùng một ứng dụng như vậy.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Tin nhắn</string>
@@ -183,6 +189,10 @@
     <string name="audio_no_method">Chưa thiết lập phương thức nào: hãy chọn một phương thức dưới đây.</string>
     <string name="audio_section_methods">Các phương thức, tốt nhất trước</string>
     <string name="audio_policy_ready">Đã sẵn sàng. Nhạc và giọng điều hướng truyền riêng đến xe, điện thoại vẫn im lặng.</string>
+    <string name="audio_method_policy">Định tuyến âm thanh hệ thống (giống Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, nhạc và điều hướng tách riêng (giống Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku hoặc root</string>
+    <string name="audio_method_playback_capture">Quyền ghi màn hình</string>
     <string name="audio_policy_not_ready">Giống Android Auto: nhạc và giọng điều hướng tách riêng, loa điện thoại tắt. Cần điện thoại đã root: cài AARE như ứng dụng hệ thống bằng module Magisk (xem README).</string>
     <string name="audio_shizuku_ready">Đã sẵn sàng. Mọi âm thanh điện thoại phát ra đều truyền đến xe, kể cả giọng điều hướng; điện thoại vẫn im lặng.</string>
     <string name="audio_shizuku_needs_android12">Cần Android 12 hoặc mới hơn.</string>
@@ -214,6 +224,14 @@
     <string name="notif_channel_connection">Kết nối xe</string>
     <string name="notif_action_stop">Dừng</string>
     <string name="notif_action_trust">Tin tưởng</string>
+    <string name="notif_action_download_cert">Tải chứng chỉ xuống</string>
+    <string name="notif_cert_download_title">Đầu đĩa đã từ chối chứng chỉ của AARE</string>
+    <string name="notif_cert_download_message">Đầu đĩa này chỉ chấp nhận chứng chỉ do Google cấp. Hãy tải chứng chỉ đó từ ứng dụng Android Auto mới nhất, rồi kết nối lại.</string>
+    <string name="notif_cert_download_progress">Đang tải chứng chỉ của Android Auto…</string>
+    <string name="notif_cert_download_ready_title">Chứng chỉ đã sẵn sàng</string>
+    <string name="notif_cert_download_ready_message">Chứng chỉ của Android Auto đã được thêm. Hãy kết nối lại với đầu đĩa để sử dụng.</string>
+    <string name="notif_cert_download_reconnecting">Chứng chỉ của Android Auto đã được thêm. Đang kết nối lại với đầu đĩa…</string>
+    <string name="notif_cert_download_failed">Không thể tải chứng chỉ: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Đang kết nối không dây…</string>
     <string name="notif_status_not_connected">Chưa kết nối</string>
     <string name="notif_keeping_consent_suffix">%1$s · đang giữ quyền ghi màn hình cho âm thanh xe hơi (nhấn Dừng để giải phóng)</string>
@@ -333,6 +351,8 @@
     <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
     <string name="standalone_toggle_title">Khởi chạy ứng dụng điện thoại trên màn hình xe</string>
     <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới. Chỉ hiển thị khi đã đỗ xe.</string>
+    <string name="standalone_keep_awake_title">Chế độ không ngủ cho ứng dụng độc lập</string>
+    <string name="standalone_keep_awake_subtitle">Giữ màn hình vật lý của điện thoại luôn sáng khi có ứng dụng đang mở. Trên các điện thoại Android 17 bị ảnh hưởng, màn hình ảo sẽ dừng khi màn hình điện thoại tắt. Tiêu tốn nhiều pin hơn.</string>
     <string name="standalone_need_root">Cần root hoặc Shizuku. Thiết lập một trong hai ở Âm thanh xe hơi, rồi quay lại.</string>
     <string name="standalone_not_native">Không phải ứng dụng Android Auto · dùng khi đã đỗ xe</string>
     <string name="standalone_starting">Đang khởi động…</string>
@@ -343,6 +363,10 @@
     <string name="browser_url_label">Trang chủ</string>
     <string name="browser_hint_parked">Trình duyệt tạm dừng khi đang lái xe.</string>
     <string name="browser_paused_driving">Trình duyệt tạm dừng khi đang lái xe.</string>
+    <string name="browser_forward">Tiến</string>
+    <string name="browser_reload">Tải lại</string>
+    <string name="browser_home">Trang chủ</string>
+    <string name="browser_address_hint">Tìm kiếm hoặc nhập địa chỉ web</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dữ liệu xe</string>
     <string name="setup_page_car_data_subtitle">Tốc độ, số và cảm biến trực tiếp từ xe</string>
@@ -393,6 +417,14 @@
     <string name="car_data_accelerometer">Cảm biến gia tốc</string>
     <string name="car_data_gyroscope">Con quay hồi chuyển</string>
     <string name="car_data_dtc">Mã lỗi</string>
+    <string name="car_data_app_label">Dữ liệu xe hơi</string>
+    <string name="car_data_show_in_car_title">Hiện trên màn hình xe</string>
+    <string name="car_data_show_in_car_subtitle">Thêm ứng dụng chẩn đoán trên xe cho dữ liệu trực tiếp này</string>
+    <string name="vehicles_section_title">Ghi đè theo từng xe</string>
+    <string name="vehicles_hint">Chỉnh mật độ màn hình hoặc lề vùng hiển thị cho một xe cụ thể, không cần bản dựng mới. Sửa vehicles.json bằng trình quản lý file, khớp xe theo hãng/dòng xe/tên.</string>
+    <string name="vehicles_rule_count">Đã tải %1$d quy tắc</string>
+    <string name="vehicles_import">Nhập file…</string>
+    <string name="vehicles_template">Ghi tệp mẫu</string>
     <string name="setup_toggle_force_h264_title">Buộc dùng video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Theo mặc định, AARE sử dụng codec tốt nhất mà xe và điện thoại đều hỗ trợ (H.265…). Bật tùy chọn này nếu hình ảnh trên xe bị lỗi.</string>
     <string name="common_ok">OK</string>

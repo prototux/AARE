@@ -5,6 +5,8 @@
     <string name="mirror_locked_placeholder">O ecrã do telemóvel está em pausa enquanto o telemóvel estiver bloqueado. Desbloqueie o telemóvel para o mostrar.</string>
     <string name="mirror_driving_no_accessibility">O ecrã do telemóvel está em pausa durante a condução. Para mostrar aplicações de navegação durante a condução, ative a AARE nas definições de acessibilidade do telemóvel: isso indica à AARE qual a aplicação aberta.</string>
     <string name="mirror_driving_nav_only">O ecrã do telemóvel está em pausa durante a condução. Mostra apenas aplicações de navegação.</string>
+    <string name="mirror_need_screen_capture">O ecrã do telemóvel precisa da permissão de captura de ecrã do Android. No telemóvel, abra a página Áudio do carro da AARE, toque em Permissão de captura de ecrã e escolha Ecrã inteiro.</string>
+    <string name="mirror_capture_failed">O Android recusou partilhar o ecrã do telemóvel. No telemóvel, toque novamente em Permissão de captura de ecrã na página Áudio do carro da AARE e escolha Ecrã inteiro.</string>
     <string name="mirror_need_accessibility">Para utilizar o telemóvel a partir do carro, ative a AARE nas definições de acessibilidade do telemóvel.</string>
 
     <!-- common: shared across screens -->
@@ -51,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Ligar a carros emparelhados por Wi-Fi quando entram no alcance do Bluetooth</string>
     <string name="setup_toggle_resume_music_title">Retomar a música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar a última aplicação de música quando o carro se ligar</string>
+    <string name="setup_bt_address_label">Endereço Bluetooth do telemóvel (opcional)</string>
+    <string name="setup_bt_address_hint">Algumas unidades principais mostram um ecrã preto até saberem qual é o telemóvel ligado. Encontre-o em Definições &gt; Acerca do telefone &gt; Estado. Deixe em branco se o seu carro já funcionar.</string>
     <string name="setup_section_location">Localização</string>
     <string name="setup_toggle_car_gps_title">Utilizar o GPS do carro</string>
     <string name="setup_toggle_car_gps_subtitle">Enquanto ligado, as aplicações no telemóvel veem a posição do carro em vez da do próprio telemóvel, para que as aplicações de navegação não misturem as duas</string>
@@ -90,7 +94,7 @@
     <string name="setup_toggle_calendar_title">Próximo evento do calendário</string>
     <string name="setup_toggle_calendar_subtitle">Sob a música, com um atalho para navegar até ao local</string>
     <string name="setup_toggle_media_first_title">Música primeiro</string>
-    <string name="setup_toggle_media_first_subtitle">No ecrã inicial, a música fica onde está o mapa (à esquerda ou em cima) e o mapa vem depois</string>
+    <string name="setup_toggle_media_first_subtitle">No ecrã principal, a música vem primeiro (primeiro na fila, ou em cima) e o mapa depois</string>
     <string name="setup_section_driving">Condução</string>
     <string name="setup_toggle_passenger_title">Modo passageiro</string>
     <string name="setup_toggle_passenger_subtitle">Ignorar o estado de condução do carro: a escrita, as listas longas e o ecrã do telemóvel continuam disponíveis em movimento, para um passageiro. O condutor não deve utilizar o ecrã durante a condução.</string>
@@ -153,6 +157,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Mais seguro: a rede tem de ser autorizada novamente em cada sessão. Desative isto para unidades principais que se voltam a ligar por conta própria, como o openauto ou o Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Ecrã do telemóvel no servidor</string>
     <string name="huserver_toggle_mirror_subtitle">Também oferece "Ecrã do telemóvel" a quem se ligar aqui. Arriscado: a pessoa vê o ecrã do telemóvel e pode tocar nele, por isso deixe desativado a menos que confie na unidade principal.</string>
+    <string name="huserver_toggle_localhost_title">Permitir localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Aceite uma ligação de uma aplicação do tipo Android Auto no navegador neste telemóvel, para carros sem Android Auto (por ex., Tesla). Qualquer aplicação no telemóvel poderia ligar-se, por isso deixe desativado a menos que utilize uma.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Mensagens</string>
@@ -183,6 +189,10 @@
     <string name="audio_no_method">Ainda nenhum método configurado: escolha um abaixo.</string>
     <string name="audio_section_methods">Métodos, por ordem de preferência</string>
     <string name="audio_policy_ready">Pronto. A música e a voz de navegação vão para o carro separadamente, o telemóvel fica em silêncio.</string>
+    <string name="audio_method_policy">Encaminhamento de áudio do sistema (como no Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, música e navegação separadas (como no Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku ou root</string>
+    <string name="audio_method_playback_capture">Permissão de captura de ecrã</string>
     <string name="audio_policy_not_ready">Como no Android Auto: música e voz de navegação separadas, altifalante do telemóvel desligado. Requer um telemóvel com root: instale a AARE como aplicação do sistema com o módulo Magisk (consulte o README).</string>
     <string name="audio_shizuku_ready">Pronto. Tudo o que o telemóvel reproduz vai para o carro, incluindo a voz de navegação; o telemóvel fica em silêncio.</string>
     <string name="audio_shizuku_needs_android12">Requer Android 12 ou mais recente.</string>
@@ -214,6 +224,14 @@
     <string name="notif_channel_connection">Ligação ao carro</string>
     <string name="notif_action_stop">Parar</string>
     <string name="notif_action_trust">Confiar</string>
+    <string name="notif_action_download_cert">Transferir certificado</string>
+    <string name="notif_cert_download_title">A unidade principal rejeitou o certificado da AARE</string>
+    <string name="notif_cert_download_message">Esta unidade principal só aceita um certificado emitido pela Google. Transfira o da aplicação Android Auto mais recente e, depois, volte a ligar-se.</string>
+    <string name="notif_cert_download_progress">A transferir o certificado do Android Auto…</string>
+    <string name="notif_cert_download_ready_title">Certificado pronto</string>
+    <string name="notif_cert_download_ready_message">O certificado do Android Auto foi adicionado. Volte a ligar-se à unidade principal para o utilizar.</string>
+    <string name="notif_cert_download_reconnecting">O certificado do Android Auto foi adicionado. A voltar a ligar à unidade principal…</string>
+    <string name="notif_cert_download_failed">Não foi possível transferir o certificado: %1$s</string>
     <string name="notif_status_connecting_wirelessly">A ligar sem fios…</string>
     <string name="notif_status_not_connected">Não ligado</string>
     <string name="notif_keeping_consent_suffix">%1$s · a manter o consentimento de captura de ecrã para o áudio do carro (Parar liberta-o)</string>
@@ -333,6 +351,8 @@
     <string name="standalone_section_warning">Estas não são apps do Android Auto: a AARE mostra o ecrã normal do telemóvel, apenas quando estacionado, e precisa de root ou Shizuku. Utilize por sua conta e risco.</string>
     <string name="standalone_toggle_title">Iniciar apps do telemóvel no ecrã do carro</string>
     <string name="standalone_toggle_subtitle">Escolha as apps abaixo. Mostradas apenas quando estacionado.</string>
+    <string name="standalone_keep_awake_title">Modo sem suspensão para aplicações autónomas</string>
+    <string name="standalone_keep_awake_subtitle">Mantém o ecrã físico do telemóvel ativo enquanto uma aplicação está aberta. Nos telemóveis Android 17 afetados, os ecrãs virtuais param quando o ecrã do telemóvel está desligado. Consome mais bateria.</string>
     <string name="standalone_need_root">Precisa de root ou Shizuku. Configure um deles em Áudio do carro e depois volte.</string>
     <string name="standalone_not_native">Não é uma app do Android Auto · uso quando estacionado</string>
     <string name="standalone_starting">A iniciar…</string>
@@ -343,6 +363,10 @@
     <string name="browser_url_label">Página inicial</string>
     <string name="browser_hint_parked">O navegador é pausado durante a condução.</string>
     <string name="browser_paused_driving">O navegador é pausado durante a condução.</string>
+    <string name="browser_forward">Avançar</string>
+    <string name="browser_reload">Recarregar</string>
+    <string name="browser_home">Página inicial</string>
+    <string name="browser_address_hint">Pesquisar ou introduzir um endereço Web</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dados do carro</string>
     <string name="setup_page_car_data_subtitle">Velocidade, mudança e sensores em tempo real do carro</string>
@@ -393,6 +417,14 @@
     <string name="car_data_accelerometer">Acelerómetro</string>
     <string name="car_data_gyroscope">Giroscópio</string>
     <string name="car_data_dtc">Códigos de avaria</string>
+    <string name="car_data_app_label">Dados do carro</string>
+    <string name="car_data_show_in_car_title">Mostrar no ecrã do carro</string>
+    <string name="car_data_show_in_car_subtitle">Adicione uma aplicação de diagnóstico no carro para estes dados em tempo real</string>
+    <string name="vehicles_section_title">Substituições por veículo</string>
+    <string name="vehicles_hint">Corrija a densidade ou as margens da área visível de um carro específico, sem uma nova compilação. Edite o vehicles.json com um gestor de ficheiros, associando o carro pela marca/modelo/nome.</string>
+    <string name="vehicles_rule_count">Regras carregadas: %1$d</string>
+    <string name="vehicles_import">Importar ficheiro…</string>
+    <string name="vehicles_template">Escrever modelo</string>
     <string name="setup_toggle_force_h264_title">Forçar vídeo H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Por predefinição, a AARE usa o melhor codec partilhado pelo carro e pelo telemóvel (H.265…). Ative se a imagem do carro estiver com falhas.</string>
     <string name="common_ok">OK</string>
