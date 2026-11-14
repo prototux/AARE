@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Nastavení</string>
     <string name="setup_app_entry_notifications">Oznámení</string>
     <string name="setup_section_app_order">Pořadí v autě</string>
+    <string name="setup_section_car_rail">Lišta v autě</string>
+    <string name="setup_car_rail_hint">Vyberte, které aplikace budou na liště (nebo hlavním panelu) a v jakém pořadí. Když nic nevyberete, lišta si ponechá vestavěnou sadu (navigace, hudba, nedávné aplikace, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompaktní lišta</string>
+    <string name="setup_toggle_compact_rail_subtitle">Užší lišta s menšími ikonami a těsnějšími mezerami</string>
     <string name="setup_section_connection_log">Protokol připojení</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nesouvisí s Google. Android Auto je ochranná známka společnosti Google LLC.</string>
     <string name="setup_choice_style">Styl</string>

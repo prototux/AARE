@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Asetukset</string>
     <string name="setup_app_entry_notifications">Ilmoitukset</string>
     <string name="setup_section_app_order">Järjestys autossa</string>
+    <string name="setup_section_car_rail">Auton lista</string>
+    <string name="setup_car_rail_hint">Valitse, mitkä sovellukset ovat listassa (tai tehtäväpalkissa) ja missä järjestyksessä. Jos mitään ei valita, lista pitää sisäänrakennetun valikoimansa (navigointi, musiikki, viimeisimmät sovellukset, puhelin).</string>
+    <string name="setup_toggle_compact_rail_title">Tiivis lista</string>
+    <string name="setup_toggle_compact_rail_subtitle">Kapeampi lista, pienemmät kuvakkeet ja tiiviimmät välit</string>
     <string name="setup_section_connection_log">Yhteysloki</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ei liity Googleen. Android Auto on Google LLC:n tavaramerkki.</string>
     <string name="setup_choice_style">Tyyli</string>

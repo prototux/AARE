@@ -114,6 +114,10 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail's chosen apps, in order (a setting; empty = the rail's built-in set). */
+    var railApps by mutableStateOf<List<String>>(emptyList())
+    /** A narrower rail: smaller icons, tighter spacing (a setting). */
+    var compactRail by mutableStateOf(false)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */

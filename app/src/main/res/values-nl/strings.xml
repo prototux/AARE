@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Instellingen</string>
     <string name="setup_app_entry_notifications">Meldingen</string>
     <string name="setup_section_app_order">Volgorde in de auto</string>
+    <string name="setup_section_car_rail">Balk in de auto</string>
+    <string name="setup_car_rail_hint">Kies welke apps op de balk (of de taakbalk) staan en in welke volgorde. Niets gekozen: de balk houdt zijn ingebouwde set (navigatie, muziek, recente apps, telefoon).</string>
+    <string name="setup_toggle_compact_rail_title">Compacte balk</string>
+    <string name="setup_toggle_compact_rail_subtitle">Een smallere balk, met kleinere pictogrammen en minder ruimte ertussen</string>
     <string name="setup_section_connection_log">Verbindingslogboek</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Niet aangesloten bij Google. Android Auto is een handelsmerk van Google LLC.</string>
     <string name="setup_choice_style">Stijl</string>

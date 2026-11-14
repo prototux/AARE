@@ -317,6 +317,16 @@ class Settings(context: Context) {
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
 
+    /** The rail's chosen apps, in order (keys as [appOrder]'s). Empty: the rail's built-in set. */
+    var railApps: List<String>
+        get() = prefs.getString("rail_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("rail_apps", v.joinToString("\n")) }
+
+    /** A narrower rail, with smaller icons and tighter spacing. */
+    var compactRail: Boolean
+        get() = prefs.getBoolean("compact_rail", false)
+        set(v) = prefs.edit { putBoolean("compact_rail", v) }
+
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
         get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()

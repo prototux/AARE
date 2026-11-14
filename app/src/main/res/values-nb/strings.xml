@@ -119,6 +119,10 @@
     <string name="setup_app_entry_settings">Innstillinger</string>
     <string name="setup_app_entry_notifications">Varsler</string>
     <string name="setup_section_app_order">Rekkefølge i bilen</string>
+    <string name="setup_section_car_rail">Bilens stolpe</string>
+    <string name="setup_car_rail_hint">Velg hvilke apper som står på stolpen (eller oppgavelinjen) og i hvilken rekkefølge. Ingenting valgt: stolpen beholder det innebygde utvalget (navigasjon, musikk, nylige apper, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakt stolpe</string>
+    <string name="setup_toggle_compact_rail_subtitle">En smalere stolpe, med mindre ikoner og tettere avstand</string>
     <string name="setup_section_connection_log">Tilkoblingslogg</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemerke som tilhører Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
