@@ -1,0 +1,26 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_INTEGRATED_OVERLAY_PARAMETERS_NOTIFICATION (phone -> head unit).
+// Field names from the protocol's OverlayParameters.
+message IntegratedOverlayParametersNotification {
+    repeated OverlayParameters overlay_parameters = 1;
+}
+
+message OverlayParameters {
+    optional int32 content_type = 1;
+    optional OverlayBounds bounds = 2;
+    optional OverlayCornerRadius corner_radius = 3;
+}
+
+message OverlayBounds {
+    optional int32 left = 1;
+    optional int32 top = 2;
+    optional int32 right = 3;
+    optional int32 bottom = 4;
+}
+
+message OverlayCornerRadius {
+    optional float radius = 1;
+}

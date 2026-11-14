@@ -15,4 +15,8 @@ enum WifiSecurityMode {
   WPA_ENTERPRISE = 7;
   WPA2_ENTERPRISE = 8;
   WPA_WPA2_ENTERPRISE = 9;
+  // 0-11 are accepted here. The names of 10 and 11 are AARE's guess, after the WPA3
+  // modes that follow WPA_WPA2_ENTERPRISE in the Wi-Fi security list.
+  WPA3_PERSONAL = 10;
+  WPA2_WPA3_PERSONAL = 11;
 }

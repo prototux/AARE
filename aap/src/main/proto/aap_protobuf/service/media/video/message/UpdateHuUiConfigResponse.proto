@@ -1,0 +1,10 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_UPDATE_HU_UI_CONFIG_RESPONSE (head unit -> phone);
+// reads it. An enum there; it logs 1 as "theming tokens accepted", 2 as rejected, anything else as
+// an error.
+message UpdateHuUiConfigResponse {
+    optional int32 status = 1;
+}

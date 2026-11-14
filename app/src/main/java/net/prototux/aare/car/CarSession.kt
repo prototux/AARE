@@ -190,6 +190,9 @@ class CarSession(
 
     fun stop() = aap.stop()
 
+    /** Ends this wireless session because the user turned wireless off. */
+    fun stopWirelessDisabled() = aap.stopWirelessDisabled()
+
     /**
      * The session closed before the head unit's version request ever came in: this attempt never
      * reached the version exchange, let alone the handshake, so nothing about it (certificate,

@@ -2,7 +2,15 @@ syntax="proto2";
 
 package aap_protobuf.service.media.shared.message;
 
+import "aap_protobuf/service/media/shared/message/MediaOptions.proto";
+
 message Start {
     optional int32 session_id = 1;
     optional uint32 configuration_index = 2;
+    // Fields 3 and 4; the name of 3 is AARE's guess. It
+    // accepts 0-2 there and sets 2 on video to head units 6.0 and later, and on audio (5.x and
+    // later) when a setting of its own is on. It sends 4 to head units 5.x and later (audio) or
+    // 6.0 and later (video).
+    optional int32 ack_mode = 3;
+    optional MediaOptions media_options = 4;
 }

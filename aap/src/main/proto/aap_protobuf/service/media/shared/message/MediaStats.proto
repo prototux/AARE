@@ -1,0 +1,33 @@
+syntax="proto2";
+
+import "aap_protobuf/shared/Duration.proto";
+
+package aap_protobuf.service.media.shared.message;
+
+// AARE: MEDIA_MESSAGE_MEDIA_STATS (head unit -> phone, audio and video channels).
+// Names are AARE's, after the labels logged for each field. Times are in
+// microseconds.
+message MediaStats {
+  optional aap_protobuf.shared.Duration interval = 1;
+  optional int64 frame_count = 2;
+  optional int64 audio_overflow_count = 3;
+  optional int64 audio_underrun_count = 4;
+  optional MediaStatsValues estimated_audio_buffer_us = 5;
+  optional MediaStatsValues audio_video_lag_us = 6;
+  optional MediaStatsValues audio_delay_us = 7;
+  optional MediaStatsValues video_delay_us = 8;
+  optional int64 audio_output_latency_offset_us = 9;
+  optional int64 video_overflow_count = 10;
+  optional MediaStatsValues video_overflow_duration_us = 11;
+  optional MediaStatsValues video_frame_jitter_us = 12;
+  optional MediaStatsValues video_frame_pacing_delay_us = 13;
+  optional int64 video_frame_too_fast_count = 14;
+  optional int64 video_frame_too_slow_count = 15;
+}
+
+message MediaStatsValues {
+  optional int64 avg = 1;
+  optional int64 min = 2;
+  optional int64 max = 3;
+  optional int64 count = 4;
+}

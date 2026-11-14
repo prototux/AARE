@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.hardware.usb.UsbAccessory
@@ -111,6 +112,12 @@ class ProjectionService : Service() {
     /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
     private var lastSessionWireless = false
     private var lastWirelessAddress: String? = null
+    /** The running session is a wireless one (Bluetooth, then Wi-Fi), not USB or the head unit server. */
+    private var wirelessProjection = false
+    /** Kept in a field: SharedPreferences holds its listeners weakly. */
+    private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "wireless" && !settings.wireless) wirelessTurnedOff()
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -122,6 +129,7 @@ class ProjectionService : Service() {
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
         createChannel()
+        settings.registerListener(settingsListener)
         _state.update { it.copy(running = true) }
     }
 
@@ -143,6 +151,7 @@ class ProjectionService : Service() {
 
     override fun onDestroy() {
         destroyed = true
+        settings.unregisterListener(settingsListener)
         // Pending retries and idle checks would run on a dead instance.
         main.removeCallbacksAndMessages(null)
         wirelessJob?.cancel()
@@ -230,7 +239,7 @@ class ProjectionService : Service() {
             while (true) {
                 try {
                     val transport = connector.connect(device)
-                    startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true)
+                    startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true, wirelessProjection = true)
                     return@launch
                 } catch (e: CancellationException) {
                     throw e
@@ -270,6 +279,22 @@ class ProjectionService : Service() {
         }
         log("wireless: ${runCatching { device.name }.getOrNull() ?: device.address} already connected over Bluetooth, connecting")
         connectWireless(device.address)
+    }
+
+    /**
+     * The user turned wireless off: a wireless session ends now (USB and head unit server sessions
+     * stay), and so does a wireless connection on its way.
+     */
+    private fun wirelessTurnedOff() {
+        if (wirelessJob?.isActive == true) {
+            log("wireless: turned off, cancelling the connection")
+            wirelessJob?.cancel()
+            if (session == null) _state.update { it.copy(status = getString(R.string.notif_status_not_connected)) }
+            scheduleIdleStop()
+        }
+        val s = session?.takeIf { wirelessProjection } ?: return
+        log("wireless: turned off, ending the wireless session")
+        s.stopWirelessDisabled()
     }
 
     private fun scheduleIdleStop() {
@@ -353,8 +378,10 @@ class ProjectionService : Service() {
      * [trustOnFirstUse] only for wireless, where the head unit was bonded over Bluetooth by the user:
      * USB and developer server head units need a Trust tap for each new certificate.
      * [mirror]: whether the car may be offered the phone screen (the developer TCP server only if opted in).
+     * [wirelessProjection]: a wireless session (Bluetooth, then Wi-Fi), which turning wireless off ends.
      */
-    private fun startSession(transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true) {
+    private fun startSession(transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true,
+                             wirelessProjection: Boolean = false) {
         if (destroyed) { transport.close(); return }
         if (session != null) {
             log("already connected; refusing ${transport.name}")
@@ -362,6 +389,7 @@ class ProjectionService : Service() {
             return
         }
         lastSessionWireless = wireless
+        this.wirelessProjection = wirelessProjection
         val cert = certs.pick(settings.certificateIndex)
         log("connecting ${transport.name} with certificate \"${cert.name}\"")
         acquireWakeLock()
