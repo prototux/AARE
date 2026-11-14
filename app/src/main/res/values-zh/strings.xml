@@ -118,6 +118,7 @@
     <string name="setup_choice_layout">布局</string>
     <string name="setup_layout_taskbar">任务栏</string>
     <string name="setup_layout_dock">程序坞</string>
+    <string name="setup_layout_classic">应用网格</string>
     <string name="setup_style_custom">自定义</string>
     <string name="theme_high_contrast">高对比度</string>
     <string name="theme_night">夜间</string>

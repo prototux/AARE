@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Asettelu</string>
     <string name="setup_layout_taskbar">Tehtäväpalkki</string>
     <string name="setup_layout_dock">Telakka</string>
+    <string name="setup_layout_classic">Sovellusruudukko</string>
     <string name="setup_style_custom">Oma</string>
     <string name="theme_high_contrast">Korkea kontrasti</string>
     <string name="theme_night">Yö</string>

@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Elrendezés</string>
     <string name="setup_layout_taskbar">Tálca</string>
     <string name="setup_layout_dock">Dokk</string>
+    <string name="setup_layout_classic">Alkalmazásrács</string>
     <string name="setup_style_custom">Egyéni</string>
     <string name="theme_high_contrast">Nagy kontraszt</string>
     <string name="theme_night">Éjszakai</string>

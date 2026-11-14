@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Oppsett</string>
     <string name="setup_layout_taskbar">Oppgavelinje</string>
     <string name="setup_layout_dock">Dokk</string>
+    <string name="setup_layout_classic">Apprutenett</string>
     <string name="setup_style_custom">Egendefinert</string>
     <string name="theme_high_contrast">Høy kontrast</string>
     <string name="theme_night">Natt</string>

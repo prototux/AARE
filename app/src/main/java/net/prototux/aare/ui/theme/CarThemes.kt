@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 
 /** The built-in themes. A new theme is a new entry here (and in the settings' choices). */
 object CarThemes {
-    val all: List<CarThemeSpec> get() = listOf(AareTheme, AndroidAutoTheme, CarPlayTheme, MaterialYouTheme, HighContrastTheme, NightTheme, RetroTheme)
+    val all: List<CarThemeSpec> get() = listOf(AareTheme, AndroidAutoTheme, AndroidAuto2019Theme, CarPlayTheme, MaterialYouTheme, HighContrastTheme, NightTheme, RetroTheme)
 
     /** The themes this phone can show: Material You needs Android 12. */
     val available: List<CarThemeSpec>

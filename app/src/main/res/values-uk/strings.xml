@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Макет</string>
     <string name="setup_layout_taskbar">Панель завдань</string>
     <string name="setup_layout_dock">Док</string>
+    <string name="setup_layout_classic">Сітка застосунків</string>
     <string name="setup_style_custom">Власна</string>
     <string name="theme_high_contrast">Висока контрастність</string>
     <string name="theme_night">Ніч</string>

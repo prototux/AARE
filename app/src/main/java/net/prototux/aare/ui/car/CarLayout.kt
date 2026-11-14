@@ -21,7 +21,10 @@ enum class CarLayout(
     TASKBAR("taskbar"),
 
     /** A dock on the driver's side and a home screen of app pages, like CarPlay's. */
-    DOCK("dock");
+    DOCK("dock"),
+
+    /** A bar along the bottom and the app grid as the home screen, like Android Auto's from 2019 to 2022. */
+    CLASSIC("classic");
 
     companion object {
         fun byId(id: String?): CarLayout = entries.firstOrNull { it.id == id } ?: TASKBAR
@@ -35,6 +38,7 @@ object CarStyles {
     val all: List<CarStyle> = listOf(
         CarStyle("aare", CarLayout.TASKBAR),
         CarStyle("android_auto", CarLayout.TASKBAR),
+        CarStyle("android_auto_2019", CarLayout.CLASSIC),
         CarStyle("carplay", CarLayout.DOCK),
         CarStyle("material_you", CarLayout.TASKBAR),
         CarStyle("high_contrast", CarLayout.TASKBAR),
@@ -79,6 +83,7 @@ internal fun StyleChoices(
     choice(stringResource(R.string.setup_choice_layout), listOf(
         CarLayout.TASKBAR.id to stringResource(R.string.setup_layout_taskbar),
         CarLayout.DOCK.id to stringResource(R.string.setup_layout_dock),
+        CarLayout.CLASSIC.id to stringResource(R.string.setup_layout_classic),
     ), layout.id) { onChange(theme.id, it) }
     Spacer(Modifier.height(12.dp))
     val accents = listOf(CarAccents.THEME to stringResource(R.string.accent_theme)) +

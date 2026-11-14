@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Layout</string>
     <string name="setup_layout_taskbar">Aktivitetsfält</string>
     <string name="setup_layout_dock">Docka</string>
+    <string name="setup_layout_classic">Apprutnät</string>
     <string name="setup_style_custom">Anpassad</string>
     <string name="theme_high_contrast">Hög kontrast</string>
     <string name="theme_night">Natt</string>

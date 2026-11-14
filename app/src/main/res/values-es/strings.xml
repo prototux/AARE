@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Diseño</string>
     <string name="setup_layout_taskbar">Barra de tareas</string>
     <string name="setup_layout_dock">Dock</string>
+    <string name="setup_layout_classic">Cuadrícula de apps</string>
     <string name="setup_style_custom">Personalizado</string>
     <string name="theme_high_contrast">Alto contraste</string>
     <string name="theme_night">Noche</string>

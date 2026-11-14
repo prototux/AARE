@@ -194,6 +194,7 @@
     <string name="setup_choice_layout">Layout</string>
     <string name="setup_layout_taskbar">Taskbar</string>
     <string name="setup_layout_dock">Dock</string>
+    <string name="setup_layout_classic">App grid</string>
     <string name="setup_style_custom">Custom</string>
     <string name="theme_high_contrast">High contrast</string>
     <string name="theme_night">Night</string>

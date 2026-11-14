@@ -120,6 +120,7 @@
     <string name="setup_choice_layout">Layout</string>
     <string name="setup_layout_taskbar">Taskleiste</string>
     <string name="setup_layout_dock">Dock</string>
+    <string name="setup_layout_classic">App-Raster</string>
     <string name="setup_style_custom">Eigene</string>
     <string name="theme_high_contrast">Hoher Kontrast</string>
     <string name="theme_night">Nacht</string>

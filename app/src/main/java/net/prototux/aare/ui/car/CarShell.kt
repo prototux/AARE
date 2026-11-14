@@ -102,9 +102,10 @@ fun CarShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    if (state.layout == CarLayout.DOCK) {
-        DockShell(state, actions, appContent, navMap, overlay, modifier)
-        return
+    when (state.layout) {
+        CarLayout.DOCK -> { DockShell(state, actions, appContent, navMap, overlay, modifier); return }
+        CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
+        CarLayout.TASKBAR -> Unit
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
@@ -130,13 +131,15 @@ fun CarShell(
     }
 }
 
+/** The screen's content: the dashboard (or, with [launcherHome], the app grid as the home screen), the app grid or an app. */
 @Composable
-private fun ContentArea(
+internal fun ContentArea(
     state: CarUiState,
     actions: CarActions,
     appContent: @Composable (CarAppEntry, Modifier) -> Unit,
     navMap: @Composable (CarAppEntry, Modifier) -> Unit,
     modifier: Modifier,
+    launcherHome: Boolean = false,
 ) {
     val gutter = LocalCarDimens.current.gutter
     // Give rotary / D-pad head units a starting point: focus lands on the first focusable of each
@@ -157,14 +160,18 @@ private fun ContentArea(
         label = "screen",
     ) { screen ->
         when (screen) {
-            CarScreen.Dashboard -> Box(Modifier.fillMaxSize()) {
+            CarScreen.Dashboard -> if (launcherHome) Launcher(state, actions, Modifier.fillMaxSize()) else Box(Modifier.fillMaxSize()) {
                 Wallpaper(state, Modifier.fillMaxSize())
                 Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
             }
             CarScreen.Launcher -> Launcher(state, actions, Modifier.fillMaxSize())
             is CarScreen.App -> {
                 val app = state.app(screen.appId)
-                if (app != null) appContent(app, Modifier.fillMaxSize()) else Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
+                when {
+                    app != null -> appContent(app, Modifier.fillMaxSize())
+                    launcherHome -> Launcher(state, actions, Modifier.fillMaxSize())
+                    else -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
+                }
             }
         }
     }
@@ -325,7 +332,7 @@ private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
 }
 
 @Composable
-private fun MicButton(listening: Boolean, onClick: () -> Unit) {
+internal fun MicButton(listening: Boolean, onClick: () -> Unit) {
     val d = LocalCarDimens.current
     val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
@@ -604,7 +611,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 // ---------------------------------------------------------------- launcher
 
 @Composable
-private fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
+internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(150.dp),
         modifier = modifier,
