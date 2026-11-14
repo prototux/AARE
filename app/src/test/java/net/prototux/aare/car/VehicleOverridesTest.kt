@@ -258,4 +258,11 @@ class VehicleOverridesTest {
         assertEquals(1, VehicleOverrides.resolve(emptyList(), rules, hu(), builtInFixes = true)!!.dpi)
         assertEquals(1, VehicleOverrides.resolve(rules, emptyList(), hu())!!.dpi)
     }
+
+    /** A skipped rule's reason goes to the connection log: it never quotes the rule. */
+    @Test fun aBadVersionIsntQuoted() {
+        val e = runCatching { VehicleMatch.version("Ford 1") }.exceptionOrNull()
+        assertTrue(e is RuleProblem)
+        assertFalse(e!!.message!!.contains("Ford"))
+    }
 }

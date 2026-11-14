@@ -181,11 +181,19 @@ data class VehicleMatch(
         /** "1.2" to (1, 2); anything else throws, so a rule with a typo is skipped rather than matching every car. */
         fun version(s: String): Pair<Int, Int> {
             val parts = s.trim().split('.')
-            require(parts.size == 2) { "protocol version \"$s\" isn't major.minor" }
-            return (parts[0].toIntOrNull() ?: error("bad protocol version \"$s\"")) to (parts[1].toIntOrNull() ?: error("bad protocol version \"$s\""))
+            val major = parts.getOrNull(0)?.toIntOrNull()
+            val minor = parts.getOrNull(1)?.toIntOrNull()
+            if (parts.size != 2 || major == null || minor == null) throw RuleProblem("a protocol version isn't major.minor")
+            return major to minor
         }
     }
 }
+
+/**
+ * Why a vehicles.json rule is skipped, in words of AARE's own: never the rule's values, which may
+ * name the user's car (they go to the connection log).
+ */
+class RuleProblem(reason: String) : IllegalArgumentException(reason)
 
 /**
  * A rule: the head units it is for, and what to [override] for them. An [optIn] rule (built-in file
@@ -262,7 +270,9 @@ object VehicleOverrides {
         val out = ArrayList<VehicleRule>()
         for (i in 0 until arr.length()) {
             val r = arr.optJSONObject(i) ?: continue
-            runCatching { parseRule(r) }.onSuccess { out += it }.onFailure { Log.w(TAG, "vehicles.json rule ${i + 1} skipped: ${it.message}") }
+            // Only AARE's own reasons: an exception's message can quote the rule's values.
+            runCatching { parseRule(r) }.onSuccess { out += it }
+                .onFailure { Log.w(TAG, "vehicles.json rule ${i + 1} skipped: ${(it as? RuleProblem)?.message ?: "malformed"}") }
         }
         return out
     }
