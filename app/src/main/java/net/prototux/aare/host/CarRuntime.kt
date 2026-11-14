@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -111,6 +112,8 @@ class CarRuntime(
     override var screenWidthDp by mutableIntStateOf(1280)
     override var screenHeightDp by mutableIntStateOf(720)
     override var densityDpi by mutableIntStateOf(160)
+    /** The car's screen takes touch (false for cars with only a knob or a touchpad), from its input service. */
+    var touchscreen by mutableStateOf(true)
     @Volatile override var carLocation: Location? = null
     @Volatile override var carHeading: Float? = null
 
