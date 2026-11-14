@@ -92,7 +92,7 @@ object CertificateUpdates {
                 return
             }
             val entry = certs.importDownloaded(download)
-            settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
+            settings.certificateIndex = certs.indexOf(entry.name)
             DiagLog.add("certificate update: imported \"${entry.name}\", valid until ${entry.notAfter}")
             notify(context, context.getString(R.string.notif_cert_updated_title),
                 context.getString(R.string.notif_cert_updated_message, DateFormat.getDateInstance().format(entry.notAfter)), download = false)
