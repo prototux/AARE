@@ -31,9 +31,10 @@ data class MqttBroker(
 
 /**
  * The HTTP server: relative URLs ("/api/…") go to [baseUrl], and [headers] (Authorization…) are
- * added to requests to that server only, never to other hosts.
+ * added to requests to that server only, never to other hosts. Plain http:// is refused unless
+ * [allowLanHttp] is on, and even then only to addresses on the home network (see [HomeHttp.isHomeHost]).
  */
-data class HttpServer(val baseUrl: String = "", val headers: List<Header> = emptyList()) {
+data class HttpServer(val baseUrl: String = "", val headers: List<Header> = emptyList(), val allowLanHttp: Boolean = false) {
     /** The bearer token of the Authorization header (Home Assistant's long-lived token), or "". */
     val token: String
         get() = headers.firstOrNull { it.name.equals(AUTHORIZATION, true) }?.value?.trim()

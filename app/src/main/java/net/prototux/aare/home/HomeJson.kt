@@ -22,7 +22,7 @@ object HomeJson {
         val pub = JSONObject().put("version", VERSION).put("enabled", c.enabled)
         pub.put("mqtt", JSONObject().put("host", c.mqtt.host).put("port", c.mqtt.port).put("tls", c.mqtt.tls)
             .put("username", c.mqtt.username).put("clientId", c.mqtt.clientId))
-        pub.put("http", JSONObject().put("baseUrl", c.http.baseUrl))
+        pub.put("http", JSONObject().put("baseUrl", c.http.baseUrl).put("allowLanHttp", c.http.allowLanHttp))
         pub.put("actions", JSONArray().apply {
             c.actions.forEach { a ->
                 val o = JSONObject().put("id", a.id).put("name", a.name).put("confirm", a.confirm).put("onCard", a.onCard)
@@ -72,7 +72,8 @@ object HomeJson {
             host = m.optString("host"), port = m.optInt("port", 1883), tls = m.optBoolean("tls"),
             username = m.optString("username"), password = sec.optString("mqttPassword"), clientId = m.optString("clientId"),
         )
-        val http = HttpServer(pub.optJSONObject("http")?.optString("baseUrl").orEmpty(), headersOf(HTTP_KEY))
+        val h = pub.optJSONObject("http") ?: JSONObject()
+        val http = HttpServer(h.optString("baseUrl"), headersOf(HTTP_KEY), h.optBoolean("allowLanHttp"))
         val actions = pub.optJSONArray("actions").objects().mapNotNull { o ->
             val id = o.optString("id").ifBlank { return@mapNotNull null }
             val send = when (o.optString("type")) {

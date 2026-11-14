@@ -189,17 +189,28 @@ private fun BrokerDialog(config: HomeConfig, onDismiss: () -> Unit, onSave: (Mqt
 
 @Composable
 private fun HttpDialog(server: HttpServer, onDismiss: () -> Unit, onSave: (HttpServer) -> Unit) {
+    val ctx = LocalContext.current
     var base by remember { mutableStateOf(server.baseUrl) }
     var token by remember { mutableStateOf(server.token) }
     var headers by remember { mutableStateOf(Header.toLines(server.otherHeaders)) }
-    val baseValid = base.isBlank() || HomeHttp.resolve(base, "/") != null
+    var lanHttp by remember { mutableStateOf(server.allowLanHttp) }
+    val edited = HttpServer(base.trim().trimEnd('/'), Header.parseLines(headers), lanHttp)
+    val refusal = if (base.isBlank()) null else plainRefusal(edited, "/")
+    val baseValid = base.isBlank() || (HomeHttp.resolve(base, "/") != null && refusal == null)
     Editor(stringResource(R.string.home_http_title), onDismiss, saveEnabled = baseValid,
-        onSave = { onSave(HttpServer(base.trim().trimEnd('/'), Header.parseLines(headers)).withToken(token)) }) {
-        Field(base, { base = it }, stringResource(R.string.home_field_base_url), hint = stringResource(R.string.home_base_url_hint), error = !baseValid)
+        onSave = { onSave(edited.withToken(token)) }) {
+        Field(base, { base = it }, stringResource(R.string.home_field_base_url),
+            hint = refusal?.let { HomeHub.reason(ctx, it) } ?: stringResource(R.string.home_base_url_hint), error = !baseValid)
         Field(token, { token = it }, stringResource(R.string.home_field_token), hint = stringResource(R.string.home_token_hint), secret = true)
         Field(headers, { headers = it }, stringResource(R.string.home_field_headers), hint = stringResource(R.string.home_headers_hint), lines = 3)
+        // Off by default; the subtitle is the warning (nothing on that network is encrypted).
+        Toggle(stringResource(R.string.home_http_lan_title), stringResource(R.string.home_http_lan_subtitle), lanHttp) { lanHttp = it }
     }
 }
+
+/** Why plain http [url] is refused with [server], or null (also when [url] isn't a valid URL yet). */
+private fun plainRefusal(server: HttpServer, url: String): HomeHttp.PlainHttpRefused? =
+    HomeHttp.resolve(server.baseUrl, url)?.let { HomeHttp.plainRefusal(server, it) }
 
 // ---------------------------------------------------------------- presets
 
@@ -309,7 +320,8 @@ private fun ActionDialog(action: HomeAction, config: HomeConfig, onDismiss: () -
     val place = lat.toDoubleOrNull()?.takeIf { it in -90.0..90.0 }?.let { la ->
         lon.toDoubleOrNull()?.takeIf { it in -180.0..180.0 }?.let { lo -> Arrival(la, lo, (radius.toIntOrNull() ?: 150).coerceIn(50, 5_000), arrivalOn) }
     }
-    val sendValid = if (isMqtt) MqttCodec.validPublishTopic(topic.trim()) else HomeHttp.resolve(config.http.baseUrl, url) != null
+    val refusal = if (isMqtt) null else plainRefusal(config.http, url)
+    val sendValid = if (isMqtt) MqttCodec.validPublishTopic(topic.trim()) else HomeHttp.resolve(config.http.baseUrl, url) != null && refusal == null
     val valid = name.isNotBlank() && sendValid && (!arrivalOn || place != null)
     val edited = HomeAction(action.id, name.trim(), send, confirm, onCard, place ?: action.arrival?.copy(enabled = false))
 
@@ -331,8 +343,8 @@ private fun ActionDialog(action: HomeAction, config: HomeConfig, onDismiss: () -
             Toggle(stringResource(R.string.home_retain_title), stringResource(R.string.home_retain_subtitle), retain) { retain = it }
         } else {
             Choices(stringResource(R.string.home_field_method), HomeHttp.METHODS.map { it to it }, method) { method = it }
-            Field(url, { url = it }, stringResource(R.string.home_field_url), hint = stringResource(R.string.home_url_hint),
-                error = url.isNotEmpty() && HomeHttp.resolve(config.http.baseUrl, url) == null)
+            Field(url, { url = it }, stringResource(R.string.home_field_url), hint = refusal?.let { HomeHub.reason(ctx, it) } ?: stringResource(R.string.home_url_hint),
+                error = url.isNotEmpty() && (HomeHttp.resolve(config.http.baseUrl, url) == null || refusal != null))
             Field(headers, { headers = it }, stringResource(R.string.home_field_headers), hint = stringResource(R.string.home_headers_hint), lines = 2)
             if (method != "GET") Field(body, { body = it }, stringResource(R.string.home_field_body), lines = 3)
         }
@@ -372,7 +384,8 @@ private fun TileDialog(tile: HomeTile, config: HomeConfig, onDismiss: () -> Unit
 
     val source = if (isMqtt) Source.Mqtt(topic.trim(), path.trim())
         else Source.Http(url.trim(), Header.parseLines(headers), path.trim(), (interval.toIntOrNull() ?: 60).coerceAtLeast(HomeConfig.MIN_POLL_S))
-    val sourceValid = if (isMqtt) MqttCodec.validFilter(topic.trim()) else HomeHttp.resolve(config.http.baseUrl, url) != null
+    val refusal = if (isMqtt) null else plainRefusal(config.http, url)
+    val sourceValid = if (isMqtt) MqttCodec.validFilter(topic.trim()) else HomeHttp.resolve(config.http.baseUrl, url) != null && refusal == null
     val edited = HomeTile(tile.id, name.trim(), source, unit.trim())
 
     Editor(stringResource(R.string.home_tile_title), onDismiss, saveEnabled = name.isNotBlank() && sourceValid, onSave = { onSave(edited) }, onDelete = onDelete,
@@ -392,8 +405,8 @@ private fun TileDialog(tile: HomeTile, config: HomeConfig, onDismiss: () -> Unit
             Field(topic, { topic = it }, stringResource(R.string.home_field_topic), hint = stringResource(R.string.home_filter_hint),
                 error = topic.isNotEmpty() && !MqttCodec.validFilter(topic.trim()))
         } else {
-            Field(url, { url = it }, stringResource(R.string.home_field_url), hint = stringResource(R.string.home_url_hint),
-                error = url.isNotEmpty() && HomeHttp.resolve(config.http.baseUrl, url) == null)
+            Field(url, { url = it }, stringResource(R.string.home_field_url), hint = refusal?.let { HomeHub.reason(ctx, it) } ?: stringResource(R.string.home_url_hint),
+                error = url.isNotEmpty() && (HomeHttp.resolve(config.http.baseUrl, url) == null || refusal != null))
             Field(headers, { headers = it }, stringResource(R.string.home_field_headers), hint = stringResource(R.string.home_headers_hint), lines = 2)
             Field(interval, { interval = it.filter(Char::isDigit).take(5) }, stringResource(R.string.home_field_interval), number = true,
                 hint = stringResource(R.string.home_interval_hint, HomeConfig.MIN_POLL_S))

@@ -575,7 +575,7 @@
     <string name="home_test_failed">Failed: %1$s</string>
     <string name="home_summary_confirm">asks first</string>
     <string name="home_summary_arrival">on arrival</string>
-    <string name="home_security_hint">Passwords, tokens and header values are kept in a private file of their own, not with the other settings, and never written to the connection log. TLS connections check the server\'s certificate against the phone\'s trusted certificates. Android blocks plain http:// addresses: use https://, or MQTT on your own network.</string>
+    <string name="home_security_hint">Passwords, tokens and header values are kept in a private file of their own, not with the other settings, and never written to the connection log. TLS connections check the server\'s certificate against the phone\'s trusted certificates. Plain http:// is refused unless the HTTP server\'s \"Allow plain http on my home network\" is on, and then works only with addresses on your home network.</string>
     <string name="home_action_title">Action</string>
     <string name="home_tile_title">Tile</string>
     <string name="home_field_name">Name</string>
@@ -596,6 +596,8 @@
     <string name="home_token_keep_hint">Leave empty to keep the saved token</string>
     <string name="home_field_headers">Headers</string>
     <string name="home_headers_hint">One per line, as Name: value</string>
+    <string name="home_http_lan_title">Allow plain http on my home network</string>
+    <string name="home_http_lan_subtitle">Off by default. Lets http:// addresses on your home network work (192.168.…, 10.…, name.local). Not encrypted: anyone on that network can read the requests, the token included. Other addresses always need https://.</string>
     <string name="home_field_topic">Topic</string>
     <string name="home_filter_hint">+ matches one level, # the rest</string>
     <string name="home_field_payload">Payload</string>
@@ -657,7 +659,8 @@
     <string name="home_error_mqtt_refused">the broker refused the connection</string>
     <string name="home_error_unknown_host">server not found</string>
     <string name="home_error_timeout">no answer in time</string>
-    <string name="home_error_cleartext">Android blocks plain http://: use https://</string>
+    <string name="home_error_http_outside_home">plain http:// only works on your home network: use https://</string>
+    <string name="home_error_http_lan_off">plain http:// is off: turn on \"Allow plain http on my home network\" for the HTTP server</string>
     <string name="home_error_tls">the server\'s certificate isn\'t trusted</string>
     <string name="home_error_generic">something went wrong</string>
 </resources>

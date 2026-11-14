@@ -28,7 +28,6 @@ import net.prototux.aare.home.mqtt.MqttRefusedException
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.net.UnknownServiceException
 import javax.net.ssl.SSLException
 import kotlin.math.max
 
@@ -345,8 +344,7 @@ object HomeHub {
         is MqttRefusedException -> context.getString(if (e.code == 4 || e.code == 5) R.string.home_error_mqtt_auth else R.string.home_error_mqtt_refused)
         is UnknownHostException -> context.getString(R.string.home_error_unknown_host)
         is SocketTimeoutException -> context.getString(R.string.home_error_timeout)
-        // Android refuses plain http:// unless the app opts in.
-        is UnknownServiceException -> context.getString(R.string.home_error_cleartext)
+        is HomeHttp.PlainHttpRefused -> context.getString(if (e.outsideHome) R.string.home_error_http_outside_home else R.string.home_error_http_lan_off)
         is SSLException -> context.getString(R.string.home_error_tls)
         else -> e.message?.takeIf { it.isNotBlank() && it.length < 80 } ?: context.getString(R.string.home_error_generic)
     }

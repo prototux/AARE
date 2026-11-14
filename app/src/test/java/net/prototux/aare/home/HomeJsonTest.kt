@@ -10,7 +10,7 @@ class HomeJsonTest {
     private val config = HomeConfig(
         enabled = true,
         mqtt = MqttBroker("broker.lan", 8883, tls = true, username = "car", password = "hunter22", clientId = "aare-1"),
-        http = HttpServer("https://ha.lan", listOf(Header("Authorization", "Bearer tok-1"))),
+        http = HttpServer("https://ha.lan", listOf(Header("Authorization", "Bearer tok-1")), allowLanHttp = true),
         actions = listOf(
             HomeAction("a1", "Garage", Send.Http("POST", "/api/services/cover/toggle", listOf(Header("X-Key", "k-2")), """{"entity_id":"cover.g"}"""),
                 confirm = true, arrival = Arrival(48.1, 2.2, 200, enabled = true)),
@@ -61,5 +61,7 @@ class HomeJsonTest {
         val c = HomeJson.decode(pub, null)
         assertEquals(listOf("y"), c.actions.map { it.id })
         assertTrue(c.tiles.isEmpty()) // no id
+        // Saved before the option existed: plain http stays off.
+        assertFalse(c.http.allowLanHttp)
     }
 }

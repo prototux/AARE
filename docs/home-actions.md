@@ -24,7 +24,8 @@ Home Assistant setups. Set up on the phone under **Home actions**; off until swi
   DISCONNECT. No QoS 2, no will message, no persistent session.
 - **HTTP server**: a base URL and default headers. A URL that starts with `/` goes on the base
   URL; the default headers (the token) are added only to requests to the base URL's own origin
-  (scheme, host and port), never to another host.
+  (scheme, host and port), never to another host. *Allow plain http on my home network* (off by
+  default) lets `http://` addresses on the home network work; see Security.
 
 AARE connects only while a car screen is up (a car session or the on-phone preview, sharing one
 connection) and disconnects when the last one closes. A dropped MQTT connection is retried after
@@ -96,8 +97,18 @@ headers.
   broker, install its CA on the phone.
 - Plain MQTT (no TLS) sends the password in clear on the network: use it only on a network you
   trust.
-- Android refuses plain `http://` for apps targeting it, and AARE doesn't opt out: HTTP actions and
-  tiles need `https://`.
+- `https://` is the default and works with any address. Plain `http://` is refused unless the HTTP
+  server's *Allow plain http on my home network* is on (off by default, with a warning that
+  anyone on that network can read the requests, the token included), and even then it goes only
+  to the home network: `localhost`, a `*.local` name, or a private address (10/8, 172.16/12,
+  192.168/16, link-local 169.254/16, loopback 127/8 and `::1`, IPv6 `fc00::/7`). A name must also
+  resolve to such an address, and the request goes to the address that was checked. A public
+  `http://` address is refused, option or not. The editors show why and won't save such a URL.
+- Android's HttpURLConnection refuses cleartext for the whole app, and the network security config
+  can't allow it for private address ranges only (only by name), so AARE keeps the app-wide block
+  and sends plain http to the home network through a small HTTP/1.1 client of its own
+  (`home/PlainHttp.kt`: one request per connection, replies capped like the https ones). The
+  browser and everything else in AARE stay https-only.
 - HTTP redirects are followed only on the same host, and never from https to http; replies over
   64 KiB are refused.
 - A webhook id works like a password (whoever knows it can trigger the automation). It is part of
