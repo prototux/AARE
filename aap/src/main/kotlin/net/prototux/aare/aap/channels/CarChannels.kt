@@ -243,13 +243,7 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
     }
 
     fun requestPairing(phoneAddress: String) {
-        val method = when {
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
-            methods.isNotEmpty() -> methods.first()
-            else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-        }
-        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(phoneAddress).setPairingMethod(method).build())
+        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(phoneAddress).setPairingMethod(pairingMethod(methods)).build())
     }
 
     override fun onMessage(msg: AapMessage) {
@@ -258,6 +252,21 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
                 val r = BluetoothPairingResponse.parseFrom(msg.bodyBytes())
                 listener.onPairingResponse(r.alreadyPaired, r.status.number == 0)
             }
+        }
+    }
+
+    companion object {
+        /**
+         * The pairing method to ask for. Only PIN or numeric comparison pairing is used:
+         * it walks [numeric comparison, PIN] and keeps the last one the car offers, so PIN wins
+         * when the car offers both. With neither it asks for no method (UNAVAILABLE) over wireless;
+         * over USB it then skips the pairing request altogether, but AARE always sends it (see
+         * [onOpened]), so it asks for no method there too.
+         */
+        fun pairingMethod(offered: List<BluetoothPairingMethod>): BluetoothPairingMethod = when {
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
+            else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE
         }
     }
 }
