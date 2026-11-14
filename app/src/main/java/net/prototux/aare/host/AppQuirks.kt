@@ -95,12 +95,6 @@ object AppQuirks {
     )
 
     /**
-     * The Google app. Messaging Car App Library apps are listed only while it's
-     * installed and enabled.
-     */
-    const val GOOGLE_APP = "com.google.android.googlequicksearchbox"
-
-    /**
      * The navigation apps a minimum version is known for, for the dashboard's map
      * card. Below it the app still works, full screen only.
      */

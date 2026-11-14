@@ -56,13 +56,16 @@ internal fun decideIsNavigation(categories: Set<String>, requestedPermissions: S
 
 /**
  * Whether a Car App Library service is one of the car's apps: not
- * a service it never shows ([AppQuirks.HIDDEN_CAR_APP_SERVICES]), not a settings screen (SETTINGS
- * category), and a messaging app (MESSAGING category) only while the Google app is enabled.
+ * a service it never shows ([AppQuirks.HIDDEN_CAR_APP_SERVICES]) and not a settings screen
+ * (SETTINGS category).
+ *
+ * Messaging apps (MESSAGING category) are also hidden while the Google app isn't
+ * installed and enabled. AARE deliberately doesn't: it's meant for phones without Google services
+ * too, and that rule would hide messaging apps for exactly those users.
  */
-internal fun listedAsCarApp(packageName: String, serviceClass: String, categories: Set<String>, googleAppEnabled: Boolean): Boolean =
+internal fun listedAsCarApp(packageName: String, serviceClass: String, categories: Set<String>): Boolean =
     "$packageName/$serviceClass" !in AppQuirks.HIDDEN_CAR_APP_SERVICES &&
-        CarAppInfo.CATEGORY_SETTINGS !in categories &&
-        (googleAppEnabled || CarAppInfo.CATEGORY_MESSAGING !in categories)
+        CarAppInfo.CATEGORY_SETTINGS !in categories
 
 /** Finds Car App Library apps: services answering `androidx.car.app.CarAppService`. */
 object CarAppCatalog {
@@ -76,14 +79,13 @@ object CarAppCatalog {
         val flags = PackageManager.GET_META_DATA or PackageManager.GET_RESOLVED_FILTER
         val found = if (Build.VERSION.SDK_INT >= 33) pm.queryIntentServices(intent, PackageManager.ResolveInfoFlags.of(flags.toLong()))
             else @Suppress("DEPRECATION") pm.queryIntentServices(intent, flags)
-        val googleAppEnabled = runCatching { pm.getApplicationInfo(AppQuirks.GOOGLE_APP, 0).enabled }.getOrDefault(false)
         return found.mapNotNull { ri ->
             val si = ri.serviceInfo ?: return@mapNotNull null
             if (si.packageName == context.packageName) return@mapNotNull null
             val categories = buildSet {
                 ri.filter?.categoriesIterator()?.forEach { add(it) }
             }
-            if (!listedAsCarApp(si.packageName, si.name, categories, googleAppEnabled)) return@mapNotNull null
+            if (!listedAsCarApp(si.packageName, si.name, categories)) return@mapNotNull null
             val appInfo = si.applicationInfo
             val minApi = appInfo.metaData?.getInt(CarAppInfo.MIN_API_KEY, 0)?.takeIf { it > 0 }
                 ?: si.metaData?.getInt(CarAppInfo.MIN_API_KEY, 0) ?: 0
