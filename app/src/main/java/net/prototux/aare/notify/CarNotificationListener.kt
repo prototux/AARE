@@ -9,11 +9,16 @@ import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.telecom.TelecomManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -84,7 +89,14 @@ class CarNotificationListener : NotificationListenerService() {
     }
 
     override fun onDestroy() {
-        tts?.shutdown()
+        synchronized(speechLock) {
+            tts?.shutdown()
+            tts = null
+            ttsReady = false
+            waitingSpeech.clear()
+            pendingUtterances = 0
+            abandonSpeechFocus()
+        }
         instance = null
         super.onDestroy()
     }
@@ -216,16 +228,112 @@ class CarNotificationListener : NotificationListenerService() {
         icon.loadDrawable(this)?.toBitmap(96, 96)
     }.getOrNull()
 
-    /** Speaks with the media usage, so it reaches the car along with the music. */
-    private fun speak(text: String) {
-        val t = tts
-        if (t != null) { t.speak(text, TextToSpeech.QUEUE_ADD, Bundle(), null); return }
-        tts = TextToSpeech(this) { status ->
-            if (status != TextToSpeech.SUCCESS) { Log.w(TAG, "no text-to-speech"); return@TextToSpeech }
-            tts?.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+    /**
+     * Guards the speech state below: [speak] is called on the main thread (and from whoever asks
+     * for a message read aloud), the utterance listener on TextToSpeech's own thread, and both
+     * move the pending count and the focus.
+     */
+    private val speechLock = Any()
+    /** Held while something is queued to speak; released once the last utterance finishes (see [speak]). */
+    private var speechFocus: AudioFocusRequest? = null
+    /** Utterances queued but not yet done, so overlapping messages release focus only once. */
+    private var pendingUtterances = 0
+    private var utteranceSeq = 0
+    /** [tts] finished starting: until then speak() would refuse an utterance, so they wait in [waitingSpeech]. */
+    private var ttsReady = false
+    /** Text and utterance id asked for while [tts] is still starting. */
+    private val waitingSpeech = ArrayList<Pair<String, String>>()
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    private val utteranceListener = object : UtteranceProgressListener() {
+        override fun onStart(utteranceId: String?) = Unit
+        override fun onDone(utteranceId: String?) = utteranceDone()
+        @Suppress("DEPRECATION")
+        override fun onError(utteranceId: String?) = utteranceDone()
+        override fun onStop(utteranceId: String?, interrupted: Boolean) = utteranceDone()
+    }
+
+    private fun utteranceDone() {
+        synchronized(speechLock) {
+            pendingUtterances = (pendingUtterances - 1).coerceAtLeast(0)
+            if (pendingUtterances == 0) abandonSpeechFocus()
+        }
+    }
+
+    /**
+     * Transient focus that only ducks the car's other audio (AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK):
+     * AARE reading a message aloud should lower the music, not pause it, unlike a car app that
+     * takes the car's microphone for a reply (full transient focus; see CarRuntime.openMicrophone).
+     */
+    private fun requestSpeechFocus() {
+        if (speechFocus != null) return
+        val am = getSystemService(AudioManager::class.java) ?: return
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            tts?.language = Locale.getDefault()
-            tts?.speak(text, TextToSpeech.QUEUE_ADD, Bundle(), null)
+            .build()
+        if (am.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) speechFocus = request
+    }
+
+    private fun abandonSpeechFocus() {
+        synchronized(speechLock) {
+            val request = speechFocus ?: return
+            speechFocus = null
+            runCatching { getSystemService(AudioManager::class.java)?.abandonAudioFocusRequest(request) }
+        }
+    }
+
+    /**
+     * Speaks with the assistant usage, so it reaches the car on the navigation-voice channel (which
+     * already asks the car to duck, not pause, the music) rather than the media one, and takes
+     * transient "may duck" focus on the phone itself for the same reason.
+     */
+    private fun speak(text: String) {
+        synchronized(speechLock) {
+            requestSpeechFocus()
+            pendingUtterances++
+            val utteranceId = "aare-tts-${++utteranceSeq}"
+            val t = tts
+            if (t != null && ttsReady) { say(t, text, utteranceId); return }
+            waitingSpeech += text to utteranceId
+            // The init callback is posted so it always runs after [tts] is assigned (TextToSpeech may
+            // report a failed bind from inside its constructor) and after this lock is released.
+            if (t == null) {
+                lateinit var engine: TextToSpeech
+                engine = TextToSpeech(this) { status -> mainHandler.post { ttsStarted(engine, status) } }
+                tts = engine
+            }
+        }
+    }
+
+    /** Hands [text] to the engine; a refused utterance gets no listener callback, so it's done at once. */
+    private fun say(t: TextToSpeech, text: String, utteranceId: String) {
+        if (t.speak(text, TextToSpeech.QUEUE_ADD, Bundle(), utteranceId) != TextToSpeech.SUCCESS) {
+            Log.w(TAG, "text-to-speech refused an utterance")
+            utteranceDone()
+        }
+    }
+
+    private fun ttsStarted(t: TextToSpeech, status: Int) {
+        synchronized(speechLock) {
+            // A late callback from an engine already shut down (the service destroyed, a failed start).
+            if (tts !== t) return
+            if (status != TextToSpeech.SUCCESS) {
+                // Release what was waiting (and the focus with it); the next message tries a new engine.
+                Log.w(TAG, "no text-to-speech")
+                tts = null
+                t.shutdown()
+                repeat(waitingSpeech.size) { utteranceDone() }
+                waitingSpeech.clear()
+                return
+            }
+            t.setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            t.language = Locale.getDefault()
+            t.setOnUtteranceProgressListener(utteranceListener)
+            ttsReady = true
+            waitingSpeech.forEach { (text, id) -> say(t, text, id) }
+            waitingSpeech.clear()
         }
     }
 
