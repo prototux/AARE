@@ -902,7 +902,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
 
 private const val SHIZUKU_REQUEST = 42
 
-/** Fixed car-screen density choices (F14), besides "Auto" (0). */
+/** Fixed car-screen density choices, besides "Auto" (0). */
 private val DENSITY_CHOICES = listOf(120, 140, 160, 180, 200, 240)
 
 /** A labelled row of mutually exclusive options. */

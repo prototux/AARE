@@ -76,7 +76,7 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putInt("max_video_height", v) }
 
     /**
-     * The car screen's density (F14): 0 ("Auto", the default) keeps today's behaviour — the head
+     * The car screen's density: 0 ("Auto", the default) keeps today's behaviour — the head
      * unit's own value, or AARE's default by screen size — or a fixed dpi. A per-vehicle override
      * (`vehicles.json`'s `dpi`) still wins over this; see `CarSession.resolveDensity` and
      * docs/vehicles.md. Applied from the next connection, like the other video settings here.

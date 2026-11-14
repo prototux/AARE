@@ -1071,7 +1071,7 @@ class CarSession(
         }
 
         /**
-         * The car screen's density (F14), in order: a per-vehicle override (`vehicles.json`'s
+         * The car screen's density, in order: a per-vehicle override (`vehicles.json`'s
          * `dpi`, see docs/vehicles.md) always wins; then the phone's own setting if it isn't
          * "Auto" (0); then the head unit's own value; then [defaultDensity] by screen size.
          */

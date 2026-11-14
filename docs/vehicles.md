@@ -35,7 +35,7 @@ of each file is used.
 
 | Key | Type | Effect |
 |---|---|---|
-| `dpi` | number | The density of the projected screen. Wins over the phone's "Car screen density" setting (F14), which in turn wins over the head unit's own value and AARE's size-based default: vehicle override > phone setting > head unit > default. |
+| `dpi` | number | The density of the projected screen. Wins over the phone's "Car screen density" setting, which in turn wins over the head unit's own value and AARE's size-based default: vehicle override > phone setting > head unit > default. |
 | `widthMargin`, `heightMargin` | number | Pixels of the video the car doesn't show, split between both sides. |
 | `maxHeight` | number | The largest video height to pick (480, 720, 1080…). |
 | `prefer60fps` | true/false | Prefer 60 fps video configurations. |

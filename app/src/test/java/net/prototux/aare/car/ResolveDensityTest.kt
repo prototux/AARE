@@ -3,7 +3,7 @@ package net.prototux.aare.car
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** F14: the car screen's density, in precedence order (vehicle override > phone setting > head unit > default). */
+/** The car screen's density, in precedence order (vehicle override > phone setting > head unit > default). */
 class ResolveDensityTest {
     @Test
     fun vehicleOverrideWinsOverEverything() {
