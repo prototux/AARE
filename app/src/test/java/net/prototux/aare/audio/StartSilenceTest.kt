@@ -30,4 +30,12 @@ class StartSilenceTest {
         assertEquals(1, StartSilence.cap(4, 100, media))
         assertEquals(0, StartSilence.cap(0, 60_000, media))
     }
+
+    @Test fun theSilenceTakesTheOldestSoundsPlaceForMedia() {
+        assertEquals(2, StartSilence.soundKept(backlog = 6, silent = 4, keepAll = false))
+        assertEquals(6, StartSilence.soundKept(backlog = 6, silent = 0, keepAll = false))
+        assertEquals(0, StartSilence.soundKept(backlog = 3, silent = 4, keepAll = false))
+        // Prompts keep their whole start.
+        assertEquals(24, StartSilence.soundKept(backlog = 24, silent = 4, keepAll = true))
+    }
 }

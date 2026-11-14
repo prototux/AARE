@@ -139,13 +139,15 @@ class CarAudioOut(
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
                     startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
-                    // Prompts keep their whole start; media keeps only a little, or it would lag
-                    // behind real time (video lip sync) for the whole stream. Use the base backlog,
-                    // not a raised one left over from the last stream's underflow.
-                    while (queued.size > baseBacklog) queued.removeFirst()
                     // Silence ahead of the sound, stamped like the sound's start. Not
                     // more than the stream was quiet for (stoppedAtMs is 0 before the first one).
                     val silent = StartSilence.cap(startSilence, now - stoppedAtMs, 1000.0 / chunkMs)
+                    // Prompts keep their whole start; media keeps only a little, or it would lag
+                    // behind real time (video lip sync) for the whole stream. Use the base backlog,
+                    // not a raised one left over from the last stream's underflow. The silence
+                    // counts towards it: on top, it would put the music further behind the video.
+                    val keep = StartSilence.soundKept(baseBacklog, silent, keepAll = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE)
+                    while (queued.size > keep) queued.removeFirst()
                     if (silent > 0) {
                         val at = queued.firstOrNull()?.second ?: ts
                         repeat(silent) { queued.addFirst(ByteArray(10 + chunk) to at) }
