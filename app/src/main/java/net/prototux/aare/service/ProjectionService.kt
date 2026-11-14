@@ -750,10 +750,6 @@ class ProjectionService : Service() {
             _state.update { s -> s.copy(pendingTrust = null, lastError = s.lastError.takeIf { s.pendingTrust == null }) }
         }
 
-        /** Accessory strings head units use for Android Auto (res/xml/accessory_filter.xml). */
-        private fun isAndroidAuto(a: UsbAccessory) =
-            a.manufacturer == "Android" && (a.model == "Android Auto" || a.model == "Android Open Automotive Protocol")
-
         /**
          * Opening the app: an Android Auto accessory may already be attached without the USB
          * permission (Samsung). Hand it to the service, which asks for the permission and connects.
@@ -761,7 +757,7 @@ class ProjectionService : Service() {
         fun probeUsb(context: Context) {
             if (_state.value.connected) return
             val usb = context.getSystemService(UsbManager::class.java) ?: return
-            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull(::isAndroidAuto) ?: return
+            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull(UsbAccessoryTransport::isAndroidAuto) ?: return
             startUsb(context, accessory)
         }
 
