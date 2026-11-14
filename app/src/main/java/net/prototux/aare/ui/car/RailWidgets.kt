@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.car.CarData
 import net.prototux.aare.car.Weather
+import net.prototux.aare.car.usesFahrenheit
 import kotlin.math.roundToInt
 
 /** A status item the rail or taskbar can show, chosen and ordered on the phone. */
@@ -58,17 +59,36 @@ internal fun List<RailWidget>.withWidget(widget: RailWidget, shown: Boolean): Li
 }
 
 /**
+ * The widgets actually drawn. Without a car temperature sensor the temperature widget falls back
+ * to the fetched weather, so when the weather widget is chosen too it would show the same chip
+ * twice: then the temperature widget gives way.
+ */
+internal fun List<RailWidget>.forDisplay(carHasTemperature: Boolean): List<RailWidget> =
+    if (!carHasTemperature && RailWidget.WEATHER in this) this - RailWidget.TEMPERATURE else this
+
+/**
+ * The car's outside temperature for the rail, in the unit the dashboard's weather uses: the car
+ * reports Celsius (AAP's Environment sensor carries no display unit), so it follows the phone's
+ * locale like the fetched weather does ([usesFahrenheit]), and matches its "°" / "°F" style.
+ */
+internal fun outsideTemperatureLabel(celsius: Float, fahrenheit: Boolean): String =
+    if (fahrenheit) "${(celsius * 9 / 5 + 32).roundToInt()}°F" else "${celsius.roundToInt()}°"
+
+/**
  * The rail's chosen status widgets, laid out for the layout they're in: stacked vertically on a
- * side rail, in a row on a bottom bar (horizontal), each [spacing] apart.
+ * side rail, in a row on a bottom bar (horizontal), each [spacing] apart. [phone] is the rail's
+ * one polled phone status (rememberPhoneStatus), shared with its network icons.
  */
 @Composable
-internal fun RailWidgets(widgets: List<RailWidget>, weather: Weather?, horizontal: Boolean, spacing: Dp) {
+internal fun RailWidgets(widgets: List<RailWidget>, weather: Weather?, phone: PhoneStatusInfo?, horizontal: Boolean, spacing: Dp) {
+    val car by CarData.state.collectAsState()
+    val carTemperature = car.environment?.value?.temperatureC
     val content: @Composable () -> Unit = {
-        widgets.forEach { widget ->
+        widgets.forDisplay(carHasTemperature = carTemperature != null).forEach { widget ->
             when (widget) {
                 RailWidget.CLOCK -> Clock()
-                RailWidget.TEMPERATURE -> OutsideTemperatureWidget(weather)
-                RailWidget.BATTERY -> BatteryWidget()
+                RailWidget.TEMPERATURE -> OutsideTemperatureWidget(carTemperature, weather)
+                RailWidget.BATTERY -> BatteryWidget(phone)
                 RailWidget.WEATHER -> WeatherChip(weather)
             }
         }
@@ -82,15 +102,11 @@ internal fun RailWidgets(widgets: List<RailWidget>, weather: Weather?, horizonta
  * dashboard already fetches (same source as the weather widget, with its icon too).
  */
 @Composable
-internal fun OutsideTemperatureWidget(weather: Weather?) {
-    val car by CarData.state.collectAsState()
-    val carTemperature = car.environment?.value?.temperatureC
+internal fun OutsideTemperatureWidget(carTemperature: Float?, weather: Weather?) {
     if (carTemperature != null) {
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Thermostat, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
-            // Always Celsius: that's the unit AAP's Environment sensor reports, unlike the fetched
-            // weather (which follows the phone's locale).
-            Text("${carTemperature.roundToInt()}°C", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(outsideTemperatureLabel(carTemperature, usesFahrenheit()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
         }
     } else {
         WeatherChip(weather)
@@ -99,8 +115,8 @@ internal fun OutsideTemperatureWidget(weather: Weather?) {
 
 /** Just the phone's battery (gauge, charging bolt or percent): one of the rail's status widgets. */
 @Composable
-internal fun BatteryWidget() {
-    val s = rememberPhoneStatus() ?: return
+internal fun BatteryWidget(status: PhoneStatusInfo?) {
+    val s = status ?: return
     val fg = MaterialTheme.colorScheme.onSurface
     val dim = fg.copy(alpha = 0.25f)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {

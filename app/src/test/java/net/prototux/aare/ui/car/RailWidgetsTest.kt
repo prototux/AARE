@@ -4,8 +4,12 @@ import net.prototux.aare.ui.car.RailWidget.BATTERY
 import net.prototux.aare.ui.car.RailWidget.CLOCK
 import net.prototux.aare.ui.car.RailWidget.TEMPERATURE
 import net.prototux.aare.ui.car.RailWidget.WEATHER
+import net.prototux.aare.car.usesFahrenheit
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class RailWidgetsTest {
     @Test
@@ -35,5 +39,22 @@ class RailWidgetsTest {
     fun defaultIsClockBatteryWeather() {
         assertEquals(listOf(CLOCK, BATTERY, WEATHER), RailWidget.DEFAULT)
         assertEquals(TEMPERATURE, RailWidget.entries.first { it.id == "temperature" })
+    }
+
+    @Test
+    fun temperatureGivesWayToTheWeatherWithoutACarSensor() {
+        // No car sensor: the temperature widget would show the weather chip, already there once.
+        assertEquals(listOf(CLOCK, WEATHER), listOf(CLOCK, TEMPERATURE, WEATHER).forDisplay(carHasTemperature = false))
+        assertEquals(listOf(TEMPERATURE), listOf(TEMPERATURE).forDisplay(carHasTemperature = false)) // alone: it is the weather
+        assertEquals(listOf(TEMPERATURE, WEATHER), listOf(TEMPERATURE, WEATHER).forDisplay(carHasTemperature = true))
+    }
+
+    @Test
+    fun outsideTemperatureFollowsTheLocaleUnit() {
+        assertEquals("21°", outsideTemperatureLabel(21.4f, fahrenheit = false))
+        assertEquals("71°F", outsideTemperatureLabel(21.4f, fahrenheit = true))
+        assertEquals("-5°", outsideTemperatureLabel(-4.6f, fahrenheit = false))
+        assertTrue(usesFahrenheit(Locale.US))
+        assertFalse(usesFahrenheit(Locale.FRANCE))
     }
 }

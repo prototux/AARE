@@ -70,7 +70,11 @@ data class PhoneStatusInfo(
     }
 }
 
-/** Polls the phone's network and battery status every 15 s, for [PhoneStatusIcons] and the rail's own battery widget. */
+/**
+ * Polls the phone's network and battery status every 15 s, for [PhoneStatusIcons]. The rail calls
+ * it once and hands the result to both its battery widget and [NetworkStatusIcons], so one rail
+ * runs one poll.
+ */
 @Composable
 internal fun rememberPhoneStatus(): PhoneStatusInfo? {
     val context = LocalContext.current
@@ -101,8 +105,8 @@ fun PhoneStatusIcons() {
 
 /** Signal bars and Wi-Fi only (no battery): the rail's network status, shown next to its battery widget. */
 @Composable
-internal fun NetworkStatusIcons() {
-    val s = rememberPhoneStatus() ?: return
+internal fun NetworkStatusIcons(status: PhoneStatusInfo?) {
+    val s = status ?: return
     val fg = MaterialTheme.colorScheme.onSurface
     val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
