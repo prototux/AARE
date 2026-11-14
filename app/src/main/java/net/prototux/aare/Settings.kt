@@ -205,8 +205,9 @@ class Settings(context: Context) {
 
     /**
      * For an assistant without a car app: show its voice UI on the car screen (through the same
-     * launcher as standalone apps) instead of opening it on the phone. Off by default (today's
-     * behaviour); needs root or Shizuku, checked separately ([net.prototux.aare.launch.AppLauncher.available]).
+     * launcher as standalone apps) instead of opening it on the phone, while parked or in passenger
+     * mode. Off by default (today's behaviour); needs root or Shizuku, checked separately
+     * ([net.prototux.aare.launch.AppLauncher.available]).
      */
     var assistantOnCarScreen: Boolean
         get() = prefs.getBoolean("assistant_on_car_screen", false)

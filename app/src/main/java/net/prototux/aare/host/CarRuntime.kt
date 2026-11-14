@@ -290,6 +290,8 @@ class CarRuntime(
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
+        // A phone assistant shown through the launcher is parked only, like other launched apps.
+        if (ui.drivingRestricted) ui.assistantStandalonePkg = null
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
@@ -638,8 +640,9 @@ class CarRuntime(
     /**
      * Steering-wheel voice button or the rail's mic. An assistant with a car app (Lapin, for example)
      * opens on the car screen and is asked to listen with ACTION_VOICE_COMMAND. Any other assistant
-     * opens on the phone, unless [Settings.assistantOnCarScreen] and the launcher are available, in
-     * which case its voice UI is shown on the car screen instead (see [assistantStandalonePkg]).
+     * opens on the phone, unless [Settings.assistantOnCarScreen] and the launcher are available: then,
+     * while parked (or in passenger mode), its voice UI is shown on the car screen instead (see
+     * [CarUiState.assistantStandalonePkg]), parked only like other launched phone apps.
      */
     fun assistant() {
         onAssistant?.invoke()
@@ -657,22 +660,22 @@ class CarRuntime(
             conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
             return
         }
-        if (settings.assistantOnCarScreen && AppLauncher.available(context)) {
+        if (settings.assistantOnCarScreen && !ui.drivingRestricted && AppLauncher.available(context)) {
             ui.assistantStandalonePkg = pkg
             return
         }
-        val label = Assistants.label(context, pkg) ?: pkg
-        if (Assistants.startOnPhone(context, pkg)) {
-            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_no_car_screen, label))
-        } else {
-            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_cant_open, label))
-        }
+        assistantOnPhone(pkg)
     }
 
     /** The assistant opened on the car screen through the launcher ([ui].assistantStandalonePkg) failed to start. */
     fun assistantStandaloneFailed(pkg: String) {
         if (ui.assistantStandalonePkg != pkg) return
         ui.assistantStandalonePkg = null
+        assistantOnPhone(pkg)
+    }
+
+    /** Opens the assistant [pkg] on the phone, for one with no car app, and says so on the car screen. */
+    private fun assistantOnPhone(pkg: String) {
         val label = Assistants.label(context, pkg) ?: pkg
         if (Assistants.startOnPhone(context, pkg)) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_no_car_screen, label))

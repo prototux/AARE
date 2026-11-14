@@ -36,9 +36,10 @@ import net.prototux.aare.ui.theme.LocalCarDimens
 /**
  * A phone assistant without a car app, opened on the car screen through [AppLauncher] instead of
  * the phone (an opt-in setting). Positioned like [AssistantBar], but hosts the app's own voice UI
- * on a virtual display rather than a car app template: driving doesn't pause it (unlike
- * [net.prototux.aare.ui.car.StandaloneAppScreen]'s general phone apps), since an assistant is meant
- * to be used while driving and shows only its momentary voice UI, not a full interactive app.
+ * (ACTION_VOICE_COMMAND / ACTION_ASSIST) on a virtual display rather than a car app template. It is
+ * an ordinary phone app, so parked only like [net.prototux.aare.ui.car.StandaloneAppScreen]'s:
+ * the runtime closes it when driving starts (not in passenger mode) and opens the assistant on the
+ * phone instead while driving.
  */
 @Composable
 internal fun StandaloneAssistantBar(packageName: String, runtime: CarRuntime, modifier: Modifier, onClose: () -> Unit) {

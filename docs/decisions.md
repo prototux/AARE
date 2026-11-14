@@ -161,7 +161,14 @@ bar rather than full screen.
 
 - Off by default (today's behaviour kept); only offered when the launcher is available (root or
   Shizuku), same gate as standalone apps.
-- Unlike general standalone apps, it is not paused while driving: it is meant to be used while
-  driving, and only its own transient voice UI is shown, not a full interactive app session.
-- On a launch failure (no root/Shizuku binder, app crash on its virtual display) it falls back to
+- It opens the assistant's voice UI (`ILaunchHost.startAssistant`: `ACTION_VOICE_COMMAND`, else
+  `ACTION_ASSIST`, as `Assistants.startOnPhone` does), and the app's main activity only if it has
+  neither, not `getLaunchIntentForPackage`'s home screen.
+- Parked only, like other launched phone apps: it is an ordinary phone app mirrored with injected
+  touches, not a car template. While driving (`ui.drivingRestricted`, so passenger mode lifts it)
+  the voice button opens the assistant on the phone, as with the setting off, and a bar left open
+  is closed when driving starts.
+- On a launch failure (no root/Shizuku binder, nothing to open) it falls back to
   `Assistants.startOnPhone`, same as when the setting is off.
+- It shares `LaunchedAppSurface` with `StandaloneAppScreen`, and installs no Back handler: the
+  car's Back closes the bar first.
