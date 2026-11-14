@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Puhelimen näyttö on keskeytetty, kun puhelin on lukittu. Avaa puhelimen lukitus näyttääksesi sen.</string>
     <string name="mirror_driving_no_accessibility">Puhelimen näyttö on keskeytetty ajon aikana. Jos haluat näyttää navigointisovelluksia ajon aikana, ota AARE käyttöön puhelimen esteettömyysasetuksissa: se kertoo AARElle, mikä sovellus on avoinna.</string>
     <string name="mirror_driving_nav_only">Puhelimen näyttö on keskeytetty ajon aikana. Se näyttää vain navigointisovelluksia.</string>
-    <string name="mirror_need_car_audio">Ota Auton äänet käyttöön AARE-sovelluksessa puhelimella ja valitse Koko näyttö, kun Android kysyy: puhelimen näyttö käyttää samaa lupaa.</string>
     <string name="mirror_need_accessibility">Jos haluat käyttää puhelinta autosta, ota AARE käyttöön puhelimen esteettömyysasetuksissa.</string>
 
     <!-- common: shared across screens -->

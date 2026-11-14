@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">A telefon képernyője szünetel, amíg a telefon zárolva van. Oldd fel a telefont a megjelenítéséhez.</string>
     <string name="mirror_driving_no_accessibility">A telefon képernyője szünetel vezetés közben. Ahhoz, hogy navigációs alkalmazásokat vezetés közben is megjeleníthess, kapcsold be az AARE-t a telefon kezelési segítség beállításaiban: ez jelzi az AARE-nak, melyik alkalmazás van megnyitva.</string>
     <string name="mirror_driving_nav_only">A telefon képernyője szünetel vezetés közben. Csak navigációs alkalmazásokat jelenít meg.</string>
-    <string name="mirror_need_car_audio">Kapcsold be az Autó hangját az AARE-ban a telefonon, és az Android kérésekor válaszd a Teljes képernyőt: a telefon képernyője ugyanezt a jogosultságot használja.</string>
     <string name="mirror_need_accessibility">A telefon autóból történő használatához kapcsold be az AARE-t a telefon kezelési segítség beállításaiban.</string>
 
     <!-- common: shared across screens -->

@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">L\'écran du téléphone est en pause tant que le téléphone est verrouillé. Déverrouillez le téléphone pour l\'afficher.</string>
     <string name="mirror_driving_no_accessibility">L\'écran du téléphone est en pause pendant la conduite. Pour afficher les applications de navigation en conduisant, activez AARE dans les paramètres d\'accessibilité du téléphone : cela indique à AARE quelle application est ouverte.</string>
     <string name="mirror_driving_nav_only">L\'écran du téléphone est en pause pendant la conduite. Il n\'affiche que les applications de navigation.</string>
-    <string name="mirror_need_car_audio">Activez l\'audio voiture dans AARE sur le téléphone, et choisissez Écran entier quand Android le demande : l\'écran du téléphone utilise la même autorisation.</string>
     <string name="mirror_need_accessibility">Pour utiliser le téléphone depuis la voiture, activez AARE dans les paramètres d\'accessibilité du téléphone.</string>
 
     <!-- common: shared across screens -->

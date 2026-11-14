@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">تتوقف شاشة الهاتف مؤقتًا أثناء قفل الهاتف. افتح قفل الهاتف لعرضها.</string>
     <string name="mirror_driving_no_accessibility">تتوقف شاشة الهاتف مؤقتًا أثناء القيادة. لعرض تطبيقات التنقّل أثناء القيادة، فعِّل AARE في إعدادات إمكانية الوصول في الهاتف: فهذا يُعلم AARE بالتطبيق المفتوح حاليًا.</string>
     <string name="mirror_driving_nav_only">تتوقف شاشة الهاتف مؤقتًا أثناء القيادة. وتعرض تطبيقات التنقّل فقط.</string>
-    <string name="mirror_need_car_audio">فعِّل خيار صوت السيارة في AARE على الهاتف، واختر الشاشة بالكامل عندما يطلب نظام Android ذلك: تستخدم شاشة الهاتف نفس الإذن.</string>
     <string name="mirror_need_accessibility">لاستخدام الهاتف من السيارة، فعِّل AARE في إعدادات إمكانية الوصول في الهاتف.</string>
 
     <string name="common_back">رجوع</string>

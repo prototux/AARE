@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Ecranul telefonului este întrerupt cât timp telefonul este blocat. Deblochează telefonul pentru a-l afișa.</string>
     <string name="mirror_driving_no_accessibility">Ecranul telefonului este întrerupt în timpul condusului. Pentru a afișa aplicațiile de navigație în timpul condusului, activează AARE în setările de accesibilitate ale telefonului: astfel AARE știe ce aplicație este deschisă.</string>
     <string name="mirror_driving_nav_only">Ecranul telefonului este întrerupt în timpul condusului. Afișează doar aplicațiile de navigație.</string>
-    <string name="mirror_need_car_audio">Activează Audio mașină în AARE pe telefon și alege Ecran întreg când Android întreabă: ecranul telefonului folosește aceeași permisiune.</string>
     <string name="mirror_need_accessibility">Pentru a folosi telefonul din mașină, activează AARE în setările de accesibilitate ale telefonului.</string>
 
     <!-- common: shared across screens -->

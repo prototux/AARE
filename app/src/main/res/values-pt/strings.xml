@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">O ecrã do telemóvel está em pausa enquanto o telemóvel estiver bloqueado. Desbloqueie o telemóvel para o mostrar.</string>
     <string name="mirror_driving_no_accessibility">O ecrã do telemóvel está em pausa durante a condução. Para mostrar aplicações de navegação durante a condução, ative a AARE nas definições de acessibilidade do telemóvel: isso indica à AARE qual a aplicação aberta.</string>
     <string name="mirror_driving_nav_only">O ecrã do telemóvel está em pausa durante a condução. Mostra apenas aplicações de navegação.</string>
-    <string name="mirror_need_car_audio">Ative o Áudio do carro na AARE no telemóvel e escolha Ecrã inteiro quando o Android perguntar: o ecrã do telemóvel utiliza a mesma permissão.</string>
     <string name="mirror_need_accessibility">Para utilizar o telemóvel a partir do carro, ative a AARE nas definições de acessibilidade do telemóvel.</string>
 
     <!-- common: shared across screens -->

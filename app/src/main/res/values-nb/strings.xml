@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Telefonskjermen er pauset mens telefonen er låst. Lås opp telefonen for å vise den.</string>
     <string name="mirror_driving_no_accessibility">Telefonskjermen er pauset under kjøring. For å vise navigasjonsapper under kjøring, slå på AARE i telefonens tilgjengelighetsinnstillinger: det forteller AARE hvilken app som er åpen.</string>
     <string name="mirror_driving_nav_only">Telefonskjermen er pauset under kjøring. Den viser bare navigasjonsapper.</string>
-    <string name="mirror_need_car_audio">Slå på Bilaudio i AARE på telefonen, og velg Hele skjermen når Android spør: telefonskjermen bruker samme tillatelse.</string>
     <string name="mirror_need_accessibility">For å bruke telefonen fra bilen, slå på AARE i telefonens tilgjengelighetsinnstillinger.</string>
 
     <!-- common: shared across screens -->
