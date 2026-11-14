@@ -81,10 +81,7 @@ class SensorChannel(service: Service, private val listener: Listener) : ServiceC
         log = { session.log.i("sensors: $it") },
     )
 
-    override fun onOpened() {
-        requests.request(available)
-        requests.start()
-    }
+    override fun onOpened() = requests.start()
 
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {

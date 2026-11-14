@@ -3,16 +3,15 @@ package net.prototux.aare.aap.channels
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 
 /**
- * Sends the sensor requests one at a time: the next goes only once the car answered the last (a
- * SensorResponse or SensorError doesn't say which sensor it is for) or [TIMEOUT_MS] went by, so a
- * head unit that handles one request at a time isn't flooded at setup. A sensor once asked for
- * keeps running for the whole session.
+ * Asks for every sensor in [order] once the channel opens, one request at a time: the next goes
+ * only once the car answered the last (a SensorResponse or SensorError doesn't say which sensor it
+ * is for) or [TIMEOUT_MS] went by, so a head unit that handles one request at a time isn't flooded
+ * at setup. A sensor once asked for keeps running for the whole session.
  *
- * Thread-safe: [request] may come from any thread, [answered] from the reader thread, timeouts
- * from the session's timer.
+ * Thread-safe: [answered] comes from the reader thread, timeouts from the session's timer.
  */
 internal class SensorRequests(
-    /** Every sensor the car offers, in the order requests go out when several are due. */
+    /** Every sensor the car offers, in the order the requests go out. */
     private val order: List<SensorType>,
     private val periodOf: (SensorType) -> Long,
     private val send: (SensorType, Long) -> Unit,
@@ -22,21 +21,15 @@ internal class SensorRequests(
 ) {
     private var started = false
     private val queue = ArrayDeque<SensorType>()
-    /** Asked for (or queued) this session: never asked for twice. */
-    private val requested = HashSet<SensorType>()
     private var pending: SensorType? = null
     /** Tells a timeout of an earlier request apart from one of the current request. */
     private var generation = 0
 
-    /** The channel is open: requests may go out. */
+    /** The channel is open: the requests go out. */
     @Synchronized fun start() {
+        if (started) return
         started = true
-        pump()
-    }
-
-    /** Asks for [types] the car offers and that weren't asked for yet, in [order]. */
-    @Synchronized fun request(types: Collection<SensorType>) {
-        for (t in order) if (t in types && requested.add(t)) queue.addLast(t)
+        queue.addAll(order)
         pump()
     }
 
@@ -54,7 +47,6 @@ internal class SensorRequests(
         started = false
         pending = null
         queue.clear()
-        requested.clear()
         generation++
     }
 
