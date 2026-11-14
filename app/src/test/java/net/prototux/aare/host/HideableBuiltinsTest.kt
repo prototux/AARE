@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** F13: which built-in apps the user may hide from the car's list, and which must never be. */
+/** Which built-in apps the user may hide from the car's list, and which must never be. */
 class HideableBuiltinsTest {
     @Test
     fun phoneAndNotificationsCanBeHidden() {
