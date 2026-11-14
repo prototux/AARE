@@ -98,6 +98,8 @@
     <string name="setup_wallpaper_photo">Фото</string>
     <string name="setup_toggle_weather_title">Погода</string>
     <string name="setup_toggle_weather_subtitle">Біля годинника, від Open-Meteo (отримує приблизну позицію, близько 10 км)</string>
+    <string name="setup_choice_agenda_count">Показувані події календаря</string>
+    <string name="setup_agenda_count_hint">Більше однієї стає розкладом, кожна зі своїм днем і часом.</string>
     <string name="setup_section_driving">Керування</string>
     <string name="setup_toggle_passenger_title">Режим пасажира</string>
     <string name="setup_toggle_passenger_subtitle">Ігнорувати стан керування автомобілем: введення тексту, довгі списки та екран телефону залишаються доступними в русі, для пасажира. Водій не повинен використовувати екран під час керування.</string>
@@ -348,6 +350,8 @@
     <string name="phone_action_answer">Відповісти</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Сьогодні</string>
+    <string name="dash_agenda_tomorrow">Завтра</string>
+    <string name="dash_event_navigate">Маршрут</string>
     <string name="dash_latest_label">Останнє</string>
     <string name="cluster_arrival_time">Прибуття %1$s</string>
 

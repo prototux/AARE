@@ -147,6 +147,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
+    /** How many upcoming events the calendar card shows (1: today's behaviour, up to 5). */
+    var calendarAgendaCount: Int
+        get() = prefs.getInt("calendar_agenda_count", 1).coerceIn(1, 5)
+        set(v) = prefs.edit { putInt("calendar_agenda_count", v.coerceIn(1, 5)) }
+
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String

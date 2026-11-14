@@ -150,3 +150,14 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Calendar agenda: a day-only widening of the query window, gated on the count
+
+`DashboardInfo.nextEvents(context, limit)` only widens its ContentResolver window (12 hours to a
+week) when `limit > 1`. At the default (1), the window and the single returned event are exactly
+what `nextEvent` returned before, so turning the setting on is the only way to see anything new —
+nothing shifts for someone who never opens the new setting. The day label itself
+(`labelAgenda`, in `car/DashboardInfo.kt`) takes a clock and zone instead of reading the real one,
+so it's a plain JVM-testable function; `CalendarAgendaCard` calls it with the real clock and zone
+and still renders a single event exactly as `CalendarCard` always has, so the on-screen look at the
+default setting is unchanged, not just the data behind it.

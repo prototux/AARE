@@ -693,6 +693,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
+    var agendaCount by remember { mutableStateOf(settings.calendarAgendaCount) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
     val scope = rememberCoroutineScope()
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -740,6 +741,11 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
+                agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
+            }
+            Text(stringResource(R.string.setup_agenda_count_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {

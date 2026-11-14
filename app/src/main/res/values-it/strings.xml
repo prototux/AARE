@@ -98,6 +98,8 @@
     <string name="setup_wallpaper_photo">Foto</string>
     <string name="setup_toggle_weather_title">Meteo</string>
     <string name="setup_toggle_weather_subtitle">Accanto all\'orologio, da Open-Meteo (usa una posizione approssimativa, circa 10 km)</string>
+    <string name="setup_choice_agenda_count">Eventi del calendario mostrati</string>
+    <string name="setup_agenda_count_hint">Più di uno diventa un\'agenda, ognuno con il suo giorno e orario.</string>
     <string name="setup_section_driving">Guida</string>
     <string name="setup_toggle_passenger_title">Modalità passeggero</string>
     <string name="setup_toggle_passenger_subtitle">Ignora lo stato di guida dell\'auto: la digitazione, gli elenchi lunghi e lo schermo del telefono restano disponibili in movimento, per un passeggero. Il conducente non deve usare lo schermo durante la guida.</string>
@@ -348,6 +350,8 @@
     <string name="phone_action_answer">Rispondi</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Oggi</string>
+    <string name="dash_agenda_tomorrow">Domani</string>
+    <string name="dash_event_navigate">Naviga</string>
     <string name="dash_latest_label">Ultimo</string>
     <string name="cluster_arrival_time">Arrivo %1$s</string>
 
