@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.prototux.aare.DiagLog
@@ -36,6 +38,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
+import net.prototux.aare.media.pickDefaultMediaApp
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
@@ -63,6 +66,7 @@ import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
+import java.time.ZonedDateTime
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -329,6 +333,27 @@ class CarRuntime(
         override fun onReceive(context: Context, intent: Intent) = refreshApps()
     }
 
+    /** A calendar app's icon shows today's date (dynamicCalendarIcon): redrawn when the clock or the time zone changes. */
+    private val dateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            refreshApps()
+            scheduleMidnightRefresh()
+        }
+    }
+
+    private var midnightRefresh: Job? = null
+
+    /** Redraws the app list just after every midnight, for as long as the car is connected. */
+    private fun scheduleMidnightRefresh() {
+        midnightRefresh?.cancel()
+        midnightRefresh = scope.launch {
+            while (true) {
+                delay(msUntilNextDay(ZonedDateTime.now()))
+                refreshApps()
+            }
+        }
+    }
+
     fun start() {
         running += this
         // Messages, directions and now playing all need the listener bound: make sure it is.
@@ -340,6 +365,10 @@ class CarRuntime(
             addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED); addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         })
+        context.registerReceiver(dateReceiver, IntentFilter().apply {
+            addAction(Intent.ACTION_DATE_CHANGED); addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED)
+        })
+        scheduleMidnightRefresh()
         scope.launch { media.apps.collectLatest { refreshApps() } }
         scope.launch { watchCalls() }
         scope.launch { watchDashboardInfo() }
@@ -365,6 +394,9 @@ class CarRuntime(
     fun stop() {
         running.remove(this)
         runCatching { context.unregisterReceiver(packageReceiver) }
+        runCatching { context.unregisterReceiver(dateReceiver) }
+        midnightRefresh?.cancel()
+        midnightRefresh = null
         settings.unregisterListener(settingsListener)
         connections.values.forEach { it.release() }
         connections.clear()
@@ -419,7 +451,9 @@ class CarRuntime(
                 if (pkg in hidden) continue
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
-                val icon = runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
+                // A calendar app shows today's date on its icon, like it does on the phone's own home screen.
+                val icon = dynamicCalendarIcon(context, pkg, 128)
+                    ?: runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
                 entries += CarAppEntry(standaloneId(pkg), pkg, label, icon, CarAppKind.STANDALONE)
             }
         }
@@ -450,7 +484,14 @@ class CarRuntime(
             ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
         }
         if (ui.activeMediaAppId == null) {
-            ui.activeMediaAppId = entries.firstOrNull { it.kind == CarAppKind.MEDIA && it.packageName == settings.lastMediaApp }?.id
+            val mediaEntries = entries.filter { it.kind == CarAppKind.MEDIA }
+            val lastPicked = mediaEntries.firstOrNull { it.packageName == settings.lastMediaApp }
+            // Only when the user never chose one and nothing is already playing: don't fight the
+            // "what's playing" pick (set elsewhere as playback starts) or override a real choice.
+            val fallback = if (lastPicked == null && settings.lastMediaApp == null && media.playback.value == null)
+                pickDefaultMediaApp(mediaEntries.map { it.packageName })?.let { pkg -> mediaEntries.firstOrNull { it.packageName == pkg } }
+            else null
+            ui.activeMediaAppId = (lastPicked ?: fallback)?.id
         }
     }
 
