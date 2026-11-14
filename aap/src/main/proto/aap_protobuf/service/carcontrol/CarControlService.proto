@@ -1,0 +1,111 @@
+syntax="proto2";
+
+option optimize_for=SPEED;
+
+package aap_protobuf.service.carcontrol;
+
+// AARE: service discovery field 15: the car properties (HVAC and
+// such) and actions a head unit offers to control from the phone. Schema only; AARE does not
+// offer car controls. Names come from car API wrapper classes (CarPropertyConfig,
+// CarControl, ...). Its enums (property ids, area types, actions, metadata) are plain int32 here:
+// same wire encoding, and AARE doesn't need their values.
+message CarControlService
+{
+    repeated CarPropertyConfig car_properties = 1;
+    repeated CarControl car_controls = 2;
+    repeated SupportedCarAction supported_actions = 3;
+}
+
+message CarPropertyConfig
+{
+    optional int32 property_id = 1;
+    optional int32 value_type = 2;
+    optional int32 access = 3;
+    repeated CarAreaId area_ids = 4;
+    optional int32 area_type = 5;
+    repeated int32 config_array = 6 [packed = true];
+    repeated CarAreaIdConfig area_id_configs = 7;
+}
+
+// One of the fields is set; the set list becomes one area bitmask.
+message CarAreaId
+{
+    optional int32 global = 1;
+    repeated int32 seats = 2 [packed = true];
+    repeated int32 windows = 3 [packed = true];
+    repeated int32 doors = 4 [packed = true];
+    repeated int32 wheels = 5 [packed = true];
+    repeated int32 mirrors = 6 [packed = true];
+}
+
+message CarAreaIdConfig
+{
+    optional CarAreaId area_id = 1;
+    optional CarPropertyValue min_value = 2;
+    optional CarPropertyValue max_value = 3;
+}
+
+message CarPropertyValue
+{
+    oneof value {
+        int32 int_value = 1;
+        float float_value = 2;
+        bool bool_value = 3;
+        int64 long_value = 4;
+        string string_value = 5;
+        IntArray int_array = 6;
+        LongArray long_array = 7;
+        FloatArray float_array = 8;
+    }
+
+    message IntArray { repeated int32 values = 1 [packed = true]; }
+    message LongArray { repeated int64 values = 1 [packed = true]; }
+    message FloatArray { repeated float values = 1 [packed = true]; }
+}
+
+message CarProperty
+{
+    optional int32 property_id = 1;
+    optional CarAreaId area_id = 2;
+}
+
+message CarAction
+{
+    optional int32 action_id = 1;
+}
+
+message SupportedCarAction
+{
+    optional CarAction action = 1;
+}
+
+message CarControl
+{
+    oneof control {
+        CarPropertyControl property_control = 1;
+        CarActionControl action_control = 2;
+        CarControlGroup control_group = 3;
+    }
+    // A missing value counts as enabled.
+    optional bool enabled = 4;
+    repeated int32 metadata = 5;
+    optional int32 side_affinity = 6;
+}
+
+message CarPropertyControl
+{
+    optional CarProperty property = 1;
+    optional CarAction associated_action = 2;
+    optional CarProperty associated_property = 3;
+}
+
+message CarActionControl
+{
+    optional CarAction action = 1;
+}
+
+message CarControlGroup
+{
+    optional int32 group_id = 1;
+    repeated CarControl car_controls = 2;
+}

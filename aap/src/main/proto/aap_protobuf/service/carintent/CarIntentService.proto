@@ -1,0 +1,11 @@
+syntax="proto2";
+
+option optimize_for=SPEED;
+
+package aap_protobuf.service.carintent;
+
+// AARE: service discovery field 18; empty there too.
+message CarIntentService
+{
+
+}
