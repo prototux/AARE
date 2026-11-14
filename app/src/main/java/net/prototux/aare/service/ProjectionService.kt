@@ -149,7 +149,7 @@ class ProjectionService : Service() {
         usbPermissionReceiver?.let { runCatching { unregisterReceiver(it) } }
         usbPermissionReceiver = null
         usbPermissionPending = null
-        // The session closes up to a second later; forget it first so its onEnded is ignored.
+        // The session closes a moment later (after its bye-bye); forget it first so its onEnded is ignored.
         val s = session
         session = null
         s?.stop()

@@ -3,6 +3,7 @@ package net.prototux.aare.aap
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -77,5 +78,26 @@ class FrameIoTest {
         assertTrue(msg.encrypted)
         assertEquals(0x8001, msg.id)
         assertArrayEquals(body, msg.bodyBytes())
+    }
+
+    @Test
+    fun encryptedMessageBeforeTlsIsSkipped() {
+        val out = ByteArrayOutputStream()
+        // ch 3 ENCRYPTED|FIRST|LAST with junk, then ch 3 fragmented: ENCRYPTED|FIRST, plain LAST,
+        // then a plain message that must come through.
+        out.write(byteArrayOf(3, 0x0b, 0, 3, 1, 2, 3))
+        out.write(byteArrayOf(3, 0x09, 0, 2, 0, 0, 0, 4, 9, 9))
+        out.write(byteArrayOf(3, 0x02, 0, 2, 7, 7))
+        out.write(byteArrayOf(3, 0x03, 0, 3, 0, 5, 1))
+        val msg = FrameReader(ByteArrayInputStream(out.toByteArray())) { null }.read()
+        assertEquals(3, msg.channel)
+        assertEquals(5, msg.id)
+        assertArrayEquals(byteArrayOf(1), msg.bodyBytes())
+    }
+
+    @Test
+    fun continuationWithoutFirstFrameIsAFramingError() {
+        val reader = FrameReader(ByteArrayInputStream(byteArrayOf(0, 0x02, 0, 2, 0, 1))) { null }
+        assertThrows(FramingException::class.java) { reader.read() }
     }
 }

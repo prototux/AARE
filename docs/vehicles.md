@@ -42,6 +42,7 @@ of each file is used.
 | `skipServices` | list | Services AARE would open that stay closed for this car. |
 | `openServices` | list | Services the car lists that AARE doesn't use, opened anyway; AARE sends nothing on them and ignores what the car sends. |
 | `micSetup` | true/false | Send SETUP on the microphone channel when it opens (default: true). |
+| `sensorChannelFirst` | true/false | Open the sensor channel first and the other channels once the car has answered it, or after 1 s (default: false, all at once). |
 
 Services are named as the connection log writes them after `services:`: `video`, `mic`,
 `input`, `sensors`, `bluetooth`, `navstatus`, `playback`, `phonestatus`, `mediabrowser`,

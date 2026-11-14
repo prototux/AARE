@@ -3,6 +3,8 @@ package net.prototux.aare.aap
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
+import aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse
+import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
@@ -13,6 +15,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationStateOuterClass.N
 import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
+import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import net.prototux.aare.aap.channels.AudioChannel
 import net.prototux.aare.aap.channels.InputChannel
@@ -43,6 +46,9 @@ open class SessionLoopbackTest {
 
     /** The protocol minor version the simulated head unit announces (1.x). */
     protected open val headUnitMinor = 6
+
+    /** Whether the phone opens the sensor channel before the others (a vehicles.json quirk). */
+    protected open val sensorChannelFirst = false
     private val modernNav get() = headUnitMinor >= 6
 
     private lateinit var hu: HeadUnitSimulator
@@ -91,7 +97,7 @@ open class SessionLoopbackTest {
 
     private inner class Callbacks : AapSession.Callbacks {
         override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> =
-            response.channelsList.mapNotNull { s ->
+            response.channelsList.also { session.sensorChannelFirst = sensorChannelFirst }.mapNotNull { s ->
                 when {
                     s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> VideoChannel(s, VideoListener()).also { video = it }
                     s.hasMediaSinkService() -> AudioChannel(s).also { audio += it }
@@ -358,6 +364,51 @@ open class SessionLoopbackTest {
     }
 
     @Test
+    fun channelOpenOrder() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        // All at once in discovery order by default, the sensor channel first only when asked to.
+        assertEquals("first open request", if (sensorChannelFirst) hu.sensors else hu.video, hu.openOrder.poll())
+        assertEquals(setOf(1, 2, 3, 4, 5, 6, 7, 8, 9), hu.openedChannels.toSet())
+    }
+
+    @Test
+    fun duplicateOpenResponseIsIgnored() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        hu.send(hu.input, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
+        assertFalse("session must go on", closed.await(500, TimeUnit.MILLISECONDS))
+        assertEquals("no answer to it", null, hu.unexpectedReplies.poll())
+        hu.tap(10, 20)
+        assertNotNull("input still flows", inputs.poll(3, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun malformedControlMessageIsDropped() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        // A length-delimited field cut short: no protobuf parser can read it.
+        hu.sendBytes(0, ControlMsg.AUDIO_FOCUS_NOTIFICATION, byteArrayOf(0x0a, 0x05, 1))
+        assertFalse("session must go on", closed.await(1, TimeUnit.SECONDS))
+        hu.tap(10, 20)
+        assertNotNull("input still flows", inputs.poll(3, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun byeByeResponseWithoutRequestEndsTheSessionCleanly() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        hu.send(0, ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance())
+        assertTrue(closed.await(3, TimeUnit.SECONDS))
+        assertEquals(null, closeError)
+    }
+
+    @Test
+    fun phonePingsCarryAnExplicitBugReportFlag() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val ping = hu.pingRequests.poll(3, TimeUnit.SECONDS)!!
+        assertTrue(ping.hasBugReport())
+        assertFalse(ping.bugReport)
+        assertTrue(ping.timestamp > 0)
+    }
+
+    @Test
     fun headUnitFocusRequestWithoutInputStaysProjected() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         assertTrue(focusGained.await(5, TimeUnit.SECONDS))
@@ -433,4 +484,9 @@ class ZeroOmittingSessionLoopbackTest : SessionLoopbackTest() {
  */
 class ProtocolOneFiveSessionLoopbackTest : SessionLoopbackTest() {
     override val headUnitMinor = 5
+}
+
+/** The same sessions with the sensor channel opened before the others (the vehicles.json quirk). */
+class SensorFirstSessionLoopbackTest : SessionLoopbackTest() {
+    override val sensorChannelFirst = true
 }
