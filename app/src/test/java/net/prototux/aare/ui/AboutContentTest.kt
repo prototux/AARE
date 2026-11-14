@@ -37,4 +37,17 @@ class AboutContentTest {
     fun profileUrlIsBuiltFromTheHandle() {
         assertEquals("https://github.com/dustfeather", AboutLinks.profile("dustfeather"))
     }
+
+    /** A blank name, licence or a non-https URL would show broken credit or dead-end a tap. */
+    @Test
+    fun everyOssComponentHasANameALicenceAndAnHttpsUrl() {
+        AboutOss.GROUPS.forEach { group ->
+            assertTrue("group ${group.titleRes} has no components", group.components.isNotEmpty())
+            group.components.forEach { component ->
+                assertTrue("blank name for component with licence \"${component.licence}\"", component.name.isNotBlank())
+                assertTrue("blank licence for \"${component.name}\"", component.licence.isNotBlank())
+                assertTrue("not an https URL for \"${component.name}\": \"${component.url}\"", component.url.startsWith("https://"))
+            }
+        }
+    }
 }
