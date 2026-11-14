@@ -36,6 +36,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
+import net.prototux.aare.media.pickDefaultMediaApp
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
@@ -419,7 +420,9 @@ class CarRuntime(
                 if (pkg in hidden) continue
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
-                val icon = runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
+                // A calendar app shows today's date on its icon, like it does on the phone's own home screen.
+                val icon = dynamicCalendarIcon(context, pkg, 128)
+                    ?: runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
                 entries += CarAppEntry(standaloneId(pkg), pkg, label, icon, CarAppKind.STANDALONE)
             }
         }
@@ -447,10 +450,18 @@ class CarRuntime(
         // finished itself: its map card would stay blank instead of offering the picker.
         if (ui.activeNavAppId == null) {
             val nav = entries.filter { it.kind == CarAppKind.NAVIGATION && it.id !in finished }
-            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
+            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull()
+                ?: fallbackNavApp(nav))?.id
         }
         if (ui.activeMediaAppId == null) {
-            ui.activeMediaAppId = entries.firstOrNull { it.kind == CarAppKind.MEDIA && it.packageName == settings.lastMediaApp }?.id
+            val mediaEntries = entries.filter { it.kind == CarAppKind.MEDIA }
+            val lastPicked = mediaEntries.firstOrNull { it.packageName == settings.lastMediaApp }
+            // Only when the user never chose one and nothing is already playing: don't fight the
+            // "what's playing" pick (set elsewhere as playback starts) or override a real choice.
+            val fallback = if (lastPicked == null && settings.lastMediaApp == null && media.playback.value == null)
+                pickDefaultMediaApp(mediaEntries.map { it.packageName })?.let { pkg -> mediaEntries.firstOrNull { it.packageName == pkg } }
+            else null
+            ui.activeMediaAppId = (lastPicked ?: fallback)?.id
         }
     }
 
@@ -518,6 +529,17 @@ class CarRuntime(
             }
             if (media.playback.value?.playing != true) media.playPause()
         }
+    }
+
+    /**
+     * When there is no chosen or single nav app: a random pick among [nav]'s Korean-market apps,
+     * but only once the phone's own default maps app says the driver doesn't use Google Maps
+     * (asking otherwise would second-guess a choice already resolved there).
+     */
+    private fun fallbackNavApp(nav: List<CarAppEntry>): CarAppEntry? {
+        if (defaultMapsPackage(context) == GOOGLE_MAPS_PACKAGE) return null
+        val pkg = pickFallbackNavPackage(nav.map { it.packageName }) ?: return null
+        return nav.firstOrNull { it.packageName == pkg }
     }
 
     /** How [Settings.appOrder] names an entry: its package, or its id for AARE's own apps. */

@@ -492,6 +492,7 @@
     <string name="msg_reply_hint">Message to %1$s</string>
     <string name="msg_message_count_one">1 message</string>
     <string name="msg_message_count_many">%1$d messages</string>
+    <string name="msg_text_hidden">Message text isn\'t shown in your country</string>
 
     <string name="assistant_mic_label">Assistant</string>
     <string name="assistant_listening">Listening…</string>

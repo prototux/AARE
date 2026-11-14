@@ -175,13 +175,17 @@ class CarNotificationListener : NotificationListenerService() {
         if (sbn.packageName == packageName) return null
         if (n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
         val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n) ?: return null
+        // Some countries don't allow a received message's text onto the car screen: the sender
+        // and the fact that one arrived still show, as does whatever the driver typed themselves.
+        val textBlocked = isMessageTextBlocked(currentCountryIso(this))
         val lines = style.messages.mapNotNull { m ->
             val text = m.text?.toString() ?: return@mapNotNull null
             // A null sender is the user, per MessagingStyle; some apps name the user instead.
             val p = m.person
             val fromUser = p == null || p === style.user || (p.key != null && p.key == style.user.key) ||
                 (p.key == null && p.name != null && p.name.toString() == style.user.name?.toString())
-            Conversation.Line(p?.name?.toString() ?: "", text, m.timestamp, fromUser)
+            val shown = if (textBlocked && !fromUser) getString(R.string.msg_text_hidden) else text
+            Conversation.Line(p?.name?.toString() ?: "", shown, m.timestamp, fromUser)
         }
         if (lines.isEmpty()) return null
         val title = style.conversationTitle?.toString()
