@@ -13,5 +13,14 @@ class KnownHeadUnitsTest {
         assertEquals(noVersion, KnownHeadUnits.decode(KnownHeadUnits.encode(noVersion)))
     }
 
+    @Test fun aRuleLeavesWirelessOutOnlyForAHeadUnitItNeverWorkedWith() {
+        val id = HeadUnitIdentity("Pioneer", "AVH", "Pioneer AVH", headUnitMake = "ALPINE", headUnitModel = "iLX-705D")
+        assertEquals(id, KnownHeadUnits.skipWireless(worked = false, known = id) { true })
+        assertEquals(null, KnownHeadUnits.skipWireless(worked = true, known = id) { true })
+        assertEquals(null, KnownHeadUnits.skipWireless(worked = false, known = id) { false })
+        // Never seen over USB: nothing to go by.
+        assertEquals(null, KnownHeadUnits.skipWireless(worked = false, known = null) { true })
+    }
+
     @Test fun garbageReadsAsUnknown() = assertEquals(null, KnownHeadUnits.decode("not json"))
 }

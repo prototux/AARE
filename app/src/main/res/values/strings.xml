@@ -121,7 +121,7 @@
     <string name="quirks_on">On</string>
     <string name="quirks_off">Off</string>
     <string name="quirks_pixel_aspect_title">Pixel aspect correction</string>
-    <string name="quirks_pixel_aspect_subtitle">On: lay the car UI out at the head unit\'s or vehicles.json\'s pixel ratio. Off: always square pixels.</string>
+    <string name="quirks_pixel_aspect_subtitle">On: lay the car UI out at the head unit\'s reported pixel ratio, from protocol 1.2 (vehicles.json can still ask for a specific ratio either way). Off: always square pixels.</string>
     <string name="quirks_video_resolutions_title">Video resolution limit</string>
     <string name="quirks_video_resolutions_subtitle">On: keep vehicles.json\'s list of resolutions to pick from, when it has one for this car. Off: pick from everything the head unit offers.</string>
     <string name="quirks_single_channel_capture_title">Single-channel navigation voice</string>

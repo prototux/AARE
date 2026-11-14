@@ -27,6 +27,8 @@ data class VehicleOverride(
     val videoResolutions: Set<String>? = null,
     /** Width / height of one of the car screen's pixels (see [PixelAspect]); 1 is square. */
     val pixelAspect: Float? = null,
+    /** Lay the UI out with the pixel aspect the head unit reports (protocol 1.2 on) when [pixelAspect] isn't set (AARE's default: no). */
+    val reportedPixelAspect: Boolean? = null,
     /** Navigation voice goes with the music on the media channel; the guidance channel stays unused. */
     val singleChannelCapture: Boolean? = null,
     /** The car is electric even though it reports no fuel type, or an unknown one. */
@@ -34,9 +36,9 @@ data class VehicleOverride(
     /** Silent audio messages sent ahead of a media / guidance stream's start, over Wi-Fi (see [StartSilence]). */
     val wifiMediaStartSilence: Int? = null,
     val wifiGuidanceStartSilence: Int? = null,
-    /** Music keeps playing when the car grants GAIN_TRANSIENT (AARE's default: only navigation voice does). */
+    /** Music keeps playing on a GAIN_TRANSIENT granted to a navigation prompt (AARE's default: only navigation voice does). */
     val mediaOnGainTransient: Boolean? = null,
-    /** An unsolicited GAIN_TRANSIENT_GUIDANCE_ONLY from the car pauses the phone's music (AARE's default: yes). */
+    /** An unsolicited GAIN_TRANSIENT_GUIDANCE_ONLY from the car pauses the phone's music until its next gain (AARE's default: yes). */
     val pauseOnGuidanceOnly: Boolean? = null,
     /** Whether to connect to this head unit wirelessly (AARE's default: yes). */
     val wireless: Boolean? = null,
@@ -57,6 +59,7 @@ data class VehicleOverride(
         micSetup = micSetup ?: base.micSetup,
         videoResolutions = videoResolutions ?: base.videoResolutions,
         pixelAspect = pixelAspect ?: base.pixelAspect,
+        reportedPixelAspect = reportedPixelAspect ?: base.reportedPixelAspect,
         singleChannelCapture = singleChannelCapture ?: base.singleChannelCapture,
         forceElectric = forceElectric ?: base.forceElectric,
         wifiMediaStartSilence = wifiMediaStartSilence ?: base.wifiMediaStartSilence,
@@ -75,7 +78,7 @@ data class VehicleOverride(
     override fun toString(): String = listOf(
         "dpi" to dpi, "widthMargin" to widthMargin, "heightMargin" to heightMargin, "maxHeight" to maxHeight,
         "prefer60fps" to prefer60fps, "skipServices" to skipServices, "openServices" to openServices, "micSetup" to micSetup,
-        "videoResolutions" to videoResolutions, "pixelAspect" to pixelAspect, "singleChannelCapture" to singleChannelCapture,
+        "videoResolutions" to videoResolutions, "pixelAspect" to pixelAspect, "reportedPixelAspect" to reportedPixelAspect, "singleChannelCapture" to singleChannelCapture,
         "forceElectric" to forceElectric, "wifiMediaStartSilence" to wifiMediaStartSilence,
         "wifiGuidanceStartSilence" to wifiGuidanceStartSilence, "mediaOnGainTransient" to mediaOnGainTransient,
         "pauseOnGuidanceOnly" to pauseOnGuidanceOnly, "wireless" to wireless, "exitToCar" to exitToCar, "exitLabel" to exitLabel,
@@ -268,17 +271,30 @@ object VehicleOverrides {
      * settings page); [QuirkChoice.ON] / [QuirkChoice.OFF] force the quirk on or off for every car,
      * regardless of what vehicles.json matched.
      *
-     * [pixelAspect][QuirkSettings.pixelAspect], the two start-silence counts and
-     * [videoResolutions][QuirkSettings.videoResolutions] have no single "on" value to force (how
-     * much pixel correction, how much silence, which resolutions is the head unit's or the rule's
-     * to say): their [QuirkChoice.ON] is the same as [QuirkChoice.AUTOMATIC], and only
-     * [QuirkChoice.OFF] forces a value (square pixels, no silence, no resolution limit).
+     * The two start-silence counts and [videoResolutions][QuirkSettings.videoResolutions] have no
+     * single "on" value to force (how much silence, which resolutions is the head unit's or the
+     * rule's to say): their [QuirkChoice.ON] is the same as [QuirkChoice.AUTOMATIC], and only
+     * [QuirkChoice.OFF] forces a value (no silence, no resolution limit).
+     * [pixelAspect][QuirkSettings.pixelAspect]'s [QuirkChoice.ON] turns on
+     * [VehicleOverride.reportedPixelAspect] (use the head unit's reported ratio, like asking for it
+     * in vehicles.json); an explicit `pixelAspect` rule still wins over it either way.
+     * [QuirkChoice.OFF] forces no factor at all.
      */
     fun effective(resolved: VehicleOverride?, quirks: QuirkSettings): VehicleOverride? {
         if (quirks == QuirkSettings()) return resolved // every quirk Automatic: today's behaviour, unchanged
         val base = resolved ?: VehicleOverride()
         return base.copy(
+            // Off: no factor at all (an explicit override always wins over the reported ratio, so
+            // forcing pixelAspect to 1 is enough on its own; reportedPixelAspect is forced false too,
+            // for a result that reads right on its own). On: use the head unit's reported ratio from
+            // protocol 1.2 on, same as asking for it in vehicles.json; an explicit pixelAspect rule
+            // (the built-in file's older, can't-report-it head units) still wins over it either way.
             pixelAspect = if (quirks.pixelAspect == QuirkChoice.OFF) 1f else base.pixelAspect,
+            reportedPixelAspect = when (quirks.pixelAspect) {
+                QuirkChoice.ON -> true
+                QuirkChoice.OFF -> false
+                QuirkChoice.AUTOMATIC -> base.reportedPixelAspect
+            },
             videoResolutions = if (quirks.videoResolutions == QuirkChoice.OFF) null else base.videoResolutions,
             singleChannelCapture = forced(quirks.singleChannelCapture, base.singleChannelCapture),
             wifiMediaStartSilence = if (quirks.wifiMediaStartSilence == QuirkChoice.OFF) 0 else base.wifiMediaStartSilence,
@@ -346,7 +362,8 @@ object VehicleOverrides {
                 maxHeight = int(a, "maxHeight"), prefer60fps = bool(a, "prefer60fps"),
                 skipServices = strings(a, "skipServices"), openServices = strings(a, "openServices"),
                 micSetup = bool(a, "micSetup"), videoResolutions = strings(a, "videoResolutions"),
-                pixelAspect = float(a, "pixelAspect"), singleChannelCapture = bool(a, "singleChannelCapture"),
+                pixelAspect = float(a, "pixelAspect"), reportedPixelAspect = bool(a, "reportedPixelAspect"),
+                singleChannelCapture = bool(a, "singleChannelCapture"),
                 forceElectric = bool(a, "forceElectric"), wifiMediaStartSilence = int(a, "wifiMediaStartSilence"),
                 wifiGuidanceStartSilence = int(a, "wifiGuidanceStartSilence"), mediaOnGainTransient = bool(a, "mediaOnGainTransient"),
                 pauseOnGuidanceOnly = bool(a, "pauseOnGuidanceOnly"), wireless = bool(a, "wireless"),

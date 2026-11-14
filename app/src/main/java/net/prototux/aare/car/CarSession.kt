@@ -220,17 +220,21 @@ class CarSession(
     // ------------------------------------------------------------------ AAP callbacks (reader thread)
 
     /**
-     * Who this head unit is, kept by its Bluetooth address (the one it announces, and the one a
-     * wireless session came in on) for quirks needed before the next session says it again:
-     * a head unit is looked up this way before wireless projection starts.
+     * Who this head unit is, kept by the Bluetooth address it announces, for quirks needed before
+     * the next session says it again. Not by the address a wireless session came in on: that can
+     * be an adapter that passes the head unit's identity through, and a rule for the head unit
+     * must not keep the adapter from connecting. That address is only marked as one wireless works
+     * with, which no rule overrides. Head units are looked up this way before wireless starts.
      */
     private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
         val announced = response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
-        val addresses = listOfNotNull(announced, peerKey.takeIf { wireless })
-            .map { it.trim().uppercase() }.filter { BluetoothAdapter.checkBluetoothAddress(it) }.toSet()
-        if (addresses.isEmpty()) return
-        runCatching { KnownHeadUnits(context).let { store -> addresses.forEach { store.put(it, id) } } }
-            .onFailure { Log.w(TAG, "can't remember the head unit", it) }
+            ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
+        val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
+        runCatching {
+            val store = KnownHeadUnits(context)
+            announced?.let { store.put(it, id) }
+            wirelessPeer?.let { store.markWirelessWorked(it) }
+        }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
     }
 
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {
@@ -381,14 +385,16 @@ class CarSession(
             DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         val quirks = vehicleOverride
-        mediaFocus = mediaAllowed(state, quirks?.mediaOnGainTransient == true)
+        mediaFocus = mediaAllowed(state, gainTransientIsMedia(answersGuidance = !notification.unsolicited && guidancePlaying,
+            quirk = quirks?.mediaOnGainTransient == true))
         guidanceFocusState = guidanceAllowed(state)
         when {
-            // The car keeps only navigation voice for now: the phone's audio
-            // focus for good, stopping its music, except for some head units (vehicles.json).
+            // The car keeps only navigation voice for now: pause the phone's music, unless a
+            // vehicles.json rule says not to, and play it again on the next gain, like the other
+            // pauses the car causes.
             notification.unsolicited && state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY &&
                 quirks?.pauseOnGuidanceOnly != false -> main.post {
-                pausedByCar = false
+                if (media.playback.value?.playing == true) pausedByCar = true
                 media.pause()
             }
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
@@ -408,7 +414,10 @@ class CarSession(
         }
     }
 
-    /** Media paused by an unsolicited transient focus loss, to resume on the next gain (main thread). */
+    /**
+     * Media paused by the car (an unsolicited transient loss, or the car keeping only navigation
+     * voice), to resume on the car's next gain (main thread).
+     */
     private var pausedByCar = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
@@ -516,7 +525,7 @@ class CarSession(
         // Non-square car pixels: the UI is laid out on a logical screen that the car's pixels
         // stretch back to the right shape (PixelAspect).
         val aspect = PixelAspect.factor(vehicleOverride?.pixelAspect, config.pixelAspectRatioE4.takeIf { config.hasPixelAspectRatioE4() },
-            aap.headUnitVersion, headUnit?.make.orEmpty())
+            aap.headUnitVersion, headUnit?.make.orEmpty(), useReported = vehicleOverride?.reportedPixelAspect == true)
         val (logicalWidth, logicalHeight) = PixelAspect.logicalSize(layout.contentWidth, layout.contentHeight, aspect)
         videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe() + (if (aspect != 1f) " pixel aspect $aspect" else "")
         Log.i(TAG, "projection $videoDescription")
@@ -1117,8 +1126,7 @@ class CarSession(
 
         /**
          * Whether the car's focus [state] lets music play. Ducking keeps it going: the head unit
-         * lowers it itself. GAIN_TRANSIENT is for navigation voice only, taking
-         * it, except for head units that mean music too ([gainTransientIsMedia], vehicles.json).
+         * lowers it itself. GAIN_TRANSIENT does when [gainTransientIsMedia].
          */
         fun mediaAllowed(state: AudioFocusStateType, gainTransientIsMedia: Boolean): Boolean = when (state) {
             AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
@@ -1126,6 +1134,14 @@ class CarSession(
             AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT -> gainTransientIsMedia
             else -> false
         }
+
+        /**
+         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request, or said by
+         * the car on its own, it does, as before. Answering a navigation prompt's request it is for
+         * navigation voice: the music waits until the prompt is over, unless a vehicles.json rule
+         * ([quirk]) says the head unit means music too.
+         */
+        fun gainTransientIsMedia(answersGuidance: Boolean, quirk: Boolean): Boolean = quirk || !answersGuidance
 
         /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
         fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {

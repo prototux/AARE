@@ -155,10 +155,11 @@ class VehicleOverridesTest {
 
     @Test fun theNewKeysAreParsed() {
         val o = VehicleOverrides.parse("""{"rules":[{"match":{"make":"X"},"apply":{"videoResolutions":["800x480"],"pixelAspect":1.1515,
-            "singleChannelCapture":true,"forceElectric":true,"wifiMediaStartSilence":8,"wifiGuidanceStartSilence":4,
+            "reportedPixelAspect":true,"singleChannelCapture":true,"forceElectric":true,"wifiMediaStartSilence":8,"wifiGuidanceStartSilence":4,
             "mediaOnGainTransient":true,"pauseOnGuidanceOnly":false,"wireless":false,"exitToCar":false,"exitLabel":"make"}}]}""").single().override
         assertEquals(setOf("800x480"), o.videoResolutions)
         assertEquals(1.1515f, o.pixelAspect!!, 1e-6f)
+        assertEquals(true, o.reportedPixelAspect)
         assertEquals(true, o.singleChannelCapture)
         assertEquals(true, o.forceElectric)
         assertEquals(8, o.wifiMediaStartSilence)
@@ -241,16 +242,31 @@ class VehicleOverridesTest {
     }
 
     @Test fun offForcesTheNeutralValueForAMagnitudeQuirk() {
-        // No single "on" value for a factor/count/list: Off disables it (square pixels, no silence,
-        // no resolution limit); On behaves like Automatic, passing the rule (or nothing) through.
-        val rule = VehicleOverride(pixelAspect = 1.15f, wifiMediaStartSilence = 8, videoResolutions = setOf("800x480"))
-        assertEquals(1f, VehicleOverrides.effective(rule, QuirkSettings(pixelAspect = QuirkChoice.OFF))?.pixelAspect)
-        assertEquals(1.15f, VehicleOverrides.effective(rule, QuirkSettings(pixelAspect = QuirkChoice.ON))?.pixelAspect)
-        assertEquals(1.15f, VehicleOverrides.effective(rule, QuirkSettings())?.pixelAspect)
+        // No single "on" value for a count or a list: Off disables it (no silence, no resolution
+        // limit); On behaves like Automatic, passing the rule (or nothing) through.
+        val rule = VehicleOverride(wifiMediaStartSilence = 8, videoResolutions = setOf("800x480"))
         assertEquals(0, VehicleOverrides.effective(rule, QuirkSettings(wifiMediaStartSilence = QuirkChoice.OFF))?.wifiMediaStartSilence)
+        assertEquals(8, VehicleOverrides.effective(rule, QuirkSettings(wifiMediaStartSilence = QuirkChoice.ON))?.wifiMediaStartSilence)
         assertEquals(null, VehicleOverrides.effective(rule, QuirkSettings(videoResolutions = QuirkChoice.OFF))?.videoResolutions)
+        assertEquals(setOf("800x480"), VehicleOverrides.effective(rule, QuirkSettings(videoResolutions = QuirkChoice.ON))?.videoResolutions)
         // No rule either: Off still forces the neutral value, not null.
-        assertEquals(1f, VehicleOverrides.effective(null, QuirkSettings(pixelAspect = QuirkChoice.OFF))?.pixelAspect)
+        assertEquals(0, VehicleOverrides.effective(null, QuirkSettings(wifiMediaStartSilence = QuirkChoice.OFF))?.wifiMediaStartSilence)
+    }
+
+    @Test fun pixelAspectOnAsksForTheHeadUnitsReportedRatio() {
+        // On turns reportedPixelAspect on; an explicit pixelAspect rule (the built-in file's older,
+        // can't-report-it head units) still wins over it either way, so the field itself is unchanged.
+        val rule = VehicleOverride(pixelAspect = 1.15f)
+        assertEquals(1.15f, VehicleOverrides.effective(rule, QuirkSettings(pixelAspect = QuirkChoice.ON))?.pixelAspect)
+        assertEquals(true, VehicleOverrides.effective(rule, QuirkSettings(pixelAspect = QuirkChoice.ON))?.reportedPixelAspect)
+        assertEquals(null, VehicleOverrides.effective(rule, QuirkSettings())?.reportedPixelAspect)
+        // No rule either: On still turns reportedPixelAspect on, so a head unit without a vehicles.json
+        // match gets its reported ratio honoured.
+        assertEquals(true, VehicleOverrides.effective(null, QuirkSettings(pixelAspect = QuirkChoice.ON))?.reportedPixelAspect)
+        // Off forces no factor at all: square pixels, and reportedPixelAspect off, whatever the rule said.
+        val reporting = VehicleOverride(reportedPixelAspect = true)
+        assertEquals(1f, VehicleOverrides.effective(reporting, QuirkSettings(pixelAspect = QuirkChoice.OFF))?.pixelAspect)
+        assertEquals(false, VehicleOverrides.effective(reporting, QuirkSettings(pixelAspect = QuirkChoice.OFF))?.reportedPixelAspect)
     }
 
     @Test fun wirelessAllowBlocksTheDenylist() {
@@ -281,6 +297,6 @@ class VehicleOverridesTest {
     }
 
     @Test fun nothingForcedAndNoRuleStaysNull() =
-        // Automatic for everything that matters, no vehicles.json match: still no override, as today.
-        assertEquals(null, VehicleOverrides.effective(null, QuirkSettings(pixelAspect = QuirkChoice.ON)))
+        // On for a quirk with no single "on" value, no vehicles.json match: still no override, as today.
+        assertEquals(null, VehicleOverrides.effective(null, QuirkSettings(videoResolutions = QuirkChoice.ON)))
 }

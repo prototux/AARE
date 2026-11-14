@@ -12,6 +12,14 @@ class AudioFocusQuirksTest {
         assertTrue(CarSession.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT))
     }
 
+    @Test fun aGainTransientAnsweringTheMusicsRequestLetsItPlay() {
+        // The music's own request, or the car on its own: music, as before.
+        assertTrue(CarSession.gainTransientIsMedia(answersGuidance = false, quirk = false))
+        // A navigation prompt's request: voice only, unless a rule says the head unit means music too.
+        assertFalse(CarSession.gainTransientIsMedia(answersGuidance = true, quirk = false))
+        assertTrue(CarSession.gainTransientIsMedia(answersGuidance = true, quirk = true))
+    }
+
     @Test fun exceptForHeadUnitsWhoseGainTransientMeansMusicToo() =
         assertTrue(CarSession.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = true))
 

@@ -101,7 +101,7 @@
     },
 
     {
-      "_comment": "The one head unit make whose GAIN_TRANSIENT lets music play too.",
+      "_comment": "The one head unit make whose GAIN_TRANSIENT for a navigation prompt lets music play too.",
       "match": { "headUnitMake": "ZJ" },
       "apply": { "mediaOnGainTransient": true }
     },
