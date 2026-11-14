@@ -450,7 +450,8 @@ class CarRuntime(
         // finished itself: its map card would stay blank instead of offering the picker.
         if (ui.activeNavAppId == null) {
             val nav = entries.filter { it.kind == CarAppKind.NAVIGATION && it.id !in finished }
-            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
+            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull()
+                ?: fallbackNavApp(nav))?.id
         }
         if (ui.activeMediaAppId == null) {
             val mediaEntries = entries.filter { it.kind == CarAppKind.MEDIA }
@@ -528,6 +529,17 @@ class CarRuntime(
             }
             if (media.playback.value?.playing != true) media.playPause()
         }
+    }
+
+    /**
+     * When there is no chosen or single nav app: a random pick among [nav]'s Korean-market apps,
+     * but only once the phone's own default maps app says the driver doesn't use Google Maps
+     * (asking otherwise would second-guess a choice already resolved there).
+     */
+    private fun fallbackNavApp(nav: List<CarAppEntry>): CarAppEntry? {
+        if (defaultMapsPackage(context) == GOOGLE_MAPS_PACKAGE) return null
+        val pkg = pickFallbackNavPackage(nav.map { it.packageName }) ?: return null
+        return nav.firstOrNull { it.packageName == pkg }
     }
 
     /** How [Settings.appOrder] names an entry: its package, or its id for AARE's own apps. */
