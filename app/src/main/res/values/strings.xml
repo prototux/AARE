@@ -213,7 +213,7 @@
     <string name="setup_section_app_order">Order in the car</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_section_car_buttons">Car buttons</string>
-    <string name="setup_car_buttons_hint">Keys AARE has seen from this car. Choose what each one does; a key left at "Default" keeps its normal behaviour.</string>
+    <string name="setup_car_buttons_hint">Keys AARE has seen from this car. Choose what each one does; a key left at \"Default\" keeps its normal behaviour.</string>
     <string name="setup_car_buttons_empty">No buttons seen yet. Connect to a car and press one.</string>
     <string name="setup_car_button_default">Default</string>
     <string name="setup_car_action_home">Home</string>
