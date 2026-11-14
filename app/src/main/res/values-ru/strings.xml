@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Рядом с часами, от Open-Meteo (получает приблизительное местоположение, около 10 км)</string>
     <string name="setup_toggle_calendar_title">Ближайшее событие календаря</string>
     <string name="setup_toggle_calendar_subtitle">Под музыкой, с ярлыком для навигации к его месту</string>
+    <string name="setup_toggle_media_first_title">Сначала музыка</string>
+    <string name="setup_toggle_media_first_subtitle">На главном экране музыка занимает место карты (слева или сверху), а карта идёт после неё</string>
     <string name="setup_section_driving">Вождение</string>
     <string name="setup_toggle_passenger_title">Режим пассажира</string>
     <string name="setup_toggle_passenger_subtitle">Игнорировать статус вождения автомобиля: ввод текста, длинные списки и экран телефона остаются доступными в движении, для пассажира. Водитель не должен использовать экран во время движения.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Тёмная панель, даже со светлыми цветами</string>
+    <string name="setup_switch_media_first">Музыка перед картой на главном экране</string>
     <string name="setup_switch_passenger">Режим пассажира: без ограничений вождения (водитель не должен использовать экран)</string>
     <string name="setup_switch_message_notifications">Уведомления о сообщениях</string>
     <string name="setup_switch_audio_next_connection">Звук телефона в автомобиле (следующее соединение)</string>

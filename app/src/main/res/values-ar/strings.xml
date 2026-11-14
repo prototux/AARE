@@ -88,6 +88,8 @@
     <string name="setup_toggle_weather_subtitle">بجانب الساعة، من Open-Meteo (يستخدم موضعًا تقريبيًا بدقة نحو 10 كم)</string>
     <string name="setup_toggle_calendar_title">الحدث القادم في التقويم</string>
     <string name="setup_toggle_calendar_subtitle">تحت الموسيقى، مع اختصار للتنقّل إلى مكانه</string>
+    <string name="setup_toggle_media_first_title">الموسيقى أولًا</string>
+    <string name="setup_toggle_media_first_subtitle">في الشاشة الرئيسية، تأخذ الموسيقى مكان الخريطة (يسارًا أو في الأعلى) وتأتي الخريطة بعدها</string>
     <string name="setup_section_driving">القيادة</string>
     <string name="setup_toggle_passenger_title">وضع الراكب</string>
     <string name="setup_toggle_passenger_subtitle">تجاهل حالة قيادة السيارة: تبقى الكتابة والقوائم الطويلة وشاشة الهاتف متاحة أثناء الحركة، لاستخدام الراكب. يجب ألا يستخدم السائق الشاشة أثناء القيادة.</string>
@@ -115,6 +117,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">شريط داكن، حتى مع ألوان النهار</string>
+    <string name="setup_switch_media_first">الموسيقى قبل الخريطة في الشاشة الرئيسية</string>
     <string name="setup_switch_passenger">وضع الراكب: بلا قيود قيادة (يجب ألا يستخدم السائق الشاشة)</string>
     <string name="setup_switch_message_notifications">إشعارات الرسائل</string>
     <string name="setup_switch_audio_next_connection">صوت الهاتف في السيارة (الاتصال التالي)</string>

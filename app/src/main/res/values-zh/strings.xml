@@ -88,6 +88,8 @@
     <string name="setup_toggle_weather_subtitle">显示在时钟旁，数据来自 Open-Meteo（仅获取大致位置，精度约 10 公里）</string>
     <string name="setup_toggle_calendar_title">下一个日历事件</string>
     <string name="setup_toggle_calendar_subtitle">显示在音乐信息下方，并提供前往该地点的导航快捷方式</string>
+    <string name="setup_toggle_media_first_title">音乐优先</string>
+    <string name="setup_toggle_media_first_subtitle">在主屏幕上，音乐显示在地图的位置（左侧或上方），地图排在其后</string>
     <string name="setup_section_driving">驾驶</string>
     <string name="setup_toggle_passenger_title">乘客模式</string>
     <string name="setup_toggle_passenger_subtitle">忽略车辆的行驶状态：行驶中仍可输入文字、浏览长列表并使用手机屏幕镜像，供乘客使用。驾驶员行驶中不得操作屏幕。</string>
@@ -115,6 +117,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">深色导航条（即使使用日间配色）</string>
+    <string name="setup_switch_media_first">主屏幕上音乐排在地图之前</string>
     <string name="setup_switch_passenger">乘客模式：不限制行驶中操作（驾驶员不得使用屏幕）</string>
     <string name="setup_switch_message_notifications">消息通知</string>
     <string name="setup_switch_audio_next_connection">车内手机音频（下次连接生效）</string>

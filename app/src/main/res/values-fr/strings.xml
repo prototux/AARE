@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">À côté de l\'horloge, via Open-Meteo (une position approximative, à environ 10 km, lui est transmise)</string>
     <string name="setup_toggle_calendar_title">Prochain événement du calendrier</string>
     <string name="setup_toggle_calendar_subtitle">Sous la musique, avec un raccourci pour naviguer jusqu\'à son lieu</string>
+    <string name="setup_toggle_media_first_title">Musique en premier</string>
+    <string name="setup_toggle_media_first_subtitle">Sur l\'écran d\'accueil, la musique prend la place de la carte (à gauche ou en haut) et la carte vient après</string>
     <string name="setup_section_driving">Conduite</string>
     <string name="setup_toggle_passenger_title">Mode passager</string>
     <string name="setup_toggle_passenger_subtitle">Ignore le statut de conduite de la voiture : la saisie, les longues listes et l\'écran du téléphone restent disponibles en mouvement, pour un passager. Le conducteur ne doit pas utiliser l\'écran en conduisant.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Barre sombre, même avec les couleurs de jour</string>
+    <string name="setup_switch_media_first">Musique avant la carte sur l\'écran d\'accueil</string>
     <string name="setup_switch_passenger">Mode passager : aucune restriction de conduite (le conducteur ne doit pas utiliser l\'écran)</string>
     <string name="setup_switch_message_notifications">Notifications de messages</string>
     <string name="setup_switch_audio_next_connection">Audio du téléphone dans la voiture (prochaine connexion)</string>

@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Bredvid klockan, från Open-Meteo (den hämtar en ungefärlig position, cirka 10 km)</string>
     <string name="setup_toggle_calendar_title">Nästa kalenderhändelse</string>
     <string name="setup_toggle_calendar_subtitle">Under musiken, med en genväg för att navigera till dess plats</string>
+    <string name="setup_toggle_media_first_title">Musik först</string>
+    <string name="setup_toggle_media_first_subtitle">På startskärmen hamnar musiken där kartan är (till vänster eller överst) och kartan efter den</string>
     <string name="setup_section_driving">Körning</string>
     <string name="setup_toggle_passenger_title">Passagerarläge</string>
     <string name="setup_toggle_passenger_subtitle">Ignorerar bilens körstatus: skrivande, långa listor och telefonskärmen förblir tillgängliga under körning, för en passagerare. Föraren får inte använda skärmen under körning.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Mörkt fält, även med dagfärger</string>
+    <string name="setup_switch_media_first">Musik före kartan på startskärmen</string>
     <string name="setup_switch_passenger">Passagerarläge: inga körbegränsningar (föraren får inte använda skärmen)</string>
     <string name="setup_switch_message_notifications">Meddelandeaviseringar</string>
     <string name="setup_switch_audio_next_connection">Telefonljud i bilen (nästa anslutning)</string>

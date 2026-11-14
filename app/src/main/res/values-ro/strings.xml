@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Lângă ceas, de la Open-Meteo (primește o poziție aproximativă, de circa 10 km)</string>
     <string name="setup_toggle_calendar_title">Următorul eveniment din calendar</string>
     <string name="setup_toggle_calendar_subtitle">Sub muzică, cu o comandă rapidă pentru a naviga spre locul respectiv</string>
+    <string name="setup_toggle_media_first_title">Muzica mai întâi</string>
+    <string name="setup_toggle_media_first_subtitle">Pe ecranul principal, muzica ia locul hărții (la stânga sau sus), iar harta vine după ea</string>
     <string name="setup_section_driving">Condus</string>
     <string name="setup_toggle_passenger_title">Mod pasager</string>
     <string name="setup_toggle_passenger_subtitle">Ignoră starea de condus a mașinii: tastarea, listele lungi și ecranul telefonului rămân disponibile în mișcare, pentru un pasager. Șoferul nu trebuie să folosească ecranul în timpul condusului.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Bară întunecată, chiar și cu culori de zi</string>
+    <string name="setup_switch_media_first">Muzica înaintea hărții pe ecranul principal</string>
     <string name="setup_switch_passenger">Mod pasager: fără restricții de condus (șoferul nu trebuie să folosească ecranul)</string>
     <string name="setup_switch_message_notifications">Notificări de mesaje</string>
     <string name="setup_switch_audio_next_connection">Audio telefon în mașină (la următoarea conectare)</string>

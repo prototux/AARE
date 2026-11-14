@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Junto ao relógio, fornecida pelo Open-Meteo (obtém uma posição aproximada, cerca de 10 km)</string>
     <string name="setup_toggle_calendar_title">Próximo evento do calendário</string>
     <string name="setup_toggle_calendar_subtitle">Sob a música, com um atalho para navegar até ao local</string>
+    <string name="setup_toggle_media_first_title">Música primeiro</string>
+    <string name="setup_toggle_media_first_subtitle">No ecrã inicial, a música fica onde está o mapa (à esquerda ou em cima) e o mapa vem depois</string>
     <string name="setup_section_driving">Condução</string>
     <string name="setup_toggle_passenger_title">Modo passageiro</string>
     <string name="setup_toggle_passenger_subtitle">Ignorar o estado de condução do carro: a escrita, as listas longas e o ecrã do telemóvel continuam disponíveis em movimento, para um passageiro. O condutor não deve utilizar o ecrã durante a condução.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Barra escura, mesmo com as cores de dia</string>
+    <string name="setup_switch_media_first">Música antes do mapa no ecrã inicial</string>
     <string name="setup_switch_passenger">Modo passageiro: sem restrições de condução (o condutor não deve utilizar o ecrã)</string>
     <string name="setup_switch_message_notifications">Notificações de mensagens</string>
     <string name="setup_switch_audio_next_connection">Áudio do telemóvel no carro (próxima ligação)</string>

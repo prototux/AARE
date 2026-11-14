@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Bên cạnh đồng hồ, từ Open-Meteo (lấy vị trí gần đúng, khoảng 10 km)</string>
     <string name="setup_toggle_calendar_title">Sự kiện lịch kế tiếp</string>
     <string name="setup_toggle_calendar_subtitle">Dưới phần nhạc, có lối tắt để điều hướng đến địa điểm đó</string>
+    <string name="setup_toggle_media_first_title">Ưu tiên nhạc</string>
+    <string name="setup_toggle_media_first_subtitle">Trên màn hình chính, phần nhạc nằm ở vị trí của bản đồ (bên trái hoặc phía trên) và bản đồ nằm sau đó</string>
     <string name="setup_section_driving">Lái xe</string>
     <string name="setup_toggle_passenger_title">Chế độ hành khách</string>
     <string name="setup_toggle_passenger_subtitle">Bỏ qua trạng thái lái xe của ô tô: nhập văn bản, danh sách dài và màn hình điện thoại vẫn khả dụng khi xe đang di chuyển, dành cho hành khách. Người lái không được dùng màn hình khi đang lái xe.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Thanh tối, ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_switch_media_first">Nhạc trước bản đồ trên màn hình chính</string>
     <string name="setup_switch_passenger">Chế độ hành khách: không có hạn chế khi lái xe (người lái không được dùng màn hình)</string>
     <string name="setup_switch_message_notifications">Thông báo tin nhắn</string>
     <string name="setup_switch_audio_next_connection">Âm thanh điện thoại trên xe (lần kết nối tiếp theo)</string>

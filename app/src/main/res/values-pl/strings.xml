@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Przy zegarze, z Open-Meteo (pobiera przybliżoną pozycję, około 10 km)</string>
     <string name="setup_toggle_calendar_title">Najbliższe wydarzenie z kalendarza</string>
     <string name="setup_toggle_calendar_subtitle">Pod muzyką, ze skrótem do nawigacji do jego miejsca</string>
+    <string name="setup_toggle_media_first_title">Najpierw muzyka</string>
+    <string name="setup_toggle_media_first_subtitle">Na ekranie głównym muzyka trafia tam, gdzie mapa (z lewej lub u góry), a mapa po niej</string>
     <string name="setup_section_driving">Jazda</string>
     <string name="setup_toggle_passenger_title">Tryb pasażera</string>
     <string name="setup_toggle_passenger_subtitle">Ignoruj stan jazdy samochodu: pisanie, długie listy i ekran telefonu pozostają dostępne w ruchu, dla pasażera. Kierowca nie może używać ekranu podczas jazdy.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Ciemny pasek, nawet z jasnymi kolorami</string>
+    <string name="setup_switch_media_first">Muzyka przed mapą na ekranie głównym</string>
     <string name="setup_switch_passenger">Tryb pasażera: brak ograniczeń jazdy (kierowca nie może używać ekranu)</string>
     <string name="setup_switch_message_notifications">Powiadomienia o wiadomościach</string>
     <string name="setup_switch_audio_next_connection">Dźwięk telefonu w samochodzie (następne połączenie)</string>

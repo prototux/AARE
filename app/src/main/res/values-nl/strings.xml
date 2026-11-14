@@ -90,6 +90,8 @@
     <string name="setup_toggle_weather_subtitle">Naast de klok, van Open-Meteo (het haalt een geschatte positie op, ongeveer 10 km)</string>
     <string name="setup_toggle_calendar_title">Volgende agenda-afspraak</string>
     <string name="setup_toggle_calendar_subtitle">Onder de muziek, met een snelkoppeling om naar de locatie te navigeren</string>
+    <string name="setup_toggle_media_first_title">Muziek eerst</string>
+    <string name="setup_toggle_media_first_subtitle">Op het startscherm komt de muziek waar de kaart staat (links of boven) en de kaart daarna</string>
     <string name="setup_section_driving">Rijden</string>
     <string name="setup_toggle_passenger_title">Passagiersmodus</string>
     <string name="setup_toggle_passenger_subtitle">Negeert de rijstatus van de auto: typen, lange lijsten en het telefoonscherm blijven beschikbaar tijdens het rijden, voor een passagier. De bestuurder mag het scherm niet gebruiken tijdens het rijden.</string>
@@ -117,6 +119,7 @@
     <string name="setup_style_android_auto">Android Auto</string>
     <string name="setup_style_carplay">CarPlay</string>
     <string name="setup_switch_dark_bar">Donkere balk, ook bij dagkleuren</string>
+    <string name="setup_switch_media_first">Muziek vóór de kaart op het startscherm</string>
     <string name="setup_switch_passenger">Passagiersmodus: geen rijbeperkingen (de bestuurder mag het scherm niet gebruiken)</string>
     <string name="setup_switch_message_notifications">Berichtmeldingen</string>
     <string name="setup_switch_audio_next_connection">Telefoonaudio in de auto (volgende verbinding)</string>
