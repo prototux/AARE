@@ -2,6 +2,7 @@ package net.prototux.aare.headunit
 
 import aap_protobuf.service.ServiceOuterClass.Service
 import aap_protobuf.service.bluetooth.BluetoothServiceOuterClass.BluetoothService
+import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestOuterClass.AudioFocusRequest
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
@@ -21,6 +22,8 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.UpdateUiConfigRequest
+import aap_protobuf.service.genericnotification.GenericNotificationServiceOuterClass.GenericNotificationService
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.KeyEventOuterClass.KeyEvent
@@ -29,8 +32,10 @@ import aap_protobuf.service.inputsource.message.RelativeEventOuterClass.Relative
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
+import aap_protobuf.service.media.shared.message.InsetsOuterClass.Insets
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
+import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.MediaSinkServiceOuterClass.MediaSinkService
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import aap_protobuf.service.media.sink.message.DisplayTypeOuterClass.DisplayType
@@ -52,6 +57,7 @@ import aap_protobuf.service.navigationstatus.NavigationStatusServiceOuterClass.N
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnDistanceEventOuterClass.NavigationNextTurnDistanceEvent
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
 import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.NavigationStatus
+import aap_protobuf.service.phonestatus.message.PhoneStatusInputOuterClass.PhoneStatusInput
 import aap_protobuf.service.sensorsource.SensorSourceServiceOuterClass.SensorSourceService
 import aap_protobuf.service.sensorsource.message.DrivingStatusDataOuterClass.DrivingStatusData
 import aap_protobuf.service.sensorsource.message.GearDataOuterClass.GearData
@@ -65,9 +71,15 @@ import aap_protobuf.service.sensorsource.message.SensorRequestOuterClass.SensorR
 import aap_protobuf.service.sensorsource.message.SensorResponseOuterClass.SensorResponse
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import aap_protobuf.service.sensorsource.message.SpeedDataOuterClass.SpeedData
+import aap_protobuf.service.wifiprojection.WifiProjectionServiceOuterClass.WifiProjectionService
+import aap_protobuf.service.wifiprojection.message.AccessPointTypeOuterClass.AccessPointType
+import aap_protobuf.service.wifiprojection.message.WifiCredentialsResponseOuterClass.WifiCredentialsResponse
+import aap_protobuf.service.wifiprojection.message.WifiSecurityModeOuterClass.WifiSecurityMode
+import aap_protobuf.shared.InstrumentClusterInputOuterClass.InstrumentClusterInput
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import com.google.protobuf.MessageLite
 import net.prototux.aare.aap.AapMessage
+import net.prototux.aare.aap.BluetoothMsg
 import net.prototux.aare.aap.ControlMsg
 import net.prototux.aare.aap.Cryptor
 import net.prototux.aare.aap.FrameReader
@@ -77,10 +89,13 @@ import net.prototux.aare.aap.MediaMsg
 import net.prototux.aare.aap.MediaPlaybackMsg
 import net.prototux.aare.aap.NavStatusMsg
 import net.prototux.aare.aap.PhoneIdentity
+import net.prototux.aare.aap.PhoneStatusMsg
 import net.prototux.aare.aap.SensorMsg
 import net.prototux.aare.aap.Transport
+import net.prototux.aare.aap.WifiProjectionMsg
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -111,6 +126,8 @@ class HeadUnit(
          * so the phone drives the UI entirely from keys and rotary detents.
          */
         val noTouch: Boolean = false,
+        /** Test-harness identity, faults and discovery variants (all off by default). */
+        val sim: Sim = Sim(),
     )
 
     interface Listener {
@@ -147,6 +164,10 @@ class HeadUnit(
     private val chPlayback = 9
     private val chBluetooth = 10
     private val chCluster = 11
+    // Only listed with the matching test option (--aac-sink, --unknown-service, --wifi-projection).
+    private val chAac = 12
+    private val chUnknown = 13
+    private val chWifi = 14
     private val chPhone = 15
     private val phoneText = PhoneStatusText()
 
@@ -171,6 +192,8 @@ class HeadUnit(
     @Volatile var driving = true
         private set
     @Volatile private var lastFix: Fix? = null
+    /** Leave audio DATA unacked (--no-audio-ack; the script's ackoff/ackon switch it). */
+    @Volatile var noAudioAck = config.sim.noAudioAck
 
     var phoneName: String = ""
         private set
@@ -247,6 +270,81 @@ class HeadUnit(
         timer.schedule({ focus(VideoFocusMode.VIDEO_FOCUS_PROJECTED) }, (seconds * 1000).toLong(), TimeUnit.MILLISECONDS)
     }
 
+    // ------------------------------------------------------------------ test events (--script)
+
+    /** A channel given to a script event: a number, or "sensors". */
+    fun channelId(arg: String): Int? = if (arg == "sensors") chSensors else arg.toIntOrNull()?.takeIf { it in 0..255 }
+
+    /** A ping request in the clear on the control channel, after TLS is up. */
+    fun plaintextFrame() {
+        if (tlsUp) write(0, control = false, encrypted = false, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** A well-formed encrypted message on a channel nobody opened. */
+    fun unknownChannelFrame() {
+        if (tlsUp) write(UNKNOWN_CHANNEL, control = false, encrypted = true, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** A control message id no version of the protocol defines. */
+    fun unknownControl() {
+        if (tlsUp) write(0, control = false, encrypted = true, AapMessage.plaintext(UNKNOWN_CONTROL_ID, ByteArray(0)))
+    }
+
+    /** NAV_FOCUS_NOTIFICATION (projected) the phone didn't ask for. */
+    fun navFocus() {
+        if (tlsUp) send(0, ControlMsg.NAV_FOCUS_NOTIFICATION, NavFocusNotification.newBuilder().setFocusType(NavFocusType.NAV_FOCUS_PROJECTED).build())
+    }
+
+    /** A CHANNEL_OPEN_RESPONSE on the control channel, which is never opened. */
+    fun openResponseOnControl() {
+        if (tlsUp) send(0, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build())
+    }
+
+    /** Bytes that are no protobuf, under an id the phone parses on [channel]. */
+    fun garbage(channel: Int) {
+        if (!tlsUp) return
+        val id = when (channel) {
+            chSensors -> SensorMsg.BATCH
+            chInput -> InputMsg.INPUT_REPORT
+            chVideo, chMedia, chGuidance, chSystem, chCluster, chAac -> MediaMsg.ACK
+            chMic -> MediaMsg.MICROPHONE_RESPONSE
+            chBluetooth -> BluetoothMsg.PAIRING_RESPONSE
+            chPhone -> PhoneStatusMsg.INPUT
+            else -> SensorMsg.REQUEST
+        }
+        // A field tag with wire type 7, which doesn't exist: every parser rejects it.
+        write(channel, control = false, encrypted = true, AapMessage.plaintext(id, byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xff.toByte(), 0x7f)))
+    }
+
+    /** A channel-control frame on a service channel with an id other than open/close (a ping request). */
+    fun badControl(channel: Int) {
+        if (tlsUp) write(channel, control = true, encrypted = true, AapMessage.plaintext(ControlMsg.PING_REQUEST, ping().toByteArray()))
+    }
+
+    /** The car's call button (PhoneStatusInput CALL). */
+    fun phoneInput() {
+        if (tlsUp) send(chPhone, PhoneStatusMsg.INPUT, PhoneStatusInput.newBuilder()
+            .setInput(InstrumentClusterInput.newBuilder().setAction(InstrumentClusterInput.InstrumentClusterAction.CALL)).build())
+    }
+
+    /** New content insets for the running projection (UPDATE_UI_CONFIG_REQUEST on the video channel). */
+    fun uiConfig() {
+        if (!tlsUp) return
+        val insets = Insets.newBuilder().setTop(32).setBottom(32).setLeft(96).setRight(96)
+        send(chVideo, MediaMsg.UPDATE_UI_CONFIG_REQUEST, UpdateUiConfigRequest.newBuilder()
+            .setUiConfig(UiConfig.newBuilder().setContentInsets(insets).setStableContentInsets(insets)).build())
+    }
+
+    fun audioFocus(state: AudioFocusStateType) {
+        if (tlsUp) send(0, ControlMsg.AUDIO_FOCUS_NOTIFICATION, AudioFocusNotification.newBuilder().setFocusState(state).setUnsolicited(true).build())
+    }
+
+    fun videoFocus(mode: VideoFocusMode) {
+        if (tlsUp) send(chVideo, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder().setFocus(mode).setUnsolicited(true).build())
+    }
+
+    private fun ping() = PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1000).build()
+
     // ------------------------------------------------------------------ sensors
 
     fun setNight(on: Boolean) {
@@ -302,8 +400,11 @@ class HeadUnit(
     private fun handle(m: AapMessage) {
         if (m.channel == 0 && !m.control) return control(m)
         if (m.control && m.id == ControlMsg.CHANNEL_OPEN_REQUEST) {
-            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
-            if (m.channel == chNav) send(chNav, NavStatusMsg.START, aap_protobuf.service.navigationstatus.message.NavigationStatusStartOuterClass.NavigationStatusStart.getDefaultInstance())
+            if (m.channel in config.sim.ignoreChannels) return
+            val refused = m.channel in config.sim.refuseChannels
+            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder()
+                .setStatus(if (refused) MessageStatus.STATUS_INVALID_SERVICE else MessageStatus.STATUS_SUCCESS).build(), control = true)
+            if (m.channel == chNav && !refused) send(chNav, NavStatusMsg.START, aap_protobuf.service.navigationstatus.message.NavigationStatusStartOuterClass.NavigationStatusStart.getDefaultInstance())
             return
         }
         when (m.channel) {
@@ -314,6 +415,14 @@ class HeadUnit(
             chNav -> navigation(m)
             chPlayback -> playback(m)
             chPhone -> if (m.id == net.prototux.aare.aap.PhoneStatusMsg.STATUS) ui.phone(phoneText.status(m.bodyBytes()))
+            // Only with a real car address: the plain head unit never answered pairing requests.
+            chBluetooth -> if (m.id == BluetoothMsg.PAIRING_REQUEST && config.sim.carBtAddress != null) send(chBluetooth, BluetoothMsg.PAIRING_RESPONSE,
+                BluetoothPairingResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).setAlreadyPaired(true).build())
+            chWifi -> config.sim.wifiProjection?.let { w ->
+                if (m.id == WifiProjectionMsg.CREDENTIALS_REQUEST) send(chWifi, WifiProjectionMsg.CREDENTIALS_RESPONSE, WifiCredentialsResponse.newBuilder()
+                    .setCarWifiSsid(w.ssid).setCarWifiPassword(FAKE_WIFI_PASSWORD).setCarWifiSecurityMode(WifiSecurityMode.WPA2_PERSONAL)
+                    .setAccessPointType(AccessPointType.STATIC).build())
+            }
         }
     }
 
@@ -323,18 +432,21 @@ class HeadUnit(
                 val b = m.bodyBytes()
                 val ver = if (b.size >= 4) "${(b[0].toInt() shl 8) or (b[1].toInt() and 0xff)}.${(b[2].toInt() shl 8) or (b[3].toInt() and 0xff)}" else "?"
                 ui.status("Phone speaks protocol $ver; TLS…")
+                if (Sim.Fault.CLOSE_AFTER_VERSION in config.sim.faults) return close("test fault: hung up after the version response")
                 tlsStarted = true
                 cryptor.beginHandshake()
                 sendPlain(ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
             ControlMsg.ENCAPSULATED_SSL -> {
+                if (Sim.Fault.CLOSE_MID_TLS in config.sim.faults) return close("test fault: hung up in the middle of the TLS handshake")
                 val out = cryptor.handshake(m.bodyBytes())
                 if (out.isNotEmpty()) sendPlain(ControlMsg.ENCAPSULATED_SSL, out)
                 if (cryptor.handshakeDone && !tlsUp) {
                     // Like openauto, we accept any phone certificate.
-                    sendPlain(ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().setStatus(0).build().toByteArray())
+                    val status = if (Sim.Fault.AUTH_FAIL in config.sim.faults) config.sim.authFailStatus else 0
+                    sendPlain(ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().setStatus(status).build().toByteArray())
                     tlsUp = true
-                    ui.status("Authenticated (${cryptor.cipherSuite}); waiting for the phone…")
+                    ui.status(if (status != 0) "Test fault: sent AUTH_COMPLETE with status $status" else "Authenticated (${cryptor.cipherSuite}); waiting for the phone…")
                 }
             }
             ControlMsg.SERVICE_DISCOVERY_REQUEST -> {
@@ -347,11 +459,11 @@ class HeadUnit(
                 ui.status("Connected to $phoneName")
                 timer.scheduleWithFixedDelay({
                     if (tlsUp && !closed.get()) send(0, ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1000).build())
-                }, 1, 1, TimeUnit.SECONDS)
+                }, config.sim.pingMs, config.sim.pingMs, TimeUnit.MILLISECONDS)
             }
             ControlMsg.PING_REQUEST -> send(0, ControlMsg.PING_RESPONSE,
                 PingResponse.newBuilder().setTimestamp(PingRequest.parseFrom(m.bodyBytes()).timestamp).build())
-            ControlMsg.AUDIO_FOCUS_REQUEST -> {
+            ControlMsg.AUDIO_FOCUS_REQUEST -> if (!config.sim.noAudioFocus) {
                 val state = when (AudioFocusRequest.parseFrom(m.bodyBytes()).audioFocusType) {
                     AudioFocusRequestType.AUDIO_FOCUS_RELEASE -> AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS
                     AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT, AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK ->
@@ -378,7 +490,7 @@ class HeadUnit(
             MediaMsg.SETUP -> {
                 send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
                     .setMaxUnacked(if (video) 4 else 8).addConfigurationIndices(0).build())
-                if (video) {
+                if (video && !config.sim.noVideoFocus) {
                     // Show the projection as soon as the phone is ready, like openauto.
                     send(m.channel, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder()
                         .setFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setUnsolicited(false).build())
@@ -393,7 +505,7 @@ class HeadUnit(
                 }
             }
             MediaMsg.STOP -> if (!video) ui.audioStop(stream!!)
-            MediaMsg.VIDEO_FOCUS_REQUEST -> {
+            MediaMsg.VIDEO_FOCUS_REQUEST -> if (!config.sim.noVideoFocus) {
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
                 val mode = if (r.mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) VideoFocusMode.VIDEO_FOCUS_NATIVE else VideoFocusMode.VIDEO_FOCUS_PROJECTED
                 send(m.channel, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder().setFocus(mode).setUnsolicited(false).build())
@@ -409,7 +521,13 @@ class HeadUnit(
                     chCluster -> ui.clusterVideo(m.body, m.bodyOffset + 8, m.bodyLength - 8, config = false)
                     else -> ui.audio(stream!!, m.body, m.bodyOffset + 8, m.bodyLength - 8)
                 }
-                send(m.channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessions[m.channel] ?: 0).setAck(1).build())
+                val ch = m.channel
+                val ack = Ack.newBuilder().setSessionId(sessions[ch] ?: 0).setAck(1).build()
+                when {
+                    !video && noAudioAck -> Unit
+                    video && config.sim.videoAckDelayMs > 0 -> later(config.sim.videoAckDelayMs) { send(ch, MediaMsg.ACK, ack) }
+                    else -> send(ch, MediaMsg.ACK, ack)
+                }
             }
         }
     }
@@ -420,9 +538,10 @@ class HeadUnit(
             MediaMsg.MICROPHONE_REQUEST -> {
                 val open = MicrophoneRequest.parseFrom(m.bodyBytes()).open
                 val session = micSession.incrementAndGet()
-                send(chMic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().setStatus(0).setSessionId(session).build())
-                micOpen = open
-                if (open) ui.micOpened() else ui.micClosed()
+                send(chMic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().setStatus(config.sim.micStatus).setSessionId(session).build())
+                // A refused microphone (--mic-status) sends nothing.
+                micOpen = open && config.sim.micStatus == 0
+                if (micOpen) ui.micOpened() else ui.micClosed()
             }
             MediaMsg.ACK -> Unit
         }
@@ -505,22 +624,26 @@ class HeadUnit(
         else -> Triple(VideoCodecResolutionType.VIDEO_800x480, 800, 480)
     }
 
-    private fun discovery(): ServiceDiscoveryResponse {
+    internal fun discovery(): ServiceDiscoveryResponse {
         val res = codecSize.first
+        val sim = config.sim
         fun audio(id: Int, type: AudioStreamType, rate: Int, ch: Int) = Service.newBuilder().setId(id).setMediaSinkService(
             MediaSinkService.newBuilder().setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type).addAudioConfigs(pcm(rate, ch)))
         return ServiceDiscoveryResponse.newBuilder()
-            .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake("AARE").setModel("Desktop").setYear("2026")
-                .setHeadUnitMake("AARE").setHeadUnitModel("desktop head unit").setHeadUnitSoftwareVersion("1.0"))
+            .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake(sim.make).setModel(sim.model).setYear(sim.year)
+                .setHeadUnitMake(sim.huMake).setHeadUnitModel(sim.huModel).setHeadUnitSoftwareVersion(sim.huSoftwareVersion)
+                .apply { sim.vehicleId?.let { setVehicleId(it) } })
             .setDisplayName(config.name)
             .setDriverPosition(if (config.rightHandDrive) DriverPosition.DRIVER_POSITION_RIGHT else DriverPosition.DRIVER_POSITION_LEFT)
             .setConnectionConfiguration(ConnectionConfiguration.newBuilder().setPingConfiguration(
                 PingConfiguration.newBuilder().setIntervalMs(1000).setTimeoutMs(3000).setTrackedPingCount(5).setHighLatencyThresholdMs(200)))
             .addChannels(Service.newBuilder().setId(chVideo).setMediaSinkService(MediaSinkService.newBuilder()
-                .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
+                .setAvailableType(sim.videoCodec)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)
                     .setFrameRate(if (config.fps60) VideoFrameRateType.VIDEO_FPS_60 else VideoFrameRateType.VIDEO_FPS_30)
-                    .setDensity(config.dpi).setWidthMargin(0).setHeightMargin(0))))
+                    .setDensity(config.dpi).setWidthMargin(0).setHeightMargin(0)
+                    // A config with no codec reads as H.264: only another codec is spelled out.
+                    .apply { if (sim.videoCodec != MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP) setVideoCodecType(sim.videoCodec) })))
             .apply {
                 if (config.cluster) addChannels(Service.newBuilder().setId(chCluster).setMediaSinkService(MediaSinkService.newBuilder()
                     .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
@@ -550,7 +673,13 @@ class HeadUnit(
             .addChannels(Service.newBuilder().setId(chPlayback).setMediaPlaybackService(MediaPlaybackStatusService.getDefaultInstance()))
             .addChannels(Service.newBuilder().setId(chPhone).setPhoneStatusService(
                 aap_protobuf.service.phonestatus.PhoneStatusServiceOuterClass.PhoneStatusService.getDefaultInstance()))
-            .addChannels(Service.newBuilder().setId(chBluetooth).setBluetoothService(BluetoothService.newBuilder().setCarAddress("SKIP_THIS_BLUETOOTH")))
+            .addChannels(Service.newBuilder().setId(chBluetooth).setBluetoothService(BluetoothService.newBuilder().setCarAddress(sim.carBtAddress ?: "SKIP_THIS_BLUETOOTH")))
+            .apply {
+                if (sim.aacSink) addChannels(Service.newBuilder().setId(chAac).setMediaSinkService(MediaSinkService.newBuilder()
+                    .setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC).setAudioType(AudioStreamType.AUDIO_STREAM_MEDIA).addAudioConfigs(pcm(48_000, 2))))
+                if (sim.unknownService) addChannels(Service.newBuilder().setId(chUnknown).setGenericNotificationService(GenericNotificationService.getDefaultInstance()))
+                sim.wifiProjection?.let { addChannels(Service.newBuilder().setId(chWifi).setWifiProjectionService(WifiProjectionService.newBuilder().setCarWifiBssid(it.bssid))) }
+            }
             .build()
     }
 
@@ -569,17 +698,33 @@ class HeadUnit(
         }
     }
 
-    private fun sendRaw(channel: Int, plain: ByteArray) {
+    private fun sendRaw(channel: Int, plain: ByteArray) = write(channel, control = false, encrypted = tlsUp, plain)
+
+    private fun write(channel: Int, control: Boolean, encrypted: Boolean, plain: ByteArray) {
         if (closed.get()) return
         try {
-            synchronized(writeLock) { writer.write(channel, false, tlsUp, plain) }
+            synchronized(writeLock) { writer.write(channel, control, encrypted, plain) }
         } catch (e: Exception) {
             close("send failed: ${e.message}")
+        }
+    }
+
+    /** Runs [task] on the timer after [ms]; dropped once the session is closed. */
+    private fun later(ms: Long, task: () -> Unit) {
+        try {
+            timer.schedule(task, ms, TimeUnit.MILLISECONDS)
+        } catch (_: RejectedExecutionException) {
         }
     }
 
     companion object {
         const val KEYCODE_ROTARY = 65536
         val SUPPORTED_KEYS = listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 126, 127, 65536, 65537, 65538)
+
+        /** Channel and control id the script's unknown-channel / unknown-control events use. */
+        const val UNKNOWN_CHANNEL = 99
+        const val UNKNOWN_CONTROL_ID = 0x7fff
+        /** A fake: what --wifi-projection answers a phone asking for the car's Wi-Fi credentials. */
+        const val FAKE_WIFI_PASSWORD = "aare-test-password"
     }
 }

@@ -3,6 +3,7 @@ package net.prototux.aare.headunit
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
+import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.SocketTransport
 import net.prototux.aare.aap.cert.SelfSignedCertificate
@@ -69,6 +70,37 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --headless DIR         no window: save a PNG of the screen to DIR every few seconds (for tests)
   --script "EV@S ..."    scripted input, seconds after connecting: tap:X,Y  key:CODE  rotate:N
                          dpad:up|down|left|right|center  reverse:SECS  night  day  park  drive
+                         test events: bye  longkey:CODE  plaintext  unknown-channel  unknown-control
+                         navfocus  open-ch0  garbage:CH  badctl:CH (CH a channel number or "sensors")
+                         phoneinput  uiconfig  audiofocus:gain|loss|loss-transient|loss-transient-can-duck
+                         videofocus:native|projected  ackoff  ackon (audio acks)
+
+Testing a phone app (all off by default; channels: 1 video, 2 media, 3 guidance, 4 system, 5 mic,
+6 input, 7 sensors, 8 nav, 9 playback, 10 bluetooth, 11 cluster, 12 AAC sink, 13 unknown service,
+14 wifi projection, 15 phone status):
+  --name S               display name (default "AARE desktop head unit")
+  --make S --model S --year S   the car (default AARE, Desktop, 2026)
+  --hu-make S --hu-model S --hu-sw S   the head unit (default AARE, desktop head unit, 1.0)
+  --vehicle-id S         also send a vehicle id
+  --car-bt-address MAC   the Bluetooth service's car address (default SKIP_THIS_BLUETOOTH); then pairing
+                         requests are answered: success, already paired
+  --fault F[,F...]       close-after-version: hang up after the version response
+                         close-mid-tls: hang up on the phone's first TLS handshake message
+                         auth-fail[:STATUS]: AUTH_COMPLETE with STATUS (default -3, authentication failure)
+  --refuse-channel N[,N...]   answer the channel open request with STATUS_INVALID_SERVICE
+  --ignore-channel N[,N...]   never answer the channel open request
+  --no-audio-ack         never ack audio data
+  --video-ack-delay MS   ack video data MS milliseconds late
+  --mic-status N         answer microphone requests with status N (default 0)
+  --no-audio-focus       never answer audio focus requests
+  --no-video-focus       never answer video focus requests, nor give focus at setup
+  --ping-ms N            the head unit's own ping interval (default 1000)
+  --aac-sink             also list an AAC media sink (listed only: its setup is never answered)
+  --unknown-service      also list a generic notification service
+  --video-codec C        h264 (default), h265 or vp9: the only codec the video sink offers (the offer
+                         only: the window still decodes H.264 only)
+  --wifi-projection SSID,BSSID   also list a Wi-Fi projection service with that BSSID; for phones that ask
+                         for credentials, answer with the SSID and a fixed fake password
 
 Keys: Esc/Backspace back · H home · V voice · arrows/wheel rotary · numpad 8/4/6/2 + 5 D-pad
       Enter select · K play/pause · , . prev/next
@@ -87,13 +119,20 @@ fun main(args: Array<String>) {
         exitProcess(2)
     }
     if (opts.containsKey("gps-only")) return gpsOnly(opts)
+    val sim = try {
+        Sim.parse(opts)
+    } catch (e: IllegalArgumentException) {
+        System.err.println(e.message)
+        exitProcess(2)
+    }
+    if (sim != Sim()) println("test options: $sim")
     if (!VideoDecoder.available()) {
         System.err.println("ffmpeg not found: install it (it decodes the car screen).")
         return
     }
     if (opts.containsKey("headless")) System.setProperty("java.awt.headless", "true")
     else runCatching { UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()) }
-    SwingUtilities.invokeLater { DesktopHeadUnit(opts).show() }
+    SwingUtilities.invokeLater { DesktopHeadUnit(opts, sim).show() }
 }
 
 /**
@@ -144,7 +183,7 @@ internal fun pkcs8KeyDer(pem: String): ByteArray {
 }
 
 /** The window, the connection loop and the simulated drive. */
-private class DesktopHeadUnit(val opts: Map<String, String>) {
+private class DesktopHeadUnit(val opts: Map<String, String>, sim: Sim) {
     val portrait = opts.containsKey("portrait")
     val res = (opts["res"] ?: if (portrait) "720x1280" else "1280x720").split("x").map { it.toInt() }
         .let { if (portrait && it[0] > it[1]) it.reversed() else it }
@@ -157,6 +196,8 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         rightHandDrive = opts.containsKey("rhd"),
         cluster = opts.containsKey("cluster"),
         noTouch = opts.containsKey("no-touch"),
+        name = opts["name"] ?: HeadUnit.Options().name,
+        sim = sim,
     )
     val identity: PhoneIdentity = loadIdentity()
     val route: RouteDrive? = opts["route"].let { r -> if (r == "none") null else runCatching { RouteDrive.load(r ?: "paris-marseille") }.getOrNull() }
@@ -384,6 +425,28 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
                     what == "park" -> unit.setDriving(false).also { driving = false }
                     what == "drive" -> unit.setDriving(true).also { driving = true }
                     what.startsWith("reverse:") -> unit.reverse(what.removePrefix("reverse:").toDouble())
+                    what == "bye" -> unit.byeBye()
+                    what.startsWith("longkey:") -> what.removePrefix("longkey:").toIntOrNull()?.let {
+                        unit.key(it, true, longPress = true); unit.key(it, false, longPress = true)
+                    } ?: println("script: bad key in $what")
+                    what == "plaintext" -> unit.plaintextFrame()
+                    what == "unknown-channel" -> unit.unknownChannelFrame()
+                    what == "unknown-control" -> unit.unknownControl()
+                    what == "navfocus" -> unit.navFocus()
+                    what == "open-ch0" -> unit.openResponseOnControl()
+                    what.startsWith("garbage:") -> unit.channelId(what.removePrefix("garbage:"))?.let(unit::garbage) ?: println("script: bad channel in $what")
+                    what.startsWith("badctl:") -> unit.channelId(what.removePrefix("badctl:"))?.let(unit::badControl) ?: println("script: bad channel in $what")
+                    what == "phoneinput" -> unit.phoneInput()
+                    what == "uiconfig" -> unit.uiConfig()
+                    what.startsWith("audiofocus:") -> Sim.AUDIO_FOCUS_STATES[what.removePrefix("audiofocus:")]?.let(unit::audioFocus)
+                        ?: println("script: bad focus state in $what")
+                    what.startsWith("videofocus:") -> when (what.removePrefix("videofocus:")) {
+                        "native" -> unit.videoFocus(VideoFocusMode.VIDEO_FOCUS_NATIVE)
+                        "projected" -> unit.videoFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED)
+                        else -> println("script: bad focus in $what")
+                    }
+                    what == "ackoff" -> unit.noAudioAck = true
+                    what == "ackon" -> unit.noAudioAck = false
                 }
             }
         }
