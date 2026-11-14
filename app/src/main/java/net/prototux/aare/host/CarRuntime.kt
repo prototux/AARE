@@ -420,7 +420,9 @@ class CarRuntime(
                 if (pkg in hidden) continue
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
-                val icon = runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
+                // A calendar app shows today's date on its icon, like it does on the phone's own home screen.
+                val icon = dynamicCalendarIcon(context, pkg, 128)
+                    ?: runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
                 entries += CarAppEntry(standaloneId(pkg), pkg, label, icon, CarAppKind.STANDALONE)
             }
         }
