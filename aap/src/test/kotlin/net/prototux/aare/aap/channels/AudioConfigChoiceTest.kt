@@ -19,27 +19,37 @@ class AudioConfigChoiceTest {
         AudioChannel.chooseConfig(type, configs, preferred, modern)
 
     @Test
-    fun mediaPlays48kStereoWhateverTheConfigPrefers() {
-        assertEquals(1, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(stereo44, stereo48, mono48), preferred = listOf(0)))
+    fun theHeadUnitsPreferredConfigWins() {
+        assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(stereo44, stereo48, mono48), preferred = listOf(0)))
+        assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_GUIDANCE, listOf(mono16, mono48), preferred = listOf(0)))
     }
 
     @Test
-    fun otherStreamsPrefer48kMonoFromProtocol16() {
+    fun withoutAPreferenceMediaPlays48kStereo() {
+        assertEquals(1, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(stereo44, stereo48, mono48)))
+    }
+
+    @Test
+    fun withoutAPreferenceOtherStreamsTake48kMonoFromProtocol16() {
         for (type in listOf(AudioStreamType.AUDIO_STREAM_GUIDANCE, AudioStreamType.AUDIO_STREAM_SYSTEM_AUDIO, AudioStreamType.AUDIO_STREAM_TELEPHONY)) {
-            assertEquals(type.name, 1, choose(type, listOf(mono16, mono48), preferred = listOf(0)))
+            assertEquals(type.name, 1, choose(type, listOf(mono16, mono48)))
             assertEquals("16 kHz mono when there is no 48 kHz mono", 0, choose(type, listOf(mono16, stereo48)))
         }
     }
 
     @Test
-    fun olderHeadUnitsGet16kMono() {
-        assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_GUIDANCE, listOf(mono16, mono48), preferred = listOf(1), modern = false))
+    fun withoutAPreferenceOlderHeadUnitsGet16kMono() {
+        assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_GUIDANCE, listOf(mono16, mono48), modern = false))
     }
 
     @Test
-    fun noMatchFallsBackToTheConfigThenTheFirst() {
-        assertEquals(1, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(mono16, stereo44), preferred = listOf(1)))
-        assertEquals("an index out of the list is not used", 0, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(mono16, stereo44), preferred = listOf(7)))
+    fun anUnusablePreferenceIsTreatedAsNone() {
+        assertEquals("an index out of the list is not used", 1, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(mono16, stereo48), preferred = listOf(7)))
+    }
+
+    @Test
+    fun noMatchTakesTheFirst() {
+        assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_MEDIA, listOf(mono16, stereo44)))
         assertEquals(0, choose(AudioStreamType.AUDIO_STREAM_GUIDANCE, listOf(stereo44)))
     }
 }
