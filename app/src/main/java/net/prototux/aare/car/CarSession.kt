@@ -388,6 +388,8 @@ class CarSession(
             Log.i(TAG, "video focus: ${if (projected) "projected" else "native"}")
             main.post {
                 encoder?.setSuspended(!projected)
+                // The encoder was paused while the car showed its own screen: time the stall check from here.
+                lastFrameMs = SystemClock.elapsedRealtime()
                 if (projected) {
                     encoder?.requestKeyFrame()
                     display?.invalidate()
@@ -456,6 +458,7 @@ class CarSession(
             }
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) {
                 frames++
+                lastFrameMs = SystemClock.elapsedRealtime()
                 if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
                     Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
                 }
@@ -497,6 +500,9 @@ class CarSession(
         }
         display = pd
         pd.show()
+        lastFrameMs = SystemClock.elapsedRealtime()
+        main.removeCallbacks(stallCheck)
+        main.postDelayed(stallCheck, STALL_CHECK_MS)
         // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
         // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
@@ -506,7 +512,34 @@ class CarSession(
     /** An encoder that fails again and again ends the session rather than restart forever. */
     private val encoderRestarts = RestartLimiter(MAX_RESTARTS, RESTART_WINDOW_MS)
 
+    /** When the encoder last produced a frame (elapsedRealtime), for [stallCheck]. */
+    @Volatile private var lastFrameMs = 0L
+    private var stalled = false
+
+    /**
+     * Keeps frames coming on a still car screen. The encoder is asked to repeat the last frame
+     * (KEY_REPEAT_PREVIOUS_FRAME_AFTER), but some encoders stop producing anything once the
+     * picture doesn't change, and a head unit that gets no frames shows black. While the car shows
+     * AARE's screen and nothing came out for [STALL_MS], the screen is redrawn, which gives the
+     * encoder a new buffer. Main thread; runs while there is a projection.
+     */
+    private val stallCheck = object : Runnable {
+        override fun run() {
+            if (closed || display == null) return
+            val quiet = SystemClock.elapsedRealtime() - lastFrameMs
+            if (video?.focused == true && quiet > STALL_MS) {
+                if (!stalled) DiagLog.add("video: no frame from the encoder for $quiet ms; redrawing the car screen")
+                stalled = true
+                display?.invalidate()
+            } else if (quiet <= STALL_MS) {
+                stalled = false
+            }
+            main.postDelayed(this, STALL_CHECK_MS)
+        }
+    }
+
     private fun teardownVideo() {
+        main.removeCallbacks(stallCheck)
         display?.release(); display = null
         encoder?.stop(); encoder = null
     }
@@ -950,6 +983,9 @@ class CarSession(
         const val KEYCODE_RADIO = 65539
         const val KEYCODE_TEL = 65540
         const val KEYCODE_TURN_CARD = 65544
+        /** A projected screen with no new frame for this long gets redrawn (see stallCheck). */
+        private const val STALL_MS = 1_000L
+        private const val STALL_CHECK_MS = 500L
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
