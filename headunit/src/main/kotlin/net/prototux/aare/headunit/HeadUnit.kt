@@ -505,7 +505,7 @@ class HeadUnit(
         else -> Triple(VideoCodecResolutionType.VIDEO_800x480, 800, 480)
     }
 
-    private fun discovery(): ServiceDiscoveryResponse {
+    internal fun discovery(): ServiceDiscoveryResponse {
         val res = codecSize.first
         fun audio(id: Int, type: AudioStreamType, rate: Int, ch: Int) = Service.newBuilder().setId(id).setMediaSinkService(
             MediaSinkService.newBuilder().setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type).addAudioConfigs(pcm(rate, ch)))
