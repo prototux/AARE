@@ -217,6 +217,7 @@ open class SessionLoopbackTest {
         // focus away and back: the stream stops, then restarts on a new media session (#109) and
         // frames resume starting with a key frame
         val session0 = hu.videoStart?.sessionId ?: 0
+        assertEquals("the first media session is 0", 0, session0)
         hu.requestFocusNative()
         Thread.sleep(300)
         val during = hu.videoFrames.get()
@@ -225,7 +226,7 @@ open class SessionLoopbackTest {
         hu.requestFocusProjected()
         Thread.sleep(500)
         assertTrue(hu.videoFrames.get() > during)
-        assertTrue("a new media session starts after full native focus", (hu.videoStart?.sessionId ?: 0) > session0)
+        assertEquals("a new media session (the next id) starts after full native focus", session0 + 1, hu.videoStart?.sessionId ?: 0)
 
         // orderly shutdown from the phone
         encoding.set(false)
