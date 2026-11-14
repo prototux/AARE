@@ -5,11 +5,13 @@ import aap_protobuf.aaw.WifiConnectionRejectionOuterClass.WifiConnectionRejectio
 import aap_protobuf.aaw.WifiConnectionStatusOuterClass.WifiConnectionStatus
 import aap_protobuf.aaw.WifiInfoResponseOuterClass.WifiInfoResponse
 import aap_protobuf.aaw.WifiPing.WifiPingRequest
+import aap_protobuf.aaw.WifiSetupInfoOuterClass.WifiSetupInfo
 import aap_protobuf.aaw.WifiStartRequestOuterClass.WifiStartRequest
 import aap_protobuf.aaw.WifiStartResponseOuterClass.WifiStartResponse
 import aap_protobuf.aaw.WifiVersionRequestOuterClass.WifiVersionRequest
 import aap_protobuf.aaw.WifiVersionResponseOuterClass.WifiVersionResponse
 import aap_protobuf.aaw.WifiVersionResponseOuterClass.WppWifiDeviceInfo
+import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
 import net.prototux.aare.aap.AapLog
 import java.io.IOException
@@ -40,8 +42,11 @@ class WifiCredentials(
 
 /** Outcome of [WirelessBootstrap.Listener.connectWifi]. */
 sealed interface JoinResult {
-    /** The phone is on the network. [gateway] stands in for the head unit if it sent no IP. */
-    class Joined(val localAddress: String? = null, val gateway: String? = null) : JoinResult
+    /**
+     * The phone is on the network. [gateway] stands in for the head unit if it sent no IP;
+     * [dhcpServer] for a WPP-over-TCP endpoint of 0.0.0.0 (see [WppEndpoint]).
+     */
+    class Joined(val localAddress: String? = null, val gateway: String? = null, val dhcpServer: String? = null) : JoinResult
 
     /** [status] is a [WppStatus] code reported to the head unit, e.g. [WppStatus.PHONE_WIFI_DISABLED]. */
     class Failed(val status: Int, val message: String) : JoinResult
@@ -68,6 +73,9 @@ class WirelessBootstrapException(
  * being asked. The head unit is only told "success" once [Listener.connectWifi] says the phone
  * really is on the network. A head unit that answers our version response and then waits gets
  * our own WifiStartRequest (see [Options.phoneStartDelayMs]).
+ *
+ * The same exchange runs over TCP (WPP over TCP, [Options.tcp]) once a head unit told us where:
+ * see [Listener.onWppEndpoint], [Listener.onSetupInfo] and docs/decisions.md.
  *
  * Threads: a reader thread answers pings at once and queues everything else for [run]; while
  * the phone joins the network a keepalive thread pings the head unit, because some cars give up
@@ -96,7 +104,34 @@ class WirelessBootstrap(
          * [Options.holdLink]), so hand the connect off to another thread or return promptly.
          */
         fun onReady(ip: String, port: Int)
+
+        /**
+         * With [Options.wppOverTcp]: the head unit's WifiVersionRequest offers WPP over TCP at
+         * [endpoint], and it would be kept for this head unit (see [keepsWppInfo]), to
+         * use from the next connection on. The exchange goes on over this link. Called on the [run] thread.
+         */
+        fun onWppEndpoint(endpoint: WppEndpoint) {}
+
+        /**
+         * With [Options.wppOverTcp]: the head unit sent a usable WifiSetupInfo (WPP 4.5+). [run] has
+         * closed this link and returns right after, without joining: run the exchange again over TCP
+         * (see [Options.tcp]), at once. Called on the [run] thread.
+         */
+        fun onSetupInfo(setup: WppSetup) {}
+
+        /**
+         * Over TCP ([Options.tcp]): the head unit refused the phone with a known [WppRejectionReason];
+         * The TCP configuration is then forgotten and starts over on RFCOMM.
+         */
+        fun onRejected(reason: Int) {}
     }
+
+    /**
+     * WPP over TCP: the phone is already on the head unit's network ([joined]), so it sends no
+     * WifiInfoRequest and joins nothing. [setupToken], from the head unit's WifiSetupInfo, goes into
+     * the first WifiVersionResponse to a WPP 4.5+ head unit.
+     */
+    class TcpLink(val joined: JoinResult.Joined, val setupToken: ByteArray? = null)
 
     /** A data class so a caller can [copy] it for one attempt (see [isDongle]). */
     data class Options(
@@ -161,6 +196,16 @@ class WirelessBootstrap(
         val phoneStartRetryMs: Long = 2_000,
         /** ...until this long after our first WifiStartRequest (50 s). */
         val phoneStartRetryLimitMs: Long = 50_000,
+        /**
+         * Whether this phone runs WPP over TCP (Android 11 and up): only then is a
+         * wpp_info reported ([Listener.onWppEndpoint]) and a WifiSetupInfo followed
+         * ([Listener.onSetupInfo]); otherwise both are only logged.
+         */
+        val wppOverTcp: Boolean = false,
+        /** The head unit is a wireless adapter ([isDongle]): its wpp_info is kept at any version. */
+        val adapter: Boolean = false,
+        /** Set when this exchange runs over TCP, not RFCOMM. */
+        val tcp: TcpLink? = null,
     )
 
     enum class State { NEW, NEGOTIATING, JOINING, READY, DONE, FAILED }
@@ -170,6 +215,12 @@ class WirelessBootstrap(
 
     /** The head unit's AAP server, from its WifiStartRequest or from its answer to ours ([phoneStarted]). */
     private class Endpoint(val ip: String, val port: Int, val phoneStarted: Boolean)
+
+    private sealed class Negotiated {
+        /** [credentials] is null over TCP, where the phone is already on the network. */
+        class Started(val endpoint: Endpoint, val credentials: WifiCredentials?) : Negotiated()
+        class MovingToTcp(val setup: WppSetup) : Negotiated()
+    }
 
     private sealed class Inbound {
         class Message(val frame: WppFrame) : Inbound()
@@ -187,6 +238,8 @@ class WirelessBootstrap(
     private var linkPinging = false
     /** WPP version (major, minor) from the head unit's WifiVersionRequest; null before one (or if unparsable). */
     @Volatile private var headUnitVersion: Pair<Int, Int>? = null
+    /** The setup token went out (sent once). */
+    private var setupTokenSent = false
 
     /**
      * Runs the bootstrap: returns once the link ended after a successful [Listener.onReady] (or
@@ -199,9 +252,19 @@ class WirelessBootstrap(
         thread(name = "wpp-reader", isDaemon = true) { readLoop() }
         try {
             state = State.NEGOTIATING
-            val (endpoint, credentials) = negotiate()
+            val (endpoint, credentials) = when (val negotiated = negotiate()) {
+                is Negotiated.Started -> negotiated.endpoint to negotiated.credentials
+                is Negotiated.MovingToTcp -> {
+                    // RFCOMM is dropped and starts over on TCP at once.
+                    log.i("wireless: moving to WPP over TCP: ${negotiated.setup}")
+                    state = State.DONE
+                    close()
+                    listener.onSetupInfo(negotiated.setup)
+                    return
+                }
+            }
             state = State.JOINING
-            val joined = join(credentials)
+            val joined = options.tcp?.joined ?: join(checkNotNull(credentials))
             val ip = endpoint.ip.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
             if (ip.isNullOrEmpty()) {
                 sendConnectionStatus(WppStatus.INVALID_HOST)
@@ -241,8 +304,11 @@ class WirelessBootstrap(
 
     // ---- phase 1: learn the endpoint and the credentials ----
 
-    /** Waits until we have both the endpoint and the credentials, whatever their order. */
-    private fun negotiate(): Pair<Endpoint, WifiCredentials> {
+    /**
+     * Waits until we have both the endpoint and the credentials, whatever their order (over TCP the
+     * endpoint only), or a WifiSetupInfo that moves the exchange to TCP.
+     */
+    private fun negotiate(): Negotiated {
         var start: Endpoint? = null
         var credentials: WifiCredentials? = null
         var infoRequests = 0
@@ -254,12 +320,16 @@ class WirelessBootstrap(
         var phoneStartFirstAt = 0L
 
         fun requestInfo() {
+            if (options.tcp != null) {
+                log.d("wireless: no WifiInfoRequest over TCP, the phone is on the network already")
+                return
+            }
             send(WppMessageId.INFO_REQUEST, ByteArray(0))
             infoRequests++
             infoRequestedAt = now()
         }
 
-        while (start == null || credentials == null) {
+        while (start == null || (credentials == null && options.tcp == null)) {
             val infoDueAt = if (infoRequests > 0 && credentials == null) infoRequestedAt + options.infoRetryMs else Long.MAX_VALUE
             val event = inbox.poll(maxOf(0, minOf(deadline, infoDueAt, phoneStartDueAt) - now()), TimeUnit.MILLISECONDS)
             ensureOpen()
@@ -353,10 +423,19 @@ class WirelessBootstrap(
                     log.i("wireless: credentials $credentials" + if (start == null) " (unsolicited, waiting for WifiStartRequest)" else "")
                     deadline = now() + options.messageTimeoutMs
                 }
+                WppMessageId.SETUP_INFO -> {
+                    deadline = now() + options.messageTimeoutMs
+                    when {
+                        options.tcp != null -> log.w("wireless: ignoring a WifiSetupInfo over TCP (only taken over RFCOMM)")
+                        !options.wppOverTcp -> log.w("wireless: ignoring a WifiSetupInfo, this phone does not run WPP over TCP")
+                        else -> return Negotiated.MovingToTcp(setupInfo(frame.payload))
+                    }
+                }
                 else -> onOtherMessage(frame)
             }
         }
-        return start to credentials
+        val endpoint = checkNotNull(start)
+        return Negotiated.Started(endpoint, credentials)
     }
 
     /**
@@ -380,12 +459,13 @@ class WirelessBootstrap(
             log.i("wireless: head unit WPP version ${request.major}.${request.minor}" +
                 (if (request.hasCarInfo()) " car=\"${car.make} ${car.model}\" hu=\"${car.headUnitMake} ${car.headUnitModel}\"" else "") +
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
-                (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
+                (if (request.hasWppInfo()) " wpp_info=${request.wppInfo.ipAddress}:${request.wppInfo.port}" else ""))
         }
         // A missing major or minor reads as 0, and that 0 is echoed back.
         val major = request?.major ?: 0
         val minor = request?.minor ?: 0
         if (request != null) headUnitVersion = major to minor
+        if (request != null && request.hasWppInfo()) onWppInfo(request)
         val status = versionStatus(major, minor, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
         if (status != WppStatus.SUCCESS) log.w("wireless: answering the version request with status $status")
         // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
@@ -402,9 +482,55 @@ class WirelessBootstrap(
             response.setDeviceInfo(WppWifiDeviceInfo.newBuilder().setDeviceId(id).apply { options.deviceName?.let { deviceName = it } })
         }
         request?.takeIf { it.hasSupportedWifiChannelType() }?.let { response.setSelectedWifiChannelType(it.supportedWifiChannelType) }
+        // Over TCP, the token of the head unit's WifiSetupInfo shows it we are the phone it gave it to.
+        // Sent to WPP 4.5+ head units only, in one response.
+        val token = options.tcp?.setupToken
+        if (token != null && !setupTokenSent && headUnitAtLeast(4, 5)) {
+            response.setSetupToken(ByteString.copyFrom(token))
+            setupTokenSent = true
+            log.i("wireless: sending the setup token (${token.size} B)")
+        }
         send(WppMessageId.VERSION_RESPONSE, response.build().toByteArray())
         startLinkPinger()
         return status
+    }
+
+    /** Reports the head unit's WPP-over-TCP endpoint where it would be kept. */
+    private fun onWppInfo(request: WifiVersionRequest) {
+        val car = request.carInfo
+        val endpoint = WppEndpoint(request.wppInfo.ipAddress, request.wppInfo.port)
+        when {
+            !options.wppOverTcp -> log.i("wireless: the head unit offers WPP over TCP, which this phone does not run")
+            !keepsWppInfo(request.major, request.minor, car.make, car.headUnitModel, options.adapter) ->
+                log.i("wireless: not keeping the WPP-over-TCP endpoint of a WPP ${request.major}.${request.minor} head unit " +
+                    "(make \"${car.make}\")")
+            else -> listener.onWppEndpoint(endpoint)
+        }
+    }
+
+    /**
+     * Checks a WifiSetupInfo. A failed check ends the bootstrap without
+     * telling the head unit, and is not worth retrying.
+     */
+    private fun setupInfo(payload: ByteArray): WppSetup {
+        val info = parse("WifiSetupInfo") { WifiSetupInfo.parseFrom(payload) }
+        // Its version stands for the version request's from here on.
+        headUnitVersion = info.major to info.minor
+        log.i("wireless: WifiSetupInfo from a WPP ${info.major}.${info.minor} head unit")
+        if (info.major != 0 && !headUnitAtLeast(4, 5)) {
+            throw fail("WifiSetupInfo from a WPP ${info.major}.${info.minor} head unit, below 4.5", retry = false)
+        }
+        val ap = info.accessPoint
+        if (!channelsUsable(ap.supportedWifiChannelsList, options.phoneWifiFrequencies())) {
+            throw fail("none of the Wi-Fi channels of the WifiSetupInfo ${ap.supportedWifiChannelsList} is usable", retry = false)
+        }
+        val credentials = credentials(ap.ssid, ap.password, ap.bssid, ap.securityMode, accessPointType = null)
+        unusable(credentials)?.let { throw fail("WifiSetupInfo: $it", retry = false) }
+        val wpp = info.wppInfo
+        if (!info.hasWppInfo() || !wpp.hasPort() || wpp.port !in 0..65535 || !IPV4.matches(wpp.ipAddress)) {
+            throw fail("WifiSetupInfo: invalid WPP endpoint \"${wpp.ipAddress}\":${wpp.port}", retry = false)
+        }
+        return WppSetup(WppEndpoint(wpp.ipAddress, wpp.port), credentials, info.setupToken.toByteArray())
     }
 
     /**
@@ -426,32 +552,40 @@ class WirelessBootstrap(
 
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
-        val bssid = info.bssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
-        if (info.bssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"${info.bssid}\"")
+        return credentials(info.ssid, info.password, info.bssid, info.securityMode,
+            accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null)
+    }
+
+    private fun credentials(ssid: String, password: String, rawBssid: String, securityMode: Int, accessPointType: Int?): WifiCredentials {
+        val bssid = rawBssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
+        if (rawBssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"$rawBssid\"")
         // One pair of surrounding double quotes is dropped from both for head units
         // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
         val unquote = !headUnitAtLeast(4, 5)
         return WifiCredentials(
-            ssid = if (unquote) unquoted(info.ssid) else info.ssid,
-            password = if (unquote) unquoted(info.password) else info.password,
+            ssid = if (unquote) unquoted(ssid) else ssid,
+            password = if (unquote) unquoted(password) else password,
             bssid = bssid?.uppercase(),
-            security = WppSecurityMode.toSecurity(info.securityMode, info.password),
-            securityMode = info.securityMode,
-            accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null,
+            security = WppSecurityMode.toSecurity(securityMode, password),
+            securityMode = securityMode,
+            accessPointType = accessPointType,
         )
+    }
+
+    /** Why the phone will not join with [credentials], or null if it will. */
+    private fun unusable(credentials: WifiCredentials): String? = when {
+        credentials.ssid.isEmpty() -> "head unit sent an empty SSID"
+        credentials.security == WifiSecurity.UNSUPPORTED -> "unsupported Wi-Fi security mode ${credentials.securityMode}"
+        // An open network (or one without a passphrase) lets anyone in range impersonate the head unit.
+        credentials.security == WifiSecurity.OPEN -> "refusing an open Wi-Fi network (security mode ${credentials.securityMode})"
+        credentials.password.isEmpty() -> "head unit sent no Wi-Fi passphrase"
+        else -> null
     }
 
     // ---- phase 2: join the network ----
 
     private fun join(credentials: WifiCredentials): JoinResult.Joined {
-        val invalid = when {
-            credentials.ssid.isEmpty() -> "head unit sent an empty SSID"
-            credentials.security == WifiSecurity.UNSUPPORTED -> "unsupported Wi-Fi security mode ${credentials.securityMode}"
-            // An open network (or one without a passphrase) lets anyone in range impersonate the head unit.
-            credentials.security == WifiSecurity.OPEN -> "refusing an open Wi-Fi network (security mode ${credentials.securityMode})"
-            credentials.password.isEmpty() -> "head unit sent no Wi-Fi passphrase"
-            else -> null
-        }
+        val invalid = unusable(credentials)
         val result = if (invalid != null) {
             JoinResult.Failed(WppStatus.WIFI_INCORRECT_CREDENTIALS, invalid)
         } else {
@@ -521,10 +655,13 @@ class WirelessBootstrap(
             WppMessageId.PING_RESPONSE -> log.d("wireless: ping answered")
             WppMessageId.CONNECTION_REJECTION -> {
                 val reason = runCatching { WifiConnectionRejection.parseFrom(frame.payload).reason }.getOrNull()
+                if (options.tcp != null && (reason == WppRejectionReason.MOBILE_DEVICE_ID_NOT_FOUND || reason == WppRejectionReason.INVALID_SETUP_TOKEN)) {
+                    listener.onRejected(reason)
+                }
                 if (state == State.READY) log.w("wireless: head unit sent a connection rejection (reason $reason)")
                 else throw fail("head unit rejected the connection (reason $reason)", WppStatus.INSTRUCT_USER_TO_CHECK_THE_PHONE)
             }
-            WppMessageId.START_REQUEST, WppMessageId.VERSION_REQUEST ->
+            WppMessageId.START_REQUEST, WppMessageId.VERSION_REQUEST, WppMessageId.SETUP_INFO ->
                 log.w("wireless: ignoring ${WppMessageId.name(frame.id)} during the session")
             else -> log.i("wireless: ignoring $frame")
         }
@@ -609,8 +746,13 @@ class WirelessBootstrap(
         if (closed.get()) throw WirelessBootstrapException("wireless bootstrap cancelled")
     }
 
-    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
-        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
+    /** [retry]: whether trying again later can help (see [WirelessBootstrapException.whileNegotiating]). */
+    private fun fail(
+        message: String,
+        status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE,
+        cause: Throwable? = null,
+        retry: Boolean = state == State.NEGOTIATING,
+    ) = WirelessBootstrapException(message, status, cause, whileNegotiating = retry)
             .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000
@@ -623,6 +765,22 @@ class WirelessBootstrap(
 
     companion object {
         private val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
+        private val IPV4 = Regex("^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$")
+
+        /** Car makes whose WPP 4.1 head units run WPP over TCP (case-insensitive substrings). */
+        private val WPP_TCP_4_1_MAKES = listOf("google", "gmc", "buick", "cadillac", "chevrolet", "chevy", "bmw")
+
+        /**
+         * Whether a head unit's wpp_info is kept (and so runs WPP over TCP with it next
+         * time): always for a wireless adapter or a head_unit_model marked "[AAR]", from WPP 4.2, at 4.1
+         * only for the makes of [WPP_TCP_4_1_MAKES], never below.
+         */
+        internal fun keepsWppInfo(major: Int, minor: Int, make: String, headUnitModel: String, adapter: Boolean): Boolean = when {
+            adapter || "[AAR]" in headUnitModel -> true
+            major < 4 || (major == 4 && minor < 1) -> false
+            major > 4 || minor >= 2 -> true
+            else -> WPP_TCP_4_1_MAKES.any { make.contains(it, ignoreCase = true) }
+        }
         private const val FAIL_LINGER_MS = 300L
 
         /** First-message timeout on the first try with an adapter (see [isDongle]). */

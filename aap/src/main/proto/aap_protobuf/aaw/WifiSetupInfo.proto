@@ -1,0 +1,27 @@
+syntax="proto2";
+
+import "aap_protobuf/aaw/WifiVersionRequest.proto";
+
+package aap_protobuf.aaw;
+
+// AARE: message type 11, head unit -> phone over RFCOMM, WPP 4.5+ (schema
+// reads it). Moves the exchange to WPP over TCP: the phone joins access_point, connects to
+// wpp_info over TLS and returns setup_token in its next WifiVersionResponse.
+message WifiSetupInfo {
+  optional int32 major = 1;
+  optional int32 minor = 2;
+  optional bytes setup_token = 3;
+  optional WifiProjectionProtocolInfo wpp_info = 4;
+  optional WifiAccessPointInfo access_point = 5;
+}
+
+// AARE: the access point of WifiSetupInfo; fields 1-4 as in WifiInfoResponse.
+// reads no field 5.
+message WifiAccessPointInfo {
+  optional string ssid = 1;
+  optional string password = 2;
+  optional string bssid = 3;
+  optional int32 security_mode = 4;
+  // frequencies (MHz), checked like WifiVersionRequest.supported_wifi_channels
+  repeated int32 supported_wifi_channels = 6;
+}

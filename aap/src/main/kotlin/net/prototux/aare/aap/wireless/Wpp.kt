@@ -35,7 +35,7 @@ object WppMessageId {
     const val PING_RESPONSE = 9
     /** HU -> phone, WPP over TCP only: the head unit refuses the phone. */
     const val CONNECTION_REJECTION = 10
-    /** HU -> phone: WPP-over-TCP setup data. Not implemented, only logged. */
+    /** HU -> phone over RFCOMM, WPP 4.5+: moves the exchange to WPP over TCP (see [WppSetup]). */
     const val SETUP_INFO = 11
 
     fun name(id: Int): String = when (id) {
@@ -69,6 +69,26 @@ object WppStatus {
     const val INSTRUCT_USER_TO_CHECK_THE_PHONE = -9
     const val PHONE_WIFI_DISABLED = -10
     const val WIFI_NETWORK_UNAVAILABLE = -11
+}
+
+/** WifiConnectionRejection.reason. */
+object WppRejectionReason {
+    const val UNKNOWN = 0
+    /** The head unit does not know this phone (its phone_info). */
+    const val MOBILE_DEVICE_ID_NOT_FOUND = 1
+    /** Our WifiVersionResponse did not carry the setup_token the head unit sent in its WifiSetupInfo. */
+    const val INVALID_SETUP_TOKEN = 2
+}
+
+/** Where the head unit serves WPP over TCP (wpp_info). An [ip] of 0.0.0.0 means its network's DHCP server. */
+data class WppEndpoint(val ip: String, val port: Int)
+
+/**
+ * A head unit's WifiSetupInfo, checked: run WPP over TCP at [endpoint] after joining [credentials],
+ * and send [setupToken] back in the WifiVersionResponse there.
+ */
+class WppSetup(val endpoint: WppEndpoint, val credentials: WifiCredentials, val setupToken: ByteArray) {
+    override fun toString() = "endpoint=${endpoint.ip}:${endpoint.port} $credentials token=${setupToken.size} B"
 }
 
 /**
