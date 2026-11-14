@@ -150,3 +150,24 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Plain-language diagnostic trouble codes
+
+The car data viewers (phone and car) showed the car's diagnostics sensor raw, as hex bytes. Added
+`DtcCodes`, decoding the two bytes per code (AAP's `DiagnosticsData.dtc` has no documented format
+beyond "bytes") per the standard SAE J2012 / ISO 15031-6 bit layout into the familiar P/C/B/U +
+4-digit codes, and a catalogue AARE ships (`app/src/main/assets/dtc/generic.json`, ~350 entries,
+written from scratch for this PR) for the SAE-generic ones.
+
+- Classification is purely positional (the code's second character, 0/2 = generic, 1/3 =
+  manufacturer-specific): simpler than modelling every system's own sub-ranges, and matches how
+  the standard actually assigns the bits.
+- Manufacturer-specific codes show their family ("manufacturer-specific powertrain code") and no
+  description: AARE has no way to know what a given manufacturer assigned to e.g. P1300, and
+  guessing would be worse than saying so.
+- The catalogue is deliberately smaller than "every code ever assigned" (~350, not thousands):
+  common P0 sensor/misfire/emissions/transmission ranges, the best-known P2 codes, the common
+  U0 network-loss codes, and a handful of representative C0/B0 ones, covering what a driver is
+  actually likely to see.
+- Both viewers show one line per decoded code ("P0128 — coolant thermostat below regulating
+  temperature") instead of the previous single hex-byte row.
