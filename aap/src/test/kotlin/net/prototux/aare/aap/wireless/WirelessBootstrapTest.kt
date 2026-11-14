@@ -225,7 +225,8 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.CONNECTION_STATUS, frame.id)
         val connectionStatus = WifiConnectionStatus.parseFrom(frame.payload)
         assertEquals(WppStatus.PHONE_WIFI_DISABLED, connectionStatus.status.number)
-        assertEquals("Wi-Fi is off", connectionStatus.errorMessage)
+        // a text for the driver, not ours
+        assertEquals(WirelessBootstrap.PHONE_WIFI_DISABLED_MESSAGE, connectionStatus.errorMessage)
 
         awaitEnd()
         val e = failure as WirelessBootstrapException
@@ -233,6 +234,54 @@ class WirelessBootstrapTest {
         assertFalse("a Wi-Fi problem on the phone isn't the car not being ready", e.whileNegotiating)
         assertNull(phone.ready.poll())
         assertNull("the phone closes the link after a failure", readWppFrame(phoneToHu.input))
+    }
+
+    @Test(timeout = 10_000)
+    fun otherJoinFailuresCarryNoErrorText() {
+        start(Phone { JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "no address on \"AndroidAuto-HU\" after 40 s") })
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        val connectionStatus = WifiConnectionStatus.parseFrom(hu.expect(WppMessageId.CONNECTION_STATUS).payload)
+        assertEquals(WppStatus.WIFI_NETWORK_UNAVAILABLE, connectionStatus.status.number)
+        assertFalse(connectionStatus.hasErrorMessage())
+        awaitEnd()
+    }
+
+    @Test(timeout = 10_000)
+    fun badPortIsReportedAsAConnectionStatus() {
+        start(Phone { throw AssertionError("must not try to join") })
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 70_000))
+        // a WifiConnectionStatus, not a WifiStartResponse
+        assertEquals(WppStatus.INVALID_HOST, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        awaitEnd()
+        assertEquals(WppStatus.INVALID_HOST, (failure as WirelessBootstrapException).status)
+    }
+
+    @Test(timeout = 10_000)
+    fun portZeroIsNotRefusedBelowWpp45() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 0))
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        assertEquals("10.0.0.1" to 0, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun noConnectionStatusForWpp45HeadUnits() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(4).setMinor(5).build(),
+            WppMessageId.START_REQUEST to startRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+        val next = LinkedBlockingQueue<Result<WppFrame>>()
+        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
+        assertNull("no WifiConnectionStatus for WPP 4.5+", next.poll(300, TimeUnit.MILLISECONDS))
     }
 
     @Test(timeout = 10_000)

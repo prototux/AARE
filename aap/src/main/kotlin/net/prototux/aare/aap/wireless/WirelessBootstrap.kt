@@ -178,7 +178,7 @@ class WirelessBootstrap(
             val joined = join(credentials)
             val ip = start.ipAddress.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
             if (ip.isNullOrEmpty()) {
-                sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
+                sendConnectionStatus(WppStatus.INVALID_HOST)
                 throw fail("head unit sent no IP address and the network has no gateway", WppStatus.INVALID_HOST)
             }
             if (ip != start.ipAddress) log.w("wireless: head unit sent no usable IP (\"${start.ipAddress}\"), using the gateway $ip")
@@ -187,7 +187,7 @@ class WirelessBootstrap(
             // dongle hangs up after reading two frames, so failing to send these is not fatal: the
             // head unit already knows everything it needs and the TCP connect is the real test.
             sendQuietly(WppMessageId.START_RESPONSE, startResponse(joined.localAddress, WppStatus.SUCCESS))
-            sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.SUCCESS, null))
+            sendConnectionStatus(WppStatus.SUCCESS)
             ensureOpen()
             state = State.READY
             log.i("wireless: on the head unit's network, AAP server at $ip:${start.port}")
@@ -260,8 +260,11 @@ class WirelessBootstrap(
                     val request = parse("WifiStartRequest") { WifiStartRequest.parseFrom(frame.payload) }
                     log.i("wireless: head unit AAP server ${request.ipAddress}:${request.port}" +
                         if (request.hasReason()) " (reason ${request.reason})" else "")
-                    if (request.port !in 1..65535) {
-                        sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
+                    // The port is not checked below WPP 4.5 (port 0 then fails at the
+                    // TCP connect) and wants one from 0 to 65535 from 4.5. One we cannot even dial is
+                    // refused like a bad address, which it reports in a WifiConnectionStatus.
+                    if (request.port !in 0..65535 || (headUnitAtLeast(4, 5) && !request.hasPort())) {
+                        sendConnectionStatus(WppStatus.INVALID_HOST)
                         throw fail("head unit sent an invalid port ${request.port}", WppStatus.INVALID_HOST)
                     }
                     if (start != null) log.w("wireless: repeated WifiStartRequest, using the latest one")
@@ -383,7 +386,7 @@ class WirelessBootstrap(
             is JoinResult.Failed -> {
                 // Only type 6 means "the phone could not get onto the network"; a failed type 7
                 // would tell the head unit its endpoint was refused.
-                sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(result.status, result.message))
+                sendConnectionStatus(result.status)
                 Thread.sleep(FAIL_LINGER_MS) // let the status leave before the caller drops the link
                 throw fail("could not join \"${credentials.ssid}\": ${result.message}", result.status)
             }
@@ -489,11 +492,23 @@ class WirelessBootstrap(
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
             .build().toByteArray()
 
-    private fun connectionStatus(status: Int, message: String?): ByteArray =
-        WifiConnectionStatus.newBuilder()
+    /**
+     * Reports how joining the network went: not at all to WPP 4.5+ head
+     * units, and with an error_message only for [WppStatus.PHONE_WIFI_DISABLED], a text the head unit
+     * may show the driver (so never our internal error text).
+     */
+    private fun sendConnectionStatus(status: Int) {
+        if (headUnitAtLeast(4, 5)) {
+            log.d("wireless: no WifiConnectionStatus($status) for a WPP 4.5+ head unit")
+            return
+        }
+        val message = if (status == WppStatus.PHONE_WIFI_DISABLED) PHONE_WIFI_DISABLED_MESSAGE else null
+        val payload = WifiConnectionStatus.newBuilder()
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
             .apply { if (message != null) errorMessage = message }
             .build().toByteArray()
+        sendQuietly(WppMessageId.CONNECTION_STATUS, payload)
+    }
 
     private inline fun <T> parse(what: String, block: () -> T): T =
         try {
@@ -521,6 +536,8 @@ class WirelessBootstrap(
     companion object {
         private val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
         private const val FAIL_LINGER_MS = 300L
+        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED); a localized text is sent. */
+        internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
 
         /**
          * WifiVersionResponse.status: accepts a request without a
