@@ -203,6 +203,15 @@ class Settings(context: Context) {
         get() = prefs.getString("assistant_pkg", null)
         set(v) = prefs.edit { if (v == null) remove("assistant_pkg") else putString("assistant_pkg", v) }
 
+    /**
+     * For an assistant without a car app: show its voice UI on the car screen (through the same
+     * launcher as standalone apps) instead of opening it on the phone. Off by default (today's
+     * behaviour); needs root or Shizuku, checked separately ([net.prototux.aare.launch.AppLauncher.available]).
+     */
+    var assistantOnCarScreen: Boolean
+        get() = prefs.getBoolean("assistant_on_car_screen", false)
+        set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
+
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
         get() = prefs.getBoolean("phone_screen", false)

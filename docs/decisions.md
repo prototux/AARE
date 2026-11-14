@@ -150,3 +150,18 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Phone assistants on the car screen (no car app)
+
+The voice button's fallback for an assistant without a car app (Google Assistant and most others)
+opened it on the phone (`Assistants.startOnPhone`). An opt-in setting
+(`Settings.assistantOnCarScreen`) instead shows it on the car screen through the same virtual-
+display launcher as standalone apps (`AppLauncher`), in a bar positioned like the car-app assistant
+bar rather than full screen.
+
+- Off by default (today's behaviour kept); only offered when the launcher is available (root or
+  Shizuku), same gate as standalone apps.
+- Unlike general standalone apps, it is not paused while driving: it is meant to be used while
+  driving, and only its own transient voice UI is shown, not a full interactive app session.
+- On a launch failure (no root/Shizuku binder, app crash on its virtual display) it falls back to
+  `Assistants.startOnPhone`, same as when the setting is off.

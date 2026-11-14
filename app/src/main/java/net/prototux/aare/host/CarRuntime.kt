@@ -637,8 +637,9 @@ class CarRuntime(
 
     /**
      * Steering-wheel voice button or the rail's mic. An assistant with a car app (Lapin, for example)
-     * opens on the car screen and is asked to listen with ACTION_VOICE_COMMAND; any other assistant
-     * opens on the phone.
+     * opens on the car screen and is asked to listen with ACTION_VOICE_COMMAND. Any other assistant
+     * opens on the phone, unless [Settings.assistantOnCarScreen] and the launcher are available, in
+     * which case its voice UI is shown on the car screen instead (see [assistantStandalonePkg]).
      */
     fun assistant() {
         onAssistant?.invoke()
@@ -656,6 +657,22 @@ class CarRuntime(
             conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
             return
         }
+        if (settings.assistantOnCarScreen && AppLauncher.available(context)) {
+            ui.assistantStandalonePkg = pkg
+            return
+        }
+        val label = Assistants.label(context, pkg) ?: pkg
+        if (Assistants.startOnPhone(context, pkg)) {
+            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_no_car_screen, label))
+        } else {
+            notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_cant_open, label))
+        }
+    }
+
+    /** The assistant opened on the car screen through the launcher ([ui].assistantStandalonePkg) failed to start. */
+    fun assistantStandaloneFailed(pkg: String) {
+        if (ui.assistantStandalonePkg != pkg) return
+        ui.assistantStandalonePkg = null
         val label = Assistants.label(context, pkg) ?: pkg
         if (Assistants.startOnPhone(context, pkg)) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_no_car_screen, label))
@@ -669,6 +686,7 @@ class CarRuntime(
 
     /** Back key from the car. */
     fun back() {
+        if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
         if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
         if (screenBack?.invoke() == true) return
         when (val s = ui.screen) {
@@ -714,10 +732,13 @@ class CarRuntime(
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
+                        val standalonePkg = ui.assistantStandalonePkg
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
+                        } else if (standalonePkg != null) {
+                            StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
                         }
                     },
                     modifier = modifier,
