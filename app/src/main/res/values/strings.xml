@@ -343,10 +343,9 @@
     <string name="standalone_audio_only_driving">Screen hidden while driving. The sound goes on.</string>
     <string name="standalone_rule_title">While driving</string>
     <string name="standalone_rule_parked">Parked only</string>
-    <string name="standalone_rule_allowed">Allowed</string>
     <string name="standalone_rule_audio">Audio only</string>
-    <string name="standalone_rule_allowed_warning">This app stays usable on the car screen while driving. Allow it only for navigation or for a passenger: don\'t watch or type while driving.</string>
-    <string name="standalone_rule_navigation_note">Navigation app: allowed while driving unless you choose otherwise.</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Shown while driving, and used as the car\'s navigation app: it takes the map slot and opens the destinations you ask for.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>

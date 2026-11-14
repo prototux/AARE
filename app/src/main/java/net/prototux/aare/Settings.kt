@@ -232,8 +232,8 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putStringSet("standalone_app_pkgs", HashSet(v)) }
 
     /**
-     * What each launched app may do while driving, by package: parked only, allowed, or audio only.
-     * A package with no rule follows [StandaloneDrivingRule.default].
+     * What each launched app may do while driving, by package: parked only (also for a package with
+     * no rule), audio only, or, for navigation apps only, navigation.
      */
     var standaloneDrivingRules: Map<String, StandaloneDrivingRule>
         get() = parseDrivingRules(prefs.getStringSet("standalone_driving_rules", emptySet()).orEmpty())

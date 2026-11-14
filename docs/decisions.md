@@ -153,10 +153,11 @@ stands in when nothing is left, and the last card can't be hidden.
 
 ## Launched apps while driving: a rule per app
 
-Each launched phone app has a driving rule, stored by package: parked only, allowed, or audio
-only (`launch/DrivingRules.kt`). An app with no rule set is parked only, unless it is a known
-navigation app: those are allowed by default, as the phone screen already allows them. "Parked
-only" now pauses the app's media session as well as hiding its screen (before, the card said
-"paused" while the sound went on), which is what tells it apart from "audio only". Passenger mode
-(ignore driving) still lifts every restriction. Allowing a non-navigation app shows a warning on
-the phone.
+Each launched phone app has a driving rule, stored by package (`launch/DrivingRules.kt`): parked
+only (the default, for every app), audio only, or navigation. "Navigation" is offered only to
+navigation apps (the phone screen's `KNOWN_NAVIGATION`, or an app whose category is maps): it shows
+the app while driving and makes it the car's navigation app. There is no "allowed" rule for other
+apps: a passenger who wants one while driving uses passenger mode (ignore driving), which lifts
+every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
+the app's media session as well as hiding its screen (before, the card said "paused" while the
+sound went on), which is what tells it apart from "audio only".
