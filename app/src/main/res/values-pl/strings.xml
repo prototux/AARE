@@ -451,6 +451,17 @@
     <string name="setup_log_save">Zapisz</string>
     <string name="setup_toggle_verbose_log_title">Szczegółowy dziennik protokołu</string>
     <string name="setup_toggle_verbose_log_subtitle">Zapisuj w tym dzienniku pełny zapis protokołu jednostki centralnej, by dołączyć go do zgłoszenia błędu. Zapisuje dużo danych; w innym wypadku pozostaw wyłączone.</string>
+    <string name="setup_section_backup">Kopia zapasowa ustawień</string>
+    <string name="setup_backup_hint">Zapisz ustawienia do pliku lub wczytaj je z powrotem. Zaufane jednostki centralne, certyfikaty, stan przypisany do telefonu oraz opcje, które otwierają AARE na sieć lub pomijają kontrolę bezpieczeństwa (serwer jednostki centralnej, tryb pasażera, dźwięk przez root…), są pomijane: ustaw je ręcznie na każdym telefonie.</string>
+    <string name="setup_backup_export">Eksportuj…</string>
+    <string name="setup_backup_import">Importuj…</string>
+    <string name="setup_backup_import_confirm_title">Zastąpić ustawienia?</string>
+    <string name="setup_backup_import_confirm_text">Bieżące ustawienia zostaną zastąpione ustawieniami z wybranego pliku. Tej operacji nie można cofnąć.</string>
+    <string name="setup_backup_import_confirm_action">Zastąp</string>
+    <string name="setup_backup_import_done">Zaimportowano ustawienia.</string>
+    <string name="setup_backup_import_done_skipped">Zaimportowano ustawienia. Pominięte jako nieznane, zablokowane lub nieprawidłowe: %1$d</string>
+    <string name="setup_backup_import_failed">Nie można zaimportować tego pliku: to nie jest plik ustawień AARE lub jest za duży.</string>
+    <string name="setup_backup_export_failed">Nie udało się zapisać pliku ustawień.</string>
     <string name="setup_nothing_to_open">Ten telefon nie ma aplikacji, która mogłaby to otworzyć</string>
     <string name="setup_wallpaper_failed">Nie udało się użyć tego zdjęcia jako tapety</string>
     <string name="msg_autoreply_default">Właśnie prowadzę, odpowiem później.</string>

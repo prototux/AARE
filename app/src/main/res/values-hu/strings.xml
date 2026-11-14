@@ -451,6 +451,17 @@
     <string name="setup_log_save">Mentés</string>
     <string name="setup_toggle_verbose_log_title">Részletes protokollnapló</string>
     <string name="setup_toggle_verbose_log_subtitle">A teljes fejegység-protokoll naplózása ebbe a naplóba, hogy csatolni lehessen egy hibajelentéshez. Sokat naplóz; egyébként hagyd kikapcsolva.</string>
+    <string name="setup_section_backup">Beállítások mentése</string>
+    <string name="setup_backup_hint">Mentse a beállításokat fájlba, vagy töltse vissza őket. A megbízható fejegységek, a tanúsítványok, a telefonhoz kötött adatok és azok a beállítások, amelyek az AARE-t a hálózat felé nyitják vagy kiiktatnak egy biztonsági ellenőrzést (fejegység-szerver, utas mód, root hang…), kimaradnak: ezeket minden telefonon kézzel állítsa be.</string>
+    <string name="setup_backup_export">Exportálás…</string>
+    <string name="setup_backup_import">Importálás…</string>
+    <string name="setup_backup_import_confirm_title">Lecseréli a beállításokat?</string>
+    <string name="setup_backup_import_confirm_text">A jelenlegi beállításokat felülírják a kiválasztott fájlban lévők. Ez nem vonható vissza.</string>
+    <string name="setup_backup_import_confirm_action">Csere</string>
+    <string name="setup_backup_import_done">Beállítások importálva.</string>
+    <string name="setup_backup_import_done_skipped">Beállítások importálva. Kihagyva (ismeretlen, tiltott vagy érvénytelen): %1$d</string>
+    <string name="setup_backup_import_failed">Ez a fájl nem importálható: nem AARE-beállításfájl, vagy túl nagy.</string>
+    <string name="setup_backup_export_failed">Nem sikerült menteni a beállításfájlt.</string>
     <string name="setup_nothing_to_open">Ezen a telefonon nincs olyan alkalmazás, amely meg tudná nyitni ezt</string>
     <string name="setup_wallpaper_failed">Nem sikerült ezt a fényképet háttérképként beállítani</string>
     <string name="msg_autoreply_default">Most vezetek, majd később válaszolok.</string>
