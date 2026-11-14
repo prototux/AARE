@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.net.Uri
@@ -27,7 +26,6 @@ import com.google.protobuf.ByteString
 import net.prototux.aare.aap.AapSession
 import net.prototux.aare.aap.channels.PhoneStatusChannel
 import net.prototux.aare.aap.channels.sendBatteryStatus
-import java.io.ByteArrayOutputStream
 
 /**
  * The phone's own state for the car: the current call and the signal on the phone status channel
@@ -220,13 +218,17 @@ class PhoneStatusBridge(
         return found
     }
 
-    /** The contact's thumbnail (already a small JPEG); shrunk only if some app stored a big one. */
+    /**
+     * The contact's thumbnail as a PNG within [THUMB_SIZE] (well under the 256 px bound
+     * 256x256 cap, to keep the phone-status channel light): gearhead decodes the caller thumbnail
+     * and refuses it unless it's PNG and within the bound, so the provider's JPEG always needs
+     * re-encoding, not just the rare oversized one. [lookup] already caches this per number per
+     * connection, so it isn't redone on every call status tick.
+     */
     private fun thumbnail(uri: Uri): ByteArray? = runCatching {
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
-        if (bytes.size <= MAX_THUMB_BYTES) return@runCatching bytes
         val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return@runCatching null
-        val small = Bitmap.createScaledBitmap(bmp, THUMB_SIZE, THUMB_SIZE * bmp.height / maxOf(1, bmp.width), true)
-        ByteArrayOutputStream().also { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+        CarImage.toCarPng(bmp, THUMB_SIZE)
     }.getOrNull()
 
     companion object {
@@ -235,7 +237,6 @@ class PhoneStatusBridge(
         private const val IDLE_TICK_MS = 10_000L
         /** Android's own low-battery "critical" level. */
         private const val CRITICAL_PERCENT = 5
-        private const val MAX_THUMB_BYTES = 16 * 1024
         private const val THUMB_SIZE = 96
     }
 }
