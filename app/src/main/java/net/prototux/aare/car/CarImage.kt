@@ -27,11 +27,20 @@ internal object CarImage {
         return Size((w * scale).toInt().coerceAtLeast(1), (h * scale).toInt().coerceAtLeast(1))
     }
 
-    /** Scales [bmp] to fit inside [maxSide]x[maxSide] (if it doesn't already) and PNG-encodes it. */
+    /**
+     * Scales [bmp] to fit inside [maxSide]x[maxSide] (if it doesn't already) and PNG-encodes it.
+     * [bmp] stays the caller's; the scaled copy made here is recycled once encoded, so a run of
+     * track changes doesn't leave its pixels waiting for the garbage collector.
+     */
     fun toCarPng(bmp: Bitmap, maxSide: Int = MAX_SIDE): ByteArray {
         val size = targetSize(bmp.width, bmp.height, maxSide)
         val scaled = if (size.width == bmp.width && size.height == bmp.height) bmp
             else Bitmap.createScaledBitmap(bmp, size.width, size.height, true)
-        return ByteArrayOutputStream().also { scaled.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        try {
+            return ByteArrayOutputStream().also { scaled.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        } finally {
+            // createScaledBitmap may hand back the source itself; never recycle the caller's bitmap.
+            if (scaled !== bmp) scaled.recycle()
+        }
     }
 }
