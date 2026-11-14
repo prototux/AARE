@@ -5,6 +5,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationCurrentPositionOu
 import aap_protobuf.service.navigationstatus.message.NavigationDestinationDistanceOuterClass.NavigationDestinationDistance
 import aap_protobuf.service.navigationstatus.message.NavigationDestinationOuterClass.NavigationDestination
 import aap_protobuf.service.navigationstatus.message.NavigationDistanceOuterClass.NavigationDistance
+import aap_protobuf.service.navigationstatus.message.NavigationLaneOuterClass.NavigationLane
 import aap_protobuf.service.navigationstatus.message.NavigationManeuverOuterClass.NavigationManeuver
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnDistanceEventOuterClass.NavigationNextTurnDistanceEvent
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent
@@ -16,7 +17,9 @@ import aap_protobuf.service.navigationstatus.message.NavigationStepOuterClass.Na
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.car.app.model.Distance
+import androidx.car.app.navigation.model.Lane
 import androidx.car.app.navigation.model.Maneuver
+import androidx.car.app.navigation.model.Step
 import androidx.car.app.navigation.model.Trip
 import com.google.protobuf.ByteString
 import net.prototux.aare.aap.channels.NavigationStatusChannel
@@ -91,13 +94,7 @@ class NavStatusBridge(
         val road = step.road?.toString() ?: trip.currentRoad?.toString() ?: ""
 
         val state = NavigationState.newBuilder()
-        trip.steps.take(3).forEach { s ->
-            state.addSteps(NavigationStep.newBuilder().apply {
-                s.maneuver?.let { setManeuver(maneuverOf(it)) }
-                s.road?.let { setRoad(NavigationRoad.newBuilder().setName(it.toString())) }
-                s.cue?.let { setCue(NavigationCue.newBuilder().addAlternateText(it.toString())) }
-            })
-        }
+        trip.steps.take(3).forEach { state.addSteps(stepOf(it)) }
         trip.destinations.forEach { d ->
             state.addDestinations(NavigationDestination.newBuilder().setAddress(listOfNotNull(d.name, d.address).joinToString(", ")))
         }
@@ -106,7 +103,8 @@ class NavStatusBridge(
         stepEstimate?.let { e ->
             position.setStepDistance(NavigationStepDistance.newBuilder().apply {
                 e.remainingDistance?.let { setDistance(distanceOf(it)) }
-                setTimeToStepSeconds(e.remainingTimeSeconds)
+                // An unknown (-1) or zero time is left out.
+                if (e.remainingTimeSeconds > 0) setTimeToStepSeconds(e.remainingTimeSeconds)
             })
         }
         destEstimate?.let { e ->
@@ -204,6 +202,14 @@ class NavStatusBridge(
         PhoneGuidance.DistanceUnit.YARDS -> 7
     }
 
+    /** A step with its lanes, sent when the navigation app gives them. */
+    private fun stepOf(s: Step): NavigationStep = NavigationStep.newBuilder().apply {
+        s.maneuver?.let { setManeuver(maneuverOf(it)) }
+        s.road?.let { setRoad(NavigationRoad.newBuilder().setName(it.toString())) }
+        s.lanes.forEach { addLanes(laneOf(it)) }
+        s.cue?.let { setCue(NavigationCue.newBuilder().addAlternateText(it.toString())) }
+    }.build()
+
     /** A type the protocol doesn't have leaves the maneuver empty. */
     private fun maneuverOf(m: Maneuver): NavigationManeuver = NavigationManeuver.newBuilder().apply {
         val type = protocolType(m.type) ?: return@apply
@@ -227,6 +233,15 @@ class NavStatusBridge(
          */
         internal fun protocolType(type: Int): NavigationManeuver.NavigationType? =
             NavigationManeuver.NavigationType.forNumber(type)
+
+        /** The library's lane shapes are the protocol's plus one (its SHAPE_UNKNOWN is 1). */
+        internal fun laneOf(lane: Lane): NavigationLane = NavigationLane.newBuilder().apply {
+            lane.directions.forEach { d ->
+                addLaneDirections(NavigationLane.LaneDirection.newBuilder()
+                    .setShape(NavigationLane.LaneDirection.Shape.forNumber(d.shape - 1) ?: NavigationLane.LaneDirection.Shape.UNKNOWN)
+                    .setIsHighlighted(d.isRecommended))
+            }
+        }.build()
 
         fun metersOf(d: Distance): Double = d.displayDistance * when (d.displayUnit) {
             Distance.UNIT_KILOMETERS, Distance.UNIT_KILOMETERS_P1 -> 1000.0

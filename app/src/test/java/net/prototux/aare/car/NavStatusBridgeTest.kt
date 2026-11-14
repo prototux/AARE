@@ -1,10 +1,14 @@
 package net.prototux.aare.car
 
+import aap_protobuf.service.navigationstatus.message.NavigationLaneOuterClass.NavigationLane.LaneDirection.Shape
 import aap_protobuf.service.navigationstatus.message.NavigationManeuverOuterClass.NavigationManeuver.NavigationType
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent.NextTurnEnum
 import aap_protobuf.service.navigationstatus.message.NavigationNextTurnEventOuterClass.NavigationNextTurnEvent.TurnSide
+import androidx.car.app.navigation.model.Lane
+import androidx.car.app.navigation.model.LaneDirection
 import androidx.car.app.navigation.model.Maneuver
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -74,5 +78,18 @@ class NavStatusBridgeTest {
         assertEquals(TurnSide.RIGHT, roundabout.turnSide)
         assertEquals(2, roundabout.turnNumber)
         assertEquals(135, roundabout.turnAngle)
+    }
+
+    @Test
+    fun lanesKeepShapeAndRecommendation() {
+        val lane = Lane.Builder()
+            .addDirection(LaneDirection.create(LaneDirection.SHAPE_NORMAL_LEFT, true))
+            .addDirection(LaneDirection.create(LaneDirection.SHAPE_STRAIGHT, false))
+            .addDirection(LaneDirection.create(LaneDirection.SHAPE_U_TURN_RIGHT, false))
+            .build()
+        val sent = NavStatusBridge.laneOf(lane).laneDirectionsList
+        assertEquals(listOf(Shape.NORMAL_LEFT, Shape.STRAIGHT, Shape.U_TURN_RIGHT), sent.map { it.shape })
+        assertTrue(sent[0].isHighlighted)
+        assertFalse(sent[1].isHighlighted)
     }
 }
