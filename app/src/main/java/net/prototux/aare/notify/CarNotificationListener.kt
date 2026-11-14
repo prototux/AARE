@@ -187,10 +187,11 @@ class CarNotificationListener : NotificationListenerService() {
         if (sbn.packageName == packageName || sbn.packageName in AppQuirks.NOT_CONVERSATIONS) return null
         if (n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
         val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n) ?: return parseCarExtender(sbn)
-        // A voice message posted before its audio is attached: wait for the update that has it.
-        if (sbn.packageName in AppQuirks.DROP_EMPTY_AUDIO_MESSAGES &&
-            style.messages.any { isEmptyAudioMessage(it.dataMimeType, it.dataUri?.toString()) }) return null
+        val dropEmptyAudio = sbn.packageName in AppQuirks.DROP_EMPTY_AUDIO_MESSAGES
         val lines = style.messages.mapNotNull { m ->
+            // A voice message posted before its audio is attached: skip just that message (the
+            // update that has the audio brings it back), not the rest of the conversation.
+            if (dropEmptyAudio && isEmptyAudioMessage(m.dataMimeType, m.dataUri?.toString())) return@mapNotNull null
             val text = m.text?.toString() ?: return@mapNotNull null
             // A null sender is the user, per MessagingStyle; some apps name the user instead.
             val p = m.person
