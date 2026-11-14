@@ -118,3 +118,20 @@ night colours, the colours Material has no slot for, type, shapes, app icon shap
 - Existing users keep their look: the old CarPlay style maps to the CarPlay theme on the dock,
   everything else to AARE on the taskbar. The old `car_style` key is only read.
 
+## Car screen mockups (Paparazzi)
+
+The README's style pictures are mockups drawn on the JVM by Paparazzi (Cash App, Apache-2.0,
+2.0.0-alpha05.1, approved by the owner), from `app/src/mockups/.../CarScreenMockups.kt`:
+`CarShell` with made-up state (apps, music, an event), generated icons and album art, and a drawn
+stand-in for the navigation app's map. `tools/mockups.sh` renders them and copies them to
+`docs/screenshots/styles`. The README says they are mockups and that a real screen can differ.
+
+- Opt-in: the plugin and the mockup sources are only added with `-Pmockups`, so ordinary builds,
+  unit tests and CI don't carry Paparazzi. It also fails with the configuration cache in this
+  project (it reads the generated phone-identity assets before they exist), so the script turns
+  the cache off for that one build.
+- Not a regression test: the images aren't compared in CI. Re-run the script after a UI change
+  that the README pictures should show.
+- 1280×720 at 160 dpi (1 dp = 1 pixel), a common head-unit size; the phone status icons show
+  layoutlib's defaults (no signal, battery 0), since there is no phone.
+

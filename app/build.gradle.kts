@@ -3,6 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Car screen mockups for the README (tools/mockups.sh): Paparazzi draws them on the JVM. Only with
+// -Pmockups, so ordinary builds and CI don't carry it; it doesn't support the configuration cache here.
+val mockups = providers.gradleProperty("mockups").isPresent
+if (mockups) apply(plugin = libs.plugins.paparazzi.get().pluginId)
+
 android {
     namespace = "net.prototux.aare"
     compileSdk {
@@ -51,6 +56,7 @@ android {
         buildConfig = true
         aidl = true
     }
+    if (mockups) sourceSets["test"].kotlin.srcDir("src/mockups/java")
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
