@@ -327,6 +327,10 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
   privileged install from there: music and navigation voice go to their own car channels. If
   the phone refuses it, AARE falls back to recording the phone's whole output, with navigation
   voice mixed into the music.
+  On phones that switch wireless debugging off when they lock (Samsung), start Shizuku from a
+  computer over USB instead, with the command Shizuku shows under *Start via connecting to a
+  computer*: started that way it doesn't need wireless debugging, and runs until the phone
+  reboots (as long as USB debugging stays on) ([discussion](https://github.com/prototux/AARE/discussions/49)).
 - **Screen capture:** works everywhere, but Android only gives normal apps media, game and
   "unknown" sounds, so navigation voice stays on the phone, and apps may opt out.
 
