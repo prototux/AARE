@@ -52,9 +52,9 @@ class CarControlProvider : ContentProvider() {
 
     /**
      * The assistant fetched its tools or ran one: the car is asked for what car_status reports, and
-     * keeps sending it until the assistant has been quiet for [ASSISTANT_HOLD_MS]. Asking only
-     * then, not for the whole drive, is the usual approach with sensors nobody uses; an
-     * assistant fetches its tools before it can call one, which gives the car time to answer.
+     * keeps sending it until the assistant has been quiet for [ASSISTANT_HOLD_MS]: the car is
+     * asked only for sensors something uses. An assistant fetches its tools
+     * before it can call one, which gives the car time to answer.
      */
     private fun assistantInUse() {
         CarData.need(ASSISTANT, VehicleStatus.SENSORS)
