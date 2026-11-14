@@ -150,3 +150,13 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Rail apps: a flat chosen list replaces the dynamic slots, not alongside them
+
+When the user picks apps for the rail on the phone (`Settings.railApps`), the rail shows exactly
+that list, in that order, clickable to open each app directly — it stops binding the nav/media
+slots to whatever is "active" and showing recents. Mixing both (the user's picks plus the dynamic
+nav/media/recent behaviour) would make the setting's effect unpredictable. An empty list (nothing
+chosen, the default) keeps today's dynamic rail untouched. Resolution happens at render time from
+live `CarUiState.apps` (`resolveRailApps`), so an uninstalled app's key is skipped without special
+handling and nothing needs to be recomputed when the app list changes.
