@@ -221,3 +221,21 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override fun mapScale(focusX: Float, focusY: Float, factor: Float) { conn.scale(focusX, focusY, factor) }
     override fun mapClick(x: Float, y: Float) { conn.click(x, y) }
 }
+
+/**
+ * The dashboard card of a navigation app that runs full screen only, run
+ * versions older than the one it knows works on its dashboard ([AppQuirks.dashboardNavigationSupported]):
+ * the app's icon and name, and a tap opens it.
+ */
+@Composable
+fun CarAppLauncherCard(info: CarAppInfo, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    Column(
+        modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer).clickable(onClick = onOpen).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        info.icon?.let { Image(it.asImageBitmap(), null, Modifier.size(72.dp).clip(CircleShape)) }
+        Spacer(Modifier.height(16.dp))
+        Text(info.label, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    }
+}

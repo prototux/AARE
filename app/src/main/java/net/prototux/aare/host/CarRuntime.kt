@@ -764,7 +764,14 @@ class CarRuntime(
                             else -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod) }
                         }
                     },
-                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) } },
+                    navMap = { app, mod ->
+                        val info = carApps[app.id]
+                        if (info != null && !AppQuirks.dashboardNavigationSupported(info.packageName, info.versionCode)) {
+                            CarAppLauncherCard(info, mod) { actions.openApp(app) }
+                        } else {
+                            shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) }
+                        }
+                    },
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
