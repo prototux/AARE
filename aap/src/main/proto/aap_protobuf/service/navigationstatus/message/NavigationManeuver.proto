@@ -49,7 +49,8 @@ message NavigationManeuver {
     DESTINATION_STRAIGHT = 40;
     DESTINATION_LEFT = 41;
     DESTINATION_RIGHT = 42;
-    // AARE: 43-50, passed on from the Car App Library; names from it.
+    // AARE: 43-50 as the Car App Library numbers them; names from it. AARE sends 43-46 as they
+    // are and 47-50 as FERRY_BOAT / FERRY_TRAIN.
     ROUNDABOUT_ENTER_CW = 43;
     ROUNDABOUT_EXIT_CW = 44;
     ROUNDABOUT_ENTER_CCW = 45;

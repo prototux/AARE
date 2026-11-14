@@ -17,10 +17,18 @@ class NavStatusBridgeTest {
 
     @Test
     fun maneuverTypesPassThroughUnchanged() {
-        // 0..29 and 32..50 are accepted and the number is sent as is.
-        for (type in (0..29) + (32..50)) assertEquals(type, NavStatusBridge.protocolType(type)?.number)
+        // 0..29 and 32..46 are sent as they are.
+        for (type in (0..29) + (32..46)) assertEquals(type, NavStatusBridge.protocolType(type)?.number)
         assertEquals(NavigationType.ROUNDABOUT_ENTER_CW, NavStatusBridge.protocolType(Maneuver.TYPE_ROUNDABOUT_ENTER_CW))
-        assertEquals(NavigationType.FERRY_TRAIN_RIGHT, NavStatusBridge.protocolType(Maneuver.TYPE_FERRY_TRAIN_RIGHT))
+        assertEquals(NavigationType.ROUNDABOUT_EXIT_CCW, NavStatusBridge.protocolType(Maneuver.TYPE_ROUNDABOUT_EXIT_CCW))
+    }
+
+    @Test
+    fun ferriesWithASideGoAsThePlainFerry() {
+        assertEquals(NavigationType.FERRY_BOAT, NavStatusBridge.protocolType(Maneuver.TYPE_FERRY_BOAT_LEFT))
+        assertEquals(NavigationType.FERRY_BOAT, NavStatusBridge.protocolType(Maneuver.TYPE_FERRY_BOAT_RIGHT))
+        assertEquals(NavigationType.FERRY_TRAIN, NavStatusBridge.protocolType(Maneuver.TYPE_FERRY_TRAIN_LEFT))
+        assertEquals(NavigationType.FERRY_TRAIN, NavStatusBridge.protocolType(Maneuver.TYPE_FERRY_TRAIN_RIGHT))
     }
 
     @Test

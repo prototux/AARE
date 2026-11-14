@@ -233,11 +233,16 @@ class NavStatusBridge(
         private const val TAG = "AareNavStatus"
 
         /**
-         * The protocol's NavigationType for a Maneuver.TYPE_*: the same numbers, passed on as is like
-         * 43..50 included. Null for a number the protocol doesn't have.
+         * The protocol's NavigationType for a Maneuver.TYPE_*: the same numbers, roundabout enter
+         * and exit (43..46) included. Ferries with a side (47..50) go as the plain ferry (37, 38),
+         * as AARE always sent them: head units that work with that today keep showing a ferry.
+         * Null for a number the protocol doesn't have.
          */
-        internal fun protocolType(type: Int): NavigationManeuver.NavigationType? =
-            NavigationManeuver.NavigationType.forNumber(type)
+        internal fun protocolType(type: Int): NavigationManeuver.NavigationType? = when (type) {
+            Maneuver.TYPE_FERRY_BOAT_LEFT, Maneuver.TYPE_FERRY_BOAT_RIGHT -> NavigationManeuver.NavigationType.FERRY_BOAT
+            Maneuver.TYPE_FERRY_TRAIN_LEFT, Maneuver.TYPE_FERRY_TRAIN_RIGHT -> NavigationManeuver.NavigationType.FERRY_TRAIN
+            else -> NavigationManeuver.NavigationType.forNumber(type)
+        }
 
         /** The library's lane shapes are the protocol's plus one (its SHAPE_UNKNOWN is 1). */
         internal fun laneOf(lane: Lane): NavigationLane = NavigationLane.newBuilder().apply {
