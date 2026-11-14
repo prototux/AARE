@@ -249,7 +249,7 @@ class AapSession(
     /**
      * Ends the session politely: bye-bye, then close when the head unit answers or after a short
      * grace period. The bye-bye goes out whatever the state once the version
-     * exchange is done, in the clear while TLS isn't up yet, and the answer gets 200 ms.
+     * exchange is done, in the clear while TLS isn't up yet.
      */
     fun stop(reason: ByeByeReason = ByeByeReason.USER_SELECTION) {
         if (closed.get()) return
@@ -482,9 +482,11 @@ class AapSession(
                 sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance().toByteArray()),
                     onSent = { close(why, null) })
             }
-            // A bye-bye response the phone didn't ask for is an error.
-            ControlMsg.BYEBYE_RESPONSE ->
-                if (byeByeSent) close("session ended", null) else fail("bye-bye response without a bye-bye request", null)
+            ControlMsg.BYEBYE_RESPONSE -> {
+                // One the phone didn't ask for still ends the session cleanly, as the head unit means it to.
+                if (!byeByeSent) log.w("bye-bye response without a bye-bye request")
+                close("session ended", null)
+            }
             ControlMsg.SERVICE_DISCOVERY_UPDATE -> onServiceUpdate(ServiceDiscoveryUpdate.parseFrom(msg.bodyBytes()))
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
             else -> log.d("unhandled control message $msg")
@@ -746,7 +748,7 @@ class AapSession(
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
         /** How long the phone waits for the head unit's answer to its bye-bye. */
-        private const val BYEBYE_TIMEOUT_MS = 200L
+        private const val BYEBYE_TIMEOUT_MS = 1_000L
         /** The phone's ping period on wireless (default). */
         private const val PING_INTERVAL_MS = 1_000L
         private const val MAX_PINGS_IN_FLIGHT = 10

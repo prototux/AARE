@@ -392,11 +392,11 @@ open class SessionLoopbackTest {
     }
 
     @Test
-    fun byeByeResponseWithoutRequestIsAnError() {
+    fun byeByeResponseWithoutRequestEndsTheSessionCleanly() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         hu.send(0, ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance())
         assertTrue(closed.await(3, TimeUnit.SECONDS))
-        assertNotNull(closeError)
+        assertEquals(null, closeError)
     }
 
     @Test
