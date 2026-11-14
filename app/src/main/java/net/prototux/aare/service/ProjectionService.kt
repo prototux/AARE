@@ -278,7 +278,9 @@ class ProjectionService : Service() {
 
     private fun openUsb(accessory: UsbAccessory) {
         // A head unit back after a drop is announced twice (its re-attach, and our wait for it).
-        if (session != null && UsbReattach.same(usbAccessory, accessory)) {
+        val current = session
+        if (current != null && UsbReattach.same(usbAccessory, accessory) &&
+            !replacesSession(false, lastSessionWireless, current.headUnitName.isNotEmpty(), SystemClock.elapsedRealtime() - sessionStart)) {
             log("USB: already connected to this head unit")
             return
         }
@@ -356,10 +358,16 @@ class ProjectionService : Service() {
      */
     private fun startSession(transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true) {
         if (destroyed) { transport.close(); return }
-        if (session != null) {
-            log("already connected; refusing ${transport.name}")
-            transport.close()
-            return
+        session?.let { old ->
+            if (!replacesSession(wireless, lastSessionWireless, old.headUnitName.isNotEmpty(), SystemClock.elapsedRealtime() - sessionStart)) {
+                log("already connected; refusing ${transport.name}")
+                transport.close()
+                return
+            }
+            log("replacing a USB link that never reached the head unit with ${transport.name}")
+            session = null
+            old.stop()
+            releaseWakeLock()
         }
         lastSessionWireless = wireless
         val cert = certs.pick(settings.certificateIndex)
@@ -813,3 +821,17 @@ class ProjectionService : Service() {
         }
     }
 }
+
+/**
+ * Whether a new link takes over from the current session instead of being refused. After a USB
+ * drop the retry may still hold the link the car already gave up; the head unit attaches again a
+ * few seconds later, and refusing that live link would leave the car stuck until it times out. So
+ * a new USB link replaces a USB session that never got as far as the head unit's name. Not one
+ * opened just now ([oldAgeMs]): the same head unit is announced twice when it comes back (its
+ * re-attach, and the wait for it), and the second must not tear down the first's handshake.
+ */
+internal fun replacesSession(newWireless: Boolean, oldWireless: Boolean, oldReachedHeadUnit: Boolean, oldAgeMs: Long): Boolean =
+    !newWireless && !oldWireless && !oldReachedHeadUnit && oldAgeMs >= REPLACE_AFTER_MS
+
+/** How long a USB session must have been waiting for the head unit before a new link may replace it. */
+internal const val REPLACE_AFTER_MS = 2_000L
