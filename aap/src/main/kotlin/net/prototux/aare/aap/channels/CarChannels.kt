@@ -1,6 +1,7 @@
 package net.prototux.aare.aap.channels
 
 import aap_protobuf.service.ServiceOuterClass.Service
+import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationDataOuterClass.BluetoothAuthenticationData
 import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.bluetooth.message.BluetoothPairingRequestOuterClass.BluetoothPairingRequest
 import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
@@ -229,6 +230,12 @@ class WifiProjectionChannel(service: Service) : ServiceChannel(service, "wifi") 
 class BluetoothChannel(service: Service, private val phoneAddress: String?, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
     interface Listener {
         fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {}
+
+        /**
+         * The car's side of the Bluetooth pairing it is about to do with the phone: [authData] is the
+         * passkey (numeric comparison) or PIN it will show, so the phone can check it is that car.
+         */
+        fun onAuthenticationData(authData: String, method: BluetoothPairingMethod?) {}
     }
 
     val carAddress: String = service.bluetoothService.carAddress
@@ -257,6 +264,10 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
             BluetoothMsg.PAIRING_RESPONSE -> {
                 val r = BluetoothPairingResponse.parseFrom(msg.bodyBytes())
                 listener.onPairingResponse(r.alreadyPaired, r.status.number == 0)
+            }
+            BluetoothMsg.AUTHENTICATION_DATA -> {
+                val d = BluetoothAuthenticationData.parseFrom(msg.bodyBytes())
+                listener.onAuthenticationData(d.authData, if (d.hasPairingMethod()) d.pairingMethod else null)
             }
         }
     }
