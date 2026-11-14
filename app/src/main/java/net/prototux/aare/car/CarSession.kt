@@ -560,6 +560,14 @@ class CarSession(
     private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
 
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+        // Some head units send a media key while they set up, before AARE has a car screen (a
+        // play as the session starts): acting on it would start the music the driver didn't ask
+        // for, and over whatever the car was playing. The driver's own presses come once the
+        // screen is up.
+        if (display == null && code in MEDIA_KEYS) {
+            if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
+            return
+        }
         when (code) {
             KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
@@ -954,6 +962,11 @@ class CarSession(
     companion object {
         private const val TAG = "AareSession"
         private const val VIDEO_FOCUS_RETRY_MS = 3_000L
+        /** The keys that start, stop or skip media, which [onKey] ignores until there is a car screen. */
+        private val MEDIA_KEYS = setOf(
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.KEYCODE_MEDIA_PLAY,
+            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+        )
         private const val VIDEO_FOCUS_RETRIES = 3
         const val KEYCODE_MEDIA = 65537
         const val KEYCODE_NAVIGATION = 65538
