@@ -3,6 +3,8 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.aap.wireless.WirelessHandshake
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import java.util.UUID
 
 /** User settings, in one SharedPreferences file. */
@@ -49,6 +51,26 @@ class Settings(context: Context) {
     var wireless: Boolean
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
+
+    /**
+     * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO],
+     * [HandshakeChoice.BUILT_IN] (what AARE always did) or [HandshakeChoice.ADAPTER].
+     */
+    var wirelessCompatibility: String
+        get() = prefs.getString("wireless_compatibility", null) ?: HandshakeChoice.AUTO
+        set(v) = prefs.edit { putString("wireless_compatibility", v) }
+
+    /** The handshake that last reached service discovery, per head unit Bluetooth address (for Auto). */
+    val wirelessHandshakes: Map<String, WirelessHandshake>
+        get() = HandshakeChoice.parse(wirelessHandshakeEntries)
+
+    fun rememberWirelessHandshake(address: String, handshake: WirelessHandshake) {
+        val entries = HandshakeChoice.remember(wirelessHandshakeEntries, address, handshake)
+        prefs.edit { putString("wireless_handshakes", entries.joinToString("\n")) }
+    }
+
+    private val wirelessHandshakeEntries: List<String>
+        get() = prefs.getString("wireless_handshakes", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
 
     /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
     var checkUpdates: Boolean

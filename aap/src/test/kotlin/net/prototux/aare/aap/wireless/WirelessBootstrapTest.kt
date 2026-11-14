@@ -425,6 +425,98 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.CONNECTION_STATUS, hu.read().id)
     }
 
+    /** The adapter order, with every ping setting on, to show none of them pings. */
+    private fun adapterOptions() = WirelessBootstrap.Options(
+        messageTimeoutMs = 3_000, keepaliveIntervalMs = 20, frameGapMs = 0, pingIntervalMs = 20,
+        deviceSerial = "serial-1", instanceId = "phone-id-1", deviceName = "Pixel",
+        handshake = WirelessHandshake.ADAPTER,
+    )
+
+    /** Whatever the phone sends next within [ms], or null. Its reader thread takes the frame after that, if any. */
+    private fun nextFrameWithin(ms: Long): WppFrame? {
+        val next = LinkedBlockingQueue<Result<WppFrame>>()
+        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
+        return next.poll(ms, TimeUnit.MILLISECONDS)?.getOrNull()
+    }
+
+    @Test(timeout = 10_000)
+    fun adapterOrderFollowsTheOfficialPhone() {
+        val phone = Phone { Thread.sleep(200); JoinResult.Joined(localAddress = "192.168.4.2") }
+        val b = start(phone, adapterOptions())
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        // read(), not expect(): a ping anywhere in here would fail the test
+        val version = hu.read()
+        assertEquals(WppMessageId.VERSION_RESPONSE, version.id)
+        val response = WifiVersionResponse.parseFrom(version.payload)
+        assertEquals(6, response.major)
+        assertEquals(1, response.minor)
+        assertEquals(WppStatus.SUCCESS, response.status)
+        assertFalse("status only: no serial", response.hasDeviceSerial())
+        assertFalse("status only: no phone_info", response.hasDeviceInfo())
+        assertFalse("status only: no channel type", response.hasSelectedWifiChannelType())
+
+        hu.send(WppMessageId.START_REQUEST, startRequest(ip = "192.168.4.1"))
+        val ack = hu.read()
+        assertEquals("the start request is acknowledged first, got $ack", WppMessageId.START_RESPONSE, ack.id)
+        val start = WifiStartResponse.parseFrom(ack.payload)
+        assertEquals(WppStatus.SUCCESS, start.status.number)
+        assertFalse(start.hasIpAddress())
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // joining takes 200 ms with a 20 ms keepalive setting: still nothing but the status
+        val joined = hu.read()
+        assertEquals("only the connection status once joined, got $joined", WppMessageId.CONNECTION_STATUS, joined.id)
+        assertEquals(WppStatus.SUCCESS, status(joined))
+        assertEquals("192.168.4.1" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))
+        assertEquals(WirelessBootstrap.State.READY, b.state)
+
+        // the head unit's pings are still answered, and the phone sends none of its own
+        hu.send(WppMessageId.PING_REQUEST, WifiPingRequest.newBuilder().setTimestamp(7).build())
+        assertEquals(WppMessageId.PING_RESPONSE, hu.read().id)
+        // last: the reader thread it starts keeps the link's next frame
+        assertNull("the phone sent something unprompted", nextFrameWithin(200))
+    }
+
+    @Test(timeout = 10_000)
+    fun adapterOrderWithUnsolicitedCredentials() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone, adapterOptions())
+
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        assertEquals("no info request: the credentials came already", WppMessageId.CONNECTION_STATUS, hu.read().id)
+        assertEquals("10.0.0.1" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun adapterOrderReportsAMissingAddressInTheStatus() {
+        start(Phone { JoinResult.Joined() }, adapterOptions())
+
+        hu.send(WppMessageId.START_REQUEST, startRequest(ip = ""))
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // no second start response contradicting the first one
+        assertEquals(WppStatus.INVALID_HOST, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        awaitEnd()
+        assertEquals(WppStatus.INVALID_HOST, (failure as WirelessBootstrapException).status)
+    }
+
+    @Test(timeout = 10_000)
+    fun adapterOrderFailureWhileNegotiatingCanBeRetried() {
+        start(Phone { JoinResult.Joined() }, adapterOptions())
+
+        // an adapter that dislikes the answer hangs up before sending its credentials
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        hu.hangUp()
+        awaitEnd()
+        assertTrue((failure as WirelessBootstrapException).whileNegotiating)
+    }
+
     @Test(timeout = 10_000)
     fun startResponseStatusIsEncoded() {
         // Google's receiver reads a WifiStartResponse without status as a failure

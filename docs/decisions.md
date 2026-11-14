@@ -150,3 +150,19 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Wireless handshake for aftermarket adapters
+
+The Bluetooth bootstrap has two answer orders (`WirelessHandshake`): AARE's own (serial and
+phone_info in the version response, pings throughout), which strict built-in head units need, and
+the official phone's exact order, which some aftermarket adapters need (status-only answers, the
+start request acknowledged before the credentials are asked for, no phone pings). Adapters also get
+the head unit's own version back in the AAP version exchange. "Wireless compatibility" picks one.
+
+- Auto is the default: for a car whose first attempt works and whose name doesn't look like an
+  adapter's it is exactly the old behaviour. What reached service discovery is remembered per
+  Bluetooth address (32 at most); the name guess only decides the first try.
+- The other order is tried once, 2 s later, only after a failure while negotiating (the head unit
+  hung up or went silent before sending its network): that is how each kind refuses the other's
+  order. Wi-Fi and TCP failures don't switch. The "car not ready yet" retries then go back to the
+  first choice; the switch doesn't use their budget.

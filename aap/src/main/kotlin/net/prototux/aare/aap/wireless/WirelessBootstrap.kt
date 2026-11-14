@@ -47,6 +47,26 @@ sealed interface JoinResult {
     class Failed(val status: Int, val message: String) : JoinResult
 }
 
+/** The order and contents of the phone's answers in the bootstrap, see [WirelessBootstrap.Options.handshake]. */
+enum class WirelessHandshake {
+    /**
+     * What strict built-in head units need: a version response carrying the device serial and
+     * phone_info, the credentials asked for at once after the start request, the start response
+     * and the connection status once joined, and phone pings throughout.
+     */
+    BUILT_IN,
+
+    /**
+     * What some aftermarket wireless adapters need, which follow the official phone's exact order
+     * and give up on anything else: a status-only version response (6.1), a status-only start
+     * response right after the start request and only then the info request, nothing but the
+     * connection status once joined, and no pings from the phone (theirs are still answered).
+     */
+    ADAPTER;
+
+    val other: WirelessHandshake get() = if (this == BUILT_IN) ADAPTER else BUILT_IN
+}
+
 class WirelessBootstrapException(
     message: String,
     val status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE,
@@ -73,6 +93,9 @@ class WirelessBootstrapException(
  * on a silent RFCOMM link within ~15 s and the user may still be looking at Android's
  * "connect to device" dialog. After a WifiVersionRequest a pinger thread does that instead, for
  * the rest of the link.
+ *
+ * [Options.handshake] picks between two answer orders (see [WirelessHandshake]): built-in head
+ * units and aftermarket adapters each refuse the other's.
  */
 class WirelessBootstrap(
     private val input: InputStream,
@@ -132,6 +155,11 @@ class WirelessBootstrap(
          * 0 disables.
          */
         val pingIntervalMs: Long = 1_000,
+        /**
+         * The order of our answers. [WirelessHandshake.ADAPTER] leaves out [deviceSerial],
+         * [instanceId] and every phone ping, whatever [keepaliveIntervalMs] and [pingIntervalMs] say.
+         */
+        val handshake: WirelessHandshake = WirelessHandshake.BUILT_IN,
     )
 
     enum class State { NEW, NEGOTIATING, JOINING, READY, DONE, FAILED }
@@ -153,6 +181,7 @@ class WirelessBootstrap(
     @Volatile private var linkEnded = false
     /** The link pinger runs (see [Options.pingIntervalMs]). */
     private var linkPinging = false
+    private val adapterOrder = options.handshake == WirelessHandshake.ADAPTER
 
     /**
      * Runs the bootstrap: returns once the link ended after a successful [Listener.onReady] (or
@@ -170,7 +199,9 @@ class WirelessBootstrap(
             val joined = join(credentials)
             val ip = start.ipAddress.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
             if (ip.isNullOrEmpty()) {
-                sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
+                // The adapter order already acknowledged the start request: say it in the status instead.
+                if (adapterOrder) sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.INVALID_HOST, "no head unit address"))
+                else sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
                 throw fail("head unit sent no IP address and the network has no gateway", WppStatus.INVALID_HOST)
             }
             if (ip != start.ipAddress) log.w("wireless: head unit sent no usable IP (\"${start.ipAddress}\"), using the gateway $ip")
@@ -178,7 +209,7 @@ class WirelessBootstrap(
             // Order as the official phone (aa-proxy-rs and open-headunit both expect 7 then 6). The
             // dongle hangs up after reading two frames, so failing to send these is not fatal: the
             // head unit already knows everything it needs and the TCP connect is the real test.
-            sendQuietly(WppMessageId.START_RESPONSE, startResponse(joined.localAddress, WppStatus.SUCCESS))
+            if (!adapterOrder) sendQuietly(WppMessageId.START_RESPONSE, startResponse(joined.localAddress, WppStatus.SUCCESS))
             sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.SUCCESS, null))
             ensureOpen()
             state = State.READY
@@ -258,6 +289,8 @@ class WirelessBootstrap(
                     }
                     if (start != null) log.w("wireless: repeated WifiStartRequest, using the latest one")
                     start = request
+                    // Adapters wait for this acknowledgement before they take the info request.
+                    if (adapterOrder) send(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.SUCCESS))
                     // A phone that already has the credentials skips the info request.
                     if (credentials == null && infoRequestedAt == 0L) {
                         send(WppMessageId.INFO_REQUEST, ByteArray(0))
@@ -287,6 +320,11 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
         }
+        if (adapterOrder) {
+            send(WppMessageId.VERSION_RESPONSE, WifiVersionResponse.newBuilder()
+                .setMajor(6).setMinor(1).setStatus(WppStatus.SUCCESS).build().toByteArray())
+            return
+        }
         // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
         // type the head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold
         // the WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
@@ -310,7 +348,7 @@ class WirelessBootstrap(
      * [Options.pingIntervalMs]); head units that send no WifiVersionRequest get none.
      */
     private fun startLinkPinger() {
-        if (options.pingIntervalMs <= 0 || linkPinging) return
+        if (options.pingIntervalMs <= 0 || linkPinging || adapterOrder) return
         linkPinging = true
         log.i("wireless: pinging the head unit every ${options.pingIntervalMs} ms")
         thread(name = "wpp-ping", isDaemon = true) {
@@ -381,7 +419,7 @@ class WirelessBootstrap(
         private val stopped = CountDownLatch(1)
 
         fun start() {
-            if (options.keepaliveIntervalMs <= 0 || linkPinging) return
+            if (options.keepaliveIntervalMs <= 0 || linkPinging || adapterOrder) return
             thread(name = "wpp-keepalive", isDaemon = true) {
                 while (!stopped.await(options.keepaliveIntervalMs, TimeUnit.MILLISECONDS) && !linkEnded && !closed.get()) {
                     val ping = WifiPingRequest.newBuilder().setTimestamp(System.currentTimeMillis()).build()
