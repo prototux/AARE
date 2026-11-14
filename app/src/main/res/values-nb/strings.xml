@@ -246,6 +246,7 @@
     <string name="notif_cert_download_failed">Kunne ikke laste ned sertifikatet: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Kobler til trådløst…</string>
     <string name="notif_status_not_connected">Ikke tilkoblet</string>
+    <string name="notif_status_reconnecting">Forbindelsen til bilen ble brutt, kobler til igjen (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · beholder samtykket til skjermopptak for bilaudio (Stopp frigir det)</string>
     <string name="notif_cert_changed_title">Head unit-sertifikat endret</string>
     <string name="notif_new_head_unit_title">Ny head unit</string>

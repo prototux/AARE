@@ -246,6 +246,7 @@
     <string name="notif_cert_download_failed">Não foi possível transferir o certificado: %1$s</string>
     <string name="notif_status_connecting_wirelessly">A ligar sem fios…</string>
     <string name="notif_status_not_connected">Não ligado</string>
+    <string name="notif_status_reconnecting">Ligação ao carro perdida, a voltar a ligar (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · a manter o consentimento de captura de ecrã para o áudio do carro (Parar liberta-o)</string>
     <string name="notif_cert_changed_title">Certificado da unidade principal alterado</string>
     <string name="notif_new_head_unit_title">Nova unidade principal</string>
