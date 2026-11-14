@@ -49,6 +49,11 @@
     <string name="setup_section_connecting">الاتصال</string>
     <string name="setup_toggle_wireless_title">الاتصال اللاسلكي</string>
     <string name="setup_toggle_wireless_subtitle">الاتصال بالسيارات المقترنة عبر Wi-Fi عند دخولها نطاق Bluetooth</string>
+    <string name="setup_choice_wireless_compat">توافق الاتصال اللاسلكي</string>
+    <string name="setup_choice_wireless_compat_auto">تلقائي</string>
+    <string name="setup_choice_wireless_compat_builtin">مدمجة</string>
+    <string name="setup_choice_wireless_compat_adapter">محوّل</string>
+    <string name="setup_hint_wireless_compat">تتوقع وحدات التحكم المدمجة ومحوّلات الاتصال اللاسلكي الإضافية (الموصولة بمنفذ USB في السيارة) أن يجيب الهاتف بترتيبات مختلفة. يستخدم الوضع التلقائي الترتيب القياسي، أو ترتيب المحوّل لسيارة اتصلت به آخر مرة. اختر «محوّل» إذا لم يتصل محوّلك اللاسلكي، ويعيد «مدمجة» الترتيب القياسي لكل السيارات.</string>
     <string name="setup_toggle_resume_music_title">استئناف الموسيقى</string>
     <string name="setup_toggle_resume_music_subtitle">تشغيل آخر تطبيق موسيقى كان يعمل عند اتصال السيارة</string>
     <string name="setup_bt_address_label">عنوان Bluetooth للهاتف (اختياري)</string>

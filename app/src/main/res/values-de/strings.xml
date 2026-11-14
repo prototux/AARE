@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Verbinden</string>
     <string name="setup_toggle_wireless_title">Kabellos</string>
     <string name="setup_toggle_wireless_subtitle">Verbindet sich über Wi-Fi mit gekoppelten Autos, sobald sie in Bluetooth-Reichweite kommen</string>
+    <string name="setup_choice_wireless_compat">Kabellos-Kompatibilität</string>
+    <string name="setup_choice_wireless_compat_auto">Automatisch</string>
+    <string name="setup_choice_wireless_compat_builtin">Eingebaut</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">Eingebaute Head Units und nachgerüstete kabellose Adapter (am USB-Anschluss des Autos) erwarten die Antworten des Telefons in unterschiedlicher Reihenfolge. Automatisch nutzt die Standardreihenfolge oder die Adapter-Reihenfolge für ein Auto, das sich zuletzt damit verbunden hat. Wählen Sie Adapter, wenn sich Ihr kabelloser Adapter nicht verbindet; Eingebaut kehrt für alle Autos zur Standardreihenfolge zurück.</string>
     <string name="setup_toggle_resume_music_title">Musik fortsetzen</string>
     <string name="setup_toggle_resume_music_subtitle">Startet die zuletzt verwendete Musik-App, wenn sich das Auto verbindet</string>
     <string name="setup_bt_address_label">Bluetooth-Adresse des Telefons (optional)</string>
