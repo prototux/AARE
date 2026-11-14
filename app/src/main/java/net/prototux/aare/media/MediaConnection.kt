@@ -594,8 +594,8 @@ internal class MediaConnection(
         )
 
         /**
-         * What is told to media apps about itself, as connection and root hints: exactly
-         * The usual set, so apps that check for it take us for it.
+         * What is told to media apps about itself, as connection and root hints: the usual set,
+         * so apps that check for it take us for it, plus the album art size AARE can use.
          */
         fun rootHints(context: Context) = Bundle().apply {
             putBoolean(MediaKeys.SEARCH_SUPPORTED, true)
@@ -603,6 +603,9 @@ internal class MediaConnection(
             putInt(MediaKeys.BROWSER_ICON_SIZE, (MediaKeys.BROWSER_ICON_SIZE_DP * context.resources.displayMetrics.density).roundToInt())
             putInt(MediaKeys.ROOT_CHILDREN_LIMIT, MediaKeys.ROOT_CHILDREN_LIMIT_VALUE)
             putInt(MediaKeys.ROOT_CHILDREN_SUPPORTED_FLAGS, MediaKeys.FLAG_BROWSABLE)
+            // Not part of the usual set, but harmless to apps that ignore it, and it keeps the
+            // ones that honour it from sending full-size artwork AARE only scales down again.
+            putInt(MediaKeys.MEDIA_ART_SIZE_PIXELS, MediaKeys.ART_SIZE_PX)
             // No EXTRA_RECENT/OFFLINE/SUGGESTED: Android Auto only sends them to ask for those special
             // roots, and some apps (VLC) only check that the key is there, not its value.
         }

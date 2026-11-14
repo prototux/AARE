@@ -13,6 +13,8 @@ internal object MediaKeys {
     const val ROOT_CHILDREN_SUPPORTED_FLAGS = "androidx.media.MediaBrowserCompat.Extras.KEY_ROOT_CHILDREN_SUPPORTED_FLAGS"
     /** The size browse list icons are drawn at, in pixels (Google's own key, no androidx copy). */
     const val BROWSER_ICON_SIZE = "com.google.android.gms.car.media.BrowserIconSize"
+    /** The largest album art AARE uses, so apps don't send bigger art than it can show ([ART_SIZE_PX]). */
+    const val MEDIA_ART_SIZE_PIXELS = "android.media.extras.MEDIA_ART_SIZE_HINT_PIXELS"
 
     /** MediaBrowserCompat.MediaItem.FLAG_BROWSABLE: like Android Auto, we ask for browsable root children. */
     const val FLAG_BROWSABLE = 1
