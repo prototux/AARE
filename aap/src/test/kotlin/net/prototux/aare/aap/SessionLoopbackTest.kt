@@ -47,6 +47,9 @@ open class SessionLoopbackTest {
 
     /** The protocol minor version the simulated head unit announces (1.x). */
     protected open val headUnitMinor = 6
+
+    /** Whether the phone opens the sensor channel before the others (a vehicles.json quirk). */
+    protected open val sensorChannelFirst = false
     private val modernNav get() = headUnitMinor >= 6
 
     private lateinit var hu: HeadUnitSimulator
@@ -95,7 +98,7 @@ open class SessionLoopbackTest {
 
     private inner class Callbacks : AapSession.Callbacks {
         override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> =
-            response.channelsList.mapNotNull { s ->
+            response.channelsList.also { session.sensorChannelFirst = sensorChannelFirst }.mapNotNull { s ->
                 when {
                     s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> VideoChannel(s, VideoListener()).also { video = it }
                     s.hasMediaSinkService() -> AudioChannel(s).also { audio += it }
@@ -372,18 +375,21 @@ open class SessionLoopbackTest {
     }
 
     @Test
-    fun sensorChannelOpensFirst() {
+    fun channelOpenOrder() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
-        assertEquals("first open request", hu.sensors, hu.openOrder.poll())
+        // All at once in discovery order by default, the sensor channel first only when asked to.
+        assertEquals("first open request", if (sensorChannelFirst) hu.sensors else hu.video, hu.openOrder.poll())
         assertEquals(setOf(1, 2, 3, 4, 5, 6, 7, 8, 9), hu.openedChannels.toSet())
     }
 
     @Test
-    fun duplicateOpenResponseIsAnsweredWithUnexpectedMessage() {
+    fun duplicateOpenResponseIsIgnored() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         hu.send(hu.input, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
-        assertEquals(hu.input, hu.unexpectedReplies.poll(3, TimeUnit.SECONDS))
         assertFalse("session must go on", closed.await(500, TimeUnit.MILLISECONDS))
+        assertEquals("no answer to it", null, hu.unexpectedReplies.poll())
+        hu.tap(10, 20)
+        assertNotNull("input still flows", inputs.poll(3, TimeUnit.SECONDS))
     }
 
     @Test
@@ -397,11 +403,11 @@ open class SessionLoopbackTest {
     }
 
     @Test
-    fun byeByeResponseWithoutRequestIsAnError() {
+    fun byeByeResponseWithoutRequestEndsTheSessionCleanly() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         hu.send(0, ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance())
         assertTrue(closed.await(3, TimeUnit.SECONDS))
-        assertNotNull(closeError)
+        assertEquals(null, closeError)
     }
 
     @Test
@@ -489,4 +495,9 @@ class ZeroOmittingSessionLoopbackTest : SessionLoopbackTest() {
  */
 class ProtocolOneFiveSessionLoopbackTest : SessionLoopbackTest() {
     override val headUnitMinor = 5
+}
+
+/** The same sessions with the sensor channel opened before the others (the vehicles.json quirk). */
+class SensorFirstSessionLoopbackTest : SessionLoopbackTest() {
+    override val sensorChannelFirst = true
 }

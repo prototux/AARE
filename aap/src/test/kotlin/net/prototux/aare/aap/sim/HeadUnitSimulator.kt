@@ -142,6 +142,10 @@ class HeadUnitSimulator(
     val navStatuses = LinkedBlockingQueue<NavigationStatus.NavigationStatusEnum>()
     /** False plays a head unit that never answers the phone's bye-bye. */
     @Volatile var answerByeBye = true
+    /** False plays a head unit that never answers the phone's pings. */
+    @Volatile var answerPings = true
+    /** The ping interval the head unit asks for in its discovery response. */
+    @Volatile var pingIntervalMs = 1000
     /** AUTH_COMPLETE's status: non-zero plays a head unit that refuses the phone certificate. */
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
@@ -220,8 +224,10 @@ class HeadUnitSimulator(
             ControlMsg.PING_REQUEST -> {
                 val req = PingRequest.parseFrom(m.bodyBytes())
                 pingRequests.add(req)
-                send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
-                pingsAnswered.incrementAndGet()
+                if (answerPings) {
+                    send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
+                    pingsAnswered.incrementAndGet()
+                }
             }
             ControlMsg.AUDIO_FOCUS_REQUEST -> {
                 val req = AudioFocusRequest.parseFrom(m.bodyBytes())
@@ -351,7 +357,7 @@ class HeadUnitSimulator(
                 .setHeadUnitMake("AARE").setHeadUnitModel("hu-sim").setHeadUnitSoftwareVersion("1"))
             .setDisplayName("Simulated car")
             .setConnectionConfiguration(ConnectionConfiguration.newBuilder().setPingConfiguration(
-                PingConfiguration.newBuilder().setIntervalMs(1000).setTimeoutMs(3000).setTrackedPingCount(5)))
+                PingConfiguration.newBuilder().setIntervalMs(pingIntervalMs).setTimeoutMs(3000).setTrackedPingCount(5)))
             .addChannels(Service.newBuilder().setId(video).setMediaSinkService(MediaSinkService.newBuilder()
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)

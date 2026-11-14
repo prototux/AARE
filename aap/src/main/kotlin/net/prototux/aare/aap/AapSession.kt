@@ -185,10 +185,19 @@ class AapSession(
     private var pendingOpens = 0
     /** Channels whose open request awaits its response. */
     private val awaitingOpen = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
-    /** Channels opened only once the sensor channel has been answered (see [onServiceDiscovery]). */
+    /** Channels opened only once the sensor channel has been answered (see [sensorChannelFirst]). */
     private val deferredOpens = AtomicReference<List<ServiceChannel>?>(null)
-    /** Channels that sent data before they were open, logged once each (reader thread only). */
+    /** Channels the head unit refused or closed: their data is dropped (reader thread only). */
+    private val shutChannels = HashSet<Int>()
+    /** Channels that sent data before their open was answered, logged once each (reader thread only). */
     private val earlyData = HashSet<Int>()
+
+    /**
+     * Open the sensor channel first and the others once the head unit has answered it (or after
+     * [DEFERRED_OPEN_MS]), instead of all at once. For head units that need it (vehicles.json);
+     * set it from [Callbacks.onServiceDiscovery].
+     */
+    @Volatile var sensorChannelFirst = false
     /** The phone said bye-bye: only then is a bye-bye response expected. */
     @Volatile private var byeByeSent = false
     /**
@@ -214,6 +223,10 @@ class AapSession(
     @Volatile private var pingEvidence = false
     /** Timestamps of the phone's pings not answered yet, oldest first (guarded by itself). */
     private val pingsInFlight = ArrayDeque<Long>()
+    /** The head unit answered one of the phone's pings: only then are unanswered pings capped. */
+    @Volatile private var pingAnswered = false
+    /** The phone's ping period: the head unit's ping configuration if it gives one. */
+    @Volatile private var pingIntervalMs = DEFAULT_PING_INTERVAL_MS
 
     /** Round trip of the last ping, for diagnostics. */
     @Volatile var lastRttMs = -1L
@@ -240,7 +253,7 @@ class AapSession(
     /**
      * Ends the session politely: bye-bye, then close when the head unit answers or after a short
      * grace period. The bye-bye goes out whatever the state once the version
-     * exchange is done, in the clear while TLS isn't up yet, and the answer gets 200 ms.
+     * exchange is done, in the clear while TLS isn't up yet.
      */
     fun stop(reason: ByeByeReason = ByeByeReason.USER_SELECTION) {
         if (closed.get()) return
@@ -370,26 +383,29 @@ class AapSession(
                 ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
                     ch.opened = false
+                    shutChannels.add(ch.id)
                     runHandler(ch) { ch.onClosed() }
                 }
                 else -> log.w("unexpected control message on channel ${ch.id}: $msg")
             }
             return
         }
-        // A channel's data counts only once the channel is open.
         if (!ch.opened) {
-            if (earlyData.add(ch.id)) log.w("dropping data on channel ${ch.id} (${ch.name}) before it is open: $msg")
-            return
+            // A refused or closed channel has nothing to say. One whose open isn't answered yet is
+            // taken as open: some head units start talking before they answer.
+            if (ch.id in shutChannels) {
+                if (earlyData.add(ch.id)) log.w("dropping data on refused or closed channel ${ch.id} (${ch.name}): $msg")
+                return
+            }
+            if (earlyData.add(ch.id)) log.w("data on channel ${ch.id} (${ch.name}) before its open was answered, delivering it: $msg")
         }
         runHandler(ch) { ch.onMessage(msg) }
     }
 
     private fun onChannelOpenResponse(ch: ServiceChannel, msg: AapMessage) {
         if (ch.id !in awaitingOpen) {
-            // An open response for a channel that isn't being opened (a
-            // duplicate, or one never asked for) gets UNEXPECTED_MESSAGE on that channel, in the clear.
-            log.w("unexpected channel open response on channel ${ch.id} (${ch.name})")
-            sendRaw(ch.id, AapMessage.plaintext(ControlMsg.UNEXPECTED_MESSAGE, ByteArray(0)), encrypted = false)
+            // A duplicate, or one never asked for: it must not count towards RUNNING again.
+            log.w("ignoring unexpected channel open response on channel ${ch.id} (${ch.name})")
             return
         }
         val body = msg.bodyBytes()
@@ -401,12 +417,13 @@ class AapSession(
         }
         awaitingOpen.remove(ch.id)
         if (accepted) {
+            if (unknownOpenStatus(body)) log.w("channel ${ch.id} (${ch.name}): open response with a status this build doesn't know, opening it")
             ch.opened = true
             log.i("channel ${ch.id} (${ch.name}) open")
             runHandler(ch) { ch.onOpened() }
         } else {
-            val resp = ChannelOpenResponse.parseFrom(body)
-            log.w("head unit refused channel ${ch.id} (${ch.name}): ${if (resp.hasStatus()) resp.status else "unknown status"}")
+            shutChannels.add(ch.id)
+            log.w("head unit refused channel ${ch.id} (${ch.name}): ${ChannelOpenResponse.parseFrom(body).status}")
         }
         if (ch.service.hasSensorSourceService()) openDeferred()
         if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
@@ -472,9 +489,11 @@ class AapSession(
                 sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance().toByteArray()),
                     onSent = { close(why, null) })
             }
-            // A bye-bye response the phone didn't ask for is an error.
-            ControlMsg.BYEBYE_RESPONSE ->
-                if (byeByeSent) close("session ended", null) else fail("bye-bye response without a bye-bye request", null)
+            ControlMsg.BYEBYE_RESPONSE -> {
+                // One the phone didn't ask for still ends the session cleanly, as the head unit means it to.
+                if (!byeByeSent) log.w("bye-bye response without a bye-bye request")
+                close("session ended", null)
+            }
             ControlMsg.SERVICE_DISCOVERY_UPDATE -> onServiceUpdate(ServiceDiscoveryUpdate.parseFrom(msg.bodyBytes()))
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
             else -> log.d("unhandled control message $msg")
@@ -577,9 +596,8 @@ class AapSession(
         discovery = resp
         log.i("head unit: ${describe(resp)}")
         if (resp.sessionConfiguration != 0) log.i("head unit UI chrome: ${UiChrome(resp.sessionConfiguration)}")
-        // A discovery response with no ping configuration (field 16) still gets pings
-        // at a fixed rate; aasdk-based head units send one, so its timeout still sizes the watchdog.
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
+            if (pc.hasIntervalMs() && pc.intervalMs > 0) pingIntervalMs = pc.intervalMs.toLong().coerceIn(250, 5_000)
             if (pc.hasTimeoutMs() && pc.timeoutMs > 0) deadAfterMs = maxOf(pc.timeoutMs.toLong() * 3, 20_000L)
         }
         val wanted = callbacks.onServiceDiscovery(this, resp)
@@ -589,11 +607,8 @@ class AapSession(
             ch.attach(this)
             channels[ch.id] = ch
         }
-        // The sensor channel first, the others after it (once its
-        // startup checks pass; here once the head unit has answered the sensor channel, or after
-        // DEFERRED_OPEN_MS if it doesn't).
         val sensors = wanted.filter { it.service.hasSensorSourceService() }
-        if (sensors.isEmpty() || sensors.size == wanted.size) {
+        if (!sensorChannelFirst || sensors.isEmpty() || sensors.size == wanted.size) {
             wanted.forEach(::requestOpen)
         } else {
             deferredOpens.set(wanted - sensors.toSet())
@@ -658,17 +673,22 @@ class AapSession(
             if (options.sendPings) sendPing()
             val silent = now() - lastInboundMs
             if (silent > (if (pingEvidence) deadAfterMs else 60_000L)) fail("head unit silent for $silent ms", null)
-        }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        }, pingIntervalMs, pingIntervalMs, TimeUnit.MILLISECONDS)
     }
 
     /**
-     * On wireless: the phone's clock in nanoseconds, bug_report explicitly
-     * false, and no new ping while [MAX_PINGS_IN_FLIGHT] are unanswered.
+     * On wireless: the phone's clock in nanoseconds, bug_report explicitly false. Once the head
+     * unit has answered a ping, no new one goes out while [MAX_PINGS_IN_FLIGHT] are unanswered;
+     * until then pings keep going as they always have (some head units never answer them), and
+     * only the latest are remembered.
      */
     private fun sendPing() {
         val timestamp = options.clockNanos()
         synchronized(pingsInFlight) {
-            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) return
+            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) {
+                if (pingAnswered) return
+                pingsInFlight.removeFirst()
+            }
             pingsInFlight.addLast(timestamp)
         }
         sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(timestamp).setBugReport(false).build())
@@ -683,6 +703,7 @@ class AapSession(
                 if (sent == timestamp) break
             }
         }
+        pingAnswered = true
         lastRttMs = (options.clockNanos() - timestamp) / 1_000_000
     }
 
@@ -739,9 +760,9 @@ class AapSession(
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
         /** How long the phone waits for the head unit's answer to its bye-bye. */
-        private const val BYEBYE_TIMEOUT_MS = 200L
-        /** The phone's ping period on wireless (default). */
-        private const val PING_INTERVAL_MS = 1_000L
+        private const val BYEBYE_TIMEOUT_MS = 1_000L
+        /** The phone's ping period on wireless when the head unit doesn't give one. */
+        private const val DEFAULT_PING_INTERVAL_MS = 1_000L
         private const val MAX_PINGS_IN_FLIGHT = 10
         /** Longest wait for the sensor channel's answer before opening the other channels. */
         private const val DEFERRED_OPEN_MS = 1_000L
@@ -777,19 +798,22 @@ class AapSession(
         }
 
         /**
-         * Whether a channel open response accepts the channel. Only SUCCESS
-         * does, so a status this build doesn't know (which protobuf keeps as an unknown field and
-         * would read as the SUCCESS default) leaves the channel closed. A response with no status
-         * at all still counts as SUCCESS: proto3 head units (Ford SYNC 4, #74) leave the 0 out.
+         * Whether a channel open response accepts the channel: every status but a known refusal.
+         * A response with no status means SUCCESS (proto3 head units such as Ford SYNC 4 leave the
+         * 0 out, #74), and so does a status this build doesn't know, which protobuf keeps as an
+         * unknown field and reads as the SUCCESS default.
          */
-        internal fun openAccepted(body: ByteArray): Boolean {
-            val resp = ChannelOpenResponse.parseFrom(body)
-            if (resp.hasStatus()) return resp.status == MessageStatus.STATUS_SUCCESS
+        internal fun openAccepted(body: ByteArray): Boolean =
+            ChannelOpenResponse.parseFrom(body).status == MessageStatus.STATUS_SUCCESS
+
+        /** Whether the response carries a status value this build doesn't know (for the log). */
+        internal fun unknownOpenStatus(body: ByteArray): Boolean {
+            if (ChannelOpenResponse.parseFrom(body).hasStatus()) return false
             val input = CodedInputStream.newInstance(body)
             while (true) {
                 val tag = input.readTag()
-                if (tag == 0) return true
-                if (tag ushr 3 == 1) return false
+                if (tag == 0) return false
+                if (tag ushr 3 == 1) return true
                 input.skipField(tag)
             }
         }
