@@ -439,6 +439,71 @@ class WirelessBootstrapTest {
         assertEquals(Status.STATUS_SUCCESS, response.status)
     }
 
+    @Test(timeout = 10_000)
+    fun versionRequestWithoutMajorIsAnsweredWithZero() {
+        start(Phone { JoinResult.Joined() })
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.getDefaultInstance())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertTrue(response.hasMajor())
+        assertEquals(0, response.major)
+        assertEquals(0, response.minor)
+        assertEquals(WppStatus.SUCCESS, response.status)
+    }
+
+    @Test(timeout = 10_000)
+    fun incompatibleVersionIsRefusedButTheHeadUnitMayStillStart() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(3).setMinor(0).build())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertEquals(WppStatus.NO_COMPATIBLE_VERSION, response.status)
+        assertEquals(3, response.major)
+
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitChannelsThePhoneCannotUseAreRefused() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0,
+            phoneWifiFrequencies = { setOf(2412, 2437, 2462) },
+        ))
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(4).setMinor(2)
+            .addSupportedWifiChannels(5180).addSupportedWifiChannels(5745).build())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertEquals(WppStatus.NO_SUPPORTED_WIFI_CHANNELS, response.status)
+    }
+
+    @Test
+    fun versionStatusFollowsAndroidAuto() {
+        val any = listOf(2437)
+        val phone = setOf(2437)
+        assertEquals(WppStatus.SUCCESS, WirelessBootstrap.versionStatus(0, 0, emptyList(), phone))
+        for (major in listOf(1, 4, 5, 6)) assertEquals("WPP $major", WppStatus.SUCCESS, WirelessBootstrap.versionStatus(major, 0, any, phone))
+        for (major in listOf(2, 3, 7, 10, -1)) {
+            assertEquals("WPP $major", WppStatus.NO_COMPATIBLE_VERSION, WirelessBootstrap.versionStatus(major, 0, any, phone))
+        }
+        // the channel check only applies below 4.5
+        assertEquals(WppStatus.NO_SUPPORTED_WIFI_CHANNELS, WirelessBootstrap.versionStatus(4, 4, emptyList(), phone))
+        assertEquals(WppStatus.SUCCESS, WirelessBootstrap.versionStatus(4, 5, emptyList(), phone))
+        assertEquals(WppStatus.NO_SUPPORTED_WIFI_CHANNELS, WirelessBootstrap.versionStatus(1, 7, listOf(5180), phone))
+    }
+
+    @Test
+    fun channelCheckFollowsAndroidAuto() {
+        val phone = setOf(2412, 5180)
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(5745, 5180), phone))
+        assertFalse(WirelessBootstrap.channelsUsable(listOf(5745), phone))
+        assertFalse("no channels listed", WirelessBootstrap.channelsUsable(emptyList(), phone))
+        assertTrue("channel numbers are not checked", WirelessBootstrap.channelsUsable(listOf(36), phone))
+        assertTrue("5000 is not checked", WirelessBootstrap.channelsUsable(listOf(5000), phone))
+        assertTrue("unknown phone frequencies skip the check", WirelessBootstrap.channelsUsable(emptyList(), null))
+    }
+
     @Test
     fun securityModesMapToWhatThePhoneCanConfigure() {
         assertEquals(WifiSecurity.WPA2_PERSONAL, WppSecurityMode.toSecurity(8, "pw"))
