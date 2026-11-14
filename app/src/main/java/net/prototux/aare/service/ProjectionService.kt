@@ -89,6 +89,8 @@ class ProjectionService : Service() {
     private var projection: MediaProjection? = null
     private var usbAccessory: UsbAccessory? = null
     private var usbRetries = 0
+    /** Waiting for the head unit of a dropped USB link to come back ([awaitUsbHeadUnit]). */
+    private var usbWait: Runnable? = null
     /** The accessory whose USB permission dialog is showing; keeps the service alive until answered. */
     private var usbPermissionPending: UsbAccessory? = null
     private var usbPermissionReceiver: BroadcastReceiver? = null
@@ -269,6 +271,11 @@ class ProjectionService : Service() {
     }
 
     private fun openUsb(accessory: UsbAccessory) {
+        // A head unit back after a drop is announced twice (its re-attach, and our wait for it).
+        if (session != null && UsbReattach.same(usbAccessory, accessory)) {
+            log("USB: already connected to this head unit")
+            return
+        }
         usbAccessory = accessory
         val usb = getSystemService(UsbManager::class.java)
         // Some phones (Samsung) don't grant the permission with USB_ACCESSORY_ATTACHED: opening
@@ -288,7 +295,7 @@ class ProjectionService : Service() {
      * EXTRA_PERMISSION_GRANTED and EXTRA_ACCESSORY to it.
      */
     private fun requestUsbPermission(usb: UsbManager, accessory: UsbAccessory) {
-        if (usbPermissionPending == accessory) return // dialog already showing
+        if (UsbReattach.same(usbPermissionPending, accessory)) return // dialog already showing
         usbPermissionPending = accessory
         if (usbPermissionReceiver == null) {
             val receiver = object : BroadcastReceiver() {
@@ -325,7 +332,7 @@ class ProjectionService : Service() {
         }
         // Not answered (dialog dismissed without a broadcast): stop waiting after a while.
         main.postDelayed({
-            if (usbPermissionPending == accessory) { usbPermissionPending = null; scheduleIdleStop() }
+            if (UsbReattach.same(usbPermissionPending, accessory)) { usbPermissionPending = null; scheduleIdleStop() }
         }, 120_000)
     }
 
@@ -408,17 +415,47 @@ class ProjectionService : Service() {
             // The budget counts drops in a row, not per plug-in: a head unit that drops each link at once is not retried forever.
             if (SystemClock.elapsedRealtime() - sessionStart > USB_RETRY_RESET_MS) usbRetries = 0
             val acc = usbAccessory
-            if (acc != null && pinRefusal == null && usbRetries++ < 3 &&
-                UsbReattach.stillAttached(UsbReattach.id(acc)) { getSystemService(UsbManager::class.java).accessoryList?.map(UsbReattach::id) }
-            ) {
-                // openUsb checks hasPermission() again and asks for it if it was lost.
-                main.postDelayed({ if (this@ProjectionService.session == null) openUsb(acc) }, 1_500)
+            if (acc != null && pinRefusal == null && usbRetries++ < 3) {
+                awaitUsbHeadUnit(UsbReattach.id(acc))
             } else {
                 usbAccessory = null
                 usbRetries = 0
                 main.postDelayed({ if (idle()) stopEverything() }, 3_000)
             }
         }
+    }
+
+    /** Waits for the head unit of a dropped USB link to come back, then reconnects (see [UsbReattach.next]). */
+    private fun awaitUsbHeadUnit(wanted: UsbReattach.Id) {
+        usbWait?.let(main::removeCallbacks)
+        val since = SystemClock.elapsedRealtime()
+        val look = object : Runnable {
+            override fun run() {
+                if (usbWait !== this) return
+                if (destroyed || session != null) { usbWait = null; return }
+                val usb = getSystemService(UsbManager::class.java)
+                val back = runCatching { usb.accessoryList?.firstOrNull { UsbReattach.id(it) == wanted } }.getOrNull()
+                val permitted = back != null && runCatching { usb.hasPermission(back) }.getOrDefault(false)
+                val waited = SystemClock.elapsedRealtime() - since
+                when (UsbReattach.next(back != null, permitted, waited)) {
+                    UsbReattach.Step.WAIT -> main.postDelayed(this, UsbReattach.LOOK_EVERY_MS)
+                    UsbReattach.Step.OPEN, UsbReattach.Step.ASK -> {
+                        usbWait = null
+                        log("USB: head unit back after $waited ms${if (permitted) "" else ", without the USB permission"}")
+                        openUsb(back!!) // asks for the permission when it's missing
+                    }
+                    UsbReattach.Step.GIVE_UP -> {
+                        usbWait = null
+                        log("USB: head unit not back after $waited ms")
+                        usbAccessory = null
+                        usbRetries = 0
+                        scheduleIdleStop()
+                    }
+                }
+            }
+        }
+        usbWait = look
+        main.postDelayed(look, UsbReattach.FIRST_LOOK_MS)
     }
 
     // ------------------------------------------------------------------ audio capture consent
@@ -609,10 +646,11 @@ class ProjectionService : Service() {
     }
 
     /** Nothing to keep the service for. A held screen-capture consent counts: it can't be given again silently. */
-    private fun idle() = session == null && usbPermissionPending == null && tcpServer == null && wirelessJob?.isActive != true && projection == null
+    private fun idle() = session == null && usbPermissionPending == null && usbWait == null && tcpServer == null && wirelessJob?.isActive != true && projection == null
 
     private fun stopEverything() {
         // No USB reconnect after this: the session's onEnded may come after the stop.
+        usbWait?.let(main::removeCallbacks); usbWait = null
         usbAccessory = null
         usbRetries = 0
         session?.stop()
