@@ -290,6 +290,7 @@
     <string name="nav_dashboard_where_to">Wohin?</string>
     <string name="nav_dashboard_install_hint">Installieren Sie eine Navigations-App, die Android Auto auf dem Telefon unterstützt</string>
     <string name="nav_dashboard_choose_app">Wählen Sie Ihre Karten-App</string>
+    <string name="nav_dashboard_standalone_hint">%1$s ist eine Telefon-App: Ihre Karte öffnet sich im Vollbild.</string>
     <string name="nav_guidance_on_phone">%1$s, auf dem Telefon</string>
     <string name="nav_next_step_then">Danach</string>
 
@@ -360,15 +361,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps auf dem Autobildschirm (erweitert)</string>
-    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
+    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, standardmäßig nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
     <string name="standalone_toggle_title">Telefon-Apps auf dem Autobildschirm starten</string>
-    <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus. Nur beim Parken angezeigt.</string>
+    <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus und für jede, was sie während der Fahrt darf.</string>
     <string name="standalone_keep_awake_title">Kein-Schlaf-Modus für eigenständige Apps</string>
     <string name="standalone_keep_awake_subtitle">Hält den physischen Telefonbildschirm wach, solange eine App geöffnet ist. Auf betroffenen Android-17-Telefonen stoppen virtuelle Displays, wenn der Telefonbildschirm aus ist. Verbraucht mehr Akku.</string>
     <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
     <string name="standalone_paused_driving">Während der Fahrt pausiert.</string>
+    <string name="standalone_audio_only_driving">Bildschirm während der Fahrt ausgeblendet. Der Ton läuft weiter.</string>
+    <string name="standalone_rule_title">Während der Fahrt</string>
+    <string name="standalone_rule_parked">Nur beim Parken</string>
+    <string name="standalone_rule_audio">Nur Audio</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Wird während der Fahrt angezeigt und als Navigations-App des Autos verwendet: Sie belegt den Kartenplatz und öffnet die Ziele, nach denen Sie fragen.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Ein Webbrowser auf dem Autobildschirm, für wenn du geparkt bist</string>
