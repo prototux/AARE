@@ -261,6 +261,8 @@ class CarRuntime(
     /** The phone's light sensor's night/day reading, while Settings.nightSource asks for it. */
     private var lightNight: Boolean? = null
     private var lightSensor: LightSensorFeed? = null
+    /** Set by [stop]: a settings change queued before it must not start the light sensor again. */
+    private var stopped = false
     /** The head unit's driver position. */
     var rightHandDrive = false
         set(v) { field = v; applyScreenSettings() }
@@ -321,11 +323,16 @@ class CarRuntime(
         }
     }
 
-    /** Starts or stops the phone's light sensor to match [Settings.nightSource]. */
+    /**
+     * Starts or stops the phone's light sensor: on only while the colours follow day/night
+     * ([Settings.THEME_AUTO]) and [Settings.nightSource] is the light sensor, so a fixed dark or
+     * light theme never keeps the sensor awake.
+     */
     private fun updateLightSensor() {
-        val wanted = settings.nightSource == Settings.NIGHT_SOURCE_LIGHT_SENSOR
+        val wanted = !stopped && settings.carTheme == Settings.THEME_AUTO && settings.nightSource == Settings.NIGHT_SOURCE_LIGHT_SENSOR
         if (wanted && lightSensor == null) {
-            val feed = LightSensorFeed(context) { night -> main.post { lightNight = night; applyScreenSettings() } }
+            // Called on the main thread, and never after the feed's stop() (it drops queued callbacks).
+            val feed = LightSensorFeed(context) { night -> lightNight = night; applyScreenSettings() }
             // No light sensor on this phone: nothing to start: carNight (or "always dark") still applies.
             if (feed.available) { feed.start(); lightSensor = feed }
         } else if (!wanted && lightSensor != null) {
@@ -385,6 +392,7 @@ class CarRuntime(
     }
 
     fun stop() {
+        stopped = true
         running.remove(this)
         runCatching { context.unregisterReceiver(packageReceiver) }
         settings.unregisterListener(settingsListener)
