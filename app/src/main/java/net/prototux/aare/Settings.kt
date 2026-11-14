@@ -368,6 +368,11 @@ class Settings(context: Context) {
         get() = prefs.getInt("cert_index", 0)
         set(v) = prefs.edit { putInt("cert_index", v) }
 
+    /** The head unit connected last, by its KnownHeadUnits key: the one the "Car quirks" page is for. */
+    var lastHeadUnit: String?
+        get() = prefs.getString("last_head_unit", null)
+        set(v) = prefs.edit { putString("last_head_unit", v) }
+
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val RAIL_AUTO = "auto"
