@@ -88,6 +88,8 @@ class ProjectionService : Service() {
     private var tcpServerLocalhost = false
     /** The running session came in over the head unit server's LAN listener, which turns off after it. */
     private var lanSession = false
+    /** Consecutive LAN sessions closed before the version exchange (the head unit's own dropped first try). */
+    private var lanVersionDrops = 0
     private var projection: MediaProjection? = null
     private var usbAccessory: UsbAccessory? = null
     private var usbRetries = 0
@@ -386,10 +388,22 @@ class ProjectionService : Service() {
             releaseWakeLock()
             if (lanSession && pinRefusal != null && tcpServerLan) {
                 // Refused at the handshake, before any car screen: keep listening so it can reconnect after Trust.
+                lanVersionDrops = 0
                 lanSession = false
                 settings.headUnitServerLan = true
+            } else if (lanSession && tcpServerLan && session.closedBeforeVersionExchange && lanVersionDrops < LAN_VERSION_DROP_RETRIES) {
+                // The head unit's own first try often drops before it even sends a version request (its
+                // screen wasn't ready yet): nothing about this attempt was actually tried, so the real
+                // attempt is still ahead. Keep listening instead of spending the one-shot listener on a
+                // connection the head unit itself abandoned. Bounded: a head unit that keeps dropping
+                // before the version exchange still loses the listener eventually.
+                lanVersionDrops++
+                lanSession = false
+                settings.headUnitServerLan = true
+                log("head unit server: LAN session closed before the version exchange ($lanVersionDrops/$LAN_VERSION_DROP_RETRIES); keeping LAN access on")
             } else if (lanSession) {
                 // Listening on the network is for one session at a time: switch it off again.
+                lanVersionDrops = 0
                 lanSession = false
                 settings.headUnitServerLan = false
                 log("head unit server: LAN access switched off after the session")
@@ -708,6 +722,8 @@ class ProjectionService : Service() {
         private const val USB_RETRY_RESET_MS = 60_000L
         /** Wireless attempts after a car that wasn't ready yet, waiting this much longer each time. */
         private const val WIRELESS_RETRIES = 2
+        /** LAN sessions kept listening after dropping before the version exchange, before giving up on it. */
+        private const val LAN_VERSION_DROP_RETRIES = 2
         private const val WIRELESS_RETRY_DELAY_MS = 10_000L
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
