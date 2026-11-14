@@ -113,6 +113,7 @@
     <string name="setup_app_group_messaging">Messaggistica</string>
     <string name="setup_app_kind_messaging">Messaggi dalle sue notifiche</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Integrata in AARE. Nascosta, esce solo dalla griglia delle app: le chiamate e la campanella funzionano ancora.</string>
     <string name="setup_section_unsupported_apps">App Android Auto che AARE non può mostrare</string>
     <string name="setup_hint_allowlist">Le app create con versioni recenti della libreria auto di Google accettano solo host nella loro lista consentita; consulta il README.</string>
     <string name="setup_app_entry_phone">Telefono</string>

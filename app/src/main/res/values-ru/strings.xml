@@ -113,6 +113,7 @@
     <string name="setup_app_group_messaging">Сообщения</string>
     <string name="setup_app_kind_messaging">Сообщения из его уведомлений</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Встроено в AARE. Если скрыть, исчезнет только из сетки приложений: звонки и колокольчик продолжат работать.</string>
     <string name="setup_section_unsupported_apps">Приложения Android Auto, которые AARE не может показать</string>
     <string name="setup_hint_allowlist">Приложения, созданные на новых версиях библиотеки Google для автомобилей, принимают только хосты из списка разрешённых; см. README.</string>
     <string name="setup_app_entry_phone">Телефон</string>

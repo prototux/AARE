@@ -113,6 +113,7 @@
     <string name="setup_app_group_messaging">Üzenetek</string>
     <string name="setup_app_kind_messaging">Üzenetek az értesítéseiből</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Az AARE része. Elrejtve csak az alkalmazásrácsból tűnik el: a hívások és a csengő továbbra is működnek.</string>
     <string name="setup_section_unsupported_apps">Android Auto alkalmazások, amelyeket az AARE nem tud megjeleníteni</string>
     <string name="setup_hint_allowlist">A Google autós könyvtárának újabb verzióival készült alkalmazások csak az engedélyezési listájukon lévő hosztokat fogadják el; lásd a README-t.</string>
     <string name="setup_app_entry_phone">Telefon</string>

@@ -113,6 +113,7 @@
     <string name="setup_app_group_messaging">Mesagerie</string>
     <string name="setup_app_kind_messaging">Mesaje din notificările sale</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Integrată în AARE. Ascunsă, dispare doar din grila de aplicații: apelurile și clopoțelul funcționează în continuare.</string>
     <string name="setup_section_unsupported_apps">Aplicații Android Auto pe care AARE nu le poate afișa</string>
     <string name="setup_hint_allowlist">Aplicațiile construite cu versiuni recente ale bibliotecii auto de la Google acceptă doar gazdele din lista lor de permisiuni; vezi README.</string>
     <string name="setup_app_entry_phone">Telefon</string>
