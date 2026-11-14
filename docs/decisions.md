@@ -153,17 +153,28 @@ stands in when nothing is left, and the last card can't be hidden.
 
 ## Settings export and import
 
-Exports and imports go through an exclude-list, not an allow-list: `SettingsBackup.export` writes
-every `SharedPreferences` entry except a documented set of device- or secret-specific keys
-(instance id, update/certificate caches, the phone's own Bluetooth MAC, connection history,
-already-asked permissions). A new setting added later is included automatically; nothing needs
-updating here unless it, too, must never move between phones.
+Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each setting that may move
+between phones, with the `SharedPreferences` type Settings.kt reads it with. A setting added later
+stays out until someone adds it there on purpose.
 
-- Each value is tagged with its SharedPreferences type (string/boolean/int/long/float/string set)
-  rather than stored as a bare JSON value: the exported text has no int/long/float distinction of
-  its own (`org.json`'s tokenizer turns every bare number into Integer/Long/Double on its own), so
-  re-parsing an untagged `180` wouldn't say which `SharedPreferences.Editor.put*` call it came from.
-- Trusted head-unit certificates live in a separate preferences file (`PinnedHeadUnits`) and are
-  never read by this export in the first place, so there's nothing to exclude there.
-- Import is exclude-filtered too (not just export), so a hand-edited or pre-exclusion-list file
-  can't smuggle a device-specific key back in.
+- An import file is not trusted. An entry with an unknown key, a blocked key or another type than
+  the allow-list's is skipped (and counted in the "imported" message), never written: an Int where
+  Settings calls `getBoolean` would throw `ClassCastException` on every launch, a crash loop the
+  user can only leave by clearing the app's data.
+- `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
+  head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
+  exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
+  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  be switched on by hand on the phone itself. A test checks the two lists never overlap.
+- Device-specific state (instance id, update and certificate caches, the phone's Bluetooth MAC,
+  connection history, already-asked permissions) and anything secret (home-automation servers,
+  MQTT hosts and users, tokens, passwords) are simply not allowed. Trusted head-unit certificates
+  live in a separate preferences file (`PinnedHeadUnits`) and are never read here.
+- A "custom" wallpaper is left out on import: the photo itself isn't in the file.
+- Each value is tagged with its type rather than stored as a bare JSON value: the exported text has
+  no int/long/float distinction of its own, so an untagged `180` wouldn't say which
+  `SharedPreferences.Editor.put*` call it came from.
+- The file is read and parsed off the main thread, and refused past 1 MB (a real export is a few
+  KB). Failures show a fixed message and log only the exception's kind: a JSON error's message
+  quotes the file. After an import the settings screen is rebuilt (`key` on a generation counter),
+  so no card keeps showing, and on its next tap writing back, a value from before the import.
