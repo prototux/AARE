@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
 
@@ -58,7 +59,10 @@ class VideoEncoder(
         /** SPS/PPS. Sent once before the first frame, and again whenever the encoder restarts. */
         fun onCodecConfig(data: ByteArray, offset: Int, length: Int)
 
-        /** One access unit. [data] has [offset] bytes of headroom; give it back with [recycle]. */
+        /**
+         * One access unit. [data] has [offset] bytes of headroom; give it back with [recycle].
+         * [ptsUs] is on the elapsedRealtime clock, the one media is stamped with.
+         */
         fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean)
 
         fun onError(e: Exception)
@@ -210,7 +214,7 @@ class VideoEncoder(
                     } else {
                         val out = obtain(headroom + info.size)
                         buf.get(out, headroom, info.size)
-                        sink.onFrame(out, headroom, info.size, info.presentationTimeUs,
+                        sink.onFrame(out, headroom, info.size, info.presentationTimeUs + bootClockOffsetUs(),
                             info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0)
                     }
                 }
@@ -232,6 +236,13 @@ class VideoEncoder(
 
     companion object {
         private const val TAG = "AareVideoEnc"
+
+        /**
+         * From the clock the input surface stamps frames with (System.nanoTime, which stops in deep
+         * sleep) to elapsedRealtime (which doesn't), the clock media is
+         * timestamps. Read per frame: the two drift apart each time the phone sleeps.
+         */
+        private fun bootClockOffsetUs() = SystemClock.elapsedRealtimeNanos() / 1_000 - System.nanoTime() / 1_000
 
         fun defaultBitrate(w: Int, h: Int, fps: Int): Int {
             // ~0.12 bits per pixel per frame: crisp UI text without saturating USB 2 / Wi-Fi,

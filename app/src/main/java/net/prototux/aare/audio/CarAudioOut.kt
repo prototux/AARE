@@ -89,9 +89,9 @@ class CarAudioOut(
         var lastSound = 0L
         playing = false
         var frames = 0L
-        // Timestamps on the video's clock (the encoder stamps System.nanoTime), as Android Auto does,
+        // Timestamps on the video's clock (elapsedRealtime, see VideoEncoder),
         // rather than starting at 0 µs.
-        val clockStartUs = System.nanoTime() / 1_000
+        val clockStartUs = SystemClock.elapsedRealtimeNanos() / 1_000
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
         // The source ended by itself (its service or the audio server died), not by stop(): the
