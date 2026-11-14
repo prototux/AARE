@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Nästa kalenderhändelse</string>
     <string name="dash_card_notification">Senaste avisering</string>
     <string name="dash_card_weather">Väder</string>
+    <string name="rail_widgets_title">Widgetar på fält/aktivitetsfält</string>
+    <string name="rail_widgets_hint">Små statusobjekt på fältet (eller aktivitetsfältet). De placeras bredvid klockan, i den här ordningen.</string>
+    <string name="rail_widget_clock">Klocka</string>
+    <string name="rail_widget_temperature">Utetemperatur</string>
+    <string name="rail_widget_battery">Telefonens batteri</string>
+    <string name="rail_widget_weather">Väder</string>
     <string name="setup_choice_wallpaper">Bakgrund</string>
     <string name="setup_wallpaper_none">Ingen</string>
     <string name="setup_wallpaper_photo">Foto</string>

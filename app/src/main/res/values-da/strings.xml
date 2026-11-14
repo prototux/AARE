@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Næste kalenderbegivenhed</string>
     <string name="dash_card_notification">Seneste notifikation</string>
     <string name="dash_card_weather">Vejr</string>
+    <string name="rail_widgets_title">Widgets på bar/proceslinje</string>
+    <string name="rail_widgets_hint">Små statuselementer på baren (eller proceslinjen). De stables ved siden af uret i denne rækkefølge.</string>
+    <string name="rail_widget_clock">Ur</string>
+    <string name="rail_widget_temperature">Udetemperatur</string>
+    <string name="rail_widget_battery">Telefonens batteri</string>
+    <string name="rail_widget_weather">Vejr</string>
     <string name="setup_choice_wallpaper">Baggrund</string>
     <string name="setup_wallpaper_none">Ingen</string>
     <string name="setup_wallpaper_photo">Foto</string>

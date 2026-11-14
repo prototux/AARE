@@ -114,6 +114,8 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail's status widgets, in order (a setting). */
+    var railWidgets by mutableStateOf(RailWidget.DEFAULT)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */

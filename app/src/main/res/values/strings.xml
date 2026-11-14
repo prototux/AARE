@@ -185,6 +185,12 @@
     <string name="dash_card_calendar">Next calendar event</string>
     <string name="dash_card_notification">Latest notification</string>
     <string name="dash_card_weather">Weather</string>
+    <string name="rail_widgets_title">Rail/taskbar widgets</string>
+    <string name="rail_widgets_hint">Small status items on the rail (or the taskbar). They stack beside the clock, in this order.</string>
+    <string name="rail_widget_clock">Clock</string>
+    <string name="rail_widget_temperature">Outside temperature</string>
+    <string name="rail_widget_battery">Phone battery</string>
+    <string name="rail_widget_weather">Weather</string>
     <string name="setup_choice_wallpaper">Wallpaper</string>
     <string name="setup_wallpaper_none">None</string>
     <string name="setup_wallpaper_photo">Photo</string>

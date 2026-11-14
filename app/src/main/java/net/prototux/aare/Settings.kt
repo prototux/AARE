@@ -312,6 +312,15 @@ class Settings(context: Context) {
         get() = prefs.getString("last_media", null)
         set(v) = prefs.edit { putString("last_media", v) }
 
+    /**
+     * The rail's status widgets, in order: ids from `RailWidget` (ui.car). Default: today's rail
+     * (the clock, the phone's battery, the weather); kept as raw ids here, not the enum, so this
+     * file doesn't depend on the UI layer.
+     */
+    var railWidgets: List<String>
+        get() = prefs.getString("rail_widgets", null)?.split(',')?.filter { it.isNotBlank() } ?: listOf("clock", "battery", "weather")
+        set(v) = prefs.edit { putString("rail_widgets", v.joinToString(",")) }
+
     /** The car launcher's order: app keys (package names, or the built-in apps' ids), first first. */
     var appOrder: List<String>
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()

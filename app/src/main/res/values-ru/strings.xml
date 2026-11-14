@@ -93,6 +93,12 @@
     <string name="dash_card_calendar">Следующее событие календаря</string>
     <string name="dash_card_notification">Последнее уведомление</string>
     <string name="dash_card_weather">Погода</string>
+    <string name="rail_widgets_title">Виджеты панели/панели задач</string>
+    <string name="rail_widgets_hint">Небольшие элементы состояния на панели (или панели задач). Они располагаются рядом с часами в этом порядке.</string>
+    <string name="rail_widget_clock">Часы</string>
+    <string name="rail_widget_temperature">Температура снаружи</string>
+    <string name="rail_widget_battery">Батарея телефона</string>
+    <string name="rail_widget_weather">Погода</string>
     <string name="setup_choice_wallpaper">Обои</string>
     <string name="setup_wallpaper_none">Нет</string>
     <string name="setup_wallpaper_photo">Фото</string>
