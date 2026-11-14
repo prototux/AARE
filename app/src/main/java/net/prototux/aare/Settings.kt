@@ -89,6 +89,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("force_h264", false)
         set(v) = prefs.edit { putBoolean("force_h264", v) }
 
+    /**
+     * Encode the car screen at a constant bitrate (VideoEncoder.constantBitrate): for head units
+     * that drop the link when the whole picture changes, as with the phone screen. Off: variable.
+     */
+    var constantBitrateVideo: Boolean
+        get() = prefs.getBoolean("constant_bitrate_video", false)
+        set(v) = prefs.edit { putBoolean("constant_bitrate_video", v) }
+
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
         get() = prefs.getString("rail_position", null)

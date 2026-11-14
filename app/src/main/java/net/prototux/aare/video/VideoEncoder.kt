@@ -43,6 +43,13 @@ class VideoEncoder(
     /** The starting bitrate; [setBitrate] changes it while running. */
     val bitrate: Int = defaultBitrate(width, height, fps),
     private val headroom: Int = 10,
+    /**
+     * Constant bitrate instead of variable, if the encoder supports it: every frame stays near the
+     * bitrate, where variable bitrate sends very large frames when the whole picture changes (a
+     * mirrored phone screen, a video), which some head units drop the link over. Costs sharpness on
+     * busy pictures.
+     */
+    private val constantBitrate: Boolean = false,
     private val sink: Sink,
 ) {
     interface Sink {
@@ -65,6 +72,7 @@ class VideoEncoder(
     fun start() {
         val t = HandlerThread("aare-video-enc", android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY).also { it.start() }
         thread = t
+        var bitrateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR
         // Built afresh for each attempt (MediaFormat.removeKey is Android 10+).
         fun format(dropped: Set<String>) = MediaFormat.createVideoFormat(kind.mime, width, height).apply {
             fun int(key: String, value: Int) { if (key !in dropped) setInteger(key, value) }
@@ -75,7 +83,7 @@ class VideoEncoder(
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
             kind.profile?.let { int(MediaFormat.KEY_PROFILE, it) }
             kind.levelFor(width, height, fps)?.let { int(MediaFormat.KEY_LEVEL, it) }
-            int(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
+            int(MediaFormat.KEY_BITRATE_MODE, bitrateMode)
             // Keep frames flowing on a static screen so the head unit's decoder never stalls.
             if (MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER !in dropped) setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 1_000_000L / 5)
             int(MediaFormat.KEY_PRIORITY, 0) // realtime
@@ -92,6 +100,12 @@ class VideoEncoder(
             var format = format(emptySet())
             val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
             c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(kind.mime)
+            if (constantBitrate) {
+                val cbr = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
+                val supported = runCatching { c.codecInfo.getCapabilitiesForType(kind.mime).encoderCapabilities?.isBitrateModeSupported(cbr) == true }.getOrDefault(false)
+                if (supported) bitrateMode = cbr
+                Log.i(TAG, "constant bitrate ${if (supported) "on" else "not supported by ${c.name}, variable kept"}")
+            }
             // Encoders differ in which tuning keys they accept: drop them step by step until one works.
             val fallbacks = listOf(
                 emptyList(),

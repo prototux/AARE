@@ -151,6 +151,8 @@
     <string name="setup_choice_max_resolution">Maximum resolution</string>
     <string name="setup_hint_lower_resolution">Lower uses less battery and bandwidth.</string>
     <string name="setup_toggle_force_h264_title">Force H.264 video</string>
+    <string name="setup_toggle_constant_bitrate_title">Constant bitrate video</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Keeps every frame about the same size. Turn on if the car drops the connection when the whole picture changes, as with the phone screen or a video. Busy pictures get a little softer. Takes effect from the next connection.</string>
     <string name="setup_toggle_force_h264_subtitle">By default AARE uses the best codec the car and phone share (H.265…). Turn on if the car\'s picture is glitchy.</string>
     <string name="setup_section_your_cars">Your cars</string>
     <string name="setup_cars_empty">Cars appear here after the first connection.</string>
