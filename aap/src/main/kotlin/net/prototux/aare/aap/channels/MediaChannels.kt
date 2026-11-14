@@ -321,10 +321,13 @@ class VideoChannel(
         if (changed || projected) listener.onVideoFocus(projected)
     }
 
-    /** Asks the head unit to show its own UI (e.g. the driver chose "exit" on the phone). */
+    /**
+     * Asks the head unit to show its own UI (e.g. the driver chose "exit" on the phone). Reason
+     * UNKNOWN.
+     */
     fun requestNativeFocus() {
         send(MediaMsg.VIDEO_FOCUS_REQUEST, VideoFocusRequestNotification.newBuilder()
-            .setMode(VideoFocusMode.VIDEO_FOCUS_NATIVE).setReason(VideoFocusReason.LAUNCH_NATIVE).build())
+            .setMode(VideoFocusMode.VIDEO_FOCUS_NATIVE).setReason(VideoFocusReason.UNKNOWN).build())
     }
 
     fun requestProjectedFocus() {
