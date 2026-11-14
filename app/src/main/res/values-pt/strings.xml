@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Registo de ligação</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Não afiliada com a Google. Android Auto é uma marca comercial da Google LLC.</string>
     <string name="setup_choice_style">Estilo</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Tema</string>
+    <string name="setup_choice_layout">Disposição</string>
+    <string name="setup_layout_taskbar">Barra de tarefas</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Personalizado</string>
+    <string name="setup_switch_phone_accent">Cores de destaque do telemóvel</string>
+    <string name="setup_toggle_phone_accent_title">Cores de destaque do telemóvel</string>
+    <string name="setup_toggle_phone_accent_subtitle">Usar as cores de destaque do fundo do telemóvel (Material You)</string>
     <string name="setup_switch_dark_bar">Barra escura, mesmo com as cores de dia</string>
     <string name="setup_switch_media_first">Música antes do mapa no ecrã inicial</string>
     <string name="setup_switch_passenger">Modo passageiro: sem restrições de condução (o condutor não deve utilizar o ecrã)</string>

@@ -60,6 +60,8 @@ val LocalCarColors = staticCompositionLocalOf { AareTheme.nightColors }
 data class CarThemeSpec(
     /** Stored in the settings: never change it once released. */
     val id: String,
+    /** Shown in the settings, not translated: a name like "AARE" or "CarPlay". */
+    val name: String,
     val day: ColorScheme,
     val night: ColorScheme,
     val dayColors: CarColors,

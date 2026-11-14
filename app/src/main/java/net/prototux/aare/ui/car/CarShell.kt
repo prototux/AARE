@@ -100,7 +100,7 @@ fun CarShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    if (state.carPlayStyle) {
+    if (state.layout == CarLayout.DOCK) {
         CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
         return
     }

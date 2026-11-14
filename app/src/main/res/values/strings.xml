@@ -190,8 +190,14 @@
     <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Not affiliated with Google. Android Auto is a trademark of Google LLC.</string>
     <string name="setup_choice_style">Style</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Theme</string>
+    <string name="setup_choice_layout">Layout</string>
+    <string name="setup_layout_taskbar">Taskbar</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Custom</string>
+    <string name="setup_switch_phone_accent">Phone\'s accent colors</string>
+    <string name="setup_toggle_phone_accent_title">Phone\'s accent colors</string>
+    <string name="setup_toggle_phone_accent_subtitle">Take the accent colors from the phone\'s wallpaper (Material You)</string>
     <string name="setup_switch_dark_bar">Dark bar, even with day colors</string>
     <string name="setup_switch_media_first">Music before the map on the home screen</string>
     <string name="setup_switch_passenger">Passenger mode: no driving restrictions (the driver must not use the screen)</string>

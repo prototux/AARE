@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Protokol připojení</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nesouvisí s Google. Android Auto je ochranná známka společnosti Google LLC.</string>
     <string name="setup_choice_style">Styl</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Motiv</string>
+    <string name="setup_choice_layout">Rozložení</string>
+    <string name="setup_layout_taskbar">Hlavní panel</string>
+    <string name="setup_layout_dock">Dok</string>
+    <string name="setup_style_custom">Vlastní</string>
+    <string name="setup_switch_phone_accent">Barvy zvýraznění z telefonu</string>
+    <string name="setup_toggle_phone_accent_title">Barvy zvýraznění z telefonu</string>
+    <string name="setup_toggle_phone_accent_subtitle">Převzít barvy zvýraznění z tapety telefonu (Material You)</string>
     <string name="setup_switch_dark_bar">Tmavá lišta, i se světlými barvami</string>
     <string name="setup_switch_media_first">Hudba před mapou na domovské obrazovce</string>
     <string name="setup_switch_passenger">Režim spolujezdce: žádná omezení za jízdy (řidič nesmí obrazovku používat)</string>

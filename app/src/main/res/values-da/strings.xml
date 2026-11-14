@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Forbindelseslog</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemærke tilhørende Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Tema</string>
+    <string name="setup_choice_layout">Layout</string>
+    <string name="setup_layout_taskbar">Proceslinje</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Tilpasset</string>
+    <string name="setup_switch_phone_accent">Telefonens accentfarver</string>
+    <string name="setup_toggle_phone_accent_title">Telefonens accentfarver</string>
+    <string name="setup_toggle_phone_accent_subtitle">Brug accentfarverne fra telefonens baggrund (Material You)</string>
     <string name="setup_switch_dark_bar">Mørk bar, selv med dagfarver</string>
     <string name="setup_switch_media_first">Musik før kortet på startskærmen</string>
     <string name="setup_switch_passenger">Passagertilstand: ingen kørselsbegrænsninger (føreren må ikke bruge skærmen)</string>

@@ -18,6 +18,7 @@ val AareTheme: CarThemeSpec = run {
     val tealDeep = Color(0xFF00695C)
     CarThemeSpec(
         id = "aare",
+        name = "AARE",
         night = darkColorScheme(
             primary = teal,
             onPrimary = Color(0xFF00201C),

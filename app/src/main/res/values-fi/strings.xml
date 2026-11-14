@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Yhteysloki</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ei liity Googleen. Android Auto on Google LLC:n tavaramerkki.</string>
     <string name="setup_choice_style">Tyyli</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Teema</string>
+    <string name="setup_choice_layout">Asettelu</string>
+    <string name="setup_layout_taskbar">Tehtäväpalkki</string>
+    <string name="setup_layout_dock">Telakka</string>
+    <string name="setup_style_custom">Oma</string>
+    <string name="setup_switch_phone_accent">Puhelimen korostusvärit</string>
+    <string name="setup_toggle_phone_accent_title">Puhelimen korostusvärit</string>
+    <string name="setup_toggle_phone_accent_subtitle">Käytä puhelimen taustakuvan korostusvärejä (Material You)</string>
     <string name="setup_switch_dark_bar">Tumma palkki, myös vaaleilla väreillä</string>
     <string name="setup_switch_media_first">Musiikki ennen karttaa kotinäytössä</string>
     <string name="setup_switch_passenger">Matkustajatila: ei ajorajoituksia (kuljettaja ei saa käyttää näyttöä)</string>

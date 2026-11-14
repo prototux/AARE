@@ -10,9 +10,9 @@ import aap_protobuf.service.media.sink.message.VideoFrameRateTypeOuterClass.Vide
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.host.CarAppClusterScreen
 import net.prototux.aare.host.CarRuntime
@@ -94,8 +94,9 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
     @Composable
     private fun Content() {
         val ui = runtime.ui
-        CarTheme(night = true) {
-            Box(Modifier.fillMaxSize().background(Color.Black)) {
+        // The main screen's theme and day/night colours, so the two screens match.
+        CarTheme(night = ui.night, theme = ui.theme) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 val nav = ui.app(ui.activeNavAppId)
                 val conn = nav?.takeIf { ui.trip != null }?.let { runtime.clusterConnection(it) }
                 if (conn != null) CarAppClusterScreen(conn, runtime, Modifier.fillMaxSize())

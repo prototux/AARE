@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Nhật ký kết nối</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Không liên kết với Google. Android Auto là thương hiệu của Google LLC.</string>
     <string name="setup_choice_style">Kiểu</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Giao diện</string>
+    <string name="setup_choice_layout">Bố cục</string>
+    <string name="setup_layout_taskbar">Thanh tác vụ</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Tùy chỉnh</string>
+    <string name="setup_switch_phone_accent">Màu nhấn của điện thoại</string>
+    <string name="setup_toggle_phone_accent_title">Màu nhấn của điện thoại</string>
+    <string name="setup_toggle_phone_accent_subtitle">Lấy màu nhấn từ hình nền điện thoại (Material You)</string>
     <string name="setup_switch_dark_bar">Thanh tối, ngay cả khi dùng màu ban ngày</string>
     <string name="setup_switch_media_first">Nhạc trước bản đồ trên màn hình chính</string>
     <string name="setup_switch_passenger">Chế độ hành khách: không có hạn chế khi lái xe (người lái không được dùng màn hình)</string>

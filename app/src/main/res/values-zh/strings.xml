@@ -114,8 +114,14 @@
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · 与 Google 无关联。Android Auto 是 Google LLC 的商标。</string>
     <string name="setup_choice_style">样式</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">主题</string>
+    <string name="setup_choice_layout">布局</string>
+    <string name="setup_layout_taskbar">任务栏</string>
+    <string name="setup_layout_dock">程序坞</string>
+    <string name="setup_style_custom">自定义</string>
+    <string name="setup_switch_phone_accent">手机强调色</string>
+    <string name="setup_toggle_phone_accent_title">手机强调色</string>
+    <string name="setup_toggle_phone_accent_subtitle">使用手机壁纸的强调色（Material You）</string>
     <string name="setup_switch_dark_bar">深色导航条（即使使用日间配色）</string>
     <string name="setup_switch_media_first">主屏幕上音乐排在地图之前</string>
     <string name="setup_switch_passenger">乘客模式：不限制行驶中操作（驾驶员不得使用屏幕）</string>

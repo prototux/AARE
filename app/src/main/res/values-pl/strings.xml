@@ -116,8 +116,14 @@
     <string name="setup_section_connection_log">Dziennik połączeń</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Niezwiązane z Google. Android Auto jest znakiem towarowym Google LLC.</string>
     <string name="setup_choice_style">Styl</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Motyw</string>
+    <string name="setup_choice_layout">Układ</string>
+    <string name="setup_layout_taskbar">Pasek zadań</string>
+    <string name="setup_layout_dock">Dok</string>
+    <string name="setup_style_custom">Własny</string>
+    <string name="setup_switch_phone_accent">Kolory akcentu telefonu</string>
+    <string name="setup_toggle_phone_accent_title">Kolory akcentu telefonu</string>
+    <string name="setup_toggle_phone_accent_subtitle">Użyj kolorów akcentu z tapety telefonu (Material You)</string>
     <string name="setup_switch_dark_bar">Ciemny pasek, nawet z jasnymi kolorami</string>
     <string name="setup_switch_media_first">Muzyka przed mapą na ekranie głównym</string>
     <string name="setup_switch_passenger">Tryb pasażera: brak ograniczeń jazdy (kierowca nie może używać ekranu)</string>
