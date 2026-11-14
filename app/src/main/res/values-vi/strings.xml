@@ -492,4 +492,24 @@
     <string name="carapp_error_stopped">%1$s đã dừng</string>
     <string name="carapp_error_google_only">%1$s chỉ chấp nhận Android Auto của Google. Cần cho phép AARE (xem danh sách ứng dụng trên điện thoại).</string>
     <string name="carapp_error_cant_start">%1$s không thể khởi động: %2$s</string>
+    <string name="shizuku_setup_title">Cấp quyền cho AARE bằng Shizuku</string>
+    <string name="shizuku_setup_subtitle">Một lần nhấn cấp những gì còn thiếu, không cần hộp thoại riêng của từng quyền: micro, vị trí, danh bạ, lịch sử gọi, lịch, cuộc gọi điện thoại, thiết bị lân cận (Bluetooth, Wi-Fi), mạng cục bộ, thông báo và quyền truy cập thông báo</string>
+    <string name="shizuku_setup_working">Đang cấp…</string>
+    <string name="shizuku_setup_result_title">Đã cấp bằng Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Mọi thứ đã được cấp từ trước.</string>
+    <string name="shizuku_setup_not_granted">Chưa cấp: %1$s</string>
+    <string name="shizuku_setup_notification_access">Quyền truy cập thông báo</string>
+    <string name="shizuku_setup_helper_failed">Trình hỗ trợ của Shizuku không khởi động được. Hãy kiểm tra Shizuku đang chạy và cho phép AARE.</string>
+    <string name="aa_section_title">Android Auto của Google</string>
+    <string name="aa_state_enabled">Đã cài và đang hoạt động: khi xe kết nối, Android có thể giao xe cho Android Auto thay vì AARE, hoặc hỏi dùng ứng dụng nào.</string>
+    <string name="aa_state_disabled">Đã tắt: Android Auto không nhận xe. Dữ liệu của nó vẫn được giữ lại.</string>
+    <string name="aa_action_disable">Ngăn Android Auto nhận xe</string>
+    <string name="aa_action_enable">Bật lại Android Auto</string>
+    <string name="aa_working">Đang xử lý…</string>
+    <string name="aa_needs_shizuku">Qua Shizuku (đang chạy và cho phép AARE), hoặc tự tay trong thông tin ứng dụng của Android Auto.</string>
+    <string name="aa_app_info">Thông tin ứng dụng Android Auto</string>
+    <string name="aa_failed">Không thành công: %1$s</string>
+    <string name="aa_confirm_title">Tắt Android Auto?</string>
+    <string name="aa_confirm_text">AARE tắt Android Auto của Google cho người dùng này qua Shizuku (pm disable-user). Nó dừng chạy, biến mất khỏi danh sách ứng dụng và không còn phản hồi khi xe kết nối, vì vậy xe luôn đến với AARE.\n\nKhông có gì bị gỡ cài đặt và dữ liệu của nó vẫn được giữ lại. Các xe, ứng dụng hoặc tính năng cần Android Auto của Google sẽ không hoạt động cho đến khi bạn bật lại bằng nút ở đây.</string>
+    <string name="aa_confirm_action">Tắt</string>
 </resources>
