@@ -229,15 +229,26 @@ class CarSession(
     private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
         // The car list's name for it (Settings.rememberCar), so that forgetting the car forgets this.
         val carName = response.displayName.ifBlank { headUnitName }
-        val announced = response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
-            ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
+        val announced = announcedAddress(response)
         val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
         runCatching {
             val store = KnownHeadUnits(context)
-            announced?.let { store.put(it, id, carName) }
+            if (announced != null) store.put(announced, id, carName) else store.name(peerKey, carName)
             wirelessPeer?.let { store.markWirelessWorked(it, carName) }
+            settings.lastHeadUnit = carKey(response)
         }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
     }
+
+    /** The Bluetooth address the head unit announces, if any. */
+    private fun announcedAddress(response: ServiceDiscoveryResponse): String? =
+        response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
+            ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
+
+    /**
+     * The head unit's key in KnownHeadUnits, which keeps its "Car quirks" choices: the Bluetooth
+     * address it announces (the same over USB and wireless), else the session's peer key.
+     */
+    private fun carKey(response: ServiceDiscoveryResponse): String = announcedAddress(response) ?: peerKey.trim()
 
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {
         headUnitName = AapSession.describe(response).substringBefore(" [").ifBlank { response.displayName }
@@ -246,9 +257,10 @@ class CarSession(
         DiagLog.add("vehicles.json match keys: make \"${id.make}\", model \"${id.model}\", year \"${id.year}\", " +
             "headUnitMake \"${id.headUnitMake}\", headUnitModel \"${id.headUnitModel}\", headUnitBuild \"${id.headUnitBuild}\", " +
             "protocol ${id.protocol?.let { (major, minor) -> "\"$major.$minor\"" } ?: "unknown"}")
-        // The per-car vehicles.json match, with the "Car quirks" settings page's global choices
-        // applied on top (VehicleOverrides.effective): the one place this session's quirks are decided.
-        vehicleOverride = VehicleOverrides.effective(VehicleOverrides.forHeadUnit(context, id), settings.quirkSettings)
+        // The per-car vehicles.json match, with this car's "Car quirks" page choices applied on top
+        // (VehicleOverrides.effective): the one place this session's quirks are decided.
+        vehicleOverride = VehicleOverrides.effective(VehicleOverrides.forHeadUnit(context, id),
+            runCatching { KnownHeadUnits(context).quirks(carKey(response)) }.getOrDefault(QuirkSettings()))
         vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
         rememberHeadUnit(response, id)
         CarData.discovered(response, owner = this, forceElectric = vehicleOverride?.forceElectric == true)

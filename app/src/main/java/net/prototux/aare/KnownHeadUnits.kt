@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import net.prototux.aare.car.HeadUnitIdentity
+import net.prototux.aare.car.QuirkChoice
+import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.car.VehicleMatch
 import org.json.JSONObject
 
@@ -11,8 +13,8 @@ import org.json.JSONObject
  * Who each head unit said it was in its last session, by Bluetooth address, on this phone only.
  * Some quirks are needed before a session tells us who the car is: projection doesn't start
  * wireless projection with head units known not to support it, looked up the same way (vehicles.json
- * `wireless: false`). Forgetting a car or its certificate forgets it here too, and only the
- * [MAX] most recently seen head units are kept.
+ * `wireless: false`). Also each head unit's "Car quirks" page choices. Forgetting a car or its
+ * certificate forgets it here too, and only the [MAX] most recently seen head units are kept.
  */
 class KnownHeadUnits(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("known_head_units", Context.MODE_PRIVATE)
@@ -24,6 +26,29 @@ class KnownHeadUnits(context: Context) {
         if (address.isBlank()) return
         prefs.edit { putString(key(address), encode(id)); putString(key(address) + CAR, carName); seen(address) }
         trim()
+    }
+
+    /** A head unit known only by [address] (no Bluetooth address of its own: USB, the developer server), for the "Car quirks" page. */
+    fun name(address: String, carName: String) {
+        if (address.isBlank()) return
+        prefs.edit { putString(key(address) + CAR, carName); seen(address) }
+        trim()
+    }
+
+    /** The car list's name for [address], or null when it isn't known (never seen, forgotten). */
+    fun carName(address: String): String? = prefs.getString(key(address) + CAR, null)
+
+    /** [address]'s "Car quirks" choices: every one [QuirkChoice.AUTOMATIC] unless the user changed it. */
+    fun quirks(address: String): QuirkSettings =
+        QuirkSettings.of { QuirkChoice.of(prefs.getString(key(address) + QUIRK + it, null)) }
+
+    fun setQuirks(address: String, quirks: QuirkSettings) {
+        if (address.isBlank()) return
+        prefs.edit {
+            quirks.byName().forEach { (name, choice) ->
+                if (choice == QuirkChoice.AUTOMATIC) remove(key(address) + QUIRK + name) else putString(key(address) + QUIRK + name, choice.pref)
+            }
+        }
     }
 
     /** A wireless session to [address] got as far as service discovery once: it does work wirelessly. [carName]: see [put]. */
@@ -70,6 +95,7 @@ class KnownHeadUnits(context: Context) {
         private const val WIRELESS_WORKED = "#wireless_worked"
         private const val CAR = "#car"
         private const val SEEN = "#seen"
+        private const val QUIRK = "#quirk_"
         /** Head units kept: more than a phone meets, few enough to stay a small file. */
         const val MAX = 32
 

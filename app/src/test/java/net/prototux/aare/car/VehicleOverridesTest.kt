@@ -345,4 +345,13 @@ class VehicleOverridesTest {
     @Test fun nothingForcedAndNoRuleStaysNull() =
         // On for a quirk with no single "on" value, no vehicles.json match: still no override, as today.
         assertEquals(null, VehicleOverrides.effective(null, QuirkSettings(videoResolutions = QuirkChoice.ON)))
+
+    /** A car's page choices are stored by name: every one comes back, and a new page starts all Automatic. */
+    @Test fun quirkChoicesRoundTripByName() {
+        val q = QuirkSettings(pixelAspect = QuirkChoice.ON, wireless = QuirkChoice.OFF, micSetup = QuirkChoice.OFF)
+        val stored = q.byName().mapValues { it.value.pref }
+        assertEquals(11, stored.size)
+        assertEquals(q, QuirkSettings.of { QuirkChoice.of(stored[it]) })
+        assertEquals(QuirkSettings(), QuirkSettings.of { QuirkChoice.of(null) })
+    }
 }

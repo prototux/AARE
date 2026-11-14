@@ -47,6 +47,7 @@ import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
+import net.prototux.aare.car.QuirkChoice
 import net.prototux.aare.car.VehicleOverrides
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
@@ -209,13 +210,20 @@ class ProjectionService : Service() {
         if (session != null || wirelessJob?.isActive == true) return
         val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: return
+        // Blocked for this car on its "Car quirks" page: never wireless, whatever else says.
+        val known = KnownHeadUnits(this)
+        val quirks = known.quirks(address)
+        if (quirks.wireless == QuirkChoice.OFF) {
+            log("wireless: ${known.carName(address) ?: address} is blocked on its Car quirks page, not connecting")
+            return
+        }
         // Wireless projection doesn't start with head units known not to support it, going by who
-        // the head unit said it was last time (vehicles.json `wireless: false`, and the "Car quirks"
-        // setting over it); never with one that already worked wirelessly.
-        KnownHeadUnits(this).skipWireless(address) {
-            VehicleOverrides.effective(VehicleOverrides.forHeadUnit(this, it), settings.quirkSettings)?.wireless == false
-        }?.let { known ->
-            log("wireless: ${known.name.ifBlank { address }} doesn't do wireless Android Auto (vehicles.json), not connecting")
+        // the head unit said it was last time (vehicles.json `wireless: false`, unless the car's
+        // "Car quirks" page allows it); never with one that already worked wirelessly.
+        known.skipWireless(address) {
+            VehicleOverrides.effective(VehicleOverrides.forHeadUnit(this, it), quirks)?.wireless == false
+        }?.let { denied ->
+            log("wireless: ${denied.name.ifBlank { address }} doesn't do wireless Android Auto (vehicles.json), not connecting")
             return
         }
         // Pass the phone's stable id as the WPP device serial and phone_info.instance_id: strict head

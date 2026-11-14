@@ -216,9 +216,9 @@ data class VehicleRule(
 }
 
 /**
- * One vehicles.json quirk's global choice, kept in Settings for every car: [AUTOMATIC] keeps
- * what vehicles.json (built-in rules and the user's file) resolves for the connected car,
- * [ON] / [OFF] force it regardless. See [VehicleOverrides.effective].
+ * One vehicles.json quirk's choice for one car, on the "Car quirks" page: [AUTOMATIC] keeps
+ * what vehicles.json (built-in rules and the user's file) resolves for the car, [ON] / [OFF]
+ * force it regardless. See [VehicleOverrides.effective].
  */
 enum class QuirkChoice(val pref: String) {
     AUTOMATIC("auto"), ON("on"), OFF("off");
@@ -228,11 +228,11 @@ enum class QuirkChoice(val pref: String) {
 }
 
 /**
- * The "Car quirks" settings page: one global [QuirkChoice] per vehicles.json quirk that has a
- * clear on/off meaning, applied on top of the per-car vehicles.json resolution for every car
- * (not just the connected one). See [VehicleOverrides.effective]. Fields [VehicleOverride] has
+ * The "Car quirks" settings page, for one head unit (kept with it in KnownHeadUnits): one
+ * [QuirkChoice] per vehicles.json quirk that has a clear on/off meaning, applied on top of that
+ * car's vehicles.json resolution. See [VehicleOverrides.effective]. Fields [VehicleOverride] has
  * no setting for (dpi, margins, maxHeight, prefer60fps, skip/openServices, exitLabel) are never
- * touched: those stay per-vehicle only, or have their own setting elsewhere (prefer60fps,
+ * touched: those stay vehicles.json only, or have their own setting elsewhere (prefer60fps,
  * maxHeight: Settings.prefer60fps / maxVideoHeight).
  */
 data class QuirkSettings(
@@ -247,7 +247,26 @@ data class QuirkSettings(
     val forceElectric: QuirkChoice = QuirkChoice.AUTOMATIC,
     val exitToCar: QuirkChoice = QuirkChoice.AUTOMATIC,
     val micSetup: QuirkChoice = QuirkChoice.AUTOMATIC,
-)
+) {
+    /** Every choice by its stored name (see [of]). */
+    fun byName(): Map<String, QuirkChoice> = mapOf(
+        "pixel_aspect" to pixelAspect, "video_resolutions" to videoResolutions, "single_channel_capture" to singleChannelCapture,
+        "wifi_media_start_silence" to wifiMediaStartSilence, "wifi_guidance_start_silence" to wifiGuidanceStartSilence,
+        "media_on_gain_transient" to mediaOnGainTransient, "pause_on_guidance_only" to pauseOnGuidanceOnly, "wireless" to wireless,
+        "force_electric" to forceElectric, "exit_to_car" to exitToCar, "mic_setup" to micSetup,
+    )
+
+    companion object {
+        /** From the choices [byName] stored: [choice] gives each one by name. */
+        fun of(choice: (String) -> QuirkChoice) = QuirkSettings(
+            pixelAspect = choice("pixel_aspect"), videoResolutions = choice("video_resolutions"),
+            singleChannelCapture = choice("single_channel_capture"), wifiMediaStartSilence = choice("wifi_media_start_silence"),
+            wifiGuidanceStartSilence = choice("wifi_guidance_start_silence"), mediaOnGainTransient = choice("media_on_gain_transient"),
+            pauseOnGuidanceOnly = choice("pause_on_guidance_only"), wireless = choice("wireless"), forceElectric = choice("force_electric"),
+            exitToCar = choice("exit_to_car"), micSetup = choice("mic_setup"),
+        )
+    }
+}
 
 /**
  * Per-vehicle overrides, from two `vehicles.json` files in the same format: the one AARE ships
@@ -293,10 +312,10 @@ object VehicleOverrides {
         resolve(user, builtIn, HeadUnitIdentity(make, model, name))
 
     /**
-     * [resolved] (vehicles.json for the connected car, from [forHeadUnit], or null) with [quirks]'s
-     * global choices applied on top. [QuirkChoice.AUTOMATIC] keeps what [resolved] says for every
+     * [resolved] (vehicles.json for a car, from [forHeadUnit], or null) with that car's [quirks]
+     * choices applied on top. [QuirkChoice.AUTOMATIC] keeps what [resolved] says for every
      * field (including leaving it unset, so AARE's own default decides, exactly as without this
-     * settings page); [QuirkChoice.ON] / [QuirkChoice.OFF] force the quirk on or off for every car,
+     * settings page); [QuirkChoice.ON] / [QuirkChoice.OFF] force the quirk on or off for the car,
      * regardless of what vehicles.json matched.
      *
      * The two start-silence counts and [videoResolutions][QuirkSettings.videoResolutions] have no

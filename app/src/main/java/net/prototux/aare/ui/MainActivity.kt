@@ -119,6 +119,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.prototux.aare.DiagLog
+import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
@@ -128,6 +129,7 @@ import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.car.QuirkChoice
+import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
@@ -1410,7 +1412,7 @@ private fun VehicleOverridesCard() {
     }
 }
 
-/** One vehicles.json quirk, with a global choice for every car (see VehicleOverrides.effective). */
+/** One vehicles.json quirk, with its choice for one car (see VehicleOverrides.effective). */
 @Composable
 private fun QuirkRow(title: String, subtitle: String, value: QuirkChoice, onLabel: String, offLabel: String, onSelect: (QuirkChoice) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
@@ -1429,62 +1431,68 @@ private fun QuirkRow(title: String, subtitle: String, value: QuirkChoice, onLabe
 }
 
 /**
- * "Car quirks": every vehicles.json quirk that has a clear on/off meaning, overridable globally
- * (every car, not just the connected one). Automatic keeps what the built-in rules and the
- * user's vehicles.json say for the connected car; On/Off force it regardless.
+ * "Car quirks": every vehicles.json quirk that has a clear on/off meaning, overridable for one car,
+ * the head unit connected last (kept with it in KnownHeadUnits, so Forget clears it). Automatic
+ * keeps what the built-in car fixes and the user's vehicles.json say for it; On/Off force it.
  */
 @Composable
 private fun CarQuirksCard(settings: Settings) {
-    var pixelAspect by remember { mutableStateOf(settings.quirkPixelAspect) }
-    var videoResolutions by remember { mutableStateOf(settings.quirkVideoResolutions) }
-    var singleChannelCapture by remember { mutableStateOf(settings.quirkSingleChannelCapture) }
-    var wifiMediaSilence by remember { mutableStateOf(settings.quirkWifiMediaStartSilence) }
-    var wifiGuidanceSilence by remember { mutableStateOf(settings.quirkWifiGuidanceStartSilence) }
-    var mediaOnGainTransient by remember { mutableStateOf(settings.quirkMediaOnGainTransient) }
-    var pauseOnGuidanceOnly by remember { mutableStateOf(settings.quirkPauseOnGuidanceOnly) }
-    var wireless by remember { mutableStateOf(settings.quirkWireless) }
-    var forceElectric by remember { mutableStateOf(settings.quirkForceElectric) }
-    var exitToCar by remember { mutableStateOf(settings.quirkExitToCar) }
-    var micSetup by remember { mutableStateOf(settings.quirkMicSetup) }
-    val on = stringResource(R.string.quirks_on)
-    val off = stringResource(R.string.quirks_off)
+    val ctx = LocalContext.current
+    val known = remember { KnownHeadUnits(ctx) }
+    val car = remember { settings.lastHeadUnit?.takeIf { known.carName(it) != null } }
     Section(stringResource(R.string.quirks_section_title)) {
+        Text(stringResource(R.string.quirks_subtitle), style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(4.dp))
         Text(stringResource(R.string.quirks_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
-        QuirkRow(stringResource(R.string.quirks_pixel_aspect_title), stringResource(R.string.quirks_pixel_aspect_subtitle), pixelAspect, on, off) {
-            pixelAspect = it; settings.quirkPixelAspect = it
+        if (car == null) {
+            Text(stringResource(R.string.quirks_no_car), style = MaterialTheme.typography.bodyMedium)
+        } else {
+            CarQuirkRows(car, known)
         }
-        QuirkRow(stringResource(R.string.quirks_video_resolutions_title), stringResource(R.string.quirks_video_resolutions_subtitle), videoResolutions, on, off) {
-            videoResolutions = it; settings.quirkVideoResolutions = it
-        }
-        QuirkRow(stringResource(R.string.quirks_single_channel_capture_title), stringResource(R.string.quirks_single_channel_capture_subtitle), singleChannelCapture, on, off) {
-            singleChannelCapture = it; settings.quirkSingleChannelCapture = it
-        }
-        QuirkRow(stringResource(R.string.quirks_wifi_media_silence_title), stringResource(R.string.quirks_wifi_media_silence_subtitle), wifiMediaSilence, on, off) {
-            wifiMediaSilence = it; settings.quirkWifiMediaStartSilence = it
-        }
-        QuirkRow(stringResource(R.string.quirks_wifi_guidance_silence_title), stringResource(R.string.quirks_wifi_guidance_silence_subtitle), wifiGuidanceSilence, on, off) {
-            wifiGuidanceSilence = it; settings.quirkWifiGuidanceStartSilence = it
-        }
-        QuirkRow(stringResource(R.string.quirks_media_on_gain_transient_title), stringResource(R.string.quirks_media_on_gain_transient_subtitle), mediaOnGainTransient, on, off) {
-            mediaOnGainTransient = it; settings.quirkMediaOnGainTransient = it
-        }
-        QuirkRow(stringResource(R.string.quirks_pause_on_guidance_only_title), stringResource(R.string.quirks_pause_on_guidance_only_subtitle), pauseOnGuidanceOnly, on, off) {
-            pauseOnGuidanceOnly = it; settings.quirkPauseOnGuidanceOnly = it
-        }
-        QuirkRow(stringResource(R.string.quirks_wireless_title), stringResource(R.string.quirks_wireless_subtitle), wireless,
-            stringResource(R.string.quirks_wireless_allow), stringResource(R.string.quirks_wireless_block)) {
-            wireless = it; settings.quirkWireless = it
-        }
-        QuirkRow(stringResource(R.string.quirks_force_electric_title), stringResource(R.string.quirks_force_electric_subtitle), forceElectric, on, off) {
-            forceElectric = it; settings.quirkForceElectric = it
-        }
-        QuirkRow(stringResource(R.string.quirks_exit_to_car_title), stringResource(R.string.quirks_exit_to_car_subtitle), exitToCar, on, off) {
-            exitToCar = it; settings.quirkExitToCar = it
-        }
-        QuirkRow(stringResource(R.string.quirks_mic_setup_title), stringResource(R.string.quirks_mic_setup_subtitle), micSetup, on, off) {
-            micSetup = it; settings.quirkMicSetup = it
-        }
+    }
+}
+
+@Composable
+private fun CarQuirkRows(car: String, known: KnownHeadUnits) {
+    var q by remember(car) { mutableStateOf(known.quirks(car)) }
+    fun set(next: QuirkSettings) { q = next; known.setQuirks(car, next) }
+    val on = stringResource(R.string.quirks_on)
+    val off = stringResource(R.string.quirks_off)
+    Text(stringResource(R.string.quirks_for_car, known.carName(car).orEmpty().ifBlank { car }), style = MaterialTheme.typography.titleSmall)
+    QuirkRow(stringResource(R.string.quirks_pixel_aspect_title), stringResource(R.string.quirks_pixel_aspect_subtitle), q.pixelAspect, on, off) {
+        set(q.copy(pixelAspect = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_video_resolutions_title), stringResource(R.string.quirks_video_resolutions_subtitle), q.videoResolutions, on, off) {
+        set(q.copy(videoResolutions = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_single_channel_capture_title), stringResource(R.string.quirks_single_channel_capture_subtitle), q.singleChannelCapture, on, off) {
+        set(q.copy(singleChannelCapture = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wifi_media_silence_title), stringResource(R.string.quirks_wifi_media_silence_subtitle), q.wifiMediaStartSilence, on, off) {
+        set(q.copy(wifiMediaStartSilence = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wifi_guidance_silence_title), stringResource(R.string.quirks_wifi_guidance_silence_subtitle), q.wifiGuidanceStartSilence, on, off) {
+        set(q.copy(wifiGuidanceStartSilence = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_media_on_gain_transient_title), stringResource(R.string.quirks_media_on_gain_transient_subtitle), q.mediaOnGainTransient, on, off) {
+        set(q.copy(mediaOnGainTransient = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_pause_on_guidance_only_title), stringResource(R.string.quirks_pause_on_guidance_only_subtitle), q.pauseOnGuidanceOnly, on, off) {
+        set(q.copy(pauseOnGuidanceOnly = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wireless_title), stringResource(R.string.quirks_wireless_subtitle), q.wireless,
+        stringResource(R.string.quirks_wireless_allow), stringResource(R.string.quirks_wireless_block)) {
+        set(q.copy(wireless = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_force_electric_title), stringResource(R.string.quirks_force_electric_subtitle), q.forceElectric, on, off) {
+        set(q.copy(forceElectric = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_exit_to_car_title), stringResource(R.string.quirks_exit_to_car_subtitle), q.exitToCar, on, off) {
+        set(q.copy(exitToCar = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_mic_setup_title), stringResource(R.string.quirks_mic_setup_subtitle), q.micSetup, on, off) {
+        set(q.copy(micSetup = it))
     }
 }
 
