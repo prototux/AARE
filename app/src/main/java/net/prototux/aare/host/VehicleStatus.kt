@@ -1,6 +1,5 @@
 package net.prototux.aare.host
 
-import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import net.prototux.aare.car.CarData
 import org.json.JSONArray
 import org.json.JSONObject
@@ -12,15 +11,6 @@ import kotlin.math.roundToInt
  * so the model doesn't have to judge raw numbers.
  */
 object VehicleStatus {
-
-    /** The sensors [json] reads: the car is asked for them while the assistant is in use. */
-    val SENSORS: Set<SensorType> = setOf(
-        SensorType.SENSOR_SPEED, SensorType.SENSOR_GEAR, SensorType.SENSOR_PARKING_BRAKE, SensorType.SENSOR_RPM,
-        SensorType.SENSOR_ODOMETER, SensorType.SENSOR_FUEL, SensorType.SENSOR_ENVIRONMENT_DATA, SensorType.SENSOR_HVAC_DATA,
-        SensorType.SENSOR_DOOR_DATA, SensorType.SENSOR_LIGHT_DATA, SensorType.SENSOR_TIRE_PRESSURE_DATA,
-        SensorType.SENSOR_PASSENGER_DATA, SensorType.SENSOR_TOLL_CARD, SensorType.SENSOR_OBDII_DIAGNOSTIC_CODE,
-        SensorType.SENSOR_VEHICLE_ENERGY_MODEL_DATA,
-    )
 
     /** Values older than this are left out: the car stopped sending them. */
     private const val STALE_MS = 10 * 60_000L

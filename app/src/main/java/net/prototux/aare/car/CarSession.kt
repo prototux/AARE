@@ -16,7 +16,6 @@ import aap_protobuf.service.media.sink.message.VideoFrameRateTypeOuterClass.Vide
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClass.MediaPlaybackMetadata
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.MediaPlaybackStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
-import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import aap_protobuf.service.ServiceOuterClass.Service
 import android.content.Context
 import android.graphics.Bitmap
@@ -223,11 +222,6 @@ class CarSession(
             vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
         }
         CarData.discovered(response, owner = this)
-        main.post {
-            if (closed) return@post
-            settings.registerListener(gpsSetting)
-            needCarGps()
-        }
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
         main.post {
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
@@ -276,11 +270,7 @@ class CarSession(
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
                 s.hasInputSourceService() -> inputServices += s
-                s.hasSensorSourceService() -> SensorChannel(s, sensorListener).also { ch ->
-                    channels += ch
-                    // Whatever AARE needs now and later; the channel asks once it is open.
-                    scope.launch { CarData.needed.collect { ch.want(it) } }
-                }
+                s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
@@ -678,17 +668,6 @@ class CarSession(
     /** The car's GPS as the phone's location, so apps don't mix two positions. */
     private val locationFeed = PhoneLocationFeed(context)
 
-    /** The phone takes the car's GPS (a setting): only then does the session itself need it. */
-    private fun needCarGps() {
-        val on = settings.carGpsForPhone
-        if (!on) locationFeed.stop()
-        CarData.need(locationFeed, if (on) setOf(SensorType.SENSOR_LOCATION) else emptySet())
-    }
-
-    private val gpsSetting = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == "car_gps") main.post { if (!closed) needCarGps() }
-    }
-
     private val sensorListener = object : SensorChannel.Listener {
         override fun onSensors(batch: SensorBatch) {
             CarData.update(batch) // every sensor, for car apps and the assistant
@@ -996,8 +975,6 @@ class CarSession(
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
         callSpeaker?.stop(); callSpeaker = null
-        settings.unregisterListener(gpsSetting)
-        CarData.release(locationFeed)
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()

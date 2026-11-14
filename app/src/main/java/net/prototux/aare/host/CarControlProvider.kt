@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import net.prototux.aare.Settings
-import net.prototux.aare.car.CarData
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.CountDownLatch
@@ -34,7 +33,6 @@ class CarControlProvider : ContentProvider() {
         val caller = callingPackage
         val allowed = Assistants.authorized(context, Settings(context).assistantPackage)
         if (caller == null || caller != allowed) throw SecurityException("Only the car's voice assistant (${allowed ?: "none chosen"}) may control the car")
-        if (method == "tools" || method == "run") main.post(::assistantInUse)
         return when (method) {
             "tools" -> Bundle().apply { putString("json", onMain { if (CarRuntime.active != null) CarTools.specs() else JSONArray() }.toString()) }
             "run" -> {
@@ -50,18 +48,6 @@ class CarControlProvider : ContentProvider() {
         }
     }
 
-    /**
-     * The assistant fetched its tools or ran one: the car is asked for what car_status reports, and
-     * keeps sending it until the assistant has been quiet for [ASSISTANT_HOLD_MS]: the car is
-     * asked only for sensors something uses. An assistant fetches its tools
-     * before it can call one, which gives the car time to answer.
-     */
-    private fun assistantInUse() {
-        CarData.need(ASSISTANT, VehicleStatus.SENSORS)
-        main.removeCallbacks(assistantDone)
-        main.postDelayed(assistantDone, ASSISTANT_HOLD_MS)
-    }
-
     /** The car runtime lives on the main thread; provider calls arrive on binder threads. */
     private fun <T> onMain(block: () -> T): T {
         if (Looper.myLooper() == Looper.getMainLooper()) return block()
@@ -70,13 +56,6 @@ class CarControlProvider : ContentProvider() {
         main.post { result = runCatching(block); done.countDown() }
         if (!done.await(10, TimeUnit.SECONDS)) throw IllegalStateException("the car screen is busy")
         return result!!.getOrThrow()
-    }
-
-    companion object {
-        /** The assistant's need for the car's sensors (see CarData.need). */
-        private val ASSISTANT = Any()
-        private const val ASSISTANT_HOLD_MS = 10 * 60_000L
-        private val assistantDone = Runnable { CarData.release(ASSISTANT) }
     }
 
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?, selectionArgs: Array<out String>?, sortOrder: String?): Cursor? = null
