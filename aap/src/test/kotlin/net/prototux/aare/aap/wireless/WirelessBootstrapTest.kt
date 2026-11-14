@@ -20,6 +20,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.channels.Channels
@@ -459,5 +460,24 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.START_RESPONSE, frame.id)
         assertArrayEquals(byteArrayOf(0x18, 0), frame.payload)
         assertNull(readWppFrame(ByteArray(0).inputStream()))
+    }
+
+    @Test
+    fun payloadsOver1024BytesAreALinkError() {
+        assertEquals(WPP_MAX_PAYLOAD, readWppFrame(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(1024)).inputStream())!!.payload.size)
+        val tooLong = encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(1025))
+        val e = runCatching { readWppFrame(tooLong.inputStream()) }.exceptionOrNull()
+        assertTrue("expected an IOException, got $e", e is IOException)
+    }
+
+    @Test(timeout = 10_000)
+    fun oversizedFrameEndsTheBootstrapLikeABrokenLink() {
+        start(Phone { throw AssertionError("must not try to join") })
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        huToPhone.output.write(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(2000)))
+        awaitEnd()
+        // a broken link while negotiating: the caller redials
+        assertTrue((failure as WirelessBootstrapException).whileNegotiating)
     }
 }

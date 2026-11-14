@@ -2,6 +2,7 @@ package net.prototux.aare.aap.wireless
 
 import java.io.DataInputStream
 import java.io.EOFException
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -105,12 +106,21 @@ object WppSecurityMode {
 /** The kinds of networks the phone can join for wireless projection. */
 enum class WifiSecurity { OPEN, WPA2_PERSONAL, WPA3_PERSONAL, WPA2_WPA3_PERSONAL, UNSUPPORTED }
 
+/**
+ * Longest payload accepted from the head unit. Reads happen into a fixed buffer of this
+ * size and treats a longer frame as a broken link; real WPP messages are a few hundred bytes.
+ */
+const val WPP_MAX_PAYLOAD = 1024
+
 /** One WPP message: `[u16 BE payload length][u16 BE message id][protobuf payload]`. */
 class WppFrame(val id: Int, val payload: ByteArray) {
     override fun toString() = "${WppMessageId.name(id)} (${payload.size} B)"
 }
 
-/** Reads one frame; returns null on a clean end of stream between frames. */
+/**
+ * Reads one frame; returns null on a clean end of stream between frames. Throws an IOException,
+ * like a broken link, for a payload over [WPP_MAX_PAYLOAD].
+ */
 fun readWppFrame(input: InputStream): WppFrame? {
     val data = if (input is DataInputStream) input else DataInputStream(input)
     val hi = data.read()
@@ -119,6 +129,7 @@ fun readWppFrame(input: InputStream): WppFrame? {
     if (lo < 0) throw EOFException("WPP stream ended inside a header")
     val length = (hi shl 8) or lo
     val id = data.readUnsignedShort()
+    if (length > WPP_MAX_PAYLOAD) throw IOException("WPP frame ${WppMessageId.name(id)} of $length B is over the $WPP_MAX_PAYLOAD B limit")
     val payload = ByteArray(length)
     data.readFully(payload)
     return WppFrame(id, payload)
