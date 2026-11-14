@@ -560,6 +560,8 @@ class WirelessBootstrap(
             while (true) {
                 val frame = readWppFrame(input) ?: break
                 log.d("wireless: <- $frame")
+                // Possibly a desynchronised stream; accepted anyway, so head units that send such frames keep working.
+                if (frame.payload.size > WPP_MAX_PAYLOAD) log.w("wireless: unusually long frame from the head unit: $frame")
                 if (frame.id == WppMessageId.PING_REQUEST) {
                     // Answered here so pings are answered even while connectWifi() blocks.
                     sendQuietly(WppMessageId.PING_RESPONSE, frame.payload)

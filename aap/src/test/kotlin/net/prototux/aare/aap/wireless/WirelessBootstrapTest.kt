@@ -20,7 +20,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.channels.Channels
@@ -758,21 +757,22 @@ class WirelessBootstrapTest {
     }
 
     @Test
-    fun payloadsOver1024BytesAreALinkError() {
-        assertEquals(WPP_MAX_PAYLOAD, readWppFrame(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(1024)).inputStream())!!.payload.size)
-        val tooLong = encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(1025))
-        val e = runCatching { readWppFrame(tooLong.inputStream()) }.exceptionOrNull()
-        assertTrue("expected an IOException, got $e", e is IOException)
+    fun payloadsOver1024BytesAreStillRead() {
+        val frame = readWppFrame(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(5000)).inputStream())!!
+        assertEquals(5000, frame.payload.size)
+        val e = runCatching { encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(0x10000)) }.exceptionOrNull()
+        assertTrue("expected the 64 KiB encode limit, got $e", e is IllegalArgumentException)
     }
 
     @Test(timeout = 10_000)
-    fun oversizedFrameEndsTheBootstrapLikeABrokenLink() {
-        start(Phone { throw AssertionError("must not try to join") })
+    fun oversizedFrameIsOnlyLogged() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
         hu.send(WppMessageId.START_REQUEST, startRequest())
         hu.expect(WppMessageId.INFO_REQUEST)
-        huToPhone.output.write(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(2000)))
-        awaitEnd()
-        // a broken link while negotiating: the caller redials
-        assertTrue((failure as WirelessBootstrapException).whileNegotiating)
+        huToPhone.output.write(encodeWppFrame(99, ByteArray(2000)))
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
     }
 }
