@@ -70,9 +70,9 @@ data class PhoneStatusInfo(
     }
 }
 
-/** Signal bars, Wi-Fi and battery, for the rail under the clock. */
+/** Polls the phone's network and battery status every 15 s, for [PhoneStatusIcons] and the rail's own battery widget. */
 @Composable
-fun PhoneStatusIcons() {
+internal fun rememberPhoneStatus(): PhoneStatusInfo? {
     val context = LocalContext.current
     var status by remember { mutableStateOf<PhoneStatusInfo?>(null) }
     LaunchedEffect(Unit) {
@@ -81,7 +81,13 @@ fun PhoneStatusIcons() {
             delay(15_000)
         }
     }
-    val s = status ?: return
+    return status
+}
+
+/** Signal bars, Wi-Fi and battery, for the rail under the clock. */
+@Composable
+fun PhoneStatusIcons() {
+    val s = rememberPhoneStatus() ?: return
     val fg = MaterialTheme.colorScheme.onSurface
     val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -93,8 +99,20 @@ fun PhoneStatusIcons() {
     }
 }
 
+/** Signal bars and Wi-Fi only (no battery): the rail's network status, shown next to its battery widget. */
 @Composable
-private fun SignalBars(level: Int?, fg: Color, dim: Color) {
+internal fun NetworkStatusIcons() {
+    val s = rememberPhoneStatus() ?: return
+    val fg = MaterialTheme.colorScheme.onSurface
+    val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (s.wifi) Icon(Icons.Rounded.Wifi, stringResource(R.string.phone_status_wifi), tint = fg, modifier = Modifier.size(16.dp))
+        SignalBars(s.signal, fg, dim)
+    }
+}
+
+@Composable
+internal fun SignalBars(level: Int?, fg: Color, dim: Color) {
     Canvas(Modifier.size(16.dp)) {
         val bar = size.width / 5.5f
         for (i in 0 until 4) {
@@ -110,7 +128,7 @@ private fun SignalBars(level: Int?, fg: Color, dim: Color) {
 }
 
 @Composable
-private fun BatteryGauge(percent: Int, charging: Boolean, fg: Color, dim: Color) {
+internal fun BatteryGauge(percent: Int, charging: Boolean, fg: Color, dim: Color) {
     val low = !charging && percent <= 15
     val fill = if (low) MaterialTheme.colorScheme.error else fg
     Canvas(Modifier.size(width = 22.dp, height = 12.dp)) {

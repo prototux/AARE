@@ -36,7 +36,13 @@ internal fun List<DashCard>.withCard(card: DashCard, shown: Boolean): List<DashC
 }
 
 /** This order with the card at [index] moved [by] places (clamped to the list). */
-internal fun List<DashCard>.moved(index: Int, by: Int): List<DashCard> {
+internal fun List<DashCard>.moved(index: Int, by: Int): List<DashCard> = movedBy(index, by)
+
+/**
+ * This list with the item at [index] moved [by] places (clamped to the list). Shared by every
+ * user-ordered list on the car screen: the dashboard's cards, and the rail's status widgets.
+ */
+internal fun <T> List<T>.movedBy(index: Int, by: Int): List<T> {
     if (index !in indices) return this
     val list = toMutableList()
     list.add((index + by).coerceIn(0, lastIndex), list.removeAt(index))

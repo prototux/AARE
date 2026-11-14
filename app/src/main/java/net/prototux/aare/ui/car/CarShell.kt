@@ -250,8 +250,12 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             val driverEnd: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (state.driverOnRight) { menu(); mic() } else { mic(); menu() }
             } }
+            // On a tight bar the weather gives up its spot first; the clock and battery stay.
+            val widgets = if (tightBar) state.railWidgets - RailWidget.WEATHER else state.railWidgets
             val status: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Clock(); if (!tightBar) WeatherChip(state.weather.takeIf { state.weatherInBar }); PhoneStatusIcons(); NotificationBell(state) { bell() }
+                RailWidgets(widgets, state.weather.takeIf { state.weatherInBar }, horizontal = true, spacing = 10.dp)
+                NetworkStatusIcons()
+                NotificationBell(state) { bell() }
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -265,12 +269,12 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Clock()
+            // Short on room: only the clock stays, the rest (and the network icons) give up their place.
+            val widgets = if (fit.status) state.railWidgets else state.railWidgets.filter { it == RailWidget.CLOCK }
+            RailWidgets(widgets, state.weather.takeIf { state.weatherInBar }, horizontal = false, spacing = 6.dp)
             if (fit.status) {
-                Spacer(Modifier.height(6.dp))
-                PhoneStatusIcons()
                 Spacer(Modifier.height(4.dp))
-                WeatherChip(state.weather.takeIf { state.weatherInBar })
+                NetworkStatusIcons()
             }
             NotificationBell(state) { bell() }
             // The apps are the only weighted child, so they are measured last and are the part that
