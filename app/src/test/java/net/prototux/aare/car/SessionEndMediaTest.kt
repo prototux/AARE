@@ -21,7 +21,7 @@ class SessionEndMediaTest {
         override fun previous() {}
         override fun pause() { pauses++ }
         @Composable
-        override fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier) {}
+        override fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier, onShowVideo: (() -> Unit)?) {}
         override fun release() {}
     }
 

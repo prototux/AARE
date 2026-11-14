@@ -340,6 +340,8 @@
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
     <string name="standalone_paused_driving">Paused while driving.</string>
+    <string name="standalone_media_video_title">Video from media apps</string>
+    <string name="standalone_media_video_subtitle">Adds "Show video" to the car\'s media screen: the media app opens on the car screen, for its video. Parked only; the cover art comes back when you drive.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>
@@ -443,6 +445,11 @@
     <string name="media_search_app">Search %1$s</string>
     <string name="media_action_search">Search</string>
     <string name="media_action_browse">Browse</string>
+    <string name="media_action_show_video">Show video</string>
+    <string name="media_video_close">Back to the player</string>
+    <string name="media_video_full_screen">Full screen</string>
+    <string name="media_video_exit_full_screen">Exit full screen</string>
+    <string name="media_video_paused_driving">Video paused while driving; the sound goes on.</string>
     <string name="media_now_playing_label">Now playing</string>
     <string name="media_nothing_here">Nothing here</string>
     <string name="media_couldnt_load_more">Couldn\'t load more</string>
