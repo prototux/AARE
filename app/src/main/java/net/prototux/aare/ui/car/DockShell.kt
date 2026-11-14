@@ -134,7 +134,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     ) {
         Clock()
         PhoneStatusIcons()
-        WeatherChip(state.weather)
+        WeatherChip(state.weather.takeIf { state.weatherInBar })
         // Only the apps are weighted: on a short screen they scroll, and voice and home keep their size.
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Column(

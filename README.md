@@ -207,7 +207,9 @@ black, like a car's night lighting) and **Retro** (a green phosphor screen or an
 dashboard). A style is a theme (colours, type, shapes) with a layout (a taskbar with dashboard
 cards, a dock with app pages, or a bottom bar with the app grid); either can be changed on its
 own. The accent colour can be the theme's, the phone's or amber, red, green, cyan, blue or white;
-on Night and Retro it colours everything (a red Night, an amber Retro). AARE is not affiliated with Google or Apple.
+on Night and Retro it colours everything (a red Night, an amber Retro). The dashboard's cards (map,
+music, next calendar event, latest notification, weather) can be shown, hidden and reordered under
+*Dashboard*: the first gets the most room. AARE is not affiliated with Google or Apple.
 
 > [!NOTE]
 > The pictures below are **mockups**, not screenshots of a car: a test draws them on a computer
@@ -223,6 +225,7 @@ on Night and Retro it colours everything (a red Night, an amber Retro). AARE is 
 | ![Material You](docs/screenshots/styles/materialYou.png) **Material You** (here Material's default colours) | ![High contrast](docs/screenshots/styles/highContrast.png) **High contrast** |
 | ![Night, amber](docs/screenshots/styles/nightAmber.png) **Night** | ![Night, red](docs/screenshots/styles/nightRed.png) **Night**, red accent |
 | ![Retro, green](docs/screenshots/styles/retro.png) **Retro** | ![Retro, amber](docs/screenshots/styles/retroAmber.png) **Retro**, amber accent |
+| ![A dashboard with the music first, the map and the weather](docs/screenshots/styles/customDashboard.png) **Dashboard** set to music, map, weather | |
 
 | | |
 |---|---|

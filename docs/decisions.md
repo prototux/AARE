@@ -135,3 +135,18 @@ stand-in for the navigation app's map. `tools/mockups.sh` renders them and copie
 - 1280×720 at 160 dpi (1 dp = 1 pixel), a common head-unit size; the phone status icons show
   layoutlib's defaults (no signal, battery 0), since there is no phone.
 
+## Configurable dashboard
+
+The dashboard is an ordered list of cards (`DashCard`: map, music, next calendar event, latest
+notification, weather), each shown or hidden and moved up or down in the settings, in the car and
+on the phone. No free placement or sizes: car screens range from 800×480 to 2560×720 and
+portrait, so the screen shape still decides the arrangement (`dashboardSlots`), and the order only
+decides which card goes where: the first gets the big space, the others fill what is left (3 cards
+at most; 2 on small screens). A card with nothing to show gives its place to the next, the map
+stands in when nothing is left, and the last card can't be hidden.
+
+- It replaces the "music first" and "next calendar event" switches; their values give the first
+  list. The calendar is read only when its card is shown; the weather when it is next to the clock
+  or its card is shown.
+- With no event, the latest notification now fills that slot on ordinary landscape screens too.
+

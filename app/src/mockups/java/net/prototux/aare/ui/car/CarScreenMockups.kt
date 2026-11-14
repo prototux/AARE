@@ -62,13 +62,21 @@ class CarScreenMockups {
     @Test fun nightRed() = shot("night", night = true, accent = "red")
     @Test fun retro() = shot("retro", night = true)
     @Test fun retroAmber() = shot("retro", night = true, accent = "amber")
+    @Test fun customDashboard() = shot("aare", night = true, cards = listOf(DashCard.MEDIA, DashCard.MAP, DashCard.WEATHER))
 
     /** The style made of [themeId] and its layout, as the settings' Style picker would set it. */
-    private fun shot(themeId: String, night: Boolean, accent: String? = null, screen: CarScreen = CarScreen.Dashboard) {
+    private fun shot(
+        themeId: String,
+        night: Boolean,
+        accent: String? = null,
+        screen: CarScreen = CarScreen.Dashboard,
+        cards: List<DashCard> = DashCard.DEFAULT,
+    ) {
         val style = CarStyles.all.first { it.themeId == themeId }
         val state = mockState(night, screen).apply {
             theme = CarThemes.byId(themeId).withAccent(CarAccents.byId(accent))
             layout = style.layout
+            dashboardCards = cards
         }
         paparazzi.snapshot {
             CarTheme(night = state.night, theme = state.theme) {
