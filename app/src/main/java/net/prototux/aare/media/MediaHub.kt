@@ -56,9 +56,12 @@ interface MediaHub {
     fun previous()
     fun pause()
 
-    /** Full-screen UI for an app: browse tree (list/grid per content style), search, now playing. */
+    /**
+     * Full-screen UI for an app: browse tree (list/grid per content style), search, now playing.
+     * [onShowVideo], when set, adds a "Show video" action to its top bar.
+     */
     @Composable
-    fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier)
+    fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier, onShowVideo: (() -> Unit)?)
 
     /** Disconnects everything. */
     fun release()

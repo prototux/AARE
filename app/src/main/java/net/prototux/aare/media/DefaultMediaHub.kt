@@ -119,7 +119,8 @@ class DefaultMediaHub(context: Context, scope: CoroutineScope) : MediaHub {
     }
 
     @Composable
-    override fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier) = MediaAppScreen(this, app, driving, modifier)
+    override fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier, onShowVideo: (() -> Unit)?) =
+        MediaAppScreen(this, app, driving, modifier, onShowVideo)
 
     override fun release() {
         discovery.release()

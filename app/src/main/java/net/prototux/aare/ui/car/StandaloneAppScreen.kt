@@ -17,6 +17,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,18 +45,28 @@ import net.prototux.aare.media.Placeholder
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
+internal fun StandaloneAppScreen(
+    runtime: CarRuntime,
+    driving: Boolean,
+    packageName: String,
+    modifier: Modifier,
+    /** Handles the car's Back instead of the launched app (true if handled), e.g. to close a media app's video. */
+    onBack: (() -> Boolean)? = null,
+) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
     var started by remember(packageName) { mutableStateOf(false) }
 
+    val backOverride by rememberUpdatedState(onBack)
     DisposableEffect(packageName) {
-        // Hardware / head-unit Back goes to the launched app.
+        // Hardware / head-unit Back goes to the launched app, unless the caller takes it.
         val back: () -> Boolean = {
-            val t = android.os.SystemClock.uptimeMillis()
-            launcher.key(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)
-            launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
-            launcher.connected
+            backOverride?.invoke() ?: run {
+                val t = android.os.SystemClock.uptimeMillis()
+                launcher.key(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)
+                launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
+                launcher.connected
+            }
         }
         runtime.screenBack = back
         onDispose {
@@ -72,6 +83,12 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                         surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                             override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
                                 val surface = Surface(st)
+                                // Back from a drive: the app kept running on its display, so it gets the new
+                                // surface rather than a restart (start() relaunches it, which would end a video).
+                                if (started) {
+                                    launcher.resize(surface, w, h, runtime.densityDpi)
+                                    return
+                                }
                                 // connect() blocks (binds Shizuku / spawns su), so do it off the main thread.
                                 Thread {
                                     if (launcher.connect()) {
