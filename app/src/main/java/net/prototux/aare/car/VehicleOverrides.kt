@@ -34,9 +34,9 @@ data class VehicleOverride(
     /** Silent audio messages sent ahead of a media / guidance stream's start, over Wi-Fi (see [StartSilence]). */
     val wifiMediaStartSilence: Int? = null,
     val wifiGuidanceStartSilence: Int? = null,
-    /** Music keeps playing when the car grants GAIN_TRANSIENT (AARE's default: only navigation voice does). */
+    /** Music keeps playing on a GAIN_TRANSIENT for a prompt or from the car itself (AARE's default: only navigation voice does). */
     val mediaOnGainTransient: Boolean? = null,
-    /** An unsolicited GAIN_TRANSIENT_GUIDANCE_ONLY from the car pauses the phone's music (AARE's default: yes). */
+    /** An unsolicited GAIN_TRANSIENT_GUIDANCE_ONLY from the car pauses the phone's music until its next gain (AARE's default: yes). */
     val pauseOnGuidanceOnly: Boolean? = null,
     /** Whether to connect to this head unit wirelessly (AARE's default: yes). */
     val wireless: Boolean? = null,

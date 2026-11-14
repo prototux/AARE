@@ -383,14 +383,16 @@ class CarSession(
             DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         val quirks = vehicleOverride
-        mediaFocus = mediaAllowed(state, quirks?.mediaOnGainTransient == true)
+        mediaFocus = mediaAllowed(state, gainTransientIsMedia(notification.unsolicited, answersGuidance = !notification.unsolicited && guidancePlaying,
+            quirk = quirks?.mediaOnGainTransient == true))
         guidanceFocusState = guidanceAllowed(state)
         when {
-            // The car keeps only navigation voice for now: the phone's audio
-            // focus for good, stopping its music, except for some head units (vehicles.json).
+            // The car keeps only navigation voice for now: pause the phone's music, unless a
+            // vehicles.json rule says not to, and play it again on the next gain, like the other
+            // pauses the car causes.
             notification.unsolicited && state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY &&
                 quirks?.pauseOnGuidanceOnly != false -> main.post {
-                pausedByCar = false
+                if (media.playback.value?.playing == true) pausedByCar = true
                 media.pause()
             }
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
@@ -410,7 +412,10 @@ class CarSession(
         }
     }
 
-    /** Media paused by an unsolicited transient focus loss, to resume on the next gain (main thread). */
+    /**
+     * Media paused by the car (an unsolicited transient loss, or the car keeping only navigation
+     * voice), to resume on the car's next gain (main thread).
+     */
     private var pausedByCar = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
@@ -1119,8 +1124,7 @@ class CarSession(
 
         /**
          * Whether the car's focus [state] lets music play. Ducking keeps it going: the head unit
-         * lowers it itself. GAIN_TRANSIENT is for navigation voice only, taking
-         * it, except for head units that mean music too ([gainTransientIsMedia], vehicles.json).
+         * lowers it itself. GAIN_TRANSIENT does when [gainTransientIsMedia].
          */
         fun mediaAllowed(state: AudioFocusStateType, gainTransientIsMedia: Boolean): Boolean = when (state) {
             AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
@@ -1128,6 +1132,16 @@ class CarSession(
             AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT -> gainTransientIsMedia
             else -> false
         }
+
+        /**
+         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request it does (a
+         * head unit that grants a transient gain for it still means "play"). Answering a
+         * navigation prompt's request, or said by the car on its own, it is for navigation voice:
+         * the music waits until the prompt is over, unless a vehicles.json rule ([quirk]) says the
+         * head unit means music too.
+         */
+        fun gainTransientIsMedia(unsolicited: Boolean, answersGuidance: Boolean, quirk: Boolean): Boolean =
+            quirk || (!unsolicited && !answersGuidance)
 
         /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
         fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {
