@@ -262,7 +262,10 @@ class CarRuntime(
 
     fun clusterConnection(nav: CarAppEntry): CarAppConnection? {
         clusterConnections[nav.id]?.let { return it }
-        val info = carApps[nav.id]?.takeIf { CarAppInfo.CATEGORY_CLUSTER in it.categories } ?: return null
+        // Some versions of some apps get no cluster session (AppQuirks.CLUSTER_DISABLED).
+        val info = carApps[nav.id]?.takeIf {
+            CarAppInfo.CATEGORY_CLUSTER in it.categories && !AppQuirks.CLUSTER_DISABLED.matches(it.packageName, it.versionCode)
+        } ?: return null
         return CarAppConnection(context, info, this, cluster = true).also { clusterConnections[nav.id] = it }
     }
 
