@@ -17,6 +17,8 @@ import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
+import aap_protobuf.service.inputsource.message.InputFeedbackOuterClass.InputFeedback
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
 import aap_protobuf.service.inputsource.message.RelativeEventOuterClass.RelativeEvent
@@ -138,6 +140,8 @@ class HeadUnitSimulator(
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
     @Volatile var hangUpInHandshake = false
+    /** Input feedback (clicks, haptics) the phone asked for, in order. */
+    val inputFeedback = LinkedBlockingQueue<FeedbackEvent>()
 
     fun start() {
         Thread({
@@ -165,8 +169,11 @@ class HeadUnitSimulator(
         when (m.channel) {
             video, mediaAudio, guidance, system -> mediaSink(m)
             mic -> micSource(m)
-            input -> if (m.id == InputMsg.KEY_BINDING_REQUEST) send(input, InputMsg.KEY_BINDING_RESPONSE,
-                aap_protobuf.service.media.sink.message.KeyBindingResponseOuterClass.KeyBindingResponse.newBuilder().setStatus(0).build())
+            input -> when (m.id) {
+                InputMsg.KEY_BINDING_REQUEST -> send(input, InputMsg.KEY_BINDING_RESPONSE,
+                    aap_protobuf.service.media.sink.message.KeyBindingResponseOuterClass.KeyBindingResponse.newBuilder().setStatus(0).build())
+                InputMsg.INPUT_FEEDBACK -> inputFeedback.add(InputFeedback.parseFrom(m.bodyBytes()).event)
+            }
             sensors -> if (m.id == SensorMsg.REQUEST) {
                 val req = SensorRequest.parseFrom(m.bodyBytes())
                 sensorRequests.add(req.type)
@@ -354,7 +361,10 @@ class HeadUnitSimulator(
                 // HOME, BACK, CALL, ENDCALL, DPAD, SEARCH, media, VOICE_ASSIST, rotary, and the AA
                 // function buttons: MEDIA, NAVIGATION, RADIO, TEL.
                 .addAllKeycodesSupported(listOf(3, 4, 5, 6, 19, 20, 21, 22, 23, 84, 85, 87, 88, 231, 65536, 65537, 65538, 65539, 65540))
-                .addTouchscreen(InputSourceService.TouchScreen.newBuilder().setWidth(width).setHeight(height))))
+                .addTouchscreen(InputSourceService.TouchScreen.newBuilder().setWidth(width).setHeight(height))
+                // A car that clicks on select and focus moves, but plays nothing for drags.
+                .addFeedbackEventsSupported(FeedbackEvent.FEEDBACK_SELECT)
+                .addFeedbackEventsSupported(FeedbackEvent.FEEDBACK_FOCUS_CHANGE)))
             .addChannels(Service.newBuilder().setId(sensors).setSensorSourceService(SensorSourceService.newBuilder()
                 .addSensors(Sensor.newBuilder().setSensorType(SensorType.SENSOR_DRIVING_STATUS_DATA))
                 .addSensors(Sensor.newBuilder().setSensorType(SensorType.SENSOR_NIGHT_MODE))

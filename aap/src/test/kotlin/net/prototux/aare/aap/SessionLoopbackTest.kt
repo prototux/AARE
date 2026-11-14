@@ -4,6 +4,7 @@ import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.Aud
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
@@ -59,6 +60,7 @@ open class SessionLoopbackTest {
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null
     private var nav: NavigationStatusChannel? = null
+    @Volatile private var input: InputChannel? = null
     private val audio = mutableListOf<AudioChannel>()
     private val encoding = AtomicBoolean(false)
     @Volatile private var closeError: Throwable? = null
@@ -100,7 +102,7 @@ open class SessionLoopbackTest {
                     }).also { mic = it }
                     s.hasInputSourceService() -> InputChannel(s, object : InputChannel.Listener {
                         override fun onInput(report: InputReport) { inputs.add(report) }
-                    })
+                    }).also { input = it }
                     s.hasSensorSourceService() -> SensorChannel(s, object : SensorChannel.Listener {
                         override fun onSensors(batch: SensorBatch) { sensors.add(batch) }
                     })
@@ -416,6 +418,22 @@ open class SessionLoopbackTest {
         nav!!.status(NavigationStatus.NavigationStatusEnum.ACTIVE)
         if (modernNav) assertEquals(NavigationStatus.NavigationStatusEnum.REROUTING, hu.navStatuses.poll(3, TimeUnit.SECONDS))
         assertEquals(NavigationStatus.NavigationStatusEnum.ACTIVE, hu.navStatuses.poll(3, TimeUnit.SECONDS))
+    }
+
+    /** Input feedback goes out only for the events the car listed. */
+    @Test
+    fun inputFeedbackOnlyForWhatTheCarListed() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val until = System.currentTimeMillis() + 3_000
+        while (input?.opened != true && System.currentTimeMillis() < until) Thread.sleep(10)
+        val ch = input!!
+        assertEquals(setOf(FeedbackEvent.FEEDBACK_SELECT, FeedbackEvent.FEEDBACK_FOCUS_CHANGE), ch.feedbackEvents)
+        ch.sendFeedback(FeedbackEvent.FEEDBACK_DRAG_START) // not listed: never sent
+        ch.sendFeedback(FeedbackEvent.FEEDBACK_FOCUS_CHANGE)
+        ch.sendFeedback(FeedbackEvent.FEEDBACK_SELECT)
+        assertEquals(FeedbackEvent.FEEDBACK_FOCUS_CHANGE, hu.inputFeedback.poll(3, TimeUnit.SECONDS))
+        assertEquals(FeedbackEvent.FEEDBACK_SELECT, hu.inputFeedback.poll(3, TimeUnit.SECONDS))
+        assertEquals(null, hu.inputFeedback.poll(500, TimeUnit.MILLISECONDS))
     }
 }
 
