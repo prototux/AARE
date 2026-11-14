@@ -172,3 +172,12 @@ text, for any app. The countdown is time-based, not an animation, so phones with
 don't click the action at once; a template refresh with the same action keeps counting.
 Alerts keep their own timeout, not their default action's countdown.
 
+## Car app screens: refresh or new screen
+
+A new template from a car app is a refresh of the screen on show (keeping what's typed, pan mode
+and the scroll position) when the screen stack has the same depth and screens and the top
+template has the same class. For the apps in `TemplateQuirks.mapHeaderStartsScreen` (Waze from
+versionCode 1030423, the library samples), a MapTemplate whose header title changed (or whose
+header came or went) is a new screen too. Other content checks (a pane's header, its loading
+state, the rows) aren't made.
+

@@ -36,11 +36,13 @@ import androidx.car.app.media.CarAudioCallback
 import androidx.car.app.media.OpenMicrophoneRequest
 import androidx.car.app.media.OpenMicrophoneResponse
 import androidx.car.app.model.Alert
+import androidx.car.app.model.Header
 import androidx.car.app.model.Template
 import androidx.car.app.model.TemplateInfo
 import androidx.car.app.model.TemplateWrapper
 import androidx.car.app.navigation.INavigationHost
 import androidx.car.app.navigation.INavigationManager
+import androidx.car.app.navigation.model.MapTemplate
 import androidx.car.app.navigation.model.Trip
 import androidx.car.app.serialization.Bundleable
 import androidx.car.app.versioning.CarAppApiLevels
@@ -48,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.setValue
+import androidx.core.content.pm.PackageInfoCompat
 import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.ArrayBlockingQueue
@@ -103,6 +106,8 @@ class CarAppConnection(
         private set
     /** The app's car theme colours, read once (main thread, on first draw). */
     val themeColors: AppThemeColors by lazy { CarAppTheme.load(context, info.service) }
+    /** A MapTemplate with a new header title is a new screen for this app ([TemplateQuirks.mapHeaderStartsScreen]). */
+    private val mapHeaderStartsScreen: Boolean by lazy { TemplateQuirks.mapHeaderStartsScreen(info.packageName, installedVersion()) }
 
     private val main = Handler(Looper.getMainLooper())
     private var carApp: ICarApp? = null
@@ -334,11 +339,13 @@ class CarAppConnection(
             if (seq < appliedSeq) return@call
             appliedSeq = seq
             val stack = runCatching { wrapper.templateInfosForScreenStack }.getOrNull().orEmpty()
-            val refresh = templateId != null && isRefresh(screenStack, stack)
+            val refresh = templateId != null && isRefresh(screenStack, stack) &&
+                (!mapHeaderStartsScreen || keepsMapHeader(template, wrapper.template))
             screenStack = stack
             template = wrapper.template
             // A refresh of the same screen (search results while typing, a navigation update, a
             // toggled row) keeps the on-screen state: what's typed, pan mode, the scroll position.
+            // For a few apps a MapTemplate with a new header title starts afresh too.
             if (!refresh) templateId = wrapper.id
         }) { m.getTemplate(it) }
     }
@@ -351,6 +358,12 @@ class CarAppConnection(
     private fun isRefresh(old: List<TemplateInfo>, new: List<TemplateInfo>): Boolean =
         new.isNotEmpty() && new.size == old.size && new.drop(1) == old.drop(1) &&
             new[0].templateClass == old[0].templateClass
+
+    private fun installedVersion(): Long? = runCatching {
+        val pi = if (Build.VERSION.SDK_INT >= 33) context.packageManager.getPackageInfo(info.packageName, PackageManager.PackageInfoFlags.of(0))
+            else @Suppress("DEPRECATION") context.packageManager.getPackageInfo(info.packageName, 0)
+        PackageInfoCompat.getLongVersionCode(pi)
+    }.getOrNull()
 
     private fun applyVisibility() {
         val app = carApp ?: return
@@ -715,3 +728,15 @@ class CarAppConnection(
         }
     }
 }
+
+/**
+ * Whether [new] keeps [old]'s header title, for an app whose MapTemplate header title tells its
+ * screens apart ([TemplateQuirks.mapHeaderStartsScreen]). Any other pair of templates does.
+ */
+@Suppress("DEPRECATION") // MapTemplate: deprecated, still used
+internal fun keepsMapHeader(old: Template?, new: Template?): Boolean =
+    old !is MapTemplate || new !is MapTemplate || sameHeaderTitle(old.header, new.header)
+
+/** Same title, or both without a header (a header and none differ, whatever its title). */
+internal fun sameHeaderTitle(a: Header?, b: Header?): Boolean =
+    if (a == null || b == null) a == null && b == null else a.title == b.title
