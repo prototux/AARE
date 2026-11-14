@@ -429,6 +429,11 @@
     <string name="car_data_accelerometer">Accelerometer</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Fejlkoder</string>
+    <string name="car_data_dtc_unknown">Ukendt</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Producentspecifik drivlinjekode</string>
+    <string name="car_data_dtc_manufacturer_chassis">Producentspecifik chassiskode</string>
+    <string name="car_data_dtc_manufacturer_body">Producentspecifik karrosserikode</string>
+    <string name="car_data_dtc_manufacturer_network">Producentspecifik netværkskode</string>
     <string name="car_data_app_label">Bildata</string>
     <string name="car_data_show_in_car_title">Vis på bilskærmen</string>
     <string name="car_data_show_in_car_subtitle">Tilføj en diagnoseapp i bilen for at se disse livedata</string>

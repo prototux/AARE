@@ -429,6 +429,11 @@
     <string name="car_data_accelerometer">Akcelerometr</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Chybové kódy</string>
+    <string name="car_data_dtc_unknown">Neznámý</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Kód hnacího ústrojí specifický pro výrobce</string>
+    <string name="car_data_dtc_manufacturer_chassis">Kód podvozku specifický pro výrobce</string>
+    <string name="car_data_dtc_manufacturer_body">Kód karoserie specifický pro výrobce</string>
+    <string name="car_data_dtc_manufacturer_network">Kód sítě specifický pro výrobce</string>
     <string name="car_data_app_label">Data vozu</string>
     <string name="car_data_show_in_car_title">Zobrazit na obrazovce auta</string>
     <string name="car_data_show_in_car_subtitle">Pro tato živá data přidejte v autě diagnostickou aplikaci</string>

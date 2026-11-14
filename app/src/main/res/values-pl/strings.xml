@@ -429,6 +429,11 @@
     <string name="car_data_accelerometer">Akcelerometr</string>
     <string name="car_data_gyroscope">Żyroskop</string>
     <string name="car_data_dtc">Kody usterek</string>
+    <string name="car_data_dtc_unknown">Nieznany</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Kod układu napędowego specyficzny dla producenta</string>
+    <string name="car_data_dtc_manufacturer_chassis">Kod podwozia specyficzny dla producenta</string>
+    <string name="car_data_dtc_manufacturer_body">Kod nadwozia specyficzny dla producenta</string>
+    <string name="car_data_dtc_manufacturer_network">Kod sieci specyficzny dla producenta</string>
     <string name="car_data_app_label">Dane samochodu</string>
     <string name="car_data_show_in_car_title">Wyświetlaj na ekranie samochodu</string>
     <string name="car_data_show_in_car_subtitle">Dodaj aplikację diagnostyczną w samochodzie dla tych danych na żywo</string>

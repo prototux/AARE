@@ -429,6 +429,11 @@
     <string name="car_data_accelerometer">Cảm biến gia tốc</string>
     <string name="car_data_gyroscope">Con quay hồi chuyển</string>
     <string name="car_data_dtc">Mã lỗi</string>
+    <string name="car_data_dtc_unknown">Không rõ</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Mã hệ truyền động riêng của nhà sản xuất</string>
+    <string name="car_data_dtc_manufacturer_chassis">Mã khung gầm riêng của nhà sản xuất</string>
+    <string name="car_data_dtc_manufacturer_body">Mã thân xe riêng của nhà sản xuất</string>
+    <string name="car_data_dtc_manufacturer_network">Mã mạng riêng của nhà sản xuất</string>
     <string name="car_data_app_label">Dữ liệu xe hơi</string>
     <string name="car_data_show_in_car_title">Hiện trên màn hình xe</string>
     <string name="car_data_show_in_car_subtitle">Thêm ứng dụng chẩn đoán trên xe cho dữ liệu trực tiếp này</string>
