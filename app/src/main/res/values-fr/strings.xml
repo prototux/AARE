@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Clair</string>
     <string name="setup_choice_bar">Barre</string>
     <string name="setup_choice_bar_auto">Côté conducteur</string>
+    <string name="setup_choice_status_items">Heure, réseau et batterie</string>
+    <string name="setup_choice_status_items_auto">Comme la voiture</string>
+    <string name="setup_choice_status_items_show">Toujours afficher</string>
+    <string name="setup_choice_status_items_hide">Toujours masquer</string>
+    <string name="setup_hint_status_items">« Comme la voiture » n\'affiche pas ce que la voiture montre déjà sur son écran.</string>
     <string name="setup_choice_left">Gauche</string>
     <string name="setup_choice_right">Droite</string>
     <string name="setup_choice_bottom">Bas</string>

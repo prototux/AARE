@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Ljust</string>
     <string name="setup_choice_bar">Fält</string>
     <string name="setup_choice_bar_auto">Förarsida</string>
+    <string name="setup_choice_status_items">Klocka, signal och batteri</string>
+    <string name="setup_choice_status_items_auto">Följ bilen</string>
+    <string name="setup_choice_status_items_show">Visa alltid</string>
+    <string name="setup_choice_status_items_hide">Dölj alltid</string>
+    <string name="setup_hint_status_items">Följ bilen utelämnar det som bilen redan visar på sin skärm.</string>
     <string name="setup_choice_left">Vänster</string>
     <string name="setup_choice_right">Höger</string>
     <string name="setup_choice_bottom">Nederkant</string>

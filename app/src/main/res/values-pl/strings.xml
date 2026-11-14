@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Jasny</string>
     <string name="setup_choice_bar">Pasek</string>
     <string name="setup_choice_bar_auto">Strona kierowcy</string>
+    <string name="setup_choice_status_items">Zegar, sygnał i bateria</string>
+    <string name="setup_choice_status_items_auto">Jak w samochodzie</string>
+    <string name="setup_choice_status_items_show">Zawsze pokazuj</string>
+    <string name="setup_choice_status_items_hide">Zawsze ukrywaj</string>
+    <string name="setup_hint_status_items">Opcja Jak w samochodzie pomija to, co samochód już pokazuje na swoim ekranie.</string>
     <string name="setup_choice_left">Lewo</string>
     <string name="setup_choice_right">Prawo</string>
     <string name="setup_choice_bottom">Dół</string>

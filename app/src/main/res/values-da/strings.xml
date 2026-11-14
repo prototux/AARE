@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Lys</string>
     <string name="setup_choice_bar">Bar</string>
     <string name="setup_choice_bar_auto">Førerside</string>
+    <string name="setup_choice_status_items">Ur, signal og batteri</string>
+    <string name="setup_choice_status_items_auto">Følg bilen</string>
+    <string name="setup_choice_status_items_show">Vis altid</string>
+    <string name="setup_choice_status_items_hide">Skjul altid</string>
+    <string name="setup_hint_status_items">Følg bilen udelader det, bilen allerede viser på sin skærm.</string>
     <string name="setup_choice_left">Venstre</string>
     <string name="setup_choice_right">Højre</string>
     <string name="setup_choice_bottom">Nederst</string>

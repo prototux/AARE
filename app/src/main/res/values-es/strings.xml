@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Claro</string>
     <string name="setup_choice_bar">Barra</string>
     <string name="setup_choice_bar_auto">Lado del conductor</string>
+    <string name="setup_choice_status_items">Hora, señal y batería</string>
+    <string name="setup_choice_status_items_auto">Según el coche</string>
+    <string name="setup_choice_status_items_show">Mostrar siempre</string>
+    <string name="setup_choice_status_items_hide">Ocultar siempre</string>
+    <string name="setup_hint_status_items">«Según el coche» omite lo que el coche ya muestra en su pantalla.</string>
     <string name="setup_choice_left">Izquierda</string>
     <string name="setup_choice_right">Derecha</string>
     <string name="setup_choice_bottom">Inferior</string>

@@ -78,6 +78,11 @@
     <string name="setup_choice_light">فاتح</string>
     <string name="setup_choice_bar">الشريط</string>
     <string name="setup_choice_bar_auto">جانب السائق</string>
+    <string name="setup_choice_status_items">الساعة والإشارة والبطارية</string>
+    <string name="setup_choice_status_items_auto">حسب السيارة</string>
+    <string name="setup_choice_status_items_show">إظهار دائمًا</string>
+    <string name="setup_choice_status_items_hide">إخفاء دائمًا</string>
+    <string name="setup_hint_status_items">خيار «حسب السيارة» يُخفي ما تعرضه السيارة على شاشتها بالفعل.</string>
     <string name="setup_choice_left">يسار</string>
     <string name="setup_choice_right">يمين</string>
     <string name="setup_choice_bottom">أسفل</string>
