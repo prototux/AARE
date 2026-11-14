@@ -637,7 +637,7 @@ class ProjectionService : Service() {
                 if (destroyed) return@post
                 result.onSuccess { entry ->
                     // Offer the downloaded certificate first on the next connection.
-                    settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
+                    settings.certificateIndex = certs.indexOf(entry.name)
                     certDownloadPrompted = false
                     val address = lastWirelessAddress
                     if (lastSessionWireless && address != null && session == null) {
