@@ -185,10 +185,19 @@ class AapSession(
     private var pendingOpens = 0
     /** Channels whose open request awaits its response. */
     private val awaitingOpen = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
-    /** Channels opened only once the sensor channel has been answered (see [onServiceDiscovery]). */
+    /** Channels opened only once the sensor channel has been answered (see [sensorChannelFirst]). */
     private val deferredOpens = AtomicReference<List<ServiceChannel>?>(null)
-    /** Channels that sent data before they were open, logged once each (reader thread only). */
+    /** Channels the head unit refused or closed: their data is dropped (reader thread only). */
+    private val shutChannels = HashSet<Int>()
+    /** Channels that sent data before their open was answered, logged once each (reader thread only). */
     private val earlyData = HashSet<Int>()
+
+    /**
+     * Open the sensor channel first and the others once the head unit has answered it (or after
+     * [DEFERRED_OPEN_MS]), instead of all at once. For head units that need it (vehicles.json);
+     * set it from [Callbacks.onServiceDiscovery].
+     */
+    @Volatile var sensorChannelFirst = false
     /** The phone said bye-bye: only then is a bye-bye response expected. */
     @Volatile private var byeByeSent = false
     /**
@@ -367,26 +376,29 @@ class AapSession(
                 ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
                     ch.opened = false
+                    shutChannels.add(ch.id)
                     runHandler(ch) { ch.onClosed() }
                 }
                 else -> log.w("unexpected control message on channel ${ch.id}: $msg")
             }
             return
         }
-        // A channel's data counts only once the channel is open.
         if (!ch.opened) {
-            if (earlyData.add(ch.id)) log.w("dropping data on channel ${ch.id} (${ch.name}) before it is open: $msg")
-            return
+            // A refused or closed channel has nothing to say. One whose open isn't answered yet is
+            // taken as open: some head units start talking before they answer.
+            if (ch.id in shutChannels) {
+                if (earlyData.add(ch.id)) log.w("dropping data on refused or closed channel ${ch.id} (${ch.name}): $msg")
+                return
+            }
+            if (earlyData.add(ch.id)) log.w("data on channel ${ch.id} (${ch.name}) before its open was answered, delivering it: $msg")
         }
         runHandler(ch) { ch.onMessage(msg) }
     }
 
     private fun onChannelOpenResponse(ch: ServiceChannel, msg: AapMessage) {
         if (ch.id !in awaitingOpen) {
-            // An open response for a channel that isn't being opened (a
-            // duplicate, or one never asked for) gets UNEXPECTED_MESSAGE on that channel, in the clear.
-            log.w("unexpected channel open response on channel ${ch.id} (${ch.name})")
-            sendRaw(ch.id, AapMessage.plaintext(ControlMsg.UNEXPECTED_MESSAGE, ByteArray(0)), encrypted = false)
+            // A duplicate, or one never asked for: it must not count towards RUNNING again.
+            log.w("ignoring unexpected channel open response on channel ${ch.id} (${ch.name})")
             return
         }
         val body = msg.bodyBytes()
@@ -398,12 +410,13 @@ class AapSession(
         }
         awaitingOpen.remove(ch.id)
         if (accepted) {
+            if (unknownOpenStatus(body)) log.w("channel ${ch.id} (${ch.name}): open response with a status this build doesn't know, opening it")
             ch.opened = true
             log.i("channel ${ch.id} (${ch.name}) open")
             runHandler(ch) { ch.onOpened() }
         } else {
-            val resp = ChannelOpenResponse.parseFrom(body)
-            log.w("head unit refused channel ${ch.id} (${ch.name}): ${if (resp.hasStatus()) resp.status else "unknown status"}")
+            shutChannels.add(ch.id)
+            log.w("head unit refused channel ${ch.id} (${ch.name}): ${ChannelOpenResponse.parseFrom(body).status}")
         }
         if (ch.service.hasSensorSourceService()) openDeferred()
         if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
@@ -586,11 +599,8 @@ class AapSession(
             ch.attach(this)
             channels[ch.id] = ch
         }
-        // The sensor channel first, the others after it (once its
-        // startup checks pass; here once the head unit has answered the sensor channel, or after
-        // DEFERRED_OPEN_MS if it doesn't).
         val sensors = wanted.filter { it.service.hasSensorSourceService() }
-        if (sensors.isEmpty() || sensors.size == wanted.size) {
+        if (!sensorChannelFirst || sensors.isEmpty() || sensors.size == wanted.size) {
             wanted.forEach(::requestOpen)
         } else {
             deferredOpens.set(wanted - sensors.toSet())
@@ -765,19 +775,22 @@ class AapSession(
         }
 
         /**
-         * Whether a channel open response accepts the channel. Only SUCCESS
-         * does, so a status this build doesn't know (which protobuf keeps as an unknown field and
-         * would read as the SUCCESS default) leaves the channel closed. A response with no status
-         * at all still counts as SUCCESS: proto3 head units (Ford SYNC 4, #74) leave the 0 out.
+         * Whether a channel open response accepts the channel: every status but a known refusal.
+         * A response with no status means SUCCESS (proto3 head units such as Ford SYNC 4 leave the
+         * 0 out, #74), and so does a status this build doesn't know, which protobuf keeps as an
+         * unknown field and reads as the SUCCESS default.
          */
-        internal fun openAccepted(body: ByteArray): Boolean {
-            val resp = ChannelOpenResponse.parseFrom(body)
-            if (resp.hasStatus()) return resp.status == MessageStatus.STATUS_SUCCESS
+        internal fun openAccepted(body: ByteArray): Boolean =
+            ChannelOpenResponse.parseFrom(body).status == MessageStatus.STATUS_SUCCESS
+
+        /** Whether the response carries a status value this build doesn't know (for the log). */
+        internal fun unknownOpenStatus(body: ByteArray): Boolean {
+            if (ChannelOpenResponse.parseFrom(body).hasStatus()) return false
             val input = CodedInputStream.newInstance(body)
             while (true) {
                 val tag = input.readTag()
-                if (tag == 0) return true
-                if (tag ushr 3 == 1) return false
+                if (tag == 0) return false
+                if (tag ushr 3 == 1) return true
                 input.skipField(tag)
             }
         }
