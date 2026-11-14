@@ -352,6 +352,8 @@
     <string name="browser_address_hint">Search or type a web address</string>
 
     <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_links_title">Links from apps</string>
+    <string name="assistant_links_subtitle">Let aare:// links in an assistant\'s reply navigate, control the music, open an app or offer a call on the car screen. Any app on the phone can open such a link, so only turn this on if you use it.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>
     <string name="assistant_same_as_phone">Same as the phone</string>
@@ -401,6 +403,7 @@
     <string name="notif_not_calling_text">%1$s asked to dial a code with * or #, not a phone number</string>
     <string name="notif_calling_title">Calling %1$s</string>
     <string name="notif_asked_by">Asked by %1$s</string>
+    <string name="notif_asked_by_link">Asked by a link in an assistant\'s reply</string>
     <string name="notif_call_confirm_title">Call %1$s?</string>
     <string name="notif_no_nav_app">No navigation app on the phone</string>
     <string name="notif_cant_open">Can\'t open that from the car</string>

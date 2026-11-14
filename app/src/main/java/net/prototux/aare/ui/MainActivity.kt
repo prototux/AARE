@@ -1157,6 +1157,10 @@ private fun AssistantCard(settings: Settings) {
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.assistant_hint),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        var links by remember { mutableStateOf(settings.assistantLinks) }
+        Toggle(stringResource(R.string.assistant_links_title), stringResource(R.string.assistant_links_subtitle), links) {
+            links = it; settings.assistantLinks = it
+        }
     }
 }
 

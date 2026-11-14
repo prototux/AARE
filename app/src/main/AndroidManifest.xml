@@ -134,6 +134,24 @@
             android:authorities="net.prototux.aare.car"
             android:exported="true" />
 
+        <!-- aare:// links in an assistant's reply (a notification action, a web link…): see
+             docs/assistant-links.md. Any app can start this, like any other link; AssistantLinks'
+             allowlist and the active-car-session check are the real gate, not the export. -->
+        <activity
+            android:name=".host.AssistantLinkActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="aare" />
+            </intent-filter>
+        </activity>
+
         <!-- Shizuku (adb rights without root): car audio including navigation voice. -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
