@@ -8,11 +8,11 @@ package net.prototux.aare.media
  * wire contract, so we keep our own copies instead of adding a dependency.
  */
 internal object MediaKeys {
-    // ---- root hints we send (what Android Auto sends)
+    // ---- root hints we send (also SEARCH_SUPPORTED and CONTENT_STYLE_SUPPORTED below)
     const val ROOT_CHILDREN_LIMIT = "androidx.media.MediaBrowserCompat.Extras.KEY_ROOT_CHILDREN_LIMIT"
     const val ROOT_CHILDREN_SUPPORTED_FLAGS = "androidx.media.MediaBrowserCompat.Extras.KEY_ROOT_CHILDREN_SUPPORTED_FLAGS"
-    const val MEDIA_ART_SIZE_PIXELS = "android.media.extras.MEDIA_ART_SIZE_HINT_PIXELS"
-    const val CUSTOM_BROWSER_ACTION_LIMIT = "androidx.media.utils.MediaBrowserCompat.extras.CUSTOM_BROWSER_ACTION_LIMIT"
+    /** The size browse list icons are drawn at, in pixels (Google's own key, no androidx copy). */
+    const val BROWSER_ICON_SIZE = "com.google.android.gms.car.media.BrowserIconSize"
 
     /** MediaBrowserCompat.MediaItem.FLAG_BROWSABLE: like Android Auto, we ask for browsable root children. */
     const val FLAG_BROWSABLE = 1
@@ -34,5 +34,7 @@ internal object MediaKeys {
 
     /** What we advertise: Android Auto's values, so apps hand us the tree they built for it. */
     const val ROOT_CHILDREN_LIMIT_VALUE = 4
+    /** Browse icon size (56 dp), sent as pixels at the phone's density. */
+    const val BROWSER_ICON_SIZE_DP = 56
     const val ART_SIZE_PX = 512
 }
