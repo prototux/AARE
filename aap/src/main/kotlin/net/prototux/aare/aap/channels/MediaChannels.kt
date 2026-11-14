@@ -43,6 +43,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected var configIndices: List<Int> = emptyList()
     private val sessionCounter = AtomicInteger(0)
     @Volatile protected var mediaSession = 0
+    /** The session before the current one (the one last stopped), -1 before any. */
+    @Volatile private var previousSession = -1
     protected val unacked = AtomicInteger(0)
     /**
      * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
@@ -81,6 +83,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             }
             MediaMsg.ACK -> {
                 val ack = Ack.parseFrom(msg.bodyBytes())
+                if (!ackCounts(ack)) return
                 sinceAck.set(0)
                 ackSeen = true
                 val now = System.nanoTime()
@@ -89,13 +92,46 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
                 lastAckNs = now
                 // Acks are back: let the car pace us again (its window is its flow control).
                 if (ackless) { ackless = false; unacked.set(0) }
-                val n = if (ack.hasAck()) ack.ack else 1
+                val n = ackedCount(ack)
                 // Never go negative: some head units ack frames sent before a restart.
                 unacked.updateAndGet { maxOf(0, it - n) }
                 onAcked()
             }
             else -> onOtherMessage(msg)
         }
+    }
+
+    /**
+     * Whether an ack is for this stream's window: while a session
+     * runs, only its own acks count (ids compared modulo 256, as the head unit may keep only a
+     * byte); while stopped, only the late acks of the session just stopped do. An ack must also
+     * be for 1 to [MAX_ACKED] messages: any other count ends the session elsewhere, AARE
+     * logs it and ignores the ack.
+     */
+    private fun ackCounts(ack: Ack): Boolean {
+        val id = ack.sessionId
+        val forUs = if (started) id % 256 == mediaSession % 256 else id == previousSession
+        if (!forUs) {
+            // The previous session's late acks are expected right after a restart: not worth a line.
+            if (!started || id % 256 != previousSession % 256) session.log.d("$name: ack for session $id ignored (current $mediaSession, started=$started)")
+            return false
+        }
+        val n = ackedCount(ack)
+        if (n !in 1..MAX_ACKED) {
+            session.log.w("$name: ack for $n messages ignored (must be 1 to $MAX_ACKED)")
+            return false
+        }
+        return true
+    }
+
+    /**
+     * How many messages an ack is for: one receive time each when the head unit sends them,
+     * otherwise its count. An ack without either is taken for one (it would otherwise be refused).
+     */
+    private fun ackedCount(ack: Ack): Int = when {
+        ack.receiveTimestampNsCount > 0 -> ack.receiveTimestampNsCount
+        ack.hasAck() -> ack.ack
+        else -> 1
     }
 
     /**
@@ -122,6 +158,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected fun stopStream() {
         if (!started) return
         started = false
+        previousSession = mediaSession
         send(MediaMsg.STOP, Stop.getDefaultInstance(), dataPriority)
     }
 
@@ -184,6 +221,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     }
 
     companion object {
+        /** The most messages one ack may be for. */
+        const val MAX_ACKED = 4096
         const val ACKLESS_AFTER = 16
         /** No ack for this long (window full) from a head unit that did ack: it has stalled (#82). */
         const val ACK_STALL_MS = 2_000L

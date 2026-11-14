@@ -271,6 +271,40 @@ open class SessionLoopbackTest {
     }
 
     /**
+     * Acks count this way: only those for the running session (ids
+     * compared modulo 256), for 1 to 4096 messages, one per receive time when the head unit
+     * sends those.
+     */
+    @Test
+    fun audioAcksCountOnlyWhenTheyAreForTheStream() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        hu.ackAudio = false
+        media.startPlayback()
+        val window = 2 + AudioChannel.SLACK // the simulated head unit's window is 2
+        repeat(window) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        assertFalse("window full", media.hasRoom)
+        while (hu.sessionIds[hu.mediaAudio] == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        val session = hu.sessionIds[hu.mediaAudio]!!
+        fun roomAfterAWhile(): Boolean { Thread.sleep(200); return media.hasRoom }
+
+        hu.sendAck(hu.mediaAudio, session + 1, count = 3)
+        assertFalse("another session's ack frees nothing", roomAfterAWhile())
+        hu.sendAck(hu.mediaAudio, session, count = 0)
+        assertFalse("an ack for no message is ignored", roomAfterAWhile())
+        hu.sendAck(hu.mediaAudio, session, count = 5000)
+        assertFalse("an ack for more than 4096 messages is ignored", roomAfterAWhile())
+
+        // Three receive times: three messages, whatever the count says. The id may wrap at 256.
+        hu.sendAck(hu.mediaAudio, session + 256, count = 1, receiveTimesNs = listOf(1L, 2L, 3L))
+        assertTrue(roomAfterAWhile())
+        repeat(3) { assertTrue("3 acked, 3 more fit", media.sendPcm(ByteArray(10 + 3840), 10, 3840, (window + it) * 20_000L)) }
+        assertFalse(media.hasRoom)
+    }
+
+    /**
      * A car holding its acks back for a moment (its buffer is full: flow control) is not a stall.
      * Counting messages since the last ack took a few hundred ms of held acks for one, so the
      * stream went unpaced for good, overran the car (crackling) and the car dropped the channel.
