@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Arrêter</string>
     <string name="notif_action_trust">Faire confiance</string>
     <string name="notif_action_download_cert">Télécharger le certificat</string>
+    <string name="notif_action_navigate">Naviguer</string>
+    <string name="notif_action_open">Ouvrir</string>
     <string name="notif_cert_download_title">L\'autoradio a refusé le certificat d\'AARE</string>
     <string name="notif_cert_download_message">Cet autoradio n\'accepte que le certificat de Google. Téléchargez celui de la dernière application Android Auto, puis reconnectez-vous.</string>
     <string name="notif_cert_download_progress">Téléchargement du certificat d\'Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s a demandé de composer un code avec * ou #, pas un numéro de téléphone</string>
     <string name="notif_calling_title">Appel de %1$s</string>
     <string name="notif_asked_by">Demandé par %1$s</string>
+    <string name="notif_asked_by_link">Demandé par un lien dans la réponse de l\'assistant</string>
     <string name="notif_call_confirm_title">Appeler %1$s ?</string>
+    <string name="notif_navigate_confirm_title">Naviguer vers %1$s ?</string>
+    <string name="notif_open_confirm_title">Ouvrir %1$s ?</string>
     <string name="notif_no_nav_app">Aucune application de navigation sur le téléphone</string>
     <string name="notif_cant_open">Impossible d\'ouvrir cela depuis la voiture</string>
     <string name="notif_navigation_title">Navigation</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Actualiser</string>
     <string name="browser_home">Page d\'accueil</string>
     <string name="browser_address_hint">Rechercher ou saisir une adresse web</string>
+    <string name="assistant_links_title">Liens de l\'assistant</string>
+    <string name="assistant_links_subtitle">Permet aux liens aare:// des réponses de l\'assistant choisi de piloter la musique, ou de proposer sur l\'écran de la voiture de naviguer, d\'ouvrir une application ou d\'appeler. Les liens venant d\'autres applications et de pages web sont ignorés.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Données du véhicule</string>
     <string name="setup_page_car_data_subtitle">Vitesse, rapport et capteurs en direct depuis la voiture</string>

@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Stop</string>
     <string name="notif_action_trust">Acceptă</string>
     <string name="notif_action_download_cert">Descarcă certificatul</string>
+    <string name="notif_action_navigate">Navighează</string>
+    <string name="notif_action_open">Deschide</string>
     <string name="notif_cert_download_title">Unitatea centrală a refuzat certificatul AARE</string>
     <string name="notif_cert_download_message">Această unitate centrală acceptă doar un certificat emis de Google. Descarcă-l din cea mai recentă aplicație Android Auto, apoi reconectează-te.</string>
     <string name="notif_cert_download_progress">Se descarcă certificatul Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s a cerut formarea unui cod cu * sau #, nu a unui număr de telefon</string>
     <string name="notif_calling_title">Se apelează %1$s</string>
     <string name="notif_asked_by">Cerut de %1$s</string>
+    <string name="notif_asked_by_link">Cerut de un link din răspunsul asistentului</string>
     <string name="notif_call_confirm_title">Apelezi %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navighezi spre %1$s?</string>
+    <string name="notif_open_confirm_title">Deschizi %1$s?</string>
     <string name="notif_no_nav_app">Nicio aplicație de navigație pe telefon</string>
     <string name="notif_cant_open">Nu se poate deschide din mașină</string>
     <string name="notif_navigation_title">Navigație</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Reîncarcă</string>
     <string name="browser_home">Pagina de pornire</string>
     <string name="browser_address_hint">Caută sau introdu o adresă web</string>
+    <string name="assistant_links_title">Linkuri de la asistent</string>
+    <string name="assistant_links_subtitle">Permite linkurilor aare:// din răspunsurile asistentului ales să controleze muzica sau să propună pe ecranul mașinii navigarea, deschiderea unei aplicații sau un apel. Linkurile din alte aplicații și din pagini web sunt ignorate.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Date despre mașină</string>
     <string name="setup_page_car_data_subtitle">Viteză, treaptă de viteză și senzori în timp real din mașină</string>

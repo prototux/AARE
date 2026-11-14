@@ -228,6 +228,8 @@
     <string name="notif_action_stop">停止</string>
     <string name="notif_action_trust">信任</string>
     <string name="notif_action_download_cert">下载证书</string>
+    <string name="notif_action_navigate">导航</string>
+    <string name="notif_action_open">打开</string>
     <string name="notif_cert_download_title">车机拒绝了 AARE 的证书</string>
     <string name="notif_cert_download_message">此车机只接受 Google 签发的证书。请从最新版 Android Auto 应用下载该证书，然后重新连接。</string>
     <string name="notif_cert_download_progress">正在下载 Android Auto 的证书…</string>
@@ -255,7 +257,10 @@
     <string name="notif_not_calling_text">%1$s 请求拨打的是带 * 或 # 的代码，而非电话号码</string>
     <string name="notif_calling_title">正在呼叫 %1$s</string>
     <string name="notif_asked_by">由 %1$s 发起</string>
+    <string name="notif_asked_by_link">由助手回复中的链接发起</string>
     <string name="notif_call_confirm_title">拨打电话给 %1$s？</string>
+    <string name="notif_navigate_confirm_title">导航到 %1$s？</string>
+    <string name="notif_open_confirm_title">打开 %1$s？</string>
     <string name="notif_no_nav_app">手机上没有导航应用</string>
     <string name="notif_cant_open">无法从车机打开此内容</string>
     <string name="notif_navigation_title">导航</string>
@@ -363,6 +368,8 @@
     <string name="browser_reload">刷新</string>
     <string name="browser_home">主页</string>
     <string name="browser_address_hint">搜索或输入网址</string>
+    <string name="assistant_links_title">来自助手的链接</string>
+    <string name="assistant_links_subtitle">允许所选助手回复中的 aare:// 链接控制音乐，或在车机屏幕上提议导航、打开应用或拨打电话。来自其他应用和网页的链接会被忽略。</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">车辆数据</string>
     <string name="setup_page_car_data_subtitle">车辆的实时速度、挡位和传感器数据</string>

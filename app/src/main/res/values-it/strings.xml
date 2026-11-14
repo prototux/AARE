@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Interrompi</string>
     <string name="notif_action_trust">Autorizza</string>
     <string name="notif_action_download_cert">Scarica certificato</string>
+    <string name="notif_action_navigate">Naviga</string>
+    <string name="notif_action_open">Apri</string>
     <string name="notif_cert_download_title">La head unit ha rifiutato il certificato di AARE</string>
     <string name="notif_cert_download_message">Questa head unit accetta solo il certificato di Google. Scaricalo dall\'app Android Auto più recente, poi riconnettiti.</string>
     <string name="notif_cert_download_progress">Download del certificato di Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s ha chiesto di comporre un codice con * o #, non un numero di telefono</string>
     <string name="notif_calling_title">Chiamata a %1$s</string>
     <string name="notif_asked_by">Richiesto da %1$s</string>
+    <string name="notif_asked_by_link">Richiesto da un link nella risposta dell\'assistente</string>
     <string name="notif_call_confirm_title">Chiamare %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigare verso %1$s?</string>
+    <string name="notif_open_confirm_title">Aprire %1$s?</string>
     <string name="notif_no_nav_app">Nessuna app di navigazione sul telefono</string>
     <string name="notif_cant_open">Impossibile aprirlo dall\'auto</string>
     <string name="notif_navigation_title">Navigazione</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Ricarica</string>
     <string name="browser_home">Pagina iniziale</string>
     <string name="browser_address_hint">Cerca o digita un indirizzo web</string>
+    <string name="assistant_links_title">Link dall\'assistente</string>
+    <string name="assistant_links_subtitle">Consente ai link aare:// nelle risposte dell\'assistente scelto di controllare la musica, o di proporre sullo schermo dell\'auto di navigare, aprire un\'app o chiamare. I link da altre app e da pagine web vengono ignorati.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dati dell\'auto</string>
     <string name="setup_page_car_data_subtitle">Velocità, marcia e sensori in diretta dall\'auto</string>

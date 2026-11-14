@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Parar</string>
     <string name="notif_action_trust">Confiar</string>
     <string name="notif_action_download_cert">Transferir certificado</string>
+    <string name="notif_action_navigate">Navegar</string>
+    <string name="notif_action_open">Abrir</string>
     <string name="notif_cert_download_title">A unidade principal rejeitou o certificado da AARE</string>
     <string name="notif_cert_download_message">Esta unidade principal só aceita um certificado emitido pela Google. Transfira o da aplicação Android Auto mais recente e, depois, volte a ligar-se.</string>
     <string name="notif_cert_download_progress">A transferir o certificado do Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s pediu para marcar um código com * ou #, não um número de telefone</string>
     <string name="notif_calling_title">A ligar a %1$s</string>
     <string name="notif_asked_by">Pedido por %1$s</string>
+    <string name="notif_asked_by_link">Pedido por uma ligação na resposta do assistente</string>
     <string name="notif_call_confirm_title">Ligar a %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navegar para %1$s?</string>
+    <string name="notif_open_confirm_title">Abrir %1$s?</string>
     <string name="notif_no_nav_app">Nenhuma aplicação de navegação no telemóvel</string>
     <string name="notif_cant_open">Não é possível abrir isso a partir do carro</string>
     <string name="notif_navigation_title">Navegação</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Recarregar</string>
     <string name="browser_home">Página inicial</string>
     <string name="browser_address_hint">Pesquisar ou introduzir um endereço Web</string>
+    <string name="assistant_links_title">Ligações do assistente</string>
+    <string name="assistant_links_subtitle">Permite que as ligações aare:// nas respostas do assistente escolhido controlem a música, ou proponham no ecrã do carro navegar, abrir uma aplicação ou ligar. As ligações de outras aplicações e de páginas web são ignoradas.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dados do carro</string>
     <string name="setup_page_car_data_subtitle">Velocidade, mudança e sensores em tempo real do carro</string>
