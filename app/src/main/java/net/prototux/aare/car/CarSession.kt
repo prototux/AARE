@@ -257,15 +257,17 @@ class CarSession(
                     when {
                         // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
                         sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
-                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
-                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
-                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
-                        // becomes the primary instead. Codecs default to PCM, so cars that don't
-                        // advertise one are unaffected.
-                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
-                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
-                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
-                        else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
+                        // An AAC sink is left closed only when a PCM one plays the stream (AudioSinks).
+                        AudioSinks.skip(s, response.channelsList) ->
+                            DiagLog.add("not using ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "it asks for ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, the PCM one plays it")
+                        else -> {
+                            if (sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM) {
+                                DiagLog.add("${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id} asks for " +
+                                    "${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")} and is the only one: sending it PCM")
+                            }
+                            AudioChannel(s, audioListener).also { audio += it; channels += it }
+                        }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
