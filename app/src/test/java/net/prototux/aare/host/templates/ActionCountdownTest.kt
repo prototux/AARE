@@ -48,6 +48,14 @@ class ActionCountdownTest {
     }
 
     @Test
+    fun anAppsOwnDurationIsHeldBetweenThreeSecondsAndAMinute() {
+        assertEquals(3_000L, timedActionParamsMillis("TimedActionParams|duration:1"))
+        assertEquals(3_000L, timedActionParamsMillis("TimedActionParams|duration:3"))
+        assertEquals(60_000L, timedActionParamsMillis("TimedActionParams|duration:60"))
+        assertEquals(60_000L, timedActionParamsMillis("TimedActionParams|duration:3600"))
+    }
+
+    @Test
     fun otherVariantsAreNoCountdownAndStayVisible() {
         assertNull(timedActionParamsMillis("Start"))
         assertNull(timedActionParamsMillis("Go|duration:5"))

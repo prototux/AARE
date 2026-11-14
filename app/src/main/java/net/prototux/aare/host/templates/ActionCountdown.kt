@@ -15,6 +15,13 @@ import androidx.compose.runtime.withFrameMillis
 /** How long the default action (Action.FLAG_DEFAULT) of a row of actions counts down. */
 internal const val DEFAULT_ACTION_COUNTDOWN_MS = 10_000L
 
+/**
+ * The range an app's own countdown is held to, in seconds: under 3 the driver can't read the
+ * action before it clicks itself; past a minute it's no countdown anyone waits for.
+ */
+private const val MIN_TIMED_ACTION_SECONDS = 3
+private const val MAX_TIMED_ACTION_SECONDS = 60
+
 /** Marks a title variant that carries an action's countdown instead of text to show. */
 private const val TIMED_ACTION_PARAMS = "TimedActionParams"
 
@@ -44,9 +51,10 @@ internal fun timedActionMillis(title: CarText?): Long? =
     title?.variants?.firstOrNull()?.let { timedActionParamsMillis(it.toString()) }
 
 /**
- * Countdown parameters in a title variant: "TimedActionParams|duration:N" counts down N seconds
- * (other comma-separated "key:value" pairs are ignored, and a missing, unreadable or non-positive
- * duration is 10 seconds). Null when [spec] isn't such a variant.
+ * Countdown parameters in a title variant: "TimedActionParams|duration:N" counts down N seconds,
+ * held to [MIN_TIMED_ACTION_SECONDS]-[MAX_TIMED_ACTION_SECONDS] (other comma-separated "key:value"
+ * pairs are ignored, and a missing, unreadable or non-positive duration is 10 seconds). Null when
+ * [spec] isn't such a variant.
  */
 internal fun timedActionParamsMillis(spec: String): Long? {
     if (!isTimedActionParams(spec)) return null
@@ -55,7 +63,7 @@ internal fun timedActionParamsMillis(spec: String): Long? {
         val kv = pair.split(':')
         if (kv[0].trim() == "duration") kv.getOrNull(1)?.trim()?.lowercase()?.toIntOrNull()?.takeIf { it > 0 }?.let { seconds = it }
     }
-    return seconds * 1000L
+    return seconds.coerceIn(MIN_TIMED_ACTION_SECONDS, MAX_TIMED_ACTION_SECONDS) * 1000L
 }
 
 /** A title variant that holds countdown parameters: never shown. */
