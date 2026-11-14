@@ -190,6 +190,14 @@ class CarSession(
     fun stop() = aap.stop()
 
     /**
+     * The session closed before the head unit's version request ever came in: this attempt never
+     * reached the version exchange, let alone the handshake, so nothing about it (certificate,
+     * trust) was actually tried. Typically the head unit's first try, dropped immediately, before
+     * its own link was ready.
+     */
+    val closedBeforeVersionExchange: Boolean get() = aap.closedDuring == AapSession.State.VERSION
+
+    /**
      * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
      * Focus isn't dropped here: the head unit answers with a native VIDEO_FOCUS_NOTIFICATION (or
      * refuses, and projection carries on), and its projection icon gives the screen back later.
