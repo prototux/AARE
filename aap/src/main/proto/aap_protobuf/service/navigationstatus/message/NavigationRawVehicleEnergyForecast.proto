@@ -1,0 +1,10 @@
+syntax="proto2";
+
+package aap_protobuf.service.navigationstatus.message;
+
+// AARE: body of INSTRUMENT_CLUSTER_NAVIGATION_RAW_VEHICLE_ENERGY_FORECAST,
+// sends it: the navigation app's vehicle energy forecast, serialized as a message of its own that
+// AARE does not model.
+message NavigationRawVehicleEnergyForecast {
+  optional bytes forecast = 1;
+}

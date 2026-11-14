@@ -1,0 +1,12 @@
+syntax="proto2";
+
+option optimize_for=SPEED;
+
+package aap_protobuf.service.bufferedmedia;
+
+// AARE: service discovery field 17; empty there too.
+// The name is AARE's guess: this service is handled with buffered media code.
+message BufferedMediaService
+{
+
+}
