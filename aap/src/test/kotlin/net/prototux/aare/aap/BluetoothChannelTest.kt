@@ -82,12 +82,21 @@ class BluetoothChannelTest {
     }
 
     @Test
+    fun noAuthenticationResultBeforeTheCarSentItsData() {
+        connect(6, listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON))
+        assertFalse(bluetooth!!.sendAuthenticationResult(MessageStatus.STATUS_SUCCESS))
+        assertNull(hu.authResults.poll(1, TimeUnit.SECONDS))
+    }
+
+    @Test
     fun authenticationDataReachesThePhoneAndTheResultGoesBack() {
         connect(5, listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON))
         hu.sendAuthenticationData("012345", BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON)
         assertEquals("012345", authData.poll(3, TimeUnit.SECONDS))
         assertTrue(bluetooth!!.sendAuthenticationResult(MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH))
         assertEquals(MessageStatus.STATUS_BLUETOOTH_AUTH_DATA_MISMATCH, hu.authResults.poll(3, TimeUnit.SECONDS)!!.status)
+        // One answer per authentication data.
+        assertFalse(bluetooth!!.sendAuthenticationResult(MessageStatus.STATUS_SUCCESS))
     }
 
     /** The authentication result is sent only to head units on protocol 1.5 or later. */

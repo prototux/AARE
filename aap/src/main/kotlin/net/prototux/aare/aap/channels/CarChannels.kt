@@ -242,6 +242,9 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
     val carAddress: String = service.bluetoothService.carAddress
     val methods: List<BluetoothPairingMethod> = service.bluetoothService.supportedPairingMethodsList
 
+    /** The car sent authentication data that hasn't been answered yet. */
+    @Volatile private var authDataPending = false
+
     override fun onOpened() {
         // Announce the phone to the car. Some head units withhold the projected screen until they
         // know which phone is connected (they keep video focus "native"); this pairing request over
@@ -255,11 +258,13 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
     }
 
     /**
-     * Tells the car whether its authentication data matched. Head units before protocol 1.5 don't
-     * know this message, and it isn't sent to them; false when not sent.
+     * Tells the car whether its authentication data matched: once per authentication data it sent,
+     * never unasked. Head units before protocol 1.5 don't know this message, and it isn't sent to
+     * them. False when not sent.
      */
     fun sendAuthenticationResult(status: MessageStatus): Boolean {
-        if (!session.headUnitAtLeast(1, 5)) return false
+        if (!authDataPending || !session.headUnitAtLeast(1, 5)) return false
+        authDataPending = false
         send(BluetoothMsg.AUTHENTICATION_RESULT, BluetoothAuthenticationResult.newBuilder().setStatus(status).build())
         return true
     }
@@ -274,7 +279,10 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
                 // The pairing method it carries is ignored: Android's
                 // own pairing request says which method is in use.
                 val d = BluetoothAuthenticationData.parseFrom(msg.bodyBytes())
-                if (d.hasAuthData()) listener.onAuthenticationData(d.authData)
+                if (d.hasAuthData()) {
+                    authDataPending = true
+                    listener.onAuthenticationData(d.authData)
+                }
             }
         }
     }
