@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">Obrazovka telefonu je pozastavena, když je telefon uzamčen. Odemkněte telefon, aby se zobrazila.</string>
     <string name="mirror_driving_no_accessibility">Obrazovka telefonu je při jízdě pozastavena. Chcete-li zobrazovat navigační aplikace při jízdě, zapněte AARE v nastavení přístupnosti telefonu: řekne AARE, která aplikace je otevřená.</string>
     <string name="mirror_driving_nav_only">Obrazovka telefonu je při jízdě pozastavena. Zobrazuje pouze navigační aplikace.</string>
-    <string name="mirror_need_car_audio">Zapněte Zvuk v autě v AARE na telefonu a při dotazu Androidu zvolte Celou obrazovku: obrazovka telefonu používá stejné oprávnění.</string>
+    <string name="mirror_need_screen_capture">Obrazovka telefonu potřebuje oprávnění Androidu ke snímání obrazovky. V telefonu otevřete nastavení Zvuk v autě v AARE, klepněte na Oprávnění ke snímání obrazovky a zvolte Celou obrazovku.</string>
+    <string name="mirror_capture_failed">Android odmítl sdílet obrazovku telefonu. V telefonu znovu klepněte na Oprávnění ke snímání obrazovky v nastavení Zvuk v autě v AARE a zvolte Celou obrazovku.</string>
     <string name="mirror_need_accessibility">Chcete-li používat telefon z auta, zapněte AARE v nastavení přístupnosti telefonu.</string>
 
     <!-- common: shared across screens -->
@@ -52,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Připojit se k párovaným autům přes Wi-Fi, jakmile se dostanou do dosahu Bluetooth</string>
     <string name="setup_toggle_resume_music_title">Obnovit hudbu</string>
     <string name="setup_toggle_resume_music_subtitle">Spustit poslední přehrávanou hudební aplikaci při připojení auta</string>
+    <string name="setup_bt_address_label">Bluetooth adresa telefonu (nepovinné)</string>
+    <string name="setup_bt_address_hint">Některé hlavní jednotky zobrazují černou obrazovku, dokud nevědí, který telefon je připojen. Najdete ji v Nastavení &gt; O telefonu &gt; Stav. Nechte prázdné, pokud vaše auto už funguje.</string>
     <string name="setup_section_location">Poloha</string>
     <string name="setup_toggle_car_gps_title">Použít GPS auta</string>
     <string name="setup_toggle_car_gps_subtitle">Při připojení aplikace v telefonu vidí polohu auta místo polohy telefonu, takže navigační aplikace obě polohy nemíchají</string>
@@ -166,6 +169,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Bezpečnější: síť musí být pro každou relaci znovu povolena. Vypněte to pro hlavní jednotky, které se znovu připojují samy, jako openauto nebo Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Obrazovka telefonu na serveru</string>
     <string name="huserver_toggle_mirror_subtitle">Nabídnout "Obrazovku telefonu" i tomu, kdo se zde připojí. Rizikové: uvidí obrazovku telefonu a mohou na ni klepat, nechte to tedy vypnuté, pokud hlavní jednotce nedůvěřujete.</string>
+    <string name="huserver_toggle_localhost_title">Povolit localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Přijmout připojení z aplikace Android Auto v prohlížeči na tomto telefonu, pro auta bez Android Auto (např. Tesla). Připojit se může jakákoli aplikace na telefonu, nechte to tedy vypnuté, pokud takovou aplikaci nepoužíváte.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Zprávy</string>
@@ -196,6 +201,10 @@
     <string name="audio_no_method">Ještě není nastavena žádná metoda: vyberte jednu níže.</string>
     <string name="audio_section_methods">Metody, nejlepší první</string>
     <string name="audio_policy_ready">Připraveno. Hudba a hlas navigace jdou do auta samostatně, telefon zůstává tichý.</string>
+    <string name="audio_method_policy">Systémové směrování zvuku (jako Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, hudba a navigace oddělené (jako Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku nebo root</string>
+    <string name="audio_method_playback_capture">Oprávnění ke snímání obrazovky</string>
     <string name="audio_policy_not_ready">Jako Android Auto: hudba a hlas navigace samostatně, reproduktor telefonu vypnutý. Vyžaduje telefon s rootem: nainstalujte AARE jako systémovou aplikaci pomocí modulu Magisk (viz README).</string>
     <string name="audio_shizuku_ready">Připraveno. Vše, co telefon přehrává, jde do auta, včetně hlasu navigace; telefon zůstává tichý.</string>
     <string name="audio_shizuku_needs_android12">Vyžaduje Android 12 nebo novější.</string>
@@ -227,6 +236,14 @@
     <string name="notif_channel_connection">Připojení k autu</string>
     <string name="notif_action_stop">Zastavit</string>
     <string name="notif_action_trust">Důvěřovat</string>
+    <string name="notif_action_download_cert">Stáhnout certifikát</string>
+    <string name="notif_cert_download_title">Hlavní jednotka odmítla certifikát AARE</string>
+    <string name="notif_cert_download_message">Tato hlavní jednotka přijímá pouze certifikát Google. Stáhněte certifikát z nejnovější aplikace Android Auto a pak se znovu připojte.</string>
+    <string name="notif_cert_download_progress">Stahuje se certifikát Android Auto…</string>
+    <string name="notif_cert_download_ready_title">Certifikát je připraven</string>
+    <string name="notif_cert_download_ready_message">Certifikát Android Auto byl přidán. Chcete-li ho použít, znovu se připojte k hlavní jednotce.</string>
+    <string name="notif_cert_download_reconnecting">Certifikát Android Auto byl přidán. Znovu se připojuje k hlavní jednotce…</string>
+    <string name="notif_cert_download_failed">Certifikát se nepodařilo stáhnout: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Bezdrátové připojování…</string>
     <string name="notif_status_not_connected">Nepřipojeno</string>
     <string name="notif_keeping_consent_suffix">%1$s · udržuje souhlas se snímáním obrazovky pro zvuk v autě (Zastavit ho uvolní)</string>
@@ -346,6 +363,8 @@
     <string name="standalone_section_warning">Toto nejsou aplikace Android Auto: AARE zobrazuje jejich běžnou obrazovku telefonu, jen při zaparkování, a vyžaduje root nebo Shizuku. Používáte na vlastní riziko.</string>
     <string name="standalone_toggle_title">Spouštět aplikace telefonu na obrazovce auta</string>
     <string name="standalone_toggle_subtitle">Vyberte aplikace níže. Zobrazeno jen při zaparkování.</string>
+    <string name="standalone_keep_awake_title">Režim bez spánku pro samostatné aplikace</string>
+    <string name="standalone_keep_awake_subtitle">Udržuje fyzickou obrazovku telefonu probuzenou, když je aplikace otevřená. Na postižených telefonech s Androidem 17 se virtuální obrazovky zastaví, když je obrazovka telefonu vypnutá. Spotřebovává více baterie.</string>
     <string name="standalone_need_root">Vyžaduje root nebo Shizuku. Nastavte jedno z nich na stránce Zvuk v autě a pak se vraťte.</string>
     <string name="standalone_not_native">Není aplikací Android Auto · použití při zaparkování</string>
     <string name="standalone_starting">Spouští se…</string>
@@ -356,6 +375,10 @@
     <string name="browser_url_label">Domovská stránka</string>
     <string name="browser_hint_parked">Prohlížeč je pozastaven během jízdy.</string>
     <string name="browser_paused_driving">Prohlížeč je pozastaven během jízdy.</string>
+    <string name="browser_forward">Vpřed</string>
+    <string name="browser_reload">Obnovit</string>
+    <string name="browser_home">Domovská stránka</string>
+    <string name="browser_address_hint">Hledat nebo zadat webovou adresu</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Data vozu</string>
     <string name="setup_page_car_data_subtitle">Rychlost, rychlostní stupeň a senzory z vozu naživo</string>
@@ -406,6 +429,14 @@
     <string name="car_data_accelerometer">Akcelerometr</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Chybové kódy</string>
+    <string name="car_data_app_label">Data vozu</string>
+    <string name="car_data_show_in_car_title">Zobrazit na obrazovce auta</string>
+    <string name="car_data_show_in_car_subtitle">Pro tato živá data přidejte v autě diagnostickou aplikaci</string>
+    <string name="vehicles_section_title">Vlastní nastavení pro jednotlivá auta</string>
+    <string name="vehicles_hint">Opravte hustotu nebo okraje viditelné oblasti konkrétního auta bez nového sestavení. Upravte soubor vehicles.json ve správci souborů, auto se identifikuje podle výrobce/modelu/názvu.</string>
+    <string name="vehicles_rule_count">Načtená pravidla: %1$d</string>
+    <string name="vehicles_import">Importovat soubor…</string>
+    <string name="vehicles_template">Napsat šablonu</string>
     <string name="setup_toggle_force_h264_title">Vynutit video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Ve výchozím nastavení AARE používá nejlepší kodek sdílený autem a telefonem (H.265…). Zapněte, pokud obraz v autě trhá nebo je poškozený.</string>
     <string name="common_ok">OK</string>

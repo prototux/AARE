@@ -54,6 +54,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -381,7 +382,9 @@ internal fun Dashboard(
             DashCard.WEATHER -> state.weather != null
         }
     }
-    val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> DashSlot(card, state, actions, navMap, m, compact) }
+    // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
+    // navigation app's surface (when it stays in the same row or column).
+    val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> key(card) { DashSlot(card, state, actions, navMap, m, compact) } }
     // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
     // first gets the big space.
     BoxWithConstraints(modifier) {

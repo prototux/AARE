@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">The phone screen is paused while the phone is locked. Unlock the phone to show it.</string>
     <string name="mirror_driving_no_accessibility">The phone screen is paused while driving. To show navigation apps while driving, turn on AARE in the phone\'s accessibility settings: it tells AARE which app is open.</string>
     <string name="mirror_driving_nav_only">The phone screen is paused while driving. It shows navigation apps only.</string>
-    <string name="mirror_need_car_audio">Turn on Car audio in AARE on the phone, and choose Entire screen when Android asks: the phone screen uses the same permission.</string>
+    <string name="mirror_need_screen_capture">The phone screen needs Android\'s screen-capture permission. On the phone, open AARE\'s Car audio settings, tap Screen-capture permission and choose Entire screen.</string>
+    <string name="mirror_capture_failed">Android refused to share the phone screen. On the phone, tap Screen-capture permission again in AARE\'s Car audio settings and choose Entire screen.</string>
     <string name="mirror_need_accessibility">To use the phone from the car, turn on AARE in the phone\'s accessibility settings.</string>
 
     <!-- common: shared across screens -->
@@ -276,6 +277,10 @@
     <string name="audio_no_method">No method is set up yet: choose one below.</string>
     <string name="audio_section_methods">Methods, best first</string>
     <string name="audio_policy_ready">Ready. Music and navigation voice go to the car separately, the phone stays quiet.</string>
+    <string name="audio_method_policy">System audio routing (like Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, music and navigation apart (like Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku or root</string>
+    <string name="audio_method_playback_capture">Screen-capture permission</string>
     <string name="audio_policy_not_ready">Like Android Auto: music and navigation voice apart, phone speaker off. Needs a rooted phone: install AARE as a system app with the Magisk module (see the README).</string>
     <string name="audio_shizuku_ready">Ready. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
     <string name="audio_shizuku_needs_android12">Needs Android 12 or newer.</string>
@@ -349,6 +354,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, then reconnect.</string>
     <string name="notif_cert_changed_message">head unit certificate changed: tap Trust in the notification or in AARE only if its software was updated, then reconnect</string>
     <string name="notif_cert_untrusted_message">head unit certificate not trusted yet: tap Trust in the notification or in AARE, then reconnect</string>
+    <string name="notif_cert_dates_title">Check the car\'s date and time</string>
+    <string name="notif_cert_not_yet_valid_message">the head unit says AARE\'s certificate isn\'t valid yet: its clock is probably behind. Set the car\'s date and time, then reconnect</string>
+    <string name="notif_cert_expired_message">the head unit says AARE\'s certificate has expired: if it hasn\'t, the car\'s clock is ahead. Set the car\'s date and time, or get a newer certificate under Advanced, then reconnect</string>
     <string name="notif_car_nearby_title">Car nearby</string>
     <string name="notif_car_nearby_text">Tap to connect wirelessly</string>
     <string name="notif_status_connecting_to">Connecting to %1$s</string>

@@ -134,6 +134,10 @@ class HeadUnitSimulator(
     val navStatuses = LinkedBlockingQueue<NavigationStatus.NavigationStatusEnum>()
     /** False plays a head unit that never answers the phone's bye-bye. */
     @Volatile var answerByeBye = true
+    /** AUTH_COMPLETE's status: non-zero plays a head unit that refuses the phone certificate. */
+    @Volatile var authStatus = 0
+    /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
+    @Volatile var hangUpInHandshake = false
 
     fun start() {
         Thread({
@@ -190,10 +194,11 @@ class HeadUnitSimulator(
                 sendPlain(0, ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
             ControlMsg.ENCAPSULATED_SSL -> {
+                if (hangUpInHandshake) { transport.close(); return }
                 val out = cryptor.handshake(m.bodyBytes())
                 if (out.isNotEmpty()) sendPlain(0, ControlMsg.ENCAPSULATED_SSL, out)
                 if (cryptor.handshakeDone && !tlsUp) {
-                    sendPlain(0, ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().apply { if (writeZeros) setStatus(0) }.build().toByteArray())
+                    sendPlain(0, ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().apply { if (writeZeros || authStatus != 0) setStatus(authStatus) }.build().toByteArray())
                     tlsUp = true
                 }
             }

@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">Екран телефону призупинено, поки телефон заблокований. Розблокуйте телефон, щоб його показати.</string>
     <string name="mirror_driving_no_accessibility">Екран телефону призупинено під час керування. Щоб показувати навігаційні застосунки під час керування, увімкніть AARE в налаштуваннях спеціальних можливостей телефону: це повідомляє AARE, який застосунок відкрито.</string>
     <string name="mirror_driving_nav_only">Екран телефону призупинено під час керування. Він показує лише навігаційні застосунки.</string>
-    <string name="mirror_need_car_audio">Увімкніть Звук в автомобілі в AARE на телефоні та виберіть Весь екран, коли Android запитає: екран телефону використовує той самий дозвіл.</string>
+    <string name="mirror_need_screen_capture">Екрану телефону потрібен дозвіл Android на захоплення екрана. На телефоні відкрийте налаштування Звук в автомобілі додатка AARE, натисніть Дозвіл на захоплення екрана і виберіть Весь екран.</string>
+    <string name="mirror_capture_failed">Android відмовився передавати екран телефону. На телефоні ще раз натисніть Дозвіл на захоплення екрана в налаштуваннях Звук в автомобілі додатка AARE і виберіть Весь екран.</string>
     <string name="mirror_need_accessibility">Щоб користуватися телефоном з автомобіля, увімкніть AARE в налаштуваннях спеціальних можливостей телефону.</string>
 
     <!-- common: shared across screens -->
@@ -52,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">З\'єднуватися з парними автомобілями через Wi-Fi, коли вони опиняються в зоні дії Bluetooth</string>
     <string name="setup_toggle_resume_music_title">Відновлювати музику</string>
     <string name="setup_toggle_resume_music_subtitle">Запускати останній відтворюваний музичний застосунок при з\'єднанні з автомобілем</string>
+    <string name="setup_bt_address_label">Bluetooth-адреса телефону (необов\'язково)</string>
+    <string name="setup_bt_address_hint">Деякі головні пристрої показують чорний екран, доки не дізнаються, який телефон підключено. Знайдіть його в Налаштування &gt; Про телефон &gt; Статус. Залиште порожнім, якщо ваш автомобіль уже працює.</string>
     <string name="setup_section_location">Геолокація</string>
     <string name="setup_toggle_car_gps_title">Використовувати GPS автомобіля</string>
     <string name="setup_toggle_car_gps_subtitle">Під час з\'єднання застосунки на телефоні бачать позицію автомобіля замість позиції телефону, тож навігаційні застосунки не плутають ці дві</string>
@@ -166,6 +169,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Безпечніше: мережу потрібно знову дозволяти для кожної сесії. Вимкніть це для головних пристроїв, які самостійно перепідключаються, як openauto чи Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Екран телефону на сервері</string>
     <string name="huserver_toggle_mirror_subtitle">Також пропонувати «Екран телефону» будь-кому, хто підключається тут. Ризиковано: вони бачать екран телефону і можуть на нього натискати, тож залишайте це вимкненим, якщо не довіряєте головному пристрою.</string>
+    <string name="huserver_toggle_localhost_title">Дозволити localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Прийняти з\'єднання від застосунку типу Android Auto в браузері на цьому телефоні — для автомобілів без Android Auto (наприклад, Tesla). Підключитися може будь-який застосунок на телефоні, тож залишайте це вимкненим, якщо не користуєтеся таким.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Повідомлення</string>
@@ -196,6 +201,10 @@
     <string name="audio_no_method">Жодний метод ще не налаштовано: виберіть один нижче.</string>
     <string name="audio_section_methods">Методи, кращі спочатку</string>
     <string name="audio_policy_ready">Готово. Музика і голос навігації йдуть до автомобіля окремо, телефон залишається тихим.</string>
+    <string name="audio_method_policy">Системна маршрутизація звуку (як Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, музика і навігація окремо (як Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku або root</string>
+    <string name="audio_method_playback_capture">Дозвіл на захоплення екрана</string>
     <string name="audio_policy_not_ready">Як Android Auto: музика і голос навігації окремо, динамік телефону вимкнено. Потрібен телефон з root-правами: установіть AARE як системний застосунок за допомогою модуля Magisk (див. README).</string>
     <string name="audio_shizuku_ready">Готово. Усе, що відтворює телефон, йде до автомобіля, включно з голосом навігації; телефон залишається тихим.</string>
     <string name="audio_shizuku_needs_android12">Потрібен Android 12 або новіший.</string>
@@ -227,6 +236,14 @@
     <string name="notif_channel_connection">З\'єднання з автомобілем</string>
     <string name="notif_action_stop">Зупинити</string>
     <string name="notif_action_trust">Довіряти</string>
+    <string name="notif_action_download_cert">Завантажити сертифікат</string>
+    <string name="notif_cert_download_title">Головний пристрій відхилив сертифікат AARE</string>
+    <string name="notif_cert_download_message">Цей головний пристрій приймає лише сертифікат, виданий Google. Завантажте його з найновішої версії застосунку Android Auto, а потім підключіться знову.</string>
+    <string name="notif_cert_download_progress">Завантаження сертифіката Android Auto…</string>
+    <string name="notif_cert_download_ready_title">Сертифікат готовий</string>
+    <string name="notif_cert_download_ready_message">Сертифікат Android Auto додано. Підключіться до головного пристрою знову, щоб використати його.</string>
+    <string name="notif_cert_download_reconnecting">Сертифікат Android Auto додано. Повторне підключення до головного пристрою…</string>
+    <string name="notif_cert_download_failed">Не вдалося завантажити сертифікат: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Бездротове з\'єднання…</string>
     <string name="notif_status_not_connected">Не з\'єднано</string>
     <string name="notif_keeping_consent_suffix">%1$s · зберігає згоду на захоплення екрана для звуку в автомобілі (Зупинити звільнить її)</string>
@@ -346,6 +363,8 @@
     <string name="standalone_section_warning">Це не застосунки Android Auto: AARE показує їхній звичайний екран телефону, лише під час паркування, і потребує root або Shizuku. Використовуйте на власний ризик.</string>
     <string name="standalone_toggle_title">Запуск застосунків телефону на екрані автомобіля</string>
     <string name="standalone_toggle_subtitle">Виберіть застосунки нижче. Відображаються лише під час паркування.</string>
+    <string name="standalone_keep_awake_title">Режим без вимкнення екрана для автономних застосунків</string>
+    <string name="standalone_keep_awake_subtitle">Не дає фізичному екрану телефону вимикатися, поки застосунок відкрито. На вразливих телефонах з Android 17 віртуальні дисплеї зупиняються, коли екран телефону вимкнено. Витрачає більше заряду батареї.</string>
     <string name="standalone_need_root">Потрібен root або Shizuku. Налаштуйте одне з них на сторінці Звук в автомобілі, а потім поверніться.</string>
     <string name="standalone_not_native">Не застосунок Android Auto · використання під час паркування</string>
     <string name="standalone_starting">Запуск…</string>
@@ -356,6 +375,10 @@
     <string name="browser_url_label">Домашня сторінка</string>
     <string name="browser_hint_parked">Браузер призупинено під час руху.</string>
     <string name="browser_paused_driving">Браузер призупинено під час руху.</string>
+    <string name="browser_forward">Вперед</string>
+    <string name="browser_reload">Оновити</string>
+    <string name="browser_home">Домашня сторінка</string>
+    <string name="browser_address_hint">Пошук або введіть веб-адресу</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Дані автомобіля</string>
     <string name="setup_page_car_data_subtitle">Швидкість, передача та датчики автомобіля в реальному часі</string>
@@ -406,6 +429,14 @@
     <string name="car_data_accelerometer">Акселерометр</string>
     <string name="car_data_gyroscope">Гіроскоп</string>
     <string name="car_data_dtc">Коди несправностей</string>
+    <string name="car_data_app_label">Дані автомобіля</string>
+    <string name="car_data_show_in_car_title">Показувати на екрані автомобіля</string>
+    <string name="car_data_show_in_car_subtitle">Додайте діагностичний застосунок в автомобілі для цих даних у реальному часі</string>
+    <string name="vehicles_section_title">Перевизначення для окремих автомобілів</string>
+    <string name="vehicles_hint">Налаштуйте щільність екрана або відступи видимої області для конкретного автомобіля без нової збірки. Редагуйте vehicles.json за допомогою файлового менеджера, зіставляючи автомобіль за маркою/моделлю/назвою.</string>
+    <string name="vehicles_rule_count">Завантажено правил: %1$d</string>
+    <string name="vehicles_import">Імпортувати файл…</string>
+    <string name="vehicles_template">Записати шаблон</string>
     <string name="setup_toggle_force_h264_title">Примусово використовувати відео H.264</string>
     <string name="setup_toggle_force_h264_subtitle">За замовчуванням AARE використовує найкращий кодек, який підтримують і автомобіль, і телефон (H.265…). Увімкніть, якщо зображення в автомобілі спотворене.</string>
     <string name="common_ok">OK</string>

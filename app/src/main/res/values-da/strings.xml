@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">Telefonskærmen er sat på pause, mens telefonen er låst. Lås telefonen op for at vise den.</string>
     <string name="mirror_driving_no_accessibility">Telefonskærmen er sat på pause under kørsel. For at vise navigations-apps under kørsel skal du aktivere AARE i telefonens tilgængelighedsindstillinger: det fortæller AARE, hvilken app der er åben.</string>
     <string name="mirror_driving_nav_only">Telefonskærmen er sat på pause under kørsel. Den viser kun navigations-apps.</string>
-    <string name="mirror_need_car_audio">Aktivér Bilaudio i AARE på telefonen, og vælg Hele skærmen, når Android spørger: telefonskærmen bruger samme tilladelse.</string>
+    <string name="mirror_need_screen_capture">Telefonskærmen kræver Androids tilladelse til skærmoptagelse. Åbn AAREs indstillinger for Bilaudio på telefonen, tryk på Tilladelse til skærmoptagelse, og vælg Hele skærmen.</string>
+    <string name="mirror_capture_failed">Android afviste at dele telefonskærmen. Tryk igen på Tilladelse til skærmoptagelse i AAREs indstillinger for Bilaudio på telefonen, og vælg Hele skærmen.</string>
     <string name="mirror_need_accessibility">For at bruge telefonen fra bilen skal du aktivere AARE i telefonens tilgængelighedsindstillinger.</string>
 
     <!-- common: shared across screens -->
@@ -52,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Opretter forbindelse til tilkoblede biler via Wi-Fi, når de kommer inden for Bluetooth-rækkevidde</string>
     <string name="setup_toggle_resume_music_title">Genoptag musik</string>
     <string name="setup_toggle_resume_music_subtitle">Starter den sidst afspillede musik-app, når bilen opretter forbindelse</string>
+    <string name="setup_bt_address_label">Telefonens Bluetooth-adresse (valgfrit)</string>
+    <string name="setup_bt_address_hint">Nogle head units viser en sort skærm, indtil de ved, hvilken telefon der er forbundet. Find den i Indstillinger &gt; Om telefonen &gt; Status. Lad den stå tom, hvis din bil allerede fungerer.</string>
     <string name="setup_section_location">Placering</string>
     <string name="setup_toggle_car_gps_title">Brug bilens GPS</string>
     <string name="setup_toggle_car_gps_subtitle">Mens forbundet ser apps på telefonen bilens position i stedet for telefonens egen, så navigations-apps ikke blander de to</string>
@@ -166,6 +169,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Mere sikkert: netværket skal tillades igen for hver session. Slå dette fra for head units, der selv genopretter forbindelse, som openauto eller Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Telefonskærm på serveren</string>
     <string name="huserver_toggle_mirror_subtitle">Tilbyder også "Telefonskærm" til alle, der opretter forbindelse her. Risikabelt: de ser telefonens skærm og kan trykke på den, så lad den være slået fra, med mindre du stoler på head unit\'en.</string>
+    <string name="huserver_toggle_localhost_title">Tillad localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Acceptér en forbindelse fra en Android-Auto-i-browseren-app på denne telefon, til biler uden Android Auto (f.eks. Tesla). Enhver app på telefonen kan oprette forbindelse, så lad den være slået fra, med mindre du bruger sådan en.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Beskeder</string>
@@ -196,6 +201,10 @@
     <string name="audio_no_method">Ingen metode er konfigureret endnu: vælg en nedenfor.</string>
     <string name="audio_section_methods">Metoder, bedste først</string>
     <string name="audio_policy_ready">Klar. Musik og navigationsstemme sendes separat til bilen, telefonen er tavs.</string>
+    <string name="audio_method_policy">Systemlydstyring (som Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, musik og navigation separat (som Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku eller root</string>
+    <string name="audio_method_playback_capture">Tilladelse til skærmoptagelse</string>
     <string name="audio_policy_not_ready">Som Android Auto: musik og navigationsstemme separat, telefonhøjttaler fra. Kræver en rootet telefon: installer AARE som systemapp med Magisk-modulet (se README).</string>
     <string name="audio_shizuku_ready">Klar. Alt, hvad telefonen afspiller, går til bilen, inklusive navigationsstemme; telefonen er tavs.</string>
     <string name="audio_shizuku_needs_android12">Kræver Android 12 eller nyere.</string>
@@ -227,6 +236,14 @@
     <string name="notif_channel_connection">Bilforbindelse</string>
     <string name="notif_action_stop">Stop</string>
     <string name="notif_action_trust">Stol på</string>
+    <string name="notif_action_download_cert">Hent certifikat</string>
+    <string name="notif_cert_download_title">Head unit afviste AAREs certifikat</string>
+    <string name="notif_cert_download_message">Denne head unit accepterer kun Googles certifikat. Hent det fra den nyeste Android Auto-app, og opret derefter forbindelse igen.</string>
+    <string name="notif_cert_download_progress">Henter Android Autos certifikat…</string>
+    <string name="notif_cert_download_ready_title">Certifikat er klar</string>
+    <string name="notif_cert_download_ready_message">Android Autos certifikat er blevet tilføjet. Opret forbindelse til head unit\'en igen for at bruge det.</string>
+    <string name="notif_cert_download_reconnecting">Android Autos certifikat er blevet tilføjet. Opretter forbindelse til head unit\'en igen…</string>
+    <string name="notif_cert_download_failed">Kunne ikke hente certifikatet: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Opretter trådløs forbindelse…</string>
     <string name="notif_status_not_connected">Ikke forbundet</string>
     <string name="notif_keeping_consent_suffix">%1$s · bevarer samtykket til skærmoptagelse for bilaudio (Stop frigiver det)</string>
@@ -346,6 +363,8 @@
     <string name="standalone_section_warning">Dette er ikke Android Auto-apps: AARE viser deres normale telefonskærm, kun når bilen er parkeret, og kræver root eller Shizuku. Bruges på eget ansvar.</string>
     <string name="standalone_toggle_title">Start telefonapps på bilskærmen</string>
     <string name="standalone_toggle_subtitle">Vælg apps nedenfor. Vises kun når parkeret.</string>
+    <string name="standalone_keep_awake_title">Ingen-dvale-tilstand for selvstændige apps</string>
+    <string name="standalone_keep_awake_subtitle">Holder den fysiske telefonskærm vågen, mens en app er åben. På berørte Android 17-telefoner stopper virtuelle skærme, når telefonskærmen er slukket. Bruger mere batteri.</string>
     <string name="standalone_need_root">Kræver root eller Shizuku. Konfigurer en af dem på siden Bilaudio, og kom så tilbage.</string>
     <string name="standalone_not_native">Ikke en Android Auto-app · brug ved parkering</string>
     <string name="standalone_starting">Starter…</string>
@@ -356,6 +375,10 @@
     <string name="browser_url_label">Startside</string>
     <string name="browser_hint_parked">Browseren er sat på pause under kørsel.</string>
     <string name="browser_paused_driving">Browseren er sat på pause under kørsel.</string>
+    <string name="browser_forward">Frem</string>
+    <string name="browser_reload">Genindlæs</string>
+    <string name="browser_home">Startside</string>
+    <string name="browser_address_hint">Søg eller indtast en webadresse</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighed, gear og sensorer fra bilen i realtid</string>
@@ -406,6 +429,14 @@
     <string name="car_data_accelerometer">Accelerometer</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Fejlkoder</string>
+    <string name="car_data_app_label">Bildata</string>
+    <string name="car_data_show_in_car_title">Vis på bilskærmen</string>
+    <string name="car_data_show_in_car_subtitle">Tilføj en diagnoseapp i bilen for at se disse livedata</string>
+    <string name="vehicles_section_title">Tilpasninger pr. bil</string>
+    <string name="vehicles_hint">Ret en bestemt bils tæthed eller margener for synligt område uden en ny build. Rediger vehicles.json med en filhåndtering, og match bilen efter mærke/model/navn.</string>
+    <string name="vehicles_rule_count">%1$d regel(ler) indlæst</string>
+    <string name="vehicles_import">Importer fil…</string>
+    <string name="vehicles_template">Skriv skabelon</string>
     <string name="setup_toggle_force_h264_title">Gennemtving H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard bruger AARE den bedste codec, som bilen og telefonen har til fælles (H.265…). Slå til, hvis bilens billede er forvrænget.</string>
     <!-- common / setup / updates / audio / media / car app errors -->

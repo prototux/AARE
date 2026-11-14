@@ -12,6 +12,7 @@ import java.security.PrivateKey
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
+import java.util.Date
 
 /**
  * The phone certificates offered to head units, in order.
@@ -59,9 +60,22 @@ class CertificateStore(private val context: Context) {
     }
 
     /** Identity to offer for attempt [index] (wraps around). */
-    fun pick(index: Int): Entry {
+    fun pick(index: Int, now: Date = Date()): Entry {
+        val usable = offerable(now)
+        return usable[Math.floorMod(index, usable.size)]
+    }
+
+    /** The attempt index that offers the certificate called [name] (0 if it isn't offered). */
+    fun indexOf(name: String, now: Date = Date()): Int = offerable(now).indexOfFirst { it.name == name }.coerceAtLeast(0)
+
+    /**
+     * What the rotation offers: every certificate that hasn't expired. A head unit that checks
+     * dates refuses an expired one anyway, so offering it only costs a connection attempt. If they
+     * have all expired, all of them, for head units that don't check.
+     */
+    private fun offerable(now: Date): List<Entry> {
         val all = entries()
-        return all[Math.floorMod(index, all.size)]
+        return all.filter { it.notAfter.after(now) }.ifEmpty { all }
     }
 
     @Synchronized

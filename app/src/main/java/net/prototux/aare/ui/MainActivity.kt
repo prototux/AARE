@@ -806,17 +806,17 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 enabled = it; settings.carAudio = it
             }
             Spacer(Modifier.height(4.dp))
-            Text(best?.let { stringResource(R.string.audio_using_method, it.label) } ?: stringResource(R.string.audio_no_method),
+            Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
                 style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
         }
         Section(stringResource(R.string.audio_section_methods)) {
-            Check(CaptureMethod.AUDIO_POLICY.label,
+            Check(stringResource(CaptureMethod.AUDIO_POLICY.title),
                 if (policy) stringResource(R.string.audio_policy_ready)
                 else stringResource(R.string.audio_policy_not_ready),
                 policy) {
                 ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
             }
-            Check(CaptureMethod.SHIZUKU.label,
+            Check(stringResource(CaptureMethod.SHIZUKU.title),
                 when {
                     shizuku -> stringResource(R.string.audio_shizuku_ready)
                     root -> stringResource(R.string.audio_root_ready)
@@ -837,7 +837,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                     }
                 }
             }
-            Check(CaptureMethod.PLAYBACK_CAPTURE.label,
+            Check(stringResource(CaptureMethod.PLAYBACK_CAPTURE.title),
                 if (state.audioCapture) stringResource(R.string.audio_playback_ready)
                 else stringResource(R.string.audio_playback_not_ready),
                 state.audioCapture) {
@@ -882,9 +882,11 @@ private fun AppsCard(settings: Settings) {
         value = withContext(Dispatchers.IO) {
             val car = CarAppCatalog.query(ctx)
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
-            val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs }
+            val messaging = AndroidAutoApps.messagingApps(ctx)
+            val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
+            val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, AndroidAutoApps.messagingApps(ctx).filter { it.packageName !in shown })
+            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
         }
     }
     fun toggle(pkg: String, visible: Boolean) {

@@ -127,10 +127,11 @@ class AapSession(
     @Volatile var closedDuring = State.VERSION
         private set
     /**
-     * The head unit refused the phone certificate: it hung up during a TLS handshake it had
-     * started, or reported an authentication failure. (Not set for timeouts before TLS began.)
+     * The head unit refused the phone certificate: it reported an authentication failure, ended
+     * the TLS handshake it had started, or hung up during it. Null if it didn't, and for timeouts
+     * before TLS began.
      */
-    @Volatile var certificateRejected = false
+    @Volatile var certificateRefusal: CertificateRefusal? = null
         private set
     @Volatile private var tlsStarted = false
     @Volatile var discovery: ServiceDiscoveryResponse? = null
@@ -164,6 +165,10 @@ class AapSession(
     @Volatile private var headUnitByeBye: String? = null
 
     @Volatile private var lastInboundMs = now()
+    // How the link looked when it failed, for the log (#182: USB links dropping with EIO).
+    @Volatile private var lastOutboundMs = now()
+    @Volatile private var writingSinceMs = -1L
+    @Volatile private var slowestWriteMs = 0L
     @Volatile private var pingIntervalMs = 1_000L
     /**
      * Silence that means the link is dead. Only applied once the head unit has shown it takes part
@@ -251,8 +256,14 @@ class AapSession(
         try {
             while (!closed.get()) {
                 val m = queue.poll(500, TimeUnit.MILLISECONDS) ?: continue
+                val started = now()
+                writingSinceMs = started
                 // Never downgrade: a message flagged encrypted while TLS is down throws (ends the session).
                 writer.write(m.channel, m.control, m.encrypted, m.plain, m.length)
+                val done = now()
+                writingSinceMs = -1L
+                lastOutboundMs = done
+                if (done - started > slowestWriteMs) slowestWriteMs = done - started
                 m.onSent?.invoke()
             }
         } catch (e: Throwable) {
@@ -435,7 +446,7 @@ class AapSession(
     private fun onAuthComplete(msg: AapMessage) {
         val status = runCatching { AuthResponse.parseFrom(msg.bodyBytes()).status }.getOrDefault(0)
         if (status != 0) {
-            certificateRejected = true
+            certificateRefusal = CertificateRefusal(status, explicit = true)
             fail("head unit rejected authentication (status $status)", null)
             return
         }
@@ -532,14 +543,15 @@ class AapSession(
     private fun fail(reason: String, error: Throwable?) {
         if (closed.get()) return
         headUnitByeBye?.let { close(it, null); return }
-        log.w("session failed: $reason", error)
+        log.w("session failed: $reason (${linkStats(now(), lastInboundMs, lastOutboundMs, writingSinceMs, slowestWriteMs, queue.size)})", error)
         close(reason, error ?: AapException(reason))
     }
 
     private fun close(reason: String, error: Throwable?) {
         if (!closed.compareAndSet(false, true)) return
         closedDuring = state
-        if (state == State.HANDSHAKE && tlsStarted && !cryptor.peerRefused) certificateRejected = true
+        if (state == State.HANDSHAKE && tlsStarted && !cryptor.peerRefused && certificateRefusal == null)
+            certificateRefusal = CertificateRefusal(0, explicit = CertificateRefusal.saidByHeadUnit(error))
         state = State.CLOSED
         // The engine only reports a failed read: say what actually happened.
         val why = cryptor.pinRefusal?.let { "head unit certificate not trusted (SHA-256 ${it.fingerprint})" }
@@ -577,6 +589,17 @@ class AapSession(
         const val PROTOCOL_MINOR = 7
 
         private fun now() = System.nanoTime() / 1_000_000
+
+        /**
+         * The link's last moments, for a failed session's log line: tells a link that died while
+         * idle from one that died while a write was stuck or the queue was backing up.
+         */
+        internal fun linkStats(nowMs: Long, lastInMs: Long, lastOutMs: Long, writingSinceMs: Long, slowestWriteMs: Long, queued: Int): String =
+            buildString {
+                append("last in ${nowMs - lastInMs} ms ago, last out ${nowMs - lastOutMs} ms ago")
+                if (writingSinceMs >= 0) append(", a write blocked for ${nowMs - writingSinceMs} ms")
+                append(", slowest write ${slowestWriteMs} ms, $queued queued")
+            }
 
         fun describe(r: ServiceDiscoveryResponse): String {
             val hu = r.headunitInfo

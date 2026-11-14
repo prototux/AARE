@@ -73,10 +73,7 @@ class ProjectionDisplay(
     /** Forces a redraw of the presentation window so a new buffer is produced for the encoder. */
     fun invalidate() {
         main.post {
-            presentation?.window?.decorView?.let {
-                it.invalidate()
-                it.postInvalidate()
-            }
+            presentation?.window?.decorView?.invalidate()
         }
     }
 
