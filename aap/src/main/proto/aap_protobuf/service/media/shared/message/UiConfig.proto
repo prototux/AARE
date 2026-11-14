@@ -33,7 +33,7 @@ message SupportedUiAction {
   optional UiAction action = 1;
 }
 
-// Edges in pixels; same field numbers as Insets.
+// AARE: Edges in pixels; same field numbers as Insets.
 message UiRect {
   optional uint32 top = 1;
   optional uint32 bottom = 2;
@@ -59,7 +59,7 @@ message CornerRadii {
 
 message NativeUiElement {
   optional UiRect position = 1;
-  // An enum: 0 unknown (it drops the element), 1-3 element types it doesn't
-  // name.
+  // AARE: an enum: 0 unknown (it drops the element), 1-3 element types it
+  // doesn't name.
   optional int32 element_type = 2;
 }

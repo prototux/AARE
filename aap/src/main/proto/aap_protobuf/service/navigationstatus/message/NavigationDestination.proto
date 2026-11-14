@@ -4,7 +4,7 @@ package aap_protobuf.service.navigationstatus.message;
 
 message NavigationDestination {
   optional string address = 1;
-  // For a charging stop; names from the ChargingStationDetails message.
+  // AARE: For a charging stop; names from the ChargingStationDetails message.
   optional ChargingStationDetails charging_station_details = 2;
 }
 

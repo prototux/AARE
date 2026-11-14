@@ -18,10 +18,11 @@ enum MediaMessageId
     MEDIA_MESSAGE_UPDATE_UI_CONFIG_REQUEST = 32777;
     MEDIA_MESSAGE_UPDATE_UI_CONFIG_REPLY = 32778;
     MEDIA_MESSAGE_AUDIO_UNDERFLOW_NOTIFICATION = 32779;
-    // 0x800C-0x8015. Directions and bodies as used:
+    // AARE: 0x800C-0x8015. Directions and bodies as used:
     // phone -> head unit: ACTION_TAKEN (ActionTakenNotification), INTEGRATED_OVERLAY_PARAMETERS
     // (IntegratedOverlayParametersNotification), UPDATE_HU_UI_CONFIG_REQUEST
-    // (UpdateHuUiConfigRequest), MEDIA_OPTIONS (MediaOptions), CRITICAL_UI (CriticalUiNotification).
+    // (UpdateHuUiConfigRequest), MEDIA_OPTIONS (MediaOptions), CRITICAL_UI
+    // (CriticalUiNotification).
     // head unit -> phone: INTEGRATED_OVERLAY_START (IntegratedOverlayStartNotification),
     // INTEGRATED_OVERLAY_STOP (body not read), UPDATE_HU_UI_CONFIG_RESPONSE
     // (UpdateHuUiConfigResponse), MEDIA_STATS (MediaStats). INTEGRATED_OVERLAY_SESSION_DATA_UPDATE

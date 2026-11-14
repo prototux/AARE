@@ -27,7 +27,7 @@ message CarPropertyConfig
     repeated CarAreaIdConfig area_id_configs = 7;
 }
 
-// One of the fields is set; the set list becomes one area bitmask.
+// AARE: One of the fields is set; the set list becomes one area bitmask.
 message CarAreaId
 {
     optional int32 global = 1;
@@ -86,7 +86,7 @@ message CarControl
         CarActionControl action_control = 2;
         CarControlGroup control_group = 3;
     }
-    // A missing value counts as enabled.
+    // AARE: A missing value counts as enabled.
     optional bool enabled = 4;
     repeated int32 metadata = 5;
     optional int32 side_affinity = 6;

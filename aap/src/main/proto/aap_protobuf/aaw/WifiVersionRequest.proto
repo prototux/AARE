@@ -9,7 +9,7 @@ message WifiVersionRequest {
   optional int32 minor = 2;
   // 0 5 GHz only, 1 2.4 GHz only, 2 dual band, 3 none
   optional int32 supported_wifi_channel_type = 3;
-  // Unpacked (parsing accepts either form).
+  // AARE: Unpacked (parsing accepts either form).
   repeated int32 supported_wifi_channels = 4;
   optional WppCarInfo car_info = 5;
   optional WifiProjectionProtocolInfo wpp_info = 6;

@@ -53,7 +53,7 @@ message SensorBatch {
     repeated GyroscopeData gyroscope_data = 20;
     repeated GpsSatelliteData gps_satellite_data = 21;
     repeated TollCardData toll_card_data = 22;
-    // 23-26 (sensor types 23-26).
+    // AARE: 23-26 (sensor types 23-26).
     repeated VehicleEnergyModelData vehicle_energy_model_data = 23;
     repeated TrailerData trailer_data = 24;
     repeated RawVehicleEnergyModelData raw_vehicle_energy_model_data = 25;

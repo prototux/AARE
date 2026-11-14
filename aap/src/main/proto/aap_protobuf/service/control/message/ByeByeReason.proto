@@ -9,7 +9,7 @@ enum ByeByeReason
     NOT_SUPPORTED = 3;
     NOT_CURRENTLY_SUPPORTED = 4;
     PROBE_SUPPORTED = 5;
-    // Values 6-8.
+    // AARE: Values 6-8.
     WIRELESS_PROJECTION_DISABLED = 6;
     POWER_DOWN = 7;
     USER_PROFILE_SWITCH = 8;

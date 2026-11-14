@@ -10,7 +10,7 @@ message RadioService {
     // AARE-only: no field 1 here otherwise. Kept because the head unit simulator and
     // DiscoveryParsingTest build it; nothing in AARE reads it.
     repeated message.RadioProperties radio_properties = 1;
-    // Field 2 and the messages below; names from the protocol's own
+    // AARE: Field 2 and the messages below; names from the protocol's own
     // RadioConfiguration class.
     optional RadioConfiguration radio_configuration = 2;
 }

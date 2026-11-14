@@ -16,7 +16,7 @@ message VehicleEnergyModelData {
     optional float battery_temp_celsius = 8;
   }
 
-  // Wire-identical to google.protobuf.Int32Value.
+  // AARE: Wire-identical to google.protobuf.Int32Value.
   message Int32Value {
     optional int32 value = 1;
   }
