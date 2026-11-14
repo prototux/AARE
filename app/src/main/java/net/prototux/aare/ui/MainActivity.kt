@@ -499,6 +499,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
+    var density by remember { mutableIntStateOf(settings.carDensity) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
@@ -550,6 +551,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.setup_toggle_constant_bitrate_title), stringResource(R.string.setup_toggle_constant_bitrate_subtitle), constantBitrate) {
                 constantBitrate = it; settings.constantBitrateVideo = it
             }
+            Spacer(Modifier.height(8.dp))
+            Choices(stringResource(R.string.setup_choice_density), (listOf(0) + DENSITY_CHOICES).map { "$it" to (if (it == 0) stringResource(R.string.setup_choice_density_auto) else "$it") }, "$density") {
+                density = it.toInt(); settings.carDensity = density
+            }
+            Text(stringResource(R.string.setup_hint_density), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Section(stringResource(R.string.setup_section_your_cars)) {
             if (cars.isEmpty()) Text(stringResource(R.string.setup_cars_empty), style = MaterialTheme.typography.bodyMedium)
@@ -895,6 +901,9 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
 }
 
 private const val SHIZUKU_REQUEST = 42
+
+/** Fixed car-screen density choices, besides "Auto" (0). */
+private val DENSITY_CHOICES = listOf(120, 140, 160, 180, 200, 240)
 
 /** A labelled row of mutually exclusive options. */
 @Composable

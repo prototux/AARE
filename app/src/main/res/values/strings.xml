@@ -153,6 +153,9 @@
     <string name="setup_toggle_60fps_subtitle">Smoother when the car supports it</string>
     <string name="setup_choice_max_resolution">Maximum resolution</string>
     <string name="setup_hint_lower_resolution">Lower uses less battery and bandwidth.</string>
+    <string name="setup_choice_density">Car screen density</string>
+    <string name="setup_choice_density_auto">Auto</string>
+    <string name="setup_hint_density">Auto uses the head unit\'s own value, or AARE\'s default for its size. A per-car override in vehicles.json still wins over this. Applied from the next connection.</string>
     <string name="setup_toggle_force_h264_title">Force H.264 video</string>
     <string name="setup_toggle_constant_bitrate_title">Constant bitrate video</string>
     <string name="setup_toggle_constant_bitrate_subtitle">Keeps every frame about the same size. Turn on if the car drops the connection when the whole picture changes, as with the phone screen or a video. Busy pictures get a little softer. Takes effect from the next connection.</string>

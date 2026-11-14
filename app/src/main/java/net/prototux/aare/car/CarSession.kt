@@ -469,7 +469,7 @@ class CarSession(
         videoConfig = config
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
-        val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
+        val dpi = resolveDensity(vehicleOverride?.dpi, settings.carDensity, config.density, minOf(w, h))
         val layout = ProjectionLayout.of(config, w, h).let { base ->
             val o = vehicleOverride
             if (o?.widthMargin == null && o?.heightMargin == null) base
@@ -1069,6 +1069,14 @@ class CarSession(
             shortSide >= 720 -> 160
             else -> 140
         }
+
+        /**
+         * The car screen's density, in order: a per-vehicle override (`vehicles.json`'s
+         * `dpi`, see docs/vehicles.md) always wins; then the phone's own setting if it isn't
+         * "Auto" (0); then the head unit's own value; then [defaultDensity] by screen size.
+         */
+        fun resolveDensity(vehicleDpi: Int?, settingDpi: Int, headUnitDensity: Int, shortSide: Int): Int =
+            vehicleDpi ?: settingDpi.takeIf { it > 0 } ?: headUnitDensity.takeIf { it > 0 } ?: defaultDensity(shortSide)
 
         /**
          * Picks the best configuration the phone can encode comfortably: the largest one within
