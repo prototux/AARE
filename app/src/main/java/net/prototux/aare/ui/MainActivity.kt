@@ -125,6 +125,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.car.CarKeyAction
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
@@ -253,6 +254,7 @@ private fun Home() {
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { LogCard() }
+                            item { CarButtonsCard(settings) }
                         }
                         Page.ABOUT -> item { AboutScreen() }
                     }
@@ -1435,6 +1437,30 @@ private fun LogCard() {
                 }) { Text(stringResource(android.R.string.copy)) }
                 TextButton(onClick = { save.launch("aare-log.txt") }) { Text(stringResource(R.string.setup_log_save)) }
                 TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
+            }
+        }
+    }
+}
+
+private const val CAR_BUTTON_DEFAULT = "default"
+
+/** Lets the user remap a key the car has sent (CarSession.onKey) to one of AARE's own actions. */
+@Composable
+private fun CarButtonsCard(settings: Settings) {
+    val seen = remember { settings.carKeysSeen }
+    var map by remember { mutableStateOf(settings.carKeyMap) }
+    val options = listOf(CAR_BUTTON_DEFAULT to stringResource(R.string.setup_car_button_default)) +
+        CarKeyAction.entries.map { it.id to stringResource(it.labelRes) }
+    Section(stringResource(R.string.setup_section_car_buttons)) {
+        Text(stringResource(R.string.setup_car_buttons_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (seen.isEmpty()) {
+            Text(stringResource(R.string.setup_car_buttons_empty), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+        }
+        seen.toList().sortedBy { (_, name) -> name }.forEach { (code, name) ->
+            Spacer(Modifier.height(12.dp))
+            Choices(name, options, map[code] ?: CAR_BUTTON_DEFAULT) { choice ->
+                map = if (choice == CAR_BUTTON_DEFAULT) map - code else map + (code to choice)
+                settings.carKeyMap = map
             }
         }
     }

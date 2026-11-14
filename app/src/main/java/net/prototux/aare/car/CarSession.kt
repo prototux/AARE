@@ -621,12 +621,20 @@ class CarSession(
     private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
 
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+        // For the "Car buttons" chooser: every key the car has ever sent, by a readable name.
+        settings.rememberCarKey(code, KeyEvent.keyCodeToString(code))
         // Some head units send a media key while they set up, before AARE has a car screen (a
         // play as the session starts): acting on it would start the music the driver didn't ask
         // for, and over whatever the car was playing. The driver's own presses come once the
         // screen is up.
         if (display == null && code in MEDIA_KEYS) {
             if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
+            return
+        }
+        // A user remap wins over the key's normal behaviour below (never over the guard above:
+        // that's about not acting before there's a screen at all, remapped or not).
+        resolveCarKeyAction(settings.carKeyMap, code)?.let { action ->
+            if (!down) performCarKeyAction(action)
             return
         }
         when (code) {
@@ -647,6 +655,22 @@ class CarSession(
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+        }
+    }
+
+    /** A remapped key's action (see [resolveCarKeyAction]), the same ones the keys above reach by default. */
+    private fun performCarKeyAction(action: CarKeyAction) {
+        when (action) {
+            CarKeyAction.HOME -> runtime.actions.goHome()
+            CarKeyAction.BACK -> back()
+            CarKeyAction.ASSISTANT -> runtime.assistant()
+            CarKeyAction.PLAY_PAUSE -> media.playPause()
+            CarKeyAction.NEXT -> media.next()
+            CarKeyAction.PREVIOUS -> media.previous()
+            CarKeyAction.OPEN_NAVIGATION -> runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_MEDIA -> runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_PHONE -> runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
+            CarKeyAction.NOTHING -> Unit
         }
     }
 
