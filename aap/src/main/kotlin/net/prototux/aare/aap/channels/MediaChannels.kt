@@ -261,7 +261,8 @@ class VideoChannel(
     override val dataPriority = Priority.VIDEO
 
     override fun onConfig(cfg: Config) {
-        if (!ready) return
+        // Whatever its status: video starts on any Config (it only checks the
+        // status on audio), and a head unit that says "wait" here would otherwise never get video.
         val index = listener.chooseConfiguration(configs, configIndices).coerceIn(0, configs.size - 1)
         chosen = configs[index]
         startIndex = index
