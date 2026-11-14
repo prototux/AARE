@@ -327,6 +327,11 @@
     <string name="phone_call_in_progress">مكالمة جارية</string>
     <string name="phone_action_hang_up">إنهاء المكالمة</string>
     <string name="phone_keypad_delete">حذف</string>
+    <string name="voip_mic_title">لا يمكن لـ %1$s استخدام الميكروفون</string>
+    <string name="voip_mic_car_text">لن يسمعك الطرف الآخر. اسمح بذلك على الهاتف: راجع الإشعار</string>
+    <string name="voip_mic_notification_text">تحتاج المكالمات من السيارة عبر %1$s إلى إذن الميكروفون. انقر لفتح إعداداته</string>
+    <string name="voip_call_failed_title">تعذّر الاتصال عبر %1$s</string>
+    <string name="voip_call_failed_text">افتحه على الهاتف للاتصال</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">قيد الشحن</string>
     <string name="phone_incoming_call">مكالمة واردة</string>

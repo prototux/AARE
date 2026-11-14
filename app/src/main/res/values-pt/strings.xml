@@ -341,6 +341,11 @@
     <string name="phone_call_in_progress">Chamada em curso</string>
     <string name="phone_action_hang_up">Desligar</string>
     <string name="phone_keypad_delete">Eliminar</string>
+    <string name="voip_mic_title">%1$s não pode usar o microfone</string>
+    <string name="voip_mic_car_text">O outro lado não vai ouvi-lo. Permita no telemóvel: veja a notificação</string>
+    <string name="voip_mic_notification_text">As chamadas do carro através de %1$s precisam da permissão de microfone. Toque para abrir as definições</string>
+    <string name="voip_call_failed_title">Não foi possível ligar através de %1$s</string>
+    <string name="voip_call_failed_text">Abra-a no telemóvel para ligar</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">A carregar</string>
     <string name="phone_incoming_call">Chamada a receber</string>
