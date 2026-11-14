@@ -220,17 +220,21 @@ class CarSession(
     // ------------------------------------------------------------------ AAP callbacks (reader thread)
 
     /**
-     * Who this head unit is, kept by its Bluetooth address (the one it announces, and the one a
-     * wireless session came in on) for quirks needed before the next session says it again:
-     * a head unit is looked up this way before wireless projection starts.
+     * Who this head unit is, kept by the Bluetooth address it announces, for quirks needed before
+     * the next session says it again. Not by the address a wireless session came in on: that can
+     * be an adapter that passes the head unit's identity through, and a rule for the head unit
+     * must not keep the adapter from connecting. That address is only marked as one wireless works
+     * with, which no rule overrides. Head units are looked up this way before wireless starts.
      */
     private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
         val announced = response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
-        val addresses = listOfNotNull(announced, peerKey.takeIf { wireless })
-            .map { it.trim().uppercase() }.filter { BluetoothAdapter.checkBluetoothAddress(it) }.toSet()
-        if (addresses.isEmpty()) return
-        runCatching { KnownHeadUnits(context).let { store -> addresses.forEach { store.put(it, id) } } }
-            .onFailure { Log.w(TAG, "can't remember the head unit", it) }
+            ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
+        val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
+        runCatching {
+            val store = KnownHeadUnits(context)
+            announced?.let { store.put(it, id) }
+            wirelessPeer?.let { store.markWirelessWorked(it) }
+        }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
     }
 
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {

@@ -22,8 +22,30 @@ class KnownHeadUnits(context: Context) {
         prefs.edit { putString(key(address), encode(id)) }
     }
 
+    /** A wireless session to [address] got as far as service discovery once: it does work wirelessly. */
+    fun markWirelessWorked(address: String) {
+        if (address.isBlank() || wirelessWorked(address)) return
+        prefs.edit { putBoolean(key(address) + WIRELESS_WORKED, true) }
+    }
+
+    fun wirelessWorked(address: String): Boolean = prefs.getBoolean(key(address) + WIRELESS_WORKED, false)
+
+    /**
+     * Whether to leave out wireless for [address], given what its known identity resolves to
+     * ([deniedByRule]): never for an address a wireless session already worked with, whatever a
+     * rule says.
+     */
+    fun skipWireless(address: String, deniedByRule: (HeadUnitIdentity) -> Boolean): HeadUnitIdentity? =
+        skipWireless(wirelessWorked(address), get(address), deniedByRule)
+
     companion object {
+        private const val WIRELESS_WORKED = "#wireless_worked"
+
         private fun key(address: String) = address.trim().uppercase()
+
+        /** The head unit to leave wireless out for, or null: see the instance [skipWireless]. */
+        fun skipWireless(worked: Boolean, known: HeadUnitIdentity?, deniedByRule: (HeadUnitIdentity) -> Boolean): HeadUnitIdentity? =
+            if (worked) null else known?.takeIf(deniedByRule)
 
         fun encode(id: HeadUnitIdentity): String = JSONObject()
             .put("make", id.make).put("model", id.model).put("name", id.name).put("year", id.year)

@@ -209,13 +209,12 @@ class ProjectionService : Service() {
         if (session != null || wirelessJob?.isActive == true) return
         val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: return
-        // Wireless projection doesn't start with head units known not to support
-        // it, going by who the head unit said it was last time (vehicles.json `wireless: false`).
-        KnownHeadUnits(this).get(address)?.let { known ->
-            if (VehicleOverrides.forHeadUnit(this, known)?.wireless == false) {
-                log("wireless: ${known.name.ifBlank { address }} doesn't do wireless Android Auto (vehicles.json), not connecting")
-                return
-            }
+        // Wireless projection doesn't start with head units known not to support it, going by who
+        // the head unit said it was last time (vehicles.json `wireless: false`); never with one that
+        // already worked wirelessly.
+        KnownHeadUnits(this).skipWireless(address) { VehicleOverrides.forHeadUnit(this, it)?.wireless == false }?.let { known ->
+            log("wireless: ${known.name.ifBlank { address }} doesn't do wireless Android Auto (vehicles.json), not connecting")
+            return
         }
         // Pass the phone's stable id as the WPP device serial and phone_info.instance_id: strict head
         // units (#46) want the serial in the version response before they send the WifiStartRequest,
