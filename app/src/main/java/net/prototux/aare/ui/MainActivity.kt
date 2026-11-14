@@ -138,6 +138,7 @@ import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
+import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
@@ -670,7 +671,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 themeId = t; layoutId = l
                 settings.carThemeId = t; settings.carLayoutId = l
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !CarThemes.byId(themeId).phoneColors) {
                 Toggle(stringResource(R.string.setup_toggle_phone_accent_title), stringResource(R.string.setup_toggle_phone_accent_subtitle), accent) {
                     accent = it; settings.phoneAccent = it
                 }

@@ -1,12 +1,17 @@
 package net.prototux.aare.ui.theme
 
+import android.os.Build
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 /** The built-in themes. A new theme is a new entry here (and in the settings' choices). */
 object CarThemes {
-    val all: List<CarThemeSpec> get() = listOf(AareTheme, AndroidAutoTheme, CarPlayTheme)
+    val all: List<CarThemeSpec> get() = listOf(AareTheme, AndroidAutoTheme, CarPlayTheme, MaterialYouTheme)
+
+    /** The themes this phone can show: Material You needs Android 12. */
+    val available: List<CarThemeSpec>
+        get() = all.filter { !it.phoneColors || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S }
 
     /** The theme stored under [id], or AARE's for an unknown or removed one. */
     fun byId(id: String?): CarThemeSpec = all.firstOrNull { it.id == id } ?: AareTheme

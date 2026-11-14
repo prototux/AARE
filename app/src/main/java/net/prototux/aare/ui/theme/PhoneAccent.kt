@@ -7,6 +7,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.ui.graphics.luminance
 
+/** This theme with the phone's own colours if it takes them (Material You), else unchanged. */
+fun CarThemeSpec.forPhone(context: Context): CarThemeSpec {
+    if (!phoneColors || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return this
+    return copy(day = dynamicLightColorScheme(context), night = dynamicDarkColorScheme(context))
+}
+
 /**
  * This theme with the phone's accent colours (Material You, from its wallpaper) instead of its own.
  * Only the accents change: the surfaces, the text colours and the call colours stay the theme's.

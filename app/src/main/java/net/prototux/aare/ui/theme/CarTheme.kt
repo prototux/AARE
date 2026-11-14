@@ -73,6 +73,11 @@ data class CarThemeSpec(
     /** App icons: round on Android, rounded squares on iOS. */
     val appIcon: Shape = CircleShape,
     val dimens: CarDimens = CarDimens(),
+    /**
+     * The colours are the phone's own (Material You, Android 12 and later), set by [forPhone]; [day]
+     * and [night] are only the stand-in for older phones.
+     */
+    val phoneColors: Boolean = false,
 )
 
 val LocalCarTheme = staticCompositionLocalOf { AareTheme }

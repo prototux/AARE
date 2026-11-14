@@ -59,6 +59,7 @@ import net.prototux.aare.ui.car.StandaloneAppScreen
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withPhoneAccent
 
 /**
@@ -285,7 +286,7 @@ class CarRuntime(
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
-        val theme = CarThemes.byId(settings.carThemeId)
+        val theme = CarThemes.byId(settings.carThemeId).forPhone(context)
         ui.theme = if (settings.phoneAccent) theme.withPhoneAccent(context) else theme
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar

@@ -97,7 +97,12 @@ night colours, the colours Material has no slot for, type, shapes, app icon shap
   No code or assets were taken from other projects.
 - Android Auto stays black in the day, as the real one does; the car apps still get the car's
   day/night signal, so a map turns light in the day.
-- The phone's accent colours (Material You) replace only the accents, not the surfaces.
+- Two ways to use the phone's colours (Android 12 and later): the Material You theme takes all of
+  them, surfaces included, light in the day and dark at night (`CarThemeSpec.phoneColors`, applied
+  by `forPhone` when the settings are read); the "phone's accent colours" option keeps any other
+  theme's surfaces and swaps only its accents. The option is hidden with Material You. Material You
+  has no call or status colours, so it uses AARE's by day and Android Auto's by night. Its
+  contrast is Material 3's to guarantee: the test checks its Material 3 baseline stand-in.
 - The cluster display follows the main screen's theme and day/night colours.
 - Existing users keep their look: the old CarPlay style maps to the CarPlay theme on the dock,
   everything else to AARE on the taskbar. The old `car_style` key is only read.

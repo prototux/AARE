@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.media.Pill
+import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -71,7 +72,8 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
                 settings.carThemeId = t; settings.carLayoutId = l
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Pointless with Material You, whose colours are all the phone's already.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !CarThemes.byId(themeId).phoneColors) {
             item { SwitchRow(stringResource(R.string.setup_switch_phone_accent), accent) { accent = it; settings.phoneAccent = it } }
         }
         item { SwitchRow(stringResource(R.string.setup_switch_dark_bar), darkBar) { darkBar = it; settings.darkBar = it } }

@@ -36,7 +36,11 @@ object CarStyles {
         CarStyle("aare", CarLayout.TASKBAR),
         CarStyle("android_auto", CarLayout.TASKBAR),
         CarStyle("carplay", CarLayout.DOCK),
+        CarStyle("material_you", CarLayout.TASKBAR),
     )
+
+    /** The styles this phone can show (Material You needs Android 12). */
+    val available: List<CarStyle> get() = CarThemes.available.map { it.id }.let { ids -> all.filter { it.themeId in ids } }
 
     /** The style a theme and layout make up, or null for a mix of the user's own ("Custom"). */
     fun matching(themeId: String, layout: CarLayout): CarStyle? =
@@ -58,13 +62,13 @@ internal fun StyleChoices(
     val theme = CarThemes.byId(themeId)
     val current = CarStyles.matching(theme.id, layout)
     val custom = "custom"
-    val styles = CarStyles.all.map { "${it.themeId}/${it.layout.id}" to it.name } +
+    val styles = CarStyles.available.map { "${it.themeId}/${it.layout.id}" to it.name } +
         (if (current == null) listOf(custom to stringResource(R.string.setup_style_custom)) else emptyList())
     choice(stringResource(R.string.setup_choice_style), styles, current?.let { "${it.themeId}/${it.layout.id}" } ?: custom) { picked ->
         CarStyles.all.firstOrNull { "${it.themeId}/${it.layout.id}" == picked }?.let { onChange(it.themeId, it.layout.id) }
     }
     Spacer(Modifier.height(12.dp))
-    choice(stringResource(R.string.setup_choice_theme), CarThemes.all.map { it.id to it.name }, theme.id) { onChange(it, layout.id) }
+    choice(stringResource(R.string.setup_choice_theme), CarThemes.available.map { it.id to it.name }, theme.id) { onChange(it, layout.id) }
     Spacer(Modifier.height(12.dp))
     choice(stringResource(R.string.setup_choice_layout), listOf(
         CarLayout.TASKBAR.id to stringResource(R.string.setup_layout_taskbar),
