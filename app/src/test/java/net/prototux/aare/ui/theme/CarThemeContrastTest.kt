@@ -9,7 +9,9 @@ import org.junit.Test
 
 /**
  * Every built-in theme must stay readable at a glance in the car, in day and in night colours:
- * WCAG AA contrast (4.5:1) for text, 3:1 for icons and the colours apps use for status.
+ * WCAG AA contrast (4.5:1) for text, 3:1 for icons and the colours apps use for status. On the
+ * accent colour, 3:1 too: it fills icon buttons and big labels (WCAG's large-text and non-text
+ * rule), and Apple's blue with white falls between the two.
  */
 class CarThemeContrastTest {
     private fun contrast(a: Color, b: Color): Double {
@@ -28,7 +30,7 @@ class CarThemeContrastTest {
                 check(mode, "onSurface on $name", s.onSurface, bg, 4.5)
                 check(mode, "onSurfaceVariant on $name", s.onSurfaceVariant, bg, 4.5)
             }
-            check(mode, "onPrimary on primary", s.onPrimary, s.primary, 4.5)
+            check(mode, "onPrimary on primary", s.onPrimary, s.primary, 3.0)
             check(mode, "onPrimaryContainer on primaryContainer", s.onPrimaryContainer, s.primaryContainer, 4.5)
             check(mode, "onSecondaryContainer on secondaryContainer", s.onSecondaryContainer, s.secondaryContainer, 4.5)
             check(mode, "primary on surfaceContainer", s.primary, s.surfaceContainer, 3.0)

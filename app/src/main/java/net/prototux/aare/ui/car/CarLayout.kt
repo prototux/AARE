@@ -34,6 +34,8 @@ data class CarStyle(val themeId: String, val layout: CarLayout) {
 object CarStyles {
     val all: List<CarStyle> = listOf(
         CarStyle("aare", CarLayout.TASKBAR),
+        CarStyle("android_auto", CarLayout.TASKBAR),
+        CarStyle("carplay", CarLayout.DOCK),
     )
 
     /** The style a theme and layout make up, or null for a mix of the user's own ("Custom"). */

@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 
 /** The built-in themes. A new theme is a new entry here (and in the settings' choices). */
 object CarThemes {
-    val all: List<CarThemeSpec> get() = listOf(AareTheme)
+    val all: List<CarThemeSpec> get() = listOf(AareTheme, AndroidAutoTheme, CarPlayTheme)
 
     /** The theme stored under [id], or AARE's for an unknown or removed one. */
     fun byId(id: String?): CarThemeSpec = all.firstOrNull { it.id == id } ?: AareTheme

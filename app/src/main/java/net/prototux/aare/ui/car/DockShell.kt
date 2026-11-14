@@ -20,7 +20,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
@@ -29,47 +28,27 @@ import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-/** The rounded square of the CarPlay look. */
-private val Squircle = RoundedCornerShape(22)
-
-private val CarPlayColors = darkColorScheme(
-    background = Color.Black,
-    surface = Color(0xFF1C1C1E),
-    surfaceContainer = Color(0xFF1C1C1E),
-    surfaceContainerHigh = Color(0xFF2C2C2E),
-    surfaceContainerHighest = Color(0xFF3A3A3C),
-    surfaceContainerLowest = Color(0xFF0E0E0F),
-    primary = Color(0xFF0A84FF),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFF0A84FF),
-    onPrimaryContainer = Color.White,
-    secondaryContainer = Color(0xFF2C2C2E),
-    onSecondaryContainer = Color.White,
-    onSurface = Color.White,
-    onSurfaceVariant = Color(0xFF98989F),
-)
+import net.prototux.aare.ui.theme.CarTheme
+import net.prototux.aare.ui.theme.LocalCarTheme
 
 /**
- * An easter egg: the car screen in the style of Apple's CarPlay (*Settings > Style*). A black dock
- * on the driver's side with the time, three apps, voice and the home button; a home screen of
- * rounded-square app icons in pages; the dashboard. Not affiliated with Apple.
+ * The dock layout, like CarPlay's: a dock on the driver's side with the time, three apps, voice and
+ * the home button; a home screen of app icons in pages; the dashboard. The theme gives the colours
+ * and shapes; the dock and the home screen stay in night colours, as CarPlay's do.
  */
 @Composable
-internal fun CarPlayShell(
+internal fun DockShell(
     state: CarUiState,
     actions: CarActions,
     appContent: @Composable (CarAppEntry, Modifier) -> Unit,
@@ -78,8 +57,8 @@ internal fun CarPlayShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    MaterialTheme(colorScheme = CarPlayColors, typography = MaterialTheme.typography) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black).then(modifier)) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
                     when (val screen = state.screen) {
@@ -110,41 +89,43 @@ internal fun CarPlayShell(
 }
 
 @Composable
-private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) {
+private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) = CarTheme(night = true) {
     val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }
     val media = state.app(state.activeMediaAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.MEDIA }
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
-        Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) Color(0xFF0A84FF) else Color(0xFF2C2C2E))
+        val scheme = MaterialTheme.colorScheme
+        Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) scheme.primary else scheme.secondaryContainer)
             .clickable { actions.assistant() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Mic, "Voice", tint = Color.White)
+            Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
         }
     }
     // The home button: the app grid, or the dashboard when already on it.
     val homeButton: @Composable () -> Unit = {
         val home = state.screen == CarScreen.Launcher
-        Box(Modifier.size(52.dp).clip(Squircle).background(Color(0xFF2C2C2E))
+        Box(Modifier.size(52.dp).clip(LocalCarTheme.current.appIcon).background(MaterialTheme.colorScheme.secondaryContainer)
             .clickable { if (home) actions.goHome() else actions.openLauncher() }, contentAlignment = Alignment.Center) {
-            Icon(if (home) Icons.Rounded.SpaceDashboard else Icons.Rounded.Apps, if (home) "Dashboard" else "Home", tint = Color.White)
+            Icon(if (home) Icons.Rounded.SpaceDashboard else Icons.Rounded.Apps, if (home) "Dashboard" else "Home",
+                tint = MaterialTheme.colorScheme.onSecondaryContainer)
         }
     }
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(96.dp).background(Color(0xFF0E0E0F)).padding(horizontal = 14.dp),
+            Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) { Clock(); PhoneStatusIcons() }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                listOfNotNull(nav, media, phone).forEach { app -> SquircleIcon(app, 60) { actions.openApp(app) } }
+                listOfNotNull(nav, media, phone).forEach { app -> DockIcon(app, 60) { actions.openApp(app) } }
             }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { voice(); homeButton() }
         }
-        return
+        return@CarTheme
     }
     Column(
-        Modifier.fillMaxHeight().width(96.dp).background(Color(0xFF0E0E0F)).padding(vertical = 14.dp),
+        Modifier.fillMaxHeight().width(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Clock()
@@ -157,7 +138,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                listOfNotNull(nav, media, phone).forEach { app -> SquircleIcon(app, 60) { actions.openApp(app) } }
+                listOfNotNull(nav, media, phone).forEach { app -> DockIcon(app, 60) { actions.openApp(app) } }
             }
         }
         voice()
@@ -168,9 +149,10 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
 
 /** The home screen: app icons in pages of two rows (more on portrait screens), with page dots. */
 @Composable
-private fun Home(state: CarUiState, actions: CarActions) {
+private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true) {
+    val scheme = MaterialTheme.colorScheme
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF1B2A4A), Color(0xFF0B1020), Color.Black))),
+        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerLowest, scheme.background))),
     ) {
         val columns = maxOf(3, (maxWidth / 150.dp).toInt())
         // Two rows in landscape; a portrait screen has room for more.
@@ -186,9 +168,9 @@ private fun Home(state: CarUiState, actions: CarActions) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             row.forEach { app ->
                                 Column(Modifier.width(130.dp).clickable { actions.openApp(app) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                                    SquircleIcon(app, 88, null)
+                                    DockIcon(app, 88, null)
                                     Spacer(Modifier.height(8.dp))
-                                    Text(app.label, color = Color.White, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                                    Text(app.label, color = scheme.onSurface, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                                 }
                             }
                             repeat(columns - row.size) { Spacer(Modifier.width(130.dp)) }
@@ -200,7 +182,7 @@ private fun Home(state: CarUiState, actions: CarActions) {
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center) {
                     repeat(pages) { i ->
                         Box(Modifier.padding(4.dp).size(8.dp).clip(CircleShape)
-                            .background(if (i == pager.currentPage) Color.White else Color.White.copy(alpha = 0.35f)))
+                            .background(if (i == pager.currentPage) scheme.onSurface else scheme.onSurface.copy(alpha = 0.35f)))
                     }
                 }
             }
@@ -209,11 +191,12 @@ private fun Home(state: CarUiState, actions: CarActions) {
 }
 
 @Composable
-private fun SquircleIcon(app: CarAppEntry, sizeDp: Int, onClick: (() -> Unit)?) {
-    val m = Modifier.size(sizeDp.dp).clip(Squircle).background(Color(0xFF2C2C2E))
+private fun DockIcon(app: CarAppEntry, sizeDp: Int, onClick: (() -> Unit)?) {
+    val shape = LocalCarTheme.current.appIcon
+    val m = Modifier.size(sizeDp.dp).clip(shape).background(MaterialTheme.colorScheme.secondaryContainer)
     Box(if (onClick != null) m.clickable(onClick = onClick) else m, contentAlignment = Alignment.Center) {
         val icon = app.icon
-        if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(Squircle))
-        else Text(app.label.take(1), color = Color.White, fontSize = (sizeDp / 2.5f).sp, fontWeight = FontWeight.SemiBold)
+        if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(shape))
+        else Text(app.label.take(1), color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = (sizeDp / 2.5f).sp, fontWeight = FontWeight.SemiBold)
     }
 }

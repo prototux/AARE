@@ -102,7 +102,7 @@ fun CarShell(
     modifier: Modifier = Modifier,
 ) {
     if (state.layout == CarLayout.DOCK) {
-        CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
+        DockShell(state, actions, appContent, navMap, overlay, modifier)
         return
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
