@@ -197,6 +197,13 @@ class CarSession(
      */
     val closedBeforeVersionExchange: Boolean get() = aap.closedDuring == AapSession.State.VERSION
 
+    /** The protocol state the session was in when it closed. */
+    val closedDuring: AapSession.State get() = aap.closedDuring
+
+    /** Why the session failed; null when it ended with a bye-bye from either side (or is still running). */
+    @Volatile var closeError: Throwable? = null
+        private set
+
     /**
      * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
      * Focus isn't dropped here: the head unit answers with a native VIDEO_FOCUS_NOTIFICATION (or
@@ -379,6 +386,7 @@ class CarSession(
     private var pausedByCar = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
+        closeError = error
         val rejected = session.certificateRefusal
         val refusal = session.pinRefusal
         main.post {
