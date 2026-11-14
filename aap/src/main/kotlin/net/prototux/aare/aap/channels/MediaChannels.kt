@@ -41,6 +41,10 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     @Volatile var started = false
         protected set
     protected var configIndices: List<Int> = emptyList()
+    /**
+     * The id the next START announces. The first session is 0 and the
+     * id moves on at each STOP, so a restart after a stop is a new session.
+     */
     private val sessionCounter = AtomicInteger(0)
     @Volatile protected var mediaSession = 0
     protected val unacked = AtomicInteger(0)
@@ -110,7 +114,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
 
     /** Starts a media session with the given configuration index. */
     protected fun startStream(configIndex: Int) {
-        mediaSession = sessionCounter.incrementAndGet()
+        mediaSession = sessionCounter.get()
         unacked.set(0)
         sinceAck.set(0)
         lastAckNs = System.nanoTime()
@@ -122,6 +126,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected fun stopStream() {
         if (!started) return
         started = false
+        sessionCounter.incrementAndGet()
         send(MediaMsg.STOP, Stop.getDefaultInstance(), dataPriority)
     }
 
