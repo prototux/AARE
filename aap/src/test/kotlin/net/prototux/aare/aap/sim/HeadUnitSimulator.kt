@@ -123,6 +123,8 @@ class HeadUnitSimulator(
     val byeBye = CountDownLatch(1)
     val closed = CountDownLatch(1)
     @Volatile var videoStart: Start? = null
+    /** Each media channel's session, from its latest START: its acks carry it, as a head unit's do. */
+    val sessionIds = ConcurrentHashMap<Int, Int>()
     @Volatile var error: Throwable? = null
     /** Video focus the phone reported, in order. */
     val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
@@ -233,7 +235,11 @@ class HeadUnitSimulator(
         when (m.id) {
             MediaMsg.SETUP -> send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
                 .setMaxUnacked(maxUnacked).addConfigurationIndices(0).build())
-            MediaMsg.START -> if (m.channel == video) videoStart = Start.parseFrom(m.bodyBytes())
+            MediaMsg.START -> {
+                val start = Start.parseFrom(m.bodyBytes())
+                sessionIds[m.channel] = start.sessionId
+                if (m.channel == video) videoStart = start
+            }
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 focusRequests.incrementAndGet()
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
@@ -255,7 +261,7 @@ class HeadUnitSimulator(
                 } else {
                     audioChunks.incrementAndGet()
                 }
-                val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
+                val session = sessionIds[m.channel] ?: 0
                 if (m.channel == video || ackAudio)
                     send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
@@ -322,6 +328,11 @@ class HeadUnitSimulator(
     /** Asks the phone for a video focus mode, as some head units do. */
     fun requestFocus(mode: VideoFocusMode) = send(video, MediaMsg.VIDEO_FOCUS_REQUEST,
         VideoFocusRequestNotification.newBuilder().setMode(mode).build())
+
+    /** Sends an ack of the head unit's own making on a media channel. */
+    fun sendAck(channel: Int, sessionId: Int, count: Int? = null, receiveTimesNs: List<Long> = emptyList()) =
+        send(channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessionId).apply { count?.let { setAck(it) } }
+            .addAllReceiveTimestampNs(receiveTimesNs).build())
 
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 

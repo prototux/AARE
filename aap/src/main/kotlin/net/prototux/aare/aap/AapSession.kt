@@ -96,7 +96,7 @@ class AapSession(
     private val identity: PhoneIdentity,
     private val phone: PhoneDescription,
     private val callbacks: Callbacks,
-    private val log: AapLog = AapLog.Stdout,
+    internal val log: AapLog = AapLog.Stdout,
     private val options: SessionOptions = SessionOptions(),
 ) {
     interface Callbacks {
