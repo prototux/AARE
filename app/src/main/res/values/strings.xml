@@ -352,6 +352,8 @@
     <string name="browser_address_hint">Search or type a web address</string>
 
     <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_links_title">Links from the assistant</string>
+    <string name="assistant_links_subtitle">Let aare:// links in the chosen assistant\'s replies control the music, or offer to navigate, open an app or call on the car screen. Links from other apps and from web pages are ignored.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>
     <string name="assistant_same_as_phone">Same as the phone</string>
@@ -365,6 +367,8 @@
     <string name="notif_action_stop">Stop</string>
     <string name="notif_action_trust">Trust</string>
     <string name="notif_action_download_cert">Download certificate</string>
+    <string name="notif_action_navigate">Navigate</string>
+    <string name="notif_action_open">Open</string>
     <string name="notif_cert_updated_title">Certificate updated</string>
     <string name="notif_cert_updated_message">AARE downloaded a newer Android Auto certificate, valid until %1$s.</string>
     <string name="notif_cert_expiring_title">Certificate expiring soon</string>
@@ -401,7 +405,10 @@
     <string name="notif_not_calling_text">%1$s asked to dial a code with * or #, not a phone number</string>
     <string name="notif_calling_title">Calling %1$s</string>
     <string name="notif_asked_by">Asked by %1$s</string>
+    <string name="notif_asked_by_link">Asked by a link in an assistant\'s reply</string>
     <string name="notif_call_confirm_title">Call %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigate to %1$s?</string>
+    <string name="notif_open_confirm_title">Open %1$s?</string>
     <string name="notif_no_nav_app">No navigation app on the phone</string>
     <string name="notif_cant_open">Can\'t open that from the car</string>
     <string name="notif_navigation_title">Navigation</string>

@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Leállítás</string>
     <string name="notif_action_trust">Megbízom</string>
     <string name="notif_action_download_cert">Tanúsítvány letöltése</string>
+    <string name="notif_action_navigate">Navigáció</string>
+    <string name="notif_action_open">Megnyitás</string>
     <string name="notif_cert_download_title">A fejegység elutasította az AARE tanúsítványát</string>
     <string name="notif_cert_download_message">Ez a fejegység csak a Google tanúsítványát fogadja el. Töltsd le a legújabb Android Auto alkalmazásból, majd csatlakozz újra.</string>
     <string name="notif_cert_download_progress">Az Android Auto tanúsítványának letöltése…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s csillagot vagy kettőskeresztet tartalmazó kódot kért hívni, nem telefonszámot</string>
     <string name="notif_calling_title">Hívás: %1$s</string>
     <string name="notif_asked_by">Kérte: %1$s</string>
+    <string name="notif_asked_by_link">Kérte: egy hivatkozás az asszisztens válaszában</string>
     <string name="notif_call_confirm_title">Hívás indítása: %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigáció ide: %1$s?</string>
+    <string name="notif_open_confirm_title">Megnyitás: %1$s?</string>
     <string name="notif_no_nav_app">Nincs navigációs alkalmazás a telefonon</string>
     <string name="notif_cant_open">Ez nem nyitható meg az autóból</string>
     <string name="notif_navigation_title">Navigáció</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Újratöltés</string>
     <string name="browser_home">Kezdőlap</string>
     <string name="browser_address_hint">Keresés vagy webcím beírása</string>
+    <string name="assistant_links_title">Hivatkozások az asszisztenstől</string>
+    <string name="assistant_links_subtitle">A kiválasztott asszisztens válaszaiban lévő aare:// hivatkozások vezérelhetik a zenét, vagy az autó képernyőjén felajánlhatják a navigációt, egy alkalmazás megnyitását vagy egy hívást. A más alkalmazásokból és weboldalakról érkező hivatkozások figyelmen kívül maradnak.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Autó adatai</string>
     <string name="setup_page_car_data_subtitle">Élő sebesség, sebességfokozat és érzékelők az autóból</string>

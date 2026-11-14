@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Detener</string>
     <string name="notif_action_trust">Confiar</string>
     <string name="notif_action_download_cert">Descargar certificado</string>
+    <string name="notif_action_navigate">Navegar</string>
+    <string name="notif_action_open">Abrir</string>
     <string name="notif_cert_download_title">La unidad central rechazó el certificado de AARE</string>
     <string name="notif_cert_download_message">Esta unidad central solo acepta el certificado de Google. Descarga el de la última app de Android Auto y vuelve a conectar.</string>
     <string name="notif_cert_download_progress">Descargando el certificado de Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s pidió marcar un código con * o #, no un número de teléfono</string>
     <string name="notif_calling_title">Llamando a %1$s</string>
     <string name="notif_asked_by">Solicitado por %1$s</string>
+    <string name="notif_asked_by_link">Solicitado por un enlace en la respuesta del asistente</string>
     <string name="notif_call_confirm_title">¿Llamar a %1$s?</string>
+    <string name="notif_navigate_confirm_title">¿Navegar a %1$s?</string>
+    <string name="notif_open_confirm_title">¿Abrir %1$s?</string>
     <string name="notif_no_nav_app">No hay app de navegación en el teléfono</string>
     <string name="notif_cant_open">No se puede abrir eso desde el coche</string>
     <string name="notif_navigation_title">Navegación</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Recargar</string>
     <string name="browser_home">Página de inicio</string>
     <string name="browser_address_hint">Busca o escribe una dirección web</string>
+    <string name="assistant_links_title">Enlaces del asistente</string>
+    <string name="assistant_links_subtitle">Permite que los enlaces aare:// en las respuestas del asistente elegido controlen la música, o propongan navegar, abrir una app o llamar en la pantalla del coche. Se ignoran los enlaces de otras apps y de páginas web.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Datos del coche</string>
     <string name="setup_page_car_data_subtitle">Velocidad, marcha y sensores en vivo desde el coche</string>

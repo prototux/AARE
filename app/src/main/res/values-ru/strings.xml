@@ -237,6 +237,8 @@
     <string name="notif_action_stop">Остановить</string>
     <string name="notif_action_trust">Доверять</string>
     <string name="notif_action_download_cert">Скачать сертификат</string>
+    <string name="notif_action_navigate">Маршрут</string>
+    <string name="notif_action_open">Открыть</string>
     <string name="notif_cert_download_title">Головное устройство отклонило сертификат AARE</string>
     <string name="notif_cert_download_message">Это головное устройство принимает только сертификат, выданный Google. Скачайте его из последней версии приложения Android Auto, затем подключитесь снова.</string>
     <string name="notif_cert_download_progress">Скачивание сертификата Android Auto…</string>
@@ -264,7 +266,10 @@
     <string name="notif_not_calling_text">%1$s попросил набрать код со звёздочкой или #, а не номер телефона</string>
     <string name="notif_calling_title">Звонок %1$s</string>
     <string name="notif_asked_by">Запрошено %1$s</string>
+    <string name="notif_asked_by_link">Запрошено ссылкой в ответе ассистента</string>
     <string name="notif_call_confirm_title">Позвонить %1$s?</string>
+    <string name="notif_navigate_confirm_title">Проложить маршрут до %1$s?</string>
+    <string name="notif_open_confirm_title">Открыть %1$s?</string>
     <string name="notif_no_nav_app">На телефоне нет навигационного приложения</string>
     <string name="notif_cant_open">Не удаётся открыть это из автомобиля</string>
     <string name="notif_navigation_title">Навигация</string>
@@ -379,6 +384,8 @@
     <string name="browser_reload">Обновить</string>
     <string name="browser_home">Домашняя страница</string>
     <string name="browser_address_hint">Поиск или введите веб-адрес</string>
+    <string name="assistant_links_title">Ссылки от ассистента</string>
+    <string name="assistant_links_subtitle">Ссылки aare:// в ответах выбранного ассистента могут управлять музыкой или предлагать на экране автомобиля проложить маршрут, открыть приложение или позвонить. Ссылки из других приложений и с веб-страниц игнорируются.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Данные автомобиля</string>
     <string name="setup_page_car_data_subtitle">Скорость, передача и датчики автомобиля в реальном времени</string>
