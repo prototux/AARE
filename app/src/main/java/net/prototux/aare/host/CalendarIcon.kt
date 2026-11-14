@@ -6,13 +6,22 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
+import java.time.Duration
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 /** Calendar apps whose launcher icon shows the day of the month, read from their own metadata. */
 private val CALENDAR_PACKAGES = setOf("com.google.android.calendar", "com.samsung.android.calendar")
 
 /** The `<meta-data>` key on the launcher activity naming the per-day icon array, as the app itself declares it. */
 private const val DYNAMIC_ICONS_META_KEY = "com.google.android.calendar.dynamic_icons"
+
+/**
+ * How long from [now] until the icons show the next day: a second past the coming local
+ * midnight, so the date has surely turned when they are redrawn.
+ */
+fun msUntilNextDay(now: ZonedDateTime): Long =
+    Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay(now.zone)).toMillis().coerceAtLeast(0) + 1_000
 
 /** The 0-based index into a per-day icon array for [dayOfMonth] (1-31), or null if out of range. */
 fun dynamicCalendarIconIndex(dayOfMonth: Int, arrayLength: Int): Int? {
