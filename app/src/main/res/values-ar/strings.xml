@@ -476,4 +476,6 @@
     <string name="carapp_error_stopped">%1$s توقف</string>
     <string name="carapp_error_google_only">%1$s يقبل فقط Android Auto من Google. يجب أن يسمح لـ AARE (راجع قائمة التطبيقات على الهاتف).</string>
     <string name="carapp_error_cant_start">تعذّر بدء %1$s: %2$s</string>
+    <string name="setup_toggle_auto_pair_title">اقتران Bluetooth السيارة تلقائيًا</string>
+    <string name="setup_toggle_auto_pair_subtitle">للمكالمات: عندما تطلب سيارة غير مقترنة بالهاتف الاقتران عبر Android Auto، يتم الاقتران بتلك السيارة عبر Shizuku بدلًا من نافذة Android، إذا كان الرمز مطابقًا للرمز الذي أرسلته السيارة. لا يحدث ذلك مع أي جهاز آخر أبدًا. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
 </resources>

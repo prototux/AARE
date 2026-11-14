@@ -492,4 +492,6 @@
     <string name="carapp_error_stopped">%1$s si è interrotto</string>
     <string name="carapp_error_google_only">%1$s accetta solo Android Auto di Google. Deve consentire AARE (vedi l\'elenco delle app sul telefono).</string>
     <string name="carapp_error_cant_start">%1$s non è riuscito ad avviarsi: %2$s</string>
+    <string name="setup_toggle_auto_pair_title">Associa automaticamente il Bluetooth dell\'auto</string>
+    <string name="setup_toggle_auto_pair_subtitle">Per le chiamate: quando un\'auto con cui il telefono non è associato richiede l\'associazione tramite Android Auto, AARE si associa a quell\'auto tramite Shizuku invece della finestra di dialogo di Android, se il codice corrisponde a quello inviato dall\'auto. Mai con nessun altro dispositivo. Richiede che Shizuku sia in esecuzione e autorizzi AARE.</string>
 </resources>

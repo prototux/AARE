@@ -493,4 +493,6 @@
     <string name="carapp_error_stopped">%1$s leállt</string>
     <string name="carapp_error_google_only">%1$s csak a Google Android Auto alkalmazását fogadja el. Engedélyeznie kell az AARE-t (lásd az alkalmazáslistát a telefonon).</string>
     <string name="carapp_error_cant_start">%1$s nem tudott elindulni: %2$s</string>
+    <string name="setup_toggle_auto_pair_title">Az autó Bluetooth-jának automatikus párosítása</string>
+    <string name="setup_toggle_auto_pair_subtitle">Hívásokhoz: amikor egy autó, amellyel a telefon nincs párosítva, párosítást kér Android Autón keresztül, az AARE a Shizukun keresztül párosodik azzal az autóval az Android párbeszédpanelje helyett, ha a kód megegyezik az autó által küldöttel. Soha semmilyen más eszközzel. Igényli, hogy a Shizuku fusson, és engedélyezze az AARE-t.</string>
 </resources>
