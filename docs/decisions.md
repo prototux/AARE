@@ -150,3 +150,15 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Home actions: one shared connection, secrets apart, https only
+
+Smart-home actions and tiles (`docs/home-actions.md`) run through one process-wide `HomeHub`, shared
+by the car session and the on-phone preview: two connections with the same MQTT client id would
+knock each other off the broker. Arrival triggers run only for a car session. The MQTT client is
+AARE's own (MQTT 3.1.1 without QoS 2 or wills): a few hundred tested lines instead of a new
+dependency. The broker password and every header value go to a private preferences file of their
+own (`home_secrets`), not the main settings, so a settings export can't carry them whichever way it
+is built; header values all count as secrets because that is where tokens go. Plain `http://` stays
+blocked by Android's default network security policy: allowing cleartext would apply to the whole
+app, so it is left to the owner (MQTT without TLS works on a local network meanwhile).
