@@ -92,7 +92,7 @@
 
     <!-- about: the About page -->
     <string name="about_section_what_title">What AARE is</string>
-    <string name="about_text">AARE is an open-source reimplementation of the phone side of Android Auto: it speaks the Android Auto projection protocol directly to the car\'s head unit, draws the car screen itself, and runs navigation, media and messaging apps without needing Google Play Services. AARE %1$s is free software, licensed GPL-3.0-or-later.</string>
+    <string name="about_text">AARE is an open-source reimplementation of the phone side of Android Auto: it speaks the Android Auto projection protocol directly to the car\'s head unit, draws the car screen itself, and runs navigation, media and messaging apps without needing Google Play Services.</string>
     <string name="about_section_links_title">Project</string>
     <string name="about_link_repository">Repository</string>
     <string name="about_link_issues">Issues</string>

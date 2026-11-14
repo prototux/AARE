@@ -223,7 +223,6 @@ private fun Home() {
                         Page.entries.forEach { CategoryRow(it) { page = it } }
                     }
                 }
-                item { About() }
             }
         } else {
             Column(Modifier.fillMaxSize().systemBarsPadding()) {
@@ -1404,7 +1403,7 @@ private fun LogCard() {
 }
 
 @Composable
-private fun About() {
+private fun LicenceLine() {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
         HorizontalDivider()
         Spacer(Modifier.height(8.dp))
@@ -1418,7 +1417,7 @@ private fun About() {
 private fun AboutScreen() {
     val ctx = LocalContext.current
     Section(stringResource(R.string.about_section_what_title)) {
-        Text(stringResource(R.string.about_text, net.prototux.aare.BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.about_text), style = MaterialTheme.typography.bodyMedium)
     }
     Spacer(Modifier.height(16.dp))
     Section(stringResource(R.string.about_section_links_title)) {
@@ -1443,6 +1442,8 @@ private fun AboutScreen() {
             ThanksHandles(group.handles)
         }
     }
+    Spacer(Modifier.height(16.dp))
+    LicenceLine()
 }
 
 /** The handles of one Thanks group, wrapped onto as many lines as needed; each opens its GitHub profile. */
