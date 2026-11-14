@@ -8,7 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.OutputStream
@@ -49,8 +49,8 @@ class MqttClient(
         /** Largest message accepted from the broker: tiles only need small values. */
         val maxPacket: Int = 256 * 1024,
     ) {
-        /** Without the password: for the connection log. */
-        override fun toString() = "${if (tls) "mqtts" else "mqtt"}://${username?.let { "$it@" } ?: ""}$host:$port"
+        /** For the connection log: never the credentials (a data class would print the password). */
+        override fun toString() = "${if (tls) "mqtts" else "mqtt"}://$host:$port"
     }
 
     @Volatile private var socket: Socket? = null
@@ -114,7 +114,9 @@ class MqttClient(
         pending[id] = reply
         try {
             withContext(Dispatchers.IO) { send() }
-            return withTimeout(options.timeoutMs.toLong()) { reply.await() }
+            // Not withTimeout: its exception is a cancellation, which a caller would take for being stopped.
+            return withTimeoutOrNull(options.timeoutMs.toLong()) { reply.await() }
+                ?: throw SocketTimeoutException("no answer from the broker")
         } finally {
             pending.remove(id)
         }

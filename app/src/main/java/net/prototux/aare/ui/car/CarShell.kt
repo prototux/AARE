@@ -380,6 +380,7 @@ internal fun Dashboard(
             DashCard.CALENDAR -> state.nextEvent != null
             DashCard.NOTIFICATION -> state.history.isNotEmpty()
             DashCard.WEATHER -> state.weather != null
+            DashCard.HOME -> !state.home.isEmpty
         }
     }
     // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
@@ -452,6 +453,9 @@ private fun DashSlot(
             }
         }
         DashCard.WEATHER -> state.weather?.let { weather -> Card(modifier) { WeatherCard(weather) } }
+        DashCard.HOME -> if (!state.home.isEmpty) Card(modifier) {
+            HomeCard(state.home, actions, compact, onOpen = { state.apps.firstOrNull { it.kind == CarAppKind.HOME }?.let(actions::openApp) })
+        }
     }
 }
 

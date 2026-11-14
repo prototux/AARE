@@ -3,7 +3,18 @@ package net.prototux.aare.home
 import java.util.UUID
 
 /** A request header. Header values are kept with the secrets: this is where tokens go. */
-data class Header(val name: String, val value: String)
+data class Header(val name: String, val value: String) {
+    companion object {
+        /** Headers typed one per line as "Name: value"; lines without a name are dropped. */
+        fun parseLines(text: String): List<Header> = text.lines().mapNotNull { line ->
+            val colon = line.indexOf(':')
+            if (colon <= 0) return@mapNotNull null
+            Header(line.substring(0, colon).trim(), line.substring(colon + 1).trim()).takeIf { h -> h.name.none { it.isWhitespace() } }
+        }
+
+        fun toLines(headers: List<Header>): String = headers.joinToString("\n") { "${it.name}: ${it.value}" }
+    }
+}
 
 /** The MQTT broker. [password] is a secret (stored apart, never logged). */
 data class MqttBroker(
@@ -22,7 +33,26 @@ data class MqttBroker(
  * The HTTP server: relative URLs ("/api/…") go to [baseUrl], and [headers] (Authorization…) are
  * added to requests to that server only, never to other hosts.
  */
-data class HttpServer(val baseUrl: String = "", val headers: List<Header> = emptyList())
+data class HttpServer(val baseUrl: String = "", val headers: List<Header> = emptyList()) {
+    /** The bearer token of the Authorization header (Home Assistant's long-lived token), or "". */
+    val token: String
+        get() = headers.firstOrNull { it.name.equals(AUTHORIZATION, true) }?.value?.trim()
+            ?.takeIf { it.startsWith("Bearer ", true) }?.substring(7)?.trim().orEmpty()
+
+    /** With [token] as the bearer token (replacing any Authorization header); blank removes the bearer one only. */
+    fun withToken(token: String): HttpServer {
+        val t = token.trim().removePrefix("Bearer ").trim()
+        val others = headers.filterNot { it.name.equals(AUTHORIZATION, true) && (t.isNotEmpty() || it.value.trim().startsWith("Bearer ", true)) }
+        return copy(headers = if (t.isEmpty()) others else others + Header(AUTHORIZATION, "Bearer $t"))
+    }
+
+    /** The headers other than the bearer token's. */
+    val otherHeaders: List<Header> get() = if (token.isEmpty()) headers else headers.filterNot { it.name.equals(AUTHORIZATION, true) }
+
+    companion object {
+        const val AUTHORIZATION = "Authorization"
+    }
+}
 
 /** What an action sends. */
 sealed interface Send {

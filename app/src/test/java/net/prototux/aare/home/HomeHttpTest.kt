@@ -61,4 +61,26 @@ class HomeHttpTest {
         assertEquals("application/json", HomeHttp.contentType(""" {"entity_id":"x"}"""))
         assertEquals("text/plain; charset=utf-8", HomeHttp.contentType("open"))
     }
+
+    @Test
+    fun headersAreTypedOnePerLine() {
+        val h = Header.parseLines("Accept: application/json\n\nX-Token:  a:b \nno colon\nBad Name: x\n: nameless")
+        assertEquals(listOf(Header("Accept", "application/json"), Header("X-Token", "a:b")), h)
+        assertEquals(h, Header.parseLines(Header.toLines(h)))
+    }
+
+    @Test
+    fun theBearerTokenIsReadAndReplaced() {
+        assertEquals("t", server.token)
+        assertEquals(listOf(Header("Accept", "*/*")), server.otherHeaders)
+        val replaced = server.withToken("Bearer new")
+        assertEquals("new", replaced.token)
+        assertEquals(listOf(Header("Accept", "*/*"), Header("Authorization", "Bearer new")), replaced.headers)
+        assertEquals(listOf(Header("Accept", "*/*")), server.withToken(" ").headers)
+        // A non-bearer Authorization (Basic…) is no token: kept as an ordinary header.
+        val basic = HttpServer("https://x", listOf(Header("Authorization", "Basic abc")))
+        assertEquals("", basic.token)
+        assertEquals(basic.headers, basic.otherHeaders)
+        assertEquals(basic.headers, basic.withToken("").headers)
+    }
 }

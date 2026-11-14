@@ -54,10 +54,7 @@ enum class HomePreset(val fields: List<PresetField>, private val defaults: Map<P
         if (PresetField.BASE_URL in fields && v(PresetField.BASE_URL).isNotEmpty()) {
             c = c.copy(http = c.http.copy(baseUrl = v(PresetField.BASE_URL).trimEnd('/')))
         }
-        if (PresetField.TOKEN in fields && v(PresetField.TOKEN).isNotEmpty()) {
-            val auth = Header("Authorization", "Bearer " + v(PresetField.TOKEN).removePrefix("Bearer ").trim())
-            c = c.copy(http = c.http.copy(headers = c.http.headers.filterNot { it.name.equals("Authorization", true) } + auth))
-        }
+        if (PresetField.TOKEN in fields && v(PresetField.TOKEN).isNotEmpty()) c = c.copy(http = c.http.withToken(v(PresetField.TOKEN)))
         return when (this) {
             HA_SERVICE -> {
                 // "cover.garage_door" → the "cover" domain; "toggle" works for most.

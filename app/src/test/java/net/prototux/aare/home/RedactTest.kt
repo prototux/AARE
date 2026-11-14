@@ -27,5 +27,6 @@ class RedactTest {
         val msg = Redact.text("connect to broker failed: pw=hunter22 for jo", listOf("hunter22", "", "ab"))
         assertEquals("connect to broker failed: pw=*** for jo", msg)
         assertFalse("hunter22" in msg)
+        assertEquals("failed: POST https://ha/api/webhook/*** gave 500", Redact.webhooks("failed: POST https://ha/api/webhook/gate-1 gave 500"))
     }
 }

@@ -23,7 +23,7 @@ object Redact {
         var u = url
         // user:password@host
         u = u.replace(Regex("^([a-zA-Z][a-zA-Z0-9+.-]*://)[^/@?#]*@"), "$1$MASK@")
-        u = u.replace(Regex("(/api/webhook/)[^/?#]+"), "$1$MASK")
+        u = webhooks(u)
         val q = u.indexOf('?')
         if (q >= 0) {
             val fragment = u.indexOf('#', q).let { if (it < 0) u.length else it }
@@ -35,6 +35,11 @@ object Redact {
         }
         return u
     }
+
+    /** Webhook ids (`/api/webhook/<id>`) anywhere in [text] masked. */
+    fun webhooks(text: String): String = text.replace(WEBHOOK, "$1$MASK")
+
+    private val WEBHOOK = Regex("(/api/webhook/)[^/?#\\s]+")
 
     /** Any occurrence of the known [secrets] in [text] (an error message quoting a URL…), masked. */
     fun text(text: String, secrets: Collection<String>): String =

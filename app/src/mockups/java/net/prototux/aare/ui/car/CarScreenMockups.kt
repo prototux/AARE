@@ -143,6 +143,7 @@ class CarScreenMockups {
         override fun answerCall() = Unit
         override fun endCall() = Unit
         override fun navigateTo(place: String) = Unit
+        override fun runHomeAction(id: String) = Unit
     }
 }
 

@@ -9,7 +9,9 @@ enum class DashCard(
     MEDIA("media"),
     CALENDAR("calendar"),
     NOTIFICATION("notification"),
-    WEATHER("weather");
+    WEATHER("weather"),
+    /** Smart-home values and buttons; shown only once some are set up. */
+    HOME("home");
 
     companion object {
         /** The cards of a saved list of ids, in order: unknown ids dropped, each card once. */
