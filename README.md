@@ -53,7 +53,7 @@ It needs no Google Play Services.
 | More audio buffering after the car reports underflows | new, untested on hardware |
 | USB (AOA) | done, tested on one head unit (see [Tested on real head units](#tested-on-real-head-units)) |
 | Wireless (Bluetooth bootstrap + Wi-Fi + TCP) | done, tested on one head unit (see [Tested on real head units](#tested-on-real-head-units)) |
-| Developer head-unit server over adb (DHU, openauto, Headunit Revived), optional LAN TCP 5277 | done |
+| Developer head-unit server over adb (DHU, openauto, Open Headunit), optional LAN TCP 5277 | done |
 
 ## Not done yet
 
@@ -372,13 +372,17 @@ server* in AARE's settings), as its peer is unauthenticated.
 The phone only accepts the head-unit server's adb connection from adb itself (uid shell or root),
 so other apps on the phone can't use it (processes running as shell, such as `adb shell` or Shizuku, are accepted).
 For Google's DHU, or any tool on the computer running adb, run `adb forward tcp:5277 localabstract:aare_hu`
-and point it at `localhost:5277`; head units on another device (Headunit Revived, openauto on a Pi) need
+and point it at `localhost:5277`; head units on another device (Open Headunit, formerly Headunit Revived, or openauto on a Pi) need
 *Accept from the network*. The desktop head unit takes `--adb-target tcp:5277` to drive the official
 Android Auto app's head unit server instead. *Accept from the
 network* in the settings also opens TCP 5277 on every network interface with no authentication: anyone
-on the same Wi-Fi can connect (apps on the phone itself are refused on every interface), so by default AARE switches it off again after one session. openauto and Headunit Revived reconnect
+on the same Wi-Fi can connect (apps on the phone itself are refused on every interface), so by default AARE switches it off again after one session. openauto and Open Headunit reconnect
 on their own and would find it off: for them, turn off *Turn off network mode after a session* so
 network mode stays on until you switch it off.
+
+A user reports AARE working well with Open Headunit, except Waze (see
+[Car apps that only trust Google](#car-apps-that-only-trust-google)) and Google Assistant, which
+didn't work for them ([discussion](https://github.com/prototux/AARE/discussions/47)).
 
 ```sh
 ./headunit.sh                       # AARE, through AARE's desktop head unit
@@ -477,7 +481,7 @@ During the handshake the head unit checks the phone's TLS certificate.
   receiver library accept only a phone certificate issued by Google's "Google Automotive Link"
   CA. AARE was tested against Google's DHU: the TLS handshake completes, then the head unit
   refuses authentication (status -3).
-- **Open-source head units:** openauto/Crankshaft, Headunit Revived, LIVI and aa-proxy-rs accept
+- **Open-source head units:** openauto/Crankshaft, Open Headunit (formerly Headunit Revived), LIVI and aa-proxy-rs accept
   AARE's generated certificate, as do some OEM units.
 - **Importing a certificate:** AARE does not ship Google's key. If you have a certificate and key
   you're entitled to use, import it under *Advanced > Phone certificates*, or tap *Download
