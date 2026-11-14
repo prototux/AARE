@@ -352,6 +352,8 @@
     <string name="browser_address_hint">Search or type a web address</string>
 
     <!-- assistant: voice assistant settings and bar -->
+    <string name="assistant_links_title">Links from apps</string>
+    <string name="assistant_links_subtitle">Let aare:// links in an assistant\'s reply navigate, control the music, open an app or offer a call on the car screen. Any app on the phone can open such a link, so only turn this on if you use it.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>
     <string name="assistant_same_as_phone">Same as the phone</string>

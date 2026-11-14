@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
+import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import org.json.JSONObject
 
@@ -28,6 +29,8 @@ class AssistantLinkActivity : Activity() {
         val link = intent?.dataString
         val rt = CarRuntime.active
         when {
+            // Any app can open an aare:// link, so links act only once the driver has switched them on.
+            !Settings(this).assistantLinks -> DiagLog.add("assistant link ignored, links are off in AARE's settings: $link")
             rt == null -> DiagLog.add("assistant link ignored, no car session: $link")
             link == null -> Unit
             else -> when (val action = AssistantLinks.parse(link)) {

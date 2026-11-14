@@ -9,6 +9,10 @@ This is separate from `CarControlProvider`, which lets an assistant *running on 
 (Lapin, for example) call the full car-tools API directly. A link is for everything else: an
 assistant with no code path into AARE, only a reply the user can tap.
 
+Links are **off by default**: turn on *Links from apps* in AARE's voice assistant settings. Any
+app on the phone can open an `aare://` link, so the driver decides whether replies may drive the
+car screen; with the setting off, every link is ignored (and logged).
+
 ## Format
 
 ```
