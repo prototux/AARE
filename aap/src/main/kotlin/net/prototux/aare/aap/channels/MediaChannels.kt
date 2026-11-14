@@ -45,6 +45,14 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     @Volatile protected var mediaSession = 0
     /** The session before the current one (the one last stopped), -1 before any. */
     @Volatile private var previousSession = -1
+    /**
+     * The head unit has acked with the running session's id. Until it has, acks aren't checked
+     * against the session at all: a head unit that sends another id (or none) keeps being paced
+     * by every ack it sends.
+     */
+    @Volatile private var sessionEchoed = false
+    /** [sessionEchoed] for the session last stopped, for its late acks. */
+    @Volatile private var previousEchoed = false
     protected val unacked = AtomicInteger(0)
     /**
      * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
@@ -102,23 +110,25 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     }
 
     /**
-     * Whether an ack is for this stream's window: while a session
-     * runs, only its own acks count (ids compared modulo 256, as the head unit may keep only a
-     * byte); while stopped, only the late acks of the session just stopped do. An ack must also
-     * be for 1 to [MAX_ACKED] messages: any other count ends the session elsewhere, AARE
-     * logs it and ignores the ack.
+     * Whether an ack is for this stream's window. Once the head unit has acked with the running
+     * session's id, only that session's acks count (ids compared modulo 256, as the head unit may
+     * keep only a byte), and while stopped only the late acks of the session just stopped; before
+     * that, every ack counts. An ack for more than [MAX_ACKED] messages is logged and ignored.
      */
     private fun ackCounts(ack: Ack): Boolean {
         val id = ack.sessionId
-        val forUs = if (started) id % 256 == mediaSession % 256 else id == previousSession
-        if (!forUs) {
-            // The previous session's late acks are expected right after a restart: not worth a line.
-            if (!started || id % 256 != previousSession % 256) session.log.d("$name: ack for session $id ignored (current $mediaSession, started=$started)")
-            return false
+        if (started && id % 256 == mediaSession % 256) sessionEchoed = true
+        if (if (started) sessionEchoed else previousEchoed) {
+            val forUs = if (started) id % 256 == mediaSession % 256 else id == previousSession
+            if (!forUs) {
+                // The previous session's late acks are expected right after a restart: not worth a line.
+                if (!started || id % 256 != previousSession % 256) session.log.d("$name: ack for session $id ignored (current $mediaSession, started=$started)")
+                return false
+            }
         }
         val n = ackedCount(ack)
-        if (n !in 1..MAX_ACKED) {
-            session.log.w("$name: ack for $n messages ignored (must be 1 to $MAX_ACKED)")
+        if (n > MAX_ACKED) {
+            session.log.w("$name: ack for $n messages ignored (at most $MAX_ACKED)")
             return false
         }
         return true
@@ -126,11 +136,11 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
 
     /**
      * How many messages an ack is for: one receive time each when the head unit sends them,
-     * otherwise its count. An ack without either is taken for one (it would otherwise be refused).
+     * otherwise its count. An ack without either, or with a count of 0, is taken for one.
      */
     private fun ackedCount(ack: Ack): Int = when {
         ack.receiveTimestampNsCount > 0 -> ack.receiveTimestampNsCount
-        ack.hasAck() -> ack.ack
+        ack.hasAck() && ack.ack > 0 -> ack.ack
         else -> 1
     }
 
@@ -147,6 +157,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     /** Starts a media session with the given configuration index. */
     protected fun startStream(configIndex: Int) {
         mediaSession = sessionCounter.incrementAndGet()
+        sessionEchoed = false
         unacked.set(0)
         sinceAck.set(0)
         lastAckNs = System.nanoTime()
@@ -159,6 +170,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         if (!started) return
         started = false
         previousSession = mediaSession
+        previousEchoed = sessionEchoed
         send(MediaMsg.STOP, Stop.getDefaultInstance(), dataPriority)
     }
 
