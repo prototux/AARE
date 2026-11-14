@@ -91,10 +91,14 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             }
             MediaMsg.ACK -> {
                 val ack = Ack.parseFrom(msg.bodyBytes())
-                if (!ackCounts(ack)) return
+                val now = System.nanoTime()
+                if (!ackCounts(ack)) {
+                    // Still the head unit acking: a run of ignored acks is no stall.
+                    lastAckNs = now
+                    return
+                }
                 sinceAck.set(0)
                 ackSeen = true
-                val now = System.nanoTime()
                 if (unacked.get() > 0) maxAckGapMs = maxOf(maxAckGapMs, (now - lastAckNs) / 1_000_000)
                 streamAcks++
                 lastAckNs = now
@@ -113,7 +117,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
      * Whether an ack is for this stream's window. Once the head unit has acked with the running
      * session's id, only that session's acks count (ids compared modulo 256, as the head unit may
      * keep only a byte), and while stopped only the late acks of the session just stopped; before
-     * that, every ack counts. An ack for more than [MAX_ACKED] messages is logged and ignored.
+     * that, every ack counts. An ack for more than [MAX_ACKED] messages is logged and ignored. An
+     * ignored ack still shows the link is alive (see [noteAttempt]).
      */
     private fun ackCounts(ack: Ack): Boolean {
         val id = ack.sessionId

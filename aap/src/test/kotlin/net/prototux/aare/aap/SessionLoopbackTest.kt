@@ -318,6 +318,39 @@ open class SessionLoopbackTest {
     }
 
     /**
+     * Acks the stream ignores (another session's) still show the head unit is there: a run of them
+     * must not count as a stall and switch the stream to ack-less sending.
+     */
+    @Test
+    fun ignoredAcksAreNoStall() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        hu.ackAudio = false
+        media.startPlayback()
+        media.ackStallMs = 100 // the real 2 s would make this test slow
+        var ts = 0L
+        while (media.hasRoom) media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)
+        while (hu.sessionIds[hu.mediaAudio] == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        val session = hu.sessionIds[hu.mediaAudio]!!
+        hu.sendAck(hu.mediaAudio, session, count = 1) // the head unit echoes the session
+        Thread.sleep(100)
+
+        // ~400 ms of chunks, past the stall time, with only another session's acks coming.
+        repeat(40) {
+            hu.sendAck(hu.mediaAudio, session + 1, count = 1)
+            media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)
+            Thread.sleep(10)
+        }
+        assertFalse("ignored acks still show the head unit is there", media.ackless)
+
+        // With no ack at all, the same run is a stall.
+        repeat(40) { media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L); Thread.sleep(10) }
+        assertTrue(media.ackless)
+    }
+
+    /**
      * A car holding its acks back for a moment (its buffer is full: flow control) is not a stall.
      * Counting messages since the last ack took a few hundred ms of held acks for one, so the
      * stream went unpaced for good, overran the car (crackling) and the car dropped the channel.
