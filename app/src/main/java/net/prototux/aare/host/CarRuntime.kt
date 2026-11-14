@@ -168,7 +168,7 @@ class CarRuntime(
             }
             return
         }
-        val isNavigate = action == CarContext.ACTION_NAVIGATE || intent.data?.scheme == "geo" || intent.data?.scheme == "google.navigation"
+        val isNavigate = action == CarContext.ACTION_NAVIGATE || isNavigationData(intent.dataString)
         // As in CarContext.startCarApp's contract, an explicit component may only start the calling app itself:
         // otherwise any app could hand another a crafted intent and take over the screen. A navigation intent
         // naming another app goes to the driver's navigation app instead.
@@ -183,9 +183,35 @@ class CarRuntime(
             notice(from.info.label, if (isNavigate) context.getString(R.string.notif_no_nav_app) else context.getString(R.string.notif_cant_open))
             return
         }
-        val navIntent = if (isNavigate && intent.action != CarContext.ACTION_NAVIGATE) Intent(CarContext.ACTION_NAVIGATE, intent.data) else intent
-        target.connect(navIntent)
+        target.connect(if (isNavigate) navigationIntent(intent, target, forNavigationApp = own == null) else intent)
         show(target)
+    }
+
+    /**
+     * [intent] as the navigation app [target] gets it. A car app's request
+     * for the navigation app ([forNavigationApp]) goes on as a Google Maps URL, and every
+     * navigation intent is then put in the format the target takes (see [toCarAppNavigation]):
+     * the Car App Library's geo: form, or Waze's own for the Waze versions that take it.
+     */
+    private fun navigationIntent(intent: Intent, target: CarAppConnection, forNavigationApp: Boolean): Intent {
+        val alias = intent.hasExtra(EXTRA_LOCATION_ALIAS)
+        var action = intent.action
+        var data = intent.dataString
+        if (forNavigationApp && !alias) {
+            // AARE also takes other navigation data (google.navigation:, a Maps URL) and VIEW intents, which
+            // Refused from car apps: those go on as they are, any other action as a navigation.
+            val maps = data?.takeIf { it.startsWith("geo:") }?.let(::mapsUrlOf)
+            when {
+                maps != null -> { action = Intent.ACTION_VIEW; data = maps }
+                action != Intent.ACTION_VIEW -> action = CarContext.ACTION_NAVIGATE
+            }
+        }
+        val waze = AppQuirks.takesWazeNavigationFormat(target.info.packageName, target.info.versionCode)
+        val request = toCarAppNavigation(action, data, alias, waze)
+        val out = Intent(intent).setAction(request.action).setData(request.data?.let(android.net.Uri::parse))
+        if (forNavigationApp) out.component = null
+        request.avoid?.let { out.putExtra("avoid", it) }
+        return out
     }
 
     override fun finish(app: CarAppConnection) {
