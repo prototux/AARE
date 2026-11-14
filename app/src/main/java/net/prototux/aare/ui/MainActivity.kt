@@ -230,7 +230,10 @@ private fun Home() {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     when (p) {
-                        Page.CAR_SCREEN -> item { CarScreenSettings(settings, refresh) }
+                        Page.CAR_SCREEN -> {
+                            item { CarScreenSettings(settings, refresh) }
+                            item { TouchCalibrationCard(settings) }
+                        }
                         Page.APPS -> item { AppsCard(settings) }
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }

@@ -5,6 +5,7 @@ import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import android.os.SystemClock
 import android.view.InputDevice
 import android.view.MotionEvent
+import net.prototux.aare.car.calibration.TouchCalibration
 import kotlin.math.abs
 
 /**
@@ -25,11 +26,14 @@ import kotlin.math.abs
  *    that axis falls back to the visible area.
  *
  * Output is clamped to the visible area so a stray report never dispatches off the surface.
+ *
+ * A [calibration] the user measured for this head unit replaces all of the above.
  */
 class TouchMapper(
     touchWidth: Int,
     touchHeight: Int,
     private val layout: ProjectionLayout,
+    private val calibration: TouchCalibration? = null,
 ) {
     private val visW = layout.visibleWidth.coerceAtLeast(1)
     private val visH = layout.visibleHeight.coerceAtLeast(1)
@@ -56,16 +60,17 @@ class TouchMapper(
         if (declY > 0 && srcY == declY && y > declY) srcY = visH
     }
 
-    internal fun mapX(x: Int): Float = (x * (visW.toFloat() / srcX) + layout.marginLeft)
-        .coerceIn(layout.marginLeft.toFloat(), (layout.marginLeft + visW).toFloat())
+    internal fun mapX(x: Int): Float = clampX(x * (visW.toFloat() / srcX) + layout.marginLeft)
 
-    internal fun mapY(y: Int): Float = (y * (visH.toFloat() / srcY) + layout.marginTop)
-        .coerceIn(layout.marginTop.toFloat(), (layout.marginTop + visH).toFloat())
+    internal fun mapY(y: Int): Float = clampY(y * (visH.toFloat() / srcY) + layout.marginTop)
+
+    private fun clampX(x: Float) = x.coerceIn(layout.marginLeft.toFloat(), (layout.marginLeft + visW).toFloat())
+    private fun clampY(y: Float) = y.coerceIn(layout.marginTop.toFloat(), (layout.marginTop + visH).toFloat())
 
     fun map(e: TouchEvent): MotionEvent? {
         val n = e.pointerDataCount
         if (n == 0) return null
-        for (i in 0 until n) observe(e.getPointerData(i).x, e.getPointerData(i).y)
+        if (calibration == null) for (i in 0 until n) observe(e.getPointerData(i).x, e.getPointerData(i).y)
         val now = SystemClock.uptimeMillis()
         val index = e.actionIndex.coerceIn(0, n - 1)
         val action = when (e.action) {
@@ -86,8 +91,16 @@ class TouchMapper(
         val coords = Array(n) { i ->
             val p = e.getPointerData(i)
             MotionEvent.PointerCoords().apply {
-                x = mapX(p.x)
-                y = mapY(p.y)
+                if (calibration != null) {
+                    // Raw values are uint32 on the wire.
+                    val rx = (p.x.toLong() and 0xffffffffL).toDouble()
+                    val ry = (p.y.toLong() and 0xffffffffL).toDouble()
+                    x = clampX((calibration.x(rx, ry) * layout.width).toFloat())
+                    y = clampY((calibration.y(rx, ry) * layout.height).toFloat())
+                } else {
+                    x = mapX(p.x)
+                    y = mapY(p.y)
+                }
                 pressure = 1f
                 size = 1f
             }

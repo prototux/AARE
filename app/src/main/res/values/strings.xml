@@ -477,4 +477,38 @@
     <string name="carapp_error_stopped">%1$s stopped</string>
     <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
     <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
+
+    <!-- Touch calibration tool -->
+    <string name="calibration_title">Touchscreen calibration</string>
+    <string name="calibration_intro">If touches land in the wrong place on the car screen, measure this car\'s touchscreen: you set the visible area from the phone, then touch 4 targets on the car screen. Do it parked.</string>
+    <string name="calibration_not_connected">Connect to the car to calibrate its touchscreen.</string>
+    <string name="calibration_saved_for">Calibrated: %1$s</string>
+    <string name="calibration_using_saved">This car uses a saved calibration.</string>
+    <string name="calibration_driving">Stop the car to calibrate.</string>
+    <string name="calibration_start">Start calibration</string>
+    <string name="calibration_reset">Reset to the car\'s values</string>
+    <string name="calibration_forget">Forget</string>
+    <string name="calibration_area_help">Step 1 of 3. On the car screen, a yellow L marks each corner of the area AARE draws in. Move each edge until its L sits right at the edge of the screen, fully visible.</string>
+    <string name="calibration_area_value">%1$s: %2$d px</string>
+    <string name="calibration_edge_left">Left</string>
+    <string name="calibration_edge_top">Top</string>
+    <string name="calibration_edge_right">Right</string>
+    <string name="calibration_edge_bottom">Bottom</string>
+    <string name="calibration_area_car_values">Car\'s values</string>
+    <string name="calibration_next">Next</string>
+    <string name="calibration_cancel">Cancel</string>
+    <string name="calibration_target_help">Step 2 of 3. On the car screen, touch the centre of target %1$d.</string>
+    <string name="calibration_target_retry_help">Step 2 of 3. That touch didn\'t match the others: touch target %1$d again.</string>
+    <string name="calibration_verify_help">Step 3 of 3. Touch the green target in the middle of the car screen to keep the calibration (%1$d s left). Otherwise nothing changes.</string>
+    <string name="calibration_result_saved">Calibration saved for this car.</string>
+    <string name="calibration_result_missed">The check touch missed the target: nothing was saved. Try again, touching the centre of each target.</string>
+    <string name="calibration_result_timeout">No check touch in time: nothing was saved.</string>
+    <string name="calibration_result_cancelled">Calibration cancelled: nothing was saved.</string>
+    <string name="calibration_result_no_spread">The 4 touches came in at the same place, or on one line: the car may not report where the screen is touched. Nothing was saved; the connection log has the details.</string>
+    <string name="calibration_result_interrupted">The car restarted the video during calibration: nothing was saved. Start again.</string>
+    <string name="calibration_result_reset">Back to the car\'s own values.</string>
+    <string name="calibration_car_area">Calibrating the touchscreen. Use the phone to move each yellow corner to the edge of this screen.</string>
+    <string name="calibration_car_target">Touch the centre of target %1$d</string>
+    <string name="calibration_car_target_retry">Touch target %1$d again</string>
+    <string name="calibration_car_verify">Touch the green target to keep this calibration (%1$d s)</string>
 </resources>
