@@ -159,8 +159,8 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
 
     /**
-     * Act on `aare://` links (AssistantLinkActivity). Off by default: any app on the phone can open
-     * such a link, so the driver chooses to let assistants' replies drive the car screen.
+     * Act on `aare://` links from the chosen assistant (AssistantLinkActivity). Off by default: the
+     * driver chooses to let the assistant's replies drive the car screen.
      */
     var assistantLinks: Boolean
         get() = prefs.getBoolean("assistant_links", false)

@@ -134,9 +134,10 @@
             android:authorities="net.prototux.aare.car"
             android:exported="true" />
 
-        <!-- aare:// links in an assistant's reply (a notification action, a web link…): see
-             docs/assistant-links.md. Any app can start this, like any other link; AssistantLinks'
-             allowlist and the active-car-session check are the real gate, not the export. -->
+        <!-- aare:// links in an assistant's reply (a notification action, a link in its app): see
+             docs/assistant-links.md. Exported so the assistant can start it, but not BROWSABLE: no
+             web page (AARE's own browser included) can open it. The activity also refuses any
+             caller but the chosen assistant. -->
         <activity
             android:name=".host.AssistantLinkActivity"
             android:exported="true"
@@ -147,7 +148,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="aare" />
             </intent-filter>
         </activity>

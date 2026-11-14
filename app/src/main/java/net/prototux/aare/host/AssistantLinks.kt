@@ -41,6 +41,31 @@ internal object AssistantLinks {
         }
     }
 
+    /**
+     * The package Android vouches for as the one that opened the link, or null when it can't say:
+     * [callingPackage] (set for `startActivityForResult`), else the activity's referrer when the
+     * system filled it in (`android-app://<package>`, the app that started the intent or created
+     * the notification's PendingIntent). A referrer the caller supplied itself
+     * ([callerSuppliedReferrer]: `EXTRA_REFERRER` or `EXTRA_REFERRER_NAME` in the intent) is any
+     * string it likes, so it never counts.
+     */
+    fun callerPackage(callingPackage: String?, referrer: String?, callerSuppliedReferrer: Boolean): String? {
+        callingPackage?.takeIf { it.isNotEmpty() }?.let { return it }
+        if (callerSuppliedReferrer || referrer == null) return null
+        val prefix = "android-app://"
+        if (!referrer.startsWith(prefix)) return null
+        // Not java.net.URI: it drops the host of a package name with an underscore.
+        return referrer.substring(prefix.length).substringBefore('/').takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * Only the user's chosen assistant ([Assistants.authorized], the same app [CarControlProvider]
+     * accepts) may act through a link; AARE's own package never does (its browser could otherwise
+     * relay a web page's link), nor does an unknown caller.
+     */
+    fun callerAllowed(caller: String?, assistant: String?, ownPackage: String): Boolean =
+        caller != null && caller != ownPackage && caller == assistant
+
     private fun text(params: Map<String, String>, key: String): String? = params[key]?.trim()?.takeIf { it.isNotEmpty() }
 
     /** Only ASCII digits and a leading '+', capped like the number CarRuntime accepts for a dialled call. */

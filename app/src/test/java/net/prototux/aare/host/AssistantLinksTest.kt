@@ -1,7 +1,9 @@
 package net.prototux.aare.host
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AssistantLinksTest {
@@ -64,5 +66,45 @@ class AssistantLinksTest {
         assertNull(AssistantLinks.parse("https://navigate?q=home"))
         assertNull(AssistantLinks.parse("not a uri at all"))
         assertNull(AssistantLinks.parse("javascript:alert(1)"))
+    }
+
+    @Test
+    fun callerIsTheCallingPackageFirstThenTheSystemReferrer() {
+        assertEquals("app.lapin", AssistantLinks.callerPackage("app.lapin", "android-app://other.app", callerSuppliedReferrer = false))
+        assertEquals("app.lapin", AssistantLinks.callerPackage(null, "android-app://app.lapin", callerSuppliedReferrer = false))
+        assertEquals("com.my_assistant", AssistantLinks.callerPackage(null, "android-app://com.my_assistant/path", callerSuppliedReferrer = false))
+    }
+
+    @Test
+    fun aReferrerTheCallerSuppliedItselfIsNotTrusted() {
+        assertNull(AssistantLinks.callerPackage(null, "android-app://app.lapin", callerSuppliedReferrer = true))
+    }
+
+    @Test
+    fun aMissingOrNonAppReferrerGivesNoCaller() {
+        assertNull(AssistantLinks.callerPackage(null, null, callerSuppliedReferrer = false))
+        assertNull(AssistantLinks.callerPackage(null, "https://app.lapin", callerSuppliedReferrer = false))
+        assertNull(AssistantLinks.callerPackage(null, "android-app://", callerSuppliedReferrer = false))
+        assertNull(AssistantLinks.callerPackage("", null, callerSuppliedReferrer = false))
+    }
+
+    @Test
+    fun onlyTheChosenAssistantMayActThroughALink() {
+        assertTrue(AssistantLinks.callerAllowed("app.lapin", "app.lapin", OWN))
+        assertFalse(AssistantLinks.callerAllowed("com.android.chrome", "app.lapin", OWN))
+        assertFalse(AssistantLinks.callerAllowed(null, "app.lapin", OWN))
+        assertFalse(AssistantLinks.callerAllowed("app.lapin", null, OWN))
+        assertFalse(AssistantLinks.callerAllowed(null, null, OWN))
+    }
+
+    @Test
+    fun aareItselfNeverCountsAsTheAssistant() {
+        // Its browser would otherwise relay a web page's aare:// link.
+        assertFalse(AssistantLinks.callerAllowed(OWN, OWN, OWN))
+        assertFalse(AssistantLinks.callerAllowed(OWN, "app.lapin", OWN))
+    }
+
+    private companion object {
+        const val OWN = "net.prototux.aare"
     }
 }
