@@ -24,10 +24,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import net.prototux.aare.R
+import net.prototux.aare.host.AppQuirks
 import net.prototux.aare.media.ArtLoader
 import java.util.Locale
 
-/** One conversation, from a messaging app's MessagingStyle notification. */
+/** One conversation, from a messaging app's MessagingStyle (or CarExtender) notification. */
 class Conversation(
     /** The notification's key. */
     val key: String,
@@ -51,6 +52,17 @@ class Conversation(
     fun spoken(): String = messages.takeLast(5).joinToString(". ") { if (it.sender.isNotEmpty() && it.sender != title) "${it.sender}: ${it.text}" else it.text }
         .let { "$title. $it" }
 }
+
+/**
+ * Whether a CarExtender conversation is complete enough to show:
+ * messages, a participant, a reply intent and a time. A null message body is skipped, not fatal.
+ */
+internal fun carExtenderUsable(messages: Array<out String?>?, participant: String?, hasReply: Boolean, latestTimestamp: Long): Boolean =
+    !messages.isNullOrEmpty() && !participant.isNullOrEmpty() && hasReply && latestTimestamp > 0
+
+/** A voice message (audio/ type) whose audio isn't there (a null or empty data URI). */
+internal fun isEmptyAudioMessage(mimeType: String?, dataUri: String?): Boolean =
+    mimeType?.startsWith("audio") == true && dataUri.isNullOrEmpty()
 
 /**
  * Messages in the car. Conversations posted as MessagingStyle notifications (what Android Auto
@@ -172,9 +184,12 @@ class CarNotificationListener : NotificationListenerService() {
 
     private fun parse(sbn: StatusBarNotification): Conversation? {
         val n = sbn.notification
-        if (sbn.packageName == packageName) return null
+        if (sbn.packageName == packageName || sbn.packageName in AppQuirks.NOT_CONVERSATIONS) return null
         if (n.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
-        val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n) ?: return null
+        val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(n) ?: return parseCarExtender(sbn)
+        // A voice message posted before its audio is attached: wait for the update that has it.
+        if (sbn.packageName in AppQuirks.DROP_EMPTY_AUDIO_MESSAGES &&
+            style.messages.any { isEmptyAudioMessage(it.dataMimeType, it.dataUri?.toString()) }) return null
         val lines = style.messages.mapNotNull { m ->
             val text = m.text?.toString() ?: return@mapNotNull null
             // A null sender is the user, per MessagingStyle; some apps name the user instead.
@@ -198,6 +213,39 @@ class CarNotificationListener : NotificationListenerService() {
             reply = actionWith(n, NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
                 ?: (0 until NotificationCompat.getActionCount(n)).asSequence().mapNotNull { NotificationCompat.getAction(n, it) }
                     .firstOrNull { !it.remoteInputs.isNullOrEmpty() },
+        )
+    }
+
+    /**
+     * A conversation from the older CarExtender (UnreadConversation) form, for messaging apps that
+     * post no MessagingStyle; it is still read. The messages all come from the
+     * one participant, at the conversation's latest time.
+     */
+    @Suppress("DEPRECATION")
+    private fun parseCarExtender(sbn: StatusBarNotification): Conversation? {
+        val n = sbn.notification
+        val car = NotificationCompat.CarExtender(n)
+        val uc = car.unreadConversation ?: return null
+        val participant = uc.participant
+        if (!carExtenderUsable(uc.messages, participant, uc.replyPendingIntent != null, uc.latestTimestamp)) return null
+        val title = participant.orEmpty()
+        val lines = uc.messages.orEmpty().filterNotNull().map { Conversation.Line(title, it, uc.latestTimestamp) }
+        if (lines.isEmpty()) return null
+        val reply = uc.replyPendingIntent?.let { pi ->
+            NotificationCompat.Action.Builder(0, getString(R.string.msg_action_reply), pi)
+                .apply { uc.remoteInput?.let { addRemoteInput(it) } }
+                .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
+                .build()
+        }
+        return Conversation(
+            key = sbn.key,
+            packageName = sbn.packageName,
+            title = title,
+            messages = lines,
+            icon = n.getLargeIcon()?.let { loadIcon(it, sbn.packageName) } ?: car.largeIcon ?: n.smallIcon?.let { loadIcon(it, sbn.packageName) },
+            timeMs = uc.latestTimestamp,
+            markRead = uc.readPendingIntent,
+            reply = reply,
         )
     }
 
