@@ -72,7 +72,7 @@ For example, a rule for every Ford head unit by Harman older than protocol 1.4:
 | `singleChannelCapture` | true/false | Navigation voice goes with the music on the media channel; the guidance channel stays unused. |
 | `forceElectric` | true/false | Tell apps the car is electric when it reports no fuel type or an unknown one. |
 | `wifiMediaStartSilence`, `wifiGuidanceStartSilence` | number | Silent audio messages sent ahead of a music / navigation voice stream, over Wi-Fi (default: 4 and 4; 0 for music from protocol 5.0 on). Over USB none are sent. |
-| `mediaOnGainTransient` | true/false | Music keeps playing when the car grants GAIN_TRANSIENT to a navigation prompt, or on its own (default: false, only navigation voice does then). Granted to the music's own request, GAIN_TRANSIENT always lets it play. |
+| `mediaOnGainTransient` | true/false | Music keeps playing when the car grants GAIN_TRANSIENT to a navigation prompt (default: false, only navigation voice does then). Granted to the music's own request, or sent by the car on its own, GAIN_TRANSIENT always lets music play. |
 | `pauseOnGuidanceOnly` | true/false | The car saying on its own that only navigation voice may play pauses the phone's music, which plays again when the car gives the sound back (default: true). |
 | `wireless` | true/false | Connect to this head unit wirelessly (default: true). Known before the session from the car's last one: AARE keeps, on the phone, who each head unit said it was by the Bluetooth address it announces. A Bluetooth device a wireless session ever worked with (a wireless adapter, say) is never left out. |
 | `exitToCar` | true/false | The app list's "Exit to car" entry (default: true). |

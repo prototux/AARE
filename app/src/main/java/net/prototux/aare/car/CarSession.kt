@@ -383,7 +383,7 @@ class CarSession(
             DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         val quirks = vehicleOverride
-        mediaFocus = mediaAllowed(state, gainTransientIsMedia(notification.unsolicited, answersGuidance = !notification.unsolicited && guidancePlaying,
+        mediaFocus = mediaAllowed(state, gainTransientIsMedia(answersGuidance = !notification.unsolicited && guidancePlaying,
             quirk = quirks?.mediaOnGainTransient == true))
         guidanceFocusState = guidanceAllowed(state)
         when {
@@ -1134,14 +1134,12 @@ class CarSession(
         }
 
         /**
-         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request it does (a
-         * head unit that grants a transient gain for it still means "play"). Answering a
-         * navigation prompt's request, or said by the car on its own, it is for navigation voice:
-         * the music waits until the prompt is over, unless a vehicles.json rule ([quirk]) says the
-         * head unit means music too.
+         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request, or said by
+         * the car on its own, it does, as before. Answering a navigation prompt's request it is for
+         * navigation voice: the music waits until the prompt is over, unless a vehicles.json rule
+         * ([quirk]) says the head unit means music too.
          */
-        fun gainTransientIsMedia(unsolicited: Boolean, answersGuidance: Boolean, quirk: Boolean): Boolean =
-            quirk || (!unsolicited && !answersGuidance)
+        fun gainTransientIsMedia(answersGuidance: Boolean, quirk: Boolean): Boolean = quirk || !answersGuidance
 
         /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
         fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {
