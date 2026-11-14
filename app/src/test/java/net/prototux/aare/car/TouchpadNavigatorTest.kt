@@ -26,6 +26,8 @@ class TouchpadNavigatorTest {
     @Test
     fun thresholdsAreAtLeastFourMillimetres() {
         assertEquals(TouchpadThresholds(40, 80), TouchpadThresholds.of(pad(60, 40, 6, 4)))
+        // 1.5 units per mm: the floor is 6 units, not 4 from a whole unit per mm.
+        assertEquals(TouchpadThresholds(6, 12), TouchpadThresholds.of(pad(30, 20, 20, 10)))
     }
 
     @Test

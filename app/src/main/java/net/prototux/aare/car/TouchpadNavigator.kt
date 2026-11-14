@@ -29,9 +29,10 @@ internal data class TouchpadThresholds(val move: Int, val multiMove: Int) {
             val pw = if (physical) pad.physicalWidth else w
             val ph = if (physical) pad.physicalHeight else h
             val scale = sensitivityScale(pad)
-            // Units per millimetre in whole units here.
-            val base = if (w / BASE_FRACTION > h / BASE_FRACTION) maxOf(w / BASE_FRACTION, (MIN_SIZE_MM * (w / pw)).toInt())
-                else maxOf(h / BASE_FRACTION, (MIN_SIZE_MM * (h / ph)).toInt())
+            // Units per millimetre as a fraction: in whole units, a small pad with 1.5 units per mm
+            // would get a floor of 4 units instead of 6.
+            val base = if (w / BASE_FRACTION > h / BASE_FRACTION) maxOf(w / BASE_FRACTION, (MIN_SIZE_MM * w / pw).toInt())
+                else maxOf(h / BASE_FRACTION, (MIN_SIZE_MM * h / ph).toInt())
             val move = (base * scale).toInt()
             val unitsPerMm = if (w > h) w.toFloat() / pw else h.toFloat() / ph
             return TouchpadThresholds(move, move + ((MULTIMOVE_PENALTY_MM * unitsPerMm).toInt() * scale).toInt())
