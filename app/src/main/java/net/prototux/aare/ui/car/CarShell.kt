@@ -548,8 +548,16 @@ private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, 
                 content()
                 Spacer(Modifier.height(12.dp))
                 if (np != null && np.durationMs > 0) {
+                    var now by remember { mutableLongStateOf(android.os.SystemClock.elapsedRealtime()) }
+                    LaunchedEffect(np.playing, np.updatedAtMs) {
+                        now = android.os.SystemClock.elapsedRealtime()
+                        while (np.playing) {
+                            delay(500)
+                            now = android.os.SystemClock.elapsedRealtime()
+                        }
+                    }
                     LinearProgressIndicator(
-                        progress = { (np.positionMs.toFloat() / np.durationMs).coerceIn(0f, 1f) },
+                        progress = { mediaProgress(np.positionMs, np.durationMs, np.playing, np.updatedAtMs, now) },
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                     )
                     Spacer(Modifier.height(12.dp))
