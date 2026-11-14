@@ -281,16 +281,15 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
 
     companion object {
         /**
-         * The pairing method to ask for. Only PIN or numeric comparison pairing is used:
-         * it walks [numeric comparison, PIN] and keeps the last one the car offers, so PIN wins
-         * when the car offers both. With neither it asks for no method (UNAVAILABLE) over wireless;
-         * over USB it then skips the pairing request altogether, but AARE always sends it (see
-         * [onOpened]), so it asks for no method there too.
+         * The pairing method to ask for: numeric comparison when the car offers it, else PIN, else
+         * the first method the car lists, else numeric comparison. Head units that pair today keep
+         * getting the method they pair with; "unavailable" is never asked for.
          */
         fun pairingMethod(offered: List<BluetoothPairingMethod>): BluetoothPairingMethod = when {
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
             BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-            else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
+            else -> offered.firstOrNull { it != BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE }
+                ?: BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
         }
     }
 }

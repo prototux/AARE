@@ -55,35 +55,30 @@ class BluetoothChannelTest {
     fun tearDown() { if (::hu.isInitialized) hu.stop() }
 
     @Test
-    fun pinWinsWhenTheCarOffersBoth() {
-        // The last of [numeric comparison, PIN] the car offers is kept, whatever its order.
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothChannel.pairingMethod(listOf(
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN)))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothChannel.pairingMethod(listOf(
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON)))
+    fun numericComparisonWinsWhenTheCarOffersBoth() {
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN)))
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON)))
     }
 
     @Test
-    fun onlyPinOrNumericComparisonIsAskedFor() {
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(listOf(
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON)))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothChannel.pairingMethod(listOf(
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothChannel.pairingMethod(emptyList()))
+    fun pinOnlyWithoutNumericComparison() {
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN)))
+    }
+
+    @Test
+    fun otherwiseTheCarsFirstMethodThenNumericComparison() {
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE)))
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(emptyList()))
     }
 
     @Test
     fun pairingRequestCarriesTheChosenMethod() {
-        connect(6, listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN))
+        connect(6, listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON))
         val req = hu.pairingRequests.poll(3, TimeUnit.SECONDS)!!
         assertEquals(PHONE_ADDRESS, req.phoneAddress)
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN, req.pairingMethod)
-    }
-
-    @Test
-    fun pairingRequestAsksForNoMethodWhenTheCarOffersNeither() {
-        connect(6, listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, hu.pairingRequests.poll(3, TimeUnit.SECONDS)!!.pairingMethod)
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, req.pairingMethod)
     }
 
     @Test
