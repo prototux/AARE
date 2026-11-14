@@ -74,6 +74,11 @@ object NavStatusMsg {
     const val DISTANCE_EVENT = 0x8005 // deprecated, same
     const val STATE = 0x8006
     const val CURRENT_POSITION = 0x8007
+    // These are sent only when the navigation app gives the data (through Google's
+    // own navigation SDK, not the Car App Library, so AARE has nothing to put in them): the energy
+    // forecast to head units newer than 5.0, the route info to 7.0 and later.
+    const val RAW_VEHICLE_ENERGY_FORECAST = 0x8008
+    const val RAW_ROUTE_INFO = 0x8009
 }
 
 object MediaPlaybackMsg {

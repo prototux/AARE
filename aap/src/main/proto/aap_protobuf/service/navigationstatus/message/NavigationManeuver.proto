@@ -35,8 +35,9 @@ message NavigationManeuver {
     MERGE_LEFT = 27;
     MERGE_RIGHT = 28;
     MERGE_SIDE_UNSPECIFIED = 29;
-    ROUNDABOUT_ENTER = 30;
-    ROUNDABOUT_EXIT = 31;
+    // AARE: no 30 and 31 (they were ROUNDABOUT_ENTER and ROUNDABOUT_EXIT here):
+    // accepts 0-29 and 32-50, the Car App Library's Maneuver.TYPE_* numbers, which have neither.
+    reserved 30, 31;
     ROUNDABOUT_ENTER_AND_EXIT_CW = 32;
     ROUNDABOUT_ENTER_AND_EXIT_CW_WITH_ANGLE = 33;
     ROUNDABOUT_ENTER_AND_EXIT_CCW = 34;
@@ -48,6 +49,16 @@ message NavigationManeuver {
     DESTINATION_STRAIGHT = 40;
     DESTINATION_LEFT = 41;
     DESTINATION_RIGHT = 42;
+    // AARE: 43-50 as the Car App Library numbers them; names from it. AARE sends 43-46 as they
+    // are and 47-50 as FERRY_BOAT / FERRY_TRAIN.
+    ROUNDABOUT_ENTER_CW = 43;
+    ROUNDABOUT_EXIT_CW = 44;
+    ROUNDABOUT_ENTER_CCW = 45;
+    ROUNDABOUT_EXIT_CCW = 46;
+    FERRY_BOAT_LEFT = 47;
+    FERRY_BOAT_RIGHT = 48;
+    FERRY_TRAIN_LEFT = 49;
+    FERRY_TRAIN_RIGHT = 50;
   }
 
   optional int32 roundabout_exit_number = 2;
