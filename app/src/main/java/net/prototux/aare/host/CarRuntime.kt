@@ -406,10 +406,15 @@ class CarRuntime(
             if (m.packageName in hidden || m.packageName in messagingOnly || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
-        // Built in, like Android Auto's: calls and the car-side settings.
-        entries += CarAppEntry(PHONE_ID, context.packageName, context.getString(R.string.setup_app_entry_phone), builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
+        // Built in, like Android Auto's: calls, notifications and the car-side settings. Phone and
+        // Notifications can be hidden (F13) the same way as any other app, keyed by their fixed id
+        // since they have no package of their own; their ringing/call and unseen-count UI
+        // (CallOverlay, the rail's bell) is separate from this list and keeps working either way.
+        if (PHONE_ID !in hidden) entries += CarAppEntry(PHONE_ID, context.packageName, context.getString(R.string.setup_app_entry_phone), builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
+        // Settings is never hidden: it is the only way to reach the car-side settings from the car
+        // itself, so hiding it would lock the user out of them until they got back to the phone.
         entries += CarAppEntry(SETTINGS_ID, context.packageName, context.getString(R.string.setup_app_entry_settings), builtinIcon(R.drawable.ic_car_settings), CarAppKind.SETTINGS)
-        entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, context.getString(R.string.setup_app_entry_notifications), builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
+        if (NOTIFICATIONS_ID !in hidden) entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, context.getString(R.string.setup_app_entry_notifications), builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
         if (settings.phoneScreen && phoneScreenAllowed) {
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
@@ -739,6 +744,14 @@ class CarRuntime(
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"
         const val EXIT_ID = "exit-to-car"
+
+        /**
+         * Built-in apps the user may hide from the car's app list (F13), the same way as any
+         * third-party app (`Settings.hiddenApps`, keyed by these fixed ids instead of a package).
+         * [SETTINGS_ID] is deliberately not here: hiding it would lock the user out of the car-side
+         * settings from the car itself, with no way back in short of reconnecting and using the phone.
+         */
+        val HIDEABLE_BUILTIN_IDS = setOf(PHONE_ID, NOTIFICATIONS_ID)
 
         /** Started runtimes, oldest first. Main thread. */
         private val running = ArrayList<CarRuntime>()
