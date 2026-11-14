@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CarPresenceService: the companion presence callbacks it relies on arrived in Android 13. -->
+    <bool name="companion_presence">false</bool>
+</resources>
