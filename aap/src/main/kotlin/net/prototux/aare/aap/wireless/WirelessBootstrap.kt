@@ -423,6 +423,12 @@ class WirelessBootstrap(
         }
     }
 
+    /**
+     * The credentials as the head unit sent them, when [parseCredentials] took quotes off them: the
+     * join falls back to these if the unquoted ones fail.
+     */
+    private var quotedCredentials: WifiCredentials? = null
+
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
         val bssid = info.bssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
@@ -430,14 +436,18 @@ class WirelessBootstrap(
         // One pair of surrounding double quotes is dropped from both for head units
         // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
         val unquote = !headUnitAtLeast(4, 5)
-        return WifiCredentials(
-            ssid = if (unquote) unquoted(info.ssid) else info.ssid,
-            password = if (unquote) unquoted(info.password) else info.password,
+        fun credentials(ssid: String, password: String) = WifiCredentials(
+            ssid = ssid,
+            password = password,
             bssid = bssid?.uppercase(),
             security = WppSecurityMode.toSecurity(info.securityMode, info.password),
             securityMode = info.securityMode,
             accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null,
         )
+        val ssid = if (unquote) unquoted(info.ssid) else info.ssid
+        val password = if (unquote) unquoted(info.password) else info.password
+        quotedCredentials = if (ssid != info.ssid || password != info.password) credentials(info.ssid, info.password) else null
+        return credentials(ssid, password)
     }
 
     // ---- phase 2: join the network ----
@@ -456,10 +466,15 @@ class WirelessBootstrap(
         } else {
             val keepalive = Keepalive().also { it.start() }
             try {
-                listener.connectWifi(credentials)
-            } catch (e: Exception) {
-                log.w("wireless: joining \"${credentials.ssid}\" threw", e)
-                JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+                val first = connectWifi(credentials)
+                val quoted = quotedCredentials
+                // The quotes may be part of the real name or passphrase: try them as sent, once.
+                if (first is JoinResult.Failed && quoted != null && first.status != WppStatus.PHONE_WIFI_DISABLED && !closed.get()) {
+                    log.w("wireless: joining without the quotes failed (${first.message}), trying the credentials as sent")
+                    connectWifi(quoted)
+                } else {
+                    first
+                }
             } finally {
                 keepalive.stop()
             }
@@ -479,6 +494,14 @@ class WirelessBootstrap(
             }
         }
     }
+
+    private fun connectWifi(credentials: WifiCredentials): JoinResult =
+        try {
+            listener.connectWifi(credentials)
+        } catch (e: Exception) {
+            log.w("wireless: joining \"${credentials.ssid}\" threw", e)
+            JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+        }
 
     /** Pings the head unit while [Listener.connectWifi] blocks. */
     private inner class Keepalive {

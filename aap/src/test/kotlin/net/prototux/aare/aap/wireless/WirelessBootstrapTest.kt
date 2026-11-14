@@ -295,6 +295,34 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
+    fun quotedCredentialsAreTriedAsSentWhenTheUnquotedOnesFail() {
+        val phone = Phone { c -> if (c.ssid.startsWith('"')) JoinResult.Joined() else JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "not found") }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").setPassword("\"pw-in-quotes\"").build())
+        assertEquals("My Car", phone.credentials.poll(2, TimeUnit.SECONDS)!!.ssid)
+        val second = phone.credentials.poll(2, TimeUnit.SECONDS)!!
+        assertEquals("\"My Car\"", second.ssid)
+        assertEquals("\"pw-in-quotes\"", second.password)
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertEquals(WppStatus.SUCCESS, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun unquotedCredentialsAreTriedOnlyOnce() {
+        val phone = Phone { JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "not found") }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        assertEquals(WppStatus.WIFI_NETWORK_UNAVAILABLE, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        awaitEnd()
+        assertEquals("credentials without quotes are not tried twice", 1, phone.credentials.size)
+    }
+
+    @Test(timeout = 10_000)
     fun quotesAreKeptFromWpp45HeadUnits() {
         val phone = Phone { JoinResult.Joined() }
         start(phone)
