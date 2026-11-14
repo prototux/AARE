@@ -25,6 +25,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -143,6 +144,7 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.transport.wireless.CarCompanion
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
@@ -527,6 +529,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 supportingText = { Text(stringResource(R.string.setup_bt_address_hint)) },
                 singleLine = true)
         }
+        if (wireless && CarCompanion.supported(ctx)) CompanionCars(settings, pins.keys)
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
                 checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx)
@@ -581,6 +584,49 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                     TextButton(onClick = { pinned.forget(key); pins = pinned.all }) { Text(stringResource(R.string.setup_action_forget)) }
                 }
             }
+        }
+    }
+}
+
+/**
+ * One-tap wireless: cars associated as companion devices start the wireless connection when their
+ * Bluetooth connects, and can have their Wi-Fi approved through Shizuku. Offered for the cars
+ * already used wirelessly: their Bluetooth address is a trusted head unit's key.
+ */
+@Composable
+private fun CompanionCars(settings: Settings, trustedKeys: Set<String>) {
+    val ctx = LocalContext.current
+    var cars by remember { mutableStateOf(CarCompanion.cars(ctx)) }
+    var shizukuWifi by remember { mutableStateOf(settings.companionWifiShizuku) }
+    var failure by remember { mutableStateOf<String?>(null) }
+    // The association's own callback reports the result; this only notices a dismissed dialog.
+    val confirm = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { cars = CarCompanion.cars(ctx) }
+    val candidates = trustedKeys.map { it.uppercase() }.filter { android.bluetooth.BluetoothAdapter.checkBluetoothAddress(it) && cars.none { c -> c.address == it } }.sorted()
+    Section(stringResource(R.string.setup_section_companion)) {
+        Text(stringResource(R.string.setup_companion_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        cars.forEach { car ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.DirectionsCar, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(14.dp))
+                Text(car.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                TextButton(onClick = { CarCompanion.remove(ctx, car); cars = CarCompanion.cars(ctx) }) { Text(stringResource(R.string.setup_action_forget)) }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) candidates.forEach { address ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(headUnitLabel(ctx, address), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                TextButton(onClick = {
+                    failure = null
+                    CarCompanion.associate(ctx, address,
+                        onPending = { confirm.launch(IntentSenderRequest.Builder(it).build()) },
+                        onDone = { ok, why -> cars = CarCompanion.cars(ctx); failure = if (ok) null else why.orEmpty() })
+                }) { Text(stringResource(R.string.setup_action_associate)) }
+            }
+        }
+        if (cars.isEmpty() && candidates.isEmpty()) Text(stringResource(R.string.setup_companion_empty), style = MaterialTheme.typography.bodyMedium)
+        failure?.let { Text(stringResource(R.string.setup_companion_failed, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+        if (cars.isNotEmpty()) Toggle(stringResource(R.string.setup_toggle_companion_shizuku_title), stringResource(R.string.setup_toggle_companion_shizuku_subtitle), shizukuWifi) {
+            shizukuWifi = it; settings.companionWifiShizuku = it
         }
     }
 }

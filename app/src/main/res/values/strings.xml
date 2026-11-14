@@ -132,6 +132,13 @@
     <string name="setup_section_connecting">Connecting</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
+    <string name="setup_section_companion">One-tap wireless</string>
+    <string name="setup_companion_hint">Associate a car you already connected to wirelessly: Android then starts AARE when that car\'s Bluetooth connects, even with the phone in a pocket. Android asks you to confirm once per car.</string>
+    <string name="setup_companion_empty">Connect to a car wirelessly once, then come back here to associate it.</string>
+    <string name="setup_companion_failed">Android didn\'t associate the car: %1$s</string>
+    <string name="setup_action_associate">Associate</string>
+    <string name="setup_toggle_companion_shizuku_title">Approve the car\'s Wi-Fi with Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">For associated cars, Shizuku answers Android\'s \"connect to device\" question, so it isn\'t asked again. The car\'s network stays AARE\'s own, never the phone\'s internet connection. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>

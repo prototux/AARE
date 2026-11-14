@@ -150,3 +150,21 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## One-tap wireless: companion device association
+
+On Android 13+ the user can associate a car already used wirelessly (its Bluetooth address is a
+trusted head unit's key) as a companion device (`CarCompanion`). Android then binds
+`CarPresenceService` when that car's Bluetooth connects, which starts the wireless connection,
+and lets AARE start its foreground service from the background (no "tap to connect" notification).
+
+- The association is with the car's Bluetooth address. Android approves a WifiNetworkSpecifier
+  request by itself only when an association matches the access point's MAC (the BSSID), which
+  head units rarely share with their Bluetooth address (`WifiApproval.Way.COMPANION` handles the
+  ones that do).
+- Otherwise, opt-in and only for associated cars, a Shizuku helper (`ShellWifiService`) runs the
+  Wi-Fi service's shell command that marks AARE's network requests as user-approved, right before
+  the request, and takes it back once it is answered. The network request stays AARE's own
+  (app-only, local-only, never the default network); the shell only answers the dialog's
+  question. If the command fails, Android asks as before.
+- No automotive companion profile: it needs a permission only Android Auto's role holder gets.

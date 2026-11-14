@@ -42,6 +42,8 @@ internal class HeadUnitNetwork(
     /** How long the request may take, user approval included. */
     private val timeoutMs: Long,
     private val matchBssid: Boolean = true,
+    /** Called right before the network request; the handle it returns is closed once the request is answered. */
+    private val preApprove: ((WifiCredentials) -> AutoCloseable?)? = null,
 ) {
     private val context = context.applicationContext
     private val connectivity = context.getSystemService(ConnectivityManager::class.java)
@@ -111,16 +113,22 @@ internal class HeadUnitNetwork(
             }
         }
         callback = cb
-        log.i("wireless: requesting network \"${credentials.ssid}\" (${credentials.security}); Android may ask the user to approve")
-        connectivity.requestNetwork(request, cb, timeoutMs.toInt())
-        if (released) { // raced with release()
-            runCatching { connectivity.unregisterNetworkCallback(cb) }
-            return JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "cancelled")
-        }
-        return try {
-            result.get(timeoutMs + 5_000, TimeUnit.MILLISECONDS)
-        } catch (e: TimeoutException) {
-            JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "no address on \"${credentials.ssid}\" after ${timeoutMs / 1000} s")
+        val approval = preApprove?.let { runCatching { it(credentials) }.onFailure { e -> log.w("wireless: pre-approval failed", e) }.getOrNull() }
+        try {
+            log.i("wireless: requesting network \"${credentials.ssid}\" (${credentials.security}); Android may ask the user to approve")
+            connectivity.requestNetwork(request, cb, timeoutMs.toInt())
+            if (released) { // raced with release()
+                runCatching { connectivity.unregisterNetworkCallback(cb) }
+                return JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "cancelled")
+            }
+            return try {
+                result.get(timeoutMs + 5_000, TimeUnit.MILLISECONDS)
+            } catch (e: TimeoutException) {
+                JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "no address on \"${credentials.ssid}\" after ${timeoutMs / 1000} s")
+            }
+        } finally {
+            // Only the answer to this request needed it: the approval is not kept for later requests.
+            approval?.let { runCatching { it.close() } }
         }
     }
 
