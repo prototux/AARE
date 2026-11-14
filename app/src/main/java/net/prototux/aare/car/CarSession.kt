@@ -313,7 +313,7 @@ class CarSession(
             // A call or the car's own source taking over arrives as LOSS_TRANSIENT: not a grant.
             guidanceAnswered = state != AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT
             DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
-        }
+        } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         // Ducking keeps the music going: the head unit lowers it itself.
         mediaFocus = state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY ||
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK
@@ -355,8 +355,10 @@ class CarSession(
     private fun pickVideoCodec(configs: List<VideoConfiguration>): VideoCodecKind {
         val advertised = configs.map(::configCodec).toSet()
         val kind = matchVideoCodec(advertised, settings.forceH264) { VideoEncoder.hardwareEncodes(it) }
-        Log.i(TAG, "video codec: ${kind.label} (car offers ${advertised.joinToString { it.name.removePrefix("MEDIA_CODEC_VIDEO_") }}" +
-            (if (settings.forceH264) ", H.264 forced" else "") + ")")
+        val line = "video codec: ${kind.label} (car offers ${advertised.joinToString { it.name.removePrefix("MEDIA_CODEC_VIDEO_") }}" +
+            (if (settings.forceH264) ", H.264 forced" else "") + ")"
+        Log.i(TAG, line)
+        DiagLog.add(line)
         return kind
     }
 

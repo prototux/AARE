@@ -244,6 +244,7 @@ open class SessionLoopbackTest {
         while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
         assertTrue("media channel should become ready", media.ready)
         media.startPlayback()
+        media.ackStallMs = 100 // the real 2 s would make this test slow
 
         // Normal play: a few chunks, all acked. The stream stays ack-based.
         repeat(3) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
@@ -262,6 +263,39 @@ open class SessionLoopbackTest {
             "audio should keep reaching the head unit after the stall (got ${hu.audioChunks.get()}, was $delivered)",
             hu.audioChunks.get() > delivered + AudioChannel.SLACK + 2,
         )
+    }
+
+    /**
+     * A car holding its acks back for a moment (its buffer is full: flow control) is not a stall.
+     * Counting messages since the last ack took a few hundred ms of held acks for one, so the
+     * stream went unpaced for good, overran the car (crackling) and the car dropped the channel.
+     */
+    @Test
+    fun audioStaysPacedWhenHeadUnitHoldsAcksBriefly() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        assertTrue("media channel should become ready", media.ready)
+        media.startPlayback()
+        repeat(3) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        Thread.sleep(300)
+
+        // ~400 ms of 20 ms chunks with acks held: well past the old message-count threshold.
+        hu.ackAudio = false
+        repeat(40) { media.sendPcm(ByteArray(10 + 3840), 10, 3840, (it + 3) * 20_000L); Thread.sleep(10) }
+        assertFalse("a short ack hold must keep the car pacing the stream", media.ackless)
+
+        // And a stream that did go ack-less returns to ack-based sending once acks come back.
+        media.ackStallMs = 50
+        repeat(20) { media.sendPcm(ByteArray(10 + 3840), 10, 3840, (it + 43) * 20_000L); Thread.sleep(10) }
+        assertTrue("past the stall time the stream goes ack-less", media.ackless)
+        hu.ackAudio = true
+        val until = System.currentTimeMillis() + 2000
+        while (media.ackless && System.currentTimeMillis() < until) {
+            media.sendPcm(ByteArray(10 + 3840), 10, 3840, 0); Thread.sleep(10)
+        }
+        assertFalse("acks coming back turn pacing back on", media.ackless)
     }
 
     @Test

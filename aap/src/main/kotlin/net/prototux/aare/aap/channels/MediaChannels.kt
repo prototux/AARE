@@ -46,12 +46,25 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected val unacked = AtomicInteger(0)
     /**
      * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
-     * mid-stream. Either way we eventually stop counting acks rather than stall the stream.
+     * mid-stream. Either way we eventually stop counting acks rather than stall the stream; an ack
+     * arriving later turns counting back on.
      */
     @Volatile var ackless = false
         private set
     /** Messages tried (sent or dropped) since the last ack, or since the stream started. */
     private val sinceAck = AtomicInteger(0)
+    @Volatile private var ackSeen = false
+    /** When the last ack arrived (System.nanoTime), or the stream started. */
+    @Volatile private var lastAckNs = System.nanoTime()
+    /** How long a head unit that has acked may go without one, window full, before we stop waiting (#82). */
+    @Volatile var ackStallMs = ACK_STALL_MS
+    /** This stream (since START), for diagnostics: DATA messages sent, ack messages, longest wait for an ack with data in flight. */
+    @Volatile var streamSent = 0
+        private set
+    @Volatile var streamAcks = 0
+        private set
+    @Volatile var maxAckGapMs = 0L
+        private set
 
     override fun onOpened() {
         send(MediaMsg.SETUP, Setup.newBuilder().setType(codec).build())
@@ -69,6 +82,13 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             MediaMsg.ACK -> {
                 val ack = Ack.parseFrom(msg.bodyBytes())
                 sinceAck.set(0)
+                ackSeen = true
+                val now = System.nanoTime()
+                if (unacked.get() > 0) maxAckGapMs = maxOf(maxAckGapMs, (now - lastAckNs) / 1_000_000)
+                streamAcks++
+                lastAckNs = now
+                // Acks are back: let the car pace us again (its window is its flow control).
+                if (ackless) { ackless = false; unacked.set(0) }
                 val n = if (ack.hasAck()) ack.ack else 1
                 // Never go negative: some head units ack frames sent before a restart.
                 unacked.updateAndGet { maxOf(0, it - n) }
@@ -93,6 +113,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         mediaSession = sessionCounter.incrementAndGet()
         unacked.set(0)
         sinceAck.set(0)
+        lastAckNs = System.nanoTime()
+        streamSent = 0; streamAcks = 0; maxAckGapMs = 0
         send(MediaMsg.START, Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex).build(), dataPriority)
         started = true
     }
@@ -108,12 +130,20 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
      * acking: some never ack (newer protocol versions), some ack for a while then go quiet mid-
      * stream (#82: music plays a second, then the in-flight window fills and never drains, so every
      * chunk is dropped and the car falls silent until reconnect). Either way, once we are well past
-     * the window with no ack in sight, stop waiting for acks so the stream keeps flowing. The
-     * counter resets on every ack ([onMessage]), so a head unit that acks normally never trips it.
-     * Dropped messages count too, or a full, stuck window would hide the stall.
+     * the window with no ack in sight, stop waiting for acks so the stream keeps flowing.
+     *
+     * A head unit that has acked is only given up on after [ackStallMs] without an ack: holding
+     * acks back while its buffer is full is how a car slows us down, and counting messages
+     * mistook that for a stall (a few hundred ms of held acks), so the stream went unpaced for
+     * good, overran the car (crackling) and the car eventually dropped the channel. Dropped
+     * messages count too, or a full, stuck window would hide the stall.
      */
     protected fun noteAttempt() {
-        if (!ackless && sinceAck.incrementAndGet() > 2 * maxUnacked + ACKLESS_AFTER) {
+        if (ackless) return
+        val count = sinceAck.incrementAndGet()
+        val stalled = if (!ackSeen) count > 2 * maxUnacked + ACKLESS_AFTER
+            else count > 2 * maxUnacked + ACKLESS_AFTER && (System.nanoTime() - lastAckNs) / 1_000_000 >= ackStallMs
+        if (stalled) {
             ackless = true
             unacked.set(0)
         }
@@ -133,6 +163,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         buf[start + 1] = MediaMsg.DATA.toByte()
         for (i in 0 until 8) buf[start + 2 + i] = (timestampUs ushr (56 - 8 * i)).toByte()
         unacked.incrementAndGet()
+        streamSent++
         noteAttempt()
         if (ackless) unacked.set(0)
         val plain = if (start == 0) buf else buf.copyOfRange(start, offset + length)
@@ -154,6 +185,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
 
     companion object {
         const val ACKLESS_AFTER = 16
+        /** No ack for this long (window full) from a head unit that did ack: it has stalled (#82). */
+        const val ACK_STALL_MS = 2_000L
     }
 }
 
