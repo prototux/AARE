@@ -77,12 +77,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
+import net.prototux.aare.ui.theme.SegmentFont
 import net.prototux.aare.ui.theme.appIconFilter
 
 /**
@@ -299,7 +301,23 @@ internal fun Clock() {
     val text = android.text.format.DateFormat.format(
         if (android.text.format.DateFormat.is24HourFormat(androidx.compose.ui.platform.LocalContext.current)) "H:mm" else "h:mm", now,
     ).toString()
-    Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+    if (LocalCarTheme.current.segmentClock) SegmentClock(text)
+    else Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+}
+
+/**
+ * The time on a seven-segment display: the lit digits over the unlit "88:88", as on an old digital
+ * dashboard. 22 sp keeps "88:88" (3.5 em) inside the 96 dp side bar.
+ */
+@Composable
+private fun SegmentClock(time: String) {
+    val style = MaterialTheme.typography.titleMedium.copy(fontFamily = SegmentFont, fontSize = 22.sp, letterSpacing = 0.sp)
+    val lit = MaterialTheme.colorScheme.onSurface
+    Box(contentAlignment = Alignment.CenterEnd) {
+        Text("88:88", style = style.copy(shadow = null), color = lit.copy(alpha = 0.12f), maxLines = 1)
+        // "!" is the font's digit-wide blank: "9:41" becomes "!9:41", over "88:88".
+        Text(time.padStart(5, '!'), style = style, color = lit, maxLines = 1)
+    }
 }
 
 @Composable

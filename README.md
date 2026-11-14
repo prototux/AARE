@@ -583,6 +583,8 @@ Head-unit reports from [@Shane11r](https://github.com/Shane11r), [@dani203](http
 
 GPL-3.0-or-later (see [LICENSE](LICENSE)). The protobuf definitions come from aasdk
 (GPL-3.0-or-later, see [aap/src/main/proto/NOTICE.md](aap/src/main/proto/NOTICE.md)).
+The Retro theme's clock uses the DSEG7 Classic font by keshikan (SIL Open Font License 1.1, see
+[app/src/main/assets/licenses/DSEG-LICENSE.txt](app/src/main/assets/licenses/DSEG-LICENSE.txt)).
 
 Not affiliated with or endorsed by Google or Apple. Android Auto is a trademark of Google LLC;
 CarPlay is a trademark of Apple Inc.

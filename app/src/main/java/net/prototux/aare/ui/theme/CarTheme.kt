@@ -15,10 +15,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.R
 
 /**
  * Car-screen sizes. Car screens are viewed from ~70 cm at a glance, so sizes follow the car-UI rule
@@ -92,7 +95,16 @@ data class CarThemeSpec(
     val glow: Boolean = false,
     /** App icons drawn in the accent colour instead of their own (single-colour themes). */
     val tintIcons: Boolean = false,
+    /** The clock on a seven-segment display ([SegmentFont]), its unlit segments faintly behind. */
+    val segmentClock: Boolean = false,
 )
+
+/**
+ * DSEG7 Classic, a seven-segment display font (SIL Open Font License 1.1, bundled with its licence
+ * in assets/licenses). Digits and a few capitals only: for the clock, never for running text.
+ * Its "!" is a blank as wide as a digit, to line up with the unlit "88:88".
+ */
+val SegmentFont = FontFamily(Font(R.font.dseg7_classic_regular))
 
 /** [CarThemeSpec.name], translated when the name is a word. */
 @Composable

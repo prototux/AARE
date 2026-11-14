@@ -15,8 +15,8 @@ import net.prototux.aare.R
  * Retro sci-fi: a green phosphor screen or the first digital dashboards. One colour on black
  * (green by default; amber, or a vacuum fluorescent display's cyan, from the settings), a fixed-width
  * font, a soft glow around text, square corners, cards drawn as outlines, and app icons in the
- * phosphor colour. The font is the phone's own monospace one: a segment-display font would be a
- * new bundled asset.
+ * phosphor colour. Text is in the phone's own monospace font; the clock is on a seven-segment
+ * display ([SegmentFont]), which has no letters for the rest.
  */
 val RetroTheme: CarThemeSpec = run {
     fun TextStyle.terminal() = copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Normal, letterSpacing = 0.5.sp)
@@ -51,5 +51,6 @@ val RetroTheme: CarThemeSpec = run {
         cardBorder = 2.dp,
         glow = true,
         tintIcons = true,
+        segmentClock = true,
     ).tinted(CarAccents.GREEN)
 }

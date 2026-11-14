@@ -109,7 +109,9 @@ night colours, the colours Material has no slot for, type, shapes, app icon shap
   every accent.
 - Retro is its own theme rather than an option of Night: a colour alone doesn't make an old
   screen. It adds the phone's monospace font, a glow around text, square corners and outlined
-  cards. A segment-display font would look closer, but it would be a bundled asset (owner's call).
+  cards. Its clock is on a seven-segment display: DSEG7 Classic v0.46 (SIL OFL 1.1, approved by
+  the owner), bundled in res/font with its licence in assets/licenses, so it ships in the APK.
+  The font has digits and a few capitals only, so it is used for the clock and nothing else.
 - Android Auto (2019) has its own layout (`ClassicShell`): a bottom bar and the app grid as home.
   It reuses the taskbar's content area, so rotary focus and screen changes behave the same.
 - The cluster display follows the main screen's theme and day/night colours.
