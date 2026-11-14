@@ -60,6 +60,7 @@ import net.prototux.aare.aap.channels.MicrophoneChannel
 import net.prototux.aare.aap.channels.NavigationStatusChannel
 import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
+import net.prototux.aare.aap.channels.WifiProjectionChannel
 import net.prototux.aare.DiagLog
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
@@ -252,6 +253,7 @@ class CarSession(
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
+                s.hasWifiProjectionService() -> channels += WifiProjectionChannel(s)
                 s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
                     override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
                         DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
