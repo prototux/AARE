@@ -150,3 +150,25 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Home actions: one shared connection, secrets apart, plain http only at home
+
+Smart-home actions and tiles (`docs/home-actions.md`) run through one process-wide `HomeHub`, shared
+by the car session and the on-phone preview: two connections with the same MQTT client id would
+knock each other off the broker. Arrival triggers run only for a car session. The MQTT client is
+AARE's own (MQTT 3.1.1 without QoS 2 or wills): a few hundred tested lines instead of a new
+dependency. The broker password and every header value go to a private preferences file of their
+own (`home_secrets`), not the main settings, so a settings export can't carry them whichever way it
+is built; header values all count as secrets because that is where tokens go.
+
+Plain `http://` (maintainer's decision): https stays the default, and http is allowed only to the
+home network (localhost, `*.local`, RFC 1918, 169.254/16, loopback, `fc00::/7`), only when the HTTP
+server's *Allow plain http on my home network* is on, with a warning. Public http stays refused.
+Opening cleartext in the network security config was rejected: it can't be limited to address
+ranges and would apply to the whole app (the browser too). Plain http goes instead through AARE's
+own small HTTP/1.1 client (`PlainHttp`), to the very address that passed the check, so a name
+can't pass as private and then connect elsewhere.
+
+Arrival triggers (maintainer's decision): opt-in per action (off by default), and they never send
+by themselves: the car screen always asks for one tap, whatever the action's *Ask first*, because a
+position can be wrong and nobody watches the screen when it fires.

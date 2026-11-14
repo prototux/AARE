@@ -67,6 +67,7 @@ import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
@@ -143,6 +144,7 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.home.HomeStore
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
@@ -188,6 +190,7 @@ private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: Image
     AUDIO(R.string.audio_settings_title, R.string.audio_page_subtitle, Icons.AutoMirrored.Rounded.VolumeUp),
     CONNECTION(R.string.setup_page_connection_title, R.string.setup_page_connection_subtitle, Icons.Rounded.Bluetooth),
     CAR_DATA(R.string.setup_page_car_data_title, R.string.setup_page_car_data_subtitle, Icons.Rounded.DirectionsCar),
+    HOME_ACTIONS(R.string.home_page_title, R.string.home_page_subtitle, Icons.Rounded.Home),
     ADVANCED(R.string.setup_page_advanced_title, R.string.setup_page_advanced_subtitle, Icons.Rounded.Tune),
     ABOUT(R.string.setup_page_about_title, R.string.setup_page_about_subtitle, Icons.Rounded.Info),
 }
@@ -248,6 +251,7 @@ private fun Home() {
                         Page.AUDIO -> item { AudioSettings(settings, state, refresh) { refresh++ } }
                         Page.CONNECTION -> item { ConnectionSettings(settings, refresh) }
                         Page.CAR_DATA -> item { CarDataCard() }
+                        Page.HOME_ACTIONS -> item { HomeActionsSettings() }
                         Page.ADVANCED -> {
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
@@ -290,7 +294,7 @@ private fun Header() {
 }
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+internal fun Section(title: String, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer).padding(20.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
@@ -388,7 +392,7 @@ private fun StatusCard(state: ProjectionService.State) {
 }
 
 @Composable
-private fun Pill(label: String, icon: ImageVector?, onClick: () -> Unit) {
+internal fun Pill(label: String, icon: ImageVector?, onClick: () -> Unit) {
     Row(
         Modifier.clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.primary).clickable(onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 10.dp),
@@ -669,7 +673,7 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
 }
 
 @Composable
-private fun Toggle(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun Toggle(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
@@ -898,7 +902,7 @@ private const val SHIZUKU_REQUEST = 42
 
 /** A labelled row of mutually exclusive options. */
 @Composable
-private fun Choices(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+internal fun Choices(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
     Text(title, style = MaterialTheme.typography.bodyLarge)
     Spacer(Modifier.height(6.dp))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -997,6 +1001,8 @@ private fun AppsCard(settings: Settings) {
 @Composable
 private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
+    val ctx = LocalContext.current
+    val homeApp = remember { HomeStore(ctx).load().hasContent }
     val all = buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -1007,6 +1013,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
         if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
+        if (homeApp) Triple(CarRuntime.HOME_ID, stringResource(R.string.home_app_label), null) else null,
     )
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }

@@ -29,12 +29,15 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
+import net.prototux.aare.home.HomeAction
+import net.prototux.aare.home.HomeHub
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
@@ -53,6 +56,10 @@ import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.HomeButton
+import net.prototux.aare.ui.car.HomeScreen
+import net.prototux.aare.ui.car.HomeTileUi
+import net.prototux.aare.ui.car.HomeUi
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
 import net.prototux.aare.ui.car.CarDataScreen
@@ -343,6 +350,7 @@ class CarRuntime(
         scope.launch { media.apps.collectLatest { refreshApps() } }
         scope.launch { watchCalls() }
         scope.launch { watchDashboardInfo() }
+        startHome()
         scope.launch {
             CarNotificationListener.guidance.collect { g ->
                 // A navigation app hosted on the car screen shows its own guidance.
@@ -364,6 +372,7 @@ class CarRuntime(
 
     fun stop() {
         running.remove(this)
+        HomeHub.stop(this)
         runCatching { context.unregisterReceiver(packageReceiver) }
         settings.unregisterListener(settingsListener)
         connections.values.forEach { it.release() }
@@ -426,6 +435,9 @@ class CarRuntime(
         if (settings.browser) {
             entries += CarAppEntry(BROWSER_ID, context.packageName, context.getString(R.string.browser_app_label), builtinIcon(R.drawable.ic_car_browser), CarAppKind.BROWSER)
         }
+        if (HomeHub.config.value.hasContent) {
+            entries += CarAppEntry(HOME_ID, context.packageName, context.getString(R.string.home_app_label), builtinIcon(R.drawable.ic_car_home), CarAppKind.HOME)
+        }
         if (settings.carDataApp) {
             entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
         }
@@ -471,6 +483,41 @@ class CarRuntime(
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvent(context) } else null
             kotlinx.coroutines.delay(5 * 60_000)
         }
+    }
+
+    // ------------------------------------------------------------------ home actions
+
+    /** The smart-home buttons and values: the hub's state on the car's UI, the Home app shown while there are any. */
+    private fun startHome() {
+        HomeHub.start(context, this, primary, { carLocation ?: DashboardInfo.phoneLocation(context) }, ::homeArrival)
+        scope.launch {
+            var hadContent = HomeHub.config.value.hasContent
+            combine(HomeHub.config, HomeHub.values, HomeHub.running) { c, v, r -> Triple(c, v, r) }.collect { (c, values, busy) ->
+                ui.home = if (!c.enabled) HomeUi() else HomeUi(
+                    buttons = c.actions.map { HomeButton(it.id, it.name.ifBlank { "?" }, it.confirm, it.onCard, it.id in busy) },
+                    tiles = c.tiles.map { t -> values[t.id].let { HomeTileUi(t.id, t.name, it?.text, t.unit, it?.failed == true) } },
+                )
+                if (c.hasContent != hadContent) { hadContent = c.hasContent; refreshApps() }
+            }
+        }
+    }
+
+    private fun runHome(action: HomeAction) {
+        scope.launch {
+            val error = HomeHub.run(action)
+            if (error == null) notice(action.name, context.getString(R.string.home_action_done), durationMs = 2_500)
+            else notice(action.name, context.getString(R.string.home_action_failed, HomeHub.reason(context, error)))
+        }
+    }
+
+    /**
+     * The car arrived at an action's place: always ask, whatever the action's own "Ask first". A
+     * position can be wrong (a fix near home on the way past, a neighbour's street), and nobody is
+     * looking at the screen when it fires, so a door or a gate never opens without one tap.
+     */
+    private fun homeArrival(action: HomeAction) {
+        notice(context.getString(R.string.home_arrival_title), context.getString(R.string.home_confirm_question, action.name), durationMs = 30_000,
+            actions = listOf(context.getString(R.string.home_confirm_run) to { runHome(action) }))
     }
 
     /** Navigates to [place] in the car's navigation app (geo: query), or false without one. */
@@ -630,6 +677,9 @@ class CarRuntime(
         override fun navigateTo(place: String) {
             if (!this@CarRuntime.navigateTo(place)) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
         }
+        override fun runHomeAction(id: String) {
+            HomeHub.config.value.actions.firstOrNull { it.id == id }?.let(::runHome)
+        }
     }
 
     /** The chosen assistant's package, or the phone's default assistant. */
@@ -704,6 +754,7 @@ class CarRuntime(
                             CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted, app.packageName, mod)
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
+                            CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
@@ -735,6 +786,7 @@ class CarRuntime(
         const val PHONE_SCREEN_ID = "phone-screen"
         const val BROWSER_ID = "browser"
         const val CAR_DATA_ID = "car-data"
+        const val HOME_ID = "home"
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"
