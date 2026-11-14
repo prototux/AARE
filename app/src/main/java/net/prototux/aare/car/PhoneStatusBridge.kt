@@ -168,7 +168,8 @@ class PhoneStatusBridge(
         if (state == TelephonyManager.CALL_STATE_RINGING) heardNumber?.let { ringingNumber = it }
         else if (state == TelephonyManager.CALL_STATE_OFFHOOK && activeNumber == null) heardNumber?.let { activeNumber = it }
         val status = PhoneStatus.newBuilder()
-        signal()?.let { status.setSignalStrength(it) }
+        // A signal strength is always sent: no SIM (or no reading) is 0 bars.
+        status.setSignalStrength(signal() ?: 0)
         if (state != TelephonyManager.CALL_STATE_IDLE) status.addCalls(call(state, now))
         val built = status.build()
         if (built == lastSent) return
