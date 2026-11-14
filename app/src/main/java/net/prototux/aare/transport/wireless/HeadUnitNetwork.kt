@@ -279,9 +279,9 @@ internal class HeadUnitNetwork(
     }
 
     private fun joined(lp: LinkProperties): JoinResult.Joined {
-        val gateway = lp.routes.firstOrNull { it.isDefaultRoute && it.gateway is Inet4Address }?.gateway
-            ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) lp.dhcpServerAddress else null
-        return JoinResult.Joined(localAddress = ipv4(lp)?.hostAddress, gateway = gateway?.hostAddress)
+        val dhcpServer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) lp.dhcpServerAddress else null
+        val gateway = lp.routes.firstOrNull { it.isDefaultRoute && it.gateway is Inet4Address }?.gateway ?: dhcpServer
+        return JoinResult.Joined(localAddress = ipv4(lp)?.hostAddress, gateway = gateway?.hostAddress, dhcpServer = dhcpServer?.hostAddress)
     }
 
     private fun ipv4(lp: LinkProperties) = lp.linkAddresses.map { it.address }.firstOrNull { it is Inet4Address }

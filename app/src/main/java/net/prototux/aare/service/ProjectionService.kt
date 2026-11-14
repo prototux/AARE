@@ -211,9 +211,13 @@ class ProjectionService : Service() {
         // units (#46) want the serial in the version response before they send the WifiStartRequest,
         // and Google's receiver library ignores every phone message except pings and
         // version responses until phone_info carries an instance id.
+        // WPP over TCP (head units that offer it) uses the AAP session's phone certificate for its TLS.
         val connector = WirelessConnector(this, DiagAapLog,
-            WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
-                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull())))
+            WirelessConnector.Options(
+                bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
+                    deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull()),
+                wppTcp = WirelessConnector.WppTcp(identity = { certs.pick(settings.certificateIndex).identity }, pins = PinnedHeadUnits(this)),
+            ))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")

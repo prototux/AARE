@@ -15,12 +15,18 @@ import android.os.ParcelUuid
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import net.prototux.aare.aap.AapLog
+import net.prototux.aare.aap.PhoneIdentity
+import net.prototux.aare.aap.PinStore
 import net.prototux.aare.aap.SocketTransport
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.AA_WIRELESS_UUID
 import net.prototux.aare.aap.wireless.JoinResult
 import net.prototux.aare.aap.wireless.WifiCredentials
 import net.prototux.aare.aap.wireless.WirelessBootstrap
+import net.prototux.aare.aap.wireless.WppEndpoint
+import net.prototux.aare.aap.wireless.WppSetup
+import net.prototux.aare.aap.wireless.WppStatus
+import net.prototux.aare.aap.wireless.WppTls
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -47,6 +53,9 @@ class WirelessPermissionException(val missing: List<String>) :
  * the [WirelessBootstrap] exchange over it, joining the head unit's Wi-Fi, then a TCP connection
  * to its AAP server. The phone is the client at every step. The head unit must be bonded (paired)
  * and is usually already connected for calls (HFP) when this runs.
+ *
+ * With [Options.wppTcp], on Android 11+, a head unit that offered WPP over TCP gets the same exchange
+ * over TLS on its network instead (see [WppTcpConfigs], docs/decisions.md).
  */
 @SuppressLint("MissingPermission") // every entry point calls requirePermissions()
 class WirelessConnector(context: Context, private val log: AapLog, private val options: Options = Options()) {
@@ -61,10 +70,21 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /** Pin the BSSID the head unit sent: lets Android skip the approval dialog next time. */
         val matchBssid: Boolean = true,
         val bootstrap: WirelessBootstrap.Options = WirelessBootstrap.Options(),
+        /** What WPP over TCP needs; null runs WPP over RFCOMM only. */
+        val wppTcp: WppTcp? = null,
     )
+
+    /**
+     * WPP over TCP's TLS: [identity] is the phone certificate of the AAP session (also used for the
+     * same), [pins] the trusted head unit certificates (see [WppTls]).
+     */
+    class WppTcp(val identity: () -> PhoneIdentity, val pins: PinStore)
 
     private val context = context.applicationContext
     private val adapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)?.adapter
+    private val tcpConfigs = WppTcpConfigs(this.context)
+    /** WPP over TCP runs from Android 11 on only. */
+    private val wppOverTcp = options.wppTcp != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
     /**
      * Bonded devices that publish the Android Auto wireless service. Devices whose services are
@@ -137,11 +157,19 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     // ---- one connection attempt ----
 
+    /** How a [WirelessBootstrap] run ended for the connector. */
+    private sealed interface Outcome {
+        class Ready(val ip: String, val port: Int) : Outcome
+        class MovingToTcp(val setup: WppSetup) : Outcome
+    }
+
     private inner class Attempt(private val device: BluetoothDevice) {
         private val aborted = AtomicBoolean(false)
         @Volatile private var rfcomm: BluetoothSocket? = null
         @Volatile private var bootstrap: WirelessBootstrap? = null
         @Volatile private var network: HeadUnitNetwork? = null
+        /** The TLS socket of WPP over TCP. */
+        @Volatile private var wpp: Socket? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
 
@@ -155,19 +183,22 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 throw WirelessException("${device.address} is not paired: pair the head unit in Bluetooth settings first")
             }
             try {
+                // A head unit with a stored TCP configuration gets WPP over TCP, no RFCOMM.
+                if (wppOverTcp) tcpConfigs.get(device.address)?.let { config -> overTcp(config, setupToken = null)?.let { return it } }
                 val socket = openRfcomm(adapter)
-                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
-                val (ip, port) = bootstrap(socket, net)
-                val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
-                val tcpSocket = connectTcp(headUnitNetwork, ip, port)
-                val name = "wifi \"${net.ssid}\" $ip:$port (${runCatching { device.name }.getOrNull() ?: device.address})"
-                val t = WirelessTransport(SocketTransport(tcpSocket, name), ::abort)
-                transport = t
-                // A dead Wi-Fi link otherwise only shows up as a TCP timeout much later.
-                net.onLost = { t.close() }
-                if (aborted.get()) throw WirelessException("cancelled")
-                log.i("wireless: connected, $name")
-                return t
+                val net = newNetwork()
+                return when (val outcome = bootstrap(socket.inputStream, socket.outputStream, net, link = null)) {
+                    is Outcome.Ready -> aap(net, outcome.ip, outcome.port)
+                    is Outcome.MovingToTcp -> {
+                        // The bootstrap closed RFCOMM and joined nothing; start over on TCP at once.
+                        runCatching { socket.close() }
+                        net.release()
+                        val config = WppTcpConfig(outcome.setup.endpoint, outcome.setup.credentials)
+                        tcpConfigs.put(device.address, config)
+                        overTcp(config, outcome.setup.setupToken)
+                            ?: throw WirelessException("WPP over TCP failed after the head unit asked for it")
+                    }
+                }
             } catch (e: Throwable) {
                 // Only an outside abort turns the worker's socket errors into "cancelled": read it before marking.
                 val wasAborted = aborted.getAndSet(true)
@@ -185,15 +216,82 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         }
 
         /**
-         * Releases TCP, RFCOMM and the network request (last, so a blocked join() wakes up). Safe to call
-         * more than once: every close is idempotent.
+         * Releases TCP, the WPP link (RFCOMM or TLS) and the network request (last, so a blocked join()
+         * wakes up). Safe to call more than once: every close is idempotent.
          */
         private fun releaseAll() {
             transport?.let { runCatching { it.close() } }
             tcp?.let { runCatching { it.close() } }
             bootstrap?.close()
+            wpp?.let { runCatching { it.close() } }
             rfcomm?.let { runCatching { it.close() } }
             network?.release()
+        }
+
+        private fun newNetwork() = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
+
+        /** The AAP connection on the head unit's network, once WPP told us where. */
+        private fun aap(net: HeadUnitNetwork, ip: String, port: Int): Transport {
+            val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
+            val tcpSocket = connectTcp(headUnitNetwork, ip, port) { tcp = it }
+            val name = "wifi \"${net.ssid}\" $ip:$port (${runCatching { device.name }.getOrNull() ?: device.address})"
+            val t = WirelessTransport(SocketTransport(tcpSocket, name), ::abort)
+            transport = t
+            // A dead Wi-Fi link otherwise only shows up as a TCP timeout much later.
+            net.onLost = { t.close() }
+            if (aborted.get()) throw WirelessException("cancelled")
+            log.i("wireless: connected, $name")
+            return t
+        }
+
+        /**
+         * WPP over TCP: join the stored network, TLS to the head unit's WPP
+         * server, the WPP exchange there, then AAP on the same network. Returns null when it failed in a
+         * way RFCOMM may still get past; the configuration is forgotten then unless the network was
+         * only not found (the car's access point may not be up yet), see docs/decisions.md.
+         */
+        private fun overTcp(config: WppTcpConfig, setupToken: ByteArray?): Transport? {
+            val tls = options.wppTcp ?: return null
+            log.i("wireless: WPP over TCP with ${device.address}: $config")
+            val net = newNetwork()
+            val joined = when (val result = net.join(config.credentials)) {
+                is JoinResult.Joined -> result
+                is JoinResult.Failed -> {
+                    checkNotAborted()
+                    // Credentials the access point refuses are forgotten.
+                    if (result.status == WppStatus.WIFI_INCORRECT_CREDENTIALS) tcpConfigs.forget(device.address)
+                    log.w("wireless: WPP over TCP: could not join \"${config.credentials.ssid}\": ${result.message}; trying Bluetooth")
+                    net.release()
+                    return null
+                }
+            }
+            try {
+                val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
+                // 0.0.0.0: the head unit's server is its network's DHCP server.
+                val host = config.endpoint.ip.takeUnless { it == "0.0.0.0" } ?: joined.dhcpServer ?: joined.gateway
+                    ?: throw WirelessException("the head unit's network has no DHCP server for its WPP endpoint 0.0.0.0")
+                val raw = connectTcp(headUnitNetwork, host, config.endpoint.port) { wpp = it }
+                checkNotAborted()
+                // Its own pin key: the head unit's WPP certificate need not be its AAP one. Trusted on first
+                // use like wireless AAP, since the configuration came over the bonded Bluetooth link.
+                val socket = WppTls.serve(raw, tls.identity(), tls.pins, "wpp:${device.address}", trustOnFirstUse = true)
+                wpp = socket
+                log.i("wireless: WPP over TLS (${socket.session.protocol}) with $host:${config.endpoint.port}")
+                return when (val outcome = bootstrap(socket.inputStream, socket.outputStream, net, WirelessBootstrap.TcpLink(joined, setupToken), config)) {
+                    is Outcome.Ready -> aap(net, outcome.ip, outcome.port)
+                    is Outcome.MovingToTcp -> throw WirelessException("unexpected WifiSetupInfo over TCP")
+                }
+            } catch (e: Exception) {
+                if (aborted.get()) throw e
+                tcpConfigs.forget(device.address)
+                log.w("wireless: WPP over TCP failed: ${e.message}; forgetting it for this head unit, trying Bluetooth")
+                bootstrap?.close()
+                transport?.let { runCatching { it.close() } }
+                listOfNotNull(tcp, wpp).forEach { runCatching { it.close() } }
+                net.release()
+                bootstrap = null; transport = null; tcp = null; wpp = null; network = null
+                return null
+            }
         }
 
         private fun openRfcomm(adapter: BluetoothAdapter): BluetoothSocket {
@@ -225,21 +323,49 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 "(is wireless Android Auto enabled on the head unit? re-pairing can help)", last)
         }
 
-        /** Runs the RFCOMM exchange on its own thread, which then keeps the link for the session. */
-        private fun bootstrap(socket: BluetoothSocket, net: HeadUnitNetwork): Pair<String, Int> {
-            val ready = CompletableFuture<Pair<String, Int>>()
-            val b = WirelessBootstrap(socket.inputStream, socket.outputStream, object : WirelessBootstrap.Listener {
-                override fun connectWifi(credentials: WifiCredentials): JoinResult = net.join(credentials)
+        /**
+         * Runs the WPP exchange on its own thread, which then keeps the link for the session: over RFCOMM,
+         * or over TCP with [link] (then [stored] is the configuration that got us there).
+         */
+        private fun bootstrap(
+            input: InputStream,
+            output: OutputStream,
+            net: HeadUnitNetwork,
+            link: WirelessBootstrap.TcpLink?,
+            stored: WppTcpConfig? = null,
+        ): Outcome {
+            val ready = CompletableFuture<Outcome>()
+            // What the head unit offered for WPP over TCP, and the credentials that got us on its network.
+            var offered: WppEndpoint? = null
+            var joinedWith: WifiCredentials? = stored?.credentials
+            val b = WirelessBootstrap(input, output, object : WirelessBootstrap.Listener {
+                override fun connectWifi(credentials: WifiCredentials): JoinResult =
+                    net.join(credentials).also { if (it is JoinResult.Joined) joinedWith = credentials }
+
                 override fun onReady(ip: String, port: Int) {
-                    ready.complete(ip to port)
+                    keep(offered, joinedWith)
+                    ready.complete(Outcome.Ready(ip, port))
                 }
-            }, log, bootstrapOptions())
+
+                override fun onWppEndpoint(endpoint: WppEndpoint) {
+                    offered = endpoint
+                }
+
+                override fun onSetupInfo(setup: WppSetup) {
+                    ready.complete(Outcome.MovingToTcp(setup))
+                }
+
+                override fun onRejected(reason: Int) {
+                    log.w("wireless: the head unit refused us over TCP (reason $reason): forgetting WPP over TCP for it")
+                    tcpConfigs.forget(device.address)
+                }
+            }, log, bootstrapOptions(link))
             bootstrap = b
-            thread(name = "aa-wireless-rfcomm", isDaemon = true) {
+            thread(name = if (link == null) "aa-wireless-rfcomm" else "aa-wireless-wpp-tcp", isDaemon = true) {
                 try {
                     b.run()
                     // Some head units (the dongle) hang up once they have our answers; the session goes on.
-                    log.i("wireless: Bluetooth bootstrap link ended")
+                    log.i("wireless: ${if (link == null) "Bluetooth bootstrap" else "WPP-over-TCP"} link ended")
                 } catch (e: Throwable) {
                     ready.completeExceptionally(e)
                 }
@@ -256,7 +382,23 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             }
         }
 
-        private fun connectTcp(network: Network, ip: String, port: Int): Socket {
+        /**
+         * Stores the endpoint a head unit offered in its version request with the credentials that got
+         * us onto its network, for WPP over TCP next time; not for a DYNAMIC
+         * access point, whose credentials change.
+         */
+        private fun keep(endpoint: WppEndpoint?, credentials: WifiCredentials?) {
+            if (endpoint == null || credentials == null) return
+            if (credentials.accessPointType == ACCESS_POINT_DYNAMIC) {
+                log.i("wireless: not keeping WPP over TCP for ${device.address}: its access point is DYNAMIC")
+                return
+            }
+            log.i("wireless: WPP over TCP at ${endpoint.ip}:${endpoint.port} from the next connection with ${device.address}")
+            tcpConfigs.put(device.address, WppTcpConfig(endpoint, credentials))
+        }
+
+        /** [track] gets each socket before it connects, so that an abort can close it. */
+        private fun connectTcp(network: Network, ip: String, port: Int, track: (Socket) -> Unit): Socket {
             // Literal addresses need no DNS; resolve anything else on the head unit's network.
             val address = runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) InetAddresses.parseNumericAddress(ip)
@@ -269,7 +411,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 checkNotAborted()
                 // Bound to the head unit's network: it is not the default network (no internet).
                 val socket = network.socketFactory.createSocket()
-                tcp = socket
+                track(socket)
                 try {
                     socket.connect(InetSocketAddress(address, port), options.tcpConnectTimeoutMs)
                     return socket
@@ -292,11 +434,13 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
          * the first attempt: a quick redial helps one that missed the connection. Later attempts get
          * the normal timeout.
          */
-        private fun bootstrapOptions(): WirelessBootstrap.Options {
+        private fun bootstrapOptions(link: WirelessBootstrap.TcpLink?): WirelessBootstrap.Options {
             val name = runCatching { device.name }.getOrNull()
-            if (!WirelessBootstrap.isDongle(name) || !dongleQuickTryUsed.compareAndSet(false, true)) return options.bootstrap
+            val adapter = WirelessBootstrap.isDongle(name)
+            val base = options.bootstrap.copy(wppOverTcp = wppOverTcp, adapter = adapter, tcp = link)
+            if (!adapter || !dongleQuickTryUsed.compareAndSet(false, true)) return base
             log.i("wireless: \"$name\" is a wireless adapter: ${WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS} ms for its first message")
-            return options.bootstrap.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
+            return base.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
         }
     }
 
@@ -338,6 +482,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     companion object {
         val AA_UUID: UUID = UUID.fromString(AA_WIRELESS_UUID)
+        /** WifiInfoResponse.access_point_type DYNAMIC: the head unit changes its credentials. */
+        private const val ACCESS_POINT_DYNAMIC = 1
         /** Some Android versions report 128-bit SDP UUIDs byte-reversed; Gearhead accepts both. */
         private val AA_UUID_REVERSED: UUID = UUID.fromString("669a0c20-0008-f4bd-e611-cb52007ae14d")
 
