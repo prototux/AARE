@@ -269,7 +269,7 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
-    fun noConnectionStatusForWpp45HeadUnits() {
+    fun connectionStatusAlsoForWpp45HeadUnits() {
         val phone = Phone { JoinResult.Joined() }
         start(phone)
         hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(4).setMinor(5).build(),
@@ -278,10 +278,8 @@ class WirelessBootstrapTest {
         hu.expect(WppMessageId.INFO_REQUEST)
         hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
         hu.expect(WppMessageId.START_RESPONSE)
+        assertEquals(WppStatus.SUCCESS, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
         assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
-        val next = LinkedBlockingQueue<Result<WppFrame>>()
-        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
-        assertNull("no WifiConnectionStatus for WPP 4.5+", next.poll(300, TimeUnit.MILLISECONDS))
     }
 
     @Test(timeout = 10_000)

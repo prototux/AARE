@@ -580,15 +580,11 @@ class WirelessBootstrap(
             .build().toByteArray()
 
     /**
-     * Reports how joining the network went: not at all to WPP 4.5+ head
-     * units, and with an error_message only for [WppStatus.PHONE_WIFI_DISABLED], a text the head unit
-     * may show the driver (so never our internal error text).
+     * Reports how joining the network went, with an error_message only for
+     * [WppStatus.PHONE_WIFI_DISABLED]: a text the head unit may show the driver (so never our
+     * internal error text).
      */
     private fun sendConnectionStatus(status: Int) {
-        if (headUnitAtLeast(4, 5)) {
-            log.d("wireless: no WifiConnectionStatus($status) for a WPP 4.5+ head unit")
-            return
-        }
         val message = if (status == WppStatus.PHONE_WIFI_DISABLED) PHONE_WIFI_DISABLED_MESSAGE else null
         val payload = WifiConnectionStatus.newBuilder()
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
