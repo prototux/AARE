@@ -85,5 +85,7 @@ class Aa18SchemaTest {
         assertEquals(0x8014, MediaMessageId.MEDIA_MESSAGE_MEDIA_OPTIONS.number)
         assertEquals(0x8015, MediaMessageId.MEDIA_MESSAGE_CRITICAL_UI_NOTIFICATION.number)
         assertEquals(0x8009, NavigationStatusMessageId.INSTRUMENT_CLUSTER_NAVIGATION_RAW_ROUTE_INFO.number)
+        assertEquals(NavigationStatusMessageId.INSTRUMENT_CLUSTER_NAVIGATION_RAW_VEHICLE_ENERGY_FORECAST.number, NavStatusMsg.RAW_VEHICLE_ENERGY_FORECAST)
+        assertEquals(NavigationStatusMessageId.INSTRUMENT_CLUSTER_NAVIGATION_RAW_ROUTE_INFO.number, NavStatusMsg.RAW_ROUTE_INFO)
     }
 }
