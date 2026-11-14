@@ -149,8 +149,7 @@ class WirelessBootstrap(
         val pingIntervalMs: Long = 1_000,
         /**
          * The frequencies (MHz) the phone's Wi-Fi can use right now, for the channel check of the
-         * version exchange (see [versionStatus]); null when unknown, which skips the check, as
-         * the same as when the Wi-Fi scanner cannot be queried.
+         * version exchange (see [versionStatus], only logged); null when unknown, which skips it.
          */
         val phoneWifiFrequencies: () -> Set<Int>? = { null },
         /**
@@ -372,8 +371,8 @@ class WirelessBootstrap(
         throw fail("head unit sent an invalid port $port", WppStatus.INVALID_HOST)
     }
 
-    /** Answers a WifiVersionRequest; returns the status we answered with. */
-    private fun answerVersionRequest(payload: ByteArray): Int {
+    /** Answers a WifiVersionRequest, always with SUCCESS. */
+    private fun answerVersionRequest(payload: ByteArray) {
         val request = runCatching { WifiVersionRequest.parseFrom(payload) }.getOrNull()
         if (request == null) {
             log.w("wireless: unparsable WifiVersionRequest (${payload.size} B), answering anyway")
@@ -384,19 +383,18 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
         }
-        // A missing major or minor reads as 0, and that 0 is echoed back.
-        val major = request?.major ?: 0
-        val minor = request?.minor ?: 0
-        if (request != null) headUnitVersion = major to minor
-        val status = versionStatus(major, minor, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
-        if (status != WppStatus.SUCCESS) log.w("wireless: answering the version request with status $status")
+        if (request != null) headUnitVersion = request.major to request.minor
+        // Always SUCCESS: refusing a version or the channels could stop head units that work today.
+        // What the stricter rules would say is logged, for reports from cars that misbehave.
+        val strict = versionStatus(request?.major ?: 0, request?.minor ?: 0, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
+        if (strict != WppStatus.SUCCESS) log.i("wireless: answering the version request with SUCCESS (stricter version and channel rules would answer $strict)")
         // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
         // type the head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold
         // the WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
         val response = WifiVersionResponse.newBuilder()
-            .setMajor(major)
-            .setMinor(minor)
-            .setStatus(status)
+            .setMajor(request?.takeIf { it.hasMajor() }?.major ?: 1)
+            .setMinor(request?.takeIf { it.hasMinor() }?.minor ?: 0)
+            .setStatus(WppStatus.SUCCESS)
         options.deviceSerial?.let { response.setDeviceSerial(it) }
         // No bluetooth_address: reading the phone's own MAC needs the privileged LOCAL_MAC_ADDRESS
         // permission, which AARE does not request; the receiver knows the link by its RFCOMM peer address.
@@ -406,7 +404,6 @@ class WirelessBootstrap(
         request?.takeIf { it.hasSupportedWifiChannelType() }?.let { response.setSelectedWifiChannelType(it.supportedWifiChannelType) }
         send(WppMessageId.VERSION_RESPONSE, response.build().toByteArray())
         startLinkPinger()
-        return status
     }
 
     /**
@@ -649,10 +646,10 @@ class WirelessBootstrap(
         internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
 
         /**
-         * WifiVersionResponse.status: accepts a request without a
-         * version (major 0) and WPP 1 and 4 to 6, and refuses 2, 3 and 7+ with NO_COMPATIBLE_VERSION.
-         * Below 4.5 it also wants one of the head unit's channels to be usable (see [channelsUsable]).
-         * It still goes on with a head unit that starts anyway after a refusal, and so do we.
+         * The WifiVersionResponse.status stricter version rules would give, only logged (we always
+         * answer SUCCESS): a request without a version (major 0) and WPP 1 and 4 to 6 pass, 2, 3
+         * and 7+ get NO_COMPATIBLE_VERSION, and below 4.5 one of the head unit's channels must be
+         * usable (see [channelsUsable]) or it is NO_SUPPORTED_WIFI_CHANNELS.
          */
         internal fun versionStatus(major: Int, minor: Int, headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Int = when {
             major == 0 -> WppStatus.SUCCESS
@@ -662,16 +659,16 @@ class WirelessBootstrap(
             else -> WppStatus.SUCCESS
         }
 
-        /**
-         * The channel check of WifiVersionRequest.supported_wifi_channels: passes if
-         * any entry is one the phone's Wi-Fi can use, below 2400 (channel numbers, not frequencies:
-         * not checkable) or exactly 5000 (a placeholder some head units send). So a head unit that
-         * lists no channel fails it, unless the phone's frequencies are unknown (null): then it is
-         * skipped without a Wi-Fi scanner or location permission.
-         */
+        /** [s] without one pair of surrounding double quotes. */
         internal fun unquoted(s: String): String =
             if (s.length > 1 && s.startsWith('"') && s.endsWith('"')) s.substring(1, s.length - 1) else s
 
+        /**
+         * The channel check of WifiVersionRequest.supported_wifi_channels: passes if any entry is
+         * one the phone's Wi-Fi can use, below 2400 (channel numbers, not frequencies: not
+         * checkable) or exactly 5000 (a placeholder some head units send). So a head unit that lists
+         * no channel fails it, unless the phone's frequencies are unknown (null): then it passes.
+         */
         internal fun channelsUsable(headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Boolean =
             phoneFrequencies == null || headUnitChannels.any { it < 2400 || it == 5000 || it in phoneFrequencies }
     }
