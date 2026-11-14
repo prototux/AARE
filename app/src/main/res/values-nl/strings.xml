@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">Regels geladen: %1$d</string>
     <string name="vehicles_import">Bestand importeren…</string>
     <string name="vehicles_template">Sjabloon schrijven</string>
+    <string name="vehicles_malformed_at">vehicles.json bevat een fout op regel %1$d, kolom %2$d (%3$s): de regels erin worden genegeerd.</string>
+    <string name="vehicles_malformed">vehicles.json kan niet worden gebruikt (%1$s): de regels erin worden genegeerd.</string>
     <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
     <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->

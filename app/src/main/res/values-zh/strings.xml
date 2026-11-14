@@ -421,6 +421,8 @@
     <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
     <string name="vehicles_import">导入文件…</string>
     <string name="vehicles_template">写入模板</string>
+    <string name="vehicles_malformed_at">vehicles.json 第 %1$d 行第 %2$d 列有错误（%3$s）：其中的规则会被忽略。</string>
+    <string name="vehicles_malformed">vehicles.json 无法使用（%1$s）：其中的规则会被忽略。</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>
