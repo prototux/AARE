@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
@@ -81,6 +83,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.host.templates.CarKeyboard
+import net.prototux.aare.host.templates.CarTextField
+import net.prototux.aare.host.templates.KeyboardMode
+import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -652,24 +658,60 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 
 // ---------------------------------------------------------------- launcher
 
+/** The launcher's search box (F12): apps matching [query] by label, case-insensitive; all of them when blank. */
+internal fun filterLauncherApps(apps: List<CarAppEntry>, query: String): List<CarAppEntry> =
+    if (query.isBlank()) apps else apps.filter { it.label.contains(query, ignoreCase = true) }
+
 @Composable
 internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(150.dp),
-        modifier = modifier,
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // Already in the user's order (CarRuntime.applyApps).
-        items(state.apps, key = { it.id }) { app ->
-            Column(
-                Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                AppIcon(app, 80)
-                Spacer(Modifier.height(10.dp))
-                Text(app.label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    var query by remember { mutableStateOf("") }
+    var keyboardWanted by remember { mutableStateOf(false) }
+    val keyboard = keyboardWanted && !state.drivingRestricted
+    // The keyboard is parked-only, like every other car keyboard (SearchTemplateView): driving
+    // starting mid-search hides it, but the typed filter stays so results don't jump as it closes.
+    LaunchedEffect(state.drivingRestricted) { if (state.drivingRestricted) keyboardWanted = false }
+    val apps = filterLauncherApps(state.apps, query)
+    Column(modifier) {
+        CarTextField(
+            value = query,
+            hint = stringResource(R.string.launcher_search_hint),
+            editing = keyboard,
+            onFocus = { if (!state.drivingRestricted) keyboardWanted = true },
+            onClear = { query = "" },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+            leadingIcon = Icons.Rounded.Search,
+        )
+        if (keyboard) {
+            val sink = remember {
+                object : KeyboardSink {
+                    override fun type(text: String) { query += text }
+                    override fun backspace() { if (query.isNotEmpty()) query = query.dropLast(1) }
+                    override fun submit() { keyboardWanted = false }
+                    override fun hide() { keyboardWanted = false }
+                }
+            }
+            CarKeyboard(KeyboardMode.Text, sink, Icons.Rounded.Search)
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(150.dp),
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (apps.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(stringResource(R.string.common_no_items), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            // Already in the user's order (CarRuntime.applyApps).
+            items(apps, key = { it.id }) { app ->
+                Column(
+                    Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AppIcon(app, 80)
+                    Spacer(Modifier.height(10.dp))
+                    Text(app.label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
     }
