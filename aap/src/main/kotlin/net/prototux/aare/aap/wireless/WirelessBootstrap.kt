@@ -108,16 +108,18 @@ class WirelessBootstrap(
         /**
          * With [Options.wppOverTcp]: the head unit's WifiVersionRequest offers WPP over TCP at
          * [endpoint], and it would be kept for this head unit (see [keepsWppInfo]), to
-         * use from the next connection on. The exchange goes on over this link. Called on the [run] thread.
+         * use from the next connection on; [version] is the head unit's. The exchange goes on over
+         * this link. Called on the [run] thread.
          */
-        fun onWppEndpoint(endpoint: WppEndpoint) {}
+        fun onWppEndpoint(endpoint: WppEndpoint, version: WppVersion) {}
 
         /**
-         * With [Options.wppOverTcp]: the head unit sent a usable WifiSetupInfo (WPP 4.5+). [run] has
-         * closed this link and returns right after, without joining: run the exchange again over TCP
-         * (see [Options.tcp]), at once. Called on the [run] thread.
+         * With [Options.wppOverTcp]: the head unit sent a usable WifiSetupInfo (WPP 4.5+). Return true
+         * to take it: [run] then closes this link and returns without joining, and the caller runs
+         * the exchange again over TCP (see [Options.tcp]) at once. False carries on over this link,
+         * as if it had not come. Called on the [run] thread.
          */
-        fun onSetupInfo(setup: WppSetup) {}
+        fun onSetupInfo(setup: WppSetup): Boolean = false
 
         /**
          * Over TCP ([Options.tcp]): the head unit refused the phone with a known [WppRejectionReason];
@@ -255,11 +257,10 @@ class WirelessBootstrap(
             val (endpoint, credentials) = when (val negotiated = negotiate()) {
                 is Negotiated.Started -> negotiated.endpoint to negotiated.credentials
                 is Negotiated.MovingToTcp -> {
-                    // RFCOMM is dropped and starts over on TCP at once.
+                    // The listener took the WifiSetupInfo: RFCOMM is dropped, the caller goes on over TCP.
                     log.i("wireless: moving to WPP over TCP: ${negotiated.setup}")
                     state = State.DONE
                     close()
-                    listener.onSetupInfo(negotiated.setup)
                     return
                 }
             }
@@ -423,12 +424,20 @@ class WirelessBootstrap(
                     log.i("wireless: credentials $credentials" + if (start == null) " (unsolicited, waiting for WifiStartRequest)" else "")
                     deadline = now() + options.messageTimeoutMs
                 }
-                WppMessageId.SETUP_INFO -> {
-                    deadline = now() + options.messageTimeoutMs
-                    when {
-                        options.tcp != null -> log.w("wireless: ignoring a WifiSetupInfo over TCP (only taken over RFCOMM)")
-                        !options.wppOverTcp -> log.w("wireless: ignoring a WifiSetupInfo, this phone does not run WPP over TCP")
-                        else -> return Negotiated.MovingToTcp(setupInfo(frame.payload))
+                WppMessageId.SETUP_INFO -> when {
+                    // Without WPP over TCP it is only logged, like any message we do not use.
+                    !options.wppOverTcp -> onOtherMessage(frame)
+                    options.tcp != null -> log.w("wireless: ignoring a WifiSetupInfo over TCP (only taken over RFCOMM)")
+                    else -> {
+                        deadline = now() + options.messageTimeoutMs
+                        // A WifiSetupInfo that fails a check, or that the listener declines, is
+                        // ignored: the exchange carries on over RFCOMM as without one.
+                        val setup = setupInfo(frame.payload)
+                        if (setup != null && listener.onSetupInfo(setup)) {
+                            headUnitVersion = setup.version.major to setup.version.minor
+                            return Negotiated.MovingToTcp(setup)
+                        }
+                        if (setup != null) log.i("wireless: WifiSetupInfo not taken, carrying on over Bluetooth")
                     }
                 }
                 else -> onOtherMessage(frame)
@@ -504,33 +513,33 @@ class WirelessBootstrap(
             !keepsWppInfo(request.major, request.minor, car.make, car.headUnitModel, options.adapter) ->
                 log.i("wireless: not keeping the WPP-over-TCP endpoint of a WPP ${request.major}.${request.minor} head unit " +
                     "(make \"${car.make}\")")
-            else -> listener.onWppEndpoint(endpoint)
+            else -> listener.onWppEndpoint(endpoint, WppVersion(request.major, request.minor))
         }
     }
 
     /**
-     * Checks a WifiSetupInfo. A failed check ends the bootstrap without
-     * telling the head unit, and is not worth retrying.
+     * Checks a WifiSetupInfo: a version from 4.5 (or none), a usable channel, usable credentials and
+     * an endpoint that is an IPv4 literal with a port. Returns null, logged, when it fails one.
      */
-    private fun setupInfo(payload: ByteArray): WppSetup {
-        val info = parse("WifiSetupInfo") { WifiSetupInfo.parseFrom(payload) }
-        // Its version stands for the version request's from here on.
-        headUnitVersion = info.major to info.minor
-        log.i("wireless: WifiSetupInfo from a WPP ${info.major}.${info.minor} head unit")
-        if (info.major != 0 && !headUnitAtLeast(4, 5)) {
-            throw fail("WifiSetupInfo from a WPP ${info.major}.${info.minor} head unit, below 4.5", retry = false)
-        }
+    private fun setupInfo(payload: ByteArray): WppSetup? {
+        val info = runCatching { WifiSetupInfo.parseFrom(payload) }.getOrNull()
+            ?: return null.also { log.w("wireless: ignoring a malformed WifiSetupInfo (${payload.size} B)") }
+        val version = WppVersion(info.major, info.minor)
+        log.i("wireless: WifiSetupInfo from a WPP $version head unit")
+        fun ignore(why: String): WppSetup? = null.also { log.w("wireless: ignoring the WifiSetupInfo: $why") }
+        if (info.major != 0 && !version.atLeast(4, 5)) return ignore("WPP $version is below 4.5")
         val ap = info.accessPoint
         if (!channelsUsable(ap.supportedWifiChannelsList, options.phoneWifiFrequencies())) {
-            throw fail("none of the Wi-Fi channels of the WifiSetupInfo ${ap.supportedWifiChannelsList} is usable", retry = false)
+            return ignore("none of its Wi-Fi channels ${ap.supportedWifiChannelsList} is usable")
         }
-        val credentials = credentials(ap.ssid, ap.password, ap.bssid, ap.securityMode, accessPointType = null)
-        unusable(credentials)?.let { throw fail("WifiSetupInfo: $it", retry = false) }
+        val credentials = credentials(ap.ssid, ap.password, ap.bssid, ap.securityMode, accessPointType = null,
+            unquote = !version.atLeast(4, 5))
+        unusable(credentials)?.let { return ignore(it) }
         val wpp = info.wppInfo
         if (!info.hasWppInfo() || !wpp.hasPort() || wpp.port !in 0..65535 || !IPV4.matches(wpp.ipAddress)) {
-            throw fail("WifiSetupInfo: invalid WPP endpoint \"${wpp.ipAddress}\":${wpp.port}", retry = false)
+            return ignore("invalid WPP endpoint \"${wpp.ipAddress}\":${wpp.port}")
         }
-        return WppSetup(WppEndpoint(wpp.ipAddress, wpp.port), credentials, info.setupToken.toByteArray())
+        return WppSetup(WppEndpoint(wpp.ipAddress, wpp.port), credentials, info.setupToken.toByteArray(), version)
     }
 
     /**
@@ -556,12 +565,18 @@ class WirelessBootstrap(
             accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null)
     }
 
-    private fun credentials(ssid: String, password: String, rawBssid: String, securityMode: Int, accessPointType: Int?): WifiCredentials {
-        val bssid = rawBssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
-        if (rawBssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"$rawBssid\"")
+    private fun credentials(
+        ssid: String,
+        password: String,
+        rawBssid: String,
+        securityMode: Int,
+        accessPointType: Int?,
         // One pair of surrounding double quotes is dropped from both for head units
         // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
-        val unquote = !headUnitAtLeast(4, 5)
+        unquote: Boolean = !headUnitAtLeast(4, 5),
+    ): WifiCredentials {
+        val bssid = rawBssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
+        if (rawBssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"$rawBssid\"")
         return WifiCredentials(
             ssid = if (unquote) unquoted(ssid) else ssid,
             password = if (unquote) unquoted(password) else password,
@@ -661,7 +676,7 @@ class WirelessBootstrap(
                 if (state == State.READY) log.w("wireless: head unit sent a connection rejection (reason $reason)")
                 else throw fail("head unit rejected the connection (reason $reason)", WppStatus.INSTRUCT_USER_TO_CHECK_THE_PHONE)
             }
-            WppMessageId.START_REQUEST, WppMessageId.VERSION_REQUEST, WppMessageId.SETUP_INFO ->
+            WppMessageId.START_REQUEST, WppMessageId.VERSION_REQUEST ->
                 log.w("wireless: ignoring ${WppMessageId.name(frame.id)} during the session")
             else -> log.i("wireless: ignoring $frame")
         }
@@ -746,13 +761,8 @@ class WirelessBootstrap(
         if (closed.get()) throw WirelessBootstrapException("wireless bootstrap cancelled")
     }
 
-    /** [retry]: whether trying again later can help (see [WirelessBootstrapException.whileNegotiating]). */
-    private fun fail(
-        message: String,
-        status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE,
-        cause: Throwable? = null,
-        retry: Boolean = state == State.NEGOTIATING,
-    ) = WirelessBootstrapException(message, status, cause, whileNegotiating = retry)
+    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
+        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
             .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000

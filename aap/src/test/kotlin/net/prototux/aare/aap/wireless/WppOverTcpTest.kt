@@ -38,10 +38,11 @@ class WppOverTcpTest {
         val output: OutputStream = Channels.newOutputStream(pipe.sink())
     }
 
-    private class Phone : WirelessBootstrap.Listener {
+    /** [takeSetup]: what onSetupInfo answers. */
+    private class Phone(@Volatile var takeSetup: Boolean = true) : WirelessBootstrap.Listener {
         val joins = LinkedBlockingQueue<WifiCredentials>()
         val ready = LinkedBlockingQueue<Pair<String, Int>>()
-        val endpoints = LinkedBlockingQueue<WppEndpoint>()
+        val endpoints = LinkedBlockingQueue<Pair<WppEndpoint, WppVersion>>()
         val setups = LinkedBlockingQueue<WppSetup>()
         val rejections = LinkedBlockingQueue<Int>()
         override fun connectWifi(credentials: WifiCredentials): JoinResult {
@@ -49,8 +50,11 @@ class WppOverTcpTest {
             return JoinResult.Joined(localAddress = "10.0.0.23", gateway = "10.0.0.1")
         }
         override fun onReady(ip: String, port: Int) = ready.put(ip to port)
-        override fun onWppEndpoint(endpoint: WppEndpoint) = endpoints.put(endpoint)
-        override fun onSetupInfo(setup: WppSetup) = setups.put(setup)
+        override fun onWppEndpoint(endpoint: WppEndpoint, version: WppVersion) = endpoints.put(endpoint to version)
+        override fun onSetupInfo(setup: WppSetup): Boolean {
+            setups.put(setup)
+            return takeSetup
+        }
         override fun onRejected(reason: Int) = rejections.put(reason)
     }
 
@@ -143,39 +147,63 @@ class WppOverTcpTest {
         assertTrue(phone.setups.isEmpty())
     }
 
+    /** Sends [info] and checks the phone ignored it: the exchange goes on over RFCOMM. */
+    private fun assertIgnored(info: WifiSetupInfo) {
+        send(WppMessageId.SETUP_INFO, info)
+        send(WppMessageId.START_REQUEST, WifiStartRequest.newBuilder().setIpAddress("10.0.0.1").setPort(5288).build())
+        expect(WppMessageId.INFO_REQUEST)
+        assertNull(failure)
+        assertEquals(1L, finished.count)
+    }
+
     @Test(timeout = 10_000)
-    fun setupInfoBelowWpp45StopsWithoutRetry() {
+    fun setupInfoBelowWpp45IsIgnored() {
         start(quiet.copy(wppOverTcp = true))
-        send(WppMessageId.SETUP_INFO, setupInfo(minor = 2))
-        awaitEnd()
-        assertFalse((failure as WirelessBootstrapException).whileNegotiating)
+        assertIgnored(setupInfo(minor = 2))
         assertTrue(phone.setups.isEmpty())
     }
 
     @Test(timeout = 10_000)
-    fun setupInfoWithoutPortStops() {
+    fun setupInfoWithoutPortIsIgnored() {
         start(quiet.copy(wppOverTcp = true))
-        send(WppMessageId.SETUP_INFO, setupInfo(port = null))
-        awaitEnd()
-        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("invalid WPP endpoint"))
-        assertFalse((failure as WirelessBootstrapException).whileNegotiating)
+        assertIgnored(setupInfo(port = null))
+        assertTrue(phone.setups.isEmpty())
     }
 
     @Test(timeout = 10_000)
-    fun setupInfoWithAHostNameStops() {
+    fun setupInfoWithAHostNameIsIgnored() {
         start(quiet.copy(wppOverTcp = true))
-        send(WppMessageId.SETUP_INFO, setupInfo(ip = "hu.local"))
-        awaitEnd()
-        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("invalid WPP endpoint"))
+        assertIgnored(setupInfo(ip = "hu.local"))
+        assertTrue(phone.setups.isEmpty())
     }
 
     @Test(timeout = 10_000)
-    fun setupInfoWithNoUsableChannelStops() {
+    fun setupInfoWithNoUsableChannelIsIgnored() {
         start(quiet.copy(wppOverTcp = true, phoneWifiFrequencies = { setOf(2412) }))
-        send(WppMessageId.SETUP_INFO, setupInfo(channels = listOf(5180)))
-        awaitEnd()
-        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("channels"))
+        assertIgnored(setupInfo(channels = listOf(5180)))
         assertTrue(phone.setups.isEmpty())
+    }
+
+    @Test(timeout = 10_000)
+    fun aMalformedSetupInfoIsIgnored() {
+        start(quiet.copy(wppOverTcp = true))
+        writeWppFrame(huToPhone.output, WppMessageId.SETUP_INFO, byteArrayOf(0x0a, 0x7f))
+        send(WppMessageId.START_REQUEST, WifiStartRequest.newBuilder().setIpAddress("10.0.0.1").setPort(5288).build())
+        expect(WppMessageId.INFO_REQUEST)
+        assertNull(failure)
+    }
+
+    @Test(timeout = 10_000)
+    fun aDeclinedSetupInfoCarriesOnOverRfcomm() {
+        phone.takeSetup = false
+        start(quiet.copy(wppOverTcp = true))
+        assertIgnored(setupInfo())
+        assertEquals(WppVersion(4, 5), phone.setups.poll(2, TimeUnit.SECONDS)!!.version)
+        // its version was not taken either: below 4.5 the phone still reports how joining went
+        send(WppMessageId.INFO_RESPONSE, WifiInfoResponse.newBuilder().setSsid("HU").setPassword("secret-passphrase")
+            .setSecurityMode(WppSecurityMode.WPA2_PERSONAL).build())
+        expect(WppMessageId.START_RESPONSE)
+        expect(WppMessageId.CONNECTION_STATUS)
     }
 
     @Test(timeout = 10_000)
@@ -183,7 +211,7 @@ class WppOverTcpTest {
         start(quiet.copy(wppOverTcp = true))
         send(WppMessageId.VERSION_REQUEST, versionRequest(4, 2))
         expect(WppMessageId.VERSION_RESPONSE)
-        assertEquals(WppEndpoint("0.0.0.0", 1234), phone.endpoints.poll(2, TimeUnit.SECONDS))
+        assertEquals(WppEndpoint("0.0.0.0", 1234) to WppVersion(4, 2), phone.endpoints.poll(2, TimeUnit.SECONDS))
         send(WppMessageId.START_REQUEST, WifiStartRequest.newBuilder().setIpAddress("10.0.0.1").setPort(5288).build())
         expect(WppMessageId.INFO_REQUEST)
     }
