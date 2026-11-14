@@ -285,6 +285,39 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
+    fun quotesAroundCredentialsAreStrippedBelowWpp45() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").setPassword("\"pass\"word\"").build())
+        val credentials = phone.credentials.poll(2, TimeUnit.SECONDS)!!
+        assertEquals("My Car", credentials.ssid)
+        assertEquals("pass\"word", credentials.password)
+    }
+
+    @Test(timeout = 10_000)
+    fun quotesAreKeptFromWpp45HeadUnits() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(5).setMinor(0).build(),
+            WppMessageId.START_REQUEST to startRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").build())
+        assertEquals("\"My Car\"", phone.credentials.poll(2, TimeUnit.SECONDS)!!.ssid)
+    }
+
+    @Test
+    fun unquoteRemovesOnePairOnly() {
+        assertEquals("a", WirelessBootstrap.unquoted("\"a\""))
+        assertEquals("\"a\"", WirelessBootstrap.unquoted("\"\"a\"\""))
+        assertEquals("", WirelessBootstrap.unquoted("\"\""))
+        assertEquals("\"", WirelessBootstrap.unquoted("\""))
+        assertEquals("\"a", WirelessBootstrap.unquoted("\"a"))
+    }
+
+    @Test(timeout = 10_000)
     fun unsupportedSecurityIsRefusedWithoutJoining() {
         val phone = Phone { throw AssertionError("must not try to join") }
         start(phone)

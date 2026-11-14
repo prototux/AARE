@@ -343,9 +343,12 @@ class WirelessBootstrap(
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
         val bssid = info.bssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
         if (info.bssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"${info.bssid}\"")
+        // One pair of surrounding double quotes is dropped from both for head units
+        // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
+        val unquote = !headUnitAtLeast(4, 5)
         return WifiCredentials(
-            ssid = info.ssid,
-            password = info.password,
+            ssid = if (unquote) unquoted(info.ssid) else info.ssid,
+            password = if (unquote) unquoted(info.password) else info.password,
             bssid = bssid?.uppercase(),
             security = WppSecurityMode.toSecurity(info.securityMode, info.password),
             securityMode = info.securityMode,
@@ -560,6 +563,9 @@ class WirelessBootstrap(
          * lists no channel fails it, unless the phone's frequencies are unknown (null): then it is
          * skipped without a Wi-Fi scanner or location permission.
          */
+        internal fun unquoted(s: String): String =
+            if (s.length > 1 && s.startsWith('"') && s.endsWith('"')) s.substring(1, s.length - 1) else s
+
         internal fun channelsUsable(headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Boolean =
             phoneFrequencies == null || headUnitChannels.any { it < 2400 || it == 5000 || it in phoneFrequencies }
     }
