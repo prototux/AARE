@@ -82,6 +82,9 @@ class ShellAudioService : IShellAudio.Stub {
                     }
                 }
                 write.close()
+                // Nobody reads any more (AARE closed the pipe without stop(), or went away): don't
+                // keep recording, or the phone stays silent with nothing playing it anywhere.
+                if (record === r) { Log.i(TAG, "capture pipe closed; stopping"); stop() }
             }, "aare-shell-audio").apply { start() }
             read
         } catch (e: Exception) {
@@ -121,6 +124,11 @@ class ShellAudioService : IShellAudio.Stub {
                     }
                 }
                 write.close()
+                // As for the remote submix: a policy nobody reads keeps its sound off the phone's
+                // speaker for good, so it goes with its reader.
+                if (stream.open) synchronized(policies) {
+                    if (policies[key] === stream) { Log.i(TAG, "policy $key pipe closed; stopping"); stopPolicyLocked(key) }
+                }
             }, "aare-shell-policy-$key").apply { start() }
             policies[key] = stream
             read
@@ -146,7 +154,7 @@ class ShellAudioService : IShellAudio.Stub {
         val s = policies.remove(key) ?: return
         s.open = false
         runCatching { s.handle.record.stop() }
-        s.pump?.join(500)
+        s.pump?.takeIf { it !== Thread.currentThread() }?.join(500)
         s.handle.close()
     }
 
@@ -157,11 +165,13 @@ class ShellAudioService : IShellAudio.Stub {
         AudioManager::class.java.getConstructor(Context::class.java).newInstance(ctx)
     }.getOrElse { ctx.getSystemService(AudioManager::class.java) }
 
+    // Synchronized: AARE's call and the pump noticing its reader is gone can come together.
+    @Synchronized
     override fun stop() {
         val r = record ?: return
         record = null
         runCatching { r.stop() }
-        pump?.join(500)
+        pump?.takeIf { it !== Thread.currentThread() }?.join(500)
         pump = null
         r.release()
     }
