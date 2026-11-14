@@ -204,4 +204,4 @@ class Cryptor(
     }
 }
 
-class AapException(message: String, cause: Throwable? = null) : Exception(message, cause)
+open class AapException(message: String, cause: Throwable? = null) : Exception(message, cause)

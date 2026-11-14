@@ -11,20 +11,22 @@ import java.io.OutputStream
  * Fragments of different channels may interleave on the wire, so partial messages are kept per
  * channel. Encrypted payloads are decrypted frame by frame, in arrival order, as TLS requires.
  */
-class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
+class FrameReader(input: InputStream, private val log: AapLog? = null, private val cryptor: () -> Cryptor?) {
     private val input = DataInputStream(input.buffered(64 * 1024))
     private class Partial(val declaredTotal: Int, val buf: ByteArrayOutputStream)
 
     private val partial = HashMap<Int, Partial>()
     // Channels whose partial message has a plaintext fragment: the whole message then counts as plaintext.
     private val partialPlain = HashSet<Int>()
+    // Channels whose current message is being skipped: part of it came encrypted before TLS was up.
+    private val skipping = HashSet<Int>()
 
     /** Bytes received so far across all open partials; bounds memory across channels. */
     private var buffered = 0L
     private var header = ByteArray(Frame.EXTENDED_SIZE)
     private var payload = ByteArray(Frame.MAX_PAYLOAD + 1024)
 
-    /** Blocks until a complete message is available. Throws on end of stream or a framing error. */
+    /** Blocks until a complete message is available. Throws on end of stream or a [FramingException]. */
     fun read(): AapMessage {
         while (true) {
             val channel = input.readUnsignedByte()
@@ -34,10 +36,31 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
             if (payload.size < size) payload = ByteArray(size)
             input.readFully(payload, 0, size)
 
+            val first = Frame.isFirst(flags)
+            val last = Frame.isLast(flags)
+            if (channel in skipping) {
+                if (first) {
+                    skipping.remove(channel)
+                } else {
+                    if (last) skipping.remove(channel)
+                    continue
+                }
+            }
+
             val plain: ByteArray
             val plainLen: Int
             if (Frame.isEncrypted(flags)) {
-                val c = cryptor() ?: throw AapException("encrypted frame before TLS is up (ch=$channel)")
+                val c = cryptor()
+                if (c == null) {
+                    // Skip a message encrypted before TLS is up instead of
+                    // ending the session. It waits 250 ms for TLS first; here TLS comes up on this
+                    // very thread, between two reads, so there is nothing to wait for.
+                    log?.w("skipping a message encrypted before TLS is up (ch=$channel)")
+                    partial.remove(channel)?.let { buffered -= it.buf.size() }
+                    partialPlain.remove(channel)
+                    if (!last) skipping.add(channel)
+                    continue
+                }
                 plain = c.decrypt(payload, 0, size)
                 plainLen = plain.size
             } else {
@@ -45,8 +68,6 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
                 plainLen = size
             }
 
-            val first = Frame.isFirst(flags)
-            val last = Frame.isLast(flags)
             if (first && last) {
                 return toMessage(channel, flags, Frame.isEncrypted(flags), plain.copyOf(plainLen), plainLen)
             }
@@ -55,7 +76,7 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
                 partialPlain.remove(channel)
                 // Early reject on the announced size; the real guard is the received-bytes check below.
                 if (declaredTotal < 0 || declaredTotal > MAX_MESSAGE_SIZE) {
-                    throw AapException("declared message size $declaredTotal out of range (ch=$channel)")
+                    throw FramingException("declared message size $declaredTotal out of range (ch=$channel)")
                 }
                 val buf = ByteArrayOutputStream(minOf(plainLen * 4, declaredTotal))
                 val state = Partial(declaredTotal, buf)
@@ -64,7 +85,7 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
                 if (Frame.isEncrypted(flags)) partialPlain.remove(channel) else partialPlain.add(channel)
                 continue
             }
-            val state = partial[channel] ?: throw AapException("continuation frame without a first frame (ch=$channel)")
+            val state = partial[channel] ?: throw FramingException("continuation frame without a first frame (ch=$channel)")
             appendFragment(channel, state, plain, plainLen)
             if (!Frame.isEncrypted(flags)) partialPlain.add(channel)
             if (last) {
@@ -93,7 +114,7 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
             partial.clear()
             partialPlain.clear()
             buffered = 0
-            throw AapException("$error (ch=$channel)")
+            throw FramingException("$error (ch=$channel)")
         }
         state.buf.write(data, 0, len)
         buffered += len
@@ -113,6 +134,9 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
         const val MAX_BUFFERED = 2L * MAX_MESSAGE_SIZE
     }
 }
+
+/** The head unit broke the framing: the stream can't be read any further. */
+class FramingException(message: String) : AapException(message)
 
 /**
  * Splits messages into frames, encrypting each chunk when needed, and writes them.

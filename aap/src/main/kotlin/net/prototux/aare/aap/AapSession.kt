@@ -146,7 +146,7 @@ class AapSession(
     val pinRefusal: PinRefusal? get() = cryptor.pinRefusal
 
     @Volatile private var tlsUp = false
-    private val reader = FrameReader(transport.input) { if (tlsUp) cryptor else null }
+    private val reader = FrameReader(transport.input, log) { if (tlsUp) cryptor else null }
     private val writer = FrameWriter(transport.output) { if (tlsUp) cryptor else null }
 
     private val queue = PriorityBlockingQueue<Outgoing>()
@@ -278,9 +278,23 @@ class AapSession(
                 lastInboundMs = now()
                 dispatch(msg)
             }
+        } catch (e: FramingException) {
+            onFramingError(e)
         } catch (e: Throwable) {
             fail(if (closed.get()) "closed" else "read failed", e)
         }
+    }
+
+    /**
+     * Tell the head unit its framing broke (FRAMING_ERROR, in the clear on
+     * the control channel, whether TLS is up or not) before hanging up. The write gets a short
+     * grace in case the writer is stuck.
+     */
+    private fun onFramingError(e: FramingException) {
+        if (closed.get()) return
+        sendRaw(0, AapMessage.plaintext(ControlMsg.FRAMING_ERROR, ByteArray(0)), encrypted = false,
+            onSent = { fail("framing error", e) })
+        schedule({ fail("framing error", e) }, 200, TimeUnit.MILLISECONDS)
     }
 
     private fun dispatch(msg: AapMessage) {
