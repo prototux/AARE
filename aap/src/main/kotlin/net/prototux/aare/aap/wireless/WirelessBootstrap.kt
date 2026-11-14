@@ -97,9 +97,15 @@ class WirelessBootstrap(
         fun onReady(ip: String, port: Int)
     }
 
-    class Options(
-        /** Longest silence from the head unit while we still need something from it. */
+    /** A data class so a caller can [copy] it for one attempt (see [isDongle]). */
+    data class Options(
+        /** Longest silence from the head unit, after its first message, while we still need something from it. */
         val messageTimeoutMs: Long = 15_000,
+        /**
+         * How long the head unit may take to send its first message after the RFCOMM connect:
+         * 12 s, and [DONGLE_FIRST_MESSAGE_TIMEOUT_MS] on its first try with an adapter.
+         */
+        val firstMessageTimeoutMs: Long = 12_000,
         /** Re-send WifiInfoRequest if the credentials have not come after this long (3 s). */
         val infoRetryMs: Long = 3_000,
         /**
@@ -226,7 +232,8 @@ class WirelessBootstrap(
         var credentials: WifiCredentials? = null
         var infoRequests = 0
         var infoRequestedAt = 0L
-        var deadline = now() + options.messageTimeoutMs
+        var heardFromHeadUnit = false
+        var deadline = now() + options.firstMessageTimeoutMs
 
         fun requestInfo() {
             send(WppMessageId.INFO_REQUEST, ByteArray(0))
@@ -241,11 +248,13 @@ class WirelessBootstrap(
             if (event == null) {
                 if (now() >= deadline) {
                     val waitingFor = when {
+                        !heardFromHeadUnit -> "the head unit's first message (is a projection already running on the head unit?)"
                         start == null && credentials == null -> "a WifiStartRequest (is a projection already running on the head unit?)"
                         start == null -> "a WifiStartRequest after the credentials"
                         else -> "a WifiInfoResponse"
                     }
-                    throw fail("timed out after ${options.messageTimeoutMs} ms waiting for $waitingFor")
+                    val waitedMs = if (heardFromHeadUnit) options.messageTimeoutMs else options.firstMessageTimeoutMs
+                    throw fail("timed out after $waitedMs ms waiting for $waitingFor")
                 }
                 if (now() >= infoDueAt) {
                     if (infoRequests >= options.infoAttempts) {
@@ -264,6 +273,10 @@ class WirelessBootstrap(
                     cause = event.error,
                 )
                 is Inbound.Message -> event.frame
+            }
+            if (!heardFromHeadUnit) {
+                heardFromHeadUnit = true
+                deadline = now() + options.messageTimeoutMs
             }
             when (frame.id) {
                 WppMessageId.VERSION_REQUEST -> {
@@ -550,6 +563,18 @@ class WirelessBootstrap(
     companion object {
         private val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
         private const val FAIL_LINGER_MS = 300L
+
+        /** First-message timeout on the first try with an adapter (see [isDongle]). */
+        const val DONGLE_FIRST_MESSAGE_TIMEOUT_MS = 3_700L
+        private val DONGLE_NAMES = listOf("Intercooler", "AndroidAuto-")
+
+        /**
+         * Whether a head unit's Bluetooth name marks a wireless adapter, by the adapters' usual
+         * names (case-sensitive substrings). It gives those a short first-message
+         * timeout on the first try only ([DONGLE_FIRST_MESSAGE_TIMEOUT_MS]): a quick redial helps an
+         * adapter that missed the first connection.
+         */
+        fun isDongle(bluetoothName: String?): Boolean = bluetoothName != null && DONGLE_NAMES.any { it in bluetoothName }
         /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED); a localized text is sent. */
         internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
 

@@ -132,6 +132,9 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     fun missingPermissions(): List<String> = requiredPermissions().filter { !granted(it) }
 
+    /** A wireless adapter got its one quick first try (see [WirelessBootstrap.isDongle]); for this connector's attempts. */
+    private val dongleQuickTryUsed = AtomicBoolean(false)
+
     // ---- one connection attempt ----
 
     private inner class Attempt(private val device: BluetoothDevice) {
@@ -230,7 +233,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 override fun onReady(ip: String, port: Int) {
                     ready.complete(ip to port)
                 }
-            }, log, options.bootstrap)
+            }, log, bootstrapOptions())
             bootstrap = b
             thread(name = "aa-wireless-rfcomm", isDaemon = true) {
                 try {
@@ -282,6 +285,18 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
         private fun checkNotAborted() {
             if (aborted.get()) throw WirelessException("cancelled")
+        }
+
+        /**
+         * Gives a wireless adapter only a short wait for its first message on
+         * the first attempt: a quick redial helps one that missed the connection. Later attempts get
+         * the normal timeout.
+         */
+        private fun bootstrapOptions(): WirelessBootstrap.Options {
+            val name = runCatching { device.name }.getOrNull()
+            if (!WirelessBootstrap.isDongle(name) || !dongleQuickTryUsed.compareAndSet(false, true)) return options.bootstrap
+            log.i("wireless: \"$name\" is a wireless adapter: ${WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS} ms for its first message")
+            return options.bootstrap.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
         }
     }
 

@@ -332,10 +332,31 @@ class WirelessBootstrapTest {
 
     @Test(timeout = 10_000)
     fun silentHeadUnitTimesOut() {
-        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0))
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(firstMessageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0))
         awaitEnd()
-        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out"))
+        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out after 300 ms waiting for the head unit's first message"))
         assertTrue((failure as WirelessBootstrapException).whileNegotiating)
+    }
+
+    @Test(timeout = 10_000)
+    fun theFirstMessageEndsTheFirstMessageTimeout() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            firstMessageTimeoutMs = 300, messageTimeoutMs = 1_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        Thread.sleep(500) // past the first-message timeout, within the message timeout
+        assertEquals(1L, finished.count)
+        awaitEnd()
+        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out after 1000 ms waiting for a WifiStartRequest"))
+    }
+
+    @Test
+    fun adaptersAreRecognisedByTheirBluetoothName() {
+        assertTrue(WirelessBootstrap.isDongle("Intercooler-1234"))
+        assertTrue(WirelessBootstrap.isDongle("AndroidAuto-5f2a"))
+        assertFalse(WirelessBootstrap.isDongle("androidauto-5f2a"))
+        assertFalse(WirelessBootstrap.isDongle("MY VW"))
+        assertFalse(WirelessBootstrap.isDongle(null))
     }
 
     @Test(timeout = 10_000)
