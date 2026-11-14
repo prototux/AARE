@@ -50,6 +50,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
+    /**
+     * Reconnect to cars that offer it with WPP over TCP: the Wi-Fi setup over the car's network
+     * instead of Bluetooth (WirelessConnector). Off: Bluetooth every time, nothing stored.
+     */
+    var wppOverTcp: Boolean
+        get() = prefs.getBoolean("wpp_over_tcp", false)
+        set(v) = prefs.edit { putBoolean("wpp_over_tcp", v) }
+
     /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
     var checkUpdates: Boolean
         get() = prefs.getBoolean("check_updates", true)

@@ -3,7 +3,7 @@ syntax="proto2";
 package aap_protobuf.aaw;
 
 // AARE: fields from open-headunit's wireless.proto (decoded from Gearhead 17.5/17.8); aasdk's copy
-// was empty. Only logged: AARE does not implement WPP over TCP (wpp_info).
+// was empty. wpp_info offers WPP over TCP (see docs/decisions.md).
 message WifiVersionRequest {
   optional int32 major = 1;
   optional int32 minor = 2;

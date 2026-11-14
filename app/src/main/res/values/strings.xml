@@ -132,6 +132,8 @@
     <string name="setup_section_connecting">Connecting</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Faster wireless reconnect (WPP over TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">For cars that offer it: after a first wireless connection, reconnect over the car\'s Wi-Fi without the Bluetooth setup step. Keeps the car\'s Wi-Fi password on this phone. A car where it fails once goes back to Bluetooth. Android 11 and up.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>

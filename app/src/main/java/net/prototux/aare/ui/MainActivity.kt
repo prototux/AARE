@@ -496,6 +496,7 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 @Composable
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
+    var wppOverTcp by remember { mutableStateOf(settings.wppOverTcp) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
@@ -517,6 +518,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
+            Toggle(stringResource(R.string.setup_toggle_wpp_over_tcp_title), stringResource(R.string.setup_toggle_wpp_over_tcp_subtitle), wppOverTcp) {
+                wppOverTcp = it; settings.wppOverTcp = it
+                // Either way: off drops what was stored (the cars' Wi-Fi passwords too), on gives cars that failed before another try.
+                net.prototux.aare.transport.wireless.WppTcpConfigs(ctx).forgetAll()
+            }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
@@ -590,6 +596,8 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
 private fun headUnitLabel(ctx: android.content.Context, key: String): String = when {
     key == "tcp" -> ctx.getString(R.string.huserver_label)
     key.startsWith("usb:") -> key.removePrefix("usb:").replace('|', ' ').trim().ifBlank { key }
+    // The certificate the paired car showed for WPP over TCP (see WirelessConnector); a protocol name, not translated.
+    key.startsWith("wpp:") -> headUnitLabel(ctx, key.removePrefix("wpp:")) + " (WPP)"
     else -> runCatching { ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.getRemoteDevice(key)?.name }.getOrNull() ?: key
 }
 
