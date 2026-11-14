@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">Завантажено правил: %1$d</string>
     <string name="vehicles_import">Імпортувати файл…</string>
     <string name="vehicles_template">Записати шаблон</string>
+    <string name="vehicles_builtin_fixes_title">Вбудовані виправлення для автомобілів</string>
+    <string name="vehicles_builtin_fixes_subtitle">Виправлення, які AARE постачає для окремих головних пристроїв: без бездротового зʼєднання там, де воно не працює, розмір відео, голос навігації, електромобілі, форма пікселів екрана, назва пункту виходу. Вимкнено: кожен автомобіль працює як раніше. Правило у vehicles.json може ввімкнути їх для одного автомобіля (builtInFixes).</string>
     <string name="setup_toggle_force_h264_title">Примусово використовувати відео H.264</string>
     <string name="setup_toggle_force_h264_subtitle">За замовчуванням AARE використовує найкращий кодек, який підтримують і автомобіль, і телефон (H.265…). Увімкніть, якщо зображення в автомобілі спотворене.</string>
     <string name="common_ok">OK</string>

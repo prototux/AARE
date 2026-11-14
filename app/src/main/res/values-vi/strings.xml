@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">Đã tải %1$d quy tắc</string>
     <string name="vehicles_import">Nhập file…</string>
     <string name="vehicles_template">Ghi tệp mẫu</string>
+    <string name="vehicles_builtin_fixes_title">Bản sửa lỗi xe tích hợp</string>
+    <string name="vehicles_builtin_fixes_subtitle">Các bản sửa lỗi AARE cung cấp cho một số đầu xe cụ thể: không kết nối không dây ở nơi nó lỗi, kích thước video, giọng dẫn đường, xe điện, hình dạng điểm ảnh màn hình, tên mục Thoát. Tắt: mọi xe hoạt động như trước. Một quy tắc trong vehicles.json có thể bật chúng cho một xe (builtInFixes).</string>
     <string name="setup_toggle_force_h264_title">Buộc dùng video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Theo mặc định, AARE sử dụng codec tốt nhất mà xe và điện thoại đều hỗ trợ (H.265…). Bật tùy chọn này nếu hình ảnh trên xe bị lỗi.</string>
     <string name="common_ok">OK</string>

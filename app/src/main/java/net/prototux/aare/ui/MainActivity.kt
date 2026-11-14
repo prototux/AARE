@@ -1375,6 +1375,8 @@ private fun xyz(v: CarData.Vector3): String? =
 @Composable
 private fun VehicleOverridesCard() {
     val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    var carFixes by remember { mutableStateOf(settings.builtInCarFixes) }
     val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
     var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -1386,6 +1388,10 @@ private fun VehicleOverridesCard() {
     }
     Section(stringResource(R.string.vehicles_section_title)) {
         Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.vehicles_builtin_fixes_title), stringResource(R.string.vehicles_builtin_fixes_subtitle), carFixes) {
+            carFixes = it; settings.builtInCarFixes = it
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
         Text(file.absolutePath, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),

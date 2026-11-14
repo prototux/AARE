@@ -3,6 +3,7 @@ package net.prototux.aare.car
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import android.content.Context
 import android.util.Log
+import net.prototux.aare.Settings
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -46,6 +47,12 @@ data class VehicleOverride(
     val exitToCar: Boolean? = null,
     /** What the "Exit to car" entry is called: [ExitLabel.NAME], [ExitLabel.MAKE] or [ExitLabel.DEFAULT]. */
     val exitLabel: String? = null,
+    /**
+     * In a user's rule: whether the built-in car fixes (the built-in rules marked `optIn`) apply to
+     * this car, whatever the "Built-in car fixes" setting says. In a resolved override: whether they
+     * did.
+     */
+    val builtInFixes: Boolean? = null,
 ) {
     /** These overrides, with [base]'s for every field left unset: a user rule over a built-in one. */
     fun over(base: VehicleOverride?): VehicleOverride = if (base == null) this else VehicleOverride(
@@ -69,6 +76,7 @@ data class VehicleOverride(
         wireless = wireless ?: base.wireless,
         exitToCar = exitToCar ?: base.exitToCar,
         exitLabel = exitLabel ?: base.exitLabel,
+        builtInFixes = builtInFixes ?: base.builtInFixes,
     )
 
     fun skips(kind: String): Boolean = skipServices.orEmpty().any { matchesKind(it, kind) }
@@ -82,6 +90,7 @@ data class VehicleOverride(
         "forceElectric" to forceElectric, "wifiMediaStartSilence" to wifiMediaStartSilence,
         "wifiGuidanceStartSilence" to wifiGuidanceStartSilence, "mediaOnGainTransient" to mediaOnGainTransient,
         "pauseOnGuidanceOnly" to pauseOnGuidanceOnly, "wireless" to wireless, "exitToCar" to exitToCar, "exitLabel" to exitLabel,
+        "builtInFixes" to builtInFixes,
     ).filter { it.second != null }.joinToString(prefix = "{", postfix = "}") { (k, v) -> "$k=$v" }
 
     companion object {
@@ -178,10 +187,14 @@ data class VehicleMatch(
     }
 }
 
-/** A rule: the head units it is for, and what to [override] for them. */
+/**
+ * A rule: the head units it is for, and what to [override] for them. An [optIn] rule (built-in file
+ * only) is a fix for specific cars, applied only when the user asks for the built-in car fixes.
+ */
 data class VehicleRule(
     val match: VehicleMatch,
     val override: VehicleOverride,
+    val optIn: Boolean = false,
 ) {
     /** Make, model and display-name substrings only, as vehicles.json had before the other match keys. */
     constructor(make: String?, model: String?, name: String?, override: VehicleOverride) :
@@ -212,7 +225,7 @@ object VehicleOverrides {
     fun forHeadUnit(context: Context, id: HeadUnitIdentity): VehicleOverride? {
         val user = runCatching { file(context).takeIf { it.exists() }?.readText() }.getOrNull()
         val builtIn = runCatching { context.assets.open(FILE).bufferedReader().use { it.readText() } }.getOrNull()
-        return resolve(rules(user, "vehicles.json"), rules(builtIn, "built-in vehicles.json"), id)
+        return resolve(rules(user, "vehicles.json"), rules(builtIn, "built-in vehicles.json"), id, Settings(context).builtInCarFixes)
     }
 
     /**
@@ -220,11 +233,18 @@ object VehicleOverrides {
      * nothing matches. Every matching built-in rule counts, the earlier one winning a field both set:
      * each of them covers one quirk, and one head unit can have several. The user's file keeps its
      * first-match meaning, so a file written before stays as it was.
+     *
+     * The built-in car fixes (`optIn` rules) only count with [builtInFixes] (the setting), or when
+     * the user's rule says `builtInFixes: true`; its `false` leaves them out even with the setting
+     * on. Without them every car behaves as before those lists were shipped.
      */
-    internal fun resolve(user: List<VehicleRule>, builtIn: List<VehicleRule>, id: HeadUnitIdentity): VehicleOverride? {
+    internal fun resolve(user: List<VehicleRule>, builtIn: List<VehicleRule>, id: HeadUnitIdentity, builtInFixes: Boolean = false): VehicleOverride? {
         val mine = user.firstOrNull { it.matches(id) }?.override
-        val shipped = builtIn.filter { it.matches(id) }.map { it.override }.reduceOrNull { acc, next -> acc.over(next) }
-        return mine?.over(shipped) ?: shipped
+        val fixes = mine?.builtInFixes ?: builtInFixes
+        val shipped = builtIn.filter { (fixes || !it.optIn) && it.matches(id) }.map { it.override }.reduceOrNull { acc, next -> acc.over(next) }
+        val resolved = mine?.over(shipped) ?: shipped
+        // Kept in the result: with the fixes on, "Exit to car" is named after the car (ExitLabel).
+        return if (fixes) (resolved ?: VehicleOverride()).copy(builtInFixes = true) else resolved?.copy(builtInFixes = null)
     }
 
     internal fun resolve(user: List<VehicleRule>, builtIn: List<VehicleRule>, make: String, model: String, name: String): VehicleOverride? =
@@ -282,8 +302,9 @@ object VehicleOverrides {
                 forceElectric = bool(a, "forceElectric"), wifiMediaStartSilence = int(a, "wifiMediaStartSilence"),
                 wifiGuidanceStartSilence = int(a, "wifiGuidanceStartSilence"), mediaOnGainTransient = bool(a, "mediaOnGainTransient"),
                 pauseOnGuidanceOnly = bool(a, "pauseOnGuidanceOnly"), wireless = bool(a, "wireless"),
-                exitToCar = bool(a, "exitToCar"), exitLabel = str(a, "exitLabel"),
+                exitToCar = bool(a, "exitToCar"), exitLabel = str(a, "exitLabel"), builtInFixes = bool(a, "builtInFixes"),
             ),
+            optIn = r.optBoolean("optIn", false),
         )
     }
 

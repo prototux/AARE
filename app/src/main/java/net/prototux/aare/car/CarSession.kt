@@ -254,9 +254,9 @@ class CarSession(
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
             listener.onStatus(this, context.getString(R.string.notif_status_connected_to, headUnitName))
             settings.rememberCar(runtime.ui.headUnitName)
-            // "Exit to car" named after the car, or left out (vehicles.json).
+            // "Exit to car" named after the car, or left out (vehicles.json, the built-in car fixes).
             if (quirks?.exitToCar == false) runtime.exitToCar = null
-            runtime.exitLabel = ExitLabel.of(quirks?.exitLabel, response.displayName, id.make)
+            runtime.exitLabel = ExitLabel.of(quirks?.exitLabel, response.displayName, id.make, carFixes = quirks?.builtInFixes == true)
             runtime.refreshApps()
         }
         val channels = ArrayList<ServiceChannel>()

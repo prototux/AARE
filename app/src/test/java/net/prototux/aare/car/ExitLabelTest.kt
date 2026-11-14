@@ -5,20 +5,26 @@ import org.junit.Test
 
 /** The "Exit to car" entry named after the car. */
 class ExitLabelTest {
-    @Test fun theDisplayNameElseTheMake() {
-        assertEquals("My Mazda", ExitLabel.of(null, "My Mazda", "Mazda"))
-        assertEquals("Mazda", ExitLabel.of(null, "", "Mazda"))
-        assertEquals(null, ExitLabel.of(null, " ", ""))
+    @Test fun theGenericLabelWithoutTheCarFixes() {
+        assertEquals(null, ExitLabel.of(null, "My Mazda", "Mazda", carFixes = false))
+        // A rule still names it.
+        assertEquals("Audi", ExitLabel.of(ExitLabel.MAKE, "MMI", "Audi", carFixes = false))
+    }
+
+    @Test fun theDisplayNameElseTheMakeWithTheCarFixes() {
+        assertEquals("My Mazda", ExitLabel.of(null, "My Mazda", "Mazda", carFixes = true))
+        assertEquals("Mazda", ExitLabel.of(null, "", "Mazda", carFixes = true))
+        assertEquals(null, ExitLabel.of(null, " ", "", carFixes = true))
     }
 
     @Test fun aRuleCanAskForTheMakeOrTheGenericLabel() {
-        assertEquals("Audi", ExitLabel.of(ExitLabel.MAKE, "MMI", "Audi"))
-        assertEquals(null, ExitLabel.of(ExitLabel.DEFAULT, "My Chevy", "Chevrolet"))
+        assertEquals("Audi", ExitLabel.of(ExitLabel.MAKE, "MMI", "Audi", carFixes = true))
+        assertEquals(null, ExitLabel.of(ExitLabel.DEFAULT, "My Chevy", "Chevrolet", carFixes = true))
     }
 
     @Test fun valuesThatArentABrandAreSkipped() {
-        assertEquals("CHERY", ExitLabel.of(null, "Chery Automobile Co.,Ltd", "CHERY"))
-        assertEquals(null, ExitLabel.of(null, "", "OEM Infotainment"))
+        assertEquals("CHERY", ExitLabel.of(null, "Chery Automobile Co.,Ltd", "CHERY", carFixes = true))
+        assertEquals(null, ExitLabel.of(null, "", "OEM Infotainment", carFixes = true))
     }
 
     @Test fun capitalsAreTamedButBrandsKeepTheirSpelling() {

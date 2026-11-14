@@ -98,6 +98,16 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("constant_bitrate_video", v) }
 
     /**
+     * Apply the fixes AARE ships for specific head units (the built-in vehicles.json rules marked
+     * `optIn`: no wireless, video size, mixed navigation voice, EV fuel type, pixel aspect, "Exit to
+     * car" naming). Off: every car behaves as it did before they were shipped, unless the user's
+     * own vehicles.json turns them on for it.
+     */
+    var builtInCarFixes: Boolean
+        get() = prefs.getBoolean("builtin_car_fixes", false)
+        set(v) = prefs.edit { putBoolean("builtin_car_fixes", v) }
+
+    /**
      * Put calls on the phone's loudspeaker and microphone while connected to a car (CallSpeaker),
      * for setups whose hands-free microphone doesn't work. Off: calls go where Android routes them.
      */
