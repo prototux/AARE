@@ -91,8 +91,10 @@ class HeadUnitSimulator(
      * does, even the ones aasdk's definitions call required.
      */
     omitZeroFields: Boolean = false,
-    /** The protocol minor version the head unit announces (1.x). */
+    /** The protocol minor version the head unit announces. */
     private val protocolMinor: Int = 6,
+    /** The protocol major version the head unit announces. */
+    private val protocolMajor: Int = 1,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -138,11 +140,15 @@ class HeadUnitSimulator(
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
     @Volatile var hangUpInHandshake = false
+    /** The body of the phone's version response (major, minor, status: 16 bits each). */
+    @Volatile var versionResponse: ByteArray? = null
+    val versionAnswered = CountDownLatch(1)
 
     fun start() {
         Thread({
             try {
-                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, 1, 0, protocolMinor.toByte()))
+                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(
+                    (protocolMajor shr 8).toByte(), protocolMajor.toByte(), (protocolMinor shr 8).toByte(), protocolMinor.toByte()))
                 while (true) handle(reader.read())
             } catch (e: Throwable) {
                 if (byeBye.count > 0L) error = e
@@ -190,6 +196,8 @@ class HeadUnitSimulator(
     private fun control(m: AapMessage) {
         when (m.id) {
             ControlMsg.VERSION_RESPONSE -> {
+                versionResponse = m.bodyBytes()
+                versionAnswered.countDown()
                 cryptor.beginHandshake()
                 sendPlain(0, ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
