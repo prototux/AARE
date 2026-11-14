@@ -45,6 +45,7 @@ import net.prototux.aare.ui.car.CarActions
 import net.prototux.aare.ui.car.CarAppEntry
 import net.prototux.aare.ui.car.CarAppKind
 import net.prototux.aare.ui.car.CarCall
+import net.prototux.aare.ui.car.CarLayout
 import net.prototux.aare.ui.car.CarNotice
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.CarSettingsScreen
@@ -56,7 +57,10 @@ import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
 import net.prototux.aare.ui.theme.CarTheme
+import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.theme.forPhone
+import net.prototux.aare.ui.theme.withPhoneAccent
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -282,7 +286,9 @@ class CarRuntime(
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
-        ui.carPlayStyle = settings.carStyle == Settings.STYLE_CARPLAY
+        val theme = CarThemes.byId(settings.carThemeId).forPhone(context)
+        ui.theme = if (settings.phoneAccent) theme.withPhoneAccent(context) else theme
+        ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
         ui.mediaFirst = settings.dashboardMediaFirst
         val wallpaper = settings.wallpaper
@@ -306,7 +312,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "car_style", "dark_bar", "dashboard_media_first", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_phone_accent", "dark_bar", "dashboard_media_first", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -677,7 +683,7 @@ class CarRuntime(
     @Composable
     fun Root(modifier: Modifier = Modifier) {
         val mediaApps by media.apps.collectAsState()
-        CarTheme(night = ui.night) {
+        CarTheme(night = ui.night, theme = ui.theme) {
             CompositionLocalProvider(LocalCarDimens provides LocalCarDimens.current) {
                 CarShell(
                     state = ui,

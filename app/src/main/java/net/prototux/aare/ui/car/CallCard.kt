@@ -48,10 +48,8 @@ import kotlin.math.roundToInt
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
+import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
-
-private val Green = Color(0xFF2E7D32)
-private val Red = Color(0xFFD32F2F)
 
 /**
  * Phone calls over whatever is on the car screen, like Android Auto: a big card with Answer and
@@ -67,7 +65,7 @@ internal fun CallOverlay(state: CarUiState, actions: CarActions, modifier: Modif
 @Composable
 private fun Ringing(call: CarCall, actions: CarActions, modifier: Modifier) {
     Row(
-        modifier.padding(16.dp).widthIn(max = 760.dp).clip(RoundedCornerShape(32.dp))
+        modifier.padding(16.dp).widthIn(max = 760.dp).clip(MaterialTheme.shapes.extraLarge)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -80,8 +78,8 @@ private fun Ringing(call: CarCall, actions: CarActions, modifier: Modifier) {
             Text(call.name, style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_decline), Red) { actions.endCall() }
-            RoundButton(Icons.Rounded.Call, stringResource(R.string.phone_action_answer), Green) { actions.answerCall() }
+            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_decline), LocalCarColors.current.decline) { actions.endCall() }
+            RoundButton(Icons.Rounded.Call, stringResource(R.string.phone_action_answer), LocalCarColors.current.accept) { actions.answerCall() }
         }
     }
 }
@@ -114,17 +112,17 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
                         onDragEnd = { settings.callBarOffsetX = offset.x; settings.callBarOffsetY = offset.y },
                     )
                 }
-                .padding(12.dp).clip(RoundedCornerShape(28.dp)).background(Green)
+                .padding(12.dp).clip(MaterialTheme.shapes.large).background(LocalCarColors.current.accept)
                 .clickable { phone?.let(actions::openApp) }.padding(start = 20.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.Call, null, tint = Color.White)
+            Icon(Icons.Rounded.Call, null, tint = LocalCarColors.current.onCall)
             Spacer(Modifier.width(12.dp))
             val timeStr = "${elapsed / 60}:${"%02d".format(elapsed % 60)}"
-            Text(stringResource(R.string.phone_in_call_elapsed, call.name, timeStr), color = Color.White,
+            Text(stringResource(R.string.phone_in_call_elapsed, call.name, timeStr), color = LocalCarColors.current.onCall,
                 style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 420.dp))
             Spacer(Modifier.width(12.dp))
-            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), Red, size = LocalCarDimens.current.touchTarget - 16.dp) { actions.endCall() }
+            if (Calls.canEnd) RoundButton(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), LocalCarColors.current.decline, size = LocalCarDimens.current.touchTarget - 16.dp) { actions.endCall() }
         }
     }
 }
@@ -133,6 +131,6 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
 private fun RoundButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, color: Color,
                         size: androidx.compose.ui.unit.Dp = LocalCarDimens.current.touchTarget, onClick: () -> Unit) {
     Box(Modifier.size(size).clip(CircleShape).background(color).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, label, tint = Color.White)
+        Icon(icon, label, tint = LocalCarColors.current.onCall)
     }
 }

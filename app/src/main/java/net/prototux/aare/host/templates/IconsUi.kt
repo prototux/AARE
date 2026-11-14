@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.IconCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import net.prototux.aare.ui.theme.LocalCarColors
 
 /**
  * Draws a CarIcon at [size].
@@ -65,7 +66,7 @@ internal fun CarIconView(
 ) {
     if (icon == null) return
     val scheme = MaterialTheme.colorScheme
-    val tint: Color? = if (icon.tint.isSet()) icon.tint.resolve(scheme, LocalContentColor.current) else null
+    val tint: Color? = if (icon.tint.isSet()) icon.tint.resolve(scheme, LocalCarColors.current, LocalContentColor.current) else null
     when (icon.type) {
         CarIcon.TYPE_CUSTOM -> {
             // wide images (lanes, junctions) get a box [widthFactor] times wider than tall

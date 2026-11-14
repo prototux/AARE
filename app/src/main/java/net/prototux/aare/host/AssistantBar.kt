@@ -86,7 +86,7 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
     }
     Box(modifier.then(outer)) {
         Column(
-            Modifier.widthIn(max = 960.dp).fillMaxWidth().clip(RoundedCornerShape(28.dp))
+            Modifier.widthIn(max = 960.dp).fillMaxWidth().clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                 .clickable(onClick = onExpand).padding(horizontal = 20.dp, vertical = 16.dp),
         ) {

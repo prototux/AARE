@@ -115,8 +115,14 @@
     <string name="setup_section_connection_log">Verbindingslogboek</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Niet aangesloten bij Google. Android Auto is een handelsmerk van Google LLC.</string>
     <string name="setup_choice_style">Stijl</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Thema</string>
+    <string name="setup_choice_layout">Indeling</string>
+    <string name="setup_layout_taskbar">Taakbalk</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Aangepast</string>
+    <string name="setup_switch_phone_accent">Accentkleuren van de telefoon</string>
+    <string name="setup_toggle_phone_accent_title">Accentkleuren van de telefoon</string>
+    <string name="setup_toggle_phone_accent_subtitle">Accentkleuren overnemen van de achtergrond van de telefoon (Material You)</string>
     <string name="setup_switch_dark_bar">Donkere balk, ook bij dagkleuren</string>
     <string name="setup_switch_media_first">Muziek vóór de kaart op het startscherm</string>
     <string name="setup_switch_passenger">Passagiersmodus: geen rijbeperkingen (de bestuurder mag het scherm niet gebruiken)</string>

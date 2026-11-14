@@ -68,7 +68,7 @@ internal fun rememberIcon(loader: ArtLoader, ref: IconRef?, sizePx: Int): Bitmap
 
 /** A rounded square of artwork, or a tinted placeholder icon. */
 @Composable
-internal fun ArtBox(art: Bitmap?, placeholder: ImageVector, modifier: Modifier, shape: Shape = RoundedCornerShape(16.dp)) {
+internal fun ArtBox(art: Bitmap?, placeholder: ImageVector, modifier: Modifier, shape: Shape = MaterialTheme.shapes.small) {
     if (art != null) {
         Image(art.asImageBitmap(), null, modifier.clip(shape), contentScale = ContentScale.Crop)
     } else {
@@ -105,8 +105,8 @@ internal fun Pill(text: String, selected: Boolean, onClick: () -> Unit, icon: Im
     val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     Row(
-        Modifier.height(56.dp).clip(RoundedCornerShape(28.dp)).background(bg)
-            .carFocusHighlight(RoundedCornerShape(28.dp)).clickable(onClick = onClick).padding(horizontal = 22.dp),
+        Modifier.height(56.dp).clip(MaterialTheme.shapes.large).background(bg)
+            .carFocusHighlight(MaterialTheme.shapes.large).clickable(onClick = onClick).padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {

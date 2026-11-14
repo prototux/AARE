@@ -4,13 +4,14 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -18,10 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * The in-car look: calm dark surfaces, one warm accent, big type and big targets.
- *
- * Car screens are viewed from ~70 cm at a glance, so sizes follow the car-UI rule of thumb:
- * touch targets ≥ 76 dp, body text ≥ 24 sp, and no more than two text styles per card.
+ * Car-screen sizes. Car screens are viewed from ~70 cm at a glance, so sizes follow the car-UI rule
+ * of thumb: touch targets ≥ 76 dp, body text ≥ 24 sp, and no more than two text styles per card.
  */
 @Immutable
 data class CarDimens(
@@ -34,62 +33,83 @@ data class CarDimens(
 
 val LocalCarDimens = staticCompositionLocalOf { CarDimens() }
 
-/** Brand accent: a river teal (the Aare is famously turquoise). */
-private val Teal = Color(0xFF3DDBC6)
-private val TealDeep = Color(0xFF00695C)
-
-private val NightColors: ColorScheme = darkColorScheme(
-    primary = Teal,
-    onPrimary = Color(0xFF00201C),
-    primaryContainer = Color(0xFF0E3B36),
-    onPrimaryContainer = Color(0xFFB9F5EA),
-    secondary = Color(0xFFB4CAC5),
-    onSecondary = Color(0xFF1F3531),
-    secondaryContainer = Color(0xFF263330),
-    onSecondaryContainer = Color(0xFFD0E6E1),
-    tertiary = Color(0xFFFFB86B),
-    onTertiary = Color(0xFF2E1500),
-    background = Color(0xFF0B0F0F),
-    onBackground = Color(0xFFE3E9E7),
-    surface = Color(0xFF0B0F0F),
-    onSurface = Color(0xFFE3E9E7),
-    surfaceVariant = Color(0xFF1A2120),
-    onSurfaceVariant = Color(0xFFAFBAB7),
-    surfaceContainerLowest = Color(0xFF060909),
-    surfaceContainerLow = Color(0xFF121818),
-    surfaceContainer = Color(0xFF161D1C),
-    surfaceContainerHigh = Color(0xFF1D2524),
-    surfaceContainerHighest = Color(0xFF26302E),
-    outline = Color(0xFF5E6B68),
-    outlineVariant = Color(0xFF2E3836),
-    error = Color(0xFFFF8A80),
+/** The colours a theme needs that Material's [ColorScheme] has no slot for, for one of day or night. */
+@Immutable
+data class CarColors(
+    /** Answering a call. */
+    val accept: Color,
+    /** Declining or hanging up a call. */
+    val decline: Color,
+    /** Icons and text on [accept] and [decline]. */
+    val onCall: Color,
+    /** CarColor's standard colours, which apps use for status text, icons and buttons. */
+    val red: Color,
+    val green: Color,
+    val blue: Color,
+    val yellow: Color,
+    /** Text on a light background an app supplied (white text goes on dark ones). */
+    val inkOnLight: Color,
 )
 
-private val DayColors: ColorScheme = lightColorScheme(
-    primary = TealDeep,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFB9F5EA),
-    onPrimaryContainer = Color(0xFF00201C),
-    secondary = Color(0xFF4A635F),
-    secondaryContainer = Color(0xFFCCE8E2),
-    onSecondaryContainer = Color(0xFF06201C),
-    tertiary = Color(0xFF8B5000),
-    background = Color(0xFFF3F7F6),
-    onBackground = Color(0xFF161D1C),
-    surface = Color(0xFFF3F7F6),
-    onSurface = Color(0xFF161D1C),
-    surfaceVariant = Color(0xFFDAE5E2),
-    onSurfaceVariant = Color(0xFF3F4947),
-    surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFECF2F0),
-    surfaceContainer = Color(0xFFE6ECEA),
-    surfaceContainerHigh = Color(0xFFE0E7E5),
-    surfaceContainerHighest = Color(0xFFD9E1DF),
-    outline = Color(0xFF6F7977),
-    outlineVariant = Color(0xFFBEC9C6),
+val LocalCarColors = staticCompositionLocalOf { AareTheme.nightColors }
+
+/**
+ * A car-screen theme: what things look like (colours, type, shapes, sizes), not where they go;
+ * that is the layout's job (see `CarLayout`). Every value is plain data, so a theme could later be
+ * read from a file; for now a new theme is a new entry in [CarThemes].
+ */
+@Immutable
+data class CarThemeSpec(
+    /** Stored in the settings: never change it once released. */
+    val id: String,
+    /** Shown in the settings, not translated: a name like "AARE" or "CarPlay". */
+    val name: String,
+    val day: ColorScheme,
+    val night: ColorScheme,
+    val dayColors: CarColors,
+    val nightColors: CarColors,
+    val typography: Typography,
+    val shapes: Shapes,
+    /** App icons: round on Android, rounded squares on iOS. */
+    val appIcon: Shape = CircleShape,
+    val dimens: CarDimens = CarDimens(),
+    /**
+     * The colours are the phone's own (Material You, Android 12 and later), set by [forPhone]; [day]
+     * and [night] are only the stand-in for older phones.
+     */
+    val phoneColors: Boolean = false,
 )
 
-private val CarType = Typography(
+val LocalCarTheme = staticCompositionLocalOf { AareTheme }
+
+/**
+ * Applies [theme] in its day or night colours. [theme] defaults to the one already applied, so a
+ * part of the screen can switch to night colours (the "dark bar") without knowing which theme it is.
+ */
+@Composable
+fun CarTheme(night: Boolean, theme: CarThemeSpec = LocalCarTheme.current, content: @Composable () -> Unit) {
+    MaterialTheme(
+        colorScheme = if (night) theme.night else theme.day,
+        typography = theme.typography,
+        shapes = theme.shapes,
+    ) {
+        CompositionLocalProvider(
+            LocalCarTheme provides theme,
+            LocalCarColors provides if (night) theme.nightColors else theme.dayColors,
+            LocalCarDimens provides theme.dimens,
+            content = content,
+        )
+    }
+}
+
+/** Phone UI theme: AARE's palette, normal phone type scale. */
+@Composable
+fun PhoneTheme(dark: Boolean, content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = if (dark) AareTheme.night else AareTheme.day, content = content)
+}
+
+/** The car type scale every theme starts from: big enough to read at a glance. */
+internal val CarTypography = Typography(
     displaySmall = TextStyle(fontSize = 44.sp, lineHeight = 52.sp, fontWeight = FontWeight.Medium),
     headlineMedium = TextStyle(fontSize = 32.sp, lineHeight = 40.sp, fontWeight = FontWeight.Medium),
     headlineSmall = TextStyle(fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium),
@@ -101,25 +121,14 @@ private val CarType = Typography(
     labelMedium = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
 )
 
-private val CarShapes = Shapes(
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
+/**
+ * AARE's corners. The car UI uses the scale by role: small for album art, thumbnails and keys,
+ * medium for buttons and list rows, large for cards and banners, extraLarge for chips and sheets.
+ */
+internal val CarShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
     large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp),
+    extraLarge = RoundedCornerShape(32.dp),
 )
-
-@Composable
-fun CarTheme(night: Boolean, content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (night) NightColors else DayColors,
-        typography = CarType,
-        shapes = CarShapes,
-        content = content,
-    )
-}
-
-/** Phone UI theme: same palette, normal phone type scale. */
-@Composable
-fun PhoneTheme(dark: Boolean, content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (dark) NightColors else DayColors, content = content)
-}

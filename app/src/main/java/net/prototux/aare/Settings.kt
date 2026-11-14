@@ -95,10 +95,25 @@ class Settings(context: Context) {
             ?: if (prefs.contains("rail_right")) (if (prefs.getBoolean("rail_right", false)) RAIL_RIGHT else RAIL_LEFT) else RAIL_AUTO
         set(v) = prefs.edit { putString("rail_position", v); remove("rail_right") }
 
-    /** The car screen's layout: [STYLE_AUTO] (Android Auto's) or [STYLE_CARPLAY] (an easter egg). */
-    var carStyle: String
-        get() = prefs.getString("car_style", STYLE_AUTO) ?: STYLE_AUTO
-        set(v) = prefs.edit { putString("car_style", v) }
+    /**
+     * The car screen's theme, an id from `CarThemes`. Before themes, the only choice was the style
+     * ("car_style"): CarPlay's keeps its look, everyone else gets AARE's.
+     */
+    var carThemeId: String
+        get() = prefs.getString("style_theme", null) ?: if (legacyCarPlay) "carplay" else "aare"
+        set(v) = prefs.edit { putString("style_theme", v) }
+
+    /** The car screen's layout, an id from `CarLayout`: [carThemeId]'s rule for the old setting. */
+    var carLayoutId: String
+        get() = prefs.getString("style_layout", null) ?: if (legacyCarPlay) "dock" else "taskbar"
+        set(v) = prefs.edit { putString("style_layout", v) }
+
+    private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
+
+    /** Take the theme's accent colours from the phone's (Material You, Android 12 and later). */
+    var phoneAccent: Boolean
+        get() = prefs.getBoolean("style_phone_accent", false)
+        set(v) = prefs.edit { putBoolean("style_phone_accent", v) }
 
     /**
      * Passenger mode: ignore the car's "driving" signal, so a passenger can type a destination or
@@ -308,8 +323,6 @@ class Settings(context: Context) {
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
-        const val STYLE_AUTO = "auto"
-        const val STYLE_CARPLAY = "carplay"
         const val WALLPAPER_CUSTOM = "custom"
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"

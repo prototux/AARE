@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.AareTheme
 
 /**
  * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
@@ -115,8 +116,10 @@ class CarUiState {
     var darkBar by mutableStateOf(false)
     /** The home screen shows the music before the map (a setting). */
     var mediaFirst by mutableStateOf(false)
-    /** The CarPlay-style layout (an easter egg, *Settings > Style*). */
-    var carPlayStyle by mutableStateOf(false)
+    /** The theme (a setting, with the phone's accent colours if asked). */
+    var theme by mutableStateOf(AareTheme)
+    /** Where things go: a taskbar and dashboard, or a dock and app pages (a setting). */
+    var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
 

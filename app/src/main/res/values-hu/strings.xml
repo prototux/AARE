@@ -115,8 +115,14 @@
     <string name="setup_section_connection_log">Kapcsolati napló</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nem áll kapcsolatban a Google-lel. Az Android Auto a Google LLC védjegye.</string>
     <string name="setup_choice_style">Stílus</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Téma</string>
+    <string name="setup_choice_layout">Elrendezés</string>
+    <string name="setup_layout_taskbar">Tálca</string>
+    <string name="setup_layout_dock">Dokk</string>
+    <string name="setup_style_custom">Egyéni</string>
+    <string name="setup_switch_phone_accent">A telefon kiemelőszínei</string>
+    <string name="setup_toggle_phone_accent_title">A telefon kiemelőszínei</string>
+    <string name="setup_toggle_phone_accent_subtitle">A kiemelőszínek a telefon háttérképéből (Material You)</string>
     <string name="setup_switch_dark_bar">Sötét sáv, nappali színeknél is</string>
     <string name="setup_switch_media_first">Zene a térkép előtt a kezdőképernyőn</string>
     <string name="setup_switch_passenger">Utas mód: nincs vezetési korlátozás (a vezető nem használhatja a képernyőt)</string>

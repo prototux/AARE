@@ -113,8 +113,14 @@
     <string name="setup_section_connection_log">سجل الاتصال</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · غير مرتبط بشركة Google. Android Auto علامة تجارية مملوكة لشركة Google LLC.</string>
     <string name="setup_choice_style">النمط</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">السمة</string>
+    <string name="setup_choice_layout">التخطيط</string>
+    <string name="setup_layout_taskbar">شريط المهام</string>
+    <string name="setup_layout_dock">الرصيف</string>
+    <string name="setup_style_custom">مخصص</string>
+    <string name="setup_switch_phone_accent">ألوان الهاتف المميزة</string>
+    <string name="setup_toggle_phone_accent_title">ألوان الهاتف المميزة</string>
+    <string name="setup_toggle_phone_accent_subtitle">استخدام الألوان المميزة من خلفية الهاتف (Material You)</string>
     <string name="setup_switch_dark_bar">شريط داكن، حتى مع ألوان النهار</string>
     <string name="setup_switch_media_first">الموسيقى قبل الخريطة في الشاشة الرئيسية</string>
     <string name="setup_switch_passenger">وضع الراكب: بلا قيود قيادة (يجب ألا يستخدم السائق الشاشة)</string>

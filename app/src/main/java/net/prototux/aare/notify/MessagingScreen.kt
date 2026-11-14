@@ -137,7 +137,7 @@ private fun ConversationList(list: List<Conversation>, app: CarAppEntry, driving
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
         items(list, key = { it.key }) { c ->
             Row(
-                Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
+                Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium)
                     .clickable { onOpen(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -166,7 +166,7 @@ private fun ConversationView(c: Conversation, driving: Boolean, onReply: () -> U
             } else {
                 LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
                     items(c.messages) { m ->
-                        Column(Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp)) {
+                        Column(Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(16.dp)) {
                             if (m.sender.isNotEmpty() && m.sender != c.title) {
                                 Text(m.sender, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                             }

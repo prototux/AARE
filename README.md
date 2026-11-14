@@ -34,7 +34,7 @@ It needs no Google Play Services.
 | Protocol: framing, TLS 1.2 (phone = server), version, service discovery, channels | done, unit and loopback tests |
 | Video: H.264 hardware encoding of a private virtual display, ack flow control, focus, key-frame recovery | done |
 | Adaptive video bitrate: lower when the car or a weak wireless link falls behind, back up when it catches up | new, untested on hardware |
-| Portrait head units: bottom bar, stacked dashboard, CarPlay mode | new, tested only with the desktop head unit's `--portrait` |
+| Portrait head units: bottom bar, stacked dashboard, dock layout | new, tested only with the desktop head unit's `--portrait` |
 | Touch, keys, rotary controller, steering-wheel voice/media/home/back keys | done |
 | Sensors: driving restrictions, night mode, car GPS and compass (passed to nav apps) | done |
 | Every other sensor the car offers (RPM, odometer, fuel and range, temperature, HVAC, doors, lights, tyres, accelerometer, gyroscope…) for car apps (car hardware API) and the assistant | new, tested only with the desktop head unit's fake car |
@@ -196,8 +196,13 @@ car's driving status: typing a destination, long lists and the phone screen stay
 moving, for a passenger. The driver must not use the screen while driving.
 - **Phone screen:** the phone's own screen (see below).
 
-As an easter egg, *Settings > Style > CarPlay* gives the car screen a CarPlay-like look. AARE is
-not affiliated with Apple; CarPlay is a trademark of Apple Inc.
+**Styles** (*Car screen > Look* on the phone, or *Settings* in the car) change how the car screen
+looks: **AARE** (its own teal look), **Android Auto** (Google's black design) and **CarPlay**
+(Apple's look, with a dock and pages of app icons) and, on Android 12 and later, **Material You**
+(the phone's own colours, from its wallpaper). A style is a theme (colours, type, shapes) with
+a layout (a taskbar with dashboard cards, or a dock with app pages); either can be changed on its
+own. On Android 12 and later any theme can also take just its accent colours from the phone. AARE is not
+affiliated with Google or Apple.
 
 | | |
 |---|---|

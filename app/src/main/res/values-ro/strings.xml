@@ -115,8 +115,14 @@
     <string name="setup_section_connection_log">Jurnal de conectare</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nu este afiliat cu Google. Android Auto este o marcă înregistrată a Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Temă</string>
+    <string name="setup_choice_layout">Aspect</string>
+    <string name="setup_layout_taskbar">Bară de activități</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_style_custom">Personalizat</string>
+    <string name="setup_switch_phone_accent">Culorile de accent ale telefonului</string>
+    <string name="setup_toggle_phone_accent_title">Culorile de accent ale telefonului</string>
+    <string name="setup_toggle_phone_accent_subtitle">Folosește culorile de accent din imaginea de fundal a telefonului (Material You)</string>
     <string name="setup_switch_dark_bar">Bară întunecată, chiar și cu culori de zi</string>
     <string name="setup_switch_media_first">Muzica înaintea hărții pe ecranul principal</string>
     <string name="setup_switch_passenger">Mod pasager: fără restricții de condus (șoferul nu trebuie să folosească ecranul)</string>

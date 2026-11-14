@@ -115,8 +115,14 @@
     <string name="setup_section_connection_log">Журнал з\'єднань</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Не пов\'язано з Google. Android Auto є торговою маркою Google LLC.</string>
     <string name="setup_choice_style">Стиль</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Тема</string>
+    <string name="setup_choice_layout">Макет</string>
+    <string name="setup_layout_taskbar">Панель завдань</string>
+    <string name="setup_layout_dock">Док</string>
+    <string name="setup_style_custom">Власна</string>
+    <string name="setup_switch_phone_accent">Акцентні кольори телефона</string>
+    <string name="setup_toggle_phone_accent_title">Акцентні кольори телефона</string>
+    <string name="setup_toggle_phone_accent_subtitle">Брати акцентні кольори зі шпалер телефона (Material You)</string>
     <string name="setup_switch_dark_bar">Темна панель, навіть зі світлими кольорами</string>
     <string name="setup_switch_media_first">Музика перед картою на головному екрані</string>
     <string name="setup_switch_passenger">Режим пасажира: без обмежень керування (водій не повинен використовувати екран)</string>
