@@ -56,4 +56,22 @@ class VehicleOverridesTest {
         assertEquals(720, VehicleOverrides.resolve(emptyList(), rule, "Ford", "Focus", "SYNC 3")!!.maxHeight)
         assertEquals(null, VehicleOverrides.resolve(emptyList(), rule, "Audi", "A3", "MMI"))
     }
+
+    @Test fun quirksAreParsed() {
+        val o = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"micSetup":false,"skipServices":["vendor"],"openServices":["wifi"," "]}}]}""").single().override
+        assertEquals(false, o.micSetup)
+        assertEquals(setOf("vendor"), o.skipServices)
+        assertEquals(setOf("wifi"), o.openServices)
+        assertEquals(null, o.dpi)
+    }
+
+    @Test fun aMalformedRuleIsSkipped() =
+        assertEquals(1, VehicleOverrides.parse("""{"rules":[42, {"match":{"make":"Ford"},"apply":{"dpi":140}}]}""").size)
+
+    /** The rules AARE ships: valid, and the VW Play's matches it as #166 reports it. */
+    @Test fun theBuiltInRulesParse() {
+        val rules = VehicleOverrides.parse(java.io.File("src/main/assets/vehicles.json").readText())
+        val vwPlay = rules.single { it.matches("Volkswagen", "VW_7_A0_HATCHBACK", "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio") }
+        assertEquals(false, vwPlay.override.micSetup)
+    }
 }
