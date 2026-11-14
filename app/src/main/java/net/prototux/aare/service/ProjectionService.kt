@@ -276,7 +276,7 @@ class ProjectionService : Service() {
         main.postDelayed({ if (idle()) stopEverything() }, 3_000)
     }
 
-    private fun openUsb(accessory: UsbAccessory) {
+    private fun openUsb(accessory: UsbAccessory, retryOpen: Boolean = true) {
         // A head unit back after a drop is announced twice (its re-attach, and our wait for it).
         if (session != null && UsbReattach.same(usbAccessory, accessory)) {
             log("USB: already connected to this head unit")
@@ -290,8 +290,18 @@ class ProjectionService : Service() {
             requestUsbPermission(usb, accessory)
             return
         }
-        val transport = runCatching { UsbAccessoryTransport(usb, accessory) }
-            .onFailure { log("USB: ${it.message}") }.getOrNull() ?: return
+        val transport = runCatching { UsbAccessoryTransport(usb, accessory) }.getOrElse { e ->
+            // Opening right after the attach can fail; one more try after 500 ms works.
+            if (retryOpen) {
+                log("USB: ${e.message}; trying again in 500 ms")
+                main.postDelayed({
+                    if (session == null && UsbReattach.same(usbAccessory, accessory)) openUsb(accessory, retryOpen = false)
+                }, 500)
+            } else {
+                log("USB: ${e.message}")
+            }
+            return
+        }
         startSession(transport, wireless = false, peerKey = usbPeerKey(accessory), trustOnFirstUse = false)
     }
 
@@ -750,10 +760,6 @@ class ProjectionService : Service() {
             _state.update { s -> s.copy(pendingTrust = null, lastError = s.lastError.takeIf { s.pendingTrust == null }) }
         }
 
-        /** Accessory strings head units use for Android Auto (res/xml/accessory_filter.xml). */
-        private fun isAndroidAuto(a: UsbAccessory) =
-            a.manufacturer == "Android" && (a.model == "Android Auto" || a.model == "Android Open Automotive Protocol")
-
         /**
          * Opening the app: an Android Auto accessory may already be attached without the USB
          * permission (Samsung). Hand it to the service, which asks for the permission and connects.
@@ -761,7 +767,7 @@ class ProjectionService : Service() {
         fun probeUsb(context: Context) {
             if (_state.value.connected) return
             val usb = context.getSystemService(UsbManager::class.java) ?: return
-            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull(::isAndroidAuto) ?: return
+            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull { UsbAccessoryTransport.isAndroidAuto(it) } ?: return
             startUsb(context, accessory)
         }
 

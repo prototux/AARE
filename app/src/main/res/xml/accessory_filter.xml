@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- What head units send when switching the phone to accessory mode. -->
-    <usb-accessory manufacturer="Android" model="Android Auto" />
-    <usb-accessory manufacturer="Android" model="Android Open Automotive Protocol" />
+    <!-- What head units send when switching the phone to accessory mode. By model only: some
+         send another manufacturer. Same list as UsbAccessoryTransport.isAndroidAuto. -->
+    <usb-accessory model="Android Auto" />
+    <usb-accessory model="Android Open Automotive Protocol" />
 </resources>

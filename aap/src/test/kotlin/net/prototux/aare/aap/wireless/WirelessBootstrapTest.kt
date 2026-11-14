@@ -224,7 +224,8 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.CONNECTION_STATUS, frame.id)
         val connectionStatus = WifiConnectionStatus.parseFrom(frame.payload)
         assertEquals(WppStatus.PHONE_WIFI_DISABLED, connectionStatus.status.number)
-        assertEquals("Wi-Fi is off", connectionStatus.errorMessage)
+        // a text for the driver, not ours
+        assertEquals(WirelessBootstrap.PHONE_WIFI_DISABLED_MESSAGE, connectionStatus.errorMessage)
 
         awaitEnd()
         val e = failure as WirelessBootstrapException
@@ -232,6 +233,113 @@ class WirelessBootstrapTest {
         assertFalse("a Wi-Fi problem on the phone isn't the car not being ready", e.whileNegotiating)
         assertNull(phone.ready.poll())
         assertNull("the phone closes the link after a failure", readWppFrame(phoneToHu.input))
+    }
+
+    @Test(timeout = 10_000)
+    fun otherJoinFailuresCarryNoErrorText() {
+        start(Phone { JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "no address on \"AndroidAuto-HU\" after 40 s") })
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        val connectionStatus = WifiConnectionStatus.parseFrom(hu.expect(WppMessageId.CONNECTION_STATUS).payload)
+        assertEquals(WppStatus.WIFI_NETWORK_UNAVAILABLE, connectionStatus.status.number)
+        assertFalse(connectionStatus.hasErrorMessage())
+        awaitEnd()
+    }
+
+    @Test(timeout = 10_000)
+    fun badPortIsReportedAsAConnectionStatus() {
+        start(Phone { throw AssertionError("must not try to join") })
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 70_000))
+        // a WifiConnectionStatus, not a WifiStartResponse
+        assertEquals(WppStatus.INVALID_HOST, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        awaitEnd()
+        assertEquals(WppStatus.INVALID_HOST, (failure as WirelessBootstrapException).status)
+    }
+
+    @Test(timeout = 10_000)
+    fun portZeroIsNotRefusedBelowWpp45() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 0))
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        assertEquals("10.0.0.1" to 0, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun connectionStatusAlsoForWpp45HeadUnits() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(4).setMinor(5).build(),
+            WppMessageId.START_REQUEST to startRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertEquals(WppStatus.SUCCESS, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun quotesAroundCredentialsAreStrippedBelowWpp45() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").setPassword("\"pass\"word\"").build())
+        val credentials = phone.credentials.poll(2, TimeUnit.SECONDS)!!
+        assertEquals("My Car", credentials.ssid)
+        assertEquals("pass\"word", credentials.password)
+    }
+
+    @Test(timeout = 10_000)
+    fun quotedCredentialsAreTriedAsSentWhenTheUnquotedOnesFail() {
+        val phone = Phone { c -> if (c.ssid.startsWith('"')) JoinResult.Joined() else JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "not found") }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").setPassword("\"pw-in-quotes\"").build())
+        assertEquals("My Car", phone.credentials.poll(2, TimeUnit.SECONDS)!!.ssid)
+        val second = phone.credentials.poll(2, TimeUnit.SECONDS)!!
+        assertEquals("\"My Car\"", second.ssid)
+        assertEquals("\"pw-in-quotes\"", second.password)
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertEquals(WppStatus.SUCCESS, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun unquotedCredentialsAreTriedOnlyOnce() {
+        val phone = Phone { JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "not found") }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        assertEquals(WppStatus.WIFI_NETWORK_UNAVAILABLE, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        awaitEnd()
+        assertEquals("credentials without quotes are not tried twice", 1, phone.credentials.size)
+    }
+
+    @Test(timeout = 10_000)
+    fun quotesAreKeptFromWpp45HeadUnits() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(5).setMinor(0).build(),
+            WppMessageId.START_REQUEST to startRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse().toBuilder().setSsid("\"My Car\"").build())
+        assertEquals("\"My Car\"", phone.credentials.poll(2, TimeUnit.SECONDS)!!.ssid)
+    }
+
+    @Test
+    fun unquoteRemovesOnePairOnly() {
+        assertEquals("a", WirelessBootstrap.unquoted("\"a\""))
+        assertEquals("\"a\"", WirelessBootstrap.unquoted("\"\"a\"\""))
+        assertEquals("", WirelessBootstrap.unquoted("\"\""))
+        assertEquals("\"", WirelessBootstrap.unquoted("\""))
+        assertEquals("\"a", WirelessBootstrap.unquoted("\"a"))
     }
 
     @Test(timeout = 10_000)
@@ -249,14 +357,35 @@ class WirelessBootstrapTest {
 
     @Test(timeout = 10_000)
     fun silentHeadUnitTimesOut() {
-        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0))
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(firstMessageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0))
         awaitEnd()
-        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out"))
+        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out after 300 ms waiting for the head unit's first message"))
         assertTrue((failure as WirelessBootstrapException).whileNegotiating)
     }
 
     @Test(timeout = 10_000)
-    fun infoRequestIsRetriedOnce() {
+    fun theFirstMessageEndsTheFirstMessageTimeout() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            firstMessageTimeoutMs = 300, messageTimeoutMs = 1_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        Thread.sleep(500) // past the first-message timeout, within the message timeout
+        assertEquals(1L, finished.count)
+        awaitEnd()
+        assertTrue(failure?.message.orEmpty(), failure?.message.orEmpty().contains("timed out after 1000 ms waiting for a WifiStartRequest"))
+    }
+
+    @Test
+    fun adaptersAreRecognisedByTheirBluetoothName() {
+        assertTrue(WirelessBootstrap.isDongle("Intercooler-1234"))
+        assertTrue(WirelessBootstrap.isDongle("AndroidAuto-5f2a"))
+        assertFalse(WirelessBootstrap.isDongle("androidauto-5f2a"))
+        assertFalse(WirelessBootstrap.isDongle("MY VW"))
+        assertFalse(WirelessBootstrap.isDongle(null))
+    }
+
+    @Test(timeout = 10_000)
+    fun infoRequestIsRetried() {
         val phone = Phone { JoinResult.Joined() }
         start(phone, WirelessBootstrap.Options(messageTimeoutMs = 3_000, infoRetryMs = 200, keepaliveIntervalMs = 0, frameGapMs = 0))
 
@@ -266,6 +395,22 @@ class WirelessBootstrapTest {
         hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
         hu.expect(WppMessageId.START_RESPONSE)
         assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun infoRequestIsRepeatedUntilTheMessageTimeout() {
+        start(Phone { throw AssertionError("must not try to join") },
+            WirelessBootstrap.Options(messageTimeoutMs = 1_000, infoRetryMs = 200, keepaliveIntervalMs = 0, frameGapMs = 0))
+
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        val requests = LinkedBlockingQueue<WppFrame>()
+        thread(name = "hu-reader", isDaemon = true) { runCatching { while (true) requests.put(hu.read()) } }
+        awaitEnd()
+        val e = failure as WirelessBootstrapException
+        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("timed out after 1000 ms waiting for a WifiInfoResponse"))
+        assertTrue("the caller redials", e.whileNegotiating)
+        // one request, then one every 200 ms until the 1 s timeout: more than the 3 a fixed count would allow
+        assertTrue("${requests.size} requests", requests.size >= 4 && requests.all { it.id == WppMessageId.INFO_REQUEST })
     }
 
     @Test(timeout = 10_000)
@@ -438,6 +583,156 @@ class WirelessBootstrapTest {
         assertEquals(Status.STATUS_SUCCESS, response.status)
     }
 
+    private fun phoneStartOptions(limitMs: Long = 50_000) = WirelessBootstrap.Options(
+        messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0,
+        phoneStartDelayMs = 100, phoneStartRetryMs = 100, phoneStartRetryLimitMs = limitMs,
+    )
+
+    private fun startResponse(status: Status, ip: String = "", port: Int = 0) = WifiStartResponse.newBuilder()
+        .setStatus(status).apply { if (ip.isNotEmpty()) setIpAddress(ip).setPort(port) }.build()
+
+    @Test(timeout = 10_000)
+    fun phoneAsksAHeadUnitThatWaitsToStart() {
+        val phone = Phone { JoinResult.Joined(localAddress = "10.0.0.23") }
+        start(phone, phoneStartOptions())
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        // sent empty
+        assertEquals(0, hu.expect(WppMessageId.START_REQUEST).payload.size)
+        hu.send(WppMessageId.START_RESPONSE, startResponse(Status.STATUS_SUCCESS, ip = "10.0.0.9", port = 5288))
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // the head unit answered our request: no WifiStartResponse from us, only the join result
+        assertEquals(WppStatus.SUCCESS, status(hu.read().also { assertEquals(WppMessageId.CONNECTION_STATUS, it.id) }))
+        assertEquals("10.0.0.9" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun phoneKeepsAskingWhileTheHeadUnitIsNotReadyThenStops() {
+        start(Phone { JoinResult.Joined() }, phoneStartOptions(limitMs = 250))
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val frames = LinkedBlockingQueue<WppFrame>()
+        thread(name = "hu-reader", isDaemon = true) { runCatching { while (true) frames.put(hu.read()) } }
+        var requests = 0
+        while (true) {
+            val frame = frames.poll(600, TimeUnit.MILLISECONDS) ?: break
+            assertEquals(WppMessageId.START_REQUEST, frame.id)
+            requests++
+            hu.send(WppMessageId.START_RESPONSE, startResponse(Status.STATUS_WIFI_NOT_YET_STARTED))
+        }
+        assertTrue("$requests start requests", requests in 2..5)
+    }
+
+    @Test(timeout = 10_000)
+    fun noPhoneStartRequestByDefault() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0, phoneStartRetryMs = 100))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val next = LinkedBlockingQueue<Result<WppFrame>>()
+        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
+        assertNull("the phone asked to start on a first attempt", next.poll(400, TimeUnit.MILLISECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitThatWaitedForThePhoneIsFlaggedForTheRedial() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        awaitEnd()
+        val e = failure as WirelessBootstrapException
+        assertTrue(e.noStartRequest)
+        assertTrue(e.whileNegotiating)
+    }
+
+    @Test(timeout = 10_000)
+    fun silenceWithoutAVersionExchangeIsNotWaitingForThePhone() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, infoRetryMs = 100, keepaliveIntervalMs = 0, frameGapMs = 0))
+        // credentials but no version exchange: a later WifiStartRequest from us would not help
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        awaitEnd()
+        assertFalse((failure as WirelessBootstrapException).noStartRequest)
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitStartRequestCancelsOurs() {
+        start(Phone { Thread.sleep(400); JoinResult.Joined() }, phoneStartOptions())
+        hu.send(WppMessageId.VERSION_REQUEST to versionRequest(), WppMessageId.START_REQUEST to startRequest())
+        assertEquals(WppMessageId.VERSION_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // nothing in between while joining, past the 100 ms start-request delay
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.CONNECTION_STATUS, hu.read().id)
+    }
+
+    @Test(timeout = 10_000)
+    fun versionRequestWithoutMajorIsAnsweredWithOne() {
+        start(Phone { JoinResult.Joined() })
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.getDefaultInstance())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertEquals(1, response.major)
+        assertEquals(0, response.minor)
+        assertEquals(WppStatus.SUCCESS, response.status)
+    }
+
+    @Test(timeout = 10_000)
+    fun unusualVersionIsStillAnsweredWithSuccess() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(3).setMinor(0).build())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertEquals(WppStatus.SUCCESS, response.status)
+        assertEquals(3, response.major)
+
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitChannelsThePhoneCannotUseAreStillAnsweredWithSuccess() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0,
+            phoneWifiFrequencies = { setOf(2412, 2437, 2462) },
+        ))
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(4).setMinor(2)
+            .addSupportedWifiChannels(5180).addSupportedWifiChannels(5745).build())
+        val response = WifiVersionResponse.parseFrom(hu.expect(WppMessageId.VERSION_RESPONSE).payload)
+        assertEquals(WppStatus.SUCCESS, response.status)
+    }
+
+    @Test
+    fun stricterVersionStatusIsComputedForTheLog() {
+        val any = listOf(2437)
+        val phone = setOf(2437)
+        assertEquals(WppStatus.SUCCESS, WirelessBootstrap.versionStatus(0, 0, emptyList(), phone))
+        for (major in listOf(1, 4, 5, 6)) assertEquals("WPP $major", WppStatus.SUCCESS, WirelessBootstrap.versionStatus(major, 0, any, phone))
+        for (major in listOf(2, 3, 7, 10, -1)) {
+            assertEquals("WPP $major", WppStatus.NO_COMPATIBLE_VERSION, WirelessBootstrap.versionStatus(major, 0, any, phone))
+        }
+        // the channel check only applies below 4.5
+        assertEquals(WppStatus.NO_SUPPORTED_WIFI_CHANNELS, WirelessBootstrap.versionStatus(4, 4, emptyList(), phone))
+        assertEquals(WppStatus.SUCCESS, WirelessBootstrap.versionStatus(4, 5, emptyList(), phone))
+        assertEquals(WppStatus.NO_SUPPORTED_WIFI_CHANNELS, WirelessBootstrap.versionStatus(1, 7, listOf(5180), phone))
+    }
+
+    @Test
+    fun channelCheckRules() {
+        val phone = setOf(2412, 5180)
+        assertTrue(WirelessBootstrap.channelsUsable(listOf(5745, 5180), phone))
+        assertFalse(WirelessBootstrap.channelsUsable(listOf(5745), phone))
+        assertFalse("no channels listed", WirelessBootstrap.channelsUsable(emptyList(), phone))
+        assertTrue("channel numbers are not checked", WirelessBootstrap.channelsUsable(listOf(36), phone))
+        assertTrue("5000 is not checked", WirelessBootstrap.channelsUsable(listOf(5000), phone))
+        assertTrue("unknown phone frequencies skip the check", WirelessBootstrap.channelsUsable(emptyList(), null))
+    }
+
     @Test
     fun securityModesMapToWhatThePhoneCanConfigure() {
         assertEquals(WifiSecurity.WPA2_PERSONAL, WppSecurityMode.toSecurity(8, "pw"))
@@ -459,5 +754,25 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.START_RESPONSE, frame.id)
         assertArrayEquals(byteArrayOf(0x18, 0), frame.payload)
         assertNull(readWppFrame(ByteArray(0).inputStream()))
+    }
+
+    @Test
+    fun payloadsOver1024BytesAreStillRead() {
+        val frame = readWppFrame(encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(5000)).inputStream())!!
+        assertEquals(5000, frame.payload.size)
+        val e = runCatching { encodeWppFrame(WppMessageId.INFO_RESPONSE, ByteArray(0x10000)) }.exceptionOrNull()
+        assertTrue("expected the 64 KiB encode limit, got $e", e is IllegalArgumentException)
+    }
+
+    @Test(timeout = 10_000)
+    fun oversizedFrameIsOnlyLogged() {
+        val phone = Phone { JoinResult.Joined() }
+        start(phone)
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        hu.expect(WppMessageId.INFO_REQUEST)
+        huToPhone.output.write(encodeWppFrame(99, ByteArray(2000)))
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
     }
 }

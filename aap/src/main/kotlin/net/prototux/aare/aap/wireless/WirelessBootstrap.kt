@@ -56,6 +56,11 @@ class WirelessBootstrapException(
      * or sent something unusable): a car that isn't ready yet, so trying again later can work.
      */
     val whileNegotiating: Boolean = false,
+    /**
+     * The head unit answered our version response but sent no WifiStartRequest before the message
+     * timeout: one that waits for the phone to ask, see [WirelessBootstrap.Options.phoneStartDelayMs].
+     */
+    val noStartRequest: Boolean = false,
 ) : Exception(message, cause)
 
 /**
@@ -66,7 +71,8 @@ class WirelessBootstrapException(
  * sends both back to back, real cars too), a bare start request (WirelessAndroidAutoDongle, which
  * aborts unless the next thing it reads is our WifiInfoRequest), and credentials sent without
  * being asked. The head unit is only told "success" once [Listener.connectWifi] says the phone
- * really is on the network.
+ * really is on the network. A head unit that answers our version response and then waits can be
+ * sent our own WifiStartRequest (see [Options.phoneStartDelayMs]).
  *
  * Threads: a reader thread answers pings at once and queues everything else for [run]; while
  * the phone joins the network a keepalive thread pings the head unit, because some cars give up
@@ -97,11 +103,20 @@ class WirelessBootstrap(
         fun onReady(ip: String, port: Int)
     }
 
-    class Options(
-        /** Longest silence from the head unit while we still need something from it. */
+    /** A data class so a caller can [copy] it for one attempt (see [isDongle]). */
+    data class Options(
+        /** Longest silence from the head unit, after its first message, while we still need something from it. */
         val messageTimeoutMs: Long = 15_000,
-        /** Re-send WifiInfoRequest once if the credentials have not come after this long. */
-        val infoRetryMs: Long = 5_000,
+        /**
+         * How long the head unit may take to send its first message after the RFCOMM connect:
+         * 12 s, and [DONGLE_FIRST_MESSAGE_TIMEOUT_MS] on its first try with an adapter.
+         */
+        val firstMessageTimeoutMs: Long = 12_000,
+        /**
+         * Re-send WifiInfoRequest this often while the credentials have not come; the message
+         * timeout still bounds the wait.
+         */
+        val infoRetryMs: Long = 3_000,
         /** Ping interval while joining the network; 0 disables. aa-proxy-rs uses 2 s for picky cars. */
         val keepaliveIntervalMs: Long = 2_000,
         /**
@@ -132,12 +147,31 @@ class WirelessBootstrap(
          * 0 disables.
          */
         val pingIntervalMs: Long = 1_000,
+        /**
+         * The frequencies (MHz) the phone's Wi-Fi can use right now, for the channel check of the
+         * version exchange (see [versionStatus], only logged); null when unknown, which skips it.
+         */
+        val phoneWifiFrequencies: () -> Set<Int>? = { null },
+        /**
+         * After a version exchange, send our own (empty) WifiStartRequest if the head unit has sent
+         * none after this long; 0 (the default) never does. For a redial to a head unit that
+         * waited for the phone last time ([WirelessBootstrapException.noStartRequest]); see
+         * [PHONE_START_DELAY_MS].
+         */
+        val phoneStartDelayMs: Long = 0,
+        /** Ask again this often while the head unit answers "not yet" or "already started" (2 s)... */
+        val phoneStartRetryMs: Long = 2_000,
+        /** ...until this long after our first WifiStartRequest (50 s). */
+        val phoneStartRetryLimitMs: Long = 50_000,
     )
 
     enum class State { NEW, NEGOTIATING, JOINING, READY, DONE, FAILED }
 
     @Volatile var state = State.NEW
         private set
+
+    /** The head unit's AAP server, from its WifiStartRequest or from its answer to ours ([phoneStarted]). */
+    private class Endpoint(val ip: String, val port: Int, val phoneStarted: Boolean)
 
     private sealed class Inbound {
         class Message(val frame: WppFrame) : Inbound()
@@ -153,6 +187,8 @@ class WirelessBootstrap(
     @Volatile private var linkEnded = false
     /** The link pinger runs (see [Options.pingIntervalMs]). */
     private var linkPinging = false
+    /** WPP version (major, minor) from the head unit's WifiVersionRequest; null before one (or if unparsable). */
+    @Volatile private var headUnitVersion: Pair<Int, Int>? = null
 
     /**
      * Runs the bootstrap: returns once the link ended after a successful [Listener.onReady] (or
@@ -165,25 +201,26 @@ class WirelessBootstrap(
         thread(name = "wpp-reader", isDaemon = true) { readLoop() }
         try {
             state = State.NEGOTIATING
-            val (start, credentials) = negotiate()
+            val (endpoint, credentials) = negotiate()
             state = State.JOINING
             val joined = join(credentials)
-            val ip = start.ipAddress.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
+            val ip = endpoint.ip.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
             if (ip.isNullOrEmpty()) {
-                sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
+                sendConnectionStatus(WppStatus.INVALID_HOST)
                 throw fail("head unit sent no IP address and the network has no gateway", WppStatus.INVALID_HOST)
             }
-            if (ip != start.ipAddress) log.w("wireless: head unit sent no usable IP (\"${start.ipAddress}\"), using the gateway $ip")
+            if (ip != endpoint.ip) log.w("wireless: head unit sent no usable IP (\"${endpoint.ip}\"), using the gateway $ip")
 
             // Order as the official phone (aa-proxy-rs and open-headunit both expect 7 then 6). The
             // dongle hangs up after reading two frames, so failing to send these is not fatal: the
             // head unit already knows everything it needs and the TCP connect is the real test.
-            sendQuietly(WppMessageId.START_RESPONSE, startResponse(joined.localAddress, WppStatus.SUCCESS))
-            sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.SUCCESS, null))
+            // A head unit that answered our own WifiStartRequest has nothing to get a response to.
+            if (!endpoint.phoneStarted) sendQuietly(WppMessageId.START_RESPONSE, startResponse(joined.localAddress, WppStatus.SUCCESS))
+            sendConnectionStatus(WppStatus.SUCCESS)
             ensureOpen()
             state = State.READY
-            log.i("wireless: on the head unit's network, AAP server at $ip:${start.port}")
-            listener.onReady(ip, start.port)
+            log.i("wireless: on the head unit's network, AAP server at $ip:${endpoint.port}")
+            listener.onReady(ip, endpoint.port)
             if (options.holdLink) hold()
             state = State.DONE
         } catch (e: Throwable) {
@@ -206,32 +243,50 @@ class WirelessBootstrap(
 
     // ---- phase 1: learn the endpoint and the credentials ----
 
-    /** Waits until we have both the start request and the credentials, whatever their order. */
-    private fun negotiate(): Pair<WifiStartRequest, WifiCredentials> {
-        var start: WifiStartRequest? = null
+    /** Waits until we have both the endpoint and the credentials, whatever their order. */
+    private fun negotiate(): Pair<Endpoint, WifiCredentials> {
+        var start: Endpoint? = null
         var credentials: WifiCredentials? = null
+        var infoRequests = 0
         var infoRequestedAt = 0L
-        var infoRetried = false
-        var deadline = now() + options.messageTimeoutMs
+        var heardFromHeadUnit = false
+        var versionAnswered = false
+        var deadline = now() + options.firstMessageTimeoutMs
+        // Our own WifiStartRequest: when the next one is due, and when the first one went out.
+        var phoneStartDueAt = Long.MAX_VALUE
+        var phoneStartFirstAt = 0L
+
+        fun requestInfo() {
+            send(WppMessageId.INFO_REQUEST, ByteArray(0))
+            infoRequests++
+            infoRequestedAt = now()
+        }
 
         while (start == null || credentials == null) {
-            val retryAt = if (infoRequestedAt != 0L && !infoRetried) infoRequestedAt + options.infoRetryMs else Long.MAX_VALUE
-            val event = inbox.poll(maxOf(0, minOf(deadline, retryAt) - now()), TimeUnit.MILLISECONDS)
+            val infoDueAt = if (infoRequests > 0 && credentials == null) infoRequestedAt + options.infoRetryMs else Long.MAX_VALUE
+            val event = inbox.poll(maxOf(0, minOf(deadline, infoDueAt, phoneStartDueAt) - now()), TimeUnit.MILLISECONDS)
             ensureOpen()
             if (event == null) {
                 if (now() >= deadline) {
                     val waitingFor = when {
+                        !heardFromHeadUnit -> "the head unit's first message (is a projection already running on the head unit?)"
                         start == null && credentials == null -> "a WifiStartRequest (is a projection already running on the head unit?)"
                         start == null -> "a WifiStartRequest after the credentials"
                         else -> "a WifiInfoResponse"
                     }
-                    throw fail("timed out after ${options.messageTimeoutMs} ms waiting for $waitingFor")
+                    val waitedMs = if (heardFromHeadUnit) options.messageTimeoutMs else options.firstMessageTimeoutMs
+                    throw fail("timed out after $waitedMs ms waiting for $waitingFor", noStartRequest = start == null && versionAnswered)
                 }
-                if (now() >= retryAt) {
+                if (now() >= infoDueAt) {
                     // Also nudges openauto if our first request got stuck behind another frame.
                     log.w("wireless: no credentials yet, asking again")
-                    send(WppMessageId.INFO_REQUEST, ByteArray(0))
-                    infoRetried = true
+                    requestInfo()
+                }
+                if (now() >= phoneStartDueAt) {
+                    log.i("wireless: no WifiStartRequest from the head unit, sending ours")
+                    if (phoneStartFirstAt == 0L) phoneStartFirstAt = now()
+                    phoneStartDueAt = Long.MAX_VALUE
+                    send(WppMessageId.START_REQUEST, ByteArray(0))
                 }
                 continue
             }
@@ -243,27 +298,56 @@ class WirelessBootstrap(
                 )
                 is Inbound.Message -> event.frame
             }
+            if (!heardFromHeadUnit) {
+                heardFromHeadUnit = true
+                deadline = now() + options.messageTimeoutMs
+            }
             when (frame.id) {
                 WppMessageId.VERSION_REQUEST -> {
                     answerVersionRequest(frame.payload)
+                    versionAnswered = true
+                    // Each exchange (re)starts the wait for the head unit's own request.
+                    phoneStartFirstAt = 0L
+                    phoneStartDueAt = if (start == null && options.phoneStartDelayMs > 0) now() + options.phoneStartDelayMs else Long.MAX_VALUE
                     deadline = now() + options.messageTimeoutMs
                 }
                 WppMessageId.START_REQUEST -> {
                     val request = parse("WifiStartRequest") { WifiStartRequest.parseFrom(frame.payload) }
                     log.i("wireless: head unit AAP server ${request.ipAddress}:${request.port}" +
                         if (request.hasReason()) " (reason ${request.reason})" else "")
-                    if (request.port !in 1..65535) {
-                        sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
-                        throw fail("head unit sent an invalid port ${request.port}", WppStatus.INVALID_HOST)
-                    }
+                    checkPort(request.port, request.hasPort())
                     if (start != null) log.w("wireless: repeated WifiStartRequest, using the latest one")
-                    start = request
+                    start = Endpoint(request.ipAddress, request.port, phoneStarted = false)
+                    phoneStartDueAt = Long.MAX_VALUE
                     // A phone that already has the credentials skips the info request.
-                    if (credentials == null && infoRequestedAt == 0L) {
-                        send(WppMessageId.INFO_REQUEST, ByteArray(0))
-                        infoRequestedAt = now()
-                    }
+                    if (credentials == null && infoRequests == 0) requestInfo()
                     deadline = now() + options.messageTimeoutMs
+                }
+                WppMessageId.START_RESPONSE -> {
+                    deadline = now() + options.messageTimeoutMs
+                    if (phoneStartFirstAt == 0L || start != null) {
+                        log.w("wireless: ignoring a WifiStartResponse we did not wait for")
+                        continue
+                    }
+                    val response = parse("WifiStartResponse") { WifiStartResponse.parseFrom(frame.payload) }
+                    when (val status = response.status.number) {
+                        WppStatus.SUCCESS -> {
+                            log.i("wireless: head unit accepted our WifiStartRequest, AAP server ${response.ipAddress}:${response.port}")
+                            checkPort(response.port, response.hasPort())
+                            start = Endpoint(response.ipAddress, response.port, phoneStarted = true)
+                            if (credentials == null && infoRequests == 0) requestInfo()
+                        }
+                        // Keep asking through these, 2 s apart, for 50 s.
+                        WppStatus.WIFI_NOT_YET_STARTED, WppStatus.PROJECTION_ALREADY_STARTED ->
+                            if (now() - phoneStartFirstAt <= options.phoneStartRetryLimitMs) {
+                                log.i("wireless: head unit answered our WifiStartRequest with status $status, asking again")
+                                phoneStartDueAt = now() + options.phoneStartRetryMs
+                            } else {
+                                log.w("wireless: head unit still answers our WifiStartRequest with status $status, no longer asking")
+                            }
+                        WppStatus.WIFI_DISABLED -> log.w("wireless: the head unit's Wi-Fi is off, no longer asking it to start")
+                        else -> log.w("wireless: head unit answered our WifiStartRequest with status $status")
+                    }
                 }
                 WppMessageId.INFO_RESPONSE -> {
                     credentials = parseCredentials(frame.payload)
@@ -276,6 +360,18 @@ class WirelessBootstrap(
         return start to credentials
     }
 
+    /**
+     * The port is not checked below WPP 4.5 (port 0 then fails at the TCP
+     * connect) and wants one from 0 to 65535 from 4.5. One we cannot even dial is refused like a bad
+     * address, which it reports in a WifiConnectionStatus.
+     */
+    private fun checkPort(port: Int, hasPort: Boolean) {
+        if (port in 0..65535 && (hasPort || !headUnitAtLeast(4, 5))) return
+        sendConnectionStatus(WppStatus.INVALID_HOST)
+        throw fail("head unit sent an invalid port $port", WppStatus.INVALID_HOST)
+    }
+
+    /** Answers a WifiVersionRequest, always with SUCCESS. */
     private fun answerVersionRequest(payload: ByteArray) {
         val request = runCatching { WifiVersionRequest.parseFrom(payload) }.getOrNull()
         if (request == null) {
@@ -287,6 +383,11 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " (offers WPP over TCP at ${request.wppInfo.ipAddress}:${request.wppInfo.port}, unsupported)" else ""))
         }
+        if (request != null) headUnitVersion = request.major to request.minor
+        // Always SUCCESS: refusing a version or the channels could stop head units that work today.
+        // What the stricter rules would say is logged, for reports from cars that misbehave.
+        val strict = versionStatus(request?.major ?: 0, request?.minor ?: 0, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
+        if (strict != WppStatus.SUCCESS) log.i("wireless: answering the version request with SUCCESS (stricter version and channel rules would answer $strict)")
         // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
         // type the head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold
         // the WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
@@ -322,18 +423,31 @@ class WirelessBootstrap(
         }
     }
 
+    /**
+     * The credentials as the head unit sent them, when [parseCredentials] took quotes off them: the
+     * join falls back to these if the unquoted ones fail.
+     */
+    private var quotedCredentials: WifiCredentials? = null
+
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
         val bssid = info.bssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
         if (info.bssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"${info.bssid}\"")
-        return WifiCredentials(
-            ssid = info.ssid,
-            password = info.password,
+        // One pair of surrounding double quotes is dropped from both for head units
+        // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
+        val unquote = !headUnitAtLeast(4, 5)
+        fun credentials(ssid: String, password: String) = WifiCredentials(
+            ssid = ssid,
+            password = password,
             bssid = bssid?.uppercase(),
             security = WppSecurityMode.toSecurity(info.securityMode, info.password),
             securityMode = info.securityMode,
             accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null,
         )
+        val ssid = if (unquote) unquoted(info.ssid) else info.ssid
+        val password = if (unquote) unquoted(info.password) else info.password
+        quotedCredentials = if (ssid != info.ssid || password != info.password) credentials(info.ssid, info.password) else null
+        return credentials(ssid, password)
     }
 
     // ---- phase 2: join the network ----
@@ -352,10 +466,15 @@ class WirelessBootstrap(
         } else {
             val keepalive = Keepalive().also { it.start() }
             try {
-                listener.connectWifi(credentials)
-            } catch (e: Exception) {
-                log.w("wireless: joining \"${credentials.ssid}\" threw", e)
-                JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+                val first = connectWifi(credentials)
+                val quoted = quotedCredentials
+                // The quotes may be part of the real name or passphrase: try them as sent, once.
+                if (first is JoinResult.Failed && quoted != null && first.status != WppStatus.PHONE_WIFI_DISABLED && !closed.get()) {
+                    log.w("wireless: joining without the quotes failed (${first.message}), trying the credentials as sent")
+                    connectWifi(quoted)
+                } else {
+                    first
+                }
             } finally {
                 keepalive.stop()
             }
@@ -369,12 +488,20 @@ class WirelessBootstrap(
             is JoinResult.Failed -> {
                 // Only type 6 means "the phone could not get onto the network"; a failed type 7
                 // would tell the head unit its endpoint was refused.
-                sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(result.status, result.message))
+                sendConnectionStatus(result.status)
                 Thread.sleep(FAIL_LINGER_MS) // let the status leave before the caller drops the link
                 throw fail("could not join \"${credentials.ssid}\": ${result.message}", result.status)
             }
         }
     }
+
+    private fun connectWifi(credentials: WifiCredentials): JoinResult =
+        try {
+            listener.connectWifi(credentials)
+        } catch (e: Exception) {
+            log.w("wireless: joining \"${credentials.ssid}\" threw", e)
+            JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+        }
 
     /** Pings the head unit while [Listener.connectWifi] blocks. */
     private inner class Keepalive {
@@ -433,6 +560,8 @@ class WirelessBootstrap(
             while (true) {
                 val frame = readWppFrame(input) ?: break
                 log.d("wireless: <- $frame")
+                // Possibly a desynchronised stream; accepted anyway, so head units that send such frames keep working.
+                if (frame.payload.size > WPP_MAX_PAYLOAD) log.w("wireless: unusually long frame from the head unit: $frame")
                 if (frame.id == WppMessageId.PING_REQUEST) {
                     // Answered here so pings are answered even while connectWifi() blocks.
                     sendQuietly(WppMessageId.PING_RESPONSE, frame.payload)
@@ -475,11 +604,19 @@ class WirelessBootstrap(
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
             .build().toByteArray()
 
-    private fun connectionStatus(status: Int, message: String?): ByteArray =
-        WifiConnectionStatus.newBuilder()
+    /**
+     * Reports how joining the network went, with an error_message only for
+     * [WppStatus.PHONE_WIFI_DISABLED]: a text the head unit may show the driver (so never our
+     * internal error text).
+     */
+    private fun sendConnectionStatus(status: Int) {
+        val message = if (status == WppStatus.PHONE_WIFI_DISABLED) PHONE_WIFI_DISABLED_MESSAGE else null
+        val payload = WifiConnectionStatus.newBuilder()
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
             .apply { if (message != null) errorMessage = message }
             .build().toByteArray()
+        sendQuietly(WppMessageId.CONNECTION_STATUS, payload)
+    }
 
     private inline fun <T> parse(what: String, block: () -> T): T =
         try {
@@ -492,14 +629,68 @@ class WirelessBootstrap(
         if (closed.get()) throw WirelessBootstrapException("wireless bootstrap cancelled")
     }
 
-    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
-        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
+    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null, noStartRequest: Boolean = false) =
+        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING, noStartRequest = noStartRequest)
             .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000
 
-    private companion object {
-        val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
-        const val FAIL_LINGER_MS = 300L
+    /** Whether the head unit's WifiVersionRequest announced at least WPP [major].[minor]. */
+    private fun headUnitAtLeast(major: Int, minor: Int): Boolean {
+        val (m, n) = headUnitVersion ?: return false
+        return m > major || (m == major && n >= minor)
+    }
+
+    companion object {
+        private val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
+        private const val FAIL_LINGER_MS = 300L
+
+        /** First-message timeout on the first try with an adapter (see [isDongle]). */
+        const val DONGLE_FIRST_MESSAGE_TIMEOUT_MS = 3_700L
+        private val DONGLE_NAMES = listOf("Intercooler", "AndroidAuto-")
+
+        /**
+         * Whether a head unit's Bluetooth name marks a wireless adapter, by the adapters' usual
+         * names (case-sensitive substrings). It gives those a short first-message
+         * timeout on the first try only ([DONGLE_FIRST_MESSAGE_TIMEOUT_MS]): a quick redial helps an
+         * adapter that missed the first connection.
+         */
+        fun isDongle(bluetoothName: String?): Boolean = bluetoothName != null && DONGLE_NAMES.any { it in bluetoothName }
+
+        /**
+         * [Options.phoneStartDelayMs] for a redial to a head unit that waited for the phone last
+         * time: it gets 5 s to start by itself before we ask.
+         */
+        const val PHONE_START_DELAY_MS = 5_000L
+
+        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED), meant for the driver. */
+        internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
+
+        /**
+         * The WifiVersionResponse.status stricter version rules would give, only logged (we always
+         * answer SUCCESS): a request without a version (major 0) and WPP 1 and 4 to 6 pass, 2, 3
+         * and 7+ get NO_COMPATIBLE_VERSION, and below 4.5 one of the head unit's channels must be
+         * usable (see [channelsUsable]) or it is NO_SUPPORTED_WIFI_CHANNELS.
+         */
+        internal fun versionStatus(major: Int, minor: Int, headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Int = when {
+            major == 0 -> WppStatus.SUCCESS
+            major != 1 && major !in 4..6 -> WppStatus.NO_COMPATIBLE_VERSION
+            major > 4 || (major == 4 && minor >= 5) -> WppStatus.SUCCESS
+            !channelsUsable(headUnitChannels, phoneFrequencies) -> WppStatus.NO_SUPPORTED_WIFI_CHANNELS
+            else -> WppStatus.SUCCESS
+        }
+
+        /** [s] without one pair of surrounding double quotes. */
+        internal fun unquoted(s: String): String =
+            if (s.length > 1 && s.startsWith('"') && s.endsWith('"')) s.substring(1, s.length - 1) else s
+
+        /**
+         * The channel check of WifiVersionRequest.supported_wifi_channels: passes if any entry is
+         * one the phone's Wi-Fi can use, below 2400 (channel numbers, not frequencies: not
+         * checkable) or exactly 5000 (a placeholder some head units send). So a head unit that lists
+         * no channel fails it, unless the phone's frequencies are unknown (null): then it passes.
+         */
+        internal fun channelsUsable(headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Boolean =
+            phoneFrequencies == null || headUnitChannels.any { it < 2400 || it == 5000 || it in phoneFrequencies }
     }
 }
