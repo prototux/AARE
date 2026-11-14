@@ -90,6 +90,14 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("force_h264", v) }
 
     /**
+     * Encode the car screen at a constant bitrate (VideoEncoder.constantBitrate): for head units
+     * that drop the link when the whole picture changes, as with the phone screen. Off: variable.
+     */
+    var constantBitrateVideo: Boolean
+        get() = prefs.getBoolean("constant_bitrate_video", false)
+        set(v) = prefs.edit { putBoolean("constant_bitrate_video", v) }
+
+    /**
      * Put calls on the phone's loudspeaker and microphone while connected to a car (CallSpeaker),
      * for setups whose hands-free microphone doesn't work. Off: calls go where Android routes them.
      */
