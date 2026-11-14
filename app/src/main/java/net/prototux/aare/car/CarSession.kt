@@ -27,7 +27,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.ViewConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -586,6 +588,12 @@ class CarSession(
 
     @Volatile private var touchSize: Pair<Int, Int>? = null
 
+    /** The car's keys, with metastate and long presses injected on the main thread. */
+    private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
+        override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
+        override fun cancel(task: Runnable) = main.removeCallbacks(task)
+    }, ::onKey)
+
     private val inputListener = object : InputChannel.Listener {
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
@@ -594,8 +602,8 @@ class CarSession(
             }
             if (report.hasKeyEvent()) {
                 for (k in report.keyEvent.keysList) {
-                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} long=${k.longpress}")
-                    main.post { onKey(k.keycode, k.down, k.longpress) }
+                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} meta=${k.metastate} long=${k.longpress}")
+                    main.post { if (!closed) keys.onKey(k.keycode, k.down, k.metastate, k.longpress) }
                 }
             }
             if (report.hasRelativeEvent()) {
@@ -620,7 +628,9 @@ class CarSession(
     /** HOME goes to the dashboard; held, it hands the screen back to the car. */
     private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
 
-    private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+    private fun onKey(key: CarKey) {
+        val code = key.code
+        val down = key.down
         // Some head units send a media key while they set up, before AARE has a car screen (a
         // play as the session starts): acting on it would start the music the driver didn't ask
         // for, and over whatever the car was playing. The driver's own presses come once the
@@ -630,7 +640,7 @@ class CarSession(
             return
         }
         when (code) {
-            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress, key.repeat)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
@@ -646,8 +656,17 @@ class CarSession(
             KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
-            else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+            else -> dispatchCarKey(key)
         }
+    }
+
+    /** A key for the car screen itself: the D-pad, Enter, letters... */
+    private fun dispatchCarKey(key: CarKey) {
+        val d = display ?: return
+        val t = SystemClock.uptimeMillis()
+        val flags = if (key.down && key.longPress) KeyEvent.FLAG_LONG_PRESS else 0
+        d.dispatchKey(KeyEvent(t, t, if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
+            key.repeat, key.metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags))
     }
 
     /**
@@ -971,6 +990,7 @@ class CarSession(
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         main.removeCallbacks(videoFocusCheck)
+        keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null

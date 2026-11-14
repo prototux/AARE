@@ -48,4 +48,13 @@ class LongPressKeyTest {
         key.onKey(down = false, longPress = false)
         assertEquals(listOf("long", "press"), events)
     }
+
+    @Test
+    fun carRepeatsAfterTheLongPressDoNotTurnItsUpIntoAPress() {
+        key.onKey(down = true, longPress = false, repeat = 0)
+        key.onKey(down = true, longPress = true, repeat = 1) // the synthetic long press, while held
+        key.onKey(down = true, longPress = false, repeat = 2) // the car keeps repeating the down
+        key.onKey(down = false, longPress = false)
+        assertEquals(listOf("long"), events)
+    }
 }
