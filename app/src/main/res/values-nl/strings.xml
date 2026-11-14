@@ -52,7 +52,7 @@
     <string name="setup_toggle_wireless_title">Draadloos</string>
     <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
     <string name="setup_toggle_wpp_over_tcp_title">Sneller draadloos opnieuw verbinden (WPP via TCP)</string>
-    <string name="setup_toggle_wpp_over_tcp_subtitle">Voor auto\'s die het aanbieden: na een eerste draadloze verbinding opnieuw verbinden via de wifi van de auto, zonder de instelstap via Bluetooth. Bewaart het wifi-wachtwoord van de auto op deze telefoon. Vertrouw de auto één keer vanuit de melding. Een auto waarbij het blijft mislukken, gaat terug naar Bluetooth. Android 11 en hoger.</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Voor auto\'s die het aanbieden: na een eerste draadloze verbinding opnieuw verbinden via de Wi-Fi van de auto, zonder de instelstap via Bluetooth. Bewaart het Wi-Fi-wachtwoord van de auto op deze telefoon. Vertrouw de auto één keer vanuit de melding. Een auto waarbij het blijft mislukken, gaat terug naar Bluetooth. Android 11 en hoger.</string>
     <string name="setup_toggle_resume_music_title">Muziek hervatten</string>
     <string name="setup_toggle_resume_music_subtitle">Start de laatst gebruikte muziekapp wanneer de auto verbinding maakt</string>
     <string name="setup_bt_address_label">Bluetooth-adres van de telefoon (optioneel)</string>

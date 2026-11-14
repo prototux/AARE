@@ -52,7 +52,7 @@
     <string name="setup_toggle_wireless_title">Kabellos</string>
     <string name="setup_toggle_wireless_subtitle">Verbindet sich über Wi-Fi mit gekoppelten Autos, sobald sie in Bluetooth-Reichweite kommen</string>
     <string name="setup_toggle_wpp_over_tcp_title">Schnellere kabellose Wiederverbindung (WPP über TCP)</string>
-    <string name="setup_toggle_wpp_over_tcp_subtitle">Für Autos, die es anbieten: Nach der ersten kabellosen Verbindung wird über das WLAN des Autos ohne den Einrichtungsschritt per Bluetooth neu verbunden. Speichert das WLAN-Passwort des Autos auf diesem Telefon. Dem Auto einmal über die Benachrichtigung vertrauen. Ein Auto, bei dem es immer wieder fehlschlägt, nutzt wieder Bluetooth. Ab Android 11.</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Für Autos, die es anbieten: Nach der ersten kabellosen Verbindung wird über das Wi-Fi des Autos ohne den Einrichtungsschritt per Bluetooth neu verbunden. Speichert das Wi-Fi-Passwort des Autos auf diesem Telefon. Dem Auto einmal über die Benachrichtigung vertrauen. Ein Auto, bei dem es immer wieder fehlschlägt, nutzt wieder Bluetooth. Ab Android 11.</string>
     <string name="setup_toggle_resume_music_title">Musik fortsetzen</string>
     <string name="setup_toggle_resume_music_subtitle">Startet die zuletzt verwendete Musik-App, wenn sich das Auto verbindet</string>
     <string name="setup_bt_address_label">Bluetooth-Adresse des Telefons (optional)</string>
