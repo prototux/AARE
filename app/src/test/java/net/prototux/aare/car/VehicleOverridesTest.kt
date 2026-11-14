@@ -155,10 +155,11 @@ class VehicleOverridesTest {
 
     @Test fun theNewKeysAreParsed() {
         val o = VehicleOverrides.parse("""{"rules":[{"match":{"make":"X"},"apply":{"videoResolutions":["800x480"],"pixelAspect":1.1515,
-            "singleChannelCapture":true,"forceElectric":true,"wifiMediaStartSilence":8,"wifiGuidanceStartSilence":4,
+            "reportedPixelAspect":true,"singleChannelCapture":true,"forceElectric":true,"wifiMediaStartSilence":8,"wifiGuidanceStartSilence":4,
             "mediaOnGainTransient":true,"pauseOnGuidanceOnly":false,"wireless":false,"exitToCar":false,"exitLabel":"make"}}]}""").single().override
         assertEquals(setOf("800x480"), o.videoResolutions)
         assertEquals(1.1515f, o.pixelAspect!!, 1e-6f)
+        assertEquals(true, o.reportedPixelAspect)
         assertEquals(true, o.singleChannelCapture)
         assertEquals(true, o.forceElectric)
         assertEquals(8, o.wifiMediaStartSilence)

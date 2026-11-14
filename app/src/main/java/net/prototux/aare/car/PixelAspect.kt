@@ -19,14 +19,14 @@ object PixelAspect {
     private const val MAX = 2f
 
     /**
-     * The factor to lay the UI out with. A vehicles.json [override] wins. Otherwise:
-     * from protocol 1.2 on (or a head unit without a make) what the head unit reports,
-     * and nothing for older ones: the built-in table of older head units with non-square pixels
-     * is in the built-in vehicles.json, as rules limited to those versions.
+     * The factor to lay the UI out with. A vehicles.json [override] wins (the built-in file has
+     * one for some older head units, protocol 1.1 and before, that can't report it). What the head
+     * unit reports, from protocol 1.2 on (or without a make), only with [useReported]: off unless
+     * asked for, so no head unit that looks right today changes.
      */
-    fun factor(override: Float?, reportedE4: Int?, protocol: Pair<Int, Int>?, make: String): Float {
+    fun factor(override: Float?, reportedE4: Int?, protocol: Pair<Int, Int>?, make: String, useReported: Boolean): Float {
         val reportsIt = protocol == null || VehicleMatch.compareVersions(protocol, 1 to 2) >= 0 || make.isEmpty()
-        val f = override ?: reportedE4?.takeIf { reportsIt && it > 0 }?.let { it / 10_000f } ?: return 1f
+        val f = override ?: reportedE4?.takeIf { useReported && reportsIt && it > 0 }?.let { it / 10_000f } ?: return 1f
         return if (f in MIN..MAX) f else 1f
     }
 

@@ -27,6 +27,8 @@ data class VehicleOverride(
     val videoResolutions: Set<String>? = null,
     /** Width / height of one of the car screen's pixels (see [PixelAspect]); 1 is square. */
     val pixelAspect: Float? = null,
+    /** Lay the UI out with the pixel aspect the head unit reports (protocol 1.2 on) when [pixelAspect] isn't set (AARE's default: no). */
+    val reportedPixelAspect: Boolean? = null,
     /** Navigation voice goes with the music on the media channel; the guidance channel stays unused. */
     val singleChannelCapture: Boolean? = null,
     /** The car is electric even though it reports no fuel type, or an unknown one. */
@@ -57,6 +59,7 @@ data class VehicleOverride(
         micSetup = micSetup ?: base.micSetup,
         videoResolutions = videoResolutions ?: base.videoResolutions,
         pixelAspect = pixelAspect ?: base.pixelAspect,
+        reportedPixelAspect = reportedPixelAspect ?: base.reportedPixelAspect,
         singleChannelCapture = singleChannelCapture ?: base.singleChannelCapture,
         forceElectric = forceElectric ?: base.forceElectric,
         wifiMediaStartSilence = wifiMediaStartSilence ?: base.wifiMediaStartSilence,
@@ -75,7 +78,7 @@ data class VehicleOverride(
     override fun toString(): String = listOf(
         "dpi" to dpi, "widthMargin" to widthMargin, "heightMargin" to heightMargin, "maxHeight" to maxHeight,
         "prefer60fps" to prefer60fps, "skipServices" to skipServices, "openServices" to openServices, "micSetup" to micSetup,
-        "videoResolutions" to videoResolutions, "pixelAspect" to pixelAspect, "singleChannelCapture" to singleChannelCapture,
+        "videoResolutions" to videoResolutions, "pixelAspect" to pixelAspect, "reportedPixelAspect" to reportedPixelAspect, "singleChannelCapture" to singleChannelCapture,
         "forceElectric" to forceElectric, "wifiMediaStartSilence" to wifiMediaStartSilence,
         "wifiGuidanceStartSilence" to wifiGuidanceStartSilence, "mediaOnGainTransient" to mediaOnGainTransient,
         "pauseOnGuidanceOnly" to pauseOnGuidanceOnly, "wireless" to wireless, "exitToCar" to exitToCar, "exitLabel" to exitLabel,
@@ -274,7 +277,8 @@ object VehicleOverrides {
                 maxHeight = int(a, "maxHeight"), prefer60fps = bool(a, "prefer60fps"),
                 skipServices = strings(a, "skipServices"), openServices = strings(a, "openServices"),
                 micSetup = bool(a, "micSetup"), videoResolutions = strings(a, "videoResolutions"),
-                pixelAspect = float(a, "pixelAspect"), singleChannelCapture = bool(a, "singleChannelCapture"),
+                pixelAspect = float(a, "pixelAspect"), reportedPixelAspect = bool(a, "reportedPixelAspect"),
+                singleChannelCapture = bool(a, "singleChannelCapture"),
                 forceElectric = bool(a, "forceElectric"), wifiMediaStartSilence = int(a, "wifiMediaStartSilence"),
                 wifiGuidanceStartSilence = int(a, "wifiGuidanceStartSilence"), mediaOnGainTransient = bool(a, "mediaOnGainTransient"),
                 pauseOnGuidanceOnly = bool(a, "pauseOnGuidanceOnly"), wireless = bool(a, "wireless"),

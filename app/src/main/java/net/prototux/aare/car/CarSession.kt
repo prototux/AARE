@@ -523,7 +523,7 @@ class CarSession(
         // Non-square car pixels: the UI is laid out on a logical screen that the car's pixels
         // stretch back to the right shape (PixelAspect).
         val aspect = PixelAspect.factor(vehicleOverride?.pixelAspect, config.pixelAspectRatioE4.takeIf { config.hasPixelAspectRatioE4() },
-            aap.headUnitVersion, headUnit?.make.orEmpty())
+            aap.headUnitVersion, headUnit?.make.orEmpty(), useReported = vehicleOverride?.reportedPixelAspect == true)
         val (logicalWidth, logicalHeight) = PixelAspect.logicalSize(layout.contentWidth, layout.contentHeight, aspect)
         videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe() + (if (aspect != 1f) " pixel aspect $aspect" else "")
         Log.i(TAG, "projection $videoDescription")

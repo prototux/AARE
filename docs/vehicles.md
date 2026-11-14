@@ -67,7 +67,8 @@ For example, a rule for every Ford head unit by Harman older than protocol 1.4:
 | `openServices` | list | Services the car lists that AARE doesn't use, opened anyway; AARE sends nothing on them and ignores what the car sends. |
 | `micSetup` | true/false | Send SETUP on the microphone channel when it opens (default: true). |
 | `videoResolutions` | list | The only video resolutions to pick (`"800x480"`…), when the head unit offers one of them. |
-| `pixelAspect` | number | Width over height of one of the car screen's pixels (1.15: wider than tall). The UI is laid out wider (or taller, below 1) and squeezed into the video, so it looks right on the car. Default: what the head unit reports from protocol 1.2 on, else 1. |
+| `pixelAspect` | number | Width over height of one of the car screen's pixels (1.15: wider than tall). The UI is laid out wider (or taller, below 1) and squeezed into the video, so it looks right on the car. Default: 1 (the built-in file sets it for some head units before protocol 1.2). |
+| `reportedPixelAspect` | true/false | Use the pixel aspect the head unit reports (protocol 1.2 on) when `pixelAspect` isn't set (default: false). |
 | `singleChannelCapture` | true/false | Navigation voice goes with the music on the media channel; the guidance channel stays unused. |
 | `forceElectric` | true/false | Tell apps the car is electric when it reports no fuel type or an unknown one. |
 | `wifiMediaStartSilence`, `wifiGuidanceStartSilence` | number | Silent audio messages sent ahead of a music / navigation voice stream, over Wi-Fi (default: 4 and 4; 0 for music from protocol 5.0 on). Over USB none are sent. |
