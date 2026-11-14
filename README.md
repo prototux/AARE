@@ -332,7 +332,11 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
   computer*: started that way it doesn't need wireless debugging, and runs until the phone
   reboots (as long as USB debugging stays on) ([discussion](https://github.com/prototux/AARE/discussions/49)).
 - **Screen capture:** works everywhere, but Android only gives normal apps media, game and
-  "unknown" sounds, so navigation voice stays on the phone, and apps may opt out.
+  "unknown" sounds, so navigation voice stays on the phone, and apps may opt out. Android asks
+  for the permission again once AARE has been closed. Reported but not confirmed yet: after a
+  one-time `adb shell appops set net.prototux.aare PROJECT_MEDIA allow` (no root needed),
+  Android approves AARE's request without the dialog, so tapping *Screen-capture permission* is
+  enough ([discussion](https://github.com/prototux/AARE/discussions/88)). It may not hold on every phone, or after a reboot.
 
 Some cars keep playing the phone's **Bluetooth** audio while in Android Auto mode (the Toyota
 Land Cruiser in [Tested on real head units](#tested-on-real-head-units) does). With those, none
