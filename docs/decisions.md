@@ -168,7 +168,8 @@ only adds a fallback or only applies after a failure.
 - SSID and passphrase lose one pair of surrounding quotes below WPP 4.5; if joining that way fails,
   the join is tried once more with them as sent.
 - First message after the RFCOMM connect: 12 s, 3.7 s on the first attempt with a wireless adapter
-  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly.
+  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly: at once,
+  without the 10 s wait and without using up one of the two retries for a car that isn't ready.
 - RFCOMM frames over 1024 bytes are logged, not refused.
 - Bad endpoint: reported as WifiConnectionStatus(INVALID_HOST); port 0 is accepted below WPP 4.5 (it
   fails at the TCP connect), a port outside 0-65535 is refused. WifiConnectionStatus carries an

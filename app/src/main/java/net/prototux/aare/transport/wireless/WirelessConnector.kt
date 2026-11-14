@@ -35,8 +35,11 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-/** Wireless connection setup failed; [message] says at which step. */
-class WirelessException(message: String, cause: Throwable? = null) : IOException(message, cause)
+/**
+ * Wireless connection setup failed; [message] says at which step. [quickTry]: it was an adapter's
+ * quick first try (see [WirelessBootstrap.isDongle]), which is meant to be redialled at once.
+ */
+class WirelessException(message: String, cause: Throwable? = null, val quickTry: Boolean = false) : IOException(message, cause)
 
 /** Runtime permissions the user has not granted (yet). Request [missing] and try again. */
 class WirelessPermissionException(val missing: List<String>) :
@@ -151,6 +154,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         @Volatile private var network: HeadUnitNetwork? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
+        /** This attempt is an adapter's quick first try (see [bootstrapOptions]). */
+        private var quickTry = false
 
         fun run(): Transport {
             requirePermissions(requiredPermissions())
@@ -182,6 +187,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 // checkNotAborted() and the field write), and every such path ends here.
                 releaseAll()
                 if (wasAborted && e !is WirelessException) throw WirelessException("cancelled", e)
+                if (quickTry && !wasAborted) throw WirelessException(e.message ?: "wireless quick first try failed", e, quickTry = true)
                 throw e
             }
         }
@@ -309,6 +315,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             if (WirelessBootstrap.isDongle(name) && dongleQuickTryUsed.compareAndSet(false, true)) {
                 log.i("wireless: \"$name\" is a wireless adapter: ${WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS} ms for its first message")
                 result = result.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
+                quickTry = true
             }
             if (device.address in waitingForPhone && result.phoneStartDelayMs <= 0) {
                 result = result.copy(phoneStartDelayMs = WirelessBootstrap.PHONE_START_DELAY_MS)

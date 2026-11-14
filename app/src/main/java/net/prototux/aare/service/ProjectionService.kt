@@ -55,6 +55,7 @@ import net.prototux.aare.transport.TcpServer
 import net.prototux.aare.transport.UsbAccessoryTransport
 import net.prototux.aare.transport.UsbReattach
 import net.prototux.aare.transport.wireless.WirelessConnector
+import net.prototux.aare.transport.wireless.WirelessException
 import net.prototux.aare.ui.MainActivity
 
 /**
@@ -237,6 +238,11 @@ class ProjectionService : Service() {
                 } catch (e: Exception) {
                     log("wireless: ${e.message}")
                     val carNotReady = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessBootstrapException && it.whileNegotiating }
+                    // An adapter's quick first try is there to be redialled: at once, and not as one of the retries.
+                    if (carNotReady && e is WirelessException && e.quickTry && session == null) {
+                        log("wireless: redialling the adapter after its quick first try")
+                        continue
+                    }
                     if (carNotReady && retries < WIRELESS_RETRIES && session == null) {
                         retries++
                         val wait = WIRELESS_RETRY_DELAY_MS * retries
