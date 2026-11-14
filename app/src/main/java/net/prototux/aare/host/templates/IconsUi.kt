@@ -70,7 +70,8 @@ internal fun CarIconView(
 ) {
     if (icon == null) return
     val scheme = MaterialTheme.colorScheme
-    val tint: Color? = if (icon.tint.isSet()) icon.tint.resolve(scheme, LocalCarColors.current, LocalContentColor.current) else null
+    val app = LocalTemplateHost.current.appColors
+    val tint: Color? = if (icon.tint.isSet()) icon.tint.resolve(scheme, LocalCarColors.current, LocalContentColor.current, app) else null
     when (icon.type) {
         CarIcon.TYPE_CUSTOM -> {
             // wide images (lanes, junctions) get a box [widthFactor] times wider than tall
