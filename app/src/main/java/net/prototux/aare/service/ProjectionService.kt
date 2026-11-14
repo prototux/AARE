@@ -365,14 +365,17 @@ class ProjectionService : Service() {
         sessionStart = SystemClock.elapsedRealtime()
         val s = CarSession(this, transport, cert.identity, settings, media, { projection }, wireless, peerKey, trustOnFirstUse, sessionListener, mirror)
         session = s
-        _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null, pendingTrust = null) }
+        _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null) }
         s.start()
     }
 
     private val sessionListener = object : CarSession.Listener {
         override fun onStatus(session: CarSession, status: String) {
             log(status)
-            _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription) }
+            // A head unit name comes with service discovery, after the phone accepted the head unit's
+            // certificate: nothing is left to trust.
+            _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription,
+                pendingTrust = it.pendingTrust.takeIf { session.headUnitName.isBlank() }) }
             updateNotification(status)
         }
 
@@ -422,7 +425,9 @@ class ProjectionService : Service() {
             }
             pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
-            _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r }, pendingTrust = pinRefusal) }
+            _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r },
+                // A later attempt that fails otherwise (USB retries every few seconds) keeps the Trust button.
+                pendingTrust = pinRefusal ?: it.pendingTrust) }
             updateNotification(getString(R.string.notif_status_not_connected))
             // A USB link that dropped while still plugged in usually comes back: retry a few times.
             // Not a refused certificate: it would be refused again until the user trusts it.
