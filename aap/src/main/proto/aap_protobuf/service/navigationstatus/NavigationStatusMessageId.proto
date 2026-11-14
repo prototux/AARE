@@ -12,4 +12,8 @@ enum NavigationStatusMessageId
   INSTRUMENT_CLUSTER_NAVIGATION_DISTANCE_EVENT = 32773 [deprecated = true];
   INSTRUMENT_CLUSTER_NAVIGATION_STATE = 32774;
   INSTRUMENT_CLUSTER_NAVIGATION_CURRENT_POSITION = 32775;
+  // 0x8008 and 0x8009; names are AARE's. The head unit sends the energy
+  // forecast to head units newer than 5.0 and the route info to 7.0 and later.
+  INSTRUMENT_CLUSTER_NAVIGATION_RAW_VEHICLE_ENERGY_FORECAST = 32776;
+  INSTRUMENT_CLUSTER_NAVIGATION_RAW_ROUTE_INFO = 32777;
 }

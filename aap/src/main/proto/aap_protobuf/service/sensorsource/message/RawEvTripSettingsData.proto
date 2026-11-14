@@ -1,0 +1,9 @@
+syntax="proto2";
+
+package aap_protobuf.service.sensorsource.message;
+
+// AARE: SensorBatch field 26: a serialized message of its own that
+// AARE does not model.
+message RawEvTripSettingsData {
+  optional bytes data = 1;
+}

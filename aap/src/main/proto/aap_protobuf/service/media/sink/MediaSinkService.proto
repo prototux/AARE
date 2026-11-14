@@ -19,4 +19,7 @@ message MediaSinkService
     optional uint32 display_id = 6;
     optional message.DisplayType display_type = 7;
     optional message.KeyCode initial_content_keycode = 8;
+    // Name is AARE's guess. An enum (0, 2 and 3 are accepted), read on the main
+    // display only and handed to its theming code.
+    optional int32 theming_support = 9;
 }

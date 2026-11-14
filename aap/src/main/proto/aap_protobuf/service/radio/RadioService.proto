@@ -7,5 +7,27 @@ package aap_protobuf.service.radio;
 import "aap_protobuf/service/radio/message/RadioProperties.proto";
 
 message RadioService {
+    // AARE-only: no field 1 here otherwise. Kept because the head unit simulator and
+    // DiscoveryParsingTest build it; nothing in AARE reads it.
     repeated message.RadioProperties radio_properties = 1;
+    // AARE: Field 2 and the messages below; names from the protocol's own
+    // RadioConfiguration class.
+    optional RadioConfiguration radio_configuration = 2;
+}
+
+message RadioConfiguration {
+    repeated RadioBandGroup band_configs = 1;
+}
+
+message RadioBandGroup {
+    repeated RadioBand bands = 1;
+    optional bool hide_empty_group = 2;
+    optional string band_scan_action = 3;
+    optional bool keep_original_station_order = 4;
+}
+
+enum RadioBand {
+    RADIO_BAND_AM = 1;
+    RADIO_BAND_FM = 2;
+    RADIO_BAND_DAB = 3;
 }

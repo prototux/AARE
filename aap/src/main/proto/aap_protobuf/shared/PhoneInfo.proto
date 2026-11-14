@@ -5,4 +5,8 @@ package aap_protobuf.shared;
 message PhoneInfo {
   optional string instance_id = 1;
   optional string connectivity_lifetime_id = 2;
+  // 3 and 4, filled in during wireless setup, for head units new enough: the
+  // phone's Bluetooth name and address. Names are AARE's. AARE doesn't send them.
+  optional string bluetooth_name = 3;
+  optional string bluetooth_address = 4;
 }
