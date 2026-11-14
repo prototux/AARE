@@ -624,7 +624,7 @@
     <string name="home_on_card_title">On the dashboard card</string>
     <string name="home_on_card_subtitle">The card shows the first few; the Home app shows them all</string>
     <string name="home_arrival_toggle_title">Run when arriving</string>
-    <string name="home_arrival_toggle_subtitle">When the car comes near a place during a drive. A drive that starts there doesn\'t count.</string>
+    <string name="home_arrival_toggle_subtitle">Off by default. When the car comes near a place during a drive, the car screen asks once before running it. A drive that starts there doesn\'t count.</string>
     <string name="home_field_latitude">Latitude</string>
     <string name="home_field_longitude">Longitude</string>
     <string name="home_field_radius">Radius (metres)</string>

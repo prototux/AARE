@@ -6,7 +6,8 @@ Home Assistant setups. Set up on the phone under **Home actions**; off until swi
 
 - **Actions** are buttons. One sends an MQTT publish (topic, payload, QoS 0 or 1, retain) or an
   HTTP request (method, URL, headers, body). An action marked *Ask first* asks on the car screen
-  before sending (a garage door). An action can also run **on arrival** (below).
+  before sending (a garage door). An action can also be offered **on arrival** (below), always
+  with a confirmation tap.
 - **Tiles** are values: the last message on an MQTT topic, or an HTTP GET polled every N seconds
   (at least 10), optionally through a JSON path, with a unit.
 - In the car: a **Home** app in the launcher (every tile, then every action) and a **Home** card
@@ -31,13 +32,17 @@ connection) and disconnects when the last one closes. A dropped MQTT connection 
 
 ## Arrival trigger
 
-Per action, off by default: a place (latitude, longitude, the phone's location as a shortcut) and a
+Per action, opt-in (off by default): a place (latitude, longitude, the phone's location as a shortcut) and a
 radius (50–5000 m). During a car session (not the preview) AARE checks every 5 seconds the car's
 GPS, or the phone's last known location, ignoring fixes older than 2 minutes or vaguer than the
-radius (at least 100 m). The action runs when the car comes within the radius **after having been
-seen outside** `max(1.5 × radius, radius + 100 m)` during the drive: a drive that starts at the
-place (leaving home) is no arrival, and a car parked at the edge doesn't fire again. An action
-marked *Ask first* shows a notice with a *Run* button instead of running.
+radius (at least 100 m). The action is offered when the car comes within the radius **after having
+been seen outside** `max(1.5 × radius, radius + 100 m)` during the drive: a drive that starts at the
+place (leaving home) is no arrival, and a car parked at the edge doesn't fire again.
+
+An arrival never runs an action by itself, whatever its *Ask first*: the car screen shows a notice
+with a *Run* button for 30 seconds, and nothing is sent without that tap. A location can be wrong
+(a fix near home while driving past) and nobody is watching the screen when it fires, so a garage
+door or a gate always waits for one tap.
 
 ## Presets
 
@@ -98,4 +103,5 @@ headers.
 - A webhook id works like a password (whoever knows it can trigger the automation). It is part of
   the action's URL, so it is kept with the settings, not the secrets; prefer a token-protected
   service call for anything sensitive.
-- Arrival actions run without a tap: keep *Ask first* on for doors and gates.
+- Arrival triggers are off unless turned on per action, and always ask for one tap on the car
+  screen before sending.

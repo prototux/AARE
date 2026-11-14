@@ -71,7 +71,7 @@ object HomeHub {
 
     /**
      * A car screen is up. [primary]: a real car session, whose [location] (the car's, else the
-     * phone's) drives the arrival triggers and whose [onArrival] runs or offers the action.
+     * phone's) drives the arrival triggers and whose [onArrival] offers the action (it never runs without a tap).
      */
     fun start(context: Context, owner: Any, primary: Boolean, location: () -> Location?, onArrival: (HomeAction) -> Unit) {
         owners[owner] = Owner(primary, location, onArrival)

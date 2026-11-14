@@ -510,15 +510,14 @@ class CarRuntime(
         }
     }
 
-    /** The car arrived at an action's place: run it, or ask first if it is one to confirm. */
+    /**
+     * The car arrived at an action's place: always ask, whatever the action's own "Ask first". A
+     * position can be wrong (a fix near home on the way past, a neighbour's street), and nobody is
+     * looking at the screen when it fires, so a door or a gate never opens without one tap.
+     */
     private fun homeArrival(action: HomeAction) {
-        if (action.confirm) {
-            notice(context.getString(R.string.home_arrival_title), context.getString(R.string.home_confirm_question, action.name), durationMs = 30_000,
-                actions = listOf(context.getString(R.string.home_confirm_run) to { runHome(action) }))
-        } else {
-            notice(context.getString(R.string.home_arrival_title), action.name)
-            runHome(action)
-        }
+        notice(context.getString(R.string.home_arrival_title), context.getString(R.string.home_confirm_question, action.name), durationMs = 30_000,
+            actions = listOf(context.getString(R.string.home_confirm_run) to { runHome(action) }))
     }
 
     /** Navigates to [place] in the car's navigation app (geo: query), or false without one. */
