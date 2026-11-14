@@ -150,3 +150,19 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Night mode from the phone's light sensor
+
+A setting lets "Car's day/night" take its reading from the phone's own ambient light sensor
+instead of the car's signal. The decision is hysteresis, not a single threshold: separate
+night/day lux thresholds with a dead zone between them, and a new reading only takes effect once
+it has held for a few seconds (LightNightDecider). Without this, a streetlight passing by or a
+hand briefly covering the sensor would flicker the car screen's whole colour scheme.
+
+- No sunset/time-of-day option: AARE has no sunset calculation anywhere (checked DashboardInfo's
+  weather code), and adding one for this alone would be a new, unrelated feature.
+- The setting only shows under "Car's day/night": a fixed Dark/Light theme has no night mode to
+  source, so showing it there would imply it does something it doesn't.
+- The sensor is started and stopped with the setting (and always released when the car session
+  ends), not left registered when unused: a light sensor is cheap, but there's no reason to keep
+  listening when nothing reads the result.

@@ -170,6 +170,9 @@
     <string name="setup_choice_colors_auto">Car\'s day/night</string>
     <string name="setup_choice_dark">Dark</string>
     <string name="setup_choice_light">Light</string>
+    <string name="setup_choice_night_source">Night mode from</string>
+    <string name="setup_choice_night_source_car">The car</string>
+    <string name="setup_choice_night_source_light_sensor">Phone\'s light sensor</string>
     <string name="setup_choice_bar">Bar</string>
     <string name="setup_choice_bar_auto">Driver\'s side</string>
     <string name="setup_choice_left">Left</string>
