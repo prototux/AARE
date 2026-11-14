@@ -53,14 +53,18 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
     /**
-     * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO],
-     * [HandshakeChoice.BUILT_IN] (what AARE always did) or [HandshakeChoice.ADAPTER].
+     * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO] (the
+     * standard order, or the one that last worked with that car), [HandshakeChoice.BUILT_IN] (what
+     * AARE always did) or [HandshakeChoice.ADAPTER]. The adapter order is never guessed.
      */
     var wirelessCompatibility: String
         get() = prefs.getString("wireless_compatibility", null) ?: HandshakeChoice.AUTO
         set(v) = prefs.edit { putString("wireless_compatibility", v) }
 
-    /** The handshake that last reached service discovery, per head unit Bluetooth address (for Auto). */
+    /**
+     * The handshake that last reached service discovery, per head unit Bluetooth address (for Auto).
+     * TODO: move into KnownHeadUnits once #233 is merged.
+     */
     val wirelessHandshakes: Map<String, WirelessHandshake>
         get() = HandshakeChoice.parse(wirelessHandshakeEntries)
 

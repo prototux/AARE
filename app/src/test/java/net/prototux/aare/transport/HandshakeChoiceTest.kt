@@ -5,48 +5,29 @@ import net.prototux.aare.aap.wireless.WirelessHandshake.BUILT_IN
 import net.prototux.aare.transport.wireless.HandshakeChoice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HandshakeChoiceTest {
     @Test
-    fun adapterNamesAreRecognised() {
-        listOf("AAWireless-1A2B", "AA Wireless", "Carlinkit-7F3C", "AutoKit-0042", "OTTOCAST U2-AIR", "Motorola MA1", "MA1-5C21", "CPC200-CCPA")
-            .forEach { assertTrue(it, HandshakeChoice.looksLikeAdapter(it)) }
+    fun autoUsesTheStandardOrderUnlessTheAdapterOrderWorkedWithThisCar() {
+        assertEquals(BUILT_IN, HandshakeChoice.pick(HandshakeChoice.AUTO, null))
+        assertEquals(BUILT_IN, HandshakeChoice.pick(HandshakeChoice.AUTO, BUILT_IN))
+        // only remembered after the driver chose Adapter for this car
+        assertEquals(ADAPTER, HandshakeChoice.pick(HandshakeChoice.AUTO, ADAPTER))
     }
 
     @Test
-    fun carNamesAreNot() {
-        listOf("MY CAR", "Uconnect", "SYNC", "Audi MMI 2041", "Mazda", "Cinema1", "Toyota Entune", "", null)
-            .forEach { assertFalse("$it", HandshakeChoice.looksLikeAdapter(it)) }
+    fun aFixedSettingIgnoresMemory() {
+        assertEquals(BUILT_IN, HandshakeChoice.pick(HandshakeChoice.BUILT_IN, ADAPTER))
+        assertEquals(ADAPTER, HandshakeChoice.pick(HandshakeChoice.ADAPTER, BUILT_IN))
+        assertEquals(ADAPTER, HandshakeChoice.pick(HandshakeChoice.ADAPTER, null))
     }
 
     @Test
-    fun autoPrefersWhatWorkedThenTheName() {
-        assertEquals(BUILT_IN, HandshakeChoice.first(HandshakeChoice.AUTO, null, "Uconnect"))
-        assertEquals(ADAPTER, HandshakeChoice.first(HandshakeChoice.AUTO, null, "AAWireless-1A2B"))
-        // what worked last time wins over the name, both ways
-        assertEquals(BUILT_IN, HandshakeChoice.first(HandshakeChoice.AUTO, BUILT_IN, "AAWireless-1A2B"))
-        assertEquals(ADAPTER, HandshakeChoice.first(HandshakeChoice.AUTO, ADAPTER, "Uconnect"))
-    }
-
-    @Test
-    fun aFixedSettingIgnoresMemoryAndName() {
-        assertEquals(BUILT_IN, HandshakeChoice.first(HandshakeChoice.BUILT_IN, ADAPTER, "AAWireless-1A2B"))
-        assertEquals(ADAPTER, HandshakeChoice.first(HandshakeChoice.ADAPTER, BUILT_IN, "Uconnect"))
-        // an unknown stored value behaves as Auto
-        assertEquals(ADAPTER, HandshakeChoice.first("something", null, "Carlinkit"))
-    }
-
-    @Test
-    fun theOtherHandshakeIsTriedOnceAfterANegotiationFailureInAuto() {
-        assertEquals(ADAPTER, HandshakeChoice.switchAfterFailure(HandshakeChoice.AUTO, BUILT_IN, whileNegotiating = true, alreadySwitched = false))
-        assertEquals(BUILT_IN, HandshakeChoice.switchAfterFailure(HandshakeChoice.AUTO, ADAPTER, whileNegotiating = true, alreadySwitched = false))
-        assertNull("once per connection", HandshakeChoice.switchAfterFailure(HandshakeChoice.AUTO, ADAPTER, whileNegotiating = true, alreadySwitched = true))
-        assertNull("a Wi-Fi or TCP failure isn't the order", HandshakeChoice.switchAfterFailure(HandshakeChoice.AUTO, BUILT_IN, whileNegotiating = false, alreadySwitched = false))
-        assertNull("a fixed setting is kept", HandshakeChoice.switchAfterFailure(HandshakeChoice.BUILT_IN, BUILT_IN, whileNegotiating = true, alreadySwitched = false))
-        assertNull(HandshakeChoice.switchAfterFailure(HandshakeChoice.ADAPTER, ADAPTER, whileNegotiating = true, alreadySwitched = false))
+    fun anUnknownSettingIsAuto() {
+        assertEquals(BUILT_IN, HandshakeChoice.pick("something", null))
+        assertEquals(ADAPTER, HandshakeChoice.pick("something", ADAPTER))
     }
 
     @Test

@@ -159,10 +159,19 @@ the official phone's exact order, which some aftermarket adapters need (status-o
 start request acknowledged before the credentials are asked for, no phone pings). Adapters also get
 the head unit's own version back in the AAP version exchange. "Wireless compatibility" picks one.
 
-- Auto is the default: for a car whose first attempt works and whose name doesn't look like an
-  adapter's it is exactly the old behaviour. What reached service discovery is remembered per
-  Bluetooth address (32 at most); the name guess only decides the first try.
-- The other order is tried once, 2 s later, only after a failure while negotiating (the head unit
-  hung up or went silent before sending its network): that is how each kind refuses the other's
-  order. Wi-Fi and TCP failures don't switch. The "car not ready yet" retries then go back to the
-  first choice; the switch doesn't use their budget.
+- The adapter order is opt-in: only the Adapter choice turns it on. Auto (the default) is the
+  standard order, exactly the old behaviour, except for a car that last reached service discovery
+  with the adapter order (remembered per Bluetooth address, 32 at most), which only happens after
+  the driver chose Adapter: a driver with both kinds of car sets Adapter once, connects the adapter
+  car, and goes back to Auto. Built-in forces the standard order even for such a car.
+- Rejected: guessing the order from the Bluetooth name, and trying the other order after a failed
+  attempt. A name is chosen by whoever sells the box (or renames it), and a built-in head unit that
+  is slow to start would get an order it refuses; a wrong guess costs a connection the driver
+  cannot explain. The adapter names #232 uses for its short first-message timeout are the only
+  adapter-name list.
+- One `WirelessConnector` serves a whole series of attempts (the "car not ready yet" retries), as
+  before: it carries state from one attempt to the next (#232's redial that asks a waiting head
+  unit to start, an adapter's one quick first try), and the handshake doesn't change within a series.
+- No error text goes to the head unit: a failed WifiConnectionStatus carries the status only (the
+  text is for the driver, and ours is a log line).
+- The per-car memory moves to `KnownHeadUnits` (#233) once that is merged.

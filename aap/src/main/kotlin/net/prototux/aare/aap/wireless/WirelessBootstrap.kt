@@ -62,9 +62,7 @@ enum class WirelessHandshake {
      * response right after the start request and only then the info request, nothing but the
      * connection status once joined, and no pings from the phone (theirs are still answered).
      */
-    ADAPTER;
-
-    val other: WirelessHandshake get() = if (this == BUILT_IN) ADAPTER else BUILT_IN
+    ADAPTER,
 }
 
 class WirelessBootstrapException(
