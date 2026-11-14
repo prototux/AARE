@@ -159,9 +159,9 @@ beyond "bytes") per the standard SAE J2012 / ISO 15031-6 bit layout into the fam
 4-digit codes, and a catalogue AARE ships (`app/src/main/assets/dtc/generic.json`, ~350 entries,
 written from scratch for this PR) for the SAE-generic ones.
 
-- Classification is purely positional (the code's second character, 0/2 = generic, 1/3 =
-  manufacturer-specific): simpler than modelling every system's own sub-ranges, and matches how
-  the standard actually assigns the bits.
+- Classification follows SAE J2012's ranges per system: P0, P2 and P34-P39 generic, P1 and
+  P30-P33 manufacturer-specific; for C, B and U, 0 and 3 generic, 1 and 2 manufacturer-specific.
+  (A plain "second character 0/2" rule got B2/C2/U2 and P34-P39 wrong.)
 - Manufacturer-specific codes show their family ("manufacturer-specific powertrain code") and no
   description: AARE has no way to know what a given manufacturer assigned to e.g. P1300, and
   guessing would be worse than saying so.

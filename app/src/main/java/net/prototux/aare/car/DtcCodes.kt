@@ -11,9 +11,9 @@ import org.json.JSONObject
  * the catalogue AARE ships (`app/src/main/assets/dtc/generic.json`).
  *
  * The wire format (two bytes per code, as AAP's `DiagnosticsData.dtc` is otherwise undocumented):
- * byte 1 bits 7-6 pick the system letter, bits 5-4 the first digit (0-3: SAE-generic codes use 0
- * or 2, manufacturer-specific ones 1 or 3), bits 3-0 the second digit; byte 2's high and low
- * nibbles are the third and fourth digits. Each digit is a hex nibble (0-9, occasionally A-F).
+ * byte 1 bits 7-6 pick the system letter, bits 5-4 the first digit (0-3; which values are
+ * SAE-generic depends on the system, see [isGeneric]), bits 3-0 the second digit; byte 2's high
+ * and low nibbles are the third and fourth digits. Each digit is a hex nibble (0-9, occasionally A-F).
  */
 object DtcCodes {
     private const val TAG = "AareDtc"
@@ -39,11 +39,17 @@ object DtcCodes {
     fun family(code: String): String = FAMILIES[code.firstOrNull()?.uppercaseChar()] ?: "unknown"
 
     /**
-     * SAE/generic: the same meaning for every make, per J2012 (the second character is 0 or 2).
-     * 1 and 3 are manufacturer-specific (or, for some systems, jointly SAE/manufacturer-defined);
-     * either way AARE has no catalogue for them.
+     * SAE/generic: the same meaning for every make, per SAE J2012's ranges. Powertrain: P0, P2 and
+     * P34-P39 are generic; P1 and P30-P33 manufacturer-specific. Chassis, body and network: 0 and 3
+     * are generic, 1 and 2 manufacturer-specific. AARE has no catalogue for manufacturer codes.
      */
-    fun isGeneric(code: String): Boolean = code.getOrNull(1)?.let { it == '0' || it == '2' } == true
+    fun isGeneric(code: String): Boolean {
+        val digit = code.getOrNull(1) ?: return false
+        return when (code.first().uppercaseChar()) {
+            'P' -> digit == '0' || digit == '2' || (digit == '3' && code.getOrNull(2)?.let { it in '4'..'9' } == true)
+            'C', 'B', 'U' -> digit == '0' || digit == '3'
+            else -> false
+        }
 
     /** [code] with its family and a description: the catalogue's for a known generic code, "unknown" for an
      * uncatalogued generic one, or the family alone (no description) for a manufacturer-specific one. */

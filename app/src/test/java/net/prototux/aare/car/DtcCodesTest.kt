@@ -48,13 +48,15 @@ class DtcCodesTest {
     }
 
     @Test
-    fun genericIsTheSecondCharacterZeroOrTwo() {
-        assertTrue(DtcCodes.isGeneric("P0128"))
-        assertTrue(DtcCodes.isGeneric("P2201"))
-        assertTrue(DtcCodes.isGeneric("U0100"))
-        assertFalse(DtcCodes.isGeneric("P1300"))
-        assertFalse(DtcCodes.isGeneric("P3000"))
-        assertFalse(DtcCodes.isGeneric("U1000"))
+    fun genericFollowsTheJ2012RangesOfEachSystem() {
+        // Powertrain: P0, P2 and P34-P39 generic; P1 and P30-P33 manufacturer-specific.
+        for (code in listOf("P0128", "P2201", "P3400", "P3999")) assertTrue(code, DtcCodes.isGeneric(code))
+        for (code in listOf("P1300", "P3000", "P3300", "P33FF")) assertFalse(code, DtcCodes.isGeneric(code))
+        // Chassis, body, network: 0 and 3 generic; 1 and 2 manufacturer-specific.
+        for (code in listOf("B0001", "B3000", "C0035", "C3000", "U0100", "U3000")) assertTrue(code, DtcCodes.isGeneric(code))
+        for (code in listOf("B1000", "B2000", "C1000", "C2000", "U1000", "U2000")) assertFalse(code, DtcCodes.isGeneric(code))
+        assertFalse(DtcCodes.isGeneric(""))
+        assertFalse(DtcCodes.isGeneric("X0000"))
     }
 
     @Test
