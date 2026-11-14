@@ -77,13 +77,15 @@ import java.util.TimeZone
  */
 @Composable
 internal fun NavigationTemplateView(t: NavigationTemplate) {
-    MapScaffold(t.actionStrip, t.mapActionStrip, t.panModeDelegate) {
+    val compact = LocalCompactMap.current
+    // in the dashboard card only the turn card stays, so the map keeps most of the card
+    MapScaffold(t.actionStrip, t.mapActionStrip, t.panModeDelegate, inCompact = true) {
         val info = t.navigationInfo
-        val estimate = t.destinationTravelEstimate
+        val estimate = t.destinationTravelEstimate.takeIf { !compact }
         val width = if (narrow) maxWidth else panelWidth()
         val top = Modifier.align(Alignment.TopStart).width(width)
         when (info) {
-            is RoutingInfo -> RoutingCard(info, t.backgroundColor, top.obstructsMap())
+            is RoutingInfo -> if (compact) CompactRoutingCard(info, t.backgroundColor, top.obstructsMap()) else RoutingCard(info, t.backgroundColor, top.obstructsMap())
             is MessageInfo -> MessageInfoCard(info, t.backgroundColor, top.obstructsMap())
         }
         if (estimate != null) {
@@ -142,6 +144,40 @@ private fun RoutingCard(info: RoutingInfo, background: CarColor?, modifier: Modi
             }
         }
         info.nextStep?.let { next -> NextStepStrip(next, fg, dim) }
+    }
+}
+
+/**
+ * The dashboard card's turn card: one slim row (arrow, distance, road), no lanes, junction or
+ * next step, so the small card stays mostly map. The full card is a tap away.
+ */
+@Composable
+private fun CompactRoutingCard(info: RoutingInfo, background: CarColor?, modifier: Modifier) {
+    val (bg, fg) = turnCardColors(background)
+    val r = LocalCarDimens.current.cardRadius
+    val step = info.currentStep
+    Row(
+        modifier.shadow(6.dp, RoundedCornerShape(r)).clip(RoundedCornerShape(r)).background(bg)
+            .heightIn(min = 64.dp).padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (info.isLoading || step == null) {
+            CircularProgressIndicator(Modifier.size(32.dp), color = fg, strokeWidth = 4.dp)
+            return@Row
+        }
+        ManeuverIcon(step.maneuver, 44.dp, fg)
+        Spacer(Modifier.width(12.dp))
+        info.currentDistance?.let { d ->
+            Text(
+                CarFormat.distance(d.displayDistance, d.displayUnit),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = fg,
+                maxLines = 1,
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        val cue = if (!CarText.isNullOrEmpty(step.cue)) step.cue else step.road
+        CarTextView(cue, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, color = fg, maxLines = 1)
     }
 }
 
