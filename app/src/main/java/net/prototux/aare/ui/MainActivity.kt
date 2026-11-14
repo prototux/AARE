@@ -501,6 +501,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
     var btAddr by remember { mutableStateOf(settings.phoneBluetoothAddress) }
@@ -516,6 +517,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
+                callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
+            }
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(btAddr, { btAddr = it; settings.phoneBluetoothAddress = it.trim() }, Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.setup_bt_address_label)) },

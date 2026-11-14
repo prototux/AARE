@@ -89,6 +89,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("force_h264", false)
         set(v) = prefs.edit { putBoolean("force_h264", v) }
 
+    /**
+     * Put calls on the phone's loudspeaker and microphone while connected to a car (CallSpeaker),
+     * for setups whose hands-free microphone doesn't work. Off: calls go where Android routes them.
+     */
+    var callsOnPhoneSpeaker: Boolean
+        get() = prefs.getBoolean("calls_on_phone_speaker", false)
+        set(v) = prefs.edit { putBoolean("calls_on_phone_speaker", v) }
+
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
         get() = prefs.getString("rail_position", null)

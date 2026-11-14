@@ -132,6 +132,8 @@ class CarSession(
     private var phoneStatus: net.prototux.aare.aap.channels.PhoneStatusChannel? = null
     /** Calls, signal, battery and call availability to the car (from onRunning). */
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
+    /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
+    private var callSpeaker: CallSpeaker? = null
     private val audio = ArrayList<AudioChannel>()
 
     /**
@@ -327,6 +329,7 @@ class CarSession(
             if (settings.resumeMedia) runtime.resumeMedia()
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
+            if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
         }
     }
 
@@ -964,6 +967,7 @@ class CarSession(
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
+        callSpeaker?.stop(); callSpeaker = null
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
