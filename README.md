@@ -303,7 +303,7 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
 
 | Method | Needs | Navigation voice | Phone speaker |
 |---|---|---|---|
-| **System audio routing**, as Android Auto does it | a rooted phone, AARE installed as a privileged app (below) | yes, on the car's navigation channel | off |
+| **System audio routing**, as Android Auto does it | a rooted phone, AARE installed as a privileged app (below), or the permission granted over `adb root` | yes, on the car's navigation channel | off |
 | **Shizuku** | [Shizuku](https://shizuku.rikka.app/) running, Android 12+ | yes, on the car's navigation channel | off |
 | **Screen-capture permission** | one consent (choose *Entire screen*) | no | still plays |
 
@@ -311,6 +311,16 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
   Install it from Magisk (*Modules > Install from storage*) and reboot. AARE is then in
   `/system/priv-app` with `MODIFY_AUDIO_ROUTING`. Later updates install normally if they are
   signed with the same key.
+- **`adb root` (no Magisk):** on builds where `adb root` works (debug builds, or ROMs with a
+  *Rooted debugging* option such as LineageOS), the permission can be granted directly, and AARE
+  then uses system audio routing
+  ([reported in a discussion](https://github.com/prototux/AARE/discussions/146); whether it survives an AARE update or a reboot isn't
+  confirmed yet). Retail phones don't allow `adb root`.
+
+  ```sh
+  adb root
+  adb shell pm grant net.prototux.aare android.permission.MODIFY_AUDIO_ROUTING
+  ```
 - **Shizuku (no root):** install Shizuku and start it (wireless debugging, once after each
   reboot). Then on AARE's *Car audio* page tap *Shizuku* to allow AARE. The shell that Shizuku
   runs as holds `MODIFY_AUDIO_ROUTING`, so AARE registers the same audio policy as the
