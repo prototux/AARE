@@ -91,7 +91,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.secondaryContainer)
-                    .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    .carFocusHighlight(MaterialTheme.shapes.medium).clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Navigation, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))
