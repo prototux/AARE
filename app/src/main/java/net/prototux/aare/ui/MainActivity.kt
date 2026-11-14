@@ -38,6 +38,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -58,11 +60,14 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
@@ -182,6 +187,7 @@ private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: Image
     CONNECTION(R.string.setup_page_connection_title, R.string.setup_page_connection_subtitle, Icons.Rounded.Bluetooth),
     CAR_DATA(R.string.setup_page_car_data_title, R.string.setup_page_car_data_subtitle, Icons.Rounded.DirectionsCar),
     ADVANCED(R.string.setup_page_advanced_title, R.string.setup_page_advanced_subtitle, Icons.Rounded.Tune),
+    ABOUT(R.string.setup_page_about_title, R.string.setup_page_about_subtitle, Icons.Rounded.Info),
 }
 
 @Composable
@@ -219,7 +225,6 @@ private fun Home() {
                         Page.entries.forEach { CategoryRow(it) { page = it } }
                     }
                 }
-                item { About() }
             }
         } else {
             Column(Modifier.fillMaxSize().systemBarsPadding()) {
@@ -247,6 +252,7 @@ private fun Home() {
                             item { VehicleOverridesCard() }
                             item { LogCard() }
                         }
+                        Page.ABOUT -> item { AboutScreen() }
                     }
                 }
             }
@@ -1430,11 +1436,93 @@ private fun LogCard() {
 }
 
 @Composable
-private fun About() {
+private fun LicenceLine() {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
         HorizontalDivider()
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.setup_about_text, net.prototux.aare.BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The About page: what AARE is, links to the project, and everyone who helped build it. */
+@Composable
+private fun AboutScreen() {
+    val ctx = LocalContext.current
+    Section(stringResource(R.string.about_section_what_title)) {
+        Text(stringResource(R.string.about_text), style = MaterialTheme.typography.bodyMedium)
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_links_title)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pill(stringResource(R.string.about_link_repository), Icons.Rounded.Code) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.REPOSITORY)))
+            }
+            Pill(stringResource(R.string.about_link_issues), Icons.Rounded.BugReport) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.ISSUES)))
+            }
+            Pill(stringResource(R.string.about_link_discussions), Icons.Rounded.Forum) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.DISCUSSIONS)))
+            }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_thanks_title)) {
+        AboutThanks.GROUPS.forEachIndexed { i, group ->
+            if (i > 0) Spacer(Modifier.height(12.dp))
+            Text(stringResource(group.titleRes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            ThanksHandles(group.handles)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_oss_title)) {
+        AboutOss.GROUPS.forEachIndexed { i, group ->
+            if (i > 0) Spacer(Modifier.height(12.dp))
+            Text(stringResource(group.titleRes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            group.components.forEach { OssComponentRow(it) }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    LicenceLine()
+}
+
+/** One open-source component's name and licence; tapping it opens its project or licence page. */
+@Composable
+private fun OssComponentRow(component: OssComponent) {
+    val ctx = LocalContext.current
+    Row(
+        Modifier.fillMaxWidth().clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(component.url))) }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(component.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(
+            component.licence,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** The handles of one Thanks group, wrapped onto as many lines as needed; each opens its GitHub profile. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ThanksHandles(handles: List<String>) {
+    val ctx = LocalContext.current
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        handles.forEach { handle ->
+            Text(
+                "@$handle",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.profile(handle)))) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
     }
 }
