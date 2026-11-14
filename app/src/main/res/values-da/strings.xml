@@ -98,6 +98,8 @@
     <string name="setup_wallpaper_photo">Foto</string>
     <string name="setup_toggle_weather_title">Vejr</string>
     <string name="setup_toggle_weather_subtitle">Ved siden af uret, fra Open-Meteo (det henter en cirka-position, ca. 10 km)</string>
+    <string name="setup_choice_agenda_count">Viste kalenderbegivenheder</string>
+    <string name="setup_agenda_count_hint">Mere end én bliver til en dagsorden, hver med sin dag og sit tidspunkt.</string>
     <string name="setup_section_driving">Kørsel</string>
     <string name="setup_toggle_passenger_title">Passagertilstand</string>
     <string name="setup_toggle_passenger_subtitle">Ignorerer bilens kørestatus: skrivning, lange lister og telefonskærmen forbliver tilgængelige under kørsel, for en passager. Føreren må ikke bruge skærmen under kørsel.</string>
@@ -348,6 +350,8 @@
     <string name="phone_action_answer">Besvar</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">I dag</string>
+    <string name="dash_agenda_tomorrow">I morgen</string>
+    <string name="dash_event_navigate">Navigér</string>
     <string name="dash_latest_label">Seneste</string>
     <string name="cluster_arrival_time">Ankomst %1$s</string>
 
