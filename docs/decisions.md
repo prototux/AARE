@@ -151,78 +151,67 @@ stands in when nothing is left, and the last card can't be hidden.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
 
-## Wireless bootstrap and USB: head unit compatibility choices, with these exceptions
+## Wireless bootstrap and USB: compatibility first
 
-The WPP exchange works as follows (version status, missing major, quotes, connection
-status, our own WifiStartRequest, info-request retries, first-message timeouts, 1024-byte frames)
-and so does USB accessory matching (by model only) and the openAccessory retry. Deliberate
-differences:
+Rule: nothing may break a head unit that works today, so every change to the WPP exchange either
+only adds a fallback or only applies after a failure.
 
-- Our own WifiStartRequest is always sent to a waiting head unit after a compatible version
-  exchange. It is only sent when the user means to project; AARE only dials when it
-  does.
-- The version exchange's channel check is implemented in `WirelessBootstrap` but not fed: Android
-  Auto asks the system Wi-Fi scanner for the usable channels, which has no public equivalent. With
-  nothing known the check is skipped, the same as without a scanner.
-- The wireless AAP socket keeps its big buffers and gets no 10 s read timeout: the ping watchdog
-  allows 20 s of silence for head units that go off channel to scan. TCP keepalive is off, as in
-  (the first probe would come after hours anyway).
-- A port we cannot dial (outside 0-65535) is refused even below WPP 4.5, where it
-  not check the port.
+- Version response: always SUCCESS, echoing the head unit's version (1.0 when it sends none). A
+  stricter answer (refusing WPP 2, 3 and 7+, or below 4.5 head units whose Wi-Fi channels the phone
+  can't use) is only logged. The channel check has a hook (`Options.phoneWifiFrequencies`) that is
+  not fed: the phone's usable channels have no public API.
+- Our own WifiStartRequest is never sent on a first attempt. Only after an attempt where the head
+  unit answered the version exchange and then sent no WifiStartRequest before the message timeout,
+  the connector's redials to that head unit ask it to start (5 s after the version exchange, again
+  every 2 s for up to 50 s while it answers "not yet" or "already started").
+- WifiInfoRequest is repeated every 3 s; the usual message timeout still decides when to give up.
+- SSID and passphrase lose one pair of surrounding quotes below WPP 4.5; if joining that way fails,
+  the join is tried once more with them as sent.
+- First message after the RFCOMM connect: 12 s, 3.7 s on the first attempt with a wireless adapter
+  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly.
+- RFCOMM frames over 1024 bytes are logged, not refused.
+- Bad endpoint: reported as WifiConnectionStatus(INVALID_HOST); port 0 is accepted below WPP 4.5 (it
+  fails at the TCP connect), a port outside 0-65535 is refused. WifiConnectionStatus carries an
+  error text only for PHONE_WIFI_DISABLED, written for the driver.
+- The wireless AAP socket keeps its big buffers and gets no read timeout: the ping watchdog allows
+  20 s of silence for head units that go off channel to scan. TCP keepalive is off: its first probe
+  would come after hours, the watchdog notices a dead link much sooner.
+- USB accessories are matched by model only ("Android Auto", "Android Open Automotive Protocol"):
+  some head units send another manufacturer. A failed openAccessory is retried once after 500 ms.
+- **WPP over TCP is opt-in** (setting "Faster wireless reconnect (WPP over TCP)", off by default).
+  Off, nothing is stored or used and WifiSetupInfo and `wpp_info` are only logged: Bluetooth every
+  time. Switching it either way forgets every stored configuration and remembered failure. When on:
 
-## Wireless: WPP over TCP and WifiSetupInfo (WPP 4.1+, 4.5+)
-
-How it works, reversed from head unit wireless setup code:
-
-- The same WPP messages and framing (4-byte header, at most 1024 bytes) run over two transports:
-  Bluetooth RFCOMM and TCP. Which one an attempt uses is decided before it starts: TCP when the
-  phone (Android 11+) has a stored TCP configuration for the head unit's Bluetooth address, that is
-  an endpoint and the access point's credentials; RFCOMM otherwise.
-- The endpoint gets stored two ways. (1) `WifiVersionRequest.wpp_info` over RFCOMM, kept when the
-  head unit is a wireless adapter, when its `head_unit_model` contains "[AAR]", from WPP 4.2, or at
-  4.1 when the car make matches its allowlist (google, gmc, buick, cadillac, chevrolet, chevy, bmw,
-  case-insensitive substrings); ignored below 4.1. The RFCOMM exchange goes on unchanged, and the
-  credentials from its WifiInfoResponse are stored once the phone is on the network, unless the
-  access point is DYNAMIC. The next connection runs over TCP. (2) `WifiSetupInfo` (message 11,
-  head unit to phone, RFCOMM only): version, `setup_token`, endpoint and access point (SSID,
-  password, BSSID, security mode, channels). Its version replaces the version request's; a nonzero
-  version below 4.5, no usable channel, unusable credentials or an endpoint that is not an IP
-  literal with a port in 0-65535 stop the attempt without telling the head unit. Otherwise the
-  endpoint and credentials are stored (whatever the access point type), the token is kept in memory,
-  and WPP restarts at once, so over TCP.
-- A TCP attempt joins the stored network, connects to the endpoint (to the network's DHCP server
-  when the IP is 0.0.0.0), 10 s per try, 3 tries 1 s apart, and starts TLS 1.2 on that socket with
-  the phone as the TLS server: the same phone certificate as the AAP session, a client
-  certificate required and trusted only if it chains to Google's automotive CA. The WPP messages
-  then run inside TLS.
-- Over TCP the exchange is the RFCOMM one without the WifiInfoRequest (the credentials are known and
-  the phone is on the network): version request and response, where the response to a WPP 4.5+
-  head unit carries the `setup_token` from the WifiSetupInfo, once; then a start request (the head
-  unit's or ours), WifiStartResponse, and AAP over TCP on the same network.
-- `WifiConnectionRejection` (TCP only): MOBILE_DEVICE_ID_NOT_FOUND (1) or INVALID_SETUP_TOKEN (2)
-  deletes the stored configuration and restarts at once, which falls back to RFCOMM. Credentials
-  the access point refuses delete it too; a failing socket only restarts.
-
-AARE does the same, behind the head unit's WPP version as above, with these differences:
-
-- **Opt-in.** The setting "Faster wireless reconnect (WPP over TCP)" is off by default. Off, nothing
-  is stored or used, and WifiSetupInfo and `wpp_info` are only logged: Bluetooth every time, as
-  before. Switching it either way forgets every stored configuration and remembered failure.
-- **A WifiSetupInfo that fails a check is ignored** and the exchange carries on over RFCOMM, instead
-  of stopping the attempt.
-- **One TCP failure per head unit and version is enough.** Any failure on the TCP path (the
-  network not joined within 10 s, TCP, TLS, WPP, a rejection) forgets the configuration and
-  remembers the head unit with its WPP version: from then on nothing is stored or tried over TCP
-  for it, and its WifiSetupInfo is declined, until it reports another version or the setting is
-  switched. The same attempt goes on over RFCOMM, also right after a WifiSetupInfo hand-off.
-- **The head unit's TLS certificate is pinned, not checked against Google's CA**, as for AAP
-  (open-source head units cannot chain to it). Trust on first use, because a TCP configuration only
-  exists after an exchange over the bonded Bluetooth link, under its own key `wpp:<Bluetooth
-  address>`, so a head unit whose WPP certificate differs from its AAP one does not disturb the AAP
-  pin. The phone certificate is the one selected for AAP, so a head unit that wants Google's phone
-  certificate refuses a self-signed one here exactly as it does for AAP.
-- **The stored configuration includes the car's Wi-Fi password**, in app-private preferences (the
-  app opts out of backups). Without it the phone cannot reach the TCP endpoint before any Bluetooth
-  exchange. Owner to confirm.
-- The TLS socket gets a read timeout for the handshake only; afterwards the WPP link has none,
-  like the RFCOMM one (pings keep it alive).
+  - *What is stored.* Per head unit (Bluetooth address): the WPP-over-TCP endpoint, the access
+    point's credentials and the head unit's WPP version, from one of two sources.
+    `WifiVersionRequest.wpp_info` over RFCOMM is kept for wireless adapters, head units whose
+    `head_unit_model` contains "[AAR]", WPP 4.2+, and WPP 4.1 when the car make contains google,
+    gmc, buick, cadillac, chevrolet, chevy or bmw (any case); with the credentials that got the
+    phone onto the network, unless the access point is DYNAMIC, for use from the next connection.
+    A `WifiSetupInfo` (message 11, WPP 4.5+, RFCOMM only: version, `setup_token`, endpoint, access
+    point) is kept when its version is 4.5+ (or absent), one of its channels is usable, its
+    credentials are usable and the endpoint is an IPv4 literal with a port in 0-65535; then
+    RFCOMM is dropped and the attempt goes on over TCP at once. One that fails a check is ignored
+    and the exchange carries on over RFCOMM.
+  - *A TCP attempt*, made instead of RFCOMM while a configuration is stored (Android 11+): join the
+    stored network (10 s at most), TCP to the endpoint (the network's DHCP server for 0.0.0.0),
+    10 s per try, 3 tries 1 s apart, no Nagle delay, then TLS 1.2 with the phone as the TLS
+    server, the AAP session's phone certificate, and a client certificate required. The WPP
+    exchange then runs inside TLS as over RFCOMM, minus the WifiInfoRequest (the phone is on the
+    network already); the version response to a WPP 4.5+ head unit carries the `setup_token` of
+    its WifiSetupInfo, once.
+  - *Failures.* Any failure on the TCP path (join, TCP, TLS, WPP, a WifiConnectionRejection:
+    1 MOBILE_DEVICE_ID_NOT_FOUND, 2 INVALID_SETUP_TOKEN) forgets the configuration and remembers
+    the head unit with its WPP version: nothing is stored or tried over TCP for it again, and its
+    WifiSetupInfo is declined, until it reports another version or the setting is switched. The
+    same attempt goes on over RFCOMM, also right after a WifiSetupInfo hand-off.
+  - *Trust.* The head unit's TLS certificate is pinned, as for AAP, not checked against Google's
+    CA (open-source head units cannot chain to it): trust on first use, since a configuration only
+    exists after an exchange over the bonded Bluetooth link, under its own key `wpp:<Bluetooth
+    address>`, so a WPP certificate that differs from the AAP one does not disturb the AAP pin. A
+    head unit that only accepts Google's phone certificate refuses a self-signed one here as it
+    does for AAP.
+  - *The car's Wi-Fi password is stored*, in app-private preferences (the app opts out of backups):
+    without it the phone cannot reach the endpoint before any Bluetooth exchange. Owner to confirm.
+  - The TLS socket has a read timeout for the handshake only; afterwards the WPP link has none,
+    like the RFCOMM one (pings keep it alive).

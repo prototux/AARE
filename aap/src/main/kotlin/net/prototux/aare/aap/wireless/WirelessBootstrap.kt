@@ -558,10 +558,22 @@ class WirelessBootstrap(
         }
     }
 
+    /**
+     * The credentials as the head unit sent them, when [parseCredentials] took quotes off them: the
+     * join falls back to these if the unquoted ones fail.
+     */
+    private var quotedCredentials: WifiCredentials? = null
+
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
-        return credentials(info.ssid, info.password, info.bssid, info.securityMode,
+        val parsed = credentials(info.ssid, info.password, info.bssid, info.securityMode,
             accessPointType = if (info.hasAccessPointType()) info.accessPointType.number else null)
+        quotedCredentials = if (parsed.ssid != info.ssid || parsed.password != info.password) {
+            WifiCredentials(info.ssid, info.password, parsed.bssid, parsed.security, parsed.securityMode, parsed.accessPointType)
+        } else {
+            null
+        }
+        return parsed
     }
 
     private fun credentials(
@@ -605,10 +617,15 @@ class WirelessBootstrap(
         } else {
             val keepalive = Keepalive().also { it.start() }
             try {
-                listener.connectWifi(credentials)
-            } catch (e: Exception) {
-                log.w("wireless: joining \"${credentials.ssid}\" threw", e)
-                JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+                val first = connectWifi(credentials)
+                val quoted = quotedCredentials
+                // The quotes may be part of the real name or passphrase: try them as sent, once.
+                if (first is JoinResult.Failed && quoted != null && first.status != WppStatus.PHONE_WIFI_DISABLED && !closed.get()) {
+                    log.w("wireless: joining without the quotes failed (${first.message}), trying the credentials as sent")
+                    connectWifi(quoted)
+                } else {
+                    first
+                }
             } finally {
                 keepalive.stop()
             }
@@ -628,6 +645,14 @@ class WirelessBootstrap(
             }
         }
     }
+
+    private fun connectWifi(credentials: WifiCredentials): JoinResult =
+        try {
+            listener.connectWifi(credentials)
+        } catch (e: Exception) {
+            log.w("wireless: joining \"${credentials.ssid}\" threw", e)
+            JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
+        }
 
     /** Pings the head unit while [Listener.connectWifi] blocks. */
     private inner class Keepalive {
@@ -689,6 +714,8 @@ class WirelessBootstrap(
             while (true) {
                 val frame = readWppFrame(input) ?: break
                 log.d("wireless: <- $frame")
+                // Possibly a desynchronised stream; accepted anyway, so head units that send such frames keep working.
+                if (frame.payload.size > WPP_MAX_PAYLOAD) log.w("wireless: unusually long frame from the head unit: $frame")
                 if (frame.id == WppMessageId.PING_REQUEST) {
                     // Answered here so pings are answered even while connectWifi() blocks.
                     sendQuietly(WppMessageId.PING_RESPONSE, frame.payload)
