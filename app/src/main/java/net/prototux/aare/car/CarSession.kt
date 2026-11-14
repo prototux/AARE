@@ -227,13 +227,15 @@ class CarSession(
      * with, which no rule overrides. Head units are looked up this way before wireless starts.
      */
     private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
+        // The car list's name for it (Settings.rememberCar), so that forgetting the car forgets this.
+        val carName = response.displayName.ifBlank { headUnitName }
         val announced = response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
             ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
         val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
         runCatching {
             val store = KnownHeadUnits(context)
-            announced?.let { store.put(it, id) }
-            wirelessPeer?.let { store.markWirelessWorked(it) }
+            announced?.let { store.put(it, id, carName) }
+            wirelessPeer?.let { store.markWirelessWorked(it, carName) }
         }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
     }
 
@@ -256,9 +258,9 @@ class CarSession(
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
             listener.onStatus(this, context.getString(R.string.notif_status_connected_to, headUnitName))
             settings.rememberCar(runtime.ui.headUnitName)
-            // "Exit to car" named after the car, or left out (vehicles.json).
+            // "Exit to car" named after the car, or left out (vehicles.json, the built-in car fixes).
             if (quirks?.exitToCar == false) runtime.exitToCar = null
-            runtime.exitLabel = ExitLabel.of(quirks?.exitLabel, response.displayName, id.make)
+            runtime.exitLabel = ExitLabel.of(quirks?.exitLabel, response.displayName, id.make, carFixes = quirks?.builtInFixes == true)
             runtime.refreshApps()
         }
         val channels = ArrayList<ServiceChannel>()
@@ -394,21 +396,26 @@ class CarSession(
             // pauses the car causes.
             notification.unsolicited && state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY &&
                 quirks?.pauseOnGuidanceOnly != false -> main.post {
-                if (media.playback.value?.playing == true) pausedByCar = true
+                if (media.playback.value?.playing == true) { pausedByCar = true; pausedForGuidance = true }
                 media.pause()
             }
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
             // does, and play again when a transient loss ends.
             notification.unsolicited && (state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT) -> main.post {
                 pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && media.playback.value?.playing == true
+                pausedForGuidance = false
                 media.pause()
             }
             // Only the car handing focus back resumes: a gain answering our own request means
-            // something else is playing now, and the old music must stay paused.
+            // something else is playing now, and the old music must stay paused. Except after a
+            // pause for navigation voice: the car often hands the sound back by answering the
+            // prompt's own requests, and the music would stay paused for the rest of the drive.
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY -> main.post {
                 if (pausedByCar) {
+                    val resume = resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
                     pausedByCar = false
-                    if (notification.unsolicited && media.playback.value?.playing != true) media.playPause()
+                    pausedForGuidance = false
+                    if (resume && media.playback.value?.playing != true) media.playPause()
                 }
             }
         }
@@ -419,6 +426,8 @@ class CarSession(
      * voice), to resume on the car's next gain (main thread).
      */
     private var pausedByCar = false
+    /** [pausedByCar] by the car keeping only navigation voice (main thread). */
+    private var pausedForGuidance = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
         val rejected = session.certificateRefusal
@@ -1142,6 +1151,12 @@ class CarSession(
          * ([quirk]) says the head unit means music too.
          */
         fun gainTransientIsMedia(answersGuidance: Boolean, quirk: Boolean): Boolean = quirk || !answersGuidance
+
+        /**
+         * Whether a gain plays the music the car paused again: the car handing the sound back on
+         * its own does; a gain answering a request only after a pause for navigation voice.
+         */
+        fun resumesAfterCarPause(unsolicited: Boolean, pausedForGuidance: Boolean): Boolean = unsolicited || pausedForGuidance
 
         /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
         fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {

@@ -3,14 +3,16 @@ package net.prototux.aare.car
 /**
  * What the app list's "Exit to car" entry is called: after the car,
  * its display name or else its make ("Exit" to a "Toyota" screen), or the generic label. Which one
- * a make gets is vehicles.json's `exitLabel` (built-in rules carry known lists).
+ * a make gets is vehicles.json's `exitLabel` (built-in rules carry known lists). Without a rule the
+ * label stays the generic one, unless the built-in car fixes are on for the car: then it is the
+ * car's name.
  */
 object ExitLabel {
-    /** The head unit's display name, else its make (the default). */
+    /** The head unit's display name, else its make (the default with the built-in car fixes). */
     const val NAME = "name"
     /** The make, even when there is a display name. */
     const val MAKE = "make"
-    /** The generic label. */
+    /** The generic label (the default without the built-in car fixes). */
     const val DEFAULT = "default"
 
     /** Values head units report that aren't a brand, so never a label (built-in list). */
@@ -26,9 +28,9 @@ object ExitLabel {
         "SYMC", "SYNC", "TANK", "TENET", "TVS", "UNI", "VIDA", "VW", "WEY", "XZENT", "ZEEKR", "ZENEC", "ŠKODA",
     )
 
-    /** The label for [mode] (null: [NAME]), or null for the generic one. */
-    fun of(mode: String?, displayName: String, make: String): String? {
-        val m = mode?.trim()?.lowercase()
+    /** The label for [mode] (null: [NAME] with [carFixes], else [DEFAULT]), or null for the generic one. */
+    fun of(mode: String?, displayName: String, make: String, carFixes: Boolean): String? {
+        val m = mode?.trim()?.lowercase() ?: if (carFixes) NAME else DEFAULT
         if (m == DEFAULT) return null
         if (m != MAKE && usable(displayName)) return pretty(displayName.trim())
         if (usable(make)) return pretty(make.trim())

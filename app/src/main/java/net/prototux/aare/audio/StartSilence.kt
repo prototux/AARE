@@ -28,4 +28,13 @@ object StartSilence {
      */
     fun cap(configured: Int, idleMs: Long, messagesPerSecond: Double): Int =
         minOf(configured.toLong(), floor(idleMs / 1000.0 * messagesPerSecond - 0.5).toLong()).coerceAtLeast(0).toInt()
+
+    /**
+     * How many of the messages waiting at a stream's start to keep (the newest), with [silent]
+     * messages going ahead of them, for a [backlog] the stream may start with: the silence takes
+     * the oldest sound's place, so the stream starts no further behind real time (and the video)
+     * than without it. With [keepAll] (navigation prompts, whose start matters more than lip sync)
+     * the whole [backlog] stays.
+     */
+    fun soundKept(backlog: Int, silent: Int, keepAll: Boolean): Int = if (keepAll) backlog else (backlog - silent).coerceAtLeast(0)
 }

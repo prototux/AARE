@@ -23,6 +23,13 @@ class AudioFocusQuirksTest {
     @Test fun exceptForHeadUnitsWhoseGainTransientMeansMusicToo() =
         assertTrue(CarSession.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = true))
 
+    /** Music the car paused plays again on its own gain; on an answered request only after a pause for navigation voice. */
+    @Test fun aPauseForNavigationVoiceEndsOnAnyGain() {
+        assertTrue(CarSession.resumesAfterCarPause(unsolicited = true, pausedForGuidance = false))
+        assertTrue(CarSession.resumesAfterCarPause(unsolicited = false, pausedForGuidance = true))
+        assertFalse(CarSession.resumesAfterCarPause(unsolicited = false, pausedForGuidance = false))
+    }
+
     @Test fun theOtherStatesAreUnchanged() {
         for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
             AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK)) assertTrue(s.name, CarSession.mediaAllowed(s, false))

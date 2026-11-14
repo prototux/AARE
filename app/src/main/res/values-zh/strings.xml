@@ -421,6 +421,8 @@
     <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
     <string name="vehicles_import">导入文件…</string>
     <string name="vehicles_template">写入模板</string>
+    <string name="vehicles_builtin_fixes_title">内置车辆修复</string>
+    <string name="vehicles_builtin_fixes_subtitle">AARE 为特定车机提供的修复：在无线连接失败的车机上不用无线、视频尺寸、导航语音、电动车、屏幕像素形状、退出项的名称。关闭时：每辆车的表现与之前相同。vehicles.json 规则可为单辆车开启（builtInFixes）。</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>

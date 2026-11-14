@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">Regels geladen: %1$d</string>
     <string name="vehicles_import">Bestand importeren…</string>
     <string name="vehicles_template">Sjabloon schrijven</string>
+    <string name="vehicles_builtin_fixes_title">Ingebouwde autocorrecties</string>
+    <string name="vehicles_builtin_fixes_subtitle">Correcties die AARE meelevert voor bepaalde head units: geen draadloos waar het mislukt, videoformaat, navigatiestem, elektrische auto\'s, pixelvorm van het scherm, naam van Afsluiten. Uit: elke auto werkt zoals voorheen. Een regel in vehicles.json kan ze voor één auto inschakelen (builtInFixes).</string>
     <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
     <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->

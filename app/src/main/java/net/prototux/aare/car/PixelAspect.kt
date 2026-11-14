@@ -19,8 +19,8 @@ object PixelAspect {
     private const val MAX = 2f
 
     /**
-     * The factor to lay the UI out with. A vehicles.json [override] wins (the built-in file has
-     * one for some older head units, protocol 1.1 and before, that can't report it). What the head
+     * The factor to lay the UI out with. A vehicles.json [override] wins (the built-in car fixes
+     * have one for some older head units, protocol 1.1 and before, that can't report it). What the head
      * unit reports, from protocol 1.2 on (or without a make), only with [useReported]: off unless
      * asked for, so no head unit that looks right today changes.
      */

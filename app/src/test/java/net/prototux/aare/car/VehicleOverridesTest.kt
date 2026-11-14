@@ -181,7 +181,8 @@ class VehicleOverridesTest {
     }
 
     private val builtIn by lazy { VehicleOverrides.parse(java.io.File("src/main/assets/vehicles.json").readText()) }
-    private fun shipped(id: HeadUnitIdentity) = VehicleOverrides.resolve(emptyList(), builtIn, id)
+    /** With the "Built-in car fixes" setting on. */
+    private fun shipped(id: HeadUnitIdentity) = VehicleOverrides.resolve(emptyList(), builtIn, id, builtInFixes = true)
 
     /** Built-in lists, as the file carries them. */
     @Test fun theBuiltInRulesCarryAndroidAutosLists() {
@@ -216,8 +217,53 @@ class VehicleOverridesTest {
         assertEquals(false, shipped(hu(make = "Xiaomi"))!!.exitToCar)
         assertEquals("default", shipped(hu(make = "Chevrolet"))!!.exitLabel)
         assertEquals("make", shipped(hu(make = "Land Rover"))!!.exitLabel)
-        // An ordinary car gets nothing.
-        assertEquals(null, shipped(hu()))
+        // An ordinary car gets nothing but the mark that the fixes are on (for the Exit label).
+        assertEquals(VehicleOverride(builtInFixes = true), shipped(hu()))
+    }
+
+    /** Off by default: a car gets only what it got before the car lists were shipped, and the audio defaults' exceptions. */
+    @Test fun theBuiltInCarFixesAreOptIn() {
+        fun default(id: HeadUnitIdentity) = VehicleOverrides.resolve(emptyList(), builtIn, id)
+        assertEquals(null, default(hu(headUnitMake = "ALPINE", headUnitModel = "iLX-705D")))
+        assertEquals(null, default(hu(make = "Xiaomi")))
+        assertEquals(null, default(hu(make = "Subaru", headUnitMake = "HARMAN")))
+        assertEquals(null, default(hu(make = "Hyundai", model = "NEev")))
+        assertEquals(null, default(hu(make = "KIA", headUnitModel = "avn_40", protocol = 1 to 0)))
+        assertEquals(null, default(hu(make = "MITSUBISHI MOTORS", model = "PHEV4B00EU", year = "2016", headUnitMake = "", headUnitModel = "", protocol = 1 to 1)))
+        assertEquals(null, default(hu()))
+        assertEquals(false, default(hu(make = "SYNC"))!!.pauseOnGuidanceOnly)
+        assertEquals(8, default(hu(make = "BMW", headUnitMake = "BMW", headUnitModel = "MGU21"))!!.wifiMediaStartSilence)
+        assertEquals(false, VehicleOverrides.resolve(emptyList(), builtIn, "Volkswagen", "VW_7_A0_HATCHBACK",
+            "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio")!!.micSetup)
+    }
+
+    /** A user rule turns the built-in car fixes on, or off, for its car, whatever the setting. */
+    @Test fun aUserRuleDecidesTheCarFixesForItsCar() {
+        val alpine = hu(headUnitMake = "ALPINE", headUnitModel = "iLX-705D")
+        val on = VehicleOverrides.parse("""{"rules":[{"match":{"headUnitMake":"ALPINE"},"apply":{"builtInFixes":true}}]}""")
+        val off = VehicleOverrides.parse("""{"rules":[{"match":{"headUnitMake":"ALPINE"},"apply":{"builtInFixes":false}}]}""")
+        assertEquals(false, VehicleOverrides.resolve(on, builtIn, alpine)!!.wireless)
+        assertEquals(null, VehicleOverrides.resolve(off, builtIn, alpine, builtInFixes = true)?.wireless)
+        assertEquals(null, VehicleOverrides.resolve(off, builtIn, alpine, builtInFixes = true)?.builtInFixes)
+        // Or sets the quirk itself.
+        val mine = VehicleOverrides.parse("""{"rules":[{"match":{"headUnitMake":"ALPINE"},"apply":{"wireless":false}}]}""")
+        assertEquals(false, VehicleOverrides.resolve(mine, builtIn, alpine)!!.wireless)
+    }
+
+    /** Only optIn rules wait for the setting; a user file's optIn means nothing. */
+    @Test fun optInIsParsed() {
+        val rules = VehicleOverrides.parse("""{"rules":[{"optIn":true,"match":{"make":"Ford"},"apply":{"dpi":1}},{"match":{"make":"Ford"},"apply":{"dpi":2}}]}""")
+        assertEquals(listOf(true, false), rules.map { it.optIn })
+        assertEquals(2, VehicleOverrides.resolve(emptyList(), rules, hu())!!.dpi)
+        assertEquals(1, VehicleOverrides.resolve(emptyList(), rules, hu(), builtInFixes = true)!!.dpi)
+        assertEquals(1, VehicleOverrides.resolve(rules, emptyList(), hu())!!.dpi)
+    }
+
+    /** A skipped rule's reason goes to the connection log: it never quotes the rule. */
+    @Test fun aBadVersionIsntQuoted() {
+        val e = runCatching { VehicleMatch.version("Ford 1") }.exceptionOrNull()
+        assertTrue(e is RuleProblem)
+        assertFalse(e!!.message!!.contains("Ford"))
     }
 
     // ---- the "Car quirks" settings page, over the per-car vehicles.json resolution
