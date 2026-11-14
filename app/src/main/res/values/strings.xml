@@ -358,7 +358,10 @@
     <string name="assistant_no_default">No default assistant set on the phone</string>
     <string name="assistant_has_car_app_subtitle">On the car screen, with the car\'s microphone</string>
     <string name="assistant_opens_on_phone">Opens on the phone</string>
+    <string name="assistant_opens_on_car_screen">Opens on the car screen</string>
     <string name="assistant_hint">The steering-wheel voice button and the rail\'s microphone open this assistant. Assistants with a car app, such as Lapin, work best.</string>
+    <string name="assistant_car_screen_toggle_title">Open assistants without a car app on the car screen</string>
+    <string name="assistant_car_screen_toggle_subtitle">Shows the assistant\'s voice UI on the car screen instead of the phone, parked or not. Needs root or Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Car connection</string>
