@@ -151,21 +151,30 @@ stands in when nothing is left, and the last card can't be hidden.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
 
-## Wireless bootstrap and USB: head unit compatibility choices, with these exceptions
+## Wireless bootstrap and USB: compatibility first
 
-The WPP exchange works as follows (version status, missing major, quotes, connection
-status, our own WifiStartRequest, info-request retries, first-message timeouts, 1024-byte frames)
-and so does USB accessory matching (by model only) and the openAccessory retry. Deliberate
-differences:
+Rule: nothing may break a head unit that works today, so every change to the WPP exchange either
+only adds a fallback or only applies after a failure.
 
-- Our own WifiStartRequest is always sent to a waiting head unit after a compatible version
-  exchange. It is only sent when the user means to project; AARE only dials when it
-  does.
-- The version exchange's channel check is implemented in `WirelessBootstrap` but not fed: Android
-  Auto asks the system Wi-Fi scanner for the usable channels, which has no public equivalent. With
-  nothing known the check is skipped, the same as without a scanner.
-- The wireless AAP socket keeps its big buffers and gets no 10 s read timeout: the ping watchdog
-  allows 20 s of silence for head units that go off channel to scan. TCP keepalive is off, as in
-  (the first probe would come after hours anyway).
-- A port we cannot dial (outside 0-65535) is refused even below WPP 4.5, where it
-  not check the port.
+- Version response: always SUCCESS, echoing the head unit's version (1.0 when it sends none). A
+  stricter answer (refusing WPP 2, 3 and 7+, or below 4.5 head units whose Wi-Fi channels the phone
+  can't use) is only logged. The channel check has a hook (`Options.phoneWifiFrequencies`) that is
+  not fed: the phone's usable channels have no public API.
+- Our own WifiStartRequest is never sent on a first attempt. Only after an attempt where the head
+  unit answered the version exchange and then sent no WifiStartRequest before the message timeout,
+  the connector's redials to that head unit ask it to start (5 s after the version exchange, again
+  every 2 s for up to 50 s while it answers "not yet" or "already started").
+- WifiInfoRequest is repeated every 3 s; the usual message timeout still decides when to give up.
+- SSID and passphrase lose one pair of surrounding quotes below WPP 4.5; if joining that way fails,
+  the join is tried once more with them as sent.
+- First message after the RFCOMM connect: 12 s, 3.7 s on the first attempt with a wireless adapter
+  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly.
+- RFCOMM frames over 1024 bytes are logged, not refused.
+- Bad endpoint: reported as WifiConnectionStatus(INVALID_HOST); port 0 is accepted below WPP 4.5 (it
+  fails at the TCP connect), a port outside 0-65535 is refused. WifiConnectionStatus carries an
+  error text only for PHONE_WIFI_DISABLED, written for the driver.
+- The wireless AAP socket keeps its big buffers and gets no read timeout: the ping watchdog allows
+  20 s of silence for head units that go off channel to scan. TCP keepalive is off: its first probe
+  would come after hours, the watchdog notices a dead link much sooner.
+- USB accessories are matched by model only ("Android Auto", "Android Open Automotive Protocol"):
+  some head units send another manufacturer. A failed openAccessory is retried once after 500 ms.
