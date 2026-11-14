@@ -590,6 +590,8 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
 private fun headUnitLabel(ctx: android.content.Context, key: String): String = when {
     key == "tcp" -> ctx.getString(R.string.huserver_label)
     key.startsWith("usb:") -> key.removePrefix("usb:").replace('|', ' ').trim().ifBlank { key }
+    // The certificate the paired car showed for WPP over TCP (see WirelessConnector); a protocol name, not translated.
+    key.startsWith("wpp:") -> headUnitLabel(ctx, key.removePrefix("wpp:")) + " (WPP)"
     else -> runCatching { ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.getRemoteDevice(key)?.name }.getOrNull() ?: key
 }
 
