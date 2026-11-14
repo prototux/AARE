@@ -8,11 +8,11 @@ package net.prototux.aare.media
  * wire contract, so we keep our own copies instead of adding a dependency.
  */
 internal object MediaKeys {
-    // ---- root hints we send (what Android Auto sends)
+    // ---- root hints we send (also SEARCH_SUPPORTED and CONTENT_STYLE_SUPPORTED below)
     const val ROOT_CHILDREN_LIMIT = "androidx.media.MediaBrowserCompat.Extras.KEY_ROOT_CHILDREN_LIMIT"
     const val ROOT_CHILDREN_SUPPORTED_FLAGS = "androidx.media.MediaBrowserCompat.Extras.KEY_ROOT_CHILDREN_SUPPORTED_FLAGS"
-    const val MEDIA_ART_SIZE_PIXELS = "android.media.extras.MEDIA_ART_SIZE_HINT_PIXELS"
-    const val CUSTOM_BROWSER_ACTION_LIMIT = "androidx.media.utils.MediaBrowserCompat.extras.CUSTOM_BROWSER_ACTION_LIMIT"
+    /** The size browse list icons are drawn at, in pixels (Google's own key, no androidx copy). */
+    const val BROWSER_ICON_SIZE = "com.google.android.gms.car.media.BrowserIconSize"
 
     /** MediaBrowserCompat.MediaItem.FLAG_BROWSABLE: like Android Auto, we ask for browsable root children. */
     const val FLAG_BROWSABLE = 1
@@ -28,11 +28,19 @@ internal object MediaKeys {
     const val COMPLETION_STATUS = "android.media.extra.PLAYBACK_STATUS"
     const val COMPLETION_PERCENTAGE = "androidx.media.MediaItem.Extras.COMPLETION_PERCENTAGE"
 
+    // ---- session extras: keep a skip button's slot even while it can't be used
+    const val RESERVE_PREVIOUS = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS"
+    const val RESERVE_NEXT = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT"
+    const val RESERVE_PREVIOUS_LEGACY = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS"
+    const val RESERVE_NEXT_LEGACY = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT"
+
     // ---- playback error resolution (PlaybackException / PlaybackState extras)
     const val ERROR_RESOLUTION_ACTION_LABEL = "android.media.extras.ERROR_RESOLUTION_ACTION_LABEL"
     const val ERROR_RESOLUTION_ACTION_INTENT = "android.media.extras.ERROR_RESOLUTION_ACTION_INTENT"
 
     /** What we advertise: Android Auto's values, so apps hand us the tree they built for it. */
     const val ROOT_CHILDREN_LIMIT_VALUE = 4
+    /** Browse icon size (56 dp), sent as pixels at the phone's density. */
+    const val BROWSER_ICON_SIZE_DP = 56
     const val ART_SIZE_PX = 512
 }

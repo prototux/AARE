@@ -179,6 +179,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override val night: Boolean get() = runtime.ui.night
     override val touchscreen: Boolean get() = runtime.touchscreen
     override val appLabel: String get() = conn.info.label
+    override val forceIconTint: Boolean = AppQuirks.FORCE_ICON_TINT.matches(conn.info.packageName, conn.info.versionCode)
     override fun contentLimit(type: Int): Int = runtime.contentLimit(type)
     override val done = CarAppConnection.templateDone
     override fun back() = conn.back()
@@ -220,4 +221,22 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override fun mapFling(vx: Float, vy: Float) { conn.fling(vx, vy) }
     override fun mapScale(focusX: Float, focusY: Float, factor: Float) { conn.scale(focusX, focusY, factor) }
     override fun mapClick(x: Float, y: Float) { conn.click(x, y) }
+}
+
+/**
+ * The dashboard card of a navigation app that runs full screen only: for
+ * versions older than the one it knows works on its dashboard ([AppQuirks.dashboardNavigationSupported]):
+ * the app's icon and name, and a tap opens it.
+ */
+@Composable
+fun CarAppLauncherCard(info: CarAppInfo, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    Column(
+        modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer).clickable(onClick = onOpen).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        info.icon?.let { Image(it.asImageBitmap(), null, Modifier.size(72.dp).clip(CircleShape)) }
+        Spacer(Modifier.height(16.dp))
+        Text(info.label, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    }
 }

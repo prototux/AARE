@@ -47,6 +47,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
+import kotlin.math.roundToInt
 import net.prototux.aare.R
 
 /**
@@ -141,7 +142,7 @@ internal class MediaConnection(
             val token = SessionToken(context, app.service)
             library = token.type == SessionToken.TYPE_LIBRARY_SERVICE
             MediaBrowser.Builder(context, token)
-                .setConnectionHints(rootHints())
+                .setConnectionHints(rootHints(context))
                 .setListener(listener)
                 .setApplicationLooper(Looper.getMainLooper())
                 .buildAsync()
@@ -197,7 +198,7 @@ internal class MediaConnection(
             // EXTRA_RECENT/OFFLINE/SUGGESTED (LibraryParams always add them, even false, and VLC
             // then answers with its one-item "suggested" root), but no other hint either.
         }
-        val params = if (library) LibraryParams.Builder().setExtras(libraryHints()).build() else null
+        val params = if (library) LibraryParams.Builder().setExtras(libraryHints(context)).build() else null
         val result = try {
             b.getLibraryRoot(params).await()
         } catch (e: CancellationException) {
@@ -238,7 +239,7 @@ internal class MediaConnection(
                     }
                 }
                 // kept in the field at once, so whatever cancels us (onLost, release) disconnects it
-                legacyBrowser = FwBrowser(context, app.service, callback, rootHints()).also { it.connect() }
+                legacyBrowser = FwBrowser(context, app.service, callback, rootHints(context)).also { it.connect() }
             }
         } == true
         if (!connected) {
@@ -420,6 +421,8 @@ internal class MediaConnection(
 
         override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: androidx.media3.session.SessionCommands) = updateState()
 
+        override fun onExtrasChanged(controller: MediaController, extras: Bundle) = updateState()
+
         /** Non-fatal errors the app sends to controllers (e.g. "sign in"); shown for a while. */
         override fun onError(controller: MediaController, sessionError: SessionError) {
             val (label, intent) = errorAction(sessionError.extras)
@@ -482,11 +485,14 @@ internal class MediaConnection(
             val (label, intent) = errorAction(e.extras)
             MediaError(e.message?.takeIf { it.isNotBlank() } ?: errorText(context, e.errorCode, app.label), label, intent)
         } ?: notice
+        val (reservePrevious, reserveNext) = reservesSkipSlots(b.sessionExtras)
         _state.value = SourceState(
             info = info,
             showPause = !Util.shouldShowPlayButton(b),
             canPrevious = b.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS),
             canNext = b.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT),
+            reservePrevious = reservePrevious,
+            reserveNext = reserveNext,
             canSeek = b.isCommandAvailable(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM) && b.isCurrentMediaItemSeekable,
             actions = actionsOf(b),
             queue = queueOf(b),
@@ -587,18 +593,22 @@ internal class MediaConnection(
             Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
         )
 
-        /** What Android Auto tells media apps about itself, as connection and root hints. */
-        fun rootHints() = Bundle().apply {
+        /**
+         * What is told to media apps about itself, as connection and root hints: exactly
+         * The usual set, so apps that check for it take us for it.
+         */
+        fun rootHints(context: Context) = Bundle().apply {
+            putBoolean(MediaKeys.SEARCH_SUPPORTED, true)
+            putBoolean(MediaKeys.CONTENT_STYLE_SUPPORTED, true)
+            putInt(MediaKeys.BROWSER_ICON_SIZE, (MediaKeys.BROWSER_ICON_SIZE_DP * context.resources.displayMetrics.density).roundToInt())
             putInt(MediaKeys.ROOT_CHILDREN_LIMIT, MediaKeys.ROOT_CHILDREN_LIMIT_VALUE)
             putInt(MediaKeys.ROOT_CHILDREN_SUPPORTED_FLAGS, MediaKeys.FLAG_BROWSABLE)
-            putInt(MediaKeys.MEDIA_ART_SIZE_PIXELS, MediaKeys.ART_SIZE_PX)
-            putInt(MediaKeys.CUSTOM_BROWSER_ACTION_LIMIT, 0)
             // No EXTRA_RECENT/OFFLINE/SUGGESTED: Android Auto only sends them to ask for those special
             // roots, and some apps (VLC) only check that the key is there, not its value.
         }
 
         /** Android Auto's root params for media3 apps: the same, but browsable-only as media3's boolean. */
-        fun libraryHints() = rootHints().apply {
+        fun libraryHints(context: Context) = rootHints(context).apply {
             remove(MediaKeys.ROOT_CHILDREN_SUPPORTED_FLAGS)
             putBoolean(MediaConstants.EXTRA_KEY_ROOT_CHILDREN_BROWSABLE_ONLY, true)
         }
