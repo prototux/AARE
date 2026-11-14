@@ -580,7 +580,9 @@ class CarAppConnection(
      * The car is asked only for the sensors behind what this app subscribed to, and stops sending
      * them once it unsubscribes. Called under the subscriptions' lock.
      */
-    private fun needSubscribedSensors() = CarData.need(hardwareHost, CarHardwareResults.sensorsFor(hardwareSubscriptions.keys))
+    private fun needSubscribedSensors() {
+        CarData.need(hardwareHost, CarHardwareResults.sensorsFor(hardwareSubscriptions.keys))
+    }
 
     /** Result types waiting to be pushed: bursts of sensor batches (accelerometer...) collapse into one push. */
     private val pendingHardware = HashSet<Int>()

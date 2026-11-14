@@ -46,7 +46,7 @@ class SensorRequestsTest {
         requests.start()
         requests.want(setOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_SPEED))
         assertEquals(1, sent.size)
-        timeouts.last()()
+        timeouts[0]() // the driving status request's timeout
         assertEquals(SensorType.SENSOR_SPEED to 0L, sent[1])
         // A timeout of a request that was answered meanwhile changes nothing.
         requests.answered()
