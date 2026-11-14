@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Nederkant</string>
     <string name="setup_toggle_dark_bar_title">Mörkt fält</string>
     <string name="setup_toggle_dark_bar_subtitle">Håll fältet mörkt även med dagfärger</string>
+    <string name="setup_toggle_split_screen_title">Delad skärm</string>
+    <string name="setup_toggle_split_screen_subtitle">Tryck länge på en app i bilens fält för att öppna den bredvid den aktuella (aktivitetsfältslayout, bara breda skärmar)</string>
+    <string name="car_split_close">Stäng delad skärm</string>
+    <string name="car_split_open_beside">Öppna bredvid den aktuella appen</string>
     <string name="setup_section_dashboard">Instrumentpanel</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det första kortet får mest plats; de andra fyller resten av skärmen. Ett kort utan något att visa lämnar sin plats till nästa.</string>

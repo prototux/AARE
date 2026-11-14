@@ -143,6 +143,10 @@ class CarScreenMockups {
         override fun answerCall() = Unit
         override fun endCall() = Unit
         override fun navigateTo(place: String) = Unit
+        override fun openBeside(app: CarAppEntry) = Unit
+        override fun closeSplit() = Unit
+        override fun commitSplitRatio(raw: Float) = Unit
+        override fun focusPane(pane: CarPane) = Unit
     }
 }
 

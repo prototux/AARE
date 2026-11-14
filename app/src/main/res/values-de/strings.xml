@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Unten</string>
     <string name="setup_toggle_dark_bar_title">Dunkle Leiste</string>
     <string name="setup_toggle_dark_bar_subtitle">Leiste auch bei Tagfarben dunkel halten</string>
+    <string name="setup_toggle_split_screen_title">Geteilter Bildschirm</string>
+    <string name="setup_toggle_split_screen_subtitle">Eine App in der Leiste des Autos lange drücken, um sie neben der aktuellen zu öffnen (Taskleisten-Layout, nur breite Bildschirme)</string>
+    <string name="car_split_close">Geteilten Bildschirm schließen</string>
+    <string name="car_split_open_beside">Neben der aktuellen App öffnen</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Karten</string>
     <string name="dash_cards_hint">Die erste Karte bekommt den meisten Platz, die anderen füllen den Rest des Bildschirms. Eine Karte ohne Inhalt überlässt ihren Platz der nächsten.</string>

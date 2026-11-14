@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Bas</string>
     <string name="setup_toggle_dark_bar_title">Barre sombre</string>
     <string name="setup_toggle_dark_bar_subtitle">Garder la barre sombre même avec les couleurs de jour</string>
+    <string name="setup_toggle_split_screen_title">Écran partagé</string>
+    <string name="setup_toggle_split_screen_subtitle">Appui long sur une application dans la barre de la voiture pour l\'ouvrir à côté de l\'application actuelle (disposition barre des tâches, écrans larges uniquement)</string>
+    <string name="car_split_close">Fermer l\'écran partagé</string>
+    <string name="car_split_open_beside">Ouvrir à côté de l\'application actuelle</string>
     <string name="setup_section_dashboard">Tableau de bord</string>
     <string name="dash_cards_title">Cartes</string>
     <string name="dash_cards_hint">La première carte a le plus de place ; les autres remplissent le reste de l\'écran. Une carte sans rien à montrer laisse sa place à la suivante.</string>

@@ -177,6 +177,10 @@
     <string name="setup_choice_bottom">Bottom</string>
     <string name="setup_toggle_dark_bar_title">Dark bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Keep the bar dark even with day colors</string>
+    <string name="setup_toggle_split_screen_title">Split screen</string>
+    <string name="setup_toggle_split_screen_subtitle">Long-press an app in the car\'s bar to open it beside the current one (taskbar layout, wide screens only)</string>
+    <string name="car_split_close">Close split screen</string>
+    <string name="car_split_open_beside">Open beside the current app</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Cards</string>
     <string name="dash_cards_hint">The first card gets the most room; the others fill what the screen leaves. A card with nothing to show gives its place to the next.</string>
