@@ -50,6 +50,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
+    /**
+     * For cars associated as companion devices (CarCompanion): have Shizuku approve the car's Wi-Fi
+     * network request, so Android's "connect to device" dialog doesn't come back (WifiApproval).
+     * The network stays AARE's own app-only one. Off by default.
+     */
+    var companionWifiShizuku: Boolean
+        get() = prefs.getBoolean("companion_wifi_shizuku", false)
+        set(v) = prefs.edit { putBoolean("companion_wifi_shizuku", v) }
+
     /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
     var checkUpdates: Boolean
         get() = prefs.getBoolean("check_updates", true)

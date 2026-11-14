@@ -54,8 +54,14 @@ import net.prototux.aare.transport.LocalSocketTransport
 import net.prototux.aare.transport.TcpServer
 import net.prototux.aare.transport.UsbAccessoryTransport
 import net.prototux.aare.transport.UsbReattach
+import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.aap.wireless.WifiCredentials
+import net.prototux.aare.transport.wireless.CarCompanion
+import net.prototux.aare.transport.wireless.ShellWifi
+import net.prototux.aare.transport.wireless.WifiApproval
 import net.prototux.aare.transport.wireless.WirelessConnector
 import net.prototux.aare.ui.MainActivity
+import kotlin.concurrent.thread
 
 /**
  * Keeps the car connection alive: owns at most one [CarSession], the transports that can start
@@ -121,6 +127,9 @@ class ProjectionService : Service() {
         media = MediaHub(this, scope)
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
+        // Likewise a Wi-Fi approval a join killed mid-way left on (it covers every AARE request).
+        // Off the main thread: binding Shizuku's helper waits for an answer that comes there.
+        thread(name = "wifi-approval-recover", isDaemon = true) { ShellWifi.recover(this, DiagAapLog) }
         createChannel()
         _state.update { it.copy(running = true) }
     }
@@ -213,7 +222,8 @@ class ProjectionService : Service() {
         // version responses until phone_info carries an instance id.
         val connector = WirelessConnector(this, DiagAapLog,
             WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
-                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull())))
+                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull()),
+                preApproveWifi = { credentials -> approveWifi(address, credentials) }))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
@@ -249,6 +259,21 @@ class ProjectionService : Service() {
                     return@launch
                 }
             }
+        }
+    }
+
+    /**
+     * Before the car's Wi-Fi request (on the connect thread): for a car associated as a companion
+     * device, have the request approved without Android's dialog where that's possible. Null: Android
+     * decides as usual.
+     */
+    private fun approveWifi(address: String, credentials: WifiCredentials): AutoCloseable? {
+        val associated = CarCompanion.addresses(this)
+        if (associated.isEmpty()) return null
+        return when (WifiApproval.way(associated, address, credentials.bssid, settings.companionWifiShizuku, CaptureMethods.shizukuAvailable())) {
+            WifiApproval.Way.COMPANION -> { log("wireless: the car's access point is an associated device: Android approves it by itself"); null }
+            WifiApproval.Way.SHIZUKU -> ShellWifi.approve(this, DiagAapLog)
+            WifiApproval.Way.DIALOG -> null
         }
     }
 

@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s si è interrotto</string>
     <string name="carapp_error_google_only">%1$s accetta solo Android Auto di Google. Deve consentire AARE (vedi l\'elenco delle app sul telefono).</string>
     <string name="carapp_error_cant_start">%1$s non è riuscito ad avviarsi: %2$s</string>
+    <string name="setup_section_companion">Wireless con un tocco</string>
+    <string name="setup_companion_hint">Associa un\'auto a cui ti sei già connesso via wireless: Android avvierà quindi AARE non appena si connette il Bluetooth di quell\'auto, anche con il telefono in tasca. Android ti chiede di confermare una volta per ogni auto.</string>
+    <string name="setup_companion_empty">Connettiti via wireless a un\'auto una volta, poi torna qui per associarla.</string>
+    <string name="setup_companion_failed">Android non ha associato l\'auto: %1$s</string>
+    <string name="setup_action_associate">Associa</string>
+    <string name="setup_toggle_companion_shizuku_title">Approva il Wi-Fi dell\'auto con Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Per le auto associate, Shizuku risponde alla domanda di Android \"connetti al dispositivo\", così non viene più chiesta. La rete dell\'auto resta quella di AARE, non è mai la connessione internet del telefono. Richiede che Shizuku sia in esecuzione e autorizzi AARE.</string>
 </resources>

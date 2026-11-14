@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
+    <string name="setup_section_companion">Kabellos mit einem Tippen</string>
+    <string name="setup_companion_hint">Verknüpfen Sie ein Auto, mit dem Sie sich bereits kabellos verbunden haben: Android startet dann AARE, sobald sich das Bluetooth dieses Autos verbindet, selbst wenn das Telefon in der Tasche ist. Android bittet Sie einmal pro Auto um Bestätigung.</string>
+    <string name="setup_companion_empty">Verbinden Sie sich einmal kabellos mit einem Auto und kommen Sie dann hierher zurück, um es zu verknüpfen.</string>
+    <string name="setup_companion_failed">Android konnte das Auto nicht verknüpfen: %1$s</string>
+    <string name="setup_action_associate">Verknüpfen</string>
+    <string name="setup_toggle_companion_shizuku_title">Das Wi-Fi des Autos mit Shizuku bestätigen</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Bei verknüpften Autos beantwortet Shizuku Androids Frage \"Mit Gerät verbinden\", sodass sie nicht erneut gestellt wird. Das Netzwerk des Autos bleibt AAREs eigenes, nie die Internetverbindung des Telefons. Erfordert laufendes Shizuku mit erlaubtem AARE.</string>
 </resources>

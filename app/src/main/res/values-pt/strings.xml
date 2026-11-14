@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s parou</string>
     <string name="carapp_error_google_only">%1$s apenas aceita o Android Auto da Google. É necessário permitir a AARE (veja a lista de aplicações no telemóvel).</string>
     <string name="carapp_error_cant_start">%1$s não conseguiu iniciar: %2$s</string>
+    <string name="setup_section_companion">Sem fios com um toque</string>
+    <string name="setup_companion_hint">Associe um carro ao qual já se ligou sem fios: o Android inicia então a AARE quando o Bluetooth desse carro liga, mesmo com o telemóvel no bolso. O Android pede-lhe para confirmar uma vez por carro.</string>
+    <string name="setup_companion_empty">Ligue-se sem fios a um carro uma vez e depois volte aqui para o associar.</string>
+    <string name="setup_companion_failed">O Android não associou o carro: %1$s</string>
+    <string name="setup_action_associate">Associar</string>
+    <string name="setup_toggle_companion_shizuku_title">Aprovar o Wi-Fi do carro com o Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Para carros associados, o Shizuku responde à pergunta do Android \"ligar ao dispositivo\", pelo que não volta a ser feita. A rede do carro continua a ser da própria AARE, nunca a ligação à internet do telemóvel. Requer que o Shizuku esteja em execução e permita a AARE.</string>
 </resources>

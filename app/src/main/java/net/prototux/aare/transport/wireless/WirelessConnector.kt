@@ -61,6 +61,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /** Pin the BSSID the head unit sent: lets Android skip the approval dialog next time. */
         val matchBssid: Boolean = true,
         val bootstrap: WirelessBootstrap.Options = WirelessBootstrap.Options(),
+        /**
+         * Runs right before the Wi-Fi network request (Android 10+), e.g. to have it approved without
+         * Android's dialog; the handle it returns is closed once the request is answered.
+         */
+        val preApproveWifi: ((WifiCredentials) -> AutoCloseable?)? = null,
     )
 
     private val context = context.applicationContext
@@ -153,7 +158,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             }
             try {
                 val socket = openRfcomm(adapter)
-                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
+                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid, options.preApproveWifi).also { network = it }
                 val (ip, port) = bootstrap(socket, net)
                 val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
                 val tcpSocket = connectTcp(headUnitNetwork, ip, port)

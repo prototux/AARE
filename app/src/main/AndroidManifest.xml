@@ -45,6 +45,13 @@
     <!-- Do Not Disturb while driving (car/DrivingMode), once the user allows it. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--
+      One-tap wireless (Android 13+, opt-in: the user associates a car as a companion device).
+      Presence: Android tells CarPresenceService when that car's Bluetooth connects. Foreground
+      services from the background: so that start isn't refused while the phone sits in a pocket.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- The car's Phone app: recent calls, contacts, placing calls (through the car's Bluetooth). -->
@@ -72,6 +79,7 @@
     <uses-feature android:name="android.hardware.usb.accessory" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.software.companion_device_setup" android:required="false" />
 
     <application
         android:name=".AareApp"
@@ -160,6 +168,18 @@
         <!-- A paired head unit with wireless Android Auto connected over Bluetooth. No
              android:permission: both actions are protected system broadcasts, and BLUETOOTH_CONNECT
              does not exist below API 31, so requiring it of the sender blocked delivery on 8-11. -->
+        <!-- Started by Android when an associated car's Bluetooth connects (Android 13+ only). -->
+        <service
+            android:name=".transport.wireless.CarPresenceService"
+            android:enabled="@bool/companion_presence"
+            android:exported="true"
+            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE"
+            tools:targetApi="33">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".service.WirelessReceiver"
             android:exported="true">

@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s đã dừng</string>
     <string name="carapp_error_google_only">%1$s chỉ chấp nhận Android Auto của Google. Cần cho phép AARE (xem danh sách ứng dụng trên điện thoại).</string>
     <string name="carapp_error_cant_start">%1$s không thể khởi động: %2$s</string>
+    <string name="setup_section_companion">Không dây một lần nhấn</string>
+    <string name="setup_companion_hint">Liên kết một xe mà bạn đã từng kết nối không dây: Android sẽ khởi động AARE khi Bluetooth của xe đó kết nối, ngay cả khi điện thoại đang ở trong túi. Android sẽ hỏi bạn xác nhận một lần cho mỗi xe.</string>
+    <string name="setup_companion_empty">Kết nối không dây với một xe một lần, rồi trở lại đây để liên kết nó.</string>
+    <string name="setup_companion_failed">Android không liên kết được xe: %1$s</string>
+    <string name="setup_action_associate">Liên kết</string>
+    <string name="setup_toggle_companion_shizuku_title">Chấp thuận Wi-Fi của xe bằng Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Với các xe đã liên kết, Shizuku trả lời câu hỏi \"kết nối với thiết bị\" của Android, nên câu hỏi đó không xuất hiện lại. Mạng của xe vẫn luôn là mạng riêng của AARE, không bao giờ là kết nối internet của điện thoại. Cần Shizuku đang chạy và cho phép AARE.</string>
 </resources>

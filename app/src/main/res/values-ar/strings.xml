@@ -476,4 +476,11 @@
     <string name="carapp_error_stopped">%1$s توقف</string>
     <string name="carapp_error_google_only">%1$s يقبل فقط Android Auto من Google. يجب أن يسمح لـ AARE (راجع قائمة التطبيقات على الهاتف).</string>
     <string name="carapp_error_cant_start">تعذّر بدء %1$s: %2$s</string>
+    <string name="setup_section_companion">الاتصال اللاسلكي بضغطة واحدة</string>
+    <string name="setup_companion_hint">اربط سيارة اتصلت بها لاسلكيًا من قبل: يشغّل Android عندها AARE عند اتصال Bluetooth لتلك السيارة، حتى لو كان الهاتف في الجيب. يطلب منك Android التأكيد مرة واحدة لكل سيارة.</string>
+    <string name="setup_companion_empty">اتصل بسيارة لاسلكيًا مرة واحدة، ثم عد إلى هنا لربطها.</string>
+    <string name="setup_companion_failed">لم يربط Android السيارة: %1$s</string>
+    <string name="setup_action_associate">ربط</string>
+    <string name="setup_toggle_companion_shizuku_title">الموافقة على Wi-Fi السيارة عبر Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">بالنسبة للسيارات المرتبطة، يجيب Shizuku على سؤال Android \"الاتصال بالجهاز\"، فلا يُطرح مرة أخرى. تبقى شبكة السيارة خاصة بـ AARE فقط، ولا تكون أبدًا اتصال إنترنت الهاتف. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
 </resources>

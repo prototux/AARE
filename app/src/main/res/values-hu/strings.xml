@@ -493,4 +493,11 @@
     <string name="carapp_error_stopped">%1$s leállt</string>
     <string name="carapp_error_google_only">%1$s csak a Google Android Auto alkalmazását fogadja el. Engedélyeznie kell az AARE-t (lásd az alkalmazáslistát a telefonon).</string>
     <string name="carapp_error_cant_start">%1$s nem tudott elindulni: %2$s</string>
+    <string name="setup_section_companion">Vezeték nélküli egy koppintással</string>
+    <string name="setup_companion_hint">Társíts egy autót, amelyhez már csatlakoztál vezeték nélkül: az Android ezután elindítja az AARE-t, amint az autó Bluetooth-ja csatlakozik, még akkor is, ha a telefon a zsebben van. Az Android autónkként egyszer kér megerősítést.</string>
+    <string name="setup_companion_empty">Csatlakozz egyszer vezeték nélkül egy autóhoz, majd gyere vissza ide a társításhoz.</string>
+    <string name="setup_companion_failed">Az Android nem tudta társítani az autót: %1$s</string>
+    <string name="setup_action_associate">Társítás</string>
+    <string name="setup_toggle_companion_shizuku_title">Az autó Wi-Fi-jének jóváhagyása Shizukuval</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Társított autóknál a Shizuku válaszol az Android \"csatlakozás az eszközhöz\" kérdésére, így az nem jelenik meg újra. Az autó hálózata az AARE sajátja marad, soha nem a telefon internetkapcsolata. Igényli, hogy a Shizuku fusson, és engedélyezze az AARE-t.</string>
 </resources>

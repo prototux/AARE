@@ -493,4 +493,11 @@
     <string name="carapp_error_stopped">%1$s is gestopt</string>
     <string name="carapp_error_google_only">%1$s accepteert alleen Google\'s Android Auto. Het moet AARE toestaan (zie de app-lijst op de telefoon).</string>
     <string name="carapp_error_cant_start">%1$s kon niet starten: %2$s</string>
+    <string name="setup_section_companion">Draadloos met één tik</string>
+    <string name="setup_companion_hint">Koppel een auto waarmee u al draadloos verbinding hebt gemaakt: Android start dan AARE zodra de Bluetooth van die auto verbindt, ook met de telefoon in een broekzak. Android vraagt u eenmaal per auto om te bevestigen.</string>
+    <string name="setup_companion_empty">Maak eenmaal draadloos verbinding met een auto en kom dan hier terug om deze te koppelen.</string>
+    <string name="setup_companion_failed">Android heeft de auto niet gekoppeld: %1$s</string>
+    <string name="setup_action_associate">Koppelen</string>
+    <string name="setup_toggle_companion_shizuku_title">Keur de Wi-Fi van de auto goed met Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Voor gekoppelde auto\'s beantwoordt Shizuku Androids vraag \"verbinden met apparaat\", zodat deze niet opnieuw wordt gesteld. Het netwerk van de auto blijft AAREs eigen netwerk, nooit de internetverbinding van de telefoon. Vereist dat Shizuku draait en AARE toestaat.</string>
 </resources>
