@@ -96,6 +96,12 @@
     <string name="setup_choice_wallpaper">Шпалери</string>
     <string name="setup_wallpaper_none">Немає</string>
     <string name="setup_wallpaper_photo">Фото</string>
+    <string name="setup_choice_map_inset">Відступ під картою</string>
+    <string name="setup_map_inset_none">Немає</string>
+    <string name="setup_map_inset_small">Малий</string>
+    <string name="setup_map_inset_medium">Середній</string>
+    <string name="setup_map_inset_large">Великий</string>
+    <string name="setup_hint_map_inset">Піднімає те, що навігаційний застосунок малює в нижній частині карти на панелі приладів. Наприклад, коли поточну швидкість автомобіля закриває логотип застосунку (часто трапляється в HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Погода</string>
     <string name="setup_toggle_weather_subtitle">Біля годинника, від Open-Meteo (отримує приблизну позицію, близько 10 км)</string>
     <string name="setup_section_driving">Керування</string>

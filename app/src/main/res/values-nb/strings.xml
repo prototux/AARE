@@ -96,6 +96,12 @@
     <string name="setup_choice_wallpaper">Bakgrunnsbilde</string>
     <string name="setup_wallpaper_none">Ingen</string>
     <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_choice_map_inset">Marg under kartet</string>
+    <string name="setup_map_inset_none">Ingen</string>
+    <string name="setup_map_inset_small">Liten</string>
+    <string name="setup_map_inset_medium">Middels</string>
+    <string name="setup_map_inset_large">Stor</string>
+    <string name="setup_hint_map_inset">Flytter opp det navigasjonsappen tegner nederst på kartet på dashbordet. For eksempel når bilens nåværende hastighet er skjult bak appens logo (skjer ofte i HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Vær</string>
     <string name="setup_toggle_weather_subtitle">Ved siden av klokken, fra Open-Meteo (den henter en omtrentlig posisjon, ca. 10 km)</string>
     <string name="setup_section_driving">Kjøring</string>

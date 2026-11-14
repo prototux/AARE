@@ -96,6 +96,12 @@
     <string name="setup_choice_wallpaper">Обои</string>
     <string name="setup_wallpaper_none">Нет</string>
     <string name="setup_wallpaper_photo">Фото</string>
+    <string name="setup_choice_map_inset">Отступ под картой</string>
+    <string name="setup_map_inset_none">Нет</string>
+    <string name="setup_map_inset_small">Маленький</string>
+    <string name="setup_map_inset_medium">Средний</string>
+    <string name="setup_map_inset_large">Большой</string>
+    <string name="setup_hint_map_inset">Поднимает то, что навигационное приложение рисует в нижней части карты на панели приборов. Например, когда текущая скорость автомобиля закрыта логотипом приложения (часто бывает в HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Погода</string>
     <string name="setup_toggle_weather_subtitle">Рядом с часами, от Open-Meteo (получает приблизительное местоположение, около 10 км)</string>
     <string name="setup_section_driving">Вождение</string>
