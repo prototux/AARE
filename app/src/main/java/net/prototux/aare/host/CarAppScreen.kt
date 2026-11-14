@@ -179,6 +179,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override val night: Boolean get() = runtime.ui.night
     override val touchscreen: Boolean get() = runtime.touchscreen
     override val appLabel: String get() = conn.info.label
+    override val forceIconTint: Boolean = AppQuirks.FORCE_ICON_TINT.matches(conn.info.packageName, conn.info.versionCode)
     override fun contentLimit(type: Int): Int = runtime.contentLimit(type)
     override val done = CarAppConnection.templateDone
     override fun back() = conn.back()
