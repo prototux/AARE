@@ -166,3 +166,7 @@ hand briefly covering the sensor would flicker the car screen's whole colour sch
 - The sensor is started and stopped with the setting (and always released when the car session
   ends), not left registered when unused: a light sensor is cheap, but there's no reason to keep
   listening when nothing reads the result.
+- The decider starts with no state and reports its first stable reading, so a bright start turns
+  the screen light without waiting for a change. The light sensor only reports changes, so a timer
+  ends the stability window when no further event comes. The sensor only runs while the colours
+  follow day/night and the source is the light sensor.
