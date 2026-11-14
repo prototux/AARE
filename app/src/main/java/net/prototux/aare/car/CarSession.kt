@@ -771,8 +771,8 @@ class CarSession(
         if (closed) return
         val cfg = channel.config ?: return
         val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
-        // Some head units want navigation voice mixed into the music, sent
-        // it them (vehicles.json): their guidance channel stays unused.
+        // Some head units want navigation voice mixed into the music (marked in
+        // vehicles.json): their guidance channel stays unused.
         val singleChannel = vehicleOverride?.singleChannelCapture == true
         if (guidance && singleChannel) return
         val p = projection()
