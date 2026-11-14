@@ -893,16 +893,24 @@ class CarSession(
      * but the next route asks again.
      */
     private var navFocusPending = false
+    /** The car was asked for projected nav focus and hasn't been given it back yet. */
+    private var navFocusProjected = false
 
     /** A hosted app's trip or a phone app's guidance started, changed or ended. */
     private fun guidanceChanged(hosted: Boolean, guiding: Boolean) {
+        val handBack: Boolean
         synchronized(navLock) {
             val was = hostedGuiding || phoneGuiding
             if (hosted) hostedGuiding = guiding else phoneGuiding = guiding
             val now = hostedGuiding || phoneGuiding
             if (now && !was) navFocusPending = true
             else if (!now) navFocusPending = false
+            // When projected navigation stops, give nav focus back to the
+            // car, or its own navigation may stay suppressed after the route.
+            handBack = !now && navFocusProjected
+            if (handBack) navFocusProjected = false
         }
+        if (handBack && aap.state == AapSession.State.RUNNING) aap.requestNavFocus(NavFocusType.NAV_FOCUS_NATIVE)
         requestNavFocus()
     }
 
@@ -910,6 +918,7 @@ class CarSession(
         synchronized(navLock) {
             if (!navFocusPending || aap.state != AapSession.State.RUNNING) return
             navFocusPending = false
+            navFocusProjected = true
         }
         aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED)
     }
