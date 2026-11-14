@@ -100,8 +100,14 @@ class WirelessBootstrap(
     class Options(
         /** Longest silence from the head unit while we still need something from it. */
         val messageTimeoutMs: Long = 15_000,
-        /** Re-send WifiInfoRequest once if the credentials have not come after this long. */
-        val infoRetryMs: Long = 5_000,
+        /** Re-send WifiInfoRequest if the credentials have not come after this long (3 s). */
+        val infoRetryMs: Long = 3_000,
+        /**
+         * WifiInfoRequests to send in all (3). When the last one goes unanswered too the
+         * bootstrap fails as on a broken link, [WirelessBootstrapException.whileNegotiating], so the
+         * caller drops RFCOMM and dials again.
+         */
+        val infoAttempts: Int = 3,
         /** Ping interval while joining the network; 0 disables. aa-proxy-rs uses 2 s for picky cars. */
         val keepaliveIntervalMs: Long = 2_000,
         /**
@@ -218,13 +224,19 @@ class WirelessBootstrap(
     private fun negotiate(): Pair<WifiStartRequest, WifiCredentials> {
         var start: WifiStartRequest? = null
         var credentials: WifiCredentials? = null
+        var infoRequests = 0
         var infoRequestedAt = 0L
-        var infoRetried = false
         var deadline = now() + options.messageTimeoutMs
 
+        fun requestInfo() {
+            send(WppMessageId.INFO_REQUEST, ByteArray(0))
+            infoRequests++
+            infoRequestedAt = now()
+        }
+
         while (start == null || credentials == null) {
-            val retryAt = if (infoRequestedAt != 0L && !infoRetried) infoRequestedAt + options.infoRetryMs else Long.MAX_VALUE
-            val event = inbox.poll(maxOf(0, minOf(deadline, retryAt) - now()), TimeUnit.MILLISECONDS)
+            val infoDueAt = if (infoRequests > 0 && credentials == null) infoRequestedAt + options.infoRetryMs else Long.MAX_VALUE
+            val event = inbox.poll(maxOf(0, minOf(deadline, infoDueAt) - now()), TimeUnit.MILLISECONDS)
             ensureOpen()
             if (event == null) {
                 if (now() >= deadline) {
@@ -235,11 +247,13 @@ class WirelessBootstrap(
                     }
                     throw fail("timed out after ${options.messageTimeoutMs} ms waiting for $waitingFor")
                 }
-                if (now() >= retryAt) {
+                if (now() >= infoDueAt) {
+                    if (infoRequests >= options.infoAttempts) {
+                        throw fail("no WifiInfoResponse after $infoRequests requests, ${options.infoRetryMs} ms apart")
+                    }
                     // Also nudges openauto if our first request got stuck behind another frame.
                     log.w("wireless: no credentials yet, asking again")
-                    send(WppMessageId.INFO_REQUEST, ByteArray(0))
-                    infoRetried = true
+                    requestInfo()
                 }
                 continue
             }
@@ -270,10 +284,7 @@ class WirelessBootstrap(
                     if (start != null) log.w("wireless: repeated WifiStartRequest, using the latest one")
                     start = request
                     // A phone that already has the credentials skips the info request.
-                    if (credentials == null && infoRequestedAt == 0L) {
-                        send(WppMessageId.INFO_REQUEST, ByteArray(0))
-                        infoRequestedAt = now()
-                    }
+                    if (credentials == null && infoRequests == 0) requestInfo()
                     deadline = now() + options.messageTimeoutMs
                 }
                 WppMessageId.INFO_RESPONSE -> {

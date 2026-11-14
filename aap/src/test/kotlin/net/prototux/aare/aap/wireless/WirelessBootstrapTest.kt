@@ -339,7 +339,7 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
-    fun infoRequestIsRetriedOnce() {
+    fun infoRequestIsRetried() {
         val phone = Phone { JoinResult.Joined() }
         start(phone, WirelessBootstrap.Options(messageTimeoutMs = 3_000, infoRetryMs = 200, keepaliveIntervalMs = 0, frameGapMs = 0))
 
@@ -349,6 +349,23 @@ class WirelessBootstrapTest {
         hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
         hu.expect(WppMessageId.START_RESPONSE)
         assertNotNull(phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun unansweredInfoRequestsEndTheLinkForARedial() {
+        start(Phone { throw AssertionError("must not try to join") },
+            WirelessBootstrap.Options(messageTimeoutMs = 5_000, infoRetryMs = 200, infoAttempts = 3, keepaliveIntervalMs = 0, frameGapMs = 0))
+
+        hu.send(WppMessageId.START_REQUEST, startRequest())
+        val startedAt = System.nanoTime()
+        repeat(3) { hu.expect(WppMessageId.INFO_REQUEST) }
+        awaitEnd()
+        val tookMs = (System.nanoTime() - startedAt) / 1_000_000
+        val e = failure as WirelessBootstrapException
+        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("no WifiInfoResponse after 3 requests"))
+        // not the 5 s message timeout: 3 requests 200 ms apart
+        assertTrue("gave up after $tookMs ms", tookMs < 2_000)
+        assertTrue("the caller redials", e.whileNegotiating)
     }
 
     @Test(timeout = 10_000)
