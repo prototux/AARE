@@ -507,6 +507,11 @@
     <string name="phone_call_in_progress">Call in progress</string>
     <string name="phone_action_hang_up">Hang up</string>
     <string name="phone_keypad_delete">Delete</string>
+    <string name="voip_mic_title">%1$s can\'t use the microphone</string>
+    <string name="voip_mic_car_text">The other side won\'t hear you. Allow it on the phone: see the notification</string>
+    <string name="voip_mic_notification_text">Calls from the car through %1$s need its microphone permission. Tap to open its settings</string>
+    <string name="voip_call_failed_title">Couldn\'t call through %1$s</string>
+    <string name="voip_call_failed_text">Open it on the phone to call</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Charging</string>
     <string name="phone_incoming_call">Incoming call</string>
