@@ -305,6 +305,11 @@
     <string name="media_search_app">Caută în %1$s</string>
     <string name="media_action_search">Căutare</string>
     <string name="media_action_browse">Răsfoire</string>
+    <string name="media_action_show_video">Afișează videoclipul</string>
+    <string name="media_video_close">Înapoi la player</string>
+    <string name="media_video_full_screen">Ecran complet</string>
+    <string name="media_video_exit_full_screen">Ieși din ecran complet</string>
+    <string name="media_video_paused_driving">Video pus pe pauză în timpul condusului; sunetul continuă.</string>
     <string name="media_now_playing_label">Se redă acum</string>
     <string name="media_nothing_here">Nimic aici</string>
     <string name="media_couldnt_load_more">Nu s-au putut încărca mai multe</string>
@@ -369,6 +374,8 @@
     <string name="standalone_not_native">Nu este o aplicație Android Auto · utilizare la parcare</string>
     <string name="standalone_starting">Se pornește…</string>
     <string name="standalone_paused_driving">Pus pe pauză în timpul condusului.</string>
+    <string name="standalone_media_video_title">Video din aplicațiile media</string>
+    <string name="standalone_media_video_subtitle">Adaugă „Afișează videoclipul” pe ecranul media al mașinii: aplicația media se deschide pe ecranul mașinii pentru videoclipul ei. Doar în parcare; coperta revine când conduci.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Un browser web pe ecranul mașinii, pentru când ești parcat</string>

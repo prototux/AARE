@@ -150,3 +150,13 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Video from media apps: the app itself, parked only
+
+"Show video" on the car's media screen launches the media app on the car screen with the
+standalone-app launcher (root or Shizuku), instead of a video path of AARE's own: media sessions
+carry no video, and the app's own player already handles its streams and DRM. It is opt-in, under
+the standalone apps' switch. The app's screen sits above AARE's controls, or fills the app area
+(not the rail). When driving starts, the app stays on its display for its sound, under the cover
+art. Parking again hands the display a new surface rather than relaunching the app, because a
+relaunch would end the video.

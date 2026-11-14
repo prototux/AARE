@@ -56,6 +56,7 @@ import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
 import net.prototux.aare.ui.car.CarDataScreen
+import net.prototux.aare.ui.car.MediaVideoScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
 import net.prototux.aare.ui.theme.CarTheme
@@ -697,7 +698,7 @@ class CarRuntime(
                         when (app.kind) {
                             CarAppKind.MEDIA -> {
                                 val m = mediaApps.firstOrNull { it.packageName == app.packageName }
-                                if (m != null) media.Screen(m, ui.drivingRestricted, mod)
+                                if (m != null) MediaVideoScreen(this, m, ui.drivingRestricted, mod)
                             }
                             CarAppKind.MESSAGING -> MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)

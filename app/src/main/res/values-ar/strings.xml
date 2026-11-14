@@ -293,6 +293,11 @@
     <string name="media_search_app">البحث في %1$s</string>
     <string name="media_action_search">بحث</string>
     <string name="media_action_browse">استعراض</string>
+    <string name="media_action_show_video">عرض الفيديو</string>
+    <string name="media_video_close">العودة إلى المشغّل</string>
+    <string name="media_video_full_screen">ملء الشاشة</string>
+    <string name="media_video_exit_full_screen">الخروج من ملء الشاشة</string>
+    <string name="media_video_paused_driving">الفيديو متوقف مؤقتًا أثناء القيادة؛ يستمر الصوت.</string>
     <string name="media_now_playing_label">التشغيل الحالي</string>
     <string name="media_nothing_here">لا شيء هنا</string>
     <string name="media_couldnt_load_more">تعذّر تحميل المزيد</string>
@@ -353,6 +358,8 @@
     <string name="standalone_not_native">ليس تطبيق Android Auto · استخدام أثناء التوقف</string>
     <string name="standalone_starting">جارٍ البدء…</string>
     <string name="standalone_paused_driving">متوقف مؤقتًا أثناء القيادة.</string>
+    <string name="standalone_media_video_title">فيديو من تطبيقات الوسائط</string>
+    <string name="standalone_media_video_subtitle">يضيف \"عرض الفيديو\" إلى شاشة الوسائط في السيارة: يُفتح تطبيق الوسائط على شاشة السيارة لعرض الفيديو. أثناء التوقف فقط؛ يعود غلاف الألبوم عند القيادة.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">المتصفح</string>
     <string name="browser_app_row_subtitle">متصفح ويب على شاشة السيارة، لوقت التوقف عن القيادة</string>

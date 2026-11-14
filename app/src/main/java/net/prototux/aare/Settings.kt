@@ -222,6 +222,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("standalone_keep_screen_awake", false)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
 
+    /**
+     * Offer "Show video" on the car's media screen: the media app itself is launched on the car screen
+     * (as [standaloneApps] are, so it needs them on and root or Shizuku), parked only.
+     */
+    var mediaVideo: Boolean
+        get() = prefs.getBoolean("media_video", false)
+        set(v) = prefs.edit { putBoolean("media_video", v) }
+
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
     var standaloneAppPackages: Set<String>
         get() = prefs.getStringSet("standalone_app_pkgs", emptySet()) ?: emptySet()
