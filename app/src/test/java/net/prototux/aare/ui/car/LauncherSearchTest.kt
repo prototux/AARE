@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-/** F12: the launcher's search box filters by label as the user types. */
+/** The launcher's search box filters by label as the user types. */
 class LauncherSearchTest {
     private fun app(label: String) = CarAppEntry(id = label, packageName = "pkg.$label", label = label, icon = null, kind = CarAppKind.TEMPLATED)
 

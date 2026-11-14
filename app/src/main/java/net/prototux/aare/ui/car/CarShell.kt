@@ -658,7 +658,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 
 // ---------------------------------------------------------------- launcher
 
-/** The launcher's search box (F12): apps matching [query] by label, case-insensitive; all of them when blank. */
+/** The launcher's search box: apps matching [query] by label, case-insensitive; all of them when blank. */
 internal fun filterLauncherApps(apps: List<CarAppEntry>, query: String): List<CarAppEntry> =
     if (query.isBlank()) apps else apps.filter { it.label.contains(query, ignoreCase = true) }
 
