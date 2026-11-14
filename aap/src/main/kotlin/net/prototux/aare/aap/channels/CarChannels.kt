@@ -204,6 +204,16 @@ class MediaPlaybackChannel(service: Service) : ServiceChannel(service, "playback
 }
 
 /**
+ * Wi-Fi projection: listed by head units that offer wireless Android Auto, with their access
+ * point's BSSID. Android Auto opens it whenever a head unit lists it, over USB too, so the car sees
+ * the channels it was built against. AARE joins the car's Wi-Fi through the Bluetooth bootstrap
+ * instead and has nothing to say on it, so it is only opened, and what the car sends is ignored.
+ */
+class WifiProjectionChannel(service: Service) : ServiceChannel(service, "wifi") {
+    override fun onMessage(msg: AapMessage) = Unit
+}
+
+/**
  * Bluetooth: the head unit gives its address; the phone asks it to pair so calls go through the
  * car (HFP). Android hides the phone's own address from normal apps, so [phoneAddress] may be
  * unknown, in which case we just let the user pair the usual way.
