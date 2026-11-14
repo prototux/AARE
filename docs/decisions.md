@@ -167,6 +167,10 @@ voice.
   TTS calls, tracked with an utterance-progress listener so it is requested once per burst of
   speech and abandoned once every queued utterance has finished (or failed) — not just on every
   individual `speak()` call, since `QUEUE_ADD` can queue several in a row.
+- `TextToSpeech.speak()` refuses an utterance (no listener callback ever follows) while the engine
+  is still starting, or after it failed: messages asked for during start-up wait for the engine,
+  and a refused or dropped utterance counts as done at once, so the focus (and the ducking) can't
+  outlive the speech. The count and focus are behind one lock: the listener runs on TTS's thread.
 - AARE has no listening (speech-to-text) of its own to apply the "exclusive transient focus while
   listening" half of the request to: `CarRuntime.openMicrophone` only relays the car's microphone
   to a connected car app (an assistant such as Lapin), which requests its own focus if it wants to.
