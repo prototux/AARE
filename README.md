@@ -626,6 +626,12 @@ answers that assistant, and only while a car (or the preview) is connected.
 
 Lapin adds them to its own device tools when it runs on AARE.
 
+An assistant with no code path into AARE — one that answers in a notification, or whose reply
+contains a link rather than calling a tool directly — can still trigger `car_navigate`,
+`car_media`, `car_open` and a confirmed phone call through an `aare://` link in that reply. See
+[docs/assistant-links.md](docs/assistant-links.md) for the link format and what AARE checks
+before acting on one.
+
 ### Car apps that only trust Google
 
 A Car App Library app decides which hosts it accepts (`HostValidator`).

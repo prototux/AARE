@@ -401,6 +401,7 @@
     <string name="notif_not_calling_text">%1$s asked to dial a code with * or #, not a phone number</string>
     <string name="notif_calling_title">Calling %1$s</string>
     <string name="notif_asked_by">Asked by %1$s</string>
+    <string name="notif_asked_by_link">Asked by a link in an assistant\'s reply</string>
     <string name="notif_call_confirm_title">Call %1$s?</string>
     <string name="notif_no_nav_app">No navigation app on the phone</string>
     <string name="notif_cant_open">Can\'t open that from the car</string>

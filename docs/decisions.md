@@ -150,3 +150,20 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## `aare://` links for assistants without a code path into AARE
+
+`CarControlProvider` lets an assistant running on the car screen call car tools directly, but an
+assistant that only answers in a notification or a chat link had no way to act on the car. Added
+`AssistantLinkActivity`, an exported activity for `aare://navigate|play|open|call` links, backed
+by a pure parser (`AssistantLinks.parse`, unit-tested) that doubles as the whole allowlist.
+
+- `java.net.URI` + manual query decoding instead of `android.net.Uri`: this module's unit tests
+  don't pull in Robolectric, and the Android stub jar's `Uri` returns nulls without it.
+- Safety is in what the link can do, not in checking who opened it: Android gives an exported
+  activity no reliable way to tell a user's tap on an assistant's link from any other app
+  launching the same intent (documented in docs/assistant-links.md). So the gate is the allowlist
+  itself (four actions, nothing else), requiring an already-running car session, and always
+  confirming a call on the car screen before dialling.
+- `open`/`play` accept `app`/`action` with `q` as a fallback alias, so the three link patterns in
+  the feature request (`?q=`) and the more specific parameter names both work.
