@@ -9,12 +9,34 @@ import org.junit.Test
 
 /** When a head unit whose WPP over TCP failed gets another try. */
 class WppTcpConfigsTest {
+    private val v45 = WppVersion(4, 5)
+
     @Test
-    fun aFailureBlocksTcpOnlyAtTheVersionItHappenedAt() {
-        assertTrue("never failed", WppTcpConfigs.tcpAllowed(null, WppVersion(4, 5)))
-        assertFalse(WppTcpConfigs.tcpAllowed(WppVersion(4, 5), WppVersion(4, 5)))
-        assertTrue("the head unit was updated", WppTcpConfigs.tcpAllowed(WppVersion(4, 2), WppVersion(4, 5)))
-        assertTrue(WppTcpConfigs.tcpAllowed(WppVersion(4, 5), WppVersion(5, 0)))
+    fun oneSlowJoinDoesNotTurnTcpOff() {
+        assertTrue("never failed", WppTcpConfigs.tcpAllowed(null, v45))
+        val once = WppTcpConfigs.nextFailures(null, v45)
+        assertEquals(WppTcpConfigs.Failures(v45, 1), once)
+        assertTrue("one failure", WppTcpConfigs.tcpAllowed(once, v45))
+        assertTrue("two in a row", WppTcpConfigs.tcpAllowed(WppTcpConfigs.nextFailures(once, v45), v45))
+    }
+
+    @Test
+    fun failuresInARowTurnTcpOffAtThatVersionOnly() {
+        var failures: WppTcpConfigs.Failures? = null
+        repeat(WppTcpConfigs.MAX_FAILURES) { failures = WppTcpConfigs.nextFailures(failures, v45) }
+        assertFalse(WppTcpConfigs.tcpAllowed(failures, v45))
+        assertTrue("the head unit was updated", WppTcpConfigs.tcpAllowed(failures, WppVersion(5, 0)))
+        assertEquals("another version starts again", WppTcpConfigs.Failures(WppVersion(5, 0), 1),
+            WppTcpConfigs.nextFailures(failures, WppVersion(5, 0)))
+    }
+
+    @Test
+    fun storedFailuresReadBack() {
+        assertEquals(WppTcpConfigs.Failures(v45, 2), WppTcpConfigs.parseFailures("4.5/2"))
+        assertNull(WppTcpConfigs.parseFailures("4.5"))
+        assertNull(WppTcpConfigs.parseFailures("4.5/0"))
+        assertNull(WppTcpConfigs.parseFailures("4.5/x"))
+        assertNull(WppTcpConfigs.parseFailures("x/1"))
     }
 
     @Test
