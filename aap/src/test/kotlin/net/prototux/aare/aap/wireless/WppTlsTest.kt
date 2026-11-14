@@ -6,6 +6,7 @@ import net.prototux.aare.aap.cert.SelfSignedCertificate
 import net.prototux.aare.aap.fingerprint
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
@@ -69,9 +70,9 @@ class WppTlsTest {
     }
 
     @Test(timeout = 10_000)
-    fun wppFramesGoThroughTlsAndTheHeadUnitIsPinnedOnFirstUse() {
-        val pins = MemoryPinStore()
-        val (phone, hu) = connect { WppTls.serve(it, phoneId, pins, "wpp:AA:BB", trustOnFirstUse = true) }
+    fun wppFramesGoThroughTlsWithATrustedHeadUnit() {
+        val pins = MemoryPinStore().apply { add("wpp:AA:BB", fingerprint(huId.certificate)) }
+        val (phone, hu) = connect { WppTls.serve(it, phoneId, pins, "wpp:AA:BB") }
         try {
             assertEquals("TLSv1.2", phone.session.protocol)
             assertEquals(phoneId.certificate, hu.session.peerCertificates.first())
@@ -87,10 +88,23 @@ class WppTlsTest {
     }
 
     @Test(timeout = 10_000)
-    fun anUntrustedHeadUnitCertificateFailsTheHandshake() {
+    fun aNewHeadUnitIsNotTrustedOnFirstUseButOfferedForTrust() {
+        val pins = MemoryPinStore()
+        val e = runCatching { connect { WppTls.serve(it, phoneId, pins, "wpp:AA:BB") } }.exceptionOrNull()
+        assertTrue("expected a refusal, got $e", e is WppCertificateRefusedException)
+        val refusal = (e as WppCertificateRefusedException).refusal
+        assertEquals("wpp:AA:BB", refusal.peerKey)
+        assertEquals(fingerprint(huId.certificate), refusal.fingerprint)
+        assertFalse("a new head unit, not a changed certificate", refusal.changed)
+        assertTrue("nothing trusted before the user says so", pins.get("wpp:AA:BB").isEmpty())
+    }
+
+    @Test(timeout = 10_000)
+    fun aChangedHeadUnitCertificateFailsTheHandshake() {
         val pins = MemoryPinStore().apply { add("wpp:AA:BB", "00".repeat(32)) }
-        val e = runCatching { connect { WppTls.serve(it, phoneId, pins, "wpp:AA:BB", trustOnFirstUse = true) } }.exceptionOrNull()
+        val e = runCatching { connect { WppTls.serve(it, phoneId, pins, "wpp:AA:BB") } }.exceptionOrNull()
         assertTrue("expected an IOException, got $e", e is IOException)
+        assertTrue("changed", (e as WppCertificateRefusedException).refusal.changed)
         assertEquals("nothing trusted on a refusal", setOf("00".repeat(32)), pins.get("wpp:AA:BB"))
     }
 }

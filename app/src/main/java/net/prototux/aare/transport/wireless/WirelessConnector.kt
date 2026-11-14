@@ -16,12 +16,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import net.prototux.aare.aap.AapLog
 import net.prototux.aare.aap.PhoneIdentity
+import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.PinStore
 import net.prototux.aare.aap.SocketTransport
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.AA_WIRELESS_UUID
 import net.prototux.aare.aap.wireless.JoinResult
 import net.prototux.aare.aap.wireless.WifiCredentials
+import net.prototux.aare.aap.wireless.WppCertificateRefusedException
 import net.prototux.aare.aap.wireless.WirelessBootstrap
 import net.prototux.aare.aap.wireless.WppEndpoint
 import net.prototux.aare.aap.wireless.WppSetup
@@ -81,9 +83,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     /**
      * WPP over TCP's TLS: [identity] is the phone certificate of the AAP session (also used for the
-     * same), [pins] the trusted head unit certificates (see [WppTls]).
+     * same), [pins] the trusted head unit certificates (see [WppTls]). [onUntrusted] gets a head unit
+     * certificate the phone refused, for the user to trust (from the attempt's thread); the attempt
+     * carries on over Bluetooth meanwhile.
      */
-    class WppTcp(val identity: () -> PhoneIdentity, val pins: PinStore)
+    class WppTcp(val identity: () -> PhoneIdentity, val pins: PinStore, val onUntrusted: (PinRefusal) -> Unit = {})
 
     private val context = context.applicationContext
     private val adapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)?.adapter
@@ -184,6 +188,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         @Volatile private var wpp: Socket? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
+        /** WPP over TCP failed in this attempt: a WifiSetupInfo on the Bluetooth link that follows is declined. */
+        @Volatile private var tcpFailed = false
 
         fun run(): Transport {
             requirePermissions(requiredPermissions())
@@ -198,7 +204,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 // A head unit with a stored TCP configuration gets WPP over TCP, no RFCOMM.
                 if (wppOverTcp) tcpConfigs.get(device.address)?.let { config -> overTcp(config, setupToken = null)?.let { return it } }
                 // Over RFCOMM; a second run after a WifiSetupInfo whose TCP attempt failed, which then
-                // carries on over RFCOMM (that head unit's next WifiSetupInfo is declined, see onSetupInfo).
+                // carries on over RFCOMM (its next WifiSetupInfo in this attempt is declined, see onSetupInfo).
                 repeat(2) {
                     val socket = openRfcomm(adapter)
                     val net = newNetwork(options.joinTimeoutMs)
@@ -265,8 +271,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /**
          * WPP over TCP: join the stored network, TLS to the head unit's WPP
          * server, the WPP exchange there, then AAP on the same network. Returns null when it failed:
-         * the head unit is then remembered as failed at its WPP version (see [WppTcpConfigs]) and the
-         * caller goes on over RFCOMM.
+         * the failure counts against TCP with this head unit (see [WppTcpConfigs]), except a
+         * certificate the user has not trusted yet, and the caller goes on over RFCOMM.
          */
         private fun overTcp(config: WppTcpConfig, setupToken: ByteArray?): Transport? {
             val tls = options.wppTcp ?: return null
@@ -276,9 +282,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 is JoinResult.Joined -> result
                 is JoinResult.Failed -> {
                     checkNotAborted()
-                    tcpConfigs.failed(device.address, config.version)
-                    log.w("wireless: WPP over TCP: could not join \"${config.credentials.ssid}\": ${result.message}; " +
-                        "no more TCP with this head unit at WPP ${config.version}, trying Bluetooth")
+                    // Often just the car's access point coming up slowly: one more strike, not the end of TCP.
+                    countTcpFailure(config, "could not join \"${config.credentials.ssid}\": ${result.message}")
                     net.release()
                     network = null
                     return null
@@ -293,19 +298,25 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 // Small frames that each want an answer: no Nagle delay.
                 runCatching { raw.tcpNoDelay = true }
                 checkNotAborted()
-                // Its own pin key: the head unit's WPP certificate need not be its AAP one. Trusted on first
-                // use like wireless AAP, since the configuration came over the bonded Bluetooth link.
-                val socket = WppTls.serve(raw, tls.identity(), tls.pins, "wpp:${device.address}", trustOnFirstUse = true)
+                // Its own pin key: the head unit's WPP certificate need not be its AAP one. Never trusted on
+                // first use: the user trusts it from the "New head unit" notification (onUntrusted).
+                val socket = WppTls.serve(raw, tls.identity(), tls.pins, WPP_PIN_PREFIX + device.address)
                 wpp = socket
                 log.i("wireless: WPP over TLS (${socket.session.protocol}) with $host:${config.endpoint.port}")
                 return when (val outcome = bootstrap(socket.inputStream, socket.outputStream, net, WirelessBootstrap.TcpLink(joined, setupToken), config)) {
-                    is Outcome.Ready -> aap(net, outcome.ip, outcome.port)
+                    is Outcome.Ready -> aap(net, outcome.ip, outcome.port).also { tcpConfigs.succeeded(device.address) }
                     is Outcome.MovingToTcp -> throw WirelessException("unexpected WifiSetupInfo over TCP")
                 }
             } catch (e: Exception) {
                 if (aborted.get()) throw e
-                tcpConfigs.failed(device.address, config.version)
-                log.w("wireless: WPP over TCP failed: ${e.message}; no more TCP with this head unit at WPP ${config.version}, trying Bluetooth")
+                if (e is WppCertificateRefusedException) {
+                    // Waiting for the user, not a failure of TCP: the configuration stays, the next connection tries again.
+                    tcpFailed = true
+                    log.w("wireless: WPP over TCP: ${e.message}; trust it from the notification, trying Bluetooth")
+                    tls.onUntrusted(e.refusal)
+                } else {
+                    countTcpFailure(config, e.message)
+                }
                 bootstrap?.close()
                 transport?.let { runCatching { it.close() } }
                 listOfNotNull(tcp, wpp).forEach { runCatching { it.close() } }
@@ -313,6 +324,14 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 bootstrap = null; transport = null; tcp = null; wpp = null; network = null
                 return null
             }
+        }
+
+        /** Counts a failed TCP attempt against [config]'s head unit (see [WppTcpConfigs.failed]) and says what happens next. */
+        private fun countTcpFailure(config: WppTcpConfig, why: String?) {
+            tcpFailed = true
+            val off = tcpConfigs.failed(device.address, config.version)
+            log.w("wireless: WPP over TCP failed: $why; " + (if (off) "no more TCP with this head unit at WPP ${config.version}" else "TCP again next time") +
+                ", trying Bluetooth")
         }
 
         private fun openRfcomm(adapter: BluetoothAdapter): BluetoothSocket {
@@ -373,6 +392,10 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 }
 
                 override fun onSetupInfo(setup: WppSetup): Boolean {
+                    if (tcpFailed) {
+                        log.i("wireless: WPP over TCP just failed with this head unit: staying on Bluetooth for this connection")
+                        return false
+                    }
                     if (!tcpConfigs.allowed(device.address, setup.version)) {
                         log.i("wireless: WPP over TCP failed with this head unit at WPP ${setup.version}: staying on Bluetooth")
                         return false
@@ -383,7 +406,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
                 override fun onRejected(reason: Int) {
                     log.w("wireless: the head unit refused us over TCP (reason $reason)")
-                    stored?.let { tcpConfigs.failed(device.address, it.version) }
+                    // It does not know this phone or its token: no more TCP at this version, not one more strike.
+                    stored?.let { tcpConfigs.refused(device.address, it.version) }
                 }
             }, log, bootstrapOptions(link))
             bootstrap = b
@@ -521,6 +545,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     companion object {
         val AA_UUID: UUID = UUID.fromString(AA_WIRELESS_UUID)
+        /** The pin key of a head unit's WPP certificate is this plus its Bluetooth address (see [WppTls]). */
+        const val WPP_PIN_PREFIX = "wpp:"
         /** WifiInfoResponse.access_point_type DYNAMIC: the head unit changes its credentials. */
         private const val ACCESS_POINT_DYNAMIC = 1
         /** Some Android versions report 128-bit SDP UUIDs byte-reversed; Gearhead accepts both. */

@@ -200,18 +200,24 @@ only adds a fallback or only applies after a failure.
     exchange then runs inside TLS as over RFCOMM, minus the WifiInfoRequest (the phone is on the
     network already); the version response to a WPP 4.5+ head unit carries the `setup_token` of
     its WifiSetupInfo, once.
-  - *Failures.* Any failure on the TCP path (join, TCP, TLS, WPP, a WifiConnectionRejection:
-    1 MOBILE_DEVICE_ID_NOT_FOUND, 2 INVALID_SETUP_TOKEN) forgets the configuration and remembers
-    the head unit with its WPP version: nothing is stored or tried over TCP for it again, and its
-    WifiSetupInfo is declined, until it reports another version or the setting is switched. The
-    same attempt goes on over RFCOMM, also right after a WifiSetupInfo hand-off.
+  - *Failures.* A failure on the TCP path (join, TCP, TLS, WPP) counts against the head unit at
+    its WPP version; a TCP attempt that works clears the count. Only 3 failures in a row turn TCP
+    off for it, so one slow access point join costs one try, not the feature: the configuration
+    is then forgotten and nothing is stored or tried over TCP for it, and its WifiSetupInfo is
+    declined, until it reports another version or the setting is switched. A
+    WifiConnectionRejection (1 MOBILE_DEVICE_ID_NOT_FOUND, 2 INVALID_SETUP_TOKEN) turns it off at
+    once: the head unit does not know the phone. The same attempt goes on over RFCOMM, also right
+    after a WifiSetupInfo hand-off, and declines another WifiSetupInfo in that attempt.
   - *Trust.* The head unit's TLS certificate is pinned, as for AAP, not checked against Google's
-    CA (open-source head units cannot chain to it): trust on first use, since a configuration only
-    exists after an exchange over the bonded Bluetooth link, under its own key `wpp:<Bluetooth
-    address>`, so a WPP certificate that differs from the AAP one does not disturb the AAP pin. A
-    head unit that only accepts Google's phone certificate refuses a self-signed one here as it
-    does for AAP.
+    CA (open-source head units cannot chain to it), under its own key `wpp:<Bluetooth address>`,
+    so a WPP certificate that differs from the AAP one does not disturb the AAP pin. Never on
+    first use (owner's decision): a certificate not trusted yet, or changed, fails the TLS
+    handshake and gets the "New head unit" (or "certificate changed") notification and Trust
+    button, as a refused AAP certificate does; that is not counted as a failure, the attempt goes
+    on over RFCOMM and the next connection tries TCP again. A head unit that only accepts Google's
+    phone certificate refuses a self-signed one here as it does for AAP.
   - *The car's Wi-Fi password is stored*, in app-private preferences (the app opts out of backups):
-    without it the phone cannot reach the endpoint before any Bluetooth exchange. Owner to confirm.
+    without it the phone cannot reach the endpoint before any Bluetooth exchange (owner's
+    decision).
   - The TLS socket has a read timeout for the handshake only; afterwards the WPP link has none,
     like the RFCOMM one (pings keep it alive).

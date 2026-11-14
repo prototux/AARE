@@ -212,12 +212,14 @@ class ProjectionService : Service() {
         // and Google's receiver library ignores every phone message except pings and
         // version responses until phone_info carries an instance id.
         // WPP over TCP (opt-in, for head units that offer it) uses the AAP session's phone certificate for its TLS.
+        // A head unit certificate it does not trust yet gets the usual Trust prompt; Bluetooth carries on meanwhile.
         val connector = WirelessConnector(this, DiagAapLog,
             WirelessConnector.Options(
                 bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
                     deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull()),
                 wppTcp = if (!settings.wppOverTcp) null
-                    else WirelessConnector.WppTcp(identity = { certs.pick(settings.certificateIndex).identity }, pins = PinnedHeadUnits(this)),
+                    else WirelessConnector.WppTcp(identity = { certs.pick(settings.certificateIndex).identity }, pins = PinnedHeadUnits(this),
+                        onUntrusted = { refusal -> main.post { if (!destroyed) untrustedWpp(refusal) } }),
             ))
         val missing = connector.missingPermissions()
         if (missing.isNotEmpty()) {
@@ -391,9 +393,9 @@ class ProjectionService : Service() {
         override fun onStatus(session: CarSession, status: String) {
             log(status)
             // A head unit name comes with service discovery, after the phone accepted the head unit's
-            // certificate: nothing is left to trust.
+            // certificate: nothing is left to trust, but for a WPP-over-TCP certificate refused before this session.
             _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription,
-                pendingTrust = it.pendingTrust.takeIf { session.headUnitName.isBlank() }) }
+                pendingTrust = it.pendingTrust.takeIf { p -> session.headUnitName.isBlank() || p.peerKey.startsWith(WirelessConnector.WPP_PIN_PREFIX) }) }
             updateNotification(status)
         }
 
@@ -633,6 +635,16 @@ class ProjectionService : Service() {
             .setAutoCancel(true)
             .addAction(Notification.Action.Builder(null, getString(R.string.notif_action_trust), trust).build())
             .build())
+    }
+
+    /**
+     * WPP over TCP refused the head unit's certificate (new or changed): the same Trust prompt as for
+     * AAP. The connection goes on over Bluetooth; once trusted, the next one uses TCP.
+     */
+    private fun untrustedWpp(refusal: PinRefusal) {
+        log("head unit ${refusal.peerKey} showed WPP certificate SHA-256 ${refusal.fingerprint}")
+        notifyUntrusted(refusal)
+        _state.update { it.copy(pendingTrust = refusal) }
     }
 
     private fun updateNotification(text: String) {

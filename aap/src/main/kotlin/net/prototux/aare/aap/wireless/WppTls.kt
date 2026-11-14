@@ -1,8 +1,10 @@
 package net.prototux.aare.aap.wireless
 
 import net.prototux.aare.aap.PhoneIdentity
+import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.PinStore
 import net.prototux.aare.aap.PinningTrustManager
+import java.io.IOException
 import java.net.Socket
 import java.security.KeyStore
 import java.security.SecureRandom
@@ -20,6 +22,8 @@ import javax.net.ssl.X509TrustManager
  *
  * Only head unit certificates that chain to Google's automotive CA are trusted; like the AAP
  * session ([net.prototux.aare.aap.Cryptor]), AARE pins the head unit's certificate in [pins] instead.
+ * Never on first use: a certificate not trusted yet fails the handshake with a
+ * [WppCertificateRefusedException], for the user to trust it (the "New head unit" notification).
  */
 object WppTls {
 
@@ -27,7 +31,7 @@ object WppTls {
      * Runs the handshake on the connected [socket] (closed with the returned one) and returns the
      * TLS socket the WPP frames go through. [handshakeTimeoutMs] bounds the handshake only; reads
      * afterwards have no timeout, like the RFCOMM link's. Throws an IOException when the handshake
-     * fails, e.g. because the head unit's certificate is not trusted.
+     * fails: a [WppCertificateRefusedException] when the head unit's certificate is not trusted.
      */
     fun serve(
         socket: Socket,
@@ -36,10 +40,9 @@ object WppTls {
         pins: PinStore?,
         /** Identifies the head unit in [pins]; required with [pins]. */
         peerKey: String?,
-        trustOnFirstUse: Boolean,
         handshakeTimeoutMs: Int = 10_000,
     ): SSLSocket {
-        val pinning = pins?.let { PinningTrustManager(requireNotNull(peerKey) { "peerKey is required with pins" }, it, trustOnFirstUse) }
+        val pinning = pins?.let { PinningTrustManager(requireNotNull(peerKey) { "peerKey is required with pins" }, it, trustOnFirstUse = false) }
         val ks = KeyStore.getInstance(KeyStore.getDefaultType()).apply { load(null, null) }
         ks.setKeyEntry("wpp", identity.privateKey, CharArray(0), (listOf(identity.certificate) + identity.chain).toTypedArray())
         val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm()).apply { init(ks, CharArray(0)) }
@@ -56,12 +59,10 @@ object WppTls {
             tls.soTimeout = handshakeTimeoutMs
             tls.startHandshake()
             tls.soTimeout = 0
-            // A first-use pin is only written once the head unit proved it holds the key.
-            pinning?.commit()
             return tls
         } catch (e: Exception) {
             runCatching { tls.close() }
-            throw e
+            throw pinning?.refusal?.let { WppCertificateRefusedException(it, e) } ?: e
         }
     }
 
@@ -71,3 +72,7 @@ object WppTls {
         override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
     }
 }
+
+/** The head unit's WPP certificate is not trusted (yet): [refusal] says which one, for the user to trust. */
+class WppCertificateRefusedException(val refusal: PinRefusal, cause: Throwable) :
+    IOException("head unit WPP certificate not trusted (SHA-256 ${refusal.fingerprint})", cause)
