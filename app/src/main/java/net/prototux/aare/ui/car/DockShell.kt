@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.SpaceDashboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -58,7 +59,9 @@ internal fun DockShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    // A Surface, not a background: it also sets the content colour, which text without its own
+    // colour (song titles, events) takes. Without it that text is black, unreadable at night.
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
