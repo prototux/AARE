@@ -22,4 +22,17 @@ class AndroidAutoAppsTest {
         val messaging = listOf(app("com.example.sms"), app("com.example.chat", declaresMedia = true), app("com.example.voice"))
         assertEquals(setOf("com.example.sms", "com.example.voice"), AndroidAutoApps.messagingOnly(messaging))
     }
+
+    @Test
+    fun navigationAppsDeclaringNotificationsAreNotMessagingApps() {
+        assertEquals(false, AndroidAutoApps.isMessaging("com.google.android.apps.maps", setOf("notification")))
+        assertEquals(false, AndroidAutoApps.isMessaging("com.waze", setOf("notification", "template")))
+    }
+
+    @Test
+    fun appsDeclaringNotificationsOrSmsAreMessagingApps() {
+        assertEquals(true, AndroidAutoApps.isMessaging("org.thoughtcrime.securesms", setOf("notification")))
+        assertEquals(true, AndroidAutoApps.isMessaging("com.example.sms", setOf("sms")))
+        assertEquals(false, AndroidAutoApps.isMessaging("com.example.player", setOf("media")))
+    }
 }

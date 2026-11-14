@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.location.Location
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.IInterface
@@ -144,9 +145,13 @@ class CarAppConnection(
         val bindIntent = Intent(CarAppInfo.SERVICE_ACTION).setComponent(info.service)
         // A second session of the same app, for the cluster display: the library tells them apart by SessionInfo.
         if (cluster) SessionInfoIntentEncoder.encode(SessionInfo(SessionInfo.DISPLAY_TYPE_CLUSTER, "aare-cluster"), bindIntent)
+        // CarContext.requestPermissions makes the app start its own permission screen on the phone,
+        // from its service: a background activity start, which Android blocks. Since Android 14 the
+        // host's binding can allow it, as long as the host itself is in the foreground.
+        val allowActivityStarts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) Context.BIND_ALLOW_ACTIVITY_STARTS else 0
         val ok = runCatching {
             context.bindService(bindIntent, serviceConnection,
-                Context.BIND_AUTO_CREATE or Context.BIND_INCLUDE_CAPABILITIES or Context.BIND_IMPORTANT)
+                Context.BIND_AUTO_CREATE or Context.BIND_INCLUDE_CAPABILITIES or Context.BIND_IMPORTANT or allowActivityStarts)
         }.getOrElse { log("bind failed", it); false }
         bound = ok
         if (!ok) fail(context.getString(R.string.carapp_error_start, info.label))

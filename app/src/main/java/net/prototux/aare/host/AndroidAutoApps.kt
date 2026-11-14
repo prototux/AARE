@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.provider.Telephony
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.media.MediaDiscovery
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import org.xmlpull.v1.XmlPullParser
 
 /** An app that declares Android Auto support but that AARE doesn't show, and why. */
@@ -42,7 +43,7 @@ object AndroidAutoApps {
         val pm = context.packageManager
         val sms = runCatching { Telephony.Sms.getDefaultSmsPackage(context) }.getOrNull()
         return declaring(context)
-            .filter { (app, uses) -> uses.any { it in MESSAGING_USES } || app.packageName == sms }
+            .filter { (app, uses) -> isMessaging(app.packageName, uses) || app.packageName == sms }
             .map { (app, uses) ->
                 PhoneApp(app.packageName, app.loadLabel(pm).toString(), runCatching { app.loadIcon(pm).toBitmap(iconSizePx, iconSizePx) }.getOrNull(), "media" in uses)
             }
@@ -55,6 +56,15 @@ object AndroidAutoApps {
             }
             .sortedBy { it.label.lowercase() }
     }
+
+    /**
+     * Whether an app declaring these `<uses>` is a messaging app. Navigation apps can declare
+     * `notification` too, for their own alerts, but have no conversations: listed as messaging
+     * apps, they only ever showed an empty list. They are told apart by package, like on the
+     * phone screen.
+     */
+    internal fun isMessaging(packageName: String, uses: Set<String>): Boolean =
+        uses.any { it in MESSAGING_USES } && packageName !in KNOWN_NAVIGATION
 
     /**
      * The [messaging] apps that must not be listed as media apps: a media browser alone, like
@@ -80,7 +90,7 @@ object AndroidAutoApps {
         val pm = context.packageManager
         val shown = carApps.toSet() + mediaPackages(pm)
         return declaring(context)
-            .filter { (app, uses) -> app.packageName !in shown && uses.none { it in MESSAGING_USES } }
+            .filter { (app, uses) -> app.packageName !in shown && !isMessaging(app.packageName, uses) }
             .map { (app, uses) ->
                 UnsupportedCarApp(
                     packageName = app.packageName,

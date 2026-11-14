@@ -471,7 +471,7 @@ class CarRuntime(
     fun navigateTo(place: String): Boolean {
         val nav = ui.app(ui.activeNavAppId) ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION } ?: return false
         val conn = connection(nav.id) ?: return false
-        conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(place))))
+        conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(navigationQuery(place)))))
         ui.activeNavAppId = nav.id
         ui.screen = CarScreen.App(nav.id)
         return true
