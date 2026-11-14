@@ -641,7 +641,10 @@ class CarSession(
         when (code) {
             KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
-            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
+            // Cars without Call keys over Android Auto (Mazda) send Search from the wheel's pick-up
+            // button: while a call rings it answers. During a call it does nothing: an assistant
+            // would take the microphone from the call. No call: the assistant, as before.
+            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down && !callKey()) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) media.pause()
@@ -656,6 +659,21 @@ class CarSession(
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+        }
+    }
+
+    /** For the voice key: answers a ringing call; true (handled) while there is any call. */
+    private fun callKey(): Boolean {
+        val state = Calls.state(context)
+        val call = runtime.ui.call
+        return when {
+            state == android.telephony.TelephonyManager.CALL_STATE_RINGING || call?.ringing == true -> {
+                Log.i(TAG, "voice key: answering the ringing call"); runtime.actions.answerCall(); true
+            }
+            state == android.telephony.TelephonyManager.CALL_STATE_OFFHOOK || call != null -> {
+                Log.i(TAG, "voice key: ignored during a call"); true
+            }
+            else -> false
         }
     }
 
