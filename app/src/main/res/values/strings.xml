@@ -338,6 +338,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, then reconnect.</string>
     <string name="notif_cert_changed_message">head unit certificate changed: tap Trust in the notification or in AARE only if its software was updated, then reconnect</string>
     <string name="notif_cert_untrusted_message">head unit certificate not trusted yet: tap Trust in the notification or in AARE, then reconnect</string>
+    <string name="notif_cert_dates_title">Check the car\'s date and time</string>
+    <string name="notif_cert_not_yet_valid_message">the head unit says AARE\'s certificate isn\'t valid yet: its clock is probably behind. Set the car\'s date and time, then reconnect</string>
+    <string name="notif_cert_expired_message">the head unit says AARE\'s certificate has expired: if it hasn\'t, the car\'s clock is ahead. Set the car\'s date and time, or get a newer certificate under Advanced, then reconnect</string>
     <string name="notif_car_nearby_title">Car nearby</string>
     <string name="notif_car_nearby_text">Tap to connect wirelessly</string>
     <string name="notif_status_connecting_to">Connecting to %1$s</string>

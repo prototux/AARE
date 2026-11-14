@@ -395,9 +395,14 @@ class ProjectionService : Service() {
             val why = when {
                 pinRefusal?.changed == true -> getString(R.string.notif_cert_changed_message)
                 pinRefusal != null -> getString(R.string.notif_cert_untrusted_message)
+                // The car judges the certificate's dates by its own clock, which is often wrong.
+                certificateRefusal?.notYetValid == true -> getString(R.string.notif_cert_not_yet_valid_message)
+                certificateRefusal?.expired == true -> getString(R.string.notif_cert_expired_message)
                 else -> reason
             }
             pinRefusal?.let { notifyUntrusted(it) }
+            val datesRefused = certificateRefusal?.notYetValid == true || certificateRefusal?.expired == true
+            if (datesRefused) certNotice(getString(R.string.notif_cert_dates_title), why, retry = false)
             if (certificateRefusal == null) handshakeHangUps = 0
             if (certificateRefusal != null && keepAfterHangUp(certificateRefusal)) {
                 log("head unit ${certificateRefusal}; offering \"${_state.value.certificate}\" again, as every head unit " +
@@ -409,7 +414,8 @@ class ProjectionService : Service() {
                 log("head unit ${certificateRefusal}; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
                 // Strict head units accept only a Google-issued certificate. If we don't have one yet,
                 // offer to fetch it, so the user needn't open Advanced before connecting.
-                if (!certs.hasGoogleCertificate() && !certDownloadPrompted) {
+                // Not when the car refused the dates: its clock is the likelier problem, and that notice says so.
+                if (!datesRefused && !certs.hasGoogleCertificate() && !certDownloadPrompted) {
                     certDownloadPrompted = true
                     certNotice(getString(R.string.notif_cert_download_title), getString(R.string.notif_cert_download_message), retry = true)
                 }
