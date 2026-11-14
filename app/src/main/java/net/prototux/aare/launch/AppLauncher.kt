@@ -83,8 +83,9 @@ class AppLauncher(private val context: Context) {
     val connected: Boolean get() = host != null
 
     /** Create the display into [surface] and launch [pkg] on it. Returns the display id, or -1. */
-    fun start(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String): Int =
-        runCatching { host?.start(surface, width, height, dpi, pkg) ?: -1 }.onFailure { Log.w(TAG, "start", it) }.getOrDefault(-1)
+    fun start(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String, keepDisplayAwake: Boolean): Int =
+        runCatching { host?.start(surface, width, height, dpi, pkg, keepDisplayAwake) ?: -1 }
+            .onFailure { Log.w(TAG, "start", it) }.getOrDefault(-1)
 
     fun resize(surface: Surface, width: Int, height: Int, dpi: Int) { runCatching { host?.resize(surface, width, height, dpi) } }
     fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {

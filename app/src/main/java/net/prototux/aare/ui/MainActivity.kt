@@ -990,6 +990,7 @@ private fun AppGroup(title: String) {
 @Composable
 private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
     var enabled by remember { mutableStateOf(settings.standaloneApps) }
+    var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
@@ -1003,6 +1004,13 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
         }
         if (enabled) {
+            Toggle(
+                stringResource(R.string.standalone_keep_awake_title),
+                stringResource(R.string.standalone_keep_awake_subtitle),
+                keepAwake,
+            ) {
+                keepAwake = it; settings.standaloneKeepScreenAwake = it
+            }
             val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
                 value = withContext(Dispatchers.IO) { launchableApps(ctx) }
             }

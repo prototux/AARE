@@ -2,11 +2,14 @@ package net.prototux.aare.launch
 
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
 import android.view.InputEvent
 import android.view.KeyEvent
@@ -31,6 +34,9 @@ class LaunchHostService : ILaunchHost.Stub {
     private val injectedContext: Context?
     @Volatile private var display: VirtualDisplay? = null
     @Volatile private var displayId: Int = -1
+    @Volatile private var displayWakeLock: PowerManager.WakeLock? = null
+    private var screenOffReceiver: BroadcastReceiver? = null
+    private var receiverContext: Context? = null
 
     constructor() : this(null)
 
@@ -40,12 +46,20 @@ class LaunchHostService : ILaunchHost.Stub {
         exemptHiddenApis()
     }
 
-    override fun start(surface: Surface, width: Int, height: Int, dpi: Int, packageName: String): Int {
+    override fun start(
+        surface: Surface,
+        width: Int,
+        height: Int,
+        dpi: Int,
+        packageName: String,
+        keepDisplayAwake: Boolean,
+    ): Int {
         stop()
         val ctx = injectedContext ?: systemContext() ?: return -1
         val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
         display = vd
         displayId = vd.display.displayId
+        if (keepDisplayAwake) enableKeepAwakeFallback(ctx, displayId)
         if (!launch(ctx, packageName, displayId)) {
             Log.w(TAG, "created display ${displayId} but could not launch $packageName on it")
         }
@@ -73,6 +87,13 @@ class LaunchHostService : ILaunchHost.Stub {
     }
 
     override fun stop() {
+        screenOffReceiver?.let { receiver ->
+            receiverContext?.let { context -> runCatching { context.unregisterReceiver(receiver) } }
+        }
+        screenOffReceiver = null
+        receiverContext = null
+        displayWakeLock?.let { lock -> runCatching { if (lock.isHeld) lock.release() } }
+        displayWakeLock = null
         display?.let { runCatching { it.release() } }
         display = null
         displayId = -1
@@ -84,6 +105,62 @@ class LaunchHostService : ILaunchHost.Stub {
     }
 
     // ---------------------------------------------------------------- privileged plumbing (reflection)
+
+    /**
+     * Hold the hosted display awake. Some Android 17 devices still suspend it with the physical
+     * display, so wake the phone after a power-off event or when starting while it is already off.
+     */
+    @Suppress("DEPRECATION")
+    private fun enableKeepAwakeFallback(ctx: Context, id: Int) {
+        runCatching {
+            val pm = ctx.getSystemService(PowerManager::class.java)
+            val method = PowerManager::class.java.getDeclaredMethod(
+                "newWakeLock",
+                Int::class.javaPrimitiveType,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+            ).apply { isAccessible = true }
+            val lock = method.invoke(pm, PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "aare:standalone-display", id)
+                as PowerManager.WakeLock
+            lock.setReferenceCounted(false)
+            lock.acquire()
+            displayWakeLock = lock
+            Log.i(TAG, "holding display wake lock for display $id")
+        }.onFailure { Log.w(TAG, "display wake lock failed for display $id", it) }
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_SCREEN_OFF) wakePhysicalDisplay(id)
+            }
+        }
+        runCatching {
+            val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)
+            if (Build.VERSION.SDK_INT >= 33) ctx.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            else @Suppress("UnspecifiedRegisterReceiverFlag") ctx.registerReceiver(receiver, filter)
+            screenOffReceiver = receiver
+            receiverContext = ctx
+        }.onFailure { Log.w(TAG, "could not watch physical screen state", it) }
+
+        val phoneIsAwake = runCatching {
+            ctx.getSystemService(PowerManager::class.java).isInteractive
+        }.getOrDefault(true)
+        if (!phoneIsAwake) wakePhysicalDisplay(id)
+    }
+
+    private fun wakePhysicalDisplay(virtualDisplayId: Int) {
+        Thread {
+            runCatching {
+                Thread.sleep(500)
+                val process = ProcessBuilder("/system/bin/cmd", "power", "wakeup")
+                    .redirectErrorStream(true)
+                    .start()
+                val output = process.inputStream.bufferedReader().use { it.readText().trim() }
+                val exit = process.waitFor()
+                if (exit == 0) Log.i(TAG, "woke phone to keep display $virtualDisplayId active")
+                else Log.w(TAG, "phone wake failed for display $virtualDisplayId (exit=$exit): $output")
+            }.onFailure { Log.w(TAG, "phone wake failed for display $virtualDisplayId", it) }
+        }.apply { name = "AARE-display-wakeup"; isDaemon = true }.start()
+    }
 
     /** Build the virtual display. Trusted + its own display group lets an arbitrary app run and focus on it. */
     private fun createDisplay(ctx: Context, surface: Surface, w: Int, h: Int, dpi: Int): VirtualDisplay? {
@@ -144,7 +221,8 @@ class LaunchHostService : ILaunchHost.Stub {
         runCatching {
             HiddenApiBypass.addHiddenApiExemptions(
                 "Landroid/app/ActivityThread;", "Landroid/hardware/input/InputManager;",
-                "Landroid/hardware/display/DisplayManager;", "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
+                "Landroid/hardware/display/DisplayManager;", "Landroid/os/PowerManager;",
+                "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
             )
         }
     }
