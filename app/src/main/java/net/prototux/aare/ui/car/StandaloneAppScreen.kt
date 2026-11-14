@@ -11,9 +11,11 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,17 +36,28 @@ import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.media.Placeholder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Hosts an ordinary phone app on the car screen (NewPipe, an emulator, a browser app…). A
  * [TextureView] gives its surface to the privileged [AppLauncher], which puts a virtual display
  * there, launches [packageName] on it, and receives the car's touches we forward.
  *
- * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving. The
- * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
+ * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving unless
+ * its driving rule says otherwise: the caller decides, through [driving] (false for a navigation
+ * app) and [audioOnly]. The privileged core is device-tested; here it just wires the surface,
+ * touches, places to open and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
+internal fun StandaloneAppScreen(
+    runtime: CarRuntime,
+    driving: Boolean,
+    packageName: String,
+    modifier: Modifier,
+    /** While [driving], the app keeps playing under the card ("audio only"), rather than being paused. */
+    audioOnly: Boolean = false,
+) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
     var started by remember(packageName) { mutableStateOf(false) }
@@ -60,8 +73,18 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
         runtime.screenBack = back
         onDispose {
             if (runtime.screenBack === back) runtime.screenBack = null
+            // A place that never made it (no launcher) mustn't come back on the next, unrelated open.
+            runtime.standaloneViews.remove(packageName)
             launcher.release()
         }
+    }
+
+    // A destination for a navigation app ("navigate to"), opened on its display once that is up.
+    val pendingView = runtime.standaloneViews[packageName]
+    LaunchedEffect(started, pendingView) {
+        if (!started || pendingView == null) return@LaunchedEffect
+        runtime.standaloneViews.remove(packageName)
+        withContext(Dispatchers.IO) { launcher.view(pendingView, packageName) }
     }
 
     Box(modifier.background(Color.Black)) {
@@ -123,7 +146,8 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             )
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
-            Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
+            if (audioOnly) Placeholder(stringResource(R.string.standalone_audio_only_driving), loading = false, icon = Icons.Rounded.Headphones)
+            else Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
         }
     }
 }

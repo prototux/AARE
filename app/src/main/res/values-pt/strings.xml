@@ -290,6 +290,7 @@
     <string name="nav_dashboard_where_to">Para onde?</string>
     <string name="nav_dashboard_install_hint">Instale no telemóvel uma aplicação de navegação compatível com o Android Auto</string>
     <string name="nav_dashboard_choose_app">Escolha a sua aplicação de mapas</string>
+    <string name="nav_dashboard_standalone_hint">%1$s é uma app do telemóvel: o seu mapa abre em ecrã inteiro.</string>
     <string name="nav_guidance_on_phone">%1$s, no telemóvel</string>
     <string name="nav_next_step_then">Depois</string>
 
@@ -360,15 +361,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps no ecrã do carro (avançado)</string>
-    <string name="standalone_section_warning">Estas não são apps do Android Auto: a AARE mostra o ecrã normal do telemóvel, apenas quando estacionado, e precisa de root ou Shizuku. Utilize por sua conta e risco.</string>
+    <string name="standalone_section_warning">Estas não são apps do Android Auto: a AARE mostra o ecrã normal do telemóvel, por predefinição apenas quando estacionado, e precisa de root ou Shizuku. Utilize por sua conta e risco.</string>
     <string name="standalone_toggle_title">Iniciar apps do telemóvel no ecrã do carro</string>
-    <string name="standalone_toggle_subtitle">Escolha as apps abaixo. Mostradas apenas quando estacionado.</string>
+    <string name="standalone_toggle_subtitle">Escolha as apps abaixo e, para cada uma, o que pode fazer durante a condução.</string>
     <string name="standalone_keep_awake_title">Modo sem suspensão para aplicações autónomas</string>
     <string name="standalone_keep_awake_subtitle">Mantém o ecrã físico do telemóvel ativo enquanto uma aplicação está aberta. Nos telemóveis Android 17 afetados, os ecrãs virtuais param quando o ecrã do telemóvel está desligado. Consome mais bateria.</string>
     <string name="standalone_need_root">Precisa de root ou Shizuku. Configure um deles em Áudio do carro e depois volte.</string>
     <string name="standalone_not_native">Não é uma app do Android Auto · uso quando estacionado</string>
     <string name="standalone_starting">A iniciar…</string>
     <string name="standalone_paused_driving">Em pausa durante a condução.</string>
+    <string name="standalone_audio_only_driving">Ecrã oculto durante a condução. O som continua.</string>
+    <string name="standalone_rule_title">Durante a condução</string>
+    <string name="standalone_rule_parked">Apenas estacionado</string>
+    <string name="standalone_rule_audio">Apenas áudio</string>
+    <string name="standalone_rule_navigation">Navegação</string>
+    <string name="standalone_rule_navigation_note">Mostrada durante a condução e usada como a app de navegação do carro: ocupa o lugar do mapa e abre os destinos que pedir.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Navegador</string>
     <string name="browser_app_row_subtitle">Um navegador web no ecrã do carro, para quando está estacionado</string>

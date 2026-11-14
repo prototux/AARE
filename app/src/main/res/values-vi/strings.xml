@@ -290,6 +290,7 @@
     <string name="nav_dashboard_where_to">Đi đâu?</string>
     <string name="nav_dashboard_install_hint">Cài một ứng dụng điều hướng hỗ trợ Android Auto trên điện thoại</string>
     <string name="nav_dashboard_choose_app">Chọn ứng dụng bản đồ của bạn</string>
+    <string name="nav_dashboard_standalone_hint">%1$s là ứng dụng điện thoại: bản đồ của nó mở toàn màn hình.</string>
     <string name="nav_guidance_on_phone">%1$s, trên điện thoại</string>
     <string name="nav_next_step_then">Tiếp theo</string>
 
@@ -360,15 +361,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Ứng dụng trên màn hình xe (nâng cao)</string>
-    <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
+    <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, mặc định chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
     <string name="standalone_toggle_title">Khởi chạy ứng dụng điện thoại trên màn hình xe</string>
-    <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới. Chỉ hiển thị khi đã đỗ xe.</string>
+    <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới, và với mỗi ứng dụng, những gì nó được làm khi đang lái xe.</string>
     <string name="standalone_keep_awake_title">Chế độ không ngủ cho ứng dụng độc lập</string>
     <string name="standalone_keep_awake_subtitle">Giữ màn hình vật lý của điện thoại luôn sáng khi có ứng dụng đang mở. Trên các điện thoại Android 17 bị ảnh hưởng, màn hình ảo sẽ dừng khi màn hình điện thoại tắt. Tiêu tốn nhiều pin hơn.</string>
     <string name="standalone_need_root">Cần root hoặc Shizuku. Thiết lập một trong hai ở Âm thanh xe hơi, rồi quay lại.</string>
     <string name="standalone_not_native">Không phải ứng dụng Android Auto · dùng khi đã đỗ xe</string>
     <string name="standalone_starting">Đang khởi động…</string>
     <string name="standalone_paused_driving">Tạm dừng khi đang lái xe.</string>
+    <string name="standalone_audio_only_driving">Màn hình bị ẩn khi đang lái xe. Âm thanh vẫn tiếp tục.</string>
+    <string name="standalone_rule_title">Khi đang lái xe</string>
+    <string name="standalone_rule_parked">Chỉ khi đã đỗ xe</string>
+    <string name="standalone_rule_audio">Chỉ âm thanh</string>
+    <string name="standalone_rule_navigation">Dẫn đường</string>
+    <string name="standalone_rule_navigation_note">Hiển thị khi đang lái xe và được dùng làm ứng dụng dẫn đường của xe: nó chiếm vị trí bản đồ và mở các điểm đến bạn yêu cầu.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Trình duyệt</string>
     <string name="browser_app_row_subtitle">Trình duyệt web trên màn hình xe, dùng khi bạn đã đỗ xe</string>
