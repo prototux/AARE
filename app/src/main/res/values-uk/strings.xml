@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Вигляд</string>
     <string name="setup_choice_colors">Кольори</string>
-    <string name="setup_choice_colors_auto">День/ніч автомобіля</string>
+    <string name="setup_choice_colors_auto">Авто</string>
     <string name="setup_choice_dark">Темний</string>
     <string name="setup_choice_light">Світлий</string>
     <string name="setup_choice_bar">Панель</string>

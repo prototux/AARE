@@ -73,7 +73,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">外观</string>
     <string name="setup_choice_colors">颜色</string>
-    <string name="setup_choice_colors_auto">跟随车辆日间/夜间模式</string>
+    <string name="setup_choice_colors_auto">自动</string>
     <string name="setup_choice_dark">深色</string>
     <string name="setup_choice_light">浅色</string>
     <string name="setup_choice_bar">导航条</string>

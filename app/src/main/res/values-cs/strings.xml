@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Vzhled</string>
     <string name="setup_choice_colors">Barvy</string>
-    <string name="setup_choice_colors_auto">Den/noc auta</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Tmavý</string>
     <string name="setup_choice_light">Světlý</string>
     <string name="setup_choice_bar">Lišta</string>

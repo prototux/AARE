@@ -67,6 +67,8 @@ internal fun StyleChoices(
     choice: @Composable (title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) -> Unit,
     onChange: (themeId: String, layoutId: String) -> Unit,
     onAccent: (accentId: String) -> Unit,
+    /** For the long lists (style, theme, accent): a drop-down on the phone, where [choice]'s row can't fit them. */
+    select: @Composable (title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) -> Unit = choice,
 ) {
     val layout = CarLayout.byId(layoutId)
     val theme = CarThemes.byId(themeId)
@@ -74,11 +76,11 @@ internal fun StyleChoices(
     val custom = "custom"
     val styles = CarStyles.available.map { "${it.themeId}/${it.layout.id}" to CarThemes.byId(it.themeId).label() } +
         (if (current == null) listOf(custom to stringResource(R.string.setup_style_custom)) else emptyList())
-    choice(stringResource(R.string.setup_choice_style), styles, current?.let { "${it.themeId}/${it.layout.id}" } ?: custom) { picked ->
+    select(stringResource(R.string.setup_choice_style), styles, current?.let { "${it.themeId}/${it.layout.id}" } ?: custom) { picked ->
         CarStyles.all.firstOrNull { "${it.themeId}/${it.layout.id}" == picked }?.let { onChange(it.themeId, it.layout.id) }
     }
     Spacer(Modifier.height(12.dp))
-    choice(stringResource(R.string.setup_choice_theme), CarThemes.available.map { it.id to it.label() }, theme.id) { onChange(it, layout.id) }
+    select(stringResource(R.string.setup_choice_theme), CarThemes.available.map { it.id to it.label() }, theme.id) { onChange(it, layout.id) }
     Spacer(Modifier.height(12.dp))
     choice(stringResource(R.string.setup_choice_layout), listOf(
         CarLayout.TASKBAR.id to stringResource(R.string.setup_layout_taskbar),
@@ -89,5 +91,5 @@ internal fun StyleChoices(
     val accents = listOf(CarAccents.THEME to stringResource(R.string.accent_theme)) +
         (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) listOf(CarAccents.PHONE to stringResource(R.string.accent_phone)) else emptyList()) +
         CarAccents.all.map { it.id to stringResource(it.nameRes) }
-    choice(stringResource(R.string.setup_choice_accent), accents, accentId, onAccent)
+    select(stringResource(R.string.setup_choice_accent), accents, accentId, onAccent)
 }

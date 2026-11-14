@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Megjelenés</string>
     <string name="setup_choice_colors">Színek</string>
-    <string name="setup_choice_colors_auto">Autó nappal/éjszaka módja</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Sötét</string>
     <string name="setup_choice_light">Világos</string>
     <string name="setup_choice_bar">Sáv</string>
