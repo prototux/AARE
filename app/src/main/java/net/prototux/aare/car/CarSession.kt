@@ -271,6 +271,8 @@ class CarSession(
         val mainInput = inputServices.firstOrNull { it.inputSourceService.displayId == mainDisplayId && realTouch(it) }
             ?: inputServices.firstOrNull(::realTouch)
             ?: inputServices.firstOrNull()
+        val hasTouch = mainInput?.let(::realTouch) == true
+        main.post { runtime.touchscreen = hasTouch }
         mainInput?.let { s ->
             InputChannel(s, inputListener).also { ch ->
                 ch.touchScreen?.let { touchSize = it.width to it.height }

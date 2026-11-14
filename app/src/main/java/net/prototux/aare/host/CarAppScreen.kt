@@ -177,6 +177,7 @@ fun CarAppClusterScreen(conn: CarAppConnection, runtime: CarRuntime, modifier: M
 private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: CarRuntime) : TemplateHost {
     override val driving: Boolean get() = runtime.ui.drivingRestricted
     override val night: Boolean get() = runtime.ui.night
+    override val touchscreen: Boolean get() = runtime.touchscreen
     override val appLabel: String get() = conn.info.label
     override fun contentLimit(type: Int): Int = runtime.contentLimit(type)
     override val done = CarAppConnection.templateDone

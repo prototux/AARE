@@ -90,7 +90,7 @@ internal fun NavigationTemplateView(t: NavigationTemplate) {
         }
         if (estimate != null) {
             // narrow screens: leave room for the map action strip at the bottom end
-            val w = if (narrow) maxWidth - 96.dp else width
+            val w = if (narrow) maxWidth - MapActionStripRoom else width
             TravelEstimateCard(estimate, Modifier.align(Alignment.BottomStart).width(w).obstructsMap())
         }
     }

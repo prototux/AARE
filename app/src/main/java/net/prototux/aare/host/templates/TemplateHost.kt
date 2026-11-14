@@ -19,6 +19,12 @@ interface TemplateHost {
     /** Car moving: honour parked-only actions and list limits, hide keyboards. */
     val driving: Boolean
 
+    /**
+     * The car's screen takes touch. Map drags then pan by themselves, so the Pan button an app
+     * offers is only needed on cars with a knob or a touchpad, as with Android Auto.
+     */
+    val touchscreen: Boolean get() = true
+
     /** The car's night mode: app resource icons have day and night variants. */
     val night: Boolean
 

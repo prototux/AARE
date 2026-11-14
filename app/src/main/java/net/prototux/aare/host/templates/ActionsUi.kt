@@ -85,6 +85,8 @@ internal fun ActionView(
         return
     }
     if (action.type == Action.TYPE_PAN && pan == null) return // no map here: nothing to pan
+    // On a touchscreen a drag pans the map: the button only stays to leave pan mode.
+    if (action.type == Action.TYPE_PAN && host.touchscreen && pan?.active != true) return
     if (!action.isDrawn()) return
 
     var vector: ImageVector? = null
