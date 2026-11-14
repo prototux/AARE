@@ -199,8 +199,9 @@ class WirelessBootstrap(
             val joined = join(credentials)
             val ip = start.ipAddress.trim().takeUnless { it.isEmpty() || it == "0.0.0.0" } ?: joined.gateway
             if (ip.isNullOrEmpty()) {
-                // The adapter order already acknowledged the start request: say it in the status instead.
-                if (adapterOrder) sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.INVALID_HOST, "no head unit address"))
+                // The adapter order already acknowledged the start request: say it in the status instead,
+                // without an error text (the head unit may show it to the driver; ours is for the log).
+                if (adapterOrder) sendQuietly(WppMessageId.CONNECTION_STATUS, connectionStatus(WppStatus.INVALID_HOST, null))
                 else sendQuietly(WppMessageId.START_RESPONSE, startResponse(null, WppStatus.INVALID_HOST))
                 throw fail("head unit sent no IP address and the network has no gateway", WppStatus.INVALID_HOST)
             }

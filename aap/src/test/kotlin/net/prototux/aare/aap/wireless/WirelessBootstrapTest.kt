@@ -500,7 +500,9 @@ class WirelessBootstrapTest {
         assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
         hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
         // no second start response contradicting the first one
-        assertEquals(WppStatus.INVALID_HOST, status(hu.expect(WppMessageId.CONNECTION_STATUS)))
+        val connectionStatus = WifiConnectionStatus.parseFrom(hu.expect(WppMessageId.CONNECTION_STATUS).payload)
+        assertEquals(WppStatus.INVALID_HOST, connectionStatus.status.number)
+        assertFalse("no internal error text for the head unit", connectionStatus.hasErrorMessage())
         awaitEnd()
         assertEquals(WppStatus.INVALID_HOST, (failure as WirelessBootstrapException).status)
     }
