@@ -250,7 +250,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                 if (state.driverOnRight) { menu(); mic() } else { mic(); menu() }
             } }
             val status: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Clock(); if (!tightBar) WeatherChip(state.weather); PhoneStatusIcons(); NotificationBell(state) { bell() }
+                Clock(); if (!tightBar) WeatherChip(state.weather.takeIf { state.weatherInBar }); PhoneStatusIcons(); NotificationBell(state) { bell() }
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -269,7 +269,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                 Spacer(Modifier.height(6.dp))
                 PhoneStatusIcons()
                 Spacer(Modifier.height(4.dp))
-                WeatherChip(state.weather)
+                WeatherChip(state.weather.takeIf { state.weatherInBar })
             }
             NotificationBell(state) { bell() }
             // The apps are the only weighted child, so they are measured last and are the part that
@@ -372,62 +372,83 @@ internal fun Dashboard(
     modifier: Modifier,
 ) {
     val gutter = LocalCarDimens.current.gutter
+    // The map and the music always have something to show (a "where to?", "nothing playing").
+    val shown: (DashCard) -> Boolean = { card ->
+        when (card) {
+            DashCard.MAP, DashCard.MEDIA -> true
+            DashCard.CALENDAR -> state.nextEvent != null
+            DashCard.NOTIFICATION -> state.history.isNotEmpty()
+            DashCard.WEATHER -> state.weather != null
+        }
+    }
+    val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> DashSlot(card, state, actions, navMap, m, compact) }
+    // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
+    // first gets the big space.
     BoxWithConstraints(modifier) {
         val narrow = maxWidth < 560.dp
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
-            // portrait screens (720x1280, 1080x1920…): the cards stacked, the map on top
+            // portrait screens (720x1280, 1080x1920…): the cards stacked, the first two sharing the height
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxWidth()) }
-                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxWidth()) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
-                val event = state.nextEvent
-                val latest = state.history.firstOrNull()
-                when {
-                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
-                    latest != null -> Card(Modifier.fillMaxWidth().height(180.dp), onClick = {
-                        state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
-                    }) { LatestNotification(latest, state.drivingRestricted) }
+                cards.forEachIndexed { i, card ->
+                    slot(card, when (i) {
+                        0 -> Modifier.weight(1.6f).fillMaxWidth()
+                        1 -> Modifier.weight(1f).fillMaxWidth()
+                        else -> Modifier.fillMaxWidth().height(180.dp)
+                    }, false)
                 }
             }
         } else if (narrow) {
-            // small screens: one big card, media as a strip under it
+            // small screens: one big card, the second as a strip under it
+            val cards = dashboardSlots(state.dashboardCards, 2, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1f).fillMaxWidth()) }
-                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = true, modifier = Modifier.fillMaxWidth().height(112.dp)) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
+                cards.forEachIndexed { i, card ->
+                    slot(card, if (i == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), i > 0)
+                }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxHeight()) }
-                val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight()) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
-                val event = state.nextEvent
-                val latest = state.history.firstOrNull()
-                when {
-                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
-                    latest != null -> Card(Modifier.weight(0.9f).fillMaxHeight(), onClick = {
-                        state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
-                    }) { LatestNotification(latest, state.drivingRestricted) }
+                cards.forEachIndexed { i, card ->
+                    slot(card, Modifier.weight(when (i) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
                 }
             }
         } else {
+            // the big card, and the others stacked beside it, the first of them taller
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                val event = state.nextEvent
-                val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.65f).fillMaxHeight()) }
-                val media: @Composable () -> Unit = {
-                    if (event == null) {
-                        MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
-                    } else {
-                        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                            MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
-                            Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
-                        }
+                slot(cards.first(), Modifier.weight(1.65f).fillMaxHeight(), false)
+                if (cards.size > 1) Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
+                    cards.drop(1).forEachIndexed { i, card ->
+                        slot(card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
                     }
                 }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
             }
         }
+    }
+}
+
+/** One dashboard card in its slot ([modifier] sizes it); [compact] for a thin strip. */
+@Composable
+private fun DashSlot(
+    card: DashCard,
+    state: CarUiState,
+    actions: CarActions,
+    navMap: @Composable (CarAppEntry, Modifier) -> Unit,
+    modifier: Modifier,
+    compact: Boolean,
+) {
+    when (card) {
+        DashCard.MAP -> NavCard(state, actions, navMap, modifier)
+        DashCard.MEDIA -> MediaCard(state, actions, compact = compact, modifier = modifier)
+        DashCard.CALENDAR -> state.nextEvent?.let { event -> Card(modifier) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) } }
+        DashCard.NOTIFICATION -> state.history.firstOrNull()?.let { latest ->
+            Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }) {
+                LatestNotification(latest, state.drivingRestricted)
+            }
+        }
+        DashCard.WEATHER -> state.weather?.let { weather -> Card(modifier) { WeatherCard(weather) } }
     }
 }
 

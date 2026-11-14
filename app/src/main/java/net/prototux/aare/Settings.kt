@@ -131,10 +131,6 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
-    /** The next calendar event on the dashboard. */
-    var showCalendar: Boolean
-        get() = prefs.getBoolean("show_calendar", true)
-        set(v) = prefs.edit { putBoolean("show_calendar", v) }
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
@@ -146,10 +142,17 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("dark_bar", false)
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
 
-    /** Home screen: the music card takes the map's place and the map comes after it. */
-    var dashboardMediaFirst: Boolean
-        get() = prefs.getBoolean("dashboard_media_first", false)
-        set(v) = prefs.edit { putBoolean("dashboard_media_first", v) }
+    /**
+     * The dashboard's cards in order, ids from `DashCard`. Before it was configurable, two switches
+     * set it: "music first" and "next calendar event" (the latest notification came last).
+     */
+    var dashboardCards: List<String>
+        get() = prefs.getString("dashboard_cards", null)?.split(',')?.filter { it.isNotBlank() } ?: buildList {
+            if (prefs.getBoolean("dashboard_media_first", false)) addAll(listOf("media", "map")) else addAll(listOf("map", "media"))
+            if (prefs.getBoolean("show_calendar", true)) add("calendar")
+            add("notification")
+        }
+        set(v) = prefs.edit { putString("dashboard_cards", v.joinToString(",")) }
 
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String

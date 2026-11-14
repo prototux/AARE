@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -60,6 +61,16 @@ internal fun WeatherChip(weather: Weather?) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(weatherIcon(w), null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(18.dp))
         Text("${w.temperature}${w.unit}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/** The weather as a dashboard card: the sky and the temperature, big. */
+@Composable
+internal fun WeatherCard(weather: Weather) {
+    Row(Modifier.fillMaxSize().padding(24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Icon(weatherIcon(weather), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(72.dp))
+        Spacer(Modifier.width(16.dp))
+        Text("${weather.temperature}${weather.unit}", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 

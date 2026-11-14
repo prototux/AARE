@@ -136,6 +136,8 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
@@ -643,7 +645,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
-    var mediaFirst by remember { mutableStateOf(settings.dashboardMediaFirst) }
+    var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
@@ -660,7 +662,6 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
         }
     }
-    var calendar by remember { mutableStateOf(settings.showCalendar) }
     @Suppress("UNUSED_EXPRESSION") refresh
     val touch = AndroidSettings.Secure.getString(ctx.contentResolver, AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
         .split(':').any { ComponentName.unflattenFromString(it) == ComponentName(ctx, MirrorTouchService::class.java) }
@@ -692,12 +693,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.setup_toggle_weather_title), stringResource(R.string.setup_toggle_weather_subtitle), weather) {
                 weather = it; settings.showWeather = it
             }
-            Toggle(stringResource(R.string.setup_toggle_calendar_title), stringResource(R.string.setup_toggle_calendar_subtitle), calendar) {
-                calendar = it; settings.showCalendar = it
-            }
-            Toggle(stringResource(R.string.setup_toggle_media_first_title), stringResource(R.string.setup_toggle_media_first_subtitle), mediaFirst) {
-                mediaFirst = it; settings.dashboardMediaFirst = it
-            }
+            Spacer(Modifier.height(8.dp))
+            DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {

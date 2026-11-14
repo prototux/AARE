@@ -51,6 +51,7 @@ import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
+import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
 import net.prototux.aare.ui.car.CarDataScreen
@@ -289,7 +290,8 @@ class CarRuntime(
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
-        ui.mediaFirst = settings.dashboardMediaFirst
+        ui.dashboardCards = DashCard.parse(settings.dashboardCards)
+        ui.weatherInBar = settings.showWeather
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -311,7 +313,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_media_first", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -453,14 +455,15 @@ class CarRuntime(
         var lastWeather = 0L
         while (true) {
             val now = System.currentTimeMillis()
-            if (!settings.showWeather) ui.weather = null
+            // For the bar's clock or the dashboard's weather card.
+            if (!settings.showWeather && DashCard.WEATHER !in ui.dashboardCards) ui.weather = null
             else if (now - lastWeather > 30 * 60_000) {
                 val where = carLocation ?: DashboardInfo.phoneLocation(context)
                 if (where != null) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.weather(where) }?.let { ui.weather = it; lastWeather = now }
                 }
             }
-            ui.nextEvent = if (settings.showCalendar)
+            ui.nextEvent = if (DashCard.CALENDAR in ui.dashboardCards)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvent(context) } else null
             kotlinx.coroutines.delay(5 * 60_000)
         }
