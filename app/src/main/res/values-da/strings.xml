@@ -451,6 +451,17 @@
     <string name="setup_log_save">Gem</string>
     <string name="setup_toggle_verbose_log_title">Detaljeret protokollog</string>
     <string name="setup_toggle_verbose_log_subtitle">Optag den fulde protokolsporing for bilenheden i denne log, så den kan vedhæftes en fejlrapport. Logger meget; lad den være slået fra ellers.</string>
+    <string name="setup_section_backup">Sikkerhedskopi af indstillinger</string>
+    <string name="setup_backup_hint">Gem dine indstillinger i en fil, eller indlæs en igen. Betroede head units, certifikater, telefonspecifik tilstand og de valg, der åbner AARE mod netværket eller springer et sikkerhedstjek over (head unit-server, passagertilstand, lyd via root…), udelades: indstil dem manuelt på hver telefon.</string>
+    <string name="setup_backup_export">Eksportér…</string>
+    <string name="setup_backup_import">Importér…</string>
+    <string name="setup_backup_import_confirm_title">Erstat dine indstillinger?</string>
+    <string name="setup_backup_import_confirm_text">Dette overskriver dine nuværende indstillinger med dem i den valgte fil. Det kan ikke fortrydes.</string>
+    <string name="setup_backup_import_confirm_action">Erstat</string>
+    <string name="setup_backup_import_done">Indstillinger importeret.</string>
+    <string name="setup_backup_import_done_skipped">Indstillinger importeret. Udeladt som ukendt, blokeret eller ugyldig: %1$d</string>
+    <string name="setup_backup_import_failed">Filen kan ikke importeres: det er ikke en AARE-indstillingsfil, eller den er for stor.</string>
+    <string name="setup_backup_export_failed">Indstillingsfilen kunne ikke gemmes.</string>
     <string name="setup_nothing_to_open">Denne telefon har ingen app, der kan åbne dette</string>
     <string name="setup_wallpaper_failed">Kunne ikke bruge dette billede som baggrund</string>
     <string name="msg_autoreply_default">Jeg kører lige nu, jeg svarer senere.</string>

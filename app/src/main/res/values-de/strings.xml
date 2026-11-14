@@ -450,6 +450,17 @@
     <string name="setup_log_save">Speichern</string>
     <string name="setup_toggle_verbose_log_title">Ausführliches Head-Unit-Protokoll</string>
     <string name="setup_toggle_verbose_log_subtitle">Zeichnet den vollständigen Head-Unit-Protokollverlauf in diesem Log auf, zum Anhängen an einen Fehlerbericht. Erzeugt viele Daten; sonst ausgeschaltet lassen.</string>
+    <string name="setup_section_backup">Einstellungen sichern</string>
+    <string name="setup_backup_hint">Einstellungen in eine Datei speichern oder daraus wiederherstellen. Vertraute Head Units, Zertifikate, telefonspezifische Daten und Optionen, die AARE fürs Netzwerk öffnen oder eine Sicherheitsprüfung aufheben (Head-Unit-Server, Beifahrermodus, Root-Audio…), bleiben außen vor: Diese auf jedem Telefon von Hand einstellen.</string>
+    <string name="setup_backup_export">Exportieren…</string>
+    <string name="setup_backup_import">Importieren…</string>
+    <string name="setup_backup_import_confirm_title">Einstellungen ersetzen?</string>
+    <string name="setup_backup_import_confirm_text">Ihre aktuellen Einstellungen werden durch die aus der gewählten Datei überschrieben. Das lässt sich nicht rückgängig machen.</string>
+    <string name="setup_backup_import_confirm_action">Ersetzen</string>
+    <string name="setup_backup_import_done">Einstellungen importiert.</string>
+    <string name="setup_backup_import_done_skipped">Einstellungen importiert. Ausgelassen (unbekannt, gesperrt oder ungültig): %1$d</string>
+    <string name="setup_backup_import_failed">Diese Datei lässt sich nicht importieren: Sie ist keine AARE-Einstellungsdatei oder zu groß.</string>
+    <string name="setup_backup_export_failed">Die Einstellungsdatei konnte nicht gespeichert werden.</string>
     <string name="setup_nothing_to_open">Dieses Telefon hat keine App, die dies öffnen kann</string>
     <string name="setup_wallpaper_failed">Dieses Foto konnte nicht als Hintergrundbild verwendet werden</string>
     <string name="msg_autoreply_default">Ich fahre gerade und antworte später.</string>

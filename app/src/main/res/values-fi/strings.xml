@@ -450,6 +450,17 @@
     <string name="setup_log_save">Tallenna</string>
     <string name="setup_toggle_verbose_log_title">Yksityiskohtainen protokollaloki</string>
     <string name="setup_toggle_verbose_log_subtitle">Tallentaa koko soittolaitteen protokollajäljen tähän lokiin, liitettäväksi vikailmoitukseen. Kirjaa paljon; jätä muuten pois päältä.</string>
+    <string name="setup_section_backup">Asetusten varmuuskopio</string>
+    <string name="setup_backup_hint">Tallenna asetukset tiedostoon tai lataa ne takaisin. Luotetut soittolaitteet, varmenteet, puhelinkohtaiset tiedot ja valinnat, jotka avaavat AAREn verkkoon tai ohittavat turvatarkistuksen (soittolaitteen palvelin, matkustajatila, root-ääni…), jätetään pois: aseta ne käsin jokaisessa puhelimessa.</string>
+    <string name="setup_backup_export">Vie…</string>
+    <string name="setup_backup_import">Tuo…</string>
+    <string name="setup_backup_import_confirm_title">Korvataanko asetukset?</string>
+    <string name="setup_backup_import_confirm_text">Nykyiset asetuksesi korvataan valitun tiedoston asetuksilla. Tätä ei voi kumota.</string>
+    <string name="setup_backup_import_confirm_action">Korvaa</string>
+    <string name="setup_backup_import_done">Asetukset tuotu.</string>
+    <string name="setup_backup_import_done_skipped">Asetukset tuotu. Ohitettu tuntemattomina, estettyinä tai virheellisinä: %1$d</string>
+    <string name="setup_backup_import_failed">Tiedostoa ei voi tuoda: se ei ole AAREn asetustiedosto tai se on liian suuri.</string>
+    <string name="setup_backup_export_failed">Asetustiedostoa ei voitu tallentaa.</string>
     <string name="setup_nothing_to_open">Puhelimessa ei ole sovellusta, joka voisi avata tämän</string>
     <string name="setup_wallpaper_failed">Tätä kuvaa ei voitu käyttää taustakuvana</string>
     <string name="msg_autoreply_default">Ajan juuri nyt, vastaan myöhemmin.</string>

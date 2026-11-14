@@ -450,6 +450,17 @@
     <string name="setup_log_save">Зберегти</string>
     <string name="setup_toggle_verbose_log_title">Детальний журнал протоколу</string>
     <string name="setup_toggle_verbose_log_subtitle">Записувати повний слід протоколу головного пристрою в цей журнал, щоб додати до звіту про помилку. Записує багато даних; в інших випадках залишайте вимкненим.</string>
+    <string name="setup_section_backup">Резервна копія налаштувань</string>
+    <string name="setup_backup_hint">Збережіть налаштування у файл або завантажте їх назад. Довірені головні пристрої, сертифікати, дані, прив\'язані до телефону, і параметри, які відкривають AARE для мережі або вимикають перевірку безпеки (сервер головного пристрою, режим пасажира, звук через root…), не переносяться: задайте їх вручну на кожному телефоні.</string>
+    <string name="setup_backup_export">Експорт…</string>
+    <string name="setup_backup_import">Імпорт…</string>
+    <string name="setup_backup_import_confirm_title">Замінити налаштування?</string>
+    <string name="setup_backup_import_confirm_text">Поточні налаштування буде перезаписано налаштуваннями з вибраного файлу. Це не можна скасувати.</string>
+    <string name="setup_backup_import_confirm_action">Замінити</string>
+    <string name="setup_backup_import_done">Налаштування імпортовано.</string>
+    <string name="setup_backup_import_done_skipped">Налаштування імпортовано. Пропущено (невідомі, заборонені або неправильні): %1$d</string>
+    <string name="setup_backup_import_failed">Цей файл не можна імпортувати: це не файл налаштувань AARE або він завеликий.</string>
+    <string name="setup_backup_export_failed">Не вдалося зберегти файл налаштувань.</string>
     <string name="setup_nothing_to_open">На цьому телефоні немає застосунку, який може це відкрити</string>
     <string name="setup_wallpaper_failed">Не вдалося використати це фото як шпалери</string>
     <string name="msg_autoreply_default">Я зараз за кермом, відповім пізніше.</string>

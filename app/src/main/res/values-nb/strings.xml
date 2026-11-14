@@ -450,6 +450,17 @@
     <string name="setup_log_save">Lagre</string>
     <string name="setup_toggle_verbose_log_title">Detaljert protokollogg</string>
     <string name="setup_toggle_verbose_log_subtitle">Lagre hele protokollsporet mot hodeenheten i denne loggen, for å legge ved en feilrapport. Logger mye; la den stå av ellers.</string>
+    <string name="setup_section_backup">Sikkerhetskopi av innstillinger</string>
+    <string name="setup_backup_hint">Lagre innstillingene i en fil, eller last inn en igjen. Betrodde head units, sertifikater, telefonspesifikk tilstand og valg som åpner AARE mot nettverket eller hopper over en sikkerhetssjekk (head unit-server, passasjermodus, lyd via root…), utelates: still dem inn manuelt på hver telefon.</string>
+    <string name="setup_backup_export">Eksporter…</string>
+    <string name="setup_backup_import">Importer…</string>
+    <string name="setup_backup_import_confirm_title">Erstatte innstillingene?</string>
+    <string name="setup_backup_import_confirm_text">Dette overskriver de nåværende innstillingene med dem i den valgte filen. Det kan ikke angres.</string>
+    <string name="setup_backup_import_confirm_action">Erstatt</string>
+    <string name="setup_backup_import_done">Innstillingene er importert.</string>
+    <string name="setup_backup_import_done_skipped">Innstillingene er importert. Utelatt som ukjent, blokkert eller ugyldig: %1$d</string>
+    <string name="setup_backup_import_failed">Filen kan ikke importeres: den er ikke en AARE-innstillingsfil, eller den er for stor.</string>
+    <string name="setup_backup_export_failed">Kunne ikke lagre innstillingsfilen.</string>
     <string name="setup_nothing_to_open">Denne telefonen har ingen app som kan åpne dette</string>
     <string name="setup_wallpaper_failed">Kunne ikke bruke dette bildet som bakgrunn</string>
     <string name="msg_autoreply_default">Jeg kjører akkurat nå, jeg svarer senere.</string>
