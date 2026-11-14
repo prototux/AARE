@@ -17,6 +17,7 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.ServiceDiscoveryUpdateOuterClass.ServiceDiscoveryUpdate
 import aap_protobuf.service.control.message.VoiceSessionNotificationOuterClass.VoiceSessionNotification
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import com.google.protobuf.CodedInputStream
@@ -64,6 +65,23 @@ class SessionOptions(
     init {
         require(pins == null || peerKey != null) { "peerKey is required with pins" }
     }
+}
+
+/**
+ * What the head unit asks of the phone's UI chrome, from the session_configuration bits of its
+ * service discovery response.
+ */
+class UiChrome(val bits: Int) {
+    /** The car shows its own clock: the phone's projected UI shouldn't. */
+    val hideClock get() = bits and 1 != 0
+    val hidePhoneSignal get() = bits and 2 != 0
+    val hideBatteryLevel get() = bits and 4 != 0
+    /** The car may keep playing its own media during a voice session. */
+    val nativeMediaDuringVoice get() = bits and 8 != 0
+
+    override fun toString() = listOfNotNull("hide clock".takeIf { hideClock }, "hide phone signal".takeIf { hidePhoneSignal },
+        "hide battery level".takeIf { hideBatteryLevel }, "native media during voice".takeIf { nativeMediaDuringVoice })
+        .joinToString().ifEmpty { "none" }
 }
 
 /** Minimal logging hook so the protocol module has no Android dependency. */
@@ -141,6 +159,8 @@ class AapSession(
     @Volatile private var tlsStarted = false
     @Volatile var discovery: ServiceDiscoveryResponse? = null
         private set
+    /** The head unit's UI chrome wishes, once discovery is done. */
+    val uiChrome: UiChrome? get() = discovery?.let { UiChrome(it.sessionConfiguration) }
     var headUnitVersion: Pair<Int, Int>? = null
         private set
 
@@ -452,6 +472,7 @@ class AapSession(
             // A bye-bye response the phone didn't ask for is an error.
             ControlMsg.BYEBYE_RESPONSE ->
                 if (byeByeSent) close("session ended", null) else fail("bye-bye response without a bye-bye request", null)
+            ControlMsg.SERVICE_DISCOVERY_UPDATE -> onServiceUpdate(ServiceDiscoveryUpdate.parseFrom(msg.bodyBytes()))
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
             else -> log.d("unhandled control message $msg")
         }
@@ -552,6 +573,7 @@ class AapSession(
         }
         discovery = resp
         log.i("head unit: ${describe(resp)}")
+        if (resp.sessionConfiguration != 0) log.i("head unit UI chrome: ${UiChrome(resp.sessionConfiguration)}")
         // A discovery response with no ping configuration (field 16) still gets pings
         // at a fixed rate; aasdk-based head units send one, so its timeout still sizes the watchdog.
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
@@ -599,6 +621,18 @@ class AapSession(
     private fun openDeferred() {
         if (closed.get()) return
         deferredOpens.getAndSet(null)?.forEach(::requestOpen)
+    }
+
+    /** The head unit changed a service it listed in discovery. */
+    private fun onServiceUpdate(update: ServiceDiscoveryUpdate) {
+        val service = update.service
+        val ch = channels[service.id]
+        if (!update.hasService() || ch == null) {
+            log.w("update for a service not opened: ${serviceKind(service)}#${service.id}")
+            return
+        }
+        log.i("head unit updated ${serviceKind(service)}#${service.id}")
+        runHandler(ch) { ch.onServiceUpdate(service) }
     }
 
     /** From the reader or, on an open timeout, the timer: [Callbacks.onRunning] must still run once. */
@@ -790,6 +824,9 @@ abstract class ServiceChannel(val service: Service, val name: String) {
 
     /** The session ended or the head unit closed the channel. */
     open fun onClosed() {}
+
+    /** The head unit updated this channel's service (ServiceDiscoveryUpdate). Reader thread. */
+    open fun onServiceUpdate(update: Service) {}
 
     protected fun send(msgId: Int, body: MessageLite, priority: Int = Priority.CONTROL) =
         session.send(id, msgId, body, priority = priority)
