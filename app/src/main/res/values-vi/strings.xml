@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Dưới</string>
     <string name="setup_toggle_dark_bar_title">Thanh tối</string>
     <string name="setup_toggle_dark_bar_subtitle">Giữ thanh màu tối ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_toggle_split_screen_title">Chia đôi màn hình</string>
+    <string name="setup_toggle_split_screen_subtitle">Nhấn giữ một ứng dụng trên thanh của xe để mở bên cạnh ứng dụng hiện tại (bố cục thanh tác vụ, chỉ màn hình rộng)</string>
+    <string name="car_split_close">Đóng chia đôi màn hình</string>
+    <string name="car_split_open_beside">Mở bên cạnh ứng dụng hiện tại</string>
     <string name="setup_section_dashboard">Bảng điều khiển</string>
     <string name="dash_cards_title">Thẻ</string>
     <string name="dash_cards_hint">Thẻ đầu tiên có nhiều chỗ nhất; các thẻ khác lấp phần còn lại của màn hình. Thẻ không có gì để hiển thị sẽ nhường chỗ cho thẻ tiếp theo.</string>

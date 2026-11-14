@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Знизу</string>
     <string name="setup_toggle_dark_bar_title">Темна панель</string>
     <string name="setup_toggle_dark_bar_subtitle">Залишати панель темною навіть зі світлими кольорами</string>
+    <string name="setup_toggle_split_screen_title">Розділений екран</string>
+    <string name="setup_toggle_split_screen_subtitle">Довге натискання на застосунок у панелі авто відкриває його поруч із поточним (макет «Панель завдань», лише широкі екрани)</string>
+    <string name="car_split_close">Закрити розділений екран</string>
+    <string name="car_split_open_beside">Відкрити поруч із поточним застосунком</string>
     <string name="setup_section_dashboard">Панель приладів</string>
     <string name="dash_cards_title">Картки</string>
     <string name="dash_cards_hint">Перша картка отримує найбільше місця, решта заповнюють залишок екрана. Картка, якій нічого показати, поступається місцем наступній.</string>

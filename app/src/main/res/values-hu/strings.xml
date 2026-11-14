@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Alul</string>
     <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
     <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_toggle_split_screen_title">Osztott képernyő</string>
+    <string name="setup_toggle_split_screen_subtitle">Nyomj hosszan egy alkalmazást az autó sávjában, hogy a jelenlegi mellett nyíljon meg (tálca elrendezés, csak széles képernyőn)</string>
+    <string name="car_split_close">Osztott képernyő bezárása</string>
+    <string name="car_split_open_beside">Megnyitás a jelenlegi alkalmazás mellett</string>
     <string name="setup_section_dashboard">Műszerfal</string>
     <string name="dash_cards_title">Kártyák</string>
     <string name="dash_cards_hint">Az első kártya kapja a legtöbb helyet, a többi kitölti a képernyő maradékát. Az a kártya, amelynek nincs mit mutatnia, átadja a helyét a következőnek.</string>

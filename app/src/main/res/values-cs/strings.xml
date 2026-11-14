@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Dole</string>
     <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_toggle_split_screen_title">Rozdělená obrazovka</string>
+    <string name="setup_toggle_split_screen_subtitle">Dlouhým stisknutím aplikace na liště auta ji otevřete vedle aktuální (rozvržení Hlavní panel, jen široké obrazovky)</string>
+    <string name="car_split_close">Zavřít rozdělenou obrazovku</string>
+    <string name="car_split_open_beside">Otevřít vedle aktuální aplikace</string>
     <string name="setup_section_dashboard">Nástěnka</string>
     <string name="dash_cards_title">Karty</string>
     <string name="dash_cards_hint">První karta dostane nejvíc místa, ostatní vyplní, co obrazovka zbude. Karta, která nemá co ukázat, uvolní místo další.</string>

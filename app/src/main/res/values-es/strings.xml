@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Inferior</string>
     <string name="setup_toggle_dark_bar_title">Barra oscura</string>
     <string name="setup_toggle_dark_bar_subtitle">Mantener la barra oscura incluso con colores de día</string>
+    <string name="setup_toggle_split_screen_title">Pantalla dividida</string>
+    <string name="setup_toggle_split_screen_subtitle">Mantén pulsada una app en la barra del coche para abrirla junto a la actual (diseño de barra de tareas, solo pantallas anchas)</string>
+    <string name="car_split_close">Cerrar pantalla dividida</string>
+    <string name="car_split_open_beside">Abrir junto a la app actual</string>
     <string name="setup_section_dashboard">Panel</string>
     <string name="dash_cards_title">Tarjetas</string>
     <string name="dash_cards_hint">La primera tarjeta tiene más espacio; las demás ocupan lo que deja la pantalla. Una tarjeta sin nada que mostrar cede su sitio a la siguiente.</string>

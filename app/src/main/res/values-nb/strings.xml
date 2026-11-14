@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Nederst</string>
     <string name="setup_toggle_dark_bar_title">Mørk stolpe</string>
     <string name="setup_toggle_dark_bar_subtitle">Hold stolpen mørk selv med dagfarger</string>
+    <string name="setup_toggle_split_screen_title">Delt skjerm</string>
+    <string name="setup_toggle_split_screen_subtitle">Trykk lenge på en app i bilens stolpe for å åpne den ved siden av den nåværende (oppgavelinjeoppsett, bare brede skjermer)</string>
+    <string name="car_split_close">Lukk delt skjerm</string>
+    <string name="car_split_open_beside">Åpne ved siden av den nåværende appen</string>
     <string name="setup_section_dashboard">Dashbord</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det første kortet får mest plass; de andre fyller resten av skjermen. Et kort uten noe å vise gir plassen sin til det neste.</string>

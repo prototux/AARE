@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Alaosa</string>
     <string name="setup_toggle_dark_bar_title">Tumma palkki</string>
     <string name="setup_toggle_dark_bar_subtitle">Pidä palkki tummana myös vaaleilla väreillä</string>
+    <string name="setup_toggle_split_screen_title">Jaettu näyttö</string>
+    <string name="setup_toggle_split_screen_subtitle">Avaa sovellus nykyisen viereen painamalla sitä pitkään auton palkissa (tehtäväpalkkiasettelu, vain leveät näytöt)</string>
+    <string name="car_split_close">Sulje jaettu näyttö</string>
+    <string name="car_split_open_beside">Avaa nykyisen sovelluksen viereen</string>
     <string name="setup_section_dashboard">Kojelauta</string>
     <string name="dash_cards_title">Kortit</string>
     <string name="dash_cards_hint">Ensimmäinen kortti saa eniten tilaa, muut täyttävät loput näytöstä. Kortti, jolla ei ole näytettävää, antaa paikkansa seuraavalle.</string>

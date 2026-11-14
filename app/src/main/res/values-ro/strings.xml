@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">Jos</string>
     <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
     <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
+    <string name="setup_toggle_split_screen_title">Ecran împărțit</string>
+    <string name="setup_toggle_split_screen_subtitle">Apasă lung o aplicație din bara mașinii pentru a o deschide lângă cea curentă (aspect bară de activități, doar ecrane late)</string>
+    <string name="car_split_close">Închide ecranul împărțit</string>
+    <string name="car_split_open_beside">Deschide lângă aplicația curentă</string>
     <string name="setup_section_dashboard">Tablou de bord</string>
     <string name="dash_cards_title">Carduri</string>
     <string name="dash_cards_hint">Primul card primește cel mai mult spațiu; celelalte umplu restul ecranului. Un card fără nimic de arătat își cedează locul următorului.</string>

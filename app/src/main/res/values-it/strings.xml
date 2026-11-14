@@ -85,6 +85,10 @@
     <string name="setup_choice_bottom">In basso</string>
     <string name="setup_toggle_dark_bar_title">Barra scura</string>
     <string name="setup_toggle_dark_bar_subtitle">Mantieni la barra scura anche con i colori diurni</string>
+    <string name="setup_toggle_split_screen_title">Schermo diviso</string>
+    <string name="setup_toggle_split_screen_subtitle">Tieni premuta un\'app nella barra dell\'auto per aprirla accanto a quella attuale (layout barra delle applicazioni, solo schermi larghi)</string>
+    <string name="car_split_close">Chiudi schermo diviso</string>
+    <string name="car_split_open_beside">Apri accanto all\'app attuale</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Schede</string>
     <string name="dash_cards_hint">La prima scheda ha più spazio; le altre riempiono il resto dello schermo. Una scheda senza nulla da mostrare lascia il posto alla successiva.</string>
