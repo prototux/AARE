@@ -240,7 +240,9 @@ class CarSession(
         DiagLog.add("vehicles.json match keys: make \"${id.make}\", model \"${id.model}\", year \"${id.year}\", " +
             "headUnitMake \"${id.headUnitMake}\", headUnitModel \"${id.headUnitModel}\", headUnitBuild \"${id.headUnitBuild}\", " +
             "protocol ${id.protocol?.let { (major, minor) -> "\"$major.$minor\"" } ?: "unknown"}")
-        vehicleOverride = VehicleOverrides.forHeadUnit(context, id)
+        // The per-car vehicles.json match, with the "Car quirks" settings page's global choices
+        // applied on top (VehicleOverrides.effective): the one place this session's quirks are decided.
+        vehicleOverride = VehicleOverrides.effective(VehicleOverrides.forHeadUnit(context, id), settings.quirkSettings)
         vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
         rememberHeadUnit(response, id)
         CarData.discovered(response, owner = this, forceElectric = vehicleOverride?.forceElectric == true)

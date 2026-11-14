@@ -212,7 +212,7 @@ class ProjectionService : Service() {
         // Wireless projection doesn't start with head units known not to support
         // it, going by who the head unit said it was last time (vehicles.json `wireless: false`).
         KnownHeadUnits(this).get(address)?.let { known ->
-            if (VehicleOverrides.forHeadUnit(this, known)?.wireless == false) {
+            if (VehicleOverrides.effective(VehicleOverrides.forHeadUnit(this, known), settings.quirkSettings)?.wireless == false) {
                 log("wireless: ${known.name.ifBlank { address }} doesn't do wireless Android Auto (vehicles.json), not connecting")
                 return
             }
