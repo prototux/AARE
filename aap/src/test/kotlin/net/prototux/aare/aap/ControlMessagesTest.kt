@@ -1,6 +1,7 @@
 package net.prototux.aare.aap
 
 import aap_protobuf.service.ServiceOuterClass.Service
+import aap_protobuf.service.control.message.ByeByeReasonOuterClass.ByeByeReason
 import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
@@ -23,6 +24,16 @@ class ControlMessagesTest {
         assertFalse(AapSession.openAccepted(byteArrayOf(0x08, 0x63)))
         // No status at all: what a proto3 head unit sends for SUCCESS (#74).
         assertTrue(AapSession.openAccepted(ByteArray(0)))
+    }
+
+    @Test
+    fun wirelessTurnedOffReasonFollowsTheHeadUnitVersion() {
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(null))
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(1 to 7))
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(4 to 4))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(4 to 5))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(5 to 0))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(6 to 1))
     }
 
     @Test

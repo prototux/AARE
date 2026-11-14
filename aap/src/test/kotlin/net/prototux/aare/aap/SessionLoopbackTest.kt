@@ -3,6 +3,7 @@ package net.prototux.aare.aap
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
+import aap_protobuf.service.control.message.ByeByeReasonOuterClass.ByeByeReason
 import aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse
 import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
@@ -346,6 +347,16 @@ open class SessionLoopbackTest {
         assertTrue(closed.await(3, TimeUnit.SECONDS))
         assertEquals(null, closeError)
         assertTrue("reason: $closeReason", closeReason!!.contains("ended"))
+    }
+
+    @Test
+    fun wirelessTurnedOffSaysUserSelectionBefore45() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        phone.stopWirelessDisabled()
+        assertTrue(hu.byeBye.await(3, TimeUnit.SECONDS))
+        // The simulated head unit announces 1.x: it doesn't know WIRELESS_PROJECTION_DISABLED.
+        assertEquals(ByeByeReason.USER_SELECTION, hu.byeByeReason)
+        assertTrue(closed.await(3, TimeUnit.SECONDS))
     }
 
     @Test
