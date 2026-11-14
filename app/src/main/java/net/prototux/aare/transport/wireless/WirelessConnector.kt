@@ -246,8 +246,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 if (!ready.isDone) ready.completeExceptionally(WirelessException("bootstrap ended without result"))
             }
             return try {
-                // The bootstrap bounds itself (message timeouts + join timeout); this is a backstop.
-                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs, TimeUnit.MILLISECONDS)
+                // The bootstrap bounds itself (message timeouts, our own start requests, join timeout); this is a backstop.
+                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs + options.bootstrap.phoneStartRetryLimitMs, TimeUnit.MILLISECONDS)
             } catch (e: ExecutionException) {
                 val cause = e.cause ?: e
                 throw if (cause is IOException) cause else WirelessException(cause.message ?: "wireless bootstrap failed", cause)

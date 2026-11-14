@@ -559,6 +559,71 @@ class WirelessBootstrapTest {
         assertEquals(Status.STATUS_SUCCESS, response.status)
     }
 
+    private fun phoneStartOptions(limitMs: Long = 50_000) = WirelessBootstrap.Options(
+        messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0,
+        phoneStartDelayMs = 100, phoneStartRetryMs = 100, phoneStartRetryLimitMs = limitMs,
+    )
+
+    private fun startResponse(status: Status, ip: String = "", port: Int = 0) = WifiStartResponse.newBuilder()
+        .setStatus(status).apply { if (ip.isNotEmpty()) setIpAddress(ip).setPort(port) }.build()
+
+    @Test(timeout = 10_000)
+    fun phoneAsksAHeadUnitThatWaitsToStart() {
+        val phone = Phone { JoinResult.Joined(localAddress = "10.0.0.23") }
+        start(phone, phoneStartOptions())
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        // sent empty
+        assertEquals(0, hu.expect(WppMessageId.START_REQUEST).payload.size)
+        hu.send(WppMessageId.START_RESPONSE, startResponse(Status.STATUS_SUCCESS, ip = "10.0.0.9", port = 5288))
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // the head unit answered our request: no WifiStartResponse from us, only the join result
+        assertEquals(WppStatus.SUCCESS, status(hu.read().also { assertEquals(WppMessageId.CONNECTION_STATUS, it.id) }))
+        assertEquals("10.0.0.9" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun phoneKeepsAskingWhileTheHeadUnitIsNotReadyThenStops() {
+        start(Phone { JoinResult.Joined() }, phoneStartOptions(limitMs = 250))
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val frames = LinkedBlockingQueue<WppFrame>()
+        thread(name = "hu-reader", isDaemon = true) { runCatching { while (true) frames.put(hu.read()) } }
+        var requests = 0
+        while (true) {
+            val frame = frames.poll(600, TimeUnit.MILLISECONDS) ?: break
+            assertEquals(WppMessageId.START_REQUEST, frame.id)
+            requests++
+            hu.send(WppMessageId.START_RESPONSE, startResponse(Status.STATUS_WIFI_NOT_YET_STARTED))
+        }
+        assertTrue("$requests start requests", requests in 2..5)
+    }
+
+    @Test(timeout = 10_000)
+    fun noPhoneStartRequestWhenTheHeadUnitStartsOrTheVersionIsRefused() {
+        start(Phone { JoinResult.Joined() }, phoneStartOptions())
+        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(7).build())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        val next = LinkedBlockingQueue<Result<WppFrame>>()
+        thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
+        assertNull("the phone asked to start after a refused version", next.poll(400, TimeUnit.MILLISECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitStartRequestCancelsOurs() {
+        start(Phone { Thread.sleep(400); JoinResult.Joined() }, phoneStartOptions())
+        hu.send(WppMessageId.VERSION_REQUEST to versionRequest(), WppMessageId.START_REQUEST to startRequest())
+        assertEquals(WppMessageId.VERSION_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        // nothing in between while joining, past the 100 ms start-request delay
+        assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        assertEquals(WppMessageId.CONNECTION_STATUS, hu.read().id)
+    }
+
     @Test(timeout = 10_000)
     fun versionRequestWithoutMajorIsAnsweredWithZero() {
         start(Phone { JoinResult.Joined() })
