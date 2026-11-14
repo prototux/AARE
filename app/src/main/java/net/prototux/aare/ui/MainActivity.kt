@@ -690,6 +690,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var splitScreen by remember { mutableStateOf(settings.splitScreen) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
@@ -727,6 +728,9 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 rail = it; settings.railPosition = it
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
+            Toggle(stringResource(R.string.setup_toggle_split_screen_title), stringResource(R.string.setup_toggle_split_screen_subtitle), splitScreen) {
+                splitScreen = it; settings.splitScreen = it
+            }
         }
         Section(stringResource(R.string.setup_section_dashboard)) {
             Choices(stringResource(R.string.setup_choice_wallpaper), listOf("none" to stringResource(R.string.setup_wallpaper_none)) + WALLPAPER_NAMES.map { it to it.replaceFirstChar(Char::uppercase) } +

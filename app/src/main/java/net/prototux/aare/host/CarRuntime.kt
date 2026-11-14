@@ -48,6 +48,7 @@ import net.prototux.aare.ui.car.CarAppKind
 import net.prototux.aare.ui.car.CarCall
 import net.prototux.aare.ui.car.CarLayout
 import net.prototux.aare.ui.car.CarNotice
+import net.prototux.aare.ui.car.CarPane
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
@@ -58,6 +59,8 @@ import net.prototux.aare.ui.car.NowPlaying
 import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
+import net.prototux.aare.ui.car.canOpenBeside
+import net.prototux.aare.ui.car.snapSplitRatio
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -312,11 +315,15 @@ class CarRuntime(
             Settings.RAIL_RIGHT -> true
             else -> rightHandDrive
         }
+        ui.splitScreenSetting = settings.splitScreen
+        // Turned off (or switched to a layout split doesn't support): close an active split rather
+        // than leave a pane the setting no longer allows opening another one into.
+        if (!ui.splitScreenSetting || ui.layout != CarLayout.TASKBAR) ui.secondaryAppId = null
     }
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -612,14 +619,16 @@ class CarRuntime(
                 }
                 else -> connection(app.id)?.connect()
             }
+            // The app taking the main pane can't also be the one beside it.
+            if (ui.secondaryAppId == app.id) ui.secondaryAppId = null
             ui.screen = CarScreen.App(app.id)
             ui.recentAppIds.remove(app.id)
             ui.recentAppIds.add(0, app.id)
             while (ui.recentAppIds.size > 6) ui.recentAppIds.removeAt(ui.recentAppIds.lastIndex)
         }
 
-        override fun goHome() { ui.screen = CarScreen.Dashboard }
-        override fun openLauncher() { ui.screen = CarScreen.Launcher }
+        override fun goHome() { ui.secondaryAppId = null; ui.screen = CarScreen.Dashboard }
+        override fun openLauncher() { ui.secondaryAppId = null; ui.screen = CarScreen.Launcher }
         override fun assistant() { this@CarRuntime.assistant() }
         override fun mediaPlayPause() = media.playPause()
         override fun mediaNext() = media.next()
@@ -630,6 +639,40 @@ class CarRuntime(
         override fun navigateTo(place: String) {
             if (!this@CarRuntime.navigateTo(place)) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
         }
+
+        override fun openBeside(app: CarAppEntry) {
+            val primaryId = (ui.screen as? CarScreen.App)?.appId
+            if (primaryId == null || app.id == primaryId || !ui.splitScreenSetting || !canOpenBeside(app.kind)) return
+            when (app.kind) {
+                CarAppKind.MEDIA -> {
+                    ui.activeMediaAppId = app.id
+                    settings.lastMediaApp = app.packageName
+                    media.apps.value.firstOrNull { it.packageName == app.packageName }?.let { media.select(it) }
+                }
+                else -> connection(app.id)?.connect()
+            }
+            // The ratio isn't reset here: reopening a split during the same session resumes at the
+            // width the driver last chose, rather than snapping back to an even half every time.
+            ui.secondaryAppId = app.id
+            ui.focusedPane = CarPane.SECONDARY
+        }
+
+        override fun closeSplit() {
+            ui.secondaryAppId = null
+            ui.focusedPane = CarPane.PRIMARY
+        }
+
+        override fun commitSplitRatio(raw: Float) {
+            when (val snapped = snapSplitRatio(raw)) {
+                // Dragged to the primary's edge: the secondary takes over as the single app.
+                0f -> ui.secondaryAppId?.let { sec -> ui.screen = CarScreen.App(sec); ui.secondaryAppId = null; ui.focusedPane = CarPane.PRIMARY }
+                // Dragged to the secondary's edge: it closes, the primary stays full screen.
+                1f -> { ui.secondaryAppId = null; ui.focusedPane = CarPane.PRIMARY }
+                else -> ui.splitRatio = snapped
+            }
+        }
+
+        override fun focusPane(pane: CarPane) { ui.focusedPane = pane }
     }
 
     /** The chosen assistant's package, or the phone's default assistant. */
@@ -664,20 +707,40 @@ class CarRuntime(
         }
     }
 
-    /** Set by a screen with its own back stack (a conversation in a messaging app): true if it handled back. */
-    var screenBack: (() -> Boolean)? = null
+    /**
+     * Screens with their own back stack (a conversation open in messaging, a browser's page
+     * history, a launched standalone app, the phone mirror's launcher), keyed by the app id that
+     * installed the handler. With split screen, two such screens can be on-screen together, each
+     * in its own pane: a single global hook (as before split screen) would have one stomp the
+     * other's, so [back] looks the handler up by whichever app owns the focused pane.
+     */
+    private val screenBacks = HashMap<String, () -> Boolean>()
 
-    /** Back key from the car. */
+    fun registerScreenBack(appId: String, handler: () -> Boolean) { screenBacks[appId] = handler }
+
+    fun unregisterScreenBack(appId: String, handler: () -> Boolean) {
+        if (screenBacks[appId] === handler) screenBacks.remove(appId)
+    }
+
+    /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
-        if (screenBack?.invoke() == true) return
+        val secondaryId = ui.secondaryAppId
+        if (secondaryId != null && ui.focusedPane == CarPane.SECONDARY) {
+            // The secondary pane has no screen stack of the dashboard's own (it's not a CarScreen):
+            // its own back stack (if any) first, otherwise back simply closes that pane.
+            if (screenBacks[secondaryId]?.invoke() != true) { ui.secondaryAppId = null; ui.focusedPane = CarPane.PRIMARY }
+            return
+        }
         when (val s = ui.screen) {
             is CarScreen.App -> {
+                if (screenBacks[s.appId]?.invoke() == true) return
                 val conn = connections[s.appId]
                 // An app still connecting or that failed has no screen to go back in: leave it.
-                if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back() else ui.screen = CarScreen.Dashboard
+                if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back()
+                else { ui.screen = CarScreen.Dashboard; ui.secondaryAppId = null }
             }
-            CarScreen.Launcher -> ui.screen = CarScreen.Dashboard
+            CarScreen.Launcher -> { ui.screen = CarScreen.Dashboard; ui.secondaryAppId = null }
             CarScreen.Dashboard -> Unit
         }
     }

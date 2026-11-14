@@ -57,9 +57,10 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
             launcher.connected
         }
-        runtime.screenBack = back
+        val id = CarRuntime.standaloneId(packageName)
+        runtime.registerScreenBack(id, back)
         onDispose {
-            if (runtime.screenBack === back) runtime.screenBack = null
+            runtime.unregisterScreenBack(id, back)
             launcher.release()
         }
     }

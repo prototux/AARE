@@ -92,9 +92,10 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
                 else -> false
             }
         }
-        runtime.screenBack = back
-        // The next screen installs its own handler before this one fades out: leave that one alone.
-        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
+        runtime.registerScreenBack(app.id, back)
+        // A new composition for the same app installs its own handler before this one fades out:
+        // unregister leaves that one alone (it only removes a handler still exactly this one).
+        onDispose { runtime.unregisterScreenBack(app.id, back) }
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
