@@ -118,6 +118,7 @@
     <string name="setup_app_entry_phone">Telefoon</string>
     <string name="setup_app_entry_settings">Instellingen</string>
     <string name="setup_app_entry_notifications">Meldingen</string>
+    <string name="launcher_search_hint">Apps zoeken</string>
     <string name="setup_section_app_order">Volgorde in de auto</string>
     <string name="setup_section_connection_log">Verbindingslogboek</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Niet aangesloten bij Google. Android Auto is een handelsmerk van Google LLC.</string>
