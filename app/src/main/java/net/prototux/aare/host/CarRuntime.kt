@@ -390,9 +390,10 @@ class CarRuntime(
             }
             entries += CarAppEntry(id, app.packageName, app.label, app.icon, kind)
         }
+        val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
         for (m in media.apps.value) {
-            // An app that has a car UI of its own is shown once, as that.
-            if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
+            // An app that has a car UI of its own is shown once, as that; a messaging app, as messaging.
+            if (m.packageName in hidden || m.packageName in messagingOnly || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
         // Built in, like Android Auto's: calls and the car-side settings.

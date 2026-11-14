@@ -20,8 +20,11 @@ data class UnsupportedCarApp(
     val reason: String,
 )
 
-/** An app on the phone listed in the car (a messaging or media app), by package. */
-data class PhoneApp(val packageName: String, val label: String, val icon: Bitmap?)
+/**
+ * An app on the phone listed in the car (a messaging or media app), by package. [declaresMedia]:
+ * a messaging app that also declares `<uses name="media"/>`, so its media browser is a real player.
+ */
+data class PhoneApp(val packageName: String, val label: String, val icon: Bitmap?, val declaresMedia: Boolean = false)
 
 /**
  * Finds every app that declares Android Auto support (`com.google.android.gms.car.application`
@@ -40,7 +43,9 @@ object AndroidAutoApps {
         val sms = runCatching { Telephony.Sms.getDefaultSmsPackage(context) }.getOrNull()
         return declaring(context)
             .filter { (app, uses) -> uses.any { it in MESSAGING_USES } || app.packageName == sms }
-            .map { (app, _) -> PhoneApp(app.packageName, app.loadLabel(pm).toString(), runCatching { app.loadIcon(pm).toBitmap(iconSizePx, iconSizePx) }.getOrNull()) }
+            .map { (app, uses) ->
+                PhoneApp(app.packageName, app.loadLabel(pm).toString(), runCatching { app.loadIcon(pm).toBitmap(iconSizePx, iconSizePx) }.getOrNull(), "media" in uses)
+            }
             .let { found ->
                 if (sms == null || found.any { it.packageName == sms }) found
                 else found + listOfNotNull(runCatching {
@@ -50,6 +55,14 @@ object AndroidAutoApps {
             }
             .sortedBy { it.label.lowercase() }
     }
+
+    /**
+     * The [messaging] apps that must not be listed as media apps: a media browser alone, like
+     * Signal's voice-note player (#156), doesn't make a messaging app a media app. Android Auto
+     * lists it as one only when it also declares `<uses name="media"/>`.
+     */
+    fun messagingOnly(messaging: List<PhoneApp>): Set<String> =
+        messaging.filterNot { it.declaresMedia }.mapTo(HashSet()) { it.packageName }
 
     /** Media apps, as the car's launcher lists them (see MediaDiscovery): one per package. */
     fun mediaApps(context: Context, iconSizePx: Int = 128): List<PhoneApp> {
