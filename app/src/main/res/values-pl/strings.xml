@@ -446,6 +446,11 @@
     <string name="setup_section_updates">Aktualizacje</string>
     <string name="setup_toggle_updates_title">Sprawdzaj aktualizacje</string>
     <string name="setup_toggle_updates_subtitle">Ostrzegaj na ekranie głównym, gdy na GitHub jest nowsza wersja. Wyłączone nigdy nie łączy się z internetem.</string>
+    <string name="update_check_now">Sprawdź teraz</string>
+    <string name="update_checking">Sprawdzanie…</string>
+    <string name="update_check_latest">Masz najnowszą wersję (%1$s).</string>
+    <string name="update_check_available">Dostępna jest wersja AARE %1$s: zobacz ekran główny.</string>
+    <string name="update_check_failed">Nie udało się połączyć z GitHubem. Spróbuj później.</string>
     <string name="update_available_title">Dostępna aktualizacja — %1$s</string>
     <string name="update_available_subtitle">Masz %1$s. Dotknij, aby zobaczyć wydanie.</string>
     <string name="setup_log_save">Zapisz</string>

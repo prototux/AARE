@@ -14,18 +14,23 @@ import kotlin.concurrent.thread
 /**
  * Looks on GitHub for a newer AARE release and, if there is one, surfaces it as a warning on the
  * home screen (no popup). On by default; switched off in Connection settings it never touches the
- * network. The check is one unauthenticated HTTPS request to the public releases API, at most once
- * a day, never while a car is connected, and silent on any failure. The result is cached so the
- * warning shows at once on the next start without asking again.
+ * network. The check is one unauthenticated HTTPS request to the public releases API, each time the
+ * app comes to the front but at most every [CHECK_EVERY_MS], never while a car is connected, and
+ * silent on any failure. The result is cached so the warning shows at once on the next start
+ * without asking again. [checkNow] asks at once and says what it found.
  */
 object UpdateChecker {
     private const val TAG = "AareUpdate"
     private const val LATEST = "https://api.github.com/repos/prototux/AARE/releases/latest"
     private const val RELEASES = "https://github.com/prototux/AARE/releases/latest"
-    private const val DAY_MS = 24 * 60 * 60 * 1000L
+    /** A release published in the morning shows the same day, not up to a day later (once a day did). */
+    private const val CHECK_EVERY_MS = 6 * 60 * 60 * 1000L
 
     /** A release newer than the installed one. [version] has no leading "v". */
     data class Update(val version: String, val url: String)
+
+    /** What [checkNow] found: the latest release's [version] (null when GitHub couldn't be asked), and whether it is newer. */
+    data class CheckResult(val version: String?, val newer: Boolean)
 
     private val _available = MutableStateFlow<Update?>(null)
     val available: StateFlow<Update?> = _available.asStateFlow()
@@ -33,30 +38,52 @@ object UpdateChecker {
     @Volatile private var checking = false
 
     /**
-     * Refreshes the home-screen warning. Returns at once: it shows any cached result and, if due,
-     * asks GitHub on a background thread. Safe to call on every app open.
+     * Refreshes the home-screen warning. Returns at once: it shows any cached result and, if due
+     * (or [force]d, when the setting is switched on), asks GitHub on a background thread. Safe to
+     * call each time the app comes to the front.
      */
-    fun refresh(context: Context) {
+    fun refresh(context: Context, force: Boolean = false) {
         val settings = Settings(context.applicationContext)
         if (!settings.checkUpdates || BuildConfig.DEBUG) { _available.value = null; return }
         _available.value = cached(settings)
         // Don't add traffic while a car session is up; the cached warning is enough.
         if (ProjectionService.state.value.connected) return
-        val now = System.currentTimeMillis()
-        if (checking || now - settings.updateLastCheckMs < DAY_MS) return
+        if (checking || (!force && !due(System.currentTimeMillis(), settings.updateLastCheckMs))) return
         checking = true
         thread(isDaemon = true, name = "aare-update-check") {
             try {
-                fetchLatest()?.let { latest ->
-                    settings.updateLastCheckMs = System.currentTimeMillis()
-                    settings.updateLatestVersion = latest.version
-                    settings.updateLatestUrl = latest.url
-                    _available.value = cached(settings)
-                }
+                fetchLatest()?.let { remember(settings, it) }
             } finally {
                 checking = false
             }
         }
+    }
+
+    /**
+     * Asks GitHub now, whatever the time since the last check, and hands [done] what it found (on a
+     * background thread). An update the user dismissed shows again: they asked.
+     */
+    fun checkNow(context: Context, done: (CheckResult) -> Unit) {
+        val settings = Settings(context.applicationContext)
+        if (!settings.checkUpdates) return
+        thread(isDaemon = true, name = "aare-update-check-now") {
+            val latest = fetchLatest()
+            if (latest != null) {
+                settings.updateDismissedVersion = null
+                remember(settings, latest)
+            }
+            done(CheckResult(latest?.version, latest != null && isNewer(latest.version, BuildConfig.VERSION_NAME)))
+        }
+    }
+
+    /** Whether the automatic check is due, [CHECK_EVERY_MS] after the last one (or the clock went back). */
+    internal fun due(nowMs: Long, lastCheckMs: Long): Boolean = nowMs - lastCheckMs !in 0 until CHECK_EVERY_MS
+
+    private fun remember(settings: Settings, latest: Update) {
+        settings.updateLastCheckMs = System.currentTimeMillis()
+        settings.updateLatestVersion = latest.version
+        settings.updateLatestUrl = latest.url
+        _available.value = cached(settings)
     }
 
     /** Stops showing the current update; it comes back only for a version newer than this one. */

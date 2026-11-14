@@ -446,6 +446,11 @@
     <string name="setup_section_updates">Updates</string>
     <string name="setup_toggle_updates_title">Controleren op updates</string>
     <string name="setup_toggle_updates_subtitle">Waarschuwt op het startscherm wanneer er een nieuwere versie op GitHub staat. Uit maakt nooit verbinding met internet.</string>
+    <string name="update_check_now">Nu controleren</string>
+    <string name="update_checking">Controleren…</string>
+    <string name="update_check_latest">U hebt de nieuwste versie (%1$s).</string>
+    <string name="update_check_available">AARE %1$s is beschikbaar: zie het startscherm.</string>
+    <string name="update_check_failed">GitHub is niet bereikbaar. Probeer het later opnieuw.</string>
     <string name="update_available_title">Update beschikbaar — %1$s</string>
     <string name="update_available_subtitle">U hebt %1$s. Tik om de release te bekijken.</string>
     <string name="setup_log_save">Opslaan</string>

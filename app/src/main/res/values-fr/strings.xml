@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Mises à jour</string>
     <string name="setup_toggle_updates_title">Vérifier les mises à jour</string>
     <string name="setup_toggle_updates_subtitle">Avertir sur l\'écran d\'accueil qu\'une nouvelle version est disponible sur GitHub. Désactivé, ne se connecte jamais à Internet.</string>
+    <string name="update_check_now">Vérifier maintenant</string>
+    <string name="update_checking">Vérification…</string>
+    <string name="update_check_latest">Vous avez la dernière version (%1$s).</string>
+    <string name="update_check_available">AARE %1$s est disponible : voir l\'écran d\'accueil.</string>
+    <string name="update_check_failed">Impossible de joindre GitHub. Réessayez plus tard.</string>
     <string name="update_available_title">Mise à jour disponible — %1$s</string>
     <string name="update_available_subtitle">Vous avez %1$s. Appuyez pour voir la version.</string>
     <string name="setup_log_save">Enregistrer</string>

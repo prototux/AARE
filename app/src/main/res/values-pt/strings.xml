@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Atualizações</string>
     <string name="setup_toggle_updates_title">Verificar atualizações</string>
     <string name="setup_toggle_updates_subtitle">Avisar no ecrã principal quando existir uma versão mais recente no GitHub. Desligado nunca estabelece ligação à internet.</string>
+    <string name="update_check_now">Verificar agora</string>
+    <string name="update_checking">A verificar…</string>
+    <string name="update_check_latest">Tem a versão mais recente (%1$s).</string>
+    <string name="update_check_available">O AARE %1$s está disponível: veja o ecrã inicial.</string>
+    <string name="update_check_failed">Não foi possível contactar o GitHub. Tente mais tarde.</string>
     <string name="update_available_title">Atualização disponível — %1$s</string>
     <string name="update_available_subtitle">Tem %1$s. Toque para ver a versão.</string>
     <string name="setup_log_save">Guardar</string>

@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Cập nhật</string>
     <string name="setup_toggle_updates_title">Kiểm tra cập nhật</string>
     <string name="setup_toggle_updates_subtitle">Cảnh báo trên màn hình chính khi có bản phát hành mới hơn trên GitHub. Tắt thì không bao giờ kết nối internet.</string>
+    <string name="update_check_now">Kiểm tra ngay</string>
+    <string name="update_checking">Đang kiểm tra…</string>
+    <string name="update_check_latest">Bạn đang dùng phiên bản mới nhất (%1$s).</string>
+    <string name="update_check_available">Đã có AARE %1$s: xem màn hình chính.</string>
+    <string name="update_check_failed">Không kết nối được GitHub. Hãy thử lại sau.</string>
     <string name="update_available_title">Có cập nhật mới — %1$s</string>
     <string name="update_available_subtitle">Bạn đang dùng %1$s. Nhấn để xem bản phát hành.</string>
     <string name="setup_log_save">Lưu</string>
