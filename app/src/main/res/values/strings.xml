@@ -213,6 +213,13 @@
     <string name="setup_section_app_order">Order in the car</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_log_save">Save</string>
+    <string name="setup_section_developer_log">Developer log</string>
+    <string name="setup_toggle_dev_log_title">Developer mode</string>
+    <string name="setup_toggle_dev_log_subtitle">Write everything AARE logs to text files in %1$s (up to 50 MB). Turning it off deletes them: save them first.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Hide personal data</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Mask the addresses, network and device names and other personal data it recognises. Read the file before you share it.</string>
+    <string name="setup_dev_log_save">Save developer log</string>
+    <string name="setup_dev_log_empty">No developer log yet</string>
     <string name="setup_toggle_verbose_log_title">Verbose protocol log</string>
     <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Not affiliated with Google. Android Auto is a trademark of Google LLC.</string>

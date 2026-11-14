@@ -21,6 +21,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("verbose_protocol_log", false)
         set(v) = prefs.edit { putBoolean("verbose_protocol_log", v) }
 
+    /** Copy everything AARE logs to text files (see [net.prototux.aare.devlog.DevLog]); off deletes them. */
+    var developerMode: Boolean
+        get() = prefs.getBoolean("developer_mode", false)
+        set(v) = prefs.edit { putBoolean("developer_mode", v) }
+
+    /** Mask personal data in the developer log's files. */
+    var developerLogPrivacy: Boolean
+        get() = prefs.getBoolean("developer_log_privacy", true)
+        set(v) = prefs.edit { putBoolean("developer_log_privacy", v) }
+
     /** Also accept head units from the network (TCP 5277, no authentication). Switched off again after one session if [headUnitServerLanOnce]. */
     var headUnitServerLan: Boolean
         get() = prefs.getBoolean("hu_server_lan", false)

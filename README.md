@@ -693,6 +693,12 @@ head unit (make, model, year, or the open-source software it runs), USB or wirel
 AARE's connection log (*Advanced > Verbose protocol log*), or `adb logcat` output around the
 connection (`adb logcat | grep -i aare`).
 
+Without adb, turn on *Developer mode* in *Advanced*: AARE then copies what it logs to text
+files in `Android/data/net.prototux.aare/files/debug` (Android 11 and later; on Android 8-10 in its
+private storage), which *Save developer log* exports. *Hide personal data* (on by default) masks the
+addresses, network and device names it recognises, but read the file before attaching it. Turning
+developer mode off deletes the files.
+
 Before sending a pull request, run `./build.sh :aap:test` and build the app.
 
 ## Thanks

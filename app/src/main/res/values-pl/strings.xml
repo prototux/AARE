@@ -449,6 +449,13 @@
     <string name="update_available_title">Dostępna aktualizacja — %1$s</string>
     <string name="update_available_subtitle">Masz %1$s. Dotknij, aby zobaczyć wydanie.</string>
     <string name="setup_log_save">Zapisz</string>
+    <string name="setup_section_developer_log">Dziennik programisty</string>
+    <string name="setup_toggle_dev_log_title">Tryb programisty</string>
+    <string name="setup_toggle_dev_log_subtitle">Zapisuje wszystko, co rejestruje AARE, w plikach tekstowych w %1$s (do 50 MB). Wyłączenie trybu usuwa je: najpierw je zapisz.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ukryj dane osobowe</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskuje adresy, nazwy sieci i urządzeń oraz inne rozpoznawane dane osobowe. Przeczytaj plik przed udostępnieniem.</string>
+    <string name="setup_dev_log_save">Zapisz dziennik programisty</string>
+    <string name="setup_dev_log_empty">Brak dziennika programisty</string>
     <string name="setup_toggle_verbose_log_title">Szczegółowy dziennik protokołu</string>
     <string name="setup_toggle_verbose_log_subtitle">Zapisuj w tym dzienniku pełny zapis protokołu jednostki centralnej, by dołączyć go do zgłoszenia błędu. Zapisuje dużo danych; w innym wypadku pozostaw wyłączone.</string>
     <string name="setup_nothing_to_open">Ten telefon nie ma aplikacji, która mogłaby to otworzyć</string>

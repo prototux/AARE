@@ -448,6 +448,13 @@
     <string name="update_available_title">Dostupná aktualizace — %1$s</string>
     <string name="update_available_subtitle">Máte %1$s. Klepnutím zobrazíte verzi.</string>
     <string name="setup_log_save">Uložit</string>
+    <string name="setup_section_developer_log">Vývojářský protokol</string>
+    <string name="setup_toggle_dev_log_title">Vývojářský režim</string>
+    <string name="setup_toggle_dev_log_subtitle">Zapisuje vše, co AARE zaznamenává, do textových souborů v %1$s (až 50 MB). Vypnutím se smažou: nejdřív je uložte.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Skrýt osobní údaje</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Zamaskuje adresy, názvy sítí a zařízení a další osobní údaje, které rozpozná. Před sdílením si soubor přečtěte.</string>
+    <string name="setup_dev_log_save">Uložit vývojářský protokol</string>
+    <string name="setup_dev_log_empty">Zatím žádný vývojářský protokol</string>
     <string name="setup_toggle_verbose_log_title">Podrobný protokol komunikace</string>
     <string name="setup_toggle_verbose_log_subtitle">Zaznamenat do tohoto protokolu úplný průběh komunikace s hlavní jednotkou, pro přiložení k hlášení chyby. Zaznamenává se hodně; jinak ho nechte vypnutý.</string>
     <string name="setup_nothing_to_open">Tento telefon nemá aplikaci, která by to mohla otevřít</string>

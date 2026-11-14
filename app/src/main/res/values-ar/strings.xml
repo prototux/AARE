@@ -432,6 +432,13 @@
     <string name="update_available_title">يتوفر تحديث — %1$s</string>
     <string name="update_available_subtitle">لديك %1$s. اضغط لعرض الإصدار.</string>
     <string name="setup_log_save">حفظ</string>
+    <string name="setup_section_developer_log">سجل المطوّر</string>
+    <string name="setup_toggle_dev_log_title">وضع المطوّر</string>
+    <string name="setup_toggle_dev_log_subtitle">يكتب كل ما يسجّله AARE في ملفات نصية داخل %1$s (حتى 50 MB). إيقاف هذا الوضع يحذفها: احفظها أولًا.</string>
+    <string name="setup_toggle_dev_log_privacy_title">إخفاء البيانات الشخصية</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">يخفي العناوين وأسماء الشبكات والأجهزة وغيرها من البيانات الشخصية التي يتعرّف عليها. اقرأ الملف قبل مشاركته.</string>
+    <string name="setup_dev_log_save">حفظ سجل المطوّر</string>
+    <string name="setup_dev_log_empty">لا يوجد سجل مطوّر بعد</string>
     <string name="setup_toggle_verbose_log_title">سجل مفصّل للبروتوكول</string>
     <string name="setup_toggle_verbose_log_subtitle">يسجّل التتبع الكامل لبروتوكول وحدة التحكم في هذا السجل، لإرفاقه بتقرير عن خلل. يسجّل كمية كبيرة من البيانات؛ اتركه معطّلاً في غير هذه الحالة.</string>
     <string name="setup_nothing_to_open">لا يوجد تطبيق على هذا الهاتف يمكنه فتح هذا</string>

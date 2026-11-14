@@ -448,6 +448,13 @@
     <string name="update_available_title">Atualização disponível — %1$s</string>
     <string name="update_available_subtitle">Tem %1$s. Toque para ver a versão.</string>
     <string name="setup_log_save">Guardar</string>
+    <string name="setup_section_developer_log">Registo de programador</string>
+    <string name="setup_toggle_dev_log_title">Modo de programador</string>
+    <string name="setup_toggle_dev_log_subtitle">Escreve tudo o que o AARE regista em ficheiros de texto em %1$s (até 50 MB). Ao desativar, são eliminados: guarde-os primeiro.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ocultar dados pessoais</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Mascara os endereços, os nomes de redes e de dispositivos e outros dados pessoais que reconhece. Leia o ficheiro antes de o partilhar.</string>
+    <string name="setup_dev_log_save">Guardar registo de programador</string>
+    <string name="setup_dev_log_empty">Ainda não há registo de programador</string>
     <string name="setup_toggle_verbose_log_title">Registo detalhado do protocolo</string>
     <string name="setup_toggle_verbose_log_subtitle">Grava o registo completo do protocolo da unidade principal neste registo, para anexar a um relatório de erro. Regista muita informação; mantenha desligado nos outros casos.</string>
     <string name="setup_nothing_to_open">Este telemóvel não tem nenhuma aplicação que possa abrir isto</string>

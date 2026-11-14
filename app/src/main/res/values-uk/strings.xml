@@ -448,6 +448,13 @@
     <string name="update_available_title">Доступне оновлення — %1$s</string>
     <string name="update_available_subtitle">У вас %1$s. Натисніть, щоб переглянути випуск.</string>
     <string name="setup_log_save">Зберегти</string>
+    <string name="setup_section_developer_log">Журнал розробника</string>
+    <string name="setup_toggle_dev_log_title">Режим розробника</string>
+    <string name="setup_toggle_dev_log_subtitle">Записує все, що реєструє AARE, у текстові файли в %1$s (до 50 MB). Після вимкнення вони видаляються: спершу збережіть їх.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Приховувати особисті дані</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Маскує адреси, назви мереж і пристроїв та інші розпізнані особисті дані. Прочитайте файл, перш ніж ділитися ним.</string>
+    <string name="setup_dev_log_save">Зберегти журнал розробника</string>
+    <string name="setup_dev_log_empty">Журналу розробника ще немає</string>
     <string name="setup_toggle_verbose_log_title">Детальний журнал протоколу</string>
     <string name="setup_toggle_verbose_log_subtitle">Записувати повний слід протоколу головного пристрою в цей журнал, щоб додати до звіту про помилку. Записує багато даних; в інших випадках залишайте вимкненим.</string>
     <string name="setup_nothing_to_open">На цьому телефоні немає застосунку, який може це відкрити</string>

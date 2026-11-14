@@ -448,6 +448,13 @@
     <string name="update_available_title">Update verfügbar — %1$s</string>
     <string name="update_available_subtitle">Sie haben %1$s. Tippen, um die Version anzuzeigen.</string>
     <string name="setup_log_save">Speichern</string>
+    <string name="setup_section_developer_log">Entwicklerprotokoll</string>
+    <string name="setup_toggle_dev_log_title">Entwicklermodus</string>
+    <string name="setup_toggle_dev_log_subtitle">Schreibt alles, was AARE protokolliert, in Textdateien unter %1$s (bis zu 50 MB). Beim Ausschalten werden sie gelöscht: Speichern Sie sie vorher.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Persönliche Daten ausblenden</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskiert Adressen, Netzwerk- und Gerätenamen und andere erkannte persönliche Daten. Lesen Sie die Datei, bevor Sie sie weitergeben.</string>
+    <string name="setup_dev_log_save">Entwicklerprotokoll speichern</string>
+    <string name="setup_dev_log_empty">Noch kein Entwicklerprotokoll</string>
     <string name="setup_toggle_verbose_log_title">Ausführliches Head-Unit-Protokoll</string>
     <string name="setup_toggle_verbose_log_subtitle">Zeichnet den vollständigen Head-Unit-Protokollverlauf in diesem Log auf, zum Anhängen an einen Fehlerbericht. Erzeugt viele Daten; sonst ausgeschaltet lassen.</string>
     <string name="setup_nothing_to_open">Dieses Telefon hat keine App, die dies öffnen kann</string>

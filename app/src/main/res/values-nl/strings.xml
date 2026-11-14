@@ -449,6 +449,13 @@
     <string name="update_available_title">Update beschikbaar — %1$s</string>
     <string name="update_available_subtitle">U hebt %1$s. Tik om de release te bekijken.</string>
     <string name="setup_log_save">Opslaan</string>
+    <string name="setup_section_developer_log">Ontwikkelaarslogboek</string>
+    <string name="setup_toggle_dev_log_title">Ontwikkelaarsmodus</string>
+    <string name="setup_toggle_dev_log_subtitle">Schrijft alles wat AARE logt naar tekstbestanden in %1$s (tot 50 MB). Uitschakelen verwijdert ze: sla ze eerst op.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Persoonlijke gegevens verbergen</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskeert de adressen, de namen van netwerken en apparaten en andere persoonlijke gegevens die het herkent. Lees het bestand voordat u het deelt.</string>
+    <string name="setup_dev_log_save">Ontwikkelaarslogboek opslaan</string>
+    <string name="setup_dev_log_empty">Nog geen ontwikkelaarslogboek</string>
     <string name="setup_toggle_verbose_log_title">Uitgebreid protocollogboek</string>
     <string name="setup_toggle_verbose_log_subtitle">Legt het volledige head-unit-protocolverloop vast in dit logboek, om bij een bugrapport te voegen. Logt veel; laat dit anders uit.</string>
     <string name="setup_nothing_to_open">Deze telefoon heeft geen app die dit kan openen</string>

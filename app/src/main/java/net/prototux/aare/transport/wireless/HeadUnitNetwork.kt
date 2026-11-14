@@ -20,6 +20,7 @@ import net.prototux.aare.aap.wireless.JoinResult
 import net.prototux.aare.aap.wireless.WifiCredentials
 import net.prototux.aare.aap.wireless.WifiSecurity
 import net.prototux.aare.aap.wireless.WppStatus
+import net.prototux.aare.devlog.DevLog
 import java.net.Inet4Address
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -67,6 +68,7 @@ internal class HeadUnitNetwork(
             return JoinResult.Failed(WppStatus.PHONE_WIFI_DISABLED, "Wi-Fi is turned off on the phone")
         }
         ssid = credentials.ssid
+        DevLog.learn(credentials.ssid)
         findExisting(credentials)?.let { return it }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return joinLegacy(credentials)
 

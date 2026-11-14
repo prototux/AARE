@@ -448,6 +448,13 @@
     <string name="update_available_title">Mise à jour disponible — %1$s</string>
     <string name="update_available_subtitle">Vous avez %1$s. Appuyez pour voir la version.</string>
     <string name="setup_log_save">Enregistrer</string>
+    <string name="setup_section_developer_log">Journal développeur</string>
+    <string name="setup_toggle_dev_log_title">Mode développeur</string>
+    <string name="setup_toggle_dev_log_subtitle">Écrit tout ce qu\'AARE journalise dans des fichiers texte dans %1$s (jusqu\'à 50 Mo). La désactivation les supprime : enregistrez-les d\'abord.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Masquer les données personnelles</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Masque les adresses, les noms de réseaux et d\'appareils et les autres données personnelles qu\'il reconnaît. Relisez le fichier avant de le partager.</string>
+    <string name="setup_dev_log_save">Enregistrer le journal développeur</string>
+    <string name="setup_dev_log_empty">Aucun journal développeur pour le moment</string>
     <string name="setup_toggle_verbose_log_title">Journal détaillé du protocole</string>
     <string name="setup_toggle_verbose_log_subtitle">Enregistrer la trace complète du protocole de l\'autoradio dans ce journal, à joindre à un rapport de bug. Génère beaucoup de données ; laissez-le désactivé sinon.</string>
     <string name="setup_nothing_to_open">Ce téléphone n\'a aucune application pouvant ouvrir ceci</string>

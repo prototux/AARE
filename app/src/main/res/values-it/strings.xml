@@ -448,6 +448,13 @@
     <string name="update_available_title">Aggiornamento disponibile — %1$s</string>
     <string name="update_available_subtitle">Hai %1$s. Tocca per visualizzare la release.</string>
     <string name="setup_log_save">Salva</string>
+    <string name="setup_section_developer_log">Log sviluppatore</string>
+    <string name="setup_toggle_dev_log_title">Modalità sviluppatore</string>
+    <string name="setup_toggle_dev_log_subtitle">Scrive tutto ciò che AARE registra in file di testo in %1$s (fino a 50 MB). Disattivandola vengono cancellati: salvali prima.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Nascondi i dati personali</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maschera indirizzi, nomi di reti e dispositivi e gli altri dati personali che riconosce. Leggi il file prima di condividerlo.</string>
+    <string name="setup_dev_log_save">Salva il log sviluppatore</string>
+    <string name="setup_dev_log_empty">Nessun log sviluppatore</string>
     <string name="setup_toggle_verbose_log_title">Log dettagliato del protocollo</string>
     <string name="setup_toggle_verbose_log_subtitle">Registra in questo log la traccia completa del protocollo dell\'head unit, da allegare a una segnalazione di bug. Registra molti dati; lascialo disattivato altrimenti.</string>
     <string name="setup_nothing_to_open">Questo telefono non ha un\'app in grado di aprirlo</string>
