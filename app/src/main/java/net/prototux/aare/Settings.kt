@@ -190,6 +190,15 @@ class Settings(context: Context) {
         get() = prefs.getString("phone_bt_address", "") ?: ""
         set(v) = prefs.edit { putString("phone_bt_address", v) }
 
+    /**
+     * When the car's Bluetooth answers AARE's pairing request and the phone isn't paired with it,
+     * pair with that car (and only it) through Shizuku instead of Android's dialog, accepting only
+     * the passkey the car sent over Android Auto (BluetoothAutoPair). Off by default.
+     */
+    var autoPairCarBluetooth: Boolean
+        get() = prefs.getBoolean("auto_pair_car_bluetooth", false)
+        set(v) = prefs.edit { putBoolean("auto_pair_car_bluetooth", v) }
+
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)

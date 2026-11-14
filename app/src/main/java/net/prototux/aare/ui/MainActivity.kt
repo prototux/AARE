@@ -503,6 +503,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
     var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
+    var autoPair by remember { mutableStateOf(settings.autoPairCarBluetooth) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
     var btAddr by remember { mutableStateOf(settings.phoneBluetoothAddress) }
@@ -520,6 +521,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
+            }
+            Toggle(stringResource(R.string.setup_toggle_auto_pair_title), stringResource(R.string.setup_toggle_auto_pair_subtitle), autoPair) {
+                autoPair = it; settings.autoPairCarBluetooth = it
             }
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(btAddr, { btAddr = it; settings.phoneBluetoothAddress = it.trim() }, Modifier.fillMaxWidth(),

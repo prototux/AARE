@@ -150,3 +150,17 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Automatic Bluetooth pairing for calls (Shizuku, opt-in)
+
+When the car answers AARE's Android Auto pairing request with "not paired", and the user turned
+the option on, AARE pairs with that car through a Shizuku helper (`ShellBluetoothService`):
+createBond, then the answer to Android's pairing request (setPairingConfirmation needs
+BLUETOOTH_PRIVILEGED, which only the shell has here).
+
+- Scope: only the address the head unit announced on its Bluetooth channel, checked again on every
+  broadcast; nothing else is ever bonded or confirmed.
+- A numeric comparison is only confirmed when its passkey equals the one the car sent over Android
+  Auto (BluetoothAuthenticationData), so a different device can't slip in under the car's
+  address; a PIN request gets the car's PIN. Anything else is left to Android's dialog, which
+  stays up (the pairing broadcast is not aborted) and is the fallback for every failure.
