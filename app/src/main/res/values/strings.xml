@@ -322,7 +322,7 @@
     <string name="audio_section_car_mic">Car microphone</string>
     <string name="audio_toggle_car_mic_title">Car microphone for phone apps</string>
     <string name="audio_toggle_car_mic_subtitle">While connected to a car with a microphone, voice typing, voice recorders and voice messages on the phone hear the car instead of the phone. Calls keep their own microphone. Needs Shizuku.</string>
-    <string name="audio_car_mic_ready">Ready: takes effect at the next connection.</string>
+    <string name="audio_car_mic_ready">Ready: turning it on or off applies at once, even while connected.</string>
     <string name="audio_car_mic_needs_android10">Needs Android 10 or newer.</string>
     <string name="audio_car_mic_needs_shizuku">Needs Shizuku, running and allowed for AARE (see the Shizuku method above).</string>
 

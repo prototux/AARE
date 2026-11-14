@@ -18,6 +18,7 @@ import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.ServiceOuterClass.Service
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import android.location.Location
@@ -341,7 +342,25 @@ class CarSession(
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
-            if (settings.carMicForPhoneApps) mic?.let { m ->
+            applyPhoneAppsMic()
+            settings.registerListener(phoneAppsMicSetting)
+        }
+    }
+
+    /** Turned on or off in the settings while connected: applies straight away, not at the next connection. */
+    private val phoneAppsMicSetting = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "car_mic_for_phone_apps") main.post { applyPhoneAppsMic() }
+    }
+
+    /** Starts or stops the car's mic for phone apps to match the setting (main thread). */
+    private fun applyPhoneAppsMic() {
+        if (closed) return
+        val on = settings.carMicForPhoneApps
+        // Once made, the same instance stays for the session: its one thread orders every on/off.
+        val existing = phoneAppsMic
+        when {
+            existing != null -> existing.setEnabled(on)
+            on -> mic?.let { m ->
                 val cfg = m.config
                 phoneAppsMic = CarMicForApps(context, micRouter, cfg?.samplingRate ?: 16_000, cfg?.numberOfChannels ?: 1).also { it.start() }
             }
@@ -985,6 +1004,7 @@ class CarSession(
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
+        settings.unregisterListener(phoneAppsMicSetting)
         phoneAppsMic?.stop(); phoneAppsMic = null
         micRouter.shutdown()
         teardownVideo()

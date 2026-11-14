@@ -35,7 +35,8 @@ class CarMicForApps(
     /** Car PCM on its way to the helper: the car's reader thread must never wait on the pipe. */
     private val queue = ArrayBlockingQueue<ByteArray>(QUEUE_CHUNKS)
     private var out: ParcelFileDescriptor.AutoCloseOutputStream? = null
-    private var writer: Thread? = null
+    /** Volatile: [stop] interrupts it from the caller's thread, in case this one is stuck in a binder call. */
+    @Volatile private var writer: Thread? = null
     @Volatile private var dropped = 0
 
     private val listener = object : IShellMicListener.Stub() {
@@ -46,12 +47,29 @@ class CarMicForApps(
 
     fun start() { handler.post(::bind) }
 
+    /**
+     * The setting changed mid-session: binds or unbinds on this one thread, so turning it off and
+     * on again quickly can't have an old unbind stop the helper's injection after a new bind.
+     */
+    fun setEnabled(on: Boolean) {
+        handler.post { if (on) bind() else { act(takeover.stop()); unbind() } }
+    }
+
     fun stop() {
-        handler.post { act(takeover.stop()); unbind() }
-        thread.quitSafely()
+        // Unblock the writer at once (it waits on queue.take()), then clean up on this thread and
+        // only quit it after that: quitting first could drop the posted cleanup, leaving the helper
+        // injecting, the car's mic open for phone apps and the writer thread waiting forever.
+        writer?.interrupt()
+        val posted = handler.post {
+            act(takeover.stop())
+            unbind()
+            thread.quitSafely()
+        }
+        if (!posted) unbind()
     }
 
     private fun bind() {
+        if (service != null) return
         if (!available()) { DiagLog.add("car mic for phone apps: needs Shizuku, allowed for AARE, and Android 10 or newer"); return }
         val s = ShellAudio.acquire(context) ?: run { DiagLog.add("car mic for phone apps: the Shizuku helper didn't start"); return }
         val (read, write) = ParcelFileDescriptor.createPipe()
