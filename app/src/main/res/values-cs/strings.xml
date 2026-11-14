@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Připraveno. Pouze média: bez hlasu navigace, některé aplikace se odhlásí, a telefon přehrává i nadále.</string>
     <string name="audio_playback_not_ready">Funguje všude, s omezeními: pouze média, bez hlasu navigace. Android požádá o snímání obrazovky: zvolte Celou obrazovku (používá i obrazovka telefonu).</string>
     <string name="audio_notice_setup_hint">Otevřete AARE na telefonu a nastavte zvuk v autě, abyste slyšeli telefon v autě</string>
+    <string name="audio_section_car_mic">Mikrofon auta</string>
+    <string name="audio_toggle_car_mic_title">Mikrofon auta pro aplikace v telefonu</string>
+    <string name="audio_toggle_car_mic_subtitle">Při připojení k autu s mikrofonem slyší hlasové psaní, záznamníky hlasu a hlasové zprávy v telefonu auto místo telefonu. Hovory si ponechají svůj mikrofon. Vyžaduje Shizuku.</string>
+    <string name="audio_car_mic_ready">Připraveno: zapnutí či vypnutí platí hned, i během připojení.</string>
+    <string name="audio_car_mic_needs_android10">Vyžaduje Android 10 nebo novější.</string>
+    <string name="audio_car_mic_needs_shizuku">Vyžaduje spuštěné Shizuku povolené pro AARE (viz metodu Shizuku výše).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Obrazovka telefonu</string>

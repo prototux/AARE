@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Klart. Endast media: ingen navigeringsröst, vissa appar avstår, och telefonen fortsätter också att spela.</string>
     <string name="audio_playback_not_ready">Fungerar överallt, med begränsningar: endast media, ingen navigeringsröst. Android frågar om att spela in skärmen: välj Hela skärmen (används också av telefonskärmen).</string>
     <string name="audio_notice_setup_hint">Öppna AARE på telefonen och konfigurera Billjud för att höra telefonen i bilen</string>
+    <string name="audio_section_car_mic">Bilens mikrofon</string>
+    <string name="audio_toggle_car_mic_title">Bilens mikrofon för telefonens appar</string>
+    <string name="audio_toggle_car_mic_subtitle">När telefonen är ansluten till en bil med mikrofon hör röstinmatning, röstinspelare och röstmeddelanden på telefonen bilen i stället för telefonen. Samtal behåller sin egen mikrofon. Kräver Shizuku.</string>
+    <string name="audio_car_mic_ready">Klart: att slå på eller av gäller direkt, även när du är ansluten.</string>
+    <string name="audio_car_mic_needs_android10">Kräver Android 10 eller nyare.</string>
+    <string name="audio_car_mic_needs_shizuku">Kräver Shizuku, igång och tillåtet för AARE (se Shizuku-metoden ovan).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Telefonskärm</string>

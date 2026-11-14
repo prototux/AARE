@@ -190,6 +190,15 @@ class Settings(context: Context) {
         get() = prefs.getString("phone_bt_address", "") ?: ""
         set(v) = prefs.edit { putString("phone_bt_address", v) }
 
+    /**
+     * The car's microphone for the phone's own apps while connected (audio/CarMicForApps): voice
+     * typing, voice recorders and voice messages hear the car instead of the phone. Needs Shizuku
+     * on Android 10+; calls keep their own microphone. Off: they record from the phone's mic.
+     */
+    var carMicForPhoneApps: Boolean
+        get() = prefs.getBoolean("car_mic_for_phone_apps", false)
+        set(v) = prefs.edit { putBoolean("car_mic_for_phone_apps", v) }
+
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)
