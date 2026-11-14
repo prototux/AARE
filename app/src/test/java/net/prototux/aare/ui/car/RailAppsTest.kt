@@ -44,4 +44,10 @@ class RailAppsTest {
         assertEquals(listOf("a"), listOf("a", "b").withKey("b", false))
         assertEquals(listOf("a"), listOf("a").withKey("a", true)) // already chosen: unchanged
     }
+
+    @Test
+    fun railKeysReorderWithTheSharedHelper() {
+        assertEquals(listOf("a", "c", "b"), listOf("a", "b", "c").movedBy(2, -1))
+        assertEquals(listOf("a", "b"), listOf("a", "b").movedBy(5, -1)) // out of range: unchanged
+    }
 }
