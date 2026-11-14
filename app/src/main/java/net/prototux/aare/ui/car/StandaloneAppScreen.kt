@@ -52,6 +52,12 @@ internal fun StandaloneAppScreen(
     modifier: Modifier,
     /** Handles the car's Back instead of the launched app (true if handled), e.g. to close a media app's video. */
     onBack: (() -> Boolean)? = null,
+    /**
+     * After a drive, hand the app (still running on its display) the new surface instead of
+     * relaunching it: for a media app's video, where a relaunch would end playback. Other launched
+     * apps keep the relaunch they always had on parking again.
+     */
+    resumeAfterDrive: Boolean = false,
 ) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
@@ -85,7 +91,7 @@ internal fun StandaloneAppScreen(
                                 val surface = Surface(st)
                                 // Back from a drive: the app kept running on its display, so it gets the new
                                 // surface rather than a restart (start() relaunches it, which would end a video).
-                                if (started) {
+                                if (started && resumeAfterDrive) {
                                     launcher.resize(surface, w, h, runtime.densityDpi)
                                     return
                                 }
