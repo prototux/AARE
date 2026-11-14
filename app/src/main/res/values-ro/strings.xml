@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Conectare</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Se conectează prin Wi-Fi la mașinile asociate când ajung în raza Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Compatibilitate wireless</string>
+    <string name="setup_choice_wireless_compat_auto">Automat</string>
+    <string name="setup_choice_wireless_compat_builtin">Integrată</string>
+    <string name="setup_choice_wireless_compat_adapter">Adaptor</string>
+    <string name="setup_hint_wireless_compat">Unitățile centrale integrate și adaptoarele wireless aftermarket (conectate la USB-ul mașinii) așteaptă ca telefonul să răspundă în ordini diferite. Automat folosește ordinea standard sau ordinea adaptorului pentru o mașină care s-a conectat ultima dată așa. Alege Adaptor dacă adaptorul wireless nu se conectează; Integrată revine la ordinea standard pentru toate mașinile.</string>
     <string name="setup_toggle_resume_music_title">Reiau muzica</string>
     <string name="setup_toggle_resume_music_subtitle">Pornește ultima aplicație muzicală redată când se conectează mașina</string>
     <string name="setup_bt_address_label">Adresa Bluetooth a telefonului (opțional)</string>

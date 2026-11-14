@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">З\'єднання</string>
     <string name="setup_toggle_wireless_title">Бездротово</string>
     <string name="setup_toggle_wireless_subtitle">З\'єднуватися з парними автомобілями через Wi-Fi, коли вони опиняються в зоні дії Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Сумісність бездротового з\'єднання</string>
+    <string name="setup_choice_wireless_compat_auto">Автоматично</string>
+    <string name="setup_choice_wireless_compat_builtin">Вбудований</string>
+    <string name="setup_choice_wireless_compat_adapter">Адаптер</string>
+    <string name="setup_hint_wireless_compat">Вбудовані головні пристрої та додаткові бездротові адаптери (підключені до USB автомобіля) очікують відповідей телефона в різному порядку. «Автоматично» використовує стандартний порядок або порядок адаптера для автомобіля, який минулого разу під\'єднався з ним. Виберіть «Адаптер», якщо бездротовий адаптер не під\'єднується; «Вбудований» повертає стандартний порядок для всіх автомобілів.</string>
     <string name="setup_toggle_resume_music_title">Відновлювати музику</string>
     <string name="setup_toggle_resume_music_subtitle">Запускати останній відтворюваний музичний застосунок при з\'єднанні з автомобілем</string>
     <string name="setup_bt_address_label">Bluetooth-адреса телефону (необов\'язково)</string>
