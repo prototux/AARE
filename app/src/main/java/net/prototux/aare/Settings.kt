@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.UUID
+import net.prototux.aare.car.CarKeyMapCodec
 
 /** User settings, in one SharedPreferences file. */
 class Settings(context: Context) {
@@ -326,6 +327,29 @@ class Settings(context: Context) {
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("hidden_apps", v) }
+
+    /**
+     * Keys AARE has seen from a car, code to a readable name (`KeyEvent.keyCodeToString`), for
+     * the "Car buttons" chooser. Recorded as they arrive (`rememberCarKey`); never removed, so a
+     * button pressed once on an earlier car still has a row (harmless if that car is gone).
+     */
+    var carKeysSeen: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_keys_seen", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_keys_seen", CarKeyMapCodec.encode(v)) }
+
+    fun rememberCarKey(code: Int, name: String) {
+        val seen = carKeysSeen
+        if (seen[code] == name) return
+        carKeysSeen = seen + (code to name)
+    }
+
+    /**
+     * User-chosen remaps: a car key code to a `CarKeyAction` id. A key with no entry here keeps
+     * its normal behaviour (`CarSession.onKey`).
+     */
+    var carKeyMap: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_key_map", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_key_map", CarKeyMapCodec.encode(v)) }
 
     /** Stable random id sent to head units so they recognise this phone. */
     val instanceId: String
