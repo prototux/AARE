@@ -35,6 +35,7 @@ import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
+import net.prototux.aare.car.LightSensorFeed
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
@@ -257,6 +258,11 @@ class CarRuntime(
 
     /** The car's own day/night signal, if it sent one. */
     private var carNight: Boolean? = null
+    /** The phone's light sensor's night/day reading, while Settings.nightSource asks for it. */
+    private var lightNight: Boolean? = null
+    private var lightSensor: LightSensorFeed? = null
+    /** Set by [stop]: a settings change queued before it must not start the light sensor again. */
+    private var stopped = false
     /** The head unit's driver position. */
     var rightHandDrive = false
         set(v) { field = v; applyScreenSettings() }
@@ -278,10 +284,13 @@ class CarRuntime(
 
     /** Applies the theme and bar position settings (also when they change during a drive). */
     private fun applyScreenSettings() {
+        updateLightSensor()
         val night = when (settings.carTheme) {
             Settings.THEME_DARK -> true
             Settings.THEME_LIGHT -> false
-            else -> carNight ?: true
+            // The light sensor hasn't reported yet (just switched on, or unavailable): fall back
+            // to the car's own signal rather than guessing, so the screen doesn't start wrong.
+            else -> if (settings.nightSource == Settings.NIGHT_SOURCE_LIGHT_SENSOR) lightNight ?: carNight ?: true else carNight ?: true
         }
         if (ui.night != night) {
             ui.night = night
@@ -314,9 +323,29 @@ class CarRuntime(
         }
     }
 
+    /**
+     * Starts or stops the phone's light sensor: on only while the colours follow day/night
+     * ([Settings.THEME_AUTO]) and [Settings.nightSource] is the light sensor, so a fixed dark or
+     * light theme never keeps the sensor awake.
+     */
+    private fun updateLightSensor() {
+        val wanted = !stopped && settings.carTheme == Settings.THEME_AUTO && settings.nightSource == Settings.NIGHT_SOURCE_LIGHT_SENSOR
+        if (wanted && lightSensor == null) {
+            // Called on the main thread, and never after the feed's stop() (it drops queued callbacks).
+            val feed = LightSensorFeed(context) { night -> lightNight = night; applyScreenSettings() }
+            // No light sensor on this phone: nothing to start: carNight (or "always dark") still applies.
+            if (feed.available) { feed.start(); lightSensor = feed }
+        } else if (!wanted && lightSensor != null) {
+            lightSensor?.stop()
+            lightSensor = null
+            lightNight = null
+        }
+    }
+
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving",
+            "night_source" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -363,9 +392,12 @@ class CarRuntime(
     }
 
     fun stop() {
+        stopped = true
         running.remove(this)
         runCatching { context.unregisterReceiver(packageReceiver) }
         settings.unregisterListener(settingsListener)
+        lightSensor?.stop()
+        lightSensor = null
         connections.values.forEach { it.release() }
         connections.clear()
         finished.clear()
