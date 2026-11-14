@@ -377,7 +377,7 @@ internal fun Dashboard(
     val shown: (DashCard) -> Boolean = { card ->
         when (card) {
             DashCard.MAP, DashCard.MEDIA -> true
-            DashCard.CALENDAR -> state.nextEvent != null
+            DashCard.CALENDAR -> state.nextEvents.isNotEmpty()
             DashCard.NOTIFICATION -> state.history.isNotEmpty()
             DashCard.WEATHER -> state.weather != null
         }
@@ -445,7 +445,7 @@ private fun DashSlot(
     when (card) {
         DashCard.MAP -> NavCard(state, actions, navMap, modifier)
         DashCard.MEDIA -> MediaCard(state, actions, compact = compact, modifier = modifier)
-        DashCard.CALENDAR -> state.nextEvent?.let { event -> Card(modifier) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) } }
+        DashCard.CALENDAR -> state.nextEvents.takeIf { it.isNotEmpty() }?.let { events -> Card(modifier) { CalendarAgendaCard(events, actions::navigateTo, Modifier.fillMaxSize()) } }
         DashCard.NOTIFICATION -> state.history.firstOrNull()?.let { latest ->
             Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }) {
                 LatestNotification(latest, state.drivingRestricted)

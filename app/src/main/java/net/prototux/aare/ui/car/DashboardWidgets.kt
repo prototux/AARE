@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,8 +43,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
+import net.prototux.aare.car.AgendaDay
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
+import net.prototux.aare.car.labelAgenda
+import java.time.ZoneId
+import java.time.format.TextStyle
+import java.util.Locale
 
 /** WMO weather codes (Open-Meteo) to an icon. */
 private fun weatherIcon(w: Weather): ImageVector = when (w.code) {
@@ -72,6 +78,45 @@ internal fun WeatherCard(weather: Weather) {
         Spacer(Modifier.width(16.dp))
         Text("${weather.temperature}${weather.unit}", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface)
     }
+}
+
+/**
+ * The calendar card: one event looks exactly as it always has ([CalendarCard]); more than one
+ * (Settings.calendarAgendaCount > 1) becomes an agenda, each row labelled with its day ("today",
+ * "tomorrow", or the weekday) and time, still with a shortcut to navigate where it has a place.
+ */
+@Composable
+internal fun CalendarAgendaCard(events: List<NextEvent>, onNavigate: (String) -> Unit, modifier: Modifier) {
+    val single = events.singleOrNull()
+    if (single != null) {
+        CalendarCard(single, onNavigate, modifier)
+        return
+    }
+    val context = LocalContext.current
+    val items = remember(events) { labelAgenda(events, System.currentTimeMillis(), ZoneId.systemDefault()) }
+    Column(modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        items.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(agendaWhen(item, context), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(item.event.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                if (item.event.location.isNotBlank()) {
+                    RoundIcon(Icons.Rounded.Navigation, stringResource(R.string.dash_event_navigate), filled = false) { onNavigate(item.event.location) }
+                }
+            }
+        }
+    }
+}
+
+/** "Today", "Tomorrow · 3:00 PM"...: the agenda row's day and (for a timed event) its time. */
+private fun agendaWhen(item: net.prototux.aare.car.AgendaItem, context: android.content.Context): String {
+    val day = when (val d = item.day) {
+        AgendaDay.Today -> context.getString(R.string.dash_event_today)
+        AgendaDay.Tomorrow -> context.getString(R.string.dash_agenda_tomorrow)
+        is AgendaDay.Later -> d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    }
+    return if (item.event.allDay) day else "$day · " + DateFormat.getTimeFormat(context).format(item.event.startMs)
 }
 
 /** The next calendar event, with a shortcut to navigate to its place. */
