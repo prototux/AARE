@@ -70,6 +70,21 @@ fun toCarAppNavigation(action: String?, data: String?, locationAlias: Boolean, w
     return if (wazeFormat) toWazeFormat(data) else NavigationRequest(ACTION_NAVIGATE, toGeo(data) ?: data)
 }
 
+/**
+ * Whether [request] is a well-formed Waze request: a home/work navigation ([locationAlias]), a
+ * VIEW of a geo: or geo.action: command (act=), or a navigation or search to a geo: place or
+ * query. Anything else falls back to the plain geo: navigation intent.
+ */
+fun isWazeRequest(request: NavigationRequest, locationAlias: Boolean): Boolean {
+    if (locationAlias && request.action == ACTION_NAVIGATE) return true
+    val data = request.data ?: return false
+    return when (request.action) {
+        ACTION_VIEW -> (hasFormat(data, "geo") || hasFormat(data, "geo.action")) && hasParam(data, "act")
+        ACTION_NAVIGATE, ACTION_SEARCH -> hasFormat(data, "geo") && hasQueryOrLocation(data)
+        else -> false
+    }
+}
+
 private fun toWazeFormat(data: String): NavigationRequest {
     val hierarchical = isHierarchical(data)
     val action = when {

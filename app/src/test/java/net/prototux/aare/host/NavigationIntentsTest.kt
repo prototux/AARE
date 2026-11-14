@@ -92,4 +92,34 @@ class NavigationIntentsTest {
         assertEquals(NavigationRequest(view, "https://example.com/?q=1"), cal(view, "https://example.com/?q=1"))
         assertEquals(NavigationRequest(navigate, null), cal(navigate, null))
     }
+
+    @Test
+    fun wellFormedWazeRequests() {
+        assertTrue(isWazeRequest(NavigationRequest(navigate, "geo:0,0?q=Lyon"), false))
+        assertTrue(isWazeRequest(NavigationRequest(navigate, "geo:45.76,4.83"), false))
+        assertTrue(isWazeRequest(NavigationRequest(search, "geo:0,0?q=Pizza"), false))
+        assertTrue(isWazeRequest(NavigationRequest(view, "geo:0,0?act=report_hazard&hazard_type=pothole"), false))
+        assertTrue(isWazeRequest(NavigationRequest(view, "geo.action:?act=mute"), false))
+        assertTrue(isWazeRequest(NavigationRequest(navigate, "google.navigation:q=home"), locationAlias = true))
+    }
+
+    @Test
+    fun malformedWazeRequestsFallBack() {
+        // What the conversion can leave behind when the input had nothing it understands.
+        assertFalse(isWazeRequest(NavigationRequest(navigate, "google.navigation:q=Lyon"), false))
+        assertFalse(isWazeRequest(NavigationRequest(navigate, "geo:0,0?z=3"), false))
+        assertFalse(isWazeRequest(NavigationRequest(view, "geo:0,0?q=Lyon"), false))
+        assertFalse(isWazeRequest(NavigationRequest(navigate, null), false))
+        assertFalse(isWazeRequest(NavigationRequest("android.intent.action.MAIN", "geo:0,0?q=Lyon"), false))
+    }
+
+    @Test
+    fun everyConvertedWazeRequestFromAPlaceIsWellFormed() {
+        for (url in listOf(
+            "https://maps.google.com/maps?q=Pizza&entry=sar",
+            "https://maps.google.com/maps?daddr=Lyon&dirflg=ht",
+            "https://maps.google.com/maps?act=report_hazard&hazard_type=pothole",
+            "google.navigation:q=Lyon&mode=d",
+        )) assertTrue(url, isWazeRequest(waze(view, url), false))
+    }
 }

@@ -199,8 +199,8 @@ class CarRuntime(
         var action = intent.action
         var data = intent.dataString
         if (forNavigationApp && !alias) {
-            // AARE also takes other navigation data (google.navigation:, a Maps URL) and VIEW intents, which
-            // Refused from car apps: those go on as they are, any other action as a navigation.
+            // Other navigation data (google.navigation:, a Maps URL) and VIEW intents go on as they are;
+            // any other action becomes a navigation.
             val maps = data?.takeIf { it.startsWith("geo:") }?.let(::mapsUrlOf)
             when {
                 maps != null -> { action = Intent.ACTION_VIEW; data = maps }
@@ -208,11 +208,28 @@ class CarRuntime(
             }
         }
         val waze = AppQuirks.takesWazeNavigationFormat(target.info.packageName, target.info.versionCode)
-        val request = toCarAppNavigation(action, data, alias, waze)
-        val out = Intent(intent).setAction(request.action).setData(request.data?.let(android.net.Uri::parse))
-        if (forNavigationApp) out.component = null
-        request.avoid?.let { out.putExtra("avoid", it) }
-        return out
+        val out = runCatching {
+            val request = toCarAppNavigation(action, data, alias, waze)
+            if (waze && !wazeTakes(request, alias, target.info.packageName)) return@runCatching null
+            Intent(intent).setAction(request.action).setData(request.data?.let(android.net.Uri::parse)).apply {
+                if (forNavigationApp) component = null
+                request.avoid?.let { putExtra("avoid", it) }
+            }
+        }.onFailure { Log.w(TAG, "navigation intent for ${target.info.packageName} not converted", it) }.getOrNull()
+        // A Waze request that isn't well formed, or that Waze has nothing to open with, goes as the plain
+        // navigation intent the app has always been given, so a Waze update can't lose the destination.
+        return out ?: if (intent.action != CarContext.ACTION_NAVIGATE) Intent(CarContext.ACTION_NAVIGATE, intent.data) else intent
+    }
+
+    /**
+     * Whether Waze ([pkg]) takes [request]: well formed, and for a search or a command, one of its
+     * activities answers it (a navigation goes to its car app session, which always takes it).
+     */
+    private fun wazeTakes(request: NavigationRequest, alias: Boolean, pkg: String): Boolean {
+        if (!isWazeRequest(request, alias)) return false
+        if (request.action == CarContext.ACTION_NAVIGATE) return true
+        val probe = Intent(request.action, request.data?.let(android.net.Uri::parse)).setPackage(pkg)
+        return context.packageManager.queryIntentActivities(probe, 0).isNotEmpty()
     }
 
     override fun finish(app: CarAppConnection) {
