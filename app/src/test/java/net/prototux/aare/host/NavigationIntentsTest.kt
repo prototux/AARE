@@ -88,6 +88,17 @@ class NavigationIntentsTest {
     }
 
     @Test
+    fun onlyAParameterNamedQIsTheQuery() {
+        // A parameter that merely ends in q (faq=) is not the query; the destination still is.
+        assertEquals(NavigationRequest(navigate, "geo:0,0?q=Lyon"), cal(view, "https://maps.google.com/maps?faq=1&daddr=Lyon"))
+        assertEquals("https://maps.google.com/maps?nav=1&q=Lyon", mapsUrlOf("geo:0,0?iq=1&q=Lyon"))
+        assertNull(mapsUrlOf("geo:0,0?q="))
+        // Any letter q in the URI is not a query either.
+        assertFalse(isWazeRequest(NavigationRequest(navigate, "geo:0,0?quiet=1"), false))
+        assertFalse(isWazeRequest(NavigationRequest(navigate, "geo:0,0?z=3&qq=Lyon"), false))
+    }
+
+    @Test
     fun otherIntentsAreLeftAlone() {
         assertEquals(NavigationRequest(view, "https://example.com/?q=1"), cal(view, "https://example.com/?q=1"))
         assertEquals(NavigationRequest(navigate, null), cal(navigate, null))

@@ -131,14 +131,30 @@ private fun schemeSpecificPart(data: String): String {
 
 private fun isHierarchical(data: String) = schemeOf(data) == null || schemeSpecificPart(data).startsWith("/")
 
-/** The q= (or else daddr=) value, still encoded: the place searched for. */
+/**
+ * The q= (or else daddr=) parameter's value, still encoded: the place searched for. Only a
+ * parameter of that exact name counts (faq=1 is no query), and an empty one is none.
+ */
 private fun query(data: String): String? {
-    val ssp = schemeSpecificPart(data)
+    val parts = rawQuery(data).split('&')
     for (key in listOf("q", "daddr")) {
-        val at = ssp.indexOf("$key=")
-        if (at >= 0) return ssp.substring(at + key.length + 1).substringBefore('&')
+        val value = parts.firstOrNull { '=' in it && decode(it.substringBefore('=')) == key }?.substringAfter('=')
+        if (!value.isNullOrEmpty()) return value
     }
     return null
+}
+
+/**
+ * The query string, still encoded: what follows the '?', or for an opaque URI written without
+ * one (google.navigation:q=...) its whole scheme-specific part.
+ */
+private fun rawQuery(data: String): String {
+    val ssp = schemeSpecificPart(data)
+    return when {
+        '?' in ssp -> ssp.substringAfter('?')
+        !isHierarchical(data) && '=' in ssp -> ssp
+        else -> ""
+    }
 }
 
 /** The coordinates in the query, or the scheme-specific part itself ("48.85,2.29"). */
@@ -151,7 +167,7 @@ private fun location(data: String): Pair<Double, Double>? {
     return lat to lng
 }
 
-private fun hasQueryOrLocation(data: String) = 'q' in data || location(data) != null
+private fun hasQueryOrLocation(data: String) = query(data) != null || location(data) != null
 
 /** The query's parameters in order, decoded (+ is a space), as Uri.getQueryParameter gives them. */
 private fun params(data: String): List<Pair<String, String>> {
