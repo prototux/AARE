@@ -654,7 +654,13 @@ Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@gitzone83](https://github.com/gitzone83), [@djshag01](https://github.com/djshag01),
 [@mirchisait](https://github.com/mirchisait), [@filipeniquini](https://github.com/filipeniquini),
 [@MattMaaaan](https://github.com/MattMaaaan) and [@cfercl](https://github.com/cfercl)
-— see [Tested on real head units](#tested-on-real-head-units) for the cars. And tips from
+— see [Tested on real head units](#tested-on-real-head-units) for the cars. Reports and ideas that
+led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops acknowledging audio,
+#82), [@henkv1](https://github.com/henkv1) (connections from the phone itself, #131),
+[@kveld9](https://github.com/kveld9) (the translations, #51), [@Ronsone](https://github.com/Ronsone)
+(the Audi A3's authentication answer, #43), [@pollio2008](https://github.com/pollio2008) (more
+navigation apps on the phone screen, discussion #150) and [@Delgrey](https://github.com/Delgrey)
+(Open Headunit, discussion #47). And tips from
 [@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
 [@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 
