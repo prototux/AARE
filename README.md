@@ -624,8 +624,11 @@ Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@l0rdg3x](https://github.com/l0rdg3x),
 [@spasticmonkey55-glitch](https://github.com/spasticmonkey55-glitch),
 [@gitzone83](https://github.com/gitzone83), [@djshag01](https://github.com/djshag01),
-[@mirchisait](https://github.com/mirchisait) and [@filipeniquini](https://github.com/filipeniquini)
-— see [Tested on real head units](#tested-on-real-head-units) for the cars.
+[@mirchisait](https://github.com/mirchisait), [@filipeniquini](https://github.com/filipeniquini),
+[@MattMaaaan](https://github.com/MattMaaaan) and [@cfercl](https://github.com/cfercl)
+— see [Tested on real head units](#tested-on-real-head-units) for the cars. And tips from
+[@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
+[@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 
 ## License
 
