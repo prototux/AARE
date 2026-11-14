@@ -321,13 +321,6 @@ class VideoChannel(
     override val dropsOverflow: Boolean get() = session.headUnitAtLeast(6, 0)
     override fun startMediaOptions() = StartMediaOptions.video()
 
-    /**
-     * Seconds between the encoder's periodic key frames: 2 on a
-     * drop overflow stream (the head unit may drop frames), 60 otherwise. Key frames on demand (on
-     * focus, after a dropped backlog, on restart) are asked for separately and don't wait for this.
-     */
-    val keyFrameIntervalS: Int get() = if (dropsOverflow) 2 else 60
-
     override fun onConfig(cfg: Config) {
         // Whatever its status: video starts on any Config (it only checks the
         // status on audio), and a head unit that says "wait" here would otherwise never get video.

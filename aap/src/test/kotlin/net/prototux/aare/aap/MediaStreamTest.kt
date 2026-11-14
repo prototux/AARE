@@ -182,7 +182,6 @@ class MediaStreamTest {
         assertFalse(audio.hasAckMode())
         assertFalse(audio.hasMediaOptions())
         assertFalse("acks pace a 1.6 head unit", media.ackless)
-        assertEquals("periodic key frames every 60 s", 60, link.video!!.keyFrameIntervalS)
     }
 
     @Test
@@ -223,7 +222,6 @@ class MediaStreamTest {
         Thread.sleep(800)
         assertTrue("frames sent without acks: ${link.hu.videoFrames.get()}", link.hu.videoFrames.get() > 20)
         assertTrue(link.video!!.ackless)
-        assertEquals("periodic key frames every 2 s", 2, link.video!!.keyFrameIntervalS)
 
         // Navigation voice reports statistics more often.
         link.startAudio("GUIDANCE")
