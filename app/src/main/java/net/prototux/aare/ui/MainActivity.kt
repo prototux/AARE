@@ -138,9 +138,11 @@ import net.prototux.aare.host.CarAppInfo
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.launch.StandaloneDrivingRule
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.DashCard
@@ -1047,6 +1049,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     var enabled by remember { mutableStateOf(settings.standaloneApps) }
     var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    var rules by remember { mutableStateOf(settings.standaloneDrivingRules) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
         Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -1079,8 +1082,37 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                         allowed = if (on) allowed + pkg else allowed - pkg
                         settings.standaloneAppPackages = allowed
                     }
+                    if (pkg in allowed) {
+                        DrivingRuleChoice(rules[pkg], navigation = pkg in KNOWN_NAVIGATION) { rule ->
+                            rules = rules + (pkg to rule)
+                            settings.standaloneDrivingRules = rules
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+/** What a launched app may do while driving, with a warning when it stays usable. */
+@Composable
+private fun DrivingRuleChoice(rule: StandaloneDrivingRule?, navigation: Boolean, onSelect: (StandaloneDrivingRule) -> Unit) {
+    val current = rule ?: StandaloneDrivingRule.default(navigation)
+    Column(Modifier.padding(start = 52.dp, bottom = 12.dp)) {
+        Choices(
+            stringResource(R.string.standalone_rule_title),
+            listOf(
+                StandaloneDrivingRule.PARKED_ONLY.key to stringResource(R.string.standalone_rule_parked),
+                StandaloneDrivingRule.ALLOWED.key to stringResource(R.string.standalone_rule_allowed),
+                StandaloneDrivingRule.AUDIO_ONLY.key to stringResource(R.string.standalone_rule_audio),
+            ),
+            current.key,
+        ) { key -> StandaloneDrivingRule.byKey(key)?.let(onSelect) }
+        when {
+            current == StandaloneDrivingRule.ALLOWED && !navigation -> Text(stringResource(R.string.standalone_rule_allowed_warning),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp))
+            navigation -> Text(stringResource(R.string.standalone_rule_navigation_note),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }
