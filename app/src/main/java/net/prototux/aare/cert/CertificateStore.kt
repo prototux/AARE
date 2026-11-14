@@ -106,10 +106,15 @@ class CertificateStore(private val context: Context) {
      */
     fun importDownloaded(d: CertificateDownload.Downloaded): Entry {
         dir.listFiles().orEmpty().filter { File(it, DOWNLOADED_MARKER).exists() }.forEach { it.deleteRecursively() }
-        val saved = savePem("Android Auto ${d.version}", d.certPem, d.keyPem)
+        val saved = savePem(DOWNLOADED_PREFIX + d.version, d.certPem, d.keyPem)
         File(saved, DOWNLOADED_MARKER).writeText(CertificateDownload.SOURCE)
         return load(saved)!!
     }
+
+    /** The repository version of the certificate [importDownloaded] saved, or null if there is none. */
+    fun downloadedVersion(): String? = dir.listFiles().orEmpty()
+        .firstOrNull { File(it, DOWNLOADED_MARKER).exists() }
+        ?.name?.removePrefix(DOWNLOADED_PREFIX)
 
     /** Imports a PKCS#12 bundle. */
     fun importPkcs12(name: String, uri: Uri, password: CharArray): Entry {
@@ -154,6 +159,7 @@ class CertificateStore(private val context: Context) {
         private const val BUILT_IN_DIR = "phone_identity"
         /** Marks a certificate directory written by [importDownloaded]. */
         private const val DOWNLOADED_MARKER = "downloaded"
+        private const val DOWNLOADED_PREFIX = "Android Auto "
 
         fun pem(type: String, der: ByteArray) =
             "-----BEGIN $type-----\n" + Base64.encodeToString(der, Base64.NO_WRAP).chunked(64).joinToString("\n") + "\n-----END $type-----\n"

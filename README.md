@@ -109,7 +109,9 @@ The quickest way: under *Advanced > Phone certificates*, tap **Download certific
 the certificate and key extracted from the latest Android Auto app by
 [iscle/android-auto-certificates](https://github.com/iscle/android-auto-certificates), checks that
 the certificate is issued by Google Automotive Link and that the key matches it, and adds it to its
-certificates (replacing an earlier download). To extract them yourself instead:
+certificates (replacing an earlier download). Downloaded certificates expire: turn on *Update the
+downloaded certificate automatically* there to get the new one when it is published, and AARE warns
+two weeks before the expiry either way. To extract them yourself instead:
 
 1. On your computer, clone this repository, or use **Code → Download ZIP** on GitHub and
    extract it. Open a terminal in the repository folder, where [extract_key.py](extract_key.py)
