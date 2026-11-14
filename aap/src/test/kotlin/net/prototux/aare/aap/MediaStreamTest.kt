@@ -48,6 +48,7 @@ class MediaStreamTest {
         major: Int = 1,
         minor: Int = 6,
         videoConfigStatus: Config.Status = Config.Status.STATUS_READY,
+        moreVideoConfigs: List<Config.Status> = emptyList(),
         uiConfig: UiConfig? = null,
         /** Drop overflow mode allowed for this car (vehicles.json), off as by default. */
         dropOverflow: Boolean = false,
@@ -71,7 +72,7 @@ class MediaStreamTest {
             val phoneSocket = server.accept()
             server.close()
             hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, protocolMinor = minor, protocolMajor = major,
-                videoConfigStatus = videoConfigStatus, videoUiConfig = uiConfig)
+                videoConfigStatus = videoConfigStatus, moreVideoConfigs = moreVideoConfigs, videoUiConfig = uiConfig)
             links += hu
             val id = SelfSignedCertificate.generate("phone")
             AapSession(
@@ -152,11 +153,29 @@ class MediaStreamTest {
     private fun uiRequest(ui: UiConfig) = UpdateUiConfigRequest.newBuilder().setUiConfig(ui).build()
 
     @Test
-    fun videoStartsWhateverTheConfigStatus() {
-        // Video starts on any Config; only audio waits for READY.
+    fun videoStartsAfterAWaitConfigThatNothingFollows() {
         val link = Link(videoConfigStatus = Config.Status.STATUS_WAIT)
         assertTrue("video starts on a Config that says WAIT", link.videoStarted.await(5, TimeUnit.SECONDS))
         assertTrue(link.hu.firstVideoFrame.await(5, TimeUnit.SECONDS))
+        assertEquals(1, link.hu.starts[link.hu.video]!!.size)
+    }
+
+    @Test
+    fun aReadyConfigAfterWaitStartsAtOnceAndOnce() {
+        val link = Link(videoConfigStatus = Config.Status.STATUS_WAIT, moreVideoConfigs = listOf(Config.Status.STATUS_READY))
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        Thread.sleep(800) // past the wait: the pending start must not start it again
+        assertEquals(1, link.hu.starts[link.hu.video]!!.size)
+        assertTrue(link.video!!.ready)
+    }
+
+    @Test
+    fun furtherConfigsAreIgnoredOnceStarted() {
+        val link = Link(moreVideoConfigs = listOf(Config.Status.STATUS_READY, Config.Status.STATUS_WAIT))
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        Thread.sleep(800)
+        assertEquals("one START for the first Config only", 1, link.hu.starts[link.hu.video]!!.size)
+        assertTrue("a later WAIT doesn't change the status", link.video!!.ready)
     }
 
     @Test

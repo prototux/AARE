@@ -101,6 +101,8 @@ class HeadUnitSimulator(
     private val protocolMajor: Int = 1,
     /** The status the video sink's Config carries (audio always says READY). */
     private val videoConfigStatus: Config.Status = Config.Status.STATUS_READY,
+    /** More video Configs sent right after the first, with these statuses. */
+    private val moreVideoConfigs: List<Config.Status> = emptyList(),
     /** The video configuration's UI config, if any (insets, margins, theme). */
     private val videoUiConfig: UiConfig? = null,
 ) {
@@ -249,9 +251,11 @@ class HeadUnitSimulator(
 
     private fun mediaSink(m: AapMessage) {
         when (m.id) {
-            MediaMsg.SETUP -> send(m.channel, MediaMsg.CONFIG, Config.newBuilder()
-                .setStatus(if (m.channel == video) videoConfigStatus else Config.Status.STATUS_READY)
-                .setMaxUnacked(maxUnacked).addConfigurationIndices(0).build())
+            MediaMsg.SETUP -> {
+                fun config(status: Config.Status) = Config.newBuilder().setStatus(status).setMaxUnacked(maxUnacked).addConfigurationIndices(0).build()
+                send(m.channel, MediaMsg.CONFIG, config(if (m.channel == video) videoConfigStatus else Config.Status.STATUS_READY))
+                if (m.channel == video) moreVideoConfigs.forEach { send(video, MediaMsg.CONFIG, config(it)) }
+            }
             MediaMsg.START -> {
                 val start = Start.parseFrom(m.bodyBytes())
                 starts.computeIfAbsent(m.channel) { LinkedBlockingQueue() }.add(start)

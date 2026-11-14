@@ -84,6 +84,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {
             MediaMsg.CONFIG -> {
+                if (ignoresConfig()) return session.log.i("$name: another Config while the stream runs, ignored")
                 val cfg = Config.parseFrom(msg.bodyBytes())
                 maxUnacked = if (cfg.hasMaxUnacked() && cfg.maxUnacked > 0) cfg.maxUnacked else 1
                 // At least this window applies in drop overflow mode (it never waits on it).
@@ -154,6 +155,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected abstract fun startMediaOptions(): MediaOptions
 
     protected open fun onConfig(cfg: Config) {}
+    /** Whether a Config now is ignored altogether (its window, indices and status included). */
+    protected open fun ignoresConfig(): Boolean = false
     protected open fun onAcked() {}
     protected open fun onOtherMessage(msg: AapMessage) {}
 
@@ -325,9 +328,33 @@ class VideoChannel(
     override val dropsOverflow: Boolean get() = allowDropOverflow && session.headUnitAtLeast(6, 0)
     override fun startMediaOptions() = StartMediaOptions.video()
 
+    /** The stream was started from a Config; later ones are ignored (a restart mid-stream helps no one). */
+    @Volatile private var configured = false
+    /** A start after a WAIT Config is pending. */
+    @Volatile private var waitTimer = false
+    /** Moves on when the channel closes, so a pending start from an older Config is dropped. */
+    @Volatile private var generation = 0
+
+    override fun ignoresConfig() = configured
+
+    /**
+     * A READY Config starts the stream at once. A WAIT one (or one without a status) starts it
+     * only if no READY follows within [WAIT_CONFIG_START_MS]: a head unit that says "wait" and
+     * never says more would otherwise never get video.
+     */
     override fun onConfig(cfg: Config) {
-        // Whatever its status: video starts on any Config (it only checks the
-        // status on audio), and a head unit that says "wait" here would otherwise never get video.
+        if (ready) return startFromConfig(generation)
+        if (waitTimer) return
+        waitTimer = true
+        val gen = generation
+        session.schedule({ startFromConfig(gen) }, WAIT_CONFIG_START_MS, TimeUnit.MILLISECONDS)
+    }
+
+    private fun startFromConfig(gen: Int) {
+        synchronized(lock) {
+            if (configured || gen != generation) return
+            configured = true
+        }
         val index = listener.chooseConfiguration(configs, configIndices).coerceIn(0, configs.size - 1)
         chosen = configs[index]
         startIndex = index
@@ -491,6 +518,7 @@ class VideoChannel(
     override fun onClosed() {
         super.onClosed()
         focused = false
+        configured = false; waitTimer = false; generation++
         uiReplies.clear(); earlyUiRequest = null
         synchronized(lock) { while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) }; sentAt.clear(); pendingFrames = 0 }
     }
@@ -498,6 +526,8 @@ class VideoChannel(
     companion object {
         /** About a quarter second at 30 fps: more than that and we're just adding latency. */
         const val MAX_PENDING = 8
+        /** How long a WAIT Config waits for a READY one before the stream starts anyway. */
+        const val WAIT_CONFIG_START_MS = 500L
         /** The longest a UI config reply waits for a frame with the new layout. */
         const val UI_REPLY_WAIT_MS = 250L
 
