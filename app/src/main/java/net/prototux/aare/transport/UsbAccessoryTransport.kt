@@ -46,7 +46,7 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
 
         /**
          * An accessory to project to: matched on the exact model only, so
-         * a head unit with another manufacturer string works too. The plain "Android" model, which
+         * a head unit with another manufacturer string works too. The plain "Android" model,
          * which is ignored by default, is not one.
          */
         fun isAndroidAuto(a: UsbAccessory) = isAndroidAutoModel(a.model)
