@@ -40,6 +40,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.aap.CertificateRefusal
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
@@ -102,6 +103,8 @@ class ProjectionService : Service() {
     private var destroyed = false
     /** The download prompt is shown at most once per service lifetime, until a Google cert arrives. */
     private var certDownloadPrompted = false
+    /** Hang-ups in a row during the TLS handshake while a valid Google-issued certificate was offered. */
+    private var handshakeHangUps = 0
     /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
     private var lastSessionWireless = false
     private var lastWirelessAddress: String? = null
@@ -362,18 +365,21 @@ class ProjectionService : Service() {
         sessionStart = SystemClock.elapsedRealtime()
         val s = CarSession(this, transport, cert.identity, settings, media, { projection }, wireless, peerKey, trustOnFirstUse, sessionListener, mirror)
         session = s
-        _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null, pendingTrust = null) }
+        _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null) }
         s.start()
     }
 
     private val sessionListener = object : CarSession.Listener {
         override fun onStatus(session: CarSession, status: String) {
             log(status)
-            _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription) }
+            // A head unit name comes with service discovery, after the phone accepted the head unit's
+            // certificate: nothing is left to trust.
+            _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription,
+                pendingTrust = it.pendingTrust.takeIf { session.headUnitName.isBlank() }) }
             updateNotification(status)
         }
 
-        override fun onEnded(session: CarSession, reason: String, certificateRejected: Boolean, pinRefusal: PinRefusal?) {
+        override fun onEnded(session: CarSession, reason: String, certificateRefusal: CertificateRefusal?, pinRefusal: PinRefusal?) {
             if (destroyed || this@ProjectionService.session !== session) return
             this@ProjectionService.session = null
             releaseWakeLock()
@@ -390,25 +396,38 @@ class ProjectionService : Service() {
             }
             // A changed certificate gets the same Trust prompt as a new head unit, saying it changed.
             val why = when {
-                pinRefusal == null -> reason
-                pinRefusal.changed -> getString(R.string.notif_cert_changed_message)
-                else -> getString(R.string.notif_cert_untrusted_message)
+                pinRefusal?.changed == true -> getString(R.string.notif_cert_changed_message)
+                pinRefusal != null -> getString(R.string.notif_cert_untrusted_message)
+                // The car judges the certificate's dates by its own clock, which is often wrong.
+                certificateRefusal?.notYetValid == true -> getString(R.string.notif_cert_not_yet_valid_message)
+                certificateRefusal?.expired == true -> getString(R.string.notif_cert_expired_message)
+                else -> reason
             }
             pinRefusal?.let { notifyUntrusted(it) }
-            if (certificateRejected) {
+            val datesRefused = certificateRefusal?.notYetValid == true || certificateRefusal?.expired == true
+            if (datesRefused) certNotice(getString(R.string.notif_cert_dates_title), why, retry = false)
+            if (certificateRefusal == null) handshakeHangUps = 0
+            if (certificateRefusal != null && keepAfterHangUp(certificateRefusal)) {
+                log("head unit ${certificateRefusal}; offering \"${_state.value.certificate}\" again, as every head unit " +
+                    "accepts a valid Google-issued certificate: this looks like a dropped link, not a refusal")
+            } else if (certificateRefusal != null) {
                 // Offer the next certificate next time: strict head units only accept Google-issued ones.
+                handshakeHangUps = 0
                 settings.certificateIndex = settings.certificateIndex + 1
-                log("head unit rejected the certificate; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
+                log("head unit ${certificateRefusal}; next connection offers \"${certs.pick(settings.certificateIndex).name}\"")
                 // Strict head units accept only a Google-issued certificate. If we don't have one yet,
                 // offer to fetch it, so the user needn't open Advanced before connecting.
-                if (!certs.hasGoogleCertificate() && !certDownloadPrompted) {
+                // Not when the car refused the dates: its clock is the likelier problem, and that notice says so.
+                if (!datesRefused && !certs.hasGoogleCertificate() && !certDownloadPrompted) {
                     certDownloadPrompted = true
                     certNotice(getString(R.string.notif_cert_download_title), getString(R.string.notif_cert_download_message), retry = true)
                 }
             }
             pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
-            _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r }, pendingTrust = pinRefusal) }
+            _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r },
+                // A later attempt that fails otherwise (USB retries every few seconds) keeps the Trust button.
+                pendingTrust = pinRefusal ?: it.pendingTrust) }
             updateNotification(getString(R.string.notif_status_not_connected))
             // A USB link that dropped while still plugged in usually comes back: retry a few times.
             // Not a refused certificate: it would be refused again until the user trusts it.
@@ -423,6 +442,20 @@ class ProjectionService : Service() {
                 main.postDelayed({ if (idle()) stopEverything() }, 3_000)
             }
         }
+    }
+
+    /**
+     * Whether to offer the same certificate again after [refusal]: a head unit that only hung up
+     * during the TLS handshake while it was offered a valid Google-issued certificate (which every
+     * head unit accepts) more likely lost the link, e.g. the cable was replugged at that moment,
+     * than refused it. Once only: a second hang-up in a row moves on, so a head unit that does
+     * refuse that certificate silently still gets the next one.
+     */
+    private fun keepAfterHangUp(refusal: CertificateRefusal): Boolean {
+        if (refusal.explicit) return false
+        val offered = certs.entries().firstOrNull { it.name == _state.value.certificate } ?: return false
+        if (!offered.isGoogleIssued || !offered.notAfter.after(java.util.Date())) return false
+        return handshakeHangUps++ == 0
     }
 
     /** Waits for the head unit of a dropped USB link to come back, then reconnects (see [UsbReattach.next]). */
@@ -609,7 +642,7 @@ class ProjectionService : Service() {
                 if (destroyed) return@post
                 result.onSuccess { entry ->
                     // Offer the downloaded certificate first on the next connection.
-                    settings.certificateIndex = certs.entries().indexOfFirst { it.name == entry.name }.coerceAtLeast(0)
+                    settings.certificateIndex = certs.indexOf(entry.name)
                     certDownloadPrompted = false
                     val address = lastWirelessAddress
                     if (lastSessionWireless && address != null && session == null) {

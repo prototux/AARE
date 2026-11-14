@@ -127,10 +127,11 @@ class AapSession(
     @Volatile var closedDuring = State.VERSION
         private set
     /**
-     * The head unit refused the phone certificate: it hung up during a TLS handshake it had
-     * started, or reported an authentication failure. (Not set for timeouts before TLS began.)
+     * The head unit refused the phone certificate: it reported an authentication failure, ended
+     * the TLS handshake it had started, or hung up during it. Null if it didn't, and for timeouts
+     * before TLS began.
      */
-    @Volatile var certificateRejected = false
+    @Volatile var certificateRefusal: CertificateRefusal? = null
         private set
     @Volatile private var tlsStarted = false
     @Volatile var discovery: ServiceDiscoveryResponse? = null
@@ -445,7 +446,7 @@ class AapSession(
     private fun onAuthComplete(msg: AapMessage) {
         val status = runCatching { AuthResponse.parseFrom(msg.bodyBytes()).status }.getOrDefault(0)
         if (status != 0) {
-            certificateRejected = true
+            certificateRefusal = CertificateRefusal(status, explicit = true)
             fail("head unit rejected authentication (status $status)", null)
             return
         }
@@ -549,7 +550,8 @@ class AapSession(
     private fun close(reason: String, error: Throwable?) {
         if (!closed.compareAndSet(false, true)) return
         closedDuring = state
-        if (state == State.HANDSHAKE && tlsStarted && !cryptor.peerRefused) certificateRejected = true
+        if (state == State.HANDSHAKE && tlsStarted && !cryptor.peerRefused && certificateRefusal == null)
+            certificateRefusal = CertificateRefusal(0, explicit = CertificateRefusal.saidByHeadUnit(error))
         state = State.CLOSED
         // The engine only reports a failed read: say what actually happened.
         val why = cryptor.pinRefusal?.let { "head unit certificate not trusted (SHA-256 ${it.fingerprint})" }
