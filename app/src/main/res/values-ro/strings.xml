@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Jos</string>
     <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
     <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
+    <string name="setup_choice_text_size">Dimensiunea textului</string>
+    <string name="setup_choice_control_size">Dimensiunea comenzilor</string>
+    <string name="setup_choice_size_default">Implicită</string>
+    <string name="setup_choice_size_larger">Mai mare</string>
+    <string name="setup_choice_size_largest">Cea mai mare</string>
     <string name="setup_section_dashboard">Tablou de bord</string>
     <string name="dash_cards_title">Carduri</string>
     <string name="dash_cards_hint">Primul card primește cel mai mult spațiu; celelalte umplu restul ecranului. Un card fără nimic de arătat își cedează locul următorului.</string>
