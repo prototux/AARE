@@ -101,6 +101,7 @@
     <string name="about_thanks_security_review">Security review</string>
     <string name="about_thanks_code_and_docs">Code and docs</string>
     <string name="about_thanks_head_unit_reports">Head-unit reports</string>
+    <string name="about_thanks_reports">Reports and ideas</string>
     <string name="about_thanks_tips">Tips</string>
     <string name="about_section_oss_title">Open-source components</string>
     <string name="about_oss_libraries_title">Libraries</string>
