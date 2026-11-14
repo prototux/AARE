@@ -69,10 +69,19 @@ class AppQuirksTest {
     fun dashboardNavigationMinimumVersions() {
         assertFalse(AppQuirks.dashboardNavigationSupported("com.locnall.KimGiSa", 40401))
         assertTrue(AppQuirks.dashboardNavigationSupported("com.locnall.KimGiSa", 40402))
-        assertFalse(AppQuirks.dashboardNavigationSupported("com.locnall.KimGiSa", null))
         assertFalse(AppQuirks.dashboardNavigationSupported("com.google.android.apps.maps", 1066723823))
         assertTrue(AppQuirks.dashboardNavigationSupported("com.google.android.apps.maps", 1066723824))
-        assertFalse(AppQuirks.dashboardNavigationSupported("com.google.android.apps.gmm.car", 2_000_000_000))
+    }
+
+    @Test
+    fun anUnreadableVersionKeepsTheMapCard() {
+        assertTrue(AppQuirks.dashboardNavigationSupported("com.locnall.KimGiSa", null))
+        assertTrue(AppQuirks.dashboardNavigationSupported("com.google.android.apps.maps", null))
+    }
+
+    @Test
+    fun anAppWithoutAMinimumKeepsTheMapCard() {
+        assertTrue(AppQuirks.dashboardNavigationSupported("com.google.android.apps.gmm.car", 1))
     }
 
     @Test

@@ -108,20 +108,15 @@ object AppQuirks {
         "$WAZE:1023000:",
     )
 
-    /** Google Maps' packages (release, beta and internal builds). */
-    private val GOOGLE_MAPS = setOf(
-        "com.google.android.apps.gmm.dev", "com.google.android.apps.gmm.car", "com.google.android.apps.gmm.fishfood",
-        "com.google.android.apps.gmm", "com.google.android.apps.gmm.qp", "com.google.android.apps.maps",
-    )
-
     /**
-     * Whether a navigation app may run in the dashboard's map card: Google
-     * Maps and Kakao Navi only from their minimum version; Waze's Car App Library app always (the
-     * minimum is for its older projected app, which AARE doesn't host); any other app always.
+     * Whether a navigation app may run in the dashboard's map card. Only an app whose installed
+     * version can be read and is below its listed minimum loses the card; an unreadable version,
+     * or an app with no minimum, keeps it as before. Waze's Car App Library app always keeps it:
+     * its listed minimum is for its older projected app, which AARE doesn't host.
      */
     fun dashboardNavigationSupported(packageName: String, versionCode: Long?): Boolean =
-        DASHBOARD_NAVIGATION_MIN_VERSIONS.matches(packageName, versionCode) || packageName == WAZE ||
-            !(packageName in GOOGLE_MAPS || packageName == "com.locnall.KimGiSa")
+        versionCode == null || packageName == WAZE || packageName !in DASHBOARD_NAVIGATION_MIN_VERSIONS ||
+            DASHBOARD_NAVIGATION_MIN_VERSIONS.matches(packageName, versionCode)
 
     /**
      * Packages whose notifications are never read as conversations (default):
