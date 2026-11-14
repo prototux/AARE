@@ -116,15 +116,15 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     /**
      * Whether an ack is for this stream's window. Once the head unit has acked with the running
      * session's id, only that session's acks count (ids compared modulo 256, as the head unit may
-     * keep only a byte), and while stopped only the late acks of the session just stopped; before
-     * that, every ack counts. An ack for more than [MAX_ACKED] messages is logged and ignored. An
-     * ignored ack still shows the link is alive (see [noteAttempt]).
+     * keep only a byte), and while stopped only the late acks of the session just stopped (compared
+     * the same way); before that, every ack counts. An ack for more than [MAX_ACKED] messages is
+     * logged and ignored. An ignored ack still shows the link is alive (see [noteAttempt]).
      */
     private fun ackCounts(ack: Ack): Boolean {
         val id = ack.sessionId
         if (started && id % 256 == mediaSession % 256) sessionEchoed = true
         if (if (started) sessionEchoed else previousEchoed) {
-            val forUs = if (started) id % 256 == mediaSession % 256 else id == previousSession
+            val forUs = id % 256 == (if (started) mediaSession else previousSession) % 256
             if (!forUs) {
                 // The previous session's late acks are expected right after a restart: not worth a line.
                 if (!started || id % 256 != previousSession % 256) session.log.d("$name: ack for session $id ignored (current $mediaSession, started=$started)")
