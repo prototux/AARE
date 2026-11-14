@@ -79,7 +79,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
         if (event.location.isNotBlank()) {
             Spacer(Modifier.height(10.dp))
             Row(
-                Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
+                Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.secondaryContainer)
                     .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

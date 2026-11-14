@@ -127,7 +127,7 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
 @Composable
 private fun InCallCard(onHangUp: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(24.dp))
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -149,7 +149,7 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
         else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(list) { c ->
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
+                    Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium)
                         .clickable { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -198,7 +198,7 @@ private fun Keypad(onCall: (String) -> Unit) {
             keys.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { k ->
-                        Box(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        Box(Modifier.weight(1f).height(64.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             .clickable { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
                             Text(k, style = MaterialTheme.typography.headlineSmall)
                         }

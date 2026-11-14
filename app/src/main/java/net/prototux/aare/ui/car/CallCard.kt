@@ -65,7 +65,7 @@ internal fun CallOverlay(state: CarUiState, actions: CarActions, modifier: Modif
 @Composable
 private fun Ringing(call: CarCall, actions: CarActions, modifier: Modifier) {
     Row(
-        modifier.padding(16.dp).widthIn(max = 760.dp).clip(RoundedCornerShape(32.dp))
+        modifier.padding(16.dp).widthIn(max = 760.dp).clip(MaterialTheme.shapes.extraLarge)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -112,7 +112,7 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
                         onDragEnd = { settings.callBarOffsetX = offset.x; settings.callBarOffsetY = offset.y },
                     )
                 }
-                .padding(12.dp).clip(RoundedCornerShape(28.dp)).background(LocalCarColors.current.accept)
+                .padding(12.dp).clip(MaterialTheme.shapes.large).background(LocalCarColors.current.accept)
                 .clickable { phone?.let(actions::openApp) }.padding(start = 20.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

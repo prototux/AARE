@@ -140,7 +140,7 @@ private fun RoutingCard(info: RoutingInfo, background: CarColor?, modifier: Modi
         LanesStrip(step, fg, dim)
         info.junctionImage?.let { junction ->
             Box(Modifier.fillMaxWidth().background(dim).padding(12.dp), contentAlignment = Alignment.Center) {
-                CarIconView(junction, 160.dp, widthFactor = 2f, shape = RoundedCornerShape(16.dp))
+                CarIconView(junction, 160.dp, widthFactor = 2f, shape = MaterialTheme.shapes.small)
             }
         }
         info.nextStep?.let { next -> NextStepStrip(next, fg, dim) }

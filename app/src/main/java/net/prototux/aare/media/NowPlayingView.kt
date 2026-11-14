@@ -98,12 +98,12 @@ internal fun NowPlayingView(hub: DefaultMediaHub, source: PlaybackSource, state:
             val portrait = maxHeight > maxWidth
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (portrait) {
-                    ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.weight(1f, fill = false).sizeIn(maxWidth = 420.dp).aspectRatio(1f), RoundedCornerShape(28.dp))
+                    ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.weight(1f, fill = false).sizeIn(maxWidth = 420.dp).aspectRatio(1f), MaterialTheme.shapes.large)
                     Spacer(Modifier.height(20.dp))
                     Column(Modifier.fillMaxWidth()) { Details(state, info, source) }
                 } else {
                     Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.fillMaxHeight().aspectRatio(1f), RoundedCornerShape(28.dp))
+                        ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.fillMaxHeight().aspectRatio(1f), MaterialTheme.shapes.large)
                         Spacer(Modifier.width(28.dp))
                         Column(Modifier.weight(1f)) { Details(state, info, source) }
                     }
@@ -234,8 +234,8 @@ internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> U
         itemsIndexed(state.queue, key = { i, entry -> "$i:${entry.id}" }) { _, entry ->
             val bg = if (entry.current) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
             Row(
-                Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp)).background(bg)
-                    .carFocusHighlight(RoundedCornerShape(20.dp))
+                Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium).background(bg)
+                    .carFocusHighlight(MaterialTheme.shapes.medium)
                     .clickable { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

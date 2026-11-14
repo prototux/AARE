@@ -8,8 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -68,6 +70,8 @@ data class CarThemeSpec(
     val nightColors: CarColors,
     val typography: Typography,
     val shapes: Shapes,
+    /** App icons: round on Android, rounded squares on iOS. */
+    val appIcon: Shape = CircleShape,
     val dimens: CarDimens = CarDimens(),
 )
 
@@ -112,9 +116,14 @@ internal val CarTypography = Typography(
     labelMedium = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
 )
 
+/**
+ * AARE's corners. The car UI uses the scale by role: small for album art, thumbnails and keys,
+ * medium for buttons and list rows, large for cards and banners, extraLarge for chips and sheets.
+ */
 internal val CarShapes = Shapes(
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
     large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp),
+    extraLarge = RoundedCornerShape(32.dp),
 )
