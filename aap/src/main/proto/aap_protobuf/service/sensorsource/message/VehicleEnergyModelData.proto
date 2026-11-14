@@ -1,0 +1,29 @@
+syntax="proto2";
+
+package aap_protobuf.service.sensorsource.message;
+
+// AARE: SensorBatch field 23. Names from the labels logged for it; field
+// 1's name is AARE's ("no vehicle info" when it is missing). Fields 1, 2 and 6 of VehicleInfo are
+// not in the base schema.
+message VehicleEnergyModelData {
+  optional VehicleInfo vehicle_info = 1;
+
+  message VehicleInfo {
+    optional Int32Value battery_level_wh = 3;
+    optional Int32Value battery_capacity_wh = 4;
+    optional HvacStatus hvac_status = 5;
+    optional float external_temp_celsius = 7;
+    optional float battery_temp_celsius = 8;
+  }
+
+  // Wire-identical to google.protobuf.Int32Value.
+  message Int32Value {
+    optional int32 value = 1;
+  }
+
+  enum HvacStatus {
+    UNKNOWN_HVAC_STATUS = 0;
+    OFF_HVAC_STATUS = 1;
+    ON_HVAC_STATUS = 2;
+  }
+}
