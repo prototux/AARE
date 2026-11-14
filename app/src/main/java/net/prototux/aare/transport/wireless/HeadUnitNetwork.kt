@@ -42,7 +42,7 @@ internal class HeadUnitNetwork(
     /** How long the request may take, user approval included. */
     private val timeoutMs: Long,
     private val matchBssid: Boolean = true,
-    /** Called right before the network request; the handle it returns is closed once the request is answered. */
+    /** Called right before the network request; the handle it returns is closed (in a finally) once the request is answered. */
     private val preApprove: ((WifiCredentials) -> AutoCloseable?)? = null,
 ) {
     private val context = context.applicationContext
@@ -127,7 +127,7 @@ internal class HeadUnitNetwork(
                 JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "no address on \"${credentials.ssid}\" after ${timeoutMs / 1000} s")
             }
         } finally {
-            // Only the answer to this request needed it: the approval is not kept for later requests.
+            // The approval covers every AARE request while it is on: only this join needed it.
             approval?.let { runCatching { it.close() } }
         }
     }

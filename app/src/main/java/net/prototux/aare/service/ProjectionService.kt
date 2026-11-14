@@ -61,6 +61,7 @@ import net.prototux.aare.transport.wireless.ShellWifi
 import net.prototux.aare.transport.wireless.WifiApproval
 import net.prototux.aare.transport.wireless.WirelessConnector
 import net.prototux.aare.ui.MainActivity
+import kotlin.concurrent.thread
 
 /**
  * Keeps the car connection alive: owns at most one [CarSession], the transports that can start
@@ -126,6 +127,9 @@ class ProjectionService : Service() {
         media = MediaHub(this, scope)
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
+        // Likewise a Wi-Fi approval a join killed mid-way left on (it covers every AARE request).
+        // Off the main thread: binding Shizuku's helper waits for an answer that comes there.
+        thread(name = "wifi-approval-recover", isDaemon = true) { ShellWifi.recover(this, DiagAapLog) }
         createChannel()
         _state.update { it.copy(running = true) }
     }

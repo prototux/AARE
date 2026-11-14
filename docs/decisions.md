@@ -163,8 +163,12 @@ and lets AARE start its foreground service from the background (no "tap to conne
   head units rarely share with their Bluetooth address (`WifiApproval.Way.COMPANION` handles the
   ones that do).
 - Otherwise, opt-in and only for associated cars, a Shizuku helper (`ShellWifiService`) runs the
-  Wi-Fi service's shell command that marks AARE's network requests as user-approved, right before
-  the request, and takes it back once it is answered. The network request stays AARE's own
-  (app-only, local-only, never the default network); the shell only answers the dialog's
-  question. If the command fails, Android asks as before.
+  Wi-Fi service's shell command `cmd wifi network-requests-set-user-approved <pkg> yes` right
+  before the request, and `no` once it is answered. That approval is per app, not per request: while
+  it is on, every network request AARE makes is approved, and it would stay on if AARE were killed
+  before `no`. So `no` runs in a finally (also after a failed `yes`), and a note written before
+  `yes` (`shell_wifi` preferences) makes the projection service take a leftover approval back when
+  it next starts (`ShellWifi.recover`, never while a join holds one; the note stays until `no`
+  works). The network request stays AARE's own (app-only, local-only, never the default network).
+  If the command fails, Android asks as before.
 - No automotive companion profile: it needs a permission only Android Auto's role holder gets.

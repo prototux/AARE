@@ -5,7 +5,9 @@ package net.prototux.aare.transport.wireless
  * for a WifiNetworkSpecifier request unless this app already got approval for that SSID and BSSID,
  * or a companion association links the app to the access point's MAC address. Associating the car
  * gives the car's *Bluetooth* address, which head units rarely reuse for their access point; so
- * for an associated car the user can let Shizuku answer the dialog's question instead.
+ * for an associated car the user can let Shizuku answer the dialog's question instead. That
+ * approval can't be narrowed to one request: Android keeps it for the app, so it covers all of
+ * AARE's network requests until it is taken back ([ShellWifi]).
  */
 internal object WifiApproval {
     enum class Way {
@@ -13,7 +15,10 @@ internal object WifiApproval {
         DIALOG,
         /** A companion association covers the access point's own MAC: Android approves by itself. */
         COMPANION,
-        /** An associated car, opted in, Shizuku usable: the shell approves this one request. */
+        /**
+         * An associated car, opted in, Shizuku usable: the shell approves AARE's network requests
+         * (all of them: the approval is per app) for the time of the join, then takes it back.
+         */
         SHIZUKU,
     }
 
