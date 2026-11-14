@@ -161,3 +161,15 @@ apps: a passenger who wants one while driving uses passenger mode (ignore drivin
 every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
 the app's media session as well as hiding its screen (before, the card said "paused" while the
 sound went on), which is what tells it apart from "audio only".
+
+## Phone navigation apps launched on the car screen
+
+(From #244.) A launched phone app (root/Shizuku launcher) counts as the car's navigation app when
+its driving rule is "navigation", which only navigation apps are offered (above). It then takes
+the rail's navigation slot, receives "navigate to" as an `ACTION_VIEW` of the same `geo:` URI hosted
+apps get (through the launcher's `view`, which only accepts `geo:`, as the helper starts activities
+with shell or root rights), and stays on screen while driving, like the phone screen's navigation
+apps. The dashboard's map card doesn't show its map: the launcher has one display per app, owned
+by the full-screen view, and moving it between the card and full screen would restart the app and
+its route at each switch. The card offers to open it, and shows its directions once it posts them.
+No Home/Work shortcuts: AARE has none for hosted navigation apps either.

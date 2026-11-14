@@ -434,6 +434,7 @@
     <string name="nav_dashboard_where_to">Where to?</string>
     <string name="nav_dashboard_install_hint">Install a navigation app that supports Android Auto on the phone</string>
     <string name="nav_dashboard_choose_app">Choose your maps app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is a phone app: its map opens full screen.</string>
     <string name="nav_guidance_on_phone">%1$s, on the phone</string>
     <string name="nav_next_step_then">Then</string>
 
