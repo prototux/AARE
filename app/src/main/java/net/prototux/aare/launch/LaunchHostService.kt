@@ -110,6 +110,9 @@ class LaunchHostService : ILaunchHost.Stub {
      * Hold the hosted display awake. Some Android 17 devices still suspend it with the physical
      * display, so wake the phone after a power-off event or when starting while it is already off.
      */
+    // BlockedPrivateApi: this runs in the privileged helper, which exempts PowerManager from the
+    // hidden API checks when it starts (exemptHiddenApis); lint only sees the app's target SDK.
+    @SuppressLint("BlockedPrivateApi")
     @Suppress("DEPRECATION")
     private fun enableKeepAwakeFallback(ctx: Context, id: Int) {
         runCatching {
