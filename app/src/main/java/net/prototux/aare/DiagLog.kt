@@ -15,7 +15,11 @@ import java.util.Locale
  */
 object DiagLog {
     private const val TAG = "Aare"
-    private const val MAX_LINES = 300
+    // Enough for a whole drive's session start and failure with the verbose protocol log on
+    // (which used to fill 300 lines with pings in two and a half minutes, #96).
+    private const val MAX_LINES = 2000
+    /** The file is appended to, and cut back to [MAX_LINES] when it outgrows this. */
+    private const val MAX_FILE_BYTES = 512 * 1024
 
     private val _lines = MutableStateFlow<List<String>>(emptyList())
     val lines: StateFlow<List<String>> = _lines
@@ -39,7 +43,7 @@ object DiagLog {
         val f = file ?: return
         runCatching {
             // Rewrite now and then to drop old lines; append otherwise.
-            if (all.size == MAX_LINES && f.length() > 64 * 1024) f.writeText(all.joinToString("\n", postfix = "\n"))
+            if (all.size == MAX_LINES && f.length() > MAX_FILE_BYTES) f.writeText(all.joinToString("\n", postfix = "\n"))
             else f.appendText("$stamp  $line\n")
         }
     }
