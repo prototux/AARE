@@ -724,8 +724,12 @@ navigation location while the phone is locked, the reverse-camera video restart,
 Shizuku, the Ford SYNC 2.5 audio crackle and the home screen's map card),
 [@l0rdg3x](https://github.com/l0rdg3x) (head units on Google's receiver library, audio focus,
 pausing and resuming the music with the car, and the home screen's music card),
-[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8) and
-[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units).
+[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8),
+[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units)
+and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0: the
+certificate kept and the Trust button that stays after a dropped link, car apps' permission
+prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
+app icons that stay visible on light themes.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),
