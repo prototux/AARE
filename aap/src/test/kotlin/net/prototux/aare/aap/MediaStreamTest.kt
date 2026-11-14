@@ -2,6 +2,7 @@ package net.prototux.aare.aap
 
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
+import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import net.prototux.aare.aap.cert.SelfSignedCertificate
@@ -9,12 +10,14 @@ import net.prototux.aare.aap.channels.AudioChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.sim.HeadUnitSimulator
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -46,7 +49,7 @@ class MediaStreamTest {
         val videoStarted = CountDownLatch(1)
         val focused = CountDownLatch(1)
         /** UI configs handed to the phone's layout, in order. */
-        val laidOut = java.util.concurrent.LinkedBlockingQueue<UiConfig>()
+        val laidOut = LinkedBlockingQueue<UiConfig>()
 
         init {
             val server = ServerSocket(0)
@@ -111,5 +114,20 @@ class MediaStreamTest {
         val link = Link(videoConfigStatus = Config.Status.STATUS_WAIT)
         assertTrue("video starts on a Config that says WAIT", link.videoStarted.await(5, TimeUnit.SECONDS))
         assertTrue(link.hu.firstVideoFrame.await(5, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun mediaStatsAreReadNotFatal() {
+        val link = Link(major = 6, minor = 0)
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        // A body we can't parse (a varint cut short) is dropped, the session carries on.
+        link.hu.sendBytes(link.hu.video, MediaMsg.MEDIA_STATS, byteArrayOf(0x10, 0xff.toByte()))
+        link.hu.sendMediaStats(link.hu.video, MediaStats.newBuilder().setFrameCount(42).build())
+        val until = System.currentTimeMillis() + 3000
+        while (link.video!!.mediaStats == null && System.currentTimeMillis() < until) Thread.sleep(20)
+        assertEquals(42L, link.video!!.mediaStats?.frameCount)
+        val frames = link.hu.videoFrames.get()
+        Thread.sleep(300)
+        assertTrue("video keeps flowing", link.hu.videoFrames.get() > frames)
     }
 }

@@ -26,6 +26,7 @@ import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
+import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.MediaSinkServiceOuterClass.MediaSinkService
@@ -350,6 +351,9 @@ class HeadUnitSimulator(
     /** Changes the projection's layout at runtime, as some head units do (insets, margins). */
     fun updateUiConfig(request: UpdateUiConfigRequest) = send(video, MediaMsg.UPDATE_UI_CONFIG_REQUEST, request)
 
+    /** Reports playback statistics on a media channel, as head units 6.0 and later do. */
+    fun sendMediaStats(channel: Int, stats: MediaStats) = send(channel, MediaMsg.MEDIA_STATS, stats)
+
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 
     fun discoveryResponse(): ServiceDiscoveryResponse {
@@ -406,6 +410,9 @@ class HeadUnitSimulator(
     fun send(channel: Int, id: Int, body: MessageLite, control: Boolean = false) = synchronized(writeLock) {
         writer.write(channel, control, tlsUp, AapMessage.plaintext(id, body.toByteArray()))
     }
+
+    /** Sends a message with any body, even one that doesn't parse. */
+    fun sendBytes(channel: Int, id: Int, body: ByteArray) = sendRaw(channel, AapMessage.plaintext(id, body))
 
     private fun sendRaw(channel: Int, plain: ByteArray) = synchronized(writeLock) {
         writer.write(channel, false, tlsUp, plain)

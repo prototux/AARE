@@ -6,6 +6,7 @@ import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.Upda
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
+import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.SetupOuterClass.Setup
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
 import aap_protobuf.service.media.shared.message.StopOuterClass.Stop
@@ -69,6 +70,9 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         private set
     @Volatile var maxAckGapMs = 0L
         private set
+    /** The head unit's latest playback statistics (MEDIA_STATS), for diagnostics; null until one comes. */
+    @Volatile var mediaStats: MediaStats? = null
+        private set
 
     override fun onOpened() {
         send(MediaMsg.SETUP, Setup.newBuilder().setType(codec).build())
@@ -98,9 +102,30 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
                 unacked.updateAndGet { maxOf(0, it - n) }
                 onAcked()
             }
+            MediaMsg.MEDIA_STATS -> onMediaStats(msg)
             else -> onOtherMessage(msg)
         }
     }
+
+    /**
+     * A head unit reports how playback goes every few seconds when the START's media options ask
+     * for it, as some do. Kept and logged only; one we can't read is dropped.
+     */
+    private fun onMediaStats(msg: AapMessage) {
+        val stats = runCatching { MediaStats.parseFrom(msg.bodyBytes()) }.getOrNull()
+            ?: return session.log.d("$name: unreadable media stats (${msg.bodyLength} bytes)")
+        mediaStats = stats
+        session.log.d("$name media stats: ${describe(stats)}")
+    }
+
+    private fun describe(s: MediaStats) = buildList {
+        if (s.hasFrameCount()) add("frames ${s.frameCount}")
+        if (s.hasAudioUnderrunCount()) add("underruns ${s.audioUnderrunCount}")
+        if (s.hasAudioOverflowCount()) add("overflows ${s.audioOverflowCount}")
+        if (s.hasVideoOverflowCount()) add("video overflows ${s.videoOverflowCount}")
+        if (s.hasAudioDelayUs()) add("audio delay ${s.audioDelayUs.avg} us")
+        if (s.hasVideoDelayUs()) add("video delay ${s.videoDelayUs.avg} us")
+    }.joinToString()
 
     /**
      * Send priority of this stream's DATA. START and STOP use it too, so they stay in order with
