@@ -236,8 +236,8 @@ class VideoEncoder(
 
         /**
          * From the clock the input surface stamps frames with (System.nanoTime, which stops in deep
-         * sleep) to elapsedRealtime (which doesn't), the clock media is
-         * timestamps. Read per frame: the two drift apart each time the phone sleeps.
+         * sleep) to elapsedRealtime (which doesn't): the clock media is timestamped on.
+         * Read per frame: the two drift apart each time the phone sleeps.
          */
         private fun bootClockOffsetUs() = SystemClock.elapsedRealtimeNanos() / 1_000 - System.nanoTime() / 1_000
 
