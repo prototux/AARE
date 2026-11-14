@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream
  * AARE draws the same Material arrows as its own turn card.
  */
 class TurnIcons {
+    /** Only touched inside [png], which holds the lock: the car session and its channels call it from their own threads. */
     private val cache = HashMap<List<Int>, ByteArray>()
 
     /** A PNG of the arrow for a Car App Library Maneuver.TYPE_*, white, [width]×[height]. */
@@ -70,12 +71,13 @@ class TurnIcons {
         private const val TAG = "AareTurnIcons"
 
         /**
-         * The cluster's colour depth: 8 bits alpha only, 16 RGB_565, 32
-         * ARGB_8888. It refuses other values; AARE draws those (or none) in full colour.
+         * The bitmap for the cluster's colour depth (bits per pixel of its display): 8 and 16 get
+         * RGB_565, opaque white on black, 32 ARGB_8888. An 8-bit cluster is a greyscale or palette
+         * display that shows no transparency: drawn alpha-only, the arrow lived only in the alpha
+         * channel, so such a cluster showed a blank square. Other values (or none) get full colour.
          */
         fun bitmapConfig(colourDepthBits: Int): Bitmap.Config = when (colourDepthBits) {
-            8 -> Bitmap.Config.ALPHA_8
-            16 -> Bitmap.Config.RGB_565
+            8, 16 -> Bitmap.Config.RGB_565
             else -> Bitmap.Config.ARGB_8888
         }
     }
