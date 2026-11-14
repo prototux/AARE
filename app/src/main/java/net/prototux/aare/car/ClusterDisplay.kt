@@ -68,7 +68,7 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         Log.i(TAG, "cluster video ${w}x$h@$fps ${dpi}dpi")
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
-        enc = VideoEncoder(w, h, fps, sink = object : VideoEncoder.Sink {
+        enc = VideoEncoder(w, h, fps, keyFrameIntervalS = ch.keyFrameIntervalS, sink = object : VideoEncoder.Sink {
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) = ch.sendCodecConfig(data, offset, length)
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) =
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }

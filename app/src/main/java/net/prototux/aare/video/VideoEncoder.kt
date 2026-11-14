@@ -43,6 +43,8 @@ class VideoEncoder(
     /** The starting bitrate; [setBitrate] changes it while running. */
     val bitrate: Int = defaultBitrate(width, height, fps),
     private val headroom: Int = 10,
+    /** Seconds between periodic key frames (the head unit's [net.prototux.aare.aap.channels.VideoChannel.keyFrameIntervalS]). */
+    private val keyFrameIntervalS: Int = 2,
     /**
      * Constant bitrate instead of variable, if the encoder supports it: every frame stays near the
      * bitrate, where variable bitrate sends very large frames when the whole picture changes (a
@@ -79,8 +81,9 @@ class VideoEncoder(
             setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
             setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
             setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-            // Long GOP: the transport is reliable, and we ask for key frames when they're needed.
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
+            // The transport is reliable and we ask for key frames when they're needed (requestKeyFrame),
+            // so periodic ones only serve head units that may drop frames.
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, keyFrameIntervalS)
             kind.profile?.let { int(MediaFormat.KEY_PROFILE, it) }
             kind.levelFor(width, height, fps)?.let { int(MediaFormat.KEY_LEVEL, it) }
             int(MediaFormat.KEY_BITRATE_MODE, bitrateMode)
@@ -139,7 +142,7 @@ class VideoEncoder(
             c.start()
             inputSurface = surface
             codec = c
-            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
+            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s, key frame every $keyFrameIntervalS s")
         } catch (e: Throwable) {
             surface?.let { runCatching { it.release() } }
             c?.let { runCatching { it.release() } }
