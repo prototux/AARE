@@ -331,15 +331,22 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps on the car screen (advanced)</string>
-    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked, and needs root or Shizuku. Use at your own risk.</string>
+    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, by default only while parked, and needs root or Shizuku. Use at your own risk.</string>
     <string name="standalone_toggle_title">Launch phone apps on the car screen</string>
-    <string name="standalone_toggle_subtitle">Pick the apps below. Shown only when parked.</string>
+    <string name="standalone_toggle_subtitle">Pick the apps below, and for each what it may do while driving.</string>
     <string name="standalone_keep_awake_title">No-sleep mode for standalone apps</string>
     <string name="standalone_keep_awake_subtitle">Keeps the physical phone screen awake while an app is open. On affected Android 17 phones, virtual displays stop when the phone screen is off. Uses more battery.</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
     <string name="standalone_paused_driving">Paused while driving.</string>
+    <string name="standalone_audio_only_driving">Screen hidden while driving. The sound goes on.</string>
+    <string name="standalone_rule_title">While driving</string>
+    <string name="standalone_rule_parked">Parked only</string>
+    <string name="standalone_rule_allowed">Allowed</string>
+    <string name="standalone_rule_audio">Audio only</string>
+    <string name="standalone_rule_allowed_warning">This app stays usable on the car screen while driving. Allow it only for navigation or for a passenger: don\'t watch or type while driving.</string>
+    <string name="standalone_rule_navigation_note">Navigation app: allowed while driving unless you choose otherwise.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>

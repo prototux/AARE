@@ -150,3 +150,13 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Launched apps while driving: a rule per app
+
+Each launched phone app has a driving rule, stored by package: parked only, allowed, or audio
+only (`launch/DrivingRules.kt`). An app with no rule set is parked only, unless it is a known
+navigation app: those are allowed by default, as the phone screen already allows them. "Parked
+only" now pauses the app's media session as well as hiding its screen (before, the card said
+"paused" while the sound went on), which is what tells it apart from "audio only". Passenger mode
+(ignore driving) still lifts every restriction. Allowing a non-navigation app shows a warning on
+the phone.

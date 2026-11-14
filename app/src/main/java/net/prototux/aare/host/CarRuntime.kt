@@ -18,6 +18,7 @@ import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.navigation.model.Trip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -40,6 +41,10 @@ import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
 import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.launch.StandaloneDisplay
+import net.prototux.aare.launch.pauseStandalonePlayback
+import net.prototux.aare.launch.standaloneDisplay
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.car.BrowserScreen
 import net.prototux.aare.ui.car.CarActions
@@ -413,7 +418,7 @@ class CarRuntime(
         if (settings.phoneScreen && phoneScreenAllowed) {
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
-        // Ordinary phone apps the user allowed onto the car screen (parked only; needs root/Shizuku).
+        // Ordinary phone apps the user allowed onto the car screen (parked only by default; needs root/Shizuku).
         if (settings.standaloneApps && AppLauncher.available(context)) {
             for (pkg in settings.standaloneAppPackages) {
                 if (pkg in hidden) continue
@@ -701,7 +706,16 @@ class CarRuntime(
                             }
                             CarAppKind.MESSAGING -> MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)
-                            CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted, app.packageName, mod)
+                            CarAppKind.STANDALONE -> {
+                                val shown = standaloneDisplay(settings.standaloneDrivingRules[app.packageName],
+                                    ui.drivingRestricted, navigation = app.packageName in KNOWN_NAVIGATION)
+                                StandaloneAppScreen(this, shown != StandaloneDisplay.SHOWN, app.packageName, mod,
+                                    audioOnly = shown == StandaloneDisplay.AUDIO_ONLY)
+                                // Parked only means paused, not just hidden: a video's sound stops too.
+                                if (shown == StandaloneDisplay.PAUSED) {
+                                    LaunchedEffect(app.packageName) { pauseStandalonePlayback(context, app.packageName) }
+                                }
+                            }
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.PHONE -> PhoneScreen(this, mod)

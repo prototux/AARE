@@ -3,6 +3,9 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.launch.StandaloneDrivingRule
+import net.prototux.aare.launch.formatDrivingRules
+import net.prototux.aare.launch.parseDrivingRules
 import java.util.UUID
 
 /** User settings, in one SharedPreferences file. */
@@ -209,9 +212,10 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
     /**
-     * Launch ordinary phone apps on the car screen (NewPipe, emulators, a browser…): a parked-only,
-     * opt-in convenience that needs root or Shizuku. These apps are not Android Auto apps; AARE
-     * mirrors their normal phone UI and injects the car's touches, so it is paused while driving.
+     * Launch ordinary phone apps on the car screen (NewPipe, emulators, a browser…): an opt-in
+     * convenience that needs root or Shizuku. These apps are not Android Auto apps; AARE mirrors
+     * their normal phone UI and injects the car's touches, so by default they are paused while
+     * driving (see [standaloneDrivingRules]).
      */
     var standaloneApps: Boolean
         get() = prefs.getBoolean("standalone_apps", false)
@@ -226,6 +230,14 @@ class Settings(context: Context) {
     var standaloneAppPackages: Set<String>
         get() = prefs.getStringSet("standalone_app_pkgs", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("standalone_app_pkgs", HashSet(v)) }
+
+    /**
+     * What each launched app may do while driving, by package: parked only, allowed, or audio only.
+     * A package with no rule follows [StandaloneDrivingRule.default].
+     */
+    var standaloneDrivingRules: Map<String, StandaloneDrivingRule>
+        get() = parseDrivingRules(prefs.getStringSet("standalone_driving_rules", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("standalone_driving_rules", formatDrivingRules(v)) }
     /** Show a web browser (a WebView) on the car screen. Off by default; paused while driving. */
     var browser: Boolean
         get() = prefs.getBoolean("browser", false)
