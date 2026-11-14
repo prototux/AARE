@@ -34,6 +34,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
+import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
@@ -260,6 +261,9 @@ class CarRuntime(
     /** The head unit's driver position. */
     var rightHandDrive = false
         set(v) { field = v; applyScreenSettings() }
+    /** The status items the head unit draws itself: the bar leaves them out unless a setting says otherwise. */
+    var headUnitChrome = CarChrome.NONE
+        set(v) { field = v; applyScreenSettings() }
 
     /** The car's driving signal (parked or not), before the passenger-mode setting. */
     private var carDriving = false
@@ -295,6 +299,7 @@ class CarRuntime(
         ui.darkBar = settings.darkBar
         ui.dashboardCards = DashCard.parse(settings.dashboardCards)
         ui.weatherInBar = settings.showWeather
+        ui.chrome = CarChrome.shown(settings.carChrome, headUnitChrome)
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -316,7 +321,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "car_chrome", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }

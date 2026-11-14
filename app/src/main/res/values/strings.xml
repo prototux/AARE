@@ -172,6 +172,11 @@
     <string name="setup_choice_light">Light</string>
     <string name="setup_choice_bar">Bar</string>
     <string name="setup_choice_bar_auto">Driver\'s side</string>
+    <string name="setup_choice_status_items">Clock, signal and battery</string>
+    <string name="setup_choice_status_items_auto">Follow the car</string>
+    <string name="setup_choice_status_items_show">Always show</string>
+    <string name="setup_choice_status_items_hide">Always hide</string>
+    <string name="setup_hint_status_items">Follow the car leaves out what the car already shows on its screen.</string>
     <string name="setup_choice_left">Left</string>
     <string name="setup_choice_right">Right</string>
     <string name="setup_choice_bottom">Bottom</string>

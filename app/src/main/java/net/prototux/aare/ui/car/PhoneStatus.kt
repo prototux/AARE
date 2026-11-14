@@ -38,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.prototux.aare.R
+import net.prototux.aare.car.CarChrome
 
 /** The phone's network and battery, as its status bar would show them. */
 data class PhoneStatusInfo(
@@ -70,9 +71,10 @@ data class PhoneStatusInfo(
     }
 }
 
-/** Signal bars, Wi-Fi and battery, for the rail under the clock. */
+/** Signal bars, Wi-Fi and battery, for the rail under the clock: those [shown] asks for. */
 @Composable
-fun PhoneStatusIcons() {
+fun PhoneStatusIcons(shown: CarChrome = CarChrome.ALL) {
+    if (!shown.phoneSignal && !shown.battery) return
     val context = LocalContext.current
     var status by remember { mutableStateOf<PhoneStatusInfo?>(null) }
     LaunchedEffect(Unit) {
@@ -85,11 +87,15 @@ fun PhoneStatusIcons() {
     val fg = MaterialTheme.colorScheme.onSurface
     val dim = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (s.wifi) Icon(Icons.Rounded.Wifi, stringResource(R.string.phone_status_wifi), tint = fg, modifier = Modifier.size(16.dp))
-        SignalBars(s.signal, fg, dim)
-        BatteryGauge(s.battery, s.charging, fg, dim)
-        if (s.charging) Icon(Icons.Rounded.Bolt, stringResource(R.string.phone_status_charging), tint = fg, modifier = Modifier.size(14.dp))
-        else Text("${s.battery}", style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 1)
+        if (shown.phoneSignal) {
+            if (s.wifi) Icon(Icons.Rounded.Wifi, stringResource(R.string.phone_status_wifi), tint = fg, modifier = Modifier.size(16.dp))
+            SignalBars(s.signal, fg, dim)
+        }
+        if (shown.battery) {
+            BatteryGauge(s.battery, s.charging, fg, dim)
+            if (s.charging) Icon(Icons.Rounded.Bolt, stringResource(R.string.phone_status_charging), tint = fg, modifier = Modifier.size(14.dp))
+            else Text("${s.battery}", style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 1)
+        }
     }
 }
 

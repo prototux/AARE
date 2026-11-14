@@ -688,6 +688,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var layoutId by remember { mutableStateOf(settings.carLayoutId) }
     var accent by remember { mutableStateOf(settings.carAccent) }
     var rail by remember { mutableStateOf(settings.railPosition) }
+    var chrome by remember { mutableStateOf(settings.carChrome) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
@@ -726,6 +727,11 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Choices(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
                 rail = it; settings.railPosition = it
             }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_status_items), listOf(Settings.CHROME_AUTO to stringResource(R.string.setup_choice_status_items_auto), Settings.CHROME_SHOW to stringResource(R.string.setup_choice_status_items_show), Settings.CHROME_HIDE to stringResource(R.string.setup_choice_status_items_hide)), chrome) {
+                chrome = it; settings.carChrome = it
+            }
+            Text(stringResource(R.string.setup_hint_status_items), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
         }
         Section(stringResource(R.string.setup_section_dashboard)) {
