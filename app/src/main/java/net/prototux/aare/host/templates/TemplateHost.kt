@@ -47,6 +47,15 @@ interface TemplateHost {
     fun showParkedOnlyMessage()
 
     /**
+     * The app's own colours from its car theme: what CarColor.PRIMARY and SECONDARY mean in its
+     * templates. Outside them, and for a pair the app doesn't set, the car theme's accent stays.
+     */
+    val appColors: AppThemeColors get() = AppThemeColors.NONE
+
+    /** The app may give its actions their own countdowns, not only its default action (see [rowCountdown]). */
+    val timedActionParams: Boolean get() = false
+
+    /**
      * The navigation app's map surface, for NavigationTemplate, MapWithContentTemplate,
      * PlaceListMapTemplate, RoutePreviewNavigationTemplate and MapTemplate. The renderer lays its
      * cards over it and reports the unobstructed area with [setVisibleArea]/[setStableArea]

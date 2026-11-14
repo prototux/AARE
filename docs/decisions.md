@@ -150,3 +150,34 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+## Car apps' own colours
+
+A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
+else on its application, else its application theme) with `carColorPrimary`/`carColorPrimaryDark`
+and `carColorSecondary`/`carColorSecondaryDark`. CarColor.PRIMARY and SECONDARY in that app's
+templates take those colours (day or night variant), for every app and API level. Everything else
+on the car screen, and a pair the app doesn't set, keeps the car theme and its accent: the app's
+colours only reach what the app itself asked to be coloured. The theme *style* an app can report
+from Car App Library 1.9 (`getAppTheme`) only changes progress-bar end caps, which the library
+version AARE builds against can't express, so it isn't asked.
+
+## Car app action countdowns
+
+In a row of actions (Pane, Message, SignIn and map pane buttons, a list row's actions) the default
+action (`Action.FLAG_DEFAULT`) counts down 10 s, its button filling up, and then clicks itself.
+In a row without one, a few listed apps (`TemplateQuirks`: Waze, Uber Driver, the library samples)
+can give an action their own countdown with a title variant "TimedActionParams|duration:N"
+(seconds); only the first such action of a row counts down, and those variants are never shown as
+text, for any app. The countdown is time-based, not an animation, so phones with animations off
+don't click the action at once; a template refresh with the same action keeps counting.
+Alerts keep their own timeout, not their default action's countdown.
+
+## Car app screens: refresh or new screen
+
+A new template from a car app is a refresh of the screen on show (keeping what's typed, pan mode
+and the scroll position) when the screen stack has the same depth and screens and the top
+template has the same class. For the apps in `TemplateQuirks.mapHeaderStartsScreen` (Waze from
+versionCode 1030423, the library samples), a MapTemplate whose header title changed (or whose
+header came or went) is a new screen too. Other content checks (a pane's header, its loading
+state, the rows) aren't made.
+
