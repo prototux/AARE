@@ -215,6 +215,14 @@
     <string name="setup_log_save">Save</string>
     <string name="setup_toggle_verbose_log_title">Verbose protocol log</string>
     <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
+    <string name="setup_section_backup">Settings backup</string>
+    <string name="setup_backup_hint">Save every setting to a file, or load one back. Trusted head units, certificates and other phone-specific state are left out; they don\'t move between phones.</string>
+    <string name="setup_backup_export">Export…</string>
+    <string name="setup_backup_import">Import…</string>
+    <string name="setup_backup_import_confirm_title">Replace your settings?</string>
+    <string name="setup_backup_import_confirm_text">This overwrites your current settings with the ones in the chosen file. This can\'t be undone.</string>
+    <string name="setup_backup_import_confirm_action">Replace</string>
+    <string name="setup_backup_import_done">Settings imported.</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Not affiliated with Google. Android Auto is a trademark of Google LLC.</string>
     <string name="setup_choice_style">Style</string>
     <string name="setup_choice_theme">Theme</string>

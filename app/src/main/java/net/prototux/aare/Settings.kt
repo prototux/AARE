@@ -372,4 +372,25 @@ class Settings(context: Context) {
 
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.registerOnSharedPreferenceChangeListener(l)
     fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.unregisterOnSharedPreferenceChangeListener(l)
+
+    /** Every entry backing a setting, for [SettingsBackup.export] to turn into JSON. */
+    val all: Map<String, Any?> get() = prefs.all
+
+    /**
+     * Writes [values] (from [SettingsBackup.import]) over the current settings. Existing keys not
+     * in [values] are left alone: an older export (fewer settings than this version knows about)
+     * only replaces what it has, it doesn't reset the rest to their defaults.
+     */
+    fun restore(values: Map<String, Any>) {
+        prefs.edit {
+            for ((key, value) in values) when (value) {
+                is String -> putString(key, value)
+                is Boolean -> putBoolean(key, value)
+                is Int -> putInt(key, value)
+                is Long -> putLong(key, value)
+                is Float -> putFloat(key, value)
+                is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
+            }
+        }
+    }
 }

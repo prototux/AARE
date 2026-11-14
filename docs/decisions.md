@@ -150,3 +150,20 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Settings export and import
+
+Exports and imports go through an exclude-list, not an allow-list: `SettingsBackup.export` writes
+every `SharedPreferences` entry except a documented set of device- or secret-specific keys
+(instance id, update/certificate caches, the phone's own Bluetooth MAC, connection history,
+already-asked permissions). A new setting added later is included automatically; nothing needs
+updating here unless it, too, must never move between phones.
+
+- Each value is tagged with its SharedPreferences type (string/boolean/int/long/float/string set)
+  rather than stored as a bare JSON value: the exported text has no int/long/float distinction of
+  its own (`org.json`'s tokenizer turns every bare number into Integer/Long/Double on its own), so
+  re-parsing an untagged `180` wouldn't say which `SharedPreferences.Editor.put*` call it came from.
+- Trusted head-unit certificates live in a separate preferences file (`PinnedHeadUnits`) and are
+  never read by this export in the first place, so there's nothing to exclude there.
+- Import is exclude-filtered too (not just export), so a hand-edited or pre-exclusion-list file
+  can't smuggle a device-specific key back in.

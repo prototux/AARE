@@ -122,6 +122,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
+import net.prototux.aare.SettingsBackup
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
@@ -253,6 +254,7 @@ private fun Home() {
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { LogCard() }
+                            item { SettingsBackupCard(settings) }
                         }
                         Page.ABOUT -> item { AboutScreen() }
                     }
@@ -1437,6 +1439,53 @@ private fun LogCard() {
                 TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
             }
         }
+    }
+}
+
+/**
+ * Exports every setting to a JSON file the user picks (SAF), and imports one back, with a
+ * confirmation before overwriting. What's left out and why is documented on SettingsBackup
+ * itself; it's device- or secret-specific state that must not move between phones.
+ */
+@Composable
+private fun SettingsBackupCard(settings: Settings) {
+    val ctx = LocalContext.current
+    var pendingImport by remember { mutableStateOf<Uri?>(null) }
+    val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        runCatching {
+            val json = SettingsBackup.export(settings.all)
+            ctx.contentResolver.openOutputStream(uri)?.use { it.write(json.toString(2).toByteArray()) }
+        }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+    }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) pendingImport = uri
+    }
+    Section(stringResource(R.string.setup_section_backup)) {
+        Text(stringResource(R.string.setup_backup_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Row {
+            TextButton(onClick = { export.launch("aare-settings.json") }) { Text(stringResource(R.string.setup_backup_export)) }
+            TextButton(onClick = { import.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text(stringResource(R.string.setup_backup_import)) }
+        }
+    }
+    pendingImport?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingImport = null },
+            title = { Text(stringResource(R.string.setup_backup_import_confirm_title)) },
+            text = { Text(stringResource(R.string.setup_backup_import_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImport = null
+                    runCatching {
+                        val text = ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().toString(Charsets.UTF_8) }
+                        settings.restore(SettingsBackup.import(org.json.JSONObject(text)))
+                        Toast.makeText(ctx, R.string.setup_backup_import_done, Toast.LENGTH_SHORT).show()
+                    }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+                }) { Text(stringResource(R.string.setup_backup_import_confirm_action)) }
+            },
+            dismissButton = { TextButton(onClick = { pendingImport = null }) { Text(stringResource(R.string.common_cancel)) } },
+        )
     }
 }
 
