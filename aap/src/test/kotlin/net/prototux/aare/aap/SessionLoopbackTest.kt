@@ -3,6 +3,7 @@ package net.prototux.aare.aap
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
+import aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse
 import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
@@ -372,6 +373,24 @@ open class SessionLoopbackTest {
         hu.send(hu.input, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
         assertEquals(hu.input, hu.unexpectedReplies.poll(3, TimeUnit.SECONDS))
         assertFalse("session must go on", closed.await(500, TimeUnit.MILLISECONDS))
+    }
+
+    @Test
+    fun malformedControlMessageIsDropped() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        // A length-delimited field cut short: no protobuf parser can read it.
+        hu.sendBytes(0, ControlMsg.AUDIO_FOCUS_NOTIFICATION, byteArrayOf(0x0a, 0x05, 1))
+        assertFalse("session must go on", closed.await(1, TimeUnit.SECONDS))
+        hu.tap(10, 20)
+        assertNotNull("input still flows", inputs.poll(3, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun byeByeResponseWithoutRequestIsAnError() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        hu.send(0, ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance())
+        assertTrue(closed.await(3, TimeUnit.SECONDS))
+        assertNotNull(closeError)
     }
 
     @Test

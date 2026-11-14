@@ -167,6 +167,8 @@ class AapSession(
     private val deferredOpens = AtomicReference<List<ServiceChannel>?>(null)
     /** Channels that sent data before they were open, logged once each (reader thread only). */
     private val earlyData = HashSet<Int>()
+    /** The phone said bye-bye: only then is a bye-bye response expected. */
+    @Volatile private var byeByeSent = false
     /**
      * Set once the head unit said bye-bye: it may hang up before our response is written, and
      * that EOF or broken pipe is then the orderly end it announced, not a failure.
@@ -209,15 +211,22 @@ class AapSession(
         log.i("session started on ${transport.name}")
     }
 
-    /** Ends the session politely: bye-bye, then close after a short grace period. */
+    /**
+     * Ends the session politely: bye-bye, then close when the head unit answers or after a short
+     * grace period. The bye-bye goes out whatever the state once the version
+     * exchange is done, in the clear while TLS isn't up yet, and the answer gets 200 ms.
+     */
     fun stop(reason: ByeByeReason = ByeByeReason.USER_SELECTION) {
         if (closed.get()) return
-        if (state == State.RUNNING || state == State.OPENING) {
-            sendControl(ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(reason).build())
-            schedule({ close("stopped by phone", null) }, 1, TimeUnit.SECONDS)
-        } else {
+        if (state == State.VERSION) {
             close("stopped by phone", null)
+            return
         }
+        byeByeSent = true
+        val bye = ByeByeRequest.newBuilder().setReason(reason).build()
+        if (tlsUp) sendControl(ControlMsg.BYEBYE_REQUEST, bye)
+        else sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_REQUEST, bye.toByteArray()), encrypted = false)
+        schedule({ close("stopped by phone", null) }, BYEBYE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
     }
 
     // ------------------------------------------------------------------ sending
@@ -313,7 +322,12 @@ class AapSession(
             return
         }
         if (msg.channel == 0 && !msg.control) {
-            handleControl(msg)
+            try {
+                handleControl(msg)
+            } catch (e: InvalidProtocolBufferException) {
+                // A control message that doesn't parse is dropped, not fatal.
+                log.w("dropping malformed control message $msg", e)
+            }
             return
         }
         val ch = channels[msg.channel]
@@ -430,7 +444,9 @@ class AapSession(
                 sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance().toByteArray()),
                     onSent = { close(why, null) })
             }
-            ControlMsg.BYEBYE_RESPONSE -> close("session ended", null)
+            // A bye-bye response the phone didn't ask for is an error.
+            ControlMsg.BYEBYE_RESPONSE ->
+                if (byeByeSent) close("session ended", null) else fail("bye-bye response without a bye-bye request", null)
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
             else -> log.d("unhandled control message $msg")
         }
@@ -609,6 +625,9 @@ class AapSession(
     private fun fail(reason: String, error: Throwable?) {
         if (closed.get()) return
         headUnitByeBye?.let { close(it, null); return }
+        // After the phone's bye-bye, whatever the head unit does next (hang up, or answer before
+        // TLS, which the pre-discovery check refuses) is the end the phone asked for.
+        if (byeByeSent) { close("stopped by phone", null); return }
         log.w("session failed: $reason (${linkStats(now(), lastInboundMs, lastOutboundMs, writingSinceMs, slowestWriteMs, queue.size)})", error)
         close(reason, error ?: AapException(reason))
     }
@@ -653,6 +672,8 @@ class AapSession(
     companion object {
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
+        /** How long the phone waits for the head unit's answer to its bye-bye. */
+        private const val BYEBYE_TIMEOUT_MS = 200L
         /** Longest wait for the sensor channel's answer before opening the other channels. */
         private const val DEFERRED_OPEN_MS = 1_000L
 
