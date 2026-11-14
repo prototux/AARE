@@ -56,6 +56,11 @@ class WirelessBootstrapException(
      * or sent something unusable): a car that isn't ready yet, so trying again later can work.
      */
     val whileNegotiating: Boolean = false,
+    /**
+     * The head unit answered our version response but sent no WifiStartRequest before the message
+     * timeout: one that waits for the phone to ask, see [WirelessBootstrap.Options.phoneStartDelayMs].
+     */
+    val noStartRequest: Boolean = false,
 ) : Exception(message, cause)
 
 /**
@@ -66,8 +71,8 @@ class WirelessBootstrapException(
  * sends both back to back, real cars too), a bare start request (WirelessAndroidAutoDongle, which
  * aborts unless the next thing it reads is our WifiInfoRequest), and credentials sent without
  * being asked. The head unit is only told "success" once [Listener.connectWifi] says the phone
- * really is on the network. A head unit that answers our version response and then waits gets
- * our own WifiStartRequest (see [Options.phoneStartDelayMs]).
+ * really is on the network. A head unit that answers our version response and then waits can be
+ * sent our own WifiStartRequest (see [Options.phoneStartDelayMs]).
  *
  * Threads: a reader thread answers pings at once and queues everything else for [run]; while
  * the phone joins the network a keepalive thread pings the head unit, because some cars give up
@@ -107,14 +112,11 @@ class WirelessBootstrap(
          * 12 s, and [DONGLE_FIRST_MESSAGE_TIMEOUT_MS] on its first try with an adapter.
          */
         val firstMessageTimeoutMs: Long = 12_000,
-        /** Re-send WifiInfoRequest if the credentials have not come after this long (3 s). */
-        val infoRetryMs: Long = 3_000,
         /**
-         * WifiInfoRequests to send in all (3). When the last one goes unanswered too the
-         * bootstrap fails as on a broken link, [WirelessBootstrapException.whileNegotiating], so the
-         * caller drops RFCOMM and dials again.
+         * Re-send WifiInfoRequest this often while the credentials have not come; the message
+         * timeout still bounds the wait.
          */
-        val infoAttempts: Int = 3,
+        val infoRetryMs: Long = 3_000,
         /** Ping interval while joining the network; 0 disables. aa-proxy-rs uses 2 s for picky cars. */
         val keepaliveIntervalMs: Long = 2_000,
         /**
@@ -152,11 +154,12 @@ class WirelessBootstrap(
          */
         val phoneWifiFrequencies: () -> Set<Int>? = { null },
         /**
-         * After a compatible version exchange, send our own (empty) WifiStartRequest if the head
-         * unit has sent none after this long; 0 disables. 5 s is used only when it
-         * means to project, and AARE only dials when it does.
+         * After a version exchange, send our own (empty) WifiStartRequest if the head unit has sent
+         * none after this long; 0 (the default) never does. For a redial to a head unit that
+         * waited for the phone last time ([WirelessBootstrapException.noStartRequest]); see
+         * [PHONE_START_DELAY_MS].
          */
-        val phoneStartDelayMs: Long = 5_000,
+        val phoneStartDelayMs: Long = 0,
         /** Ask again this often while the head unit answers "not yet" or "already started" (2 s)... */
         val phoneStartRetryMs: Long = 2_000,
         /** ...until this long after our first WifiStartRequest (50 s). */
@@ -248,6 +251,7 @@ class WirelessBootstrap(
         var infoRequests = 0
         var infoRequestedAt = 0L
         var heardFromHeadUnit = false
+        var versionAnswered = false
         var deadline = now() + options.firstMessageTimeoutMs
         // Our own WifiStartRequest: when the next one is due, and when the first one went out.
         var phoneStartDueAt = Long.MAX_VALUE
@@ -272,12 +276,9 @@ class WirelessBootstrap(
                         else -> "a WifiInfoResponse"
                     }
                     val waitedMs = if (heardFromHeadUnit) options.messageTimeoutMs else options.firstMessageTimeoutMs
-                    throw fail("timed out after $waitedMs ms waiting for $waitingFor")
+                    throw fail("timed out after $waitedMs ms waiting for $waitingFor", noStartRequest = start == null && versionAnswered)
                 }
                 if (now() >= infoDueAt) {
-                    if (infoRequests >= options.infoAttempts) {
-                        throw fail("no WifiInfoResponse after $infoRequests requests, ${options.infoRetryMs} ms apart")
-                    }
                     // Also nudges openauto if our first request got stuck behind another frame.
                     log.w("wireless: no credentials yet, asking again")
                     requestInfo()
@@ -304,10 +305,11 @@ class WirelessBootstrap(
             }
             when (frame.id) {
                 WppMessageId.VERSION_REQUEST -> {
-                    val compatible = answerVersionRequest(frame.payload) == WppStatus.SUCCESS
-                    // Each compatible exchange (re)starts the wait for the head unit's own request.
+                    answerVersionRequest(frame.payload)
+                    versionAnswered = true
+                    // Each exchange (re)starts the wait for the head unit's own request.
                     phoneStartFirstAt = 0L
-                    phoneStartDueAt = if (compatible && start == null && options.phoneStartDelayMs > 0) now() + options.phoneStartDelayMs else Long.MAX_VALUE
+                    phoneStartDueAt = if (start == null && options.phoneStartDelayMs > 0) now() + options.phoneStartDelayMs else Long.MAX_VALUE
                     deadline = now() + options.messageTimeoutMs
                 }
                 WppMessageId.START_REQUEST -> {
@@ -609,8 +611,8 @@ class WirelessBootstrap(
         if (closed.get()) throw WirelessBootstrapException("wireless bootstrap cancelled")
     }
 
-    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
-        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
+    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null, noStartRequest: Boolean = false) =
+        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING, noStartRequest = noStartRequest)
             .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000
@@ -636,7 +638,14 @@ class WirelessBootstrap(
          * adapter that missed the first connection.
          */
         fun isDongle(bluetoothName: String?): Boolean = bluetoothName != null && DONGLE_NAMES.any { it in bluetoothName }
-        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED); a localized text is sent. */
+
+        /**
+         * [Options.phoneStartDelayMs] for a redial to a head unit that waited for the phone last
+         * time: it gets 5 s to start by itself before we ask.
+         */
+        const val PHONE_START_DELAY_MS = 5_000L
+
+        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED), meant for the driver. */
         internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
 
         /**

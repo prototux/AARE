@@ -373,20 +373,19 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
-    fun unansweredInfoRequestsEndTheLinkForARedial() {
+    fun infoRequestIsRepeatedUntilTheMessageTimeout() {
         start(Phone { throw AssertionError("must not try to join") },
-            WirelessBootstrap.Options(messageTimeoutMs = 5_000, infoRetryMs = 200, infoAttempts = 3, keepaliveIntervalMs = 0, frameGapMs = 0))
+            WirelessBootstrap.Options(messageTimeoutMs = 1_000, infoRetryMs = 200, keepaliveIntervalMs = 0, frameGapMs = 0))
 
         hu.send(WppMessageId.START_REQUEST, startRequest())
-        val startedAt = System.nanoTime()
-        repeat(3) { hu.expect(WppMessageId.INFO_REQUEST) }
+        val requests = LinkedBlockingQueue<WppFrame>()
+        thread(name = "hu-reader", isDaemon = true) { runCatching { while (true) requests.put(hu.read()) } }
         awaitEnd()
-        val tookMs = (System.nanoTime() - startedAt) / 1_000_000
         val e = failure as WirelessBootstrapException
-        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("no WifiInfoResponse after 3 requests"))
-        // not the 5 s message timeout: 3 requests 200 ms apart
-        assertTrue("gave up after $tookMs ms", tookMs < 2_000)
+        assertTrue(e.message.orEmpty(), e.message.orEmpty().contains("timed out after 1000 ms waiting for a WifiInfoResponse"))
         assertTrue("the caller redials", e.whileNegotiating)
+        // one request, then one every 200 ms until the 1 s timeout: more than the 3 a fixed count would allow
+        assertTrue("${requests.size} requests", requests.size >= 4 && requests.all { it.id == WppMessageId.INFO_REQUEST })
     }
 
     @Test(timeout = 10_000)
@@ -603,13 +602,34 @@ class WirelessBootstrapTest {
     }
 
     @Test(timeout = 10_000)
-    fun noPhoneStartRequestWhenTheHeadUnitStartsOrTheVersionIsRefused() {
-        start(Phone { JoinResult.Joined() }, phoneStartOptions())
-        hu.send(WppMessageId.VERSION_REQUEST, WifiVersionRequest.newBuilder().setMajor(7).build())
+    fun noPhoneStartRequestByDefault() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(
+            messageTimeoutMs = 3_000, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0, phoneStartRetryMs = 100))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
         hu.expect(WppMessageId.VERSION_RESPONSE)
         val next = LinkedBlockingQueue<Result<WppFrame>>()
         thread(name = "hu-reader", isDaemon = true) { next.put(runCatching { hu.read() }) }
-        assertNull("the phone asked to start after a refused version", next.poll(400, TimeUnit.MILLISECONDS))
+        assertNull("the phone asked to start on a first attempt", next.poll(400, TimeUnit.MILLISECONDS))
+    }
+
+    @Test(timeout = 10_000)
+    fun headUnitThatWaitedForThePhoneIsFlaggedForTheRedial() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, keepaliveIntervalMs = 0, frameGapMs = 0, pingIntervalMs = 0))
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        awaitEnd()
+        val e = failure as WirelessBootstrapException
+        assertTrue(e.noStartRequest)
+        assertTrue(e.whileNegotiating)
+    }
+
+    @Test(timeout = 10_000)
+    fun silenceWithoutAVersionExchangeIsNotWaitingForThePhone() {
+        start(Phone { JoinResult.Joined() }, WirelessBootstrap.Options(messageTimeoutMs = 300, infoRetryMs = 100, keepaliveIntervalMs = 0, frameGapMs = 0))
+        // credentials but no version exchange: a later WifiStartRequest from us would not help
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        awaitEnd()
+        assertFalse((failure as WirelessBootstrapException).noStartRequest)
     }
 
     @Test(timeout = 10_000)
