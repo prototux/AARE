@@ -124,6 +124,10 @@ class CarUiState {
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** Font-scale multiplier for the car screen's text (a setting, F09). Independent of [controlScale]. */
+    var textScale by mutableStateOf(1f)
+    /** Multiplier for [net.prototux.aare.ui.theme.CarDimens] (touch targets, icons…) (a setting, F09). */
+    var controlScale by mutableStateOf(1f)
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }

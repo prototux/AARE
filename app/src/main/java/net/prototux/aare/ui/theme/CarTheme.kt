@@ -38,6 +38,45 @@ data class CarDimens(
 
 val LocalCarDimens = staticCompositionLocalOf { CarDimens() }
 
+/**
+ * [CarDimens] scaled by the control-size setting (F09): touch targets, the rail and icons grow
+ * together; corner radii stay a theme's own (a shape choice, not a control size).
+ */
+fun CarDimens.scaled(factor: Float): CarDimens = if (factor == 1f) this else copy(
+    touchTarget = touchTarget * factor,
+    railWidth = railWidth * factor,
+    gutter = gutter * factor,
+    iconSize = iconSize * factor,
+)
+
+/**
+ * The control-size setting's current multiplier (F09), ambient so it survives a nested [CarTheme]
+ * (the dark-bar rail calls it again for night colours) without being reset by [theme]'s own dimens.
+ */
+val LocalCarControlScale = staticCompositionLocalOf { 1f }
+
+/** The car screen's text-size setting (F09): a font-scale multiplier on top of the car type scale. */
+enum class CarTextSize(val id: String, @StringRes val labelRes: Int, val fontScale: Float) {
+    DEFAULT("default", R.string.setup_choice_size_default, 1f),
+    LARGER("larger", R.string.setup_choice_size_larger, 1.15f),
+    LARGEST("largest", R.string.setup_choice_size_largest, 1.3f);
+
+    companion object {
+        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+/** The car screen's control-size setting (F09): a multiplier on [CarDimens], independent of text size. */
+enum class CarControlSize(val id: String, @StringRes val labelRes: Int, val scale: Float) {
+    DEFAULT("default", R.string.setup_choice_size_default, 1f),
+    LARGER("larger", R.string.setup_choice_size_larger, 1.15f),
+    LARGEST("largest", R.string.setup_choice_size_largest, 1.3f);
+
+    companion object {
+        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
 /** The colours a theme needs that Material's [ColorScheme] has no slot for, for one of day or night. */
 @Immutable
 data class CarColors(
@@ -126,7 +165,7 @@ fun CarTheme(night: Boolean, theme: CarThemeSpec = LocalCarTheme.current, conten
         CompositionLocalProvider(
             LocalCarTheme provides theme,
             LocalCarColors provides if (night) theme.nightColors else theme.dayColors,
-            LocalCarDimens provides theme.dimens,
+            LocalCarDimens provides theme.dimens.scaled(LocalCarControlScale.current),
             content = content,
         )
     }

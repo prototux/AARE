@@ -150,3 +150,18 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Car text size and control size (F09)
+
+Two independent settings scale the car screen: text size (a font-scale multiplier on
+`LocalDensity`) and control size (a multiplier on `CarDimens`' touch targets, rail width, gutter
+and icon size; corner radii are a theme's shape choice, not a control size, so they're untouched).
+
+- `CarTheme()` always resets `LocalCarDimens` to `theme.dimens` (themes are data, swapped whole),
+  and the dark-bar rail calls `CarTheme()` a second time for night colours. Scaling `theme.dimens`
+  directly inside `CarTheme()` from a new ambient `LocalCarControlScale` (set once in
+  `CarRuntime.Root`) survives that nested call; overriding `LocalCarDimens` from outside `CarTheme`
+  (as the dashboard-cards editor's `touchTarget` parameter does) would not.
+- Text size instead overrides `LocalDensity` once at `Root`'s top: Compose's `MaterialTheme`/
+  `CarTheme` never touch `LocalDensity`, so that override already survives nested calls without
+  the same trick.
