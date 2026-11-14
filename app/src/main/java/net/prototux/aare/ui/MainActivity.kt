@@ -1443,7 +1443,36 @@ private fun AboutScreen() {
         }
     }
     Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_oss_title)) {
+        AboutOss.GROUPS.forEachIndexed { i, group ->
+            if (i > 0) Spacer(Modifier.height(12.dp))
+            Text(stringResource(group.titleRes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            group.components.forEach { OssComponentRow(it) }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
     LicenceLine()
+}
+
+/** One open-source component's name and licence; tapping it opens its project or licence page. */
+@Composable
+private fun OssComponentRow(component: OssComponent) {
+    val ctx = LocalContext.current
+    Row(
+        Modifier.fillMaxWidth().clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(component.url))) }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(component.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(
+            component.licence,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
 }
 
 /** The handles of one Thanks group, wrapped onto as many lines as needed; each opens its GitHub profile. */
