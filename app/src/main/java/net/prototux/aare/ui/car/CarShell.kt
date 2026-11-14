@@ -230,13 +230,15 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     // weather there, the launcher has them all. Landscape bars keep everything.
     val tightBar = horizontal && area.height > area.width && area.width < 800.dp
     val tighterBar = tightBar && area.width < 640.dp
-    // The compact rail setting: a bit smaller and tighter, so it shows the same things in less room.
+    // The compact rail setting: smaller icons and tighter gaps, so it shows the same things in less
+    // room. The touch target never shrinks: 76 dp is the car-safety floor (glance and tap while
+    // driving), so only what is drawn inside it, the gaps and the rail's margin around it get smaller.
     val compact = state.compactRail
     val scale = if (compact) 0.78f else 1f
-    val touch = d.touchTarget * scale
+    val touch = d.touchTarget
     val iconSize = d.iconSize * scale
     val logoSize = 48.dp * scale
-    val railSize = d.railWidth * scale
+    val railSize = if (compact) minOf(d.railWidth, d.touchTarget + 4.dp) else d.railWidth
     val outerPadding = if (compact) 10.dp else 16.dp
     val appSpacing = if (compact) 6.dp else 8.dp
     // The apps chosen on the phone (Settings.railApps), resolved against what's installed now; empty
