@@ -105,8 +105,8 @@ class NavStatusBridge(
         stepEstimate?.let { e ->
             position.setStepDistance(NavigationStepDistance.newBuilder().apply {
                 e.remainingDistance?.let { setDistance(distanceOf(it)) }
-                // An unknown (-1) or zero time is left out.
-                if (e.remainingTimeSeconds > 0) setTimeToStepSeconds(e.remainingTimeSeconds)
+                // An unknown (-1) time is left out; 0 is sent, or the cluster keeps the last time it got.
+                if (e.remainingTimeSeconds >= 0) setTimeToStepSeconds(e.remainingTimeSeconds)
             })
         }
         destEstimate?.let { e ->
