@@ -161,3 +161,14 @@ colours only reach what the app itself asked to be coloured. The theme *style* a
 from Car App Library 1.9 (`getAppTheme`) only changes progress-bar end caps, which the library
 version AARE builds against can't express, so it isn't asked.
 
+## Car app action countdowns
+
+In a row of actions (Pane, Message, SignIn and map pane buttons, a list row's actions) the default
+action (`Action.FLAG_DEFAULT`) counts down 10 s, its button filling up, and then clicks itself.
+In a row without one, a few listed apps (`TemplateQuirks`: Waze, Uber Driver, the library samples)
+can give an action their own countdown with a title variant "TimedActionParams|duration:N"
+(seconds); only the first such action of a row counts down, and those variants are never shown as
+text, for any app. The countdown is time-based, not an animation, so phones with animations off
+don't click the action at once; a template refresh with the same action keeps counting.
+Alerts keep their own timeout, not their default action's countdown.
+

@@ -193,6 +193,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     }
     override fun showParkedOnlyMessage() = runtime.notice(runtime.context.getString(R.string.notif_parked_only_title), runtime.context.getString(R.string.notif_parked_only_text))
     override val appColors get() = conn.themeColors
+    override val timedActionParams = TemplateQuirks.timedActionParams(conn.info.packageName)
 
     @Composable
     override fun MapSurface(modifier: Modifier) {

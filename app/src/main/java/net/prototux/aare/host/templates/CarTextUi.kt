@@ -114,7 +114,8 @@ internal fun CarTextView(
     textAlign: TextAlign? = null,
 ) {
     if (text == null || text.isEmpty) return
-    val candidates: List<CharSequence> = remember(text) { listOf(text.toCharSequence()) + text.variants }
+    // A variant carrying an action's countdown (see timedActionParamsMillis) is no text to show.
+    val candidates: List<CharSequence> = remember(text) { listOf(text.toCharSequence()) + text.variants.filterNot(::isTimedActionParams) }
     if (candidates.size == 1) {
         StyledText(candidates[0], modifier, style, color, maxLines, textAlign)
         return

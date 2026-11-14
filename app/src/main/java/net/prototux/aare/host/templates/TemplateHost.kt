@@ -52,6 +52,9 @@ interface TemplateHost {
      */
     val appColors: AppThemeColors get() = AppThemeColors.NONE
 
+    /** The app may give its actions their own countdowns, not only its default action (see [rowCountdown]). */
+    val timedActionParams: Boolean get() = false
+
     /**
      * The navigation app's map surface, for NavigationTemplate, MapWithContentTemplate,
      * PlaceListMapTemplate, RoutePreviewNavigationTemplate and MapTemplate. The renderer lays its

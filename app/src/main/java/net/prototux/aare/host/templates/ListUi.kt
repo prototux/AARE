@@ -319,8 +319,9 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
                 )
             }
         }
-        row.actions.forEach { action ->
-            ActionView(action, ActionLook.Header)
+        val countdown = rememberRowCountdown(row.actions)
+        row.actions.forEachIndexed { i, action ->
+            ActionView(action, ActionLook.Header, countdownMillis = countdown.millisFor(i))
         }
         if (row.numericDecoration != Row.NO_DECORATION && row.numericDecoration >= 0) {
             Box(
