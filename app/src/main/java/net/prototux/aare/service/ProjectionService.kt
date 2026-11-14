@@ -51,6 +51,7 @@ import net.prototux.aare.media.MediaHub
 import net.prototux.aare.transport.LocalSocketTransport
 import net.prototux.aare.transport.TcpServer
 import net.prototux.aare.transport.UsbAccessoryTransport
+import net.prototux.aare.transport.UsbReattach
 import net.prototux.aare.transport.wireless.WirelessConnector
 import net.prototux.aare.ui.MainActivity
 
@@ -407,7 +408,9 @@ class ProjectionService : Service() {
             // The budget counts drops in a row, not per plug-in: a head unit that drops each link at once is not retried forever.
             if (SystemClock.elapsedRealtime() - sessionStart > USB_RETRY_RESET_MS) usbRetries = 0
             val acc = usbAccessory
-            if (acc != null && pinRefusal == null && usbRetries++ < 3 && getSystemService(UsbManager::class.java).accessoryList?.contains(acc) == true) {
+            if (acc != null && pinRefusal == null && usbRetries++ < 3 &&
+                UsbReattach.stillAttached(UsbReattach.id(acc)) { getSystemService(UsbManager::class.java).accessoryList?.map(UsbReattach::id) }
+            ) {
                 // openUsb checks hasPermission() again and asks for it if it was lost.
                 main.postDelayed({ if (this@ProjectionService.session == null) openUsb(acc) }, 1_500)
             } else {
