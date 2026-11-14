@@ -113,6 +113,7 @@
     <string name="setup_app_group_messaging">Повідомлення</string>
     <string name="setup_app_kind_messaging">Повідомлення з його сповіщень</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Вбудовано в AARE. Якщо приховати, зникне лише із сітки застосунків: дзвінки та дзвіночок і далі працюють.</string>
     <string name="setup_section_unsupported_apps">Застосунки Android Auto, які AARE не може показати</string>
     <string name="setup_hint_allowlist">Застосунки, створені на новіших версіях бібліотеки Google для автомобілів, приймають лише хости зі списку дозволених; див. README.</string>
     <string name="setup_app_entry_phone">Телефон</string>
