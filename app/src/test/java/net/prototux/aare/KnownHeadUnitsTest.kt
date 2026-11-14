@@ -22,5 +22,10 @@ class KnownHeadUnitsTest {
         assertEquals(null, KnownHeadUnits.skipWireless(worked = false, known = null) { true })
     }
 
+    @Test fun theHeadUnitsSeenLongestAgoGoFirst() {
+        assertEquals(emptySet<String>(), KnownHeadUnits.oldest(mapOf("A" to 1L, "B" to 2L), max = 2))
+        assertEquals(setOf("A", "C"), KnownHeadUnits.oldest(mapOf("A" to 1L, "B" to 5L, "C" to 0L, "D" to 3L), max = 2))
+    }
+
     @Test fun garbageReadsAsUnknown() = assertEquals(null, KnownHeadUnits.decode("not json"))
 }

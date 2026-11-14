@@ -227,13 +227,15 @@ class CarSession(
      * with, which no rule overrides. Head units are looked up this way before wireless starts.
      */
     private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
+        // The car list's name for it (Settings.rememberCar), so that forgetting the car forgets this.
+        val carName = response.displayName.ifBlank { headUnitName }
         val announced = response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
             ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
         val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
         runCatching {
             val store = KnownHeadUnits(context)
-            announced?.let { store.put(it, id) }
-            wirelessPeer?.let { store.markWirelessWorked(it) }
+            announced?.let { store.put(it, id, carName) }
+            wirelessPeer?.let { store.markWirelessWorked(it, carName) }
         }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
     }
 

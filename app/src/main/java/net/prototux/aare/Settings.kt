@@ -310,8 +310,10 @@ class Settings(context: Context) {
         prefs.edit { putStringSet("known_cars", cars.map { (n, t) -> "$n\t$t" }.toSet()) }
     }
 
+    /** Also forgets who its head unit said it was (KnownHeadUnits). */
     fun forgetCar(name: String) {
         prefs.edit { putStringSet("known_cars", (knownCars - name).map { (n, t) -> "$n\t$t" }.toSet()) }
+        KnownHeadUnits(appContext).forgetCar(name)
     }
 
     /** Last navigation and media apps used, restored on the next connection. */
