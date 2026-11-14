@@ -129,6 +129,32 @@ class KeyInjectorTest {
     }
 
     @Test
+    fun homeTakesItsLongPressOnlyFromTheCar() {
+        val home = ArrayList<CarKey>()
+        val homeKeys = KeyInjector(500, clock, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME)) { home += it }
+        // Held past the timeout (or a late up): still a short press.
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = true, metaState = 0, carLongPress = false)
+        clock.advance(2000)
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = false, metaState = 0, carLongPress = false)
+        // The car's own long press goes through as it sent it, repeats included.
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = true, metaState = 0, carLongPress = false)
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = true, metaState = 0, carLongPress = true)
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = true, metaState = 0, carLongPress = true)
+        homeKeys.onKey(KeyEvent.KEYCODE_HOME, down = false, metaState = 0, carLongPress = false)
+        assertEquals(
+            listOf(
+                CarKey(KeyEvent.KEYCODE_HOME, true), CarKey(KeyEvent.KEYCODE_HOME, false),
+                CarKey(KeyEvent.KEYCODE_HOME, true),
+                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true),
+                CarKey(KeyEvent.KEYCODE_HOME, true, longPress = true),
+                CarKey(KeyEvent.KEYCODE_HOME, false),
+            ),
+            home,
+        )
+        assertEquals("no long press left to fire", 0, clock.tasks.size)
+    }
+
+    @Test
     fun clearDropsEveryHold() {
         injector.onKey(KeyEvent.KEYCODE_HOME, down = true, metaState = 0, carLongPress = false)
         injector.clear()

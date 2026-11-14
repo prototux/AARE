@@ -630,7 +630,7 @@ class CarSession(
     private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
         override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
         override fun cancel(task: Runnable) = main.removeCallbacks(task)
-    }, ::onKey)
+    }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
 
     private val inputListener = object : InputChannel.Listener {
         override fun onInput(report: InputReport) {
@@ -679,7 +679,7 @@ class CarSession(
             return
         }
         when (code) {
-            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress, key.repeat)
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()

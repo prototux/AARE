@@ -24,12 +24,16 @@ internal data class CarKey(
  * - downs the car repeats during a hold count up the repeat count;
  * - the up ends the hold and cancels a long press still to come.
  * A down the car flags as a long press itself goes through as one (once per hold) and cancels the
- * synthetic one. Treating it as a plain click instead would, here, click
- * mid-hold and again on the up, and HOME would lose its long press.
+ * synthetic one. Treating it as a plain click instead would click mid-hold and again on the up.
+ *
+ * Keys in [carLongPressOnly] (HOME) get no hold: they go through as the car sends them, with its own
+ * longpress flag. A car whose key-up comes late would otherwise turn a short HOME press into a long
+ * one, which leaves the projection.
  */
 internal class KeyInjector(
     private val longPressTimeoutMs: Long,
     private val scheduler: Scheduler,
+    private val carLongPressOnly: Set<Int> = emptySet(),
     private val emit: (CarKey) -> Unit,
 ) {
     interface Scheduler {
@@ -51,6 +55,10 @@ internal class KeyInjector(
 
     fun onKey(code: Int, down: Boolean, metaState: Int, carLongPress: Boolean) {
         val meta = metaStateFor(code, metaState)
+        if (code in carLongPressOnly) {
+            emit(CarKey(code, down, meta, longPress = carLongPress))
+            return
+        }
         if (!down) {
             held.remove(code)?.let(scheduler::cancel)
             emit(CarKey(code, false, meta, longPress = carLongPress))
