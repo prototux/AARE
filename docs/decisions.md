@@ -169,3 +169,55 @@ differences:
   (the first probe would come after hours anyway).
 - A port we cannot dial (outside 0-65535) is refused even below WPP 4.5, where it
   not check the port.
+
+## Wireless: WPP over TCP and WifiSetupInfo (WPP 4.1+, 4.5+)
+
+How it works, reversed from head unit wireless setup code:
+
+- The same WPP messages and framing (4-byte header, at most 1024 bytes) run over two transports:
+  Bluetooth RFCOMM and TCP. Which one an attempt uses is decided before it starts: TCP when the
+  phone (Android 11+) has a stored TCP configuration for the head unit's Bluetooth address, that is
+  an endpoint and the access point's credentials; RFCOMM otherwise.
+- The endpoint gets stored two ways. (1) `WifiVersionRequest.wpp_info` over RFCOMM, kept when the
+  head unit is a wireless adapter, when its `head_unit_model` contains "[AAR]", from WPP 4.2, or at
+  4.1 when the car make matches its allowlist (google, gmc, buick, cadillac, chevrolet, chevy, bmw,
+  case-insensitive substrings); ignored below 4.1. The RFCOMM exchange goes on unchanged, and the
+  credentials from its WifiInfoResponse are stored once the phone is on the network, unless the
+  access point is DYNAMIC. The next connection runs over TCP. (2) `WifiSetupInfo` (message 11,
+  head unit to phone, RFCOMM only): version, `setup_token`, endpoint and access point (SSID,
+  password, BSSID, security mode, channels). Its version replaces the version request's; a nonzero
+  version below 4.5, no usable channel, unusable credentials or an endpoint that is not an IP
+  literal with a port in 0-65535 stop the attempt without telling the head unit. Otherwise the
+  endpoint and credentials are stored (whatever the access point type), the token is kept in memory,
+  and WPP restarts at once, so over TCP.
+- A TCP attempt joins the stored network, connects to the endpoint (to the network's DHCP server
+  when the IP is 0.0.0.0), 10 s per try, 3 tries 1 s apart, and starts TLS 1.2 on that socket with
+  the phone as the TLS server: the same phone certificate as the AAP session, a client
+  certificate required and trusted only if it chains to Google's automotive CA. The WPP messages
+  then run inside TLS.
+- Over TCP the exchange is the RFCOMM one without the WifiInfoRequest (the credentials are known and
+  the phone is on the network): version request and response, where the response to a WPP 4.5+
+  head unit carries the `setup_token` from the WifiSetupInfo, once; then a start request (the head
+  unit's or ours), WifiStartResponse, and AAP over TCP on the same network.
+- `WifiConnectionRejection` (TCP only): MOBILE_DEVICE_ID_NOT_FOUND (1) or INVALID_SETUP_TOKEN (2)
+  deletes the stored configuration and restarts at once, which falls back to RFCOMM. Credentials
+  the access point refuses delete it too; a failing socket only restarts.
+
+AARE does the same, behind the head unit's WPP version as above (a head unit that sends no
+`wpp_info` or WifiSetupInfo sees no change), with these differences:
+
+- **The head unit's TLS certificate is pinned, not checked against Google's CA**, as for AAP
+  (open-source head units cannot chain to it). Trust on first use, because a TCP configuration only
+  exists after an exchange over the bonded Bluetooth link, under its own key `wpp:<Bluetooth
+  address>`, so a head unit whose WPP certificate differs from its AAP one does not disturb the AAP
+  pin. The phone certificate is the one selected for AAP, so a head unit that wants Google's phone
+  certificate refuses a self-signed one here exactly as it does for AAP.
+- **The stored configuration includes the car's Wi-Fi password**, in app-private preferences (the
+  app opts out of backups). Without it the phone cannot reach the TCP endpoint before any Bluetooth
+  exchange. Owner to confirm.
+- **A failed TCP attempt falls back to RFCOMM in the same attempt** instead of retrying TCP, so a
+  stale configuration never locks the phone out. The configuration is deleted on a rejection,
+  refused credentials, or any failure after the network was joined (TCP, TLS, WPP); it is kept
+  when only the network was not found (the car's access point may not be up yet).
+- The TLS socket gets a read timeout for the handshake only; afterwards the WPP link has none,
+  like the RFCOMM one (pings keep it alive).
