@@ -380,6 +380,7 @@
     <string name="notif_cert_download_failed">Couldn\'t download the certificate: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Connecting wirelessly…</string>
     <string name="notif_status_not_connected">Not connected</string>
+    <string name="notif_status_reconnecting">Connection to the car lost, reconnecting (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · keeping the screen-capture consent for car audio (Stop releases it)</string>
     <string name="notif_cert_changed_title">Head unit certificate changed</string>
     <string name="notif_new_head_unit_title">New head unit</string>
