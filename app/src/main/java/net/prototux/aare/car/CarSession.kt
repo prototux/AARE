@@ -1,6 +1,5 @@
 package net.prototux.aare.car
 
-import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
 import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
@@ -133,6 +132,8 @@ class CarSession(
     private var phoneStatus: net.prototux.aare.aap.channels.PhoneStatusChannel? = null
     /** Calls, signal, battery and call availability to the car (from onRunning). */
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
+    /** Answers the car's Bluetooth passkey or PIN while it pairs; null without a Bluetooth service. */
+    @Volatile private var btPairing: BluetoothPairing? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
     private val audio = ArrayList<AudioChannel>()
@@ -283,12 +284,11 @@ class CarSession(
                             DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
                             main.post { maybeAutoPair(carAddress, alreadyPaired) }
                         }
-
-                        override fun onAuthenticationData(authData: String, method: BluetoothPairingMethod?) {
-                            DiagLog.add("car bluetooth: the car sent its pairing ${method?.name?.removePrefix("BLUETOOTH_PAIRING_")?.lowercase() ?: "code"}")
+                        override fun onAuthenticationData(authData: String) {
+                            btPairing?.onAuthenticationData(authData)
                             main.post { carAuthData = authData; autoPair?.onAuthenticationData(authData) }
                         }
-                    })
+                    }).also { btPairing = BluetoothPairing(context, it, main).apply { start() } }
                 }
             }
         }
@@ -1015,6 +1015,7 @@ class CarSession(
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
+        btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
         locationFeed.stop()
         drivingMode.stop()
