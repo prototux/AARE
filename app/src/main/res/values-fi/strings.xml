@@ -492,4 +492,6 @@
     <string name="carapp_error_stopped">%1$s pysähtyi</string>
     <string name="carapp_error_google_only">%1$s hyväksyy vain Googlen Android Auton. Sen täytyy sallia AARE (katso sovellusluettelo puhelimesta).</string>
     <string name="carapp_error_cant_start">%1$s ei voinut käynnistyä: %2$s</string>
+    <string name="setup_toggle_auto_pair_title">Yhdistä auton Bluetooth laiteparina automaattisesti</string>
+    <string name="setup_toggle_auto_pair_subtitle">Puheluita varten: kun auto, jonka kanssa puhelinta ei ole liitetty laitepariksi, pyytää laiteparin muodostamista Android Auton kautta, AARE muodostaa laiteparin sen auton kanssa Shizukun kautta Androidin valintaikkunan sijaan, jos koodi vastaa auton lähettämää. Ei koskaan minkään muun laitteen kanssa. Vaatii, että Shizuku on käynnissä ja sallii AAREn.</string>
 </resources>

@@ -132,6 +132,8 @@ class CarSession(
     private var phoneStatus: net.prototux.aare.aap.channels.PhoneStatusChannel? = null
     /** Calls, signal, battery and call availability to the car (from onRunning). */
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
+    /** Answers the car's Bluetooth passkey or PIN while it pairs; null without a Bluetooth service. */
+    @Volatile private var btPairing: BluetoothPairing? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
     private val audio = ArrayList<AudioChannel>()
@@ -275,11 +277,16 @@ class CarSession(
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
                 s.hasWifiProjectionService() -> channels += WifiProjectionChannel(s)
-                s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
-                    override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
-                        DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
-                    }
-                })
+                s.hasBluetoothService() -> {
+                    val carAddress = s.bluetoothService.carAddress.trim().uppercase()
+                    channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
+                        override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
+                            DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
+                            main.post { maybeAutoPair(carAddress, alreadyPaired) }
+                        }
+                        override fun onAuthenticationData(authData: String) { btPairing?.onAuthenticationData(authData) }
+                    }).also { btPairing = BluetoothPairing(context, it, main).apply { start() } }
+                }
             }
         }
         // The input service for the projected (main) display: match its display id, require a real
@@ -965,8 +972,40 @@ class CarSession(
     /** The session ended (main thread): work posted before that and run after must not start anything. */
     private var closed = false
 
+    /** Opt-in automatic pairing with this car's Bluetooth (main thread), see [maybeAutoPair]. */
+    private var autoPair: BluetoothAutoPair? = null
+
+    /**
+     * The car answered our pairing request: if the phone isn't paired with it yet and the user
+     * opted in, pair through Shizuku instead of Android's dialog ([BluetoothAutoPair]). Only the
+     * address the car announced on its Bluetooth channel.
+     */
+    @android.annotation.SuppressLint("MissingPermission") // wrapped: without BLUETOOTH_CONNECT the bond state reads as unknown
+    private fun maybeAutoPair(carAddress: String, alreadyPaired: Boolean) {
+        if (closed || autoPair != null) return
+        val bonded = runCatching {
+            context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty()
+                .any { it.address.equals(carAddress, ignoreCase = true) }
+        }.getOrDefault(false)
+        val shizuku = CaptureMethods.shizukuAvailable()
+        if (!AutoPairing.shouldStart(settings.autoPairCarBluetooth, shizuku, carAddress, alreadyPaired, bonded)) {
+            if (settings.autoPairCarBluetooth && !alreadyPaired && !bonded) {
+                DiagLog.add("car bluetooth: not pairing automatically (${AutoPairing.whyNot(Build.VERSION.SDK_INT, shizuku)})")
+            }
+            return
+        }
+        DiagLog.add("car bluetooth: not paired with $carAddress yet; pairing through Shizuku")
+        // The checks stay BluetoothPairing's (#229): this only answers, through Shizuku, what they accepted.
+        autoPair = BluetoothAutoPair(context, carAddress).also { p ->
+            btPairing?.privileged = p
+            p.start()
+        }
+    }
+
     private fun teardown() {
         closed = true
+        btPairing?.privileged = null
+        autoPair?.stop(); autoPair = null
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
@@ -974,6 +1013,7 @@ class CarSession(
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
+        btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
         locationFeed.stop()
         drivingMode.stop()

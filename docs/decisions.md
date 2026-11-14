@@ -150,3 +150,23 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Automatic Bluetooth pairing for calls (Shizuku, opt-in)
+
+Builds on #229 (maintainer's decision): `BluetoothPairing` and `PairingCheck` handle the car's
+authentication data (BluetoothAuthenticationData) and match it with Android's pairing request,
+for everyone. This option only adds what an app can't do: when the car answers AARE's Android
+Auto pairing request with "not paired" and the user turned it on (Android 12+), AARE starts the
+bond itself (createBond, an app's own BLUETOOTH_CONNECT), and a Shizuku helper
+(`ShellBluetoothService`) answers what `PairingCheck` accepted: setPairingConfirmation for a
+matching numeric comparison (it needs BLUETOOTH_PRIVILEGED, which only the shell has here), or
+setPin when AARE's own setPin was refused. The helper can do nothing else.
+
+- Scope: only the address the head unit announced on its Bluetooth channel, checked again on every
+  broadcast; nothing else is ever bonded or confirmed.
+- A numeric comparison is only confirmed when `PairingCheck` found its passkey equal to the one the
+  car sent, so a different device can't slip in under the car's address; a mismatch is never
+  confirmed. Anything else is left to Android's dialog, which stays up (the pairing broadcast is
+  not aborted) and is the fallback for every failure.
+- On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
+  that is why.

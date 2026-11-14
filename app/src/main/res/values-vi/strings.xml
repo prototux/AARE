@@ -492,4 +492,6 @@
     <string name="carapp_error_stopped">%1$s đã dừng</string>
     <string name="carapp_error_google_only">%1$s chỉ chấp nhận Android Auto của Google. Cần cho phép AARE (xem danh sách ứng dụng trên điện thoại).</string>
     <string name="carapp_error_cant_start">%1$s không thể khởi động: %2$s</string>
+    <string name="setup_toggle_auto_pair_title">Tự động ghép đôi Bluetooth của xe</string>
+    <string name="setup_toggle_auto_pair_subtitle">Đối với các cuộc gọi: khi một xe mà điện thoại chưa ghép đôi yêu cầu ghép đôi qua Android Auto, AARE sẽ ghép đôi với xe đó qua Shizuku thay cho hộp thoại của Android, nếu mã khớp với mã xe đã gửi. Không bao giờ ghép với thiết bị khác. Cần Shizuku đang chạy và cho phép AARE.</string>
 </resources>
