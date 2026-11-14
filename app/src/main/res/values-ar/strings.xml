@@ -49,6 +49,8 @@
     <string name="setup_section_connecting">الاتصال</string>
     <string name="setup_toggle_wireless_title">الاتصال اللاسلكي</string>
     <string name="setup_toggle_wireless_subtitle">الاتصال بالسيارات المقترنة عبر Wi-Fi عند دخولها نطاق Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">إعادة اتصال لاسلكي أسرع (WPP عبر TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">للسيارات التي توفّرها: بعد أول اتصال لاسلكي، يعاد الاتصال عبر شبكة Wi-Fi الخاصة بالسيارة دون خطوة الإعداد عبر البلوتوث. تُحفظ كلمة مرور Wi-Fi الخاصة بالسيارة على هذا الهاتف. ثق بالسيارة مرة واحدة من الإشعار. السيارة التي يستمر فيها الفشل تعود إلى البلوتوث. Android 11 فما فوق.</string>
     <string name="setup_toggle_resume_music_title">استئناف الموسيقى</string>
     <string name="setup_toggle_resume_music_subtitle">تشغيل آخر تطبيق موسيقى كان يعمل عند اتصال السيارة</string>
     <string name="setup_bt_address_label">عنوان Bluetooth للهاتف (اختياري)</string>

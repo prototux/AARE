@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Forbinder</string>
     <string name="setup_toggle_wireless_title">Trådløst</string>
     <string name="setup_toggle_wireless_subtitle">Opretter forbindelse til tilkoblede biler via Wi-Fi, når de kommer inden for Bluetooth-rækkevidde</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Hurtigere trådløs genforbindelse (WPP over TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Til biler, der tilbyder det: efter den første trådløse forbindelse genforbindes der over bilens Wi-Fi uden opsætningstrinnet via Bluetooth. Gemmer bilens Wi-Fi-adgangskode på denne telefon. Stol på bilen én gang fra notifikationen. En bil, hvor det bliver ved med at mislykkes, går tilbage til Bluetooth. Android 11 og nyere.</string>
     <string name="setup_toggle_resume_music_title">Genoptag musik</string>
     <string name="setup_toggle_resume_music_subtitle">Starter den sidst afspillede musik-app, når bilen opretter forbindelse</string>
     <string name="setup_bt_address_label">Telefonens Bluetooth-adresse (valgfrit)</string>

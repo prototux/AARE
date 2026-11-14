@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Conexión</string>
     <string name="setup_toggle_wireless_title">Inalámbrica</string>
     <string name="setup_toggle_wireless_subtitle">Conectar con coches emparejados por Wi-Fi cuando entren en el alcance de Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Reconexión inalámbrica más rápida (WPP por TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Para coches que lo ofrecen: tras una primera conexión inalámbrica, vuelve a conectar por el Wi-Fi del coche sin el paso de configuración por Bluetooth. Guarda la contraseña Wi-Fi del coche en este teléfono. Confía en el coche una vez desde la notificación. Un coche en el que sigue fallando vuelve a Bluetooth. Android 11 y posteriores.</string>
     <string name="setup_toggle_resume_music_title">Reanudar música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar la última app de música al conectar el coche</string>
     <string name="setup_bt_address_label">Dirección Bluetooth del teléfono (opcional)</string>

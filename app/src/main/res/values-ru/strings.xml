@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Подключение</string>
     <string name="setup_toggle_wireless_title">По беспроводной сети</string>
     <string name="setup_toggle_wireless_subtitle">Соединяться с парными автомобилями по Wi-Fi, когда они оказываются в зоне действия Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Быстрое беспроводное переподключение (WPP по TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Для машин, которые это поддерживают: после первого беспроводного подключения переподключение идёт по Wi-Fi машины без шага настройки через Bluetooth. Пароль Wi-Fi машины хранится на этом телефоне. Один раз доверьтесь машине из уведомления. Машина, с которой это постоянно не удаётся, возвращается к Bluetooth. Android 11 и новее.</string>
     <string name="setup_toggle_resume_music_title">Возобновлять музыку</string>
     <string name="setup_toggle_resume_music_subtitle">Запускать последнее воспроизводимое музыкальное приложение при соединении с автомобилем</string>
     <string name="setup_bt_address_label">Bluetooth-адрес телефона (необязательно)</string>

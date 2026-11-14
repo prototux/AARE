@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">З\'єднання</string>
     <string name="setup_toggle_wireless_title">Бездротово</string>
     <string name="setup_toggle_wireless_subtitle">З\'єднуватися з парними автомобілями через Wi-Fi, коли вони опиняються в зоні дії Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Швидше бездротове повторне підключення (WPP через TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Для авто, які це підтримують: після першого бездротового підключення повторне підключення йде через Wi-Fi авто без кроку налаштування через Bluetooth. Пароль Wi-Fi авто зберігається на цьому телефоні. Один раз довіртеся авто зі сповіщення. Авто, з яким це постійно не вдається, повертається до Bluetooth. Android 11 і новіші.</string>
     <string name="setup_toggle_resume_music_title">Відновлювати музику</string>
     <string name="setup_toggle_resume_music_subtitle">Запускати останній відтворюваний музичний застосунок при з\'єднанні з автомобілем</string>
     <string name="setup_bt_address_label">Bluetooth-адреса телефону (необов\'язково)</string>

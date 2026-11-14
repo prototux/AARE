@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Připojování</string>
     <string name="setup_toggle_wireless_title">Bezdrátově</string>
     <string name="setup_toggle_wireless_subtitle">Připojit se k párovaným autům přes Wi-Fi, jakmile se dostanou do dosahu Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Rychlejší bezdrátové opětovné připojení (WPP přes TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Pro auta, která to nabízejí: po prvním bezdrátovém připojení se znovu připojí přes Wi-Fi auta bez kroku nastavení přes Bluetooth. Ukládá heslo k Wi-Fi auta v tomto telefonu. Autu jednou důvěřujte z oznámení. Auto, u kterého to opakovaně selhává, se vrátí k Bluetooth. Android 11 a novější.</string>
     <string name="setup_toggle_resume_music_title">Obnovit hudbu</string>
     <string name="setup_toggle_resume_music_subtitle">Spustit poslední přehrávanou hudební aplikaci při připojení auta</string>
     <string name="setup_bt_address_label">Bluetooth adresa telefonu (nepovinné)</string>

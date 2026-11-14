@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Conectare</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Se conectează prin Wi-Fi la mașinile asociate când ajung în raza Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Reconectare wireless mai rapidă (WPP prin TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Pentru mașinile care o oferă: după o primă conexiune wireless, reconectare prin Wi-Fi-ul mașinii fără pasul de configurare prin Bluetooth. Păstrează parola Wi-Fi a mașinii pe acest telefon. Acceptați mașina o dată din notificare. O mașină la care eșuează în continuare revine la Bluetooth. Android 11 și versiuni ulterioare.</string>
     <string name="setup_toggle_resume_music_title">Reiau muzica</string>
     <string name="setup_toggle_resume_music_subtitle">Pornește ultima aplicație muzicală redată când se conectează mașina</string>
     <string name="setup_bt_address_label">Adresa Bluetooth a telefonului (opțional)</string>

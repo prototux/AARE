@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Łączenie</string>
     <string name="setup_toggle_wireless_title">Bezprzewodowo</string>
     <string name="setup_toggle_wireless_subtitle">Łącz się ze sparowanymi samochodami przez Wi-Fi, gdy znajdą się w zasięgu Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Szybsze ponowne łączenie bezprzewodowe (WPP przez TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Dla samochodów, które to oferują: po pierwszym połączeniu bezprzewodowym ponowne łączenie przez Wi-Fi samochodu bez kroku konfiguracji przez Bluetooth. Przechowuje hasło Wi-Fi samochodu na tym telefonie. Zaufaj samochodowi raz z powiadomienia. Samochód, w którym to stale zawodzi, wraca do Bluetooth. Android 11 i nowsze.</string>
     <string name="setup_toggle_resume_music_title">Wznów muzykę</string>
     <string name="setup_toggle_resume_music_subtitle">Uruchom ostatnią odtwarzaną aplikację muzyczną po połączeniu z samochodem</string>
     <string name="setup_bt_address_label">Adres Bluetooth telefonu (opcjonalnie)</string>

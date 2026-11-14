@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Kapcsolódás</string>
     <string name="setup_toggle_wireless_title">Vezeték nélküli</string>
     <string name="setup_toggle_wireless_subtitle">Kapcsolódás a párosított autókhoz Wi-Fi-n keresztül, amint Bluetooth-hatótávolságba kerülnek</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Gyorsabb vezeték nélküli újracsatlakozás (WPP TCP-n)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Az ezt kínáló autókhoz: az első vezeték nélküli kapcsolat után az autó Wi-Fi-jén csatlakozik újra, a Bluetooth-os beállítási lépés nélkül. Az autó Wi-Fi-jelszavát ezen a telefonon tárolja. Egyszer bízzon meg az autóban az értesítésből. Az az autó, amelynél ismételten sikertelen, visszatér a Bluetoothhoz. Android 11 vagy újabb.</string>
     <string name="setup_toggle_resume_music_title">Zene folytatása</string>
     <string name="setup_toggle_resume_music_subtitle">Az utoljára játszott zenealkalmazás elindítása, amikor az autó csatlakozik</string>
     <string name="setup_bt_address_label">Telefon Bluetooth-címe (opcionális)</string>

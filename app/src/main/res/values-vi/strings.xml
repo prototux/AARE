@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Đang kết nối</string>
     <string name="setup_toggle_wireless_title">Không dây</string>
     <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Kết nối lại không dây nhanh hơn (WPP qua TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Cho xe có hỗ trợ: sau lần kết nối không dây đầu tiên, kết nối lại qua Wi-Fi của xe mà không cần bước thiết lập qua Bluetooth. Lưu mật khẩu Wi-Fi của xe trên điện thoại này. Tin tưởng xe một lần từ thông báo. Xe mà việc này liên tục thất bại sẽ quay lại dùng Bluetooth. Android 11 trở lên.</string>
     <string name="setup_toggle_resume_music_title">Tiếp tục nhạc</string>
     <string name="setup_toggle_resume_music_subtitle">Bật lại ứng dụng nhạc vừa phát khi xe kết nối</string>
     <string name="setup_bt_address_label">Địa chỉ Bluetooth điện thoại (không bắt buộc)</string>

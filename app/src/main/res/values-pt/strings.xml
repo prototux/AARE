@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">A ligar</string>
     <string name="setup_toggle_wireless_title">Sem fios</string>
     <string name="setup_toggle_wireless_subtitle">Ligar a carros emparelhados por Wi-Fi quando entram no alcance do Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Religação sem fios mais rápida (WPP por TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Para carros que o oferecem: após uma primeira ligação sem fios, volta a ligar pelo Wi-Fi do carro sem o passo de configuração por Bluetooth. Guarda a palavra-passe Wi-Fi do carro neste telemóvel. Confie no carro uma vez a partir da notificação. Um carro em que continua a falhar volta ao Bluetooth. Android 11 e posterior.</string>
     <string name="setup_toggle_resume_music_title">Retomar a música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar a última aplicação de música quando o carro se ligar</string>
     <string name="setup_bt_address_label">Endereço Bluetooth do telemóvel (opcional)</string>

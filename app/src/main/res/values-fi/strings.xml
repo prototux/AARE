@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Yhdistäminen</string>
     <string name="setup_toggle_wireless_title">Langaton</string>
     <string name="setup_toggle_wireless_subtitle">Yhdistä laiteparina oleviin autoihin Wi-Fin kautta, kun ne tulevat Bluetooth-kantaman sisään</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Nopeampi langaton uudelleenyhdistäminen (WPP TCP:n kautta)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Autoille, jotka tarjoavat sen: ensimmäisen langattoman yhteyden jälkeen yhdistetään uudelleen auton Wi-Fin kautta ilman Bluetooth-asetusvaihetta. Tallentaa auton Wi-Fi-salasanan tähän puhelimeen. Luota autoon kerran ilmoituksesta. Auto, jossa se epäonnistuu toistuvasti, palaa Bluetoothiin. Android 11 tai uudempi.</string>
     <string name="setup_toggle_resume_music_title">Jatka musiikkia</string>
     <string name="setup_toggle_resume_music_subtitle">Käynnistä viimeksi soitettu musiikkisovellus, kun auto yhdistetään</string>
     <string name="setup_bt_address_label">Puhelimen Bluetooth-osoite (valinnainen)</string>

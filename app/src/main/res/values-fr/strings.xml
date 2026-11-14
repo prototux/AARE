@@ -51,6 +51,8 @@
     <string name="setup_section_connecting">Connexion</string>
     <string name="setup_toggle_wireless_title">Sans fil</string>
     <string name="setup_toggle_wireless_subtitle">Se connecter aux voitures associées en Wi-Fi lorsqu\'elles entrent dans la portée Bluetooth</string>
+    <string name="setup_toggle_wpp_over_tcp_title">Reconnexion sans fil plus rapide (WPP via TCP)</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">Pour les voitures qui le proposent : après une première connexion sans fil, reconnexion via le Wi-Fi de la voiture sans l\'étape de configuration Bluetooth. Garde le mot de passe Wi-Fi de la voiture sur ce téléphone. Faites confiance à la voiture une fois depuis la notification. Une voiture où cela échoue à répétition repasse en Bluetooth. Android 11 et plus.</string>
     <string name="setup_toggle_resume_music_title">Reprendre la musique</string>
     <string name="setup_toggle_resume_music_subtitle">Relancer la dernière application de musique à la connexion de la voiture</string>
     <string name="setup_bt_address_label">Adresse Bluetooth du téléphone (facultatif)</string>

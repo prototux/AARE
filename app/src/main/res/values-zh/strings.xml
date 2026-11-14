@@ -49,6 +49,8 @@
     <string name="setup_section_connecting">连接</string>
     <string name="setup_toggle_wireless_title">无线连接</string>
     <string name="setup_toggle_wireless_subtitle">已配对车辆进入蓝牙范围时，通过 Wi-Fi 自动连接</string>
+    <string name="setup_toggle_wpp_over_tcp_title">更快的无线重连（WPP over TCP）</string>
+    <string name="setup_toggle_wpp_over_tcp_subtitle">适用于支持此功能的汽车：首次无线连接后，通过汽车的 Wi-Fi 重新连接，无需经过蓝牙设置步骤。会在此手机上保存汽车的 Wi-Fi 密码。请在通知中信任该汽车一次。屡次失败的汽车会改回使用蓝牙。需要 Android 11 及以上版本。</string>
     <string name="setup_toggle_resume_music_title">恢复音乐播放</string>
     <string name="setup_toggle_resume_music_subtitle">车机连接时自动播放上次使用的音乐应用</string>
     <string name="setup_bt_address_label">手机蓝牙地址（可选）</string>
