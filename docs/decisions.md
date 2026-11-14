@@ -150,3 +150,23 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Duck the music under AARE's own speech, don't pause it
+
+`CarNotificationListener.speak()` (messages read aloud) tagged its TextToSpeech output
+`USAGE_MEDIA`. Two consequences: on the phone itself, nothing asked for audio focus at all,
+and for car audio (`CarSession`'s audio-policy/Shizuku capture), `USAGE_MEDIA` is one of
+`CaptureMethods.MEDIA_USAGES`, so AARE's own speech shared the "media" channel, whose `Focus`
+asks the car for plain `AUDIO_FOCUS_GAIN` (full, pausing other car sound) rather than the
+"guidance" channel's `AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK` already used for phone navigation
+voice.
+
+- Retagged it `USAGE_ASSISTANT` (one of `CaptureMethods.GUIDANCE_USAGES`): when the car exposes a
+  guidance channel, AARE's own speech now rides the channel that already asks to duck, not pause.
+- Added an actual phone-side `AudioFocusRequest` (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`) around the
+  TTS calls, tracked with an utterance-progress listener so it is requested once per burst of
+  speech and abandoned once every queued utterance has finished (or failed) — not just on every
+  individual `speak()` call, since `QUEUE_ADD` can queue several in a row.
+- AARE has no listening (speech-to-text) of its own to apply the "exclusive transient focus while
+  listening" half of the request to: `CarRuntime.openMicrophone` only relays the car's microphone
+  to a connected car app (an assistant such as Lapin), which requests its own focus if it wants to.
