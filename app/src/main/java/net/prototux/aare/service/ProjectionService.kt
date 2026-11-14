@@ -43,7 +43,9 @@ import net.prototux.aare.Settings
 import net.prototux.aare.aap.CertificateRefusal
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
+import net.prototux.aare.aap.wireless.WirelessBootstrap
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
+import net.prototux.aare.aap.wireless.WirelessHandshake
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.cert.CertificateDownload
@@ -54,6 +56,7 @@ import net.prototux.aare.transport.LocalSocketTransport
 import net.prototux.aare.transport.TcpServer
 import net.prototux.aare.transport.UsbAccessoryTransport
 import net.prototux.aare.transport.UsbReattach
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.transport.wireless.WirelessConnector
 import net.prototux.aare.ui.MainActivity
 
@@ -111,6 +114,8 @@ class ProjectionService : Service() {
     /** The last session's transport and wireless address, so a certificate download can reconnect wireless (not USB). */
     private var lastSessionWireless = false
     private var lastWirelessAddress: String? = null
+    /** The running wireless session's head unit address and handshake, until it is remembered at service discovery. */
+    private var sessionHandshake: Pair<String, WirelessHandshake>? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -207,36 +212,46 @@ class ProjectionService : Service() {
         if (session != null || wirelessJob?.isActive == true) return
         val adapter = getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter ?: return
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: return
-        // Pass the phone's stable id as the WPP device serial and phone_info.instance_id: strict head
-        // units (#46) want the serial in the version response before they send the WifiStartRequest,
-        // and Google's receiver library ignores every phone message except pings and
-        // version responses until phone_info carries an instance id.
-        val connector = WirelessConnector(this, DiagAapLog,
-            WirelessConnector.Options(bootstrap = net.prototux.aare.aap.wireless.WirelessBootstrap.Options(
-                deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = runCatching { adapter.name }.getOrNull())))
-        val missing = connector.missingPermissions()
+        val missing = WirelessConnector(this, DiagAapLog).missingPermissions()
         if (missing.isNotEmpty()) {
             log("wireless: missing permissions ${missing.joinToString { it.substringAfterLast('.') }}")
             return
         }
         lastWirelessAddress = address
-        log("wireless: connecting to ${runCatching { device.name }.getOrNull() ?: address}")
+        val name = runCatching { device.name }.getOrNull()
+        log("wireless: connecting to ${name ?: address}")
+        val compatibility = settings.wirelessCompatibility
+        val firstHandshake = firstHandshake(compatibility, address, name)
         _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
             // Right after the Bluetooth link comes up some cars accept the connection but don't
             // start Android Auto yet (the Mach-E hangs up after a few silent seconds, #74); a
             // little later they do. The retries run in this job, so the service stays up meanwhile.
             var retries = 0
+            var handshake = firstHandshake
+            var switchedHandshake = false
             while (true) {
                 try {
-                    val transport = connector.connect(device)
-                    startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true)
+                    val transport = wirelessConnector(handshake).connect(device)
+                    startSession(transport, wireless = true, peerKey = address, trustOnFirstUse = true, wirelessHandshake = handshake)
                     return@launch
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     log("wireless: ${e.message}")
                     val carNotReady = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessBootstrapException && it.whileNegotiating }
+                    // Built-in head units and adapters both hang up on the other's order: try it once, at once.
+                    val other = HandshakeChoice.switchAfterFailure(compatibility, handshake, carNotReady, switchedHandshake)
+                    if (other != null && session == null) {
+                        switchedHandshake = true
+                        handshake = other
+                        log("wireless: trying the ${handshakeLabel(other)} handshake instead")
+                        delay(HANDSHAKE_SWITCH_DELAY_MS)
+                        if (session == null) continue
+                        return@launch
+                    }
+                    // A car that isn't ready yet gets the first choice again: that is still the best guess.
+                    handshake = firstHandshake
                     if (carNotReady && retries < WIRELESS_RETRIES && session == null) {
                         retries++
                         val wait = WIRELESS_RETRY_DELAY_MS * retries
@@ -251,6 +266,35 @@ class ProjectionService : Service() {
             }
         }
     }
+
+    /**
+     * The connector for one wireless attempt. Pass the phone's stable id as the WPP device serial and
+     * phone_info.instance_id: strict head units (#46) want the serial in the version response before
+     * they send the WifiStartRequest, and Google's receiver library ignores every phone message
+     * except pings and version responses until phone_info carries an instance id. The adapter
+     * handshake leaves both out.
+     */
+    private fun wirelessConnector(handshake: WirelessHandshake): WirelessConnector {
+        val phoneName = runCatching { getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.name }.getOrNull()
+        return WirelessConnector(this, DiagAapLog, WirelessConnector.Options(bootstrap = WirelessBootstrap.Options(
+            deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = phoneName, handshake = handshake)))
+    }
+
+    /** The handshake a connection to [address] starts with, logged with why when it isn't the usual one. */
+    private fun firstHandshake(compatibility: String, address: String, name: String?): WirelessHandshake {
+        val remembered = settings.wirelessHandshakes[address.uppercase()]
+        val handshake = HandshakeChoice.first(compatibility, remembered, name)
+        val why = when {
+            compatibility != HandshakeChoice.AUTO -> "set in the settings"
+            remembered != null -> "it worked last time"
+            handshake == WirelessHandshake.ADAPTER -> "the name looks like a wireless adapter's"
+            else -> null
+        }
+        if (why != null) log("wireless: ${handshakeLabel(handshake)} handshake ($why)")
+        return handshake
+    }
+
+    private fun handshakeLabel(h: WirelessHandshake) = if (h == WirelessHandshake.ADAPTER) "wireless adapter" else "built-in head unit"
 
     /**
      * The car was already connected over Bluetooth when AARE opened, so the ACL-connect broadcast
@@ -354,7 +398,10 @@ class ProjectionService : Service() {
      * USB and developer server head units need a Trust tap for each new certificate.
      * [mirror]: whether the car may be offered the phone screen (the developer TCP server only if opted in).
      */
-    private fun startSession(transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true) {
+    private fun startSession(
+        transport: Transport, wireless: Boolean, peerKey: String, trustOnFirstUse: Boolean, mirror: Boolean = true,
+        wirelessHandshake: WirelessHandshake? = null,
+    ) {
         if (destroyed) { transport.close(); return }
         if (session != null) {
             log("already connected; refusing ${transport.name}")
@@ -362,11 +409,13 @@ class ProjectionService : Service() {
             return
         }
         lastSessionWireless = wireless
+        sessionHandshake = wirelessHandshake?.let { peerKey to it }
         val cert = certs.pick(settings.certificateIndex)
         log("connecting ${transport.name} with certificate \"${cert.name}\"")
         acquireWakeLock()
         sessionStart = SystemClock.elapsedRealtime()
-        val s = CarSession(this, transport, cert.identity, settings, media, { projection }, wireless, peerKey, trustOnFirstUse, sessionListener, mirror)
+        val s = CarSession(this, transport, cert.identity, settings, media, { projection }, wireless, peerKey, trustOnFirstUse, sessionListener, mirror,
+            echoHeadUnitVersion = wirelessHandshake == WirelessHandshake.ADAPTER)
         session = s
         _state.update { it.copy(connected = true, transport = transport.name, certificate = cert.name, lastError = null) }
         s.start()
@@ -375,6 +424,11 @@ class ProjectionService : Service() {
     private val sessionListener = object : CarSession.Listener {
         override fun onStatus(session: CarSession, status: String) {
             log(status)
+            // The wireless handshake got this far: start with it next time (Wireless compatibility: Auto).
+            sessionHandshake?.takeIf { session.reachedServiceDiscovery && this@ProjectionService.session === session }?.let { (address, handshake) ->
+                sessionHandshake = null
+                settings.rememberWirelessHandshake(address, handshake)
+            }
             // A head unit name comes with service discovery, after the phone accepted the head unit's
             // certificate: nothing is left to trust.
             _state.update { it.copy(status = status, headUnit = session.headUnitName, video = session.videoDescription,
@@ -725,6 +779,8 @@ class ProjectionService : Service() {
         /** LAN sessions kept listening after dropping before the version exchange, before giving up on it. */
         private const val LAN_VERSION_DROP_RETRIES = 2
         private const val WIRELESS_RETRY_DELAY_MS = 10_000L
+        /** Before trying the other wireless handshake: lets the head unit close its side of the link first. */
+        private const val HANDSHAKE_SWITCH_DELAY_MS = 2_000L
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"

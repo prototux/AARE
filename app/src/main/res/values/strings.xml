@@ -132,6 +132,11 @@
     <string name="setup_section_connecting">Connecting</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Connect to paired cars over Wi-Fi when they come into Bluetooth range</string>
+    <string name="setup_choice_wireless_compat">Wireless compatibility</string>
+    <string name="setup_choice_wireless_compat_auto">Auto</string>
+    <string name="setup_choice_wireless_compat_builtin">Built-in</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">Built-in head units and aftermarket wireless adapters (plugged into the car\'s USB) expect the phone to answer in different orders. Auto remembers what worked for each car, guesses from its Bluetooth name the first time, and tries the other way once if the connection fails.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>
