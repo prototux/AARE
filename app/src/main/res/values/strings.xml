@@ -163,7 +163,7 @@
     <string name="setup_toggle_calendar_title">Next calendar event</string>
     <string name="setup_toggle_calendar_subtitle">Under the music, with a shortcut to navigate to its place</string>
     <string name="setup_toggle_media_first_title">Music first</string>
-    <string name="setup_toggle_media_first_subtitle">On the home screen, the music goes where the map is (left, or on top) and the map after it</string>
+    <string name="setup_toggle_media_first_subtitle">On the home screen, the music comes first (first in the row, or on top) and the map after it</string>
     <string name="setup_section_driving">Driving</string>
     <string name="setup_toggle_passenger_title">Passenger mode</string>
     <string name="setup_toggle_passenger_subtitle">Ignore the car\'s driving status: typing, long lists and the phone screen stay available while moving, for a passenger. The driver must not use the screen while driving.</string>
@@ -265,6 +265,10 @@
     <string name="audio_no_method">No method is set up yet: choose one below.</string>
     <string name="audio_section_methods">Methods, best first</string>
     <string name="audio_policy_ready">Ready. Music and navigation voice go to the car separately, the phone stays quiet.</string>
+    <string name="audio_method_policy">System audio routing (like Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, music and navigation apart (like Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku or root</string>
+    <string name="audio_method_playback_capture">Screen-capture permission</string>
     <string name="audio_policy_not_ready">Like Android Auto: music and navigation voice apart, phone speaker off. Needs a rooted phone: install AARE as a system app with the Magisk module (see the README).</string>
     <string name="audio_shizuku_ready">Ready. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
     <string name="audio_shizuku_needs_android12">Needs Android 12 or newer.</string>

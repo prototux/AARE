@@ -16,14 +16,16 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import net.prototux.aare.BuildConfig
-import net.prototux.aare.Settings
-import org.lsposed.hiddenapibypass.HiddenApiBypass
-import rikka.shizuku.Shizuku
+import androidx.annotation.StringRes
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import net.prototux.aare.BuildConfig
+import net.prototux.aare.R
+import net.prototux.aare.Settings
+import org.lsposed.hiddenapibypass.HiddenApiBypass
+import rikka.shizuku.Shizuku
 
 /** A stream of 16-bit PCM captured from the phone, for one car audio channel. */
 interface PcmSource {
@@ -34,16 +36,16 @@ interface PcmSource {
     fun release()
 }
 
-/** How AARE captures the phone's audio, best first. */
-enum class CaptureMethod(val label: String) {
+/** How AARE captures the phone's audio, best first. [label] is for the log, [title] for the screen. */
+enum class CaptureMethod(val label: String, @StringRes val title: Int) {
     /** Android Auto's own way: an audio policy (privileged app, see tools/magisk). Music and navigation voice apart. */
-    AUDIO_POLICY("System audio routing (like Android Auto)"),
+    AUDIO_POLICY("System audio routing (like Android Auto)", R.string.audio_method_policy),
     /** The same audio policy, registered by a Shizuku (adb rights) process: the shell holds MODIFY_AUDIO_ROUTING. */
-    SHIZUKU_POLICY("Shizuku, music and navigation apart (like Android Auto)"),
+    SHIZUKU_POLICY("Shizuku, music and navigation apart (like Android Auto)", R.string.audio_method_shizuku_policy),
     /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
-    SHIZUKU("Shizuku or root"),
+    SHIZUKU("Shizuku or root", R.string.audio_method_shizuku),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
-    PLAYBACK_CAPTURE("Screen-capture permission"),
+    PLAYBACK_CAPTURE("Screen-capture permission", R.string.audio_method_playback_capture),
 }
 
 object CaptureMethods {

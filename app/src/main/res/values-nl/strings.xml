@@ -5,6 +5,8 @@
     <string name="mirror_locked_placeholder">Het telefoonscherm is gepauzeerd zolang de telefoon vergrendeld is. Ontgrendel de telefoon om het te tonen.</string>
     <string name="mirror_driving_no_accessibility">Het telefoonscherm is gepauzeerd tijdens het rijden. Om navigatie-apps tijdens het rijden te tonen, schakelt u AARE in bij de toegankelijkheidsinstellingen van de telefoon: zo weet AARE welke app open is.</string>
     <string name="mirror_driving_nav_only">Het telefoonscherm is gepauzeerd tijdens het rijden. Het toont alleen navigatie-apps.</string>
+    <string name="mirror_need_screen_capture">Het telefoonscherm heeft Android\'s schermopname-machtiging nodig. Open op de telefoon de Autoaudio-instellingen van AARE, tik op Schermopname-machtiging en kies Volledig scherm.</string>
+    <string name="mirror_capture_failed">Android heeft het delen van het telefoonscherm geweigerd. Tik op de telefoon opnieuw op Schermopname-machtiging in de Autoaudio-instellingen van AARE en kies Volledig scherm.</string>
     <string name="mirror_need_accessibility">Om de telefoon vanuit de auto te gebruiken, schakelt u AARE in bij de toegankelijkheidsinstellingen van de telefoon.</string>
 
     <!-- common: shared across screens -->
@@ -51,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
     <string name="setup_toggle_resume_music_title">Muziek hervatten</string>
     <string name="setup_toggle_resume_music_subtitle">Start de laatst gebruikte muziekapp wanneer de auto verbinding maakt</string>
+    <string name="setup_bt_address_label">Bluetooth-adres van de telefoon (optioneel)</string>
+    <string name="setup_bt_address_hint">Sommige head units tonen een zwart scherm totdat ze weten welke telefoon verbonden is. U vindt het bij Instellingen &gt; Over de telefoon &gt; Status. Laat dit leeg als uw auto al werkt.</string>
     <string name="setup_section_location">Locatie</string>
     <string name="setup_toggle_car_gps_title">GPS van de auto gebruiken</string>
     <string name="setup_toggle_car_gps_subtitle">Tijdens de verbinding zien apps op de telefoon de positie van de auto in plaats van die van de telefoon zelf, zodat navigatie-apps de twee niet mengen</string>
@@ -90,7 +94,7 @@
     <string name="setup_toggle_calendar_title">Volgende agenda-afspraak</string>
     <string name="setup_toggle_calendar_subtitle">Onder de muziek, met een snelkoppeling om naar de locatie te navigeren</string>
     <string name="setup_toggle_media_first_title">Muziek eerst</string>
-    <string name="setup_toggle_media_first_subtitle">Op het startscherm komt de muziek waar de kaart staat (links of boven) en de kaart daarna</string>
+    <string name="setup_toggle_media_first_subtitle">Op het startscherm staat de muziek eerst (eerst in de rij, of boven) en de kaart daarna</string>
     <string name="setup_section_driving">Rijden</string>
     <string name="setup_toggle_passenger_title">Passagiersmodus</string>
     <string name="setup_toggle_passenger_subtitle">Negeert de rijstatus van de auto: typen, lange lijsten en het telefoonscherm blijven beschikbaar tijdens het rijden, voor een passagier. De bestuurder mag het scherm niet gebruiken tijdens het rijden.</string>
@@ -153,6 +157,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Veiliger: het netwerk moet voor elke sessie opnieuw worden toegestaan. Schakel dit uit voor head units die zelf opnieuw verbinding maken, zoals openauto of Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Telefoonscherm op de server</string>
     <string name="huserver_toggle_mirror_subtitle">Biedt "Telefoonscherm" ook aan iedereen die hier verbinding maakt. Risicovol: deze persoon ziet het scherm van de telefoon en kan erop tikken, laat het dus uit, tenzij u de head unit vertrouwt.</string>
+    <string name="huserver_toggle_localhost_title">Localhost toestaan (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Accepteer een verbinding van een Android-Auto-in-de-browser-app op deze telefoon, voor auto\'s zonder Android Auto (bijv. Tesla). Elke app op de telefoon zou kunnen verbinden, laat dit dus uit tenzij u er een gebruikt.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Berichten</string>
@@ -183,6 +189,10 @@
     <string name="audio_no_method">Nog geen methode ingesteld: kies er hieronder een.</string>
     <string name="audio_section_methods">Methoden, beste eerst</string>
     <string name="audio_policy_ready">Gereed. Muziek en navigatiestem gaan apart naar de auto, de telefoon blijft stil.</string>
+    <string name="audio_method_policy">Systeemaudiorouting (zoals Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, muziek en navigatie apart (zoals Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku of root</string>
+    <string name="audio_method_playback_capture">Schermopname-machtiging</string>
     <string name="audio_policy_not_ready">Zoals Android Auto: muziek en navigatiestem apart, telefoonluidspreker uit. Vereist een geroote telefoon: installeer AARE als systeemapp met de Magisk-module (zie de README).</string>
     <string name="audio_shizuku_ready">Gereed. Alles wat de telefoon afspeelt gaat naar de auto, inclusief navigatiestem; de telefoon blijft stil.</string>
     <string name="audio_shizuku_needs_android12">Vereist Android 12 of nieuwer.</string>
@@ -214,6 +224,14 @@
     <string name="notif_channel_connection">Autoverbinding</string>
     <string name="notif_action_stop">Stoppen</string>
     <string name="notif_action_trust">Vertrouwen</string>
+    <string name="notif_action_download_cert">Certificaat downloaden</string>
+    <string name="notif_cert_download_title">De head unit heeft AARE\'s certificaat geweigerd</string>
+    <string name="notif_cert_download_message">Deze head unit accepteert alleen Google\'s certificaat. Download het certificaat van de nieuwste Android Auto-app en maak opnieuw verbinding.</string>
+    <string name="notif_cert_download_progress">Android Auto\'s certificaat wordt gedownload…</string>
+    <string name="notif_cert_download_ready_title">Certificaat gereed</string>
+    <string name="notif_cert_download_ready_message">Android Auto\'s certificaat is toegevoegd. Maak opnieuw verbinding met de head unit om het te gebruiken.</string>
+    <string name="notif_cert_download_reconnecting">Android Auto\'s certificaat is toegevoegd. Opnieuw verbinden met de head unit…</string>
+    <string name="notif_cert_download_failed">Kon het certificaat niet downloaden: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Draadloos verbinden…</string>
     <string name="notif_status_not_connected">Niet verbonden</string>
     <string name="notif_keeping_consent_suffix">%1$s · schermopname-toestemming voor autoaudio wordt behouden (Stoppen trekt deze in)</string>
@@ -333,6 +351,8 @@
     <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
     <string name="standalone_toggle_title">Telefoonapps starten op het autoscherm</string>
     <string name="standalone_toggle_subtitle">Kies de apps hieronder. Alleen getoond tijdens parkeren.</string>
+    <string name="standalone_keep_awake_title">Wakker blijven voor zelfstandige apps</string>
+    <string name="standalone_keep_awake_subtitle">Houdt het fysieke telefoonscherm wakker terwijl een app open is. Op getroffen Android 17-telefoons stoppen virtuele schermen wanneer het telefoonscherm uit is. Gebruikt meer batterij.</string>
     <string name="standalone_need_root">Vereist root of Shizuku. Stel er een in op de pagina Autoaudio en kom dan terug.</string>
     <string name="standalone_not_native">Geen Android Auto-app · gebruik tijdens parkeren</string>
     <string name="standalone_starting">Starten…</string>
@@ -343,6 +363,10 @@
     <string name="browser_url_label">Startpagina</string>
     <string name="browser_hint_parked">De browser is gepauzeerd tijdens het rijden.</string>
     <string name="browser_paused_driving">De browser is gepauzeerd tijdens het rijden.</string>
+    <string name="browser_forward">Vooruit</string>
+    <string name="browser_reload">Vernieuwen</string>
+    <string name="browser_home">Startpagina</string>
+    <string name="browser_address_hint">Zoeken of een webadres invoeren</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
     <string name="setup_page_car_data_subtitle">Snelheid, versnelling en sensoren live vanuit de auto</string>
@@ -393,6 +417,14 @@
     <string name="car_data_accelerometer">Versnellingsmeter</string>
     <string name="car_data_gyroscope">Gyroscoop</string>
     <string name="car_data_dtc">Foutcodes</string>
+    <string name="car_data_app_label">Autogegevens</string>
+    <string name="car_data_show_in_car_title">Weergeven op het autoscherm</string>
+    <string name="car_data_show_in_car_subtitle">Voeg een diagnose-app toe in de auto voor deze livegegevens</string>
+    <string name="vehicles_section_title">Uitzonderingen per voertuig</string>
+    <string name="vehicles_hint">Pas de dichtheid of de marges van het zichtbare gebied aan voor een specifieke auto, zonder nieuwe build. Bewerk vehicles.json met een bestandsbeheerder en match de auto op merk/model/naam.</string>
+    <string name="vehicles_rule_count">Regels geladen: %1$d</string>
+    <string name="vehicles_import">Bestand importeren…</string>
+    <string name="vehicles_template">Sjabloon schrijven</string>
     <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
     <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->
