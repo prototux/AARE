@@ -209,7 +209,11 @@ class CarAudioOut(
         val now = channel.ackless
         if (now == lastAckless) return
         lastAckless = now
-        DiagLog.add("car audio ($label): " + if (now) "no acks from the car, sending unpaced" else "acks back, paced by the car again")
+        DiagLog.add("car audio ($label): " + when {
+            now && channel.dropsOverflow -> "the car drops what it can't take (protocol 5.0 and later), sending unpaced"
+            now -> "no acks from the car, sending unpaced"
+            else -> "acks back, paced by the car again"
+        })
     }
 
     /** Connection-log line with the chunks dropped (car's window full) during the stream that just ended. */

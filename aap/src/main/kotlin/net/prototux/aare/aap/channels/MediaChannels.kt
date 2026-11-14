@@ -146,7 +146,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
      * those that come; the head unit drops what it can't take. Valid once the channel is attached
      * (the head unit's version is known before any channel opens).
      */
-    protected abstract val dropsOverflow: Boolean
+    abstract val dropsOverflow: Boolean
 
     /** The media options a [dropsOverflow] stream's START carries. */
     protected abstract fun startMediaOptions(): MediaOptions
