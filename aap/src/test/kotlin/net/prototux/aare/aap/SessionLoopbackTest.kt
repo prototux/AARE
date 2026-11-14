@@ -271,9 +271,10 @@ open class SessionLoopbackTest {
     }
 
     /**
-     * Acks count this way: only those for the running session (ids
-     * compared modulo 256), for 1 to 4096 messages, one per receive time when the head unit
-     * sends those.
+     * Acks are checked against the media session only once the head unit has acked with the
+     * running session's id (ids compared modulo 256); before that every ack counts. An ack is for
+     * one message per receive time when the head unit sends those, a count of 0 counts as one,
+     * and a count over 4096 is ignored.
      */
     @Test
     fun audioAcksCountOnlyWhenTheyAreForTheStream() {
@@ -284,23 +285,35 @@ open class SessionLoopbackTest {
         hu.ackAudio = false
         media.startPlayback()
         val window = 2 + AudioChannel.SLACK // the simulated head unit's window is 2
-        repeat(window) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        var ts = 0L
+        fun fill() { while (media.hasRoom) assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
+        repeat(window) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
         assertFalse("window full", media.hasRoom)
         while (hu.sessionIds[hu.mediaAudio] == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
         val session = hu.sessionIds[hu.mediaAudio]!!
         fun roomAfterAWhile(): Boolean { Thread.sleep(200); return media.hasRoom }
 
+        // The head unit hasn't acked with this session yet: any ack counts, as it always did.
+        hu.sendAck(hu.mediaAudio, session + 1, count = 1)
+        assertTrue("before any ack with the session, another id still counts", roomAfterAWhile())
+        fill()
+        hu.sendAck(hu.mediaAudio, session, count = 1)
+        assertTrue(roomAfterAWhile())
+        fill()
+
+        // Now it has: other sessions' acks and oversized counts free nothing.
         hu.sendAck(hu.mediaAudio, session + 1, count = 3)
         assertFalse("another session's ack frees nothing", roomAfterAWhile())
-        hu.sendAck(hu.mediaAudio, session, count = 0)
-        assertFalse("an ack for no message is ignored", roomAfterAWhile())
         hu.sendAck(hu.mediaAudio, session, count = 5000)
         assertFalse("an ack for more than 4096 messages is ignored", roomAfterAWhile())
+        hu.sendAck(hu.mediaAudio, session, count = 0)
+        assertTrue("a count of 0 counts as one", roomAfterAWhile())
+        fill()
 
         // Three receive times: three messages, whatever the count says. The id may wrap at 256.
         hu.sendAck(hu.mediaAudio, session + 256, count = 1, receiveTimesNs = listOf(1L, 2L, 3L))
         assertTrue(roomAfterAWhile())
-        repeat(3) { assertTrue("3 acked, 3 more fit", media.sendPcm(ByteArray(10 + 3840), 10, 3840, (window + it) * 20_000L)) }
+        repeat(3) { assertTrue("3 acked, 3 more fit", media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
         assertFalse(media.hasRoom)
     }
 
