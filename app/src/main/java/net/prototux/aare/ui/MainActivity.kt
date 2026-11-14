@@ -145,6 +145,7 @@ import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.NeedAllCarSensors
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
@@ -1295,6 +1296,7 @@ private fun DataRow(label: String, value: String?) {
  */
 @Composable
 private fun CarDataCard() {
+    NeedAllCarSensors()
     val car by CarData.state.collectAsState()
     val proj by ProjectionService.state.collectAsState()
     val ctx = LocalContext.current

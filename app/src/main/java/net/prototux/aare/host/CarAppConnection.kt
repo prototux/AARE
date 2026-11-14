@@ -407,7 +407,9 @@ class CarAppConnection(
         alert = null
         // The listener changes under the same lock as the subscriptions: a binder thread subscribing at the same
         // time can't add it back after this removal (CarData's add/remove don't lock, so no lock order issue).
-        synchronized(hardwareSubscriptions) { cleanedUp = true; hardwareSubscriptions.clear(); CarData.removeListener(carDataListener) }
+        synchronized(hardwareSubscriptions) {
+            cleanedUp = true; hardwareSubscriptions.clear(); CarData.removeListener(carDataListener); CarData.release(hardwareHost)
+        }
         mic?.stop()
     }
 
@@ -559,6 +561,7 @@ class CarAppConnection(
                 if (cleanedUp) return
                 hardwareSubscriptions[resultType] = callback
                 CarData.addListener(carDataListener)
+                needSubscribedSensors()
             }
             // Outside the lock: a call back into the app.
             deliverHardware(resultType, callback)
@@ -568,9 +571,16 @@ class CarAppConnection(
             synchronized(hardwareSubscriptions) {
                 hardwareSubscriptions.remove(resultType)
                 if (hardwareSubscriptions.isEmpty()) CarData.removeListener(carDataListener)
+                if (!cleanedUp) needSubscribedSensors()
             }
         }
     }
+
+    /**
+     * The car is asked only for the sensors behind what this app subscribed to, and stops sending
+     * them once it unsubscribes. Called under the subscriptions' lock.
+     */
+    private fun needSubscribedSensors() = CarData.need(hardwareHost, CarHardwareResults.sensorsFor(hardwareSubscriptions.keys))
 
     /** Result types waiting to be pushed: bursts of sensor batches (accelerometer...) collapse into one push. */
     private val pendingHardware = HashSet<Int>()

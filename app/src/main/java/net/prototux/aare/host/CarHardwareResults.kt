@@ -37,6 +37,22 @@ object CarHardwareResults {
     const val GYROSCOPE = 22
     const val CAR_LOCATION = 23
 
+    /** The car sensors behind each result type, to ask the car only for what apps subscribed to. */
+    fun sensorsFor(types: Collection<Int>): Set<SensorType> = buildSet {
+        for (t in types) when (t) {
+            SPEED -> add(SensorType.SENSOR_SPEED)
+            MILEAGE -> add(SensorType.SENSOR_ODOMETER)
+            ENERGY_LEVEL -> add(SensorType.SENSOR_FUEL)
+            TOLL -> add(SensorType.SENSOR_TOLL_CARD)
+            ACCELEROMETER -> add(SensorType.SENSOR_ACCELEROMETER_DATA)
+            GYROSCOPE -> add(SensorType.SENSOR_GYROSCOPE_DATA)
+            COMPASS -> add(SensorType.SENSOR_COMPASS)
+            CAR_LOCATION -> add(SensorType.SENSOR_LOCATION)
+            // MODEL and ENERGY_PROFILE come from service discovery; EV_STATUS has no source.
+            else -> Unit
+        }
+    }
+
     /** Result types that depend on each kind of sensor data, to push only what changed. */
     fun typesFor(changed: Set<CarData.Kind>): Set<Int> = buildSet {
         for (k in changed) when (k) {

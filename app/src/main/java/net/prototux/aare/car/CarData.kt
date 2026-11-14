@@ -102,6 +102,29 @@ object CarData {
     /** Whoever last called [discovered]: a quick reconnect's teardown must not [reset] a car the new session already found. */
     private var owner: Any? = null
 
+    /** Every sensor type: for a page that shows all the car reports. */
+    val ALL_SENSORS: Set<SensorType> = SensorType.values().toSet()
+
+    /** What each part of AARE needs from the car right now. */
+    private val needs = HashMap<Any, Set<SensorType>>()
+    private val _needed = MutableStateFlow<Set<SensorType>>(emptySet())
+    /**
+     * The sensors something in AARE uses now: the session asks the car for these (and driving
+     * status) and stops the others, asking only for what it needs. Not tied to
+     * a car: a page left open keeps its needs across reconnects.
+     */
+    val needed: StateFlow<Set<SensorType>> = _needed
+
+    /** [client] needs [types] from now on (replacing what it needed before; empty for nothing). Any thread. */
+    fun need(client: Any, types: Set<SensorType>) {
+        synchronized(needs) {
+            if (types.isEmpty()) needs.remove(client) else needs[client] = types
+            _needed.value = needs.values.flatten().toSet()
+        }
+    }
+
+    fun release(client: Any) = need(client, emptySet())
+
     fun addListener(l: Listener) { listeners.addIfAbsent(l) }
     fun removeListener(l: Listener) { listeners.remove(l) }
 

@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +32,7 @@ import net.prototux.aare.service.ProjectionService
  */
 @Composable
 internal fun CarDataScreen(modifier: Modifier) {
+    NeedAllCarSensors()
     val car by CarData.state.collectAsState()
     val proj by ProjectionService.state.collectAsState()
     val rows = carDataLines(car, proj)
@@ -49,6 +51,19 @@ internal fun CarDataScreen(modifier: Modifier) {
                 Text(value, style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace))
             }
         }
+    }
+}
+
+/**
+ * While a page showing every sensor is on screen, the car is asked for all of them; they stop
+ * again when it closes (unless something else needs them).
+ */
+@Composable
+internal fun NeedAllCarSensors() {
+    DisposableEffect(Unit) {
+        val client = Any()
+        CarData.need(client, CarData.ALL_SENSORS)
+        onDispose { CarData.release(client) }
     }
 }
 

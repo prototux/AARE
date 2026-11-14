@@ -1,5 +1,6 @@
 package net.prototux.aare.host
 
+import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -34,6 +35,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
+import net.prototux.aare.car.CarData
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.mirror.MirrorScreen
@@ -257,6 +259,8 @@ class CarRuntime(
 
     /** The car's own day/night signal, if it sent one. */
     private var carNight: Boolean? = null
+    /** This runtime's need for that signal (see CarData.need). */
+    private val nightSignal = Any()
     /** The head unit's driver position. */
     var rightHandDrive = false
         set(v) { field = v; applyScreenSettings() }
@@ -283,6 +287,10 @@ class CarRuntime(
             Settings.THEME_LIGHT -> false
             else -> carNight ?: true
         }
+        // The car's day/night signal is only needed while the colors follow it (and the runtime runs:
+        // a late post after stop() must not need it again).
+        val followsCar = settings.carTheme != Settings.THEME_DARK && settings.carTheme != Settings.THEME_LIGHT
+        CarData.need(nightSignal, if (followsCar && this in running) setOf(SensorType.SENSOR_NIGHT_MODE) else emptySet())
         if (ui.night != night) {
             ui.night = night
             configurationChanged()
@@ -364,6 +372,7 @@ class CarRuntime(
 
     fun stop() {
         running.remove(this)
+        CarData.release(nightSignal)
         runCatching { context.unregisterReceiver(packageReceiver) }
         settings.unregisterListener(settingsListener)
         connections.values.forEach { it.release() }
