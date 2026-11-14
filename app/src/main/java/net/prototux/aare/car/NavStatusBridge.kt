@@ -37,6 +37,8 @@ class NavStatusBridge(
     private val turnImage: (Maneuver, Int, Int) -> ByteArray?,
     /** A bitmap (the phone navigation app's turn arrow) as a PNG of the given size. */
     private val png: (Bitmap, Int, Int) -> ByteArray?,
+    /** AARE's own arrow for a maneuver type, as a PNG of the given size and colour depth. */
+    private val typeIcon: (type: Int, width: Int, height: Int, colourDepthBits: Int) -> ByteArray?,
 ) {
     private var active = false
     /** REROUTING was sent: the next guidance sends ACTIVE again. */
@@ -120,12 +122,7 @@ class NavStatusBridge(
         // The older events most head units still use for their cluster.
         val turn = legacyTurn(road, maneuver?.type ?: Maneuver.TYPE_UNKNOWN,
             maneuver?.roundaboutExitNumber ?: 0, maneuver?.roundaboutExitAngle ?: 0)
-        maneuver?.let { m ->
-            if (channel.wantsImages) {
-                val o = channel.imageOptions
-                turnImage(m, o.width.takeIf { it > 0 } ?: 64, o.height.takeIf { it > 0 } ?: 64)?.let { turn.setImage(ByteString.copyFrom(it)) }
-            }
-        }
+        image(maneuver?.type ?: Maneuver.TYPE_UNKNOWN) { w, h -> maneuver?.let { turnImage(it, w, h) } }?.let { turn.setImage(it) }
         val distance = stepEstimate?.let { e ->
             val d = e.remainingDistance ?: return@let null
             NavigationNextTurnDistanceEvent.newBuilder()
@@ -175,11 +172,7 @@ class NavStatusBridge(
                 .setDisplayUnits(NavigationDistance.DistanceUnits.forNumber(unitNumber(d)) ?: NavigationDistance.DistanceUnits.UNKNOWN_DISTANCE_UNIT)))
         }
         val turn = legacyTurn(g.instruction, Maneuver.TYPE_UNKNOWN, 0, 0)
-        val arrow = g.arrow
-        if (arrow != null && channel.wantsImages) {
-            val o = channel.imageOptions
-            png(arrow, o.width.takeIf { it > 0 } ?: 64, o.height.takeIf { it > 0 } ?: 64)?.let { turn.setImage(ByteString.copyFrom(it)) }
-        }
+        image(Maneuver.TYPE_UNKNOWN) { w, h -> g.arrow?.let { png(it, w, h) } }?.let { turn.setImage(it) }
         val distance = g.distance?.let { d ->
             NavigationNextTurnDistanceEvent.newBuilder()
                 .setDistanceMeters(d.meters)
@@ -191,6 +184,18 @@ class NavStatusBridge(
                 .build()
         }
         channel.update(state.build(), position.build(), turn.build(), distance)
+    }
+
+    /**
+     * The turn picture for an image cluster: the app's [own], else AARE's arrow for the maneuver
+     * type, drawn by default when the app gives none.
+     */
+    private fun image(type: Int, own: (Int, Int) -> ByteArray?): ByteString? {
+        if (!channel.wantsImages) return null
+        val o = channel.imageOptions
+        val w = o.width.takeIf { it > 0 } ?: 64
+        val h = o.height.takeIf { it > 0 } ?: 64
+        return (own(w, h) ?: typeIcon(type, w, h, o.colourDepthBits))?.let { ByteString.copyFrom(it) }
     }
 
     /** The protocol's distance unit number (the same in both distance messages). */
