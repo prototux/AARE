@@ -18,6 +18,7 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
@@ -50,6 +51,9 @@ class PhoneStatusBridge(
 
     private var lastBattery = -1
     private var lastCritical = false
+    /** The first level heard and when (elapsedRealtime), to estimate the drain before Android 12. */
+    private var firstBattery = -1
+    private var firstBatteryAtMs = 0L
     private var lastSent: PhoneStatus? = null
 
     private var callState = TelephonyManager.CALL_STATE_IDLE
@@ -137,7 +141,24 @@ class PhoneStatusBridge(
         if (percent == lastBattery && critical == lastCritical) return
         lastBattery = percent
         lastCritical = critical
-        aap.sendBatteryStatus(percent, critical)
+        if (firstBattery < 0) { firstBattery = percent; firstBatteryAtMs = SystemClock.elapsedRealtime() }
+        if (!aap.sendBatteryStatus(percent, critical, timeRemainingS(percent))) Log.d(TAG, "head unit too old for battery status")
+    }
+
+    /**
+     * How long the battery lasts: Android's own discharge prediction on
+     * Android 12+, otherwise the level divided by the drain seen since the session started. Null
+     * when unknown (nothing drained yet, or no prediction).
+     */
+    private fun timeRemainingS(percent: Int): Int? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val left = runCatching { context.getSystemService(PowerManager::class.java)?.batteryDischargePrediction }.getOrNull()
+            return left?.takeUnless { it.isNegative }?.seconds?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt()
+        }
+        val drained = firstBattery - percent
+        val elapsedS = (SystemClock.elapsedRealtime() - firstBatteryAtMs) / 1_000
+        if (drained <= 0 || elapsedS <= 0) return null
+        return (percent.toLong() * elapsedS / drained).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
     // ------------------------------------------------------------------ calls and signal

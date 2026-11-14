@@ -30,9 +30,14 @@ class PhoneStatusChannel(service: Service, private val onInput: (PhoneStatusInpu
     }
 }
 
-/** The phone's battery, for the car's status bar (control message 23). */
-fun AapSession.sendBatteryStatus(levelPercent: Int, critical: Boolean, timeRemainingS: Int? = null) {
+/**
+ * The phone's battery, for the car's status bar (control message 23). Only
+ * to head units that asked for protocol 1.4 or later; returns whether it was sent.
+ */
+fun AapSession.sendBatteryStatus(levelPercent: Int, critical: Boolean, timeRemainingS: Int? = null): Boolean {
+    if (!headUnitAtLeast(1, 4)) return false
     val b = BatteryStatusNotification.newBuilder().setBatteryLevel(levelPercent.coerceIn(0, 100)).setCriticalBattery(critical)
     timeRemainingS?.let { b.setTimeRemainingS(it) }
     sendControl(ControlMsg.BATTERY_STATUS_NOTIFICATION, b.build())
+    return true
 }
