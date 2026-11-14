@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s остановлен</string>
     <string name="carapp_error_google_only">%1$s принимает только Google Android Auto. Ему нужно разрешить AARE (см. список приложений на телефоне).</string>
     <string name="carapp_error_cant_start">%1$s не удалось запустить: %2$s</string>
+    <string name="setup_section_companion">Беспроводное соединение одним нажатием</string>
+    <string name="setup_companion_hint">Привяжите автомобиль, к которому вы уже подключались по беспроводной сети: после этого Android запускает AARE при подключении Bluetooth этого автомобиля, даже если телефон в кармане. Android просит подтверждение один раз для каждого автомобиля.</string>
+    <string name="setup_companion_empty">Подключитесь к автомобилю по беспроводной сети один раз, затем вернитесь сюда, чтобы привязать его.</string>
+    <string name="setup_companion_failed">Android не привязал автомобиль: %1$s</string>
+    <string name="setup_action_associate">Привязать</string>
+    <string name="setup_toggle_companion_shizuku_title">Подтверждать Wi-Fi автомобиля через Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Для привязанных автомобилей Shizuku отвечает на вопрос Android \"подключиться к устройству\", поэтому он больше не задаётся. Сеть автомобиля остаётся собственной сетью AARE и никогда не становится интернет-подключением телефона. Требует, чтобы Shizuku работал и разрешал AARE.</string>
 </resources>

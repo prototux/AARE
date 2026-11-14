@@ -476,4 +476,11 @@
     <string name="carapp_error_stopped">%1$s 已停止</string>
     <string name="carapp_error_google_only">%1$s 只接受 Google 的 Android Auto。需要允许 AARE（参见手机上的应用列表）。</string>
     <string name="carapp_error_cant_start">%1$s 无法启动：%2$s</string>
+    <string name="setup_section_companion">一键无线连接</string>
+    <string name="setup_companion_hint">关联一辆你已经无线连接过的车辆：此后当该车辆的蓝牙连接时，Android 会启动 AARE，即使手机放在口袋里也一样。Android 会针对每辆车请求一次确认。</string>
+    <string name="setup_companion_empty">先无线连接一次车辆，然后回到此处将其关联。</string>
+    <string name="setup_companion_failed">Android 未能关联该车辆：%1$s</string>
+    <string name="setup_action_associate">关联</string>
+    <string name="setup_toggle_companion_shizuku_title">通过 Shizuku 批准车辆的 Wi-Fi</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">对于已关联的车辆，Shizuku 会代为回答 Android 的“连接到设备”询问，因此不会再次询问。车辆的网络始终只属于 AARE，绝不会成为手机的互联网连接。需要 Shizuku 正在运行并允许 AARE。</string>
 </resources>

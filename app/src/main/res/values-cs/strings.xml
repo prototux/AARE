@@ -492,4 +492,11 @@
     <string name="carapp_error_stopped">%1$s se zastavilo</string>
     <string name="carapp_error_google_only">%1$s akceptuje pouze Android Auto od Googlu. Musí povolit AARE (viz seznam aplikací na telefonu).</string>
     <string name="carapp_error_cant_start">%1$s se nepodařilo spustit: %2$s</string>
+    <string name="setup_section_companion">Bezdrátově na jedno klepnutí</string>
+    <string name="setup_companion_hint">Přiřadit auto, ke kterému jste se už bezdrátově připojili: Android pak spustí AARE, jakmile se připojí Bluetooth tohoto auta, i když je telefon v kapse. Android se u každého auta jednou zeptá na potvrzení.</string>
+    <string name="setup_companion_empty">Jednou se bezdrátově připojte k autu a pak se sem vraťte a přiřaďte ho.</string>
+    <string name="setup_companion_failed">Android auto nepřiřadil: %1$s</string>
+    <string name="setup_action_associate">Přiřadit</string>
+    <string name="setup_toggle_companion_shizuku_title">Schvalovat Wi-Fi auta přes Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">U přiřazených aut odpovídá na otázku Androidu „připojit se k zařízení“ Shizuku, takže se už znovu neobjeví. Síť auta zůstává vlastní sítí AARE, nikdy internetovým připojením telefonu. Vyžaduje běžící Shizuku a povolené AARE v něm.</string>
 </resources>
