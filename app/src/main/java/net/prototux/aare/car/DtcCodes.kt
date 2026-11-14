@@ -2,6 +2,9 @@ package net.prototux.aare.car
 
 import android.content.Context
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import net.prototux.aare.R
 import org.json.JSONObject
 
 /**
@@ -10,21 +13,36 @@ import org.json.JSONObject
  * (P/C/B/U + 4 digits), with a plain-language description for the generic (SAE-defined) ones from
  * the catalogue AARE ships (`app/src/main/assets/dtc/generic.json`).
  *
- * The wire format (two bytes per code, as AAP's `DiagnosticsData.dtc` is otherwise undocumented):
- * byte 1 bits 7-6 pick the system letter, bits 5-4 the first digit (0-3; which values are
- * SAE-generic depends on the system, see [isGeneric]), bits 3-0 the second digit; byte 2's high
- * and low nibbles are the third and fourth digits. Each digit is a hex nibble (0-9, occasionally A-F).
+ * The wire format is a guess: AAP's `DiagnosticsData.dtc` is undocumented beyond "bytes", so this
+ * assumes the usual OBD-II layout, two bytes per code: byte 1 bits 7-6 pick the system letter,
+ * bits 5-4 the first digit (0-3), bits 3-0 the second digit; byte 2's high and low nibbles are the
+ * third and fourth digits. Each digit is a hex nibble (0-9, occasionally A-F). As it is a guess,
+ * the viewers show each code's raw bytes next to it. A zero pair (P0000) is padding, not a code.
  */
 object DtcCodes {
     private const val TAG = "AareDtc"
     private val SYSTEMS = charArrayOf('P', 'C', 'B', 'U')
     private val FAMILIES = mapOf('P' to "powertrain", 'C' to "chassis", 'B' to "body", 'U' to "network")
+    private val MANUFACTURER_DESCRIPTIONS = mapOf(
+        "powertrain" to R.string.car_data_dtc_manufacturer_powertrain,
+        "chassis" to R.string.car_data_dtc_manufacturer_chassis,
+        "body" to R.string.car_data_dtc_manufacturer_body,
+        "network" to R.string.car_data_dtc_manufacturer_network,
+    )
 
-    /** One decoded code: its family, whether it's SAE-generic, and what to show for it. */
-    data class Dtc(val code: String, val generic: Boolean, val family: String, val description: String)
+    /**
+     * One decoded code: its raw bytes as hex ("01 28"), its family, whether it's SAE-generic, and
+     * what to show for it (null while the catalogue isn't loaded yet).
+     */
+    data class Dtc(val code: String, val raw: String, val generic: Boolean, val family: String, val description: String?)
 
-    /** Every 2-byte code in [bytes], as "P0128" etc. A trailing odd byte (malformed data) is dropped. */
-    fun decode(bytes: ByteArray): List<String> = (0 until bytes.size / 2).map { toCode(bytes[it * 2], bytes[it * 2 + 1]) }
+    /** Every 2-byte code in [bytes], as "P0128" etc. Zero padding and a trailing odd byte (malformed data) are dropped. */
+    fun decode(bytes: ByteArray): List<String> = pairs(bytes).map { (h, l) -> toCode(h, l) }
+
+    /** The 2-byte codes in [bytes], without zero padding or a trailing odd byte. */
+    private fun pairs(bytes: ByteArray): List<Pair<Byte, Byte>> =
+        (0 until bytes.size / 2).map { bytes[it * 2] to bytes[it * 2 + 1] }
+            .filterNot { (h, l) -> h.toInt() == 0 && l.toInt() == 0 }
 
     private fun toCode(high: Byte, low: Byte): String {
         val h = high.toInt() and 0xFF
@@ -50,22 +68,31 @@ object DtcCodes {
             'C', 'B', 'U' -> digit == '0' || digit == '3'
             else -> false
         }
+    }
 
-    /** [code] with its family and a description: the catalogue's for a known generic code, "unknown" for an
-     * uncatalogued generic one, or the family alone (no description) for a manufacturer-specific one. */
-    fun describe(context: Context, code: String): Dtc {
+    /**
+     * [code] with its family and a description: the catalogue's for a known generic code,
+     * "Unknown" for an uncatalogued generic one, or the family alone for a manufacturer-specific
+     * one. [catalogue] null (not loaded yet) leaves a generic code without a description.
+     */
+    fun describe(context: Context, code: String, raw: String, catalogue: Map<String, String>?): Dtc {
         val generic = isGeneric(code)
         val fam = family(code)
         val description = when {
-            !generic -> "manufacturer-specific $fam code"
-            else -> Catalogue.lookup(context, code) ?: "unknown"
+            !generic -> context.getString(MANUFACTURER_DESCRIPTIONS[fam] ?: R.string.car_data_dtc_unknown)
+            catalogue == null -> null
+            else -> catalogue[code] ?: context.getString(R.string.car_data_dtc_unknown)
         }
-        return Dtc(code, generic, fam, description)
+        return Dtc(code, raw, generic, fam, description)
     }
 
-    /** One display line per code in [bytes] ("P0128 — Coolant thermostat below regulating temperature"), for the car data viewers. */
-    fun describeAll(context: Context, bytes: ByteArray): List<String> =
-        decode(bytes).map { code -> describe(context, code) }.map { "${it.code} — ${it.description}" }
+    /**
+     * One display line per code in [bytes] ("P0128 (01 28) — Coolant thermostat below regulating
+     * temperature"), for the car data viewers; [catalogue] as for [describe].
+     */
+    fun describeAll(context: Context, bytes: ByteArray, catalogue: Map<String, String>?): List<String> =
+        pairs(bytes).map { (h, l) -> describe(context, toCode(h, l), "%02x %02x".format(h, l), catalogue) }
+            .map { d -> "${d.code} (${d.raw})" + (d.description?.let { " — $it" } ?: "") }
 
     /** The shipped catalogue of generic codes (`app/src/main/assets/dtc/generic.json`): code to a short description. */
     object Catalogue {
@@ -73,9 +100,13 @@ object DtcCodes {
 
         @Volatile private var cache: Map<String, String>? = null
 
-        fun lookup(context: Context, code: String): String? = load(context)[code]
+        /** The catalogue if it's been read already, else null: never touches the assets. */
+        val loaded: Map<String, String>? get() = cache
 
-        private fun load(context: Context): Map<String, String> = cache ?: synchronized(this) {
+        /** The catalogue (~20 KB of JSON), read from the assets off the main thread the first time, then kept. */
+        suspend fun load(context: Context): Map<String, String> = cache ?: withContext(Dispatchers.IO) { read(context) }
+
+        private fun read(context: Context): Map<String, String> = cache ?: synchronized(this) {
             cache ?: runCatching { context.assets.open(ASSET_PATH).bufferedReader().use { parse(it.readText()) } }
                 .onFailure { Log.w(TAG, "dtc catalogue: ${it.message}") }
                 .getOrDefault(emptyMap())

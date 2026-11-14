@@ -35,6 +35,12 @@ class DtcCodesTest {
     }
 
     @Test
+    fun zeroPaddingIsNoCode() {
+        assertEquals(listOf("P0128"), DtcCodes.decode(bytes(0x01, 0x28, 0x00, 0x00)))
+        assertTrue(DtcCodes.decode(bytes(0x00, 0x00, 0x00, 0x00)).isEmpty())
+    }
+
+    @Test
     fun emptyBytesDecodeToNoCodes() {
         assertTrue(DtcCodes.decode(ByteArray(0)).isEmpty())
     }

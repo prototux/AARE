@@ -142,9 +142,9 @@ import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
-import net.prototux.aare.car.DtcCodes
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
@@ -1366,8 +1366,7 @@ private fun CarDataCard() {
         DataRow(stringResource(R.string.car_data_toll), yesNo(car.tollCardPresent?.value))
         DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
         DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
-        DataRow(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }
-            ?.let { DtcCodes.describeAll(ctx, it).joinToString("\n") })
+        DataRow(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
     }
 }
 
