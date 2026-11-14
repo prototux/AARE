@@ -468,8 +468,12 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
 }
 
 /** The car's microphone (a media source on the head unit). */
-class MicrophoneChannel(service: Service, private val listener: Listener) :
-    ServiceChannel(service, "mic") {
+class MicrophoneChannel(
+    service: Service,
+    private val listener: Listener,
+    /** Send SETUP when the channel opens; a head unit can be told not to get it (vehicles.json micSetup). */
+    private val sendSetup: Boolean = true,
+) : ServiceChannel(service, "mic") {
 
     interface Listener {
         fun onMicReady(config: AudioConfiguration?) {}
@@ -486,7 +490,7 @@ class MicrophoneChannel(service: Service, private val listener: Listener) :
     private var sessionId = 0
 
     override fun onOpened() {
-        send(MediaMsg.SETUP, Setup.newBuilder().setType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).build())
+        if (sendSetup) send(MediaMsg.SETUP, Setup.newBuilder().setType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).build())
     }
 
     fun openMic() {

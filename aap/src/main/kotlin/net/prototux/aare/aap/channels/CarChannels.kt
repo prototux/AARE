@@ -195,6 +195,14 @@ class NavigationStatusChannel(service: Service) : ServiceChannel(service, "navst
     private fun now() = System.nanoTime() / 1_000_000
 }
 
+/**
+ * A service AARE has nothing to say on, opened because the head unit expects it open (a
+ * vehicles.json `openServices` quirk). Whatever the car sends on it is ignored.
+ */
+class PassiveChannel(service: Service, name: String) : ServiceChannel(service, name) {
+    override fun onMessage(msg: AapMessage) = Unit
+}
+
 /** Now-playing info for the head unit's own widgets and cluster. */
 class MediaPlaybackChannel(service: Service) : ServiceChannel(service, "playback") {
     override fun onMessage(msg: AapMessage) = Unit

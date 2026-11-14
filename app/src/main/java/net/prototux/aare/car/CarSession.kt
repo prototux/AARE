@@ -59,6 +59,7 @@ import net.prototux.aare.aap.channels.InputChannel
 import net.prototux.aare.aap.channels.MediaPlaybackChannel
 import net.prototux.aare.aap.channels.MicrophoneChannel
 import net.prototux.aare.aap.channels.NavigationStatusChannel
+import net.prototux.aare.aap.channels.PassiveChannel
 import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.channels.WifiProjectionChannel
@@ -208,7 +209,7 @@ class CarSession(
         response.headunitInfo.let { hu ->
             vehicleOverride = VehicleOverrides.forHeadUnit(context,
                 make = hu.make.ifEmpty { response.make }, model = hu.model.ifEmpty { response.model }, name = headUnitName)
-            vehicleOverride?.let { Log.i(TAG, "vehicles.json override for \"$headUnitName\": $it") }
+            vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
         }
         CarData.discovered(response, owner = this)
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
@@ -222,7 +223,13 @@ class CarSession(
         // a cluster/second screen lists one input service per display, several of them empty.
         val inputServices = ArrayList<Service>()
         var mainDisplayId = 0
+        val quirks = vehicleOverride
         for (s in response.channelsList) {
+            val kind = AapSession.serviceKind(s)
+            if (quirks?.skips(kind) == true) {
+                DiagLog.add("vehicles.json: not opening $kind#${s.id}")
+                continue
+            }
             when {
                 s.hasMediaSinkService() && s.mediaSinkService.videoConfigsCount > 0 -> {
                     // The main display, and the instrument cluster's if the car has one (display_type CLUSTER).
@@ -251,7 +258,7 @@ class CarSession(
                         else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
                     }
                 }
-                s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener).also { channels += it }
+                s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
                 s.hasInputSourceService() -> inputServices += s
                 s.hasSensorSourceService() -> channels += SensorChannel(s, sensorListener)
                 s.hasNavigationStatusService() -> navStatus = NavigationStatusChannel(s).also { channels += it }
@@ -278,6 +285,14 @@ class CarSession(
                 ch.touchScreen?.let { touchSize = it.width to it.height }
                 channels += ch
                 Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
+            }
+        }
+        // Services the head unit lists that AARE doesn't speak, opened because a rule says this car wants them open.
+        if (quirks?.openServices != null) for (s in response.channelsList) {
+            val kind = AapSession.serviceKind(s)
+            if (quirks.opens(kind) && !quirks.skips(kind) && channels.none { it.id == s.id }) {
+                DiagLog.add("vehicles.json: opening $kind#${s.id}")
+                channels += PassiveChannel(s, kind)
             }
         }
         Log.i(TAG, "audio: " + audio.joinToString { ch ->

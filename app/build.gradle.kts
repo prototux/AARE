@@ -128,5 +128,7 @@ dependencies {
     implementation(libs.shizuku.provider)
     implementation(libs.hiddenapibypass)
     testImplementation(libs.junit)
+    // vehicles.json is parsed with the platform's org.json, which unit tests only see as a stub.
+    testImplementation(libs.org.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
