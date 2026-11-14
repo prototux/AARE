@@ -1,6 +1,7 @@
 package net.prototux.aare.headunit
 
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
+import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.AapSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -21,6 +22,36 @@ class SimTest {
             "hu-model" to "CMU 150", "hu-sw" to "74.00.324", "vehicle-id" to "VIN WVWZZZ1JZXW000001", "car-bt-address" to "00:11:22:33:44:55"))
         assertEquals(Sim(make = "Mazda [x]", model = "3 Hatch", year = "2019", huMake = "Harman", huModel = "CMU 150",
             huSoftwareVersion = "74.00.324", vehicleId = "VIN WVWZZZ1JZXW000001", carBtAddress = "00:11:22:33:44:55"), s)
+    }
+
+    @Test
+    fun faults() {
+        assertEquals(setOf(Sim.Fault.CLOSE_AFTER_VERSION), Sim.parse(mapOf("fault" to "close-after-version")).faults)
+        val s = Sim.parse(mapOf("fault" to "close-mid-tls, auth-fail"))
+        assertEquals(setOf(Sim.Fault.CLOSE_MID_TLS, Sim.Fault.AUTH_FAIL), s.faults)
+        assertEquals(MessageStatus.STATUS_AUTHENTICATION_FAILURE_VALUE, s.authFailStatus)
+        assertEquals(MessageStatus.STATUS_AUTHENTICATION_FAILURE_CERT_EXPIRED_VALUE, Sim.parse(mapOf("fault" to "auth-fail:-24")).authFailStatus)
+        assertThrows(IllegalArgumentException::class.java) { Sim.parse(mapOf("fault" to "close-early")) }
+        assertThrows(IllegalArgumentException::class.java) { Sim.parse(mapOf("fault" to "true")) }
+        assertThrows(IllegalArgumentException::class.java) { Sim.parse(mapOf("fault" to "auth-fail:0")) }
+        assertThrows(IllegalArgumentException::class.java) { Sim.parse(mapOf("fault" to "auth-fail:x")) }
+        assertThrows(IllegalArgumentException::class.java) { Sim.parse(mapOf("fault" to "close-mid-tls:1")) }
+    }
+
+    @Test
+    fun channelsAndNumbers() {
+        val s = Sim.parse(mapOf("refuse-channel" to "7", "ignore-channel" to "2,3", "video-ack-delay" to "250", "mic-status" to "-1",
+            "ping-ms" to "100", "no-audio-ack" to "true", "no-audio-focus" to "true", "no-video-focus" to "true"))
+        assertEquals(setOf(7), s.refuseChannels)
+        assertEquals(setOf(2, 3), s.ignoreChannels)
+        assertEquals(250L, s.videoAckDelayMs)
+        assertEquals(-1, s.micStatus)
+        assertEquals(100L, s.pingMs)
+        assertTrue(s.noAudioAck && s.noAudioFocus && s.noVideoFocus)
+        for (bad in listOf("refuse-channel" to "x", "ignore-channel" to "256", "video-ack-delay" to "-1", "ping-ms" to "0",
+            "mic-status" to "9999999999", "mic-status" to "true")) {
+            assertThrows(bad.toString(), IllegalArgumentException::class.java) { Sim.parse(mapOf(bad)) }
+        }
     }
 
     @Test

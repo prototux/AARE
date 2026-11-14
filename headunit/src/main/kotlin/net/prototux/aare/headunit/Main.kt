@@ -79,6 +79,17 @@ Testing a phone app (all off by default; channels: 1 video, 2 media, 3 guidance,
   --vehicle-id S         also send a vehicle id
   --car-bt-address MAC   the Bluetooth service's car address (default SKIP_THIS_BLUETOOTH); then pairing
                          requests are answered: success, already paired
+  --fault F[,F...]       close-after-version: hang up after the version response
+                         close-mid-tls: hang up on the phone's first TLS handshake message
+                         auth-fail[:STATUS]: AUTH_COMPLETE with STATUS (default -3, authentication failure)
+  --refuse-channel N[,N...]   answer the channel open request with STATUS_INVALID_SERVICE
+  --ignore-channel N[,N...]   never answer the channel open request
+  --no-audio-ack         never ack audio data
+  --video-ack-delay MS   ack video data MS milliseconds late
+  --mic-status N         answer microphone requests with status N (default 0)
+  --no-audio-focus       never answer audio focus requests
+  --no-video-focus       never answer video focus requests, nor give focus at setup
+  --ping-ms N            the head unit's own ping interval (default 1000)
   --aac-sink             also list an AAC media sink (listed only: its setup is never answered)
   --unknown-service      also list a generic notification service
   --video-codec C        h264 (default), h265 or vp9: the only codec the video sink offers (the offer

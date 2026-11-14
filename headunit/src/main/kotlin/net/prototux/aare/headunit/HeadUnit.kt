@@ -89,6 +89,7 @@ import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.WifiProjectionMsg
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -119,7 +120,7 @@ class HeadUnit(
          * so the phone drives the UI entirely from keys and rotary detents.
          */
         val noTouch: Boolean = false,
-        /** Test-harness identity and discovery variants (all off by default). */
+        /** Test-harness identity, faults and discovery variants (all off by default). */
         val sim: Sim = Sim(),
     )
 
@@ -185,6 +186,8 @@ class HeadUnit(
     @Volatile var driving = true
         private set
     @Volatile private var lastFix: Fix? = null
+    /** Leave audio DATA unacked (--no-audio-ack). */
+    private val noAudioAck = config.sim.noAudioAck
 
     var phoneName: String = ""
         private set
@@ -316,8 +319,11 @@ class HeadUnit(
     private fun handle(m: AapMessage) {
         if (m.channel == 0 && !m.control) return control(m)
         if (m.control && m.id == ControlMsg.CHANNEL_OPEN_REQUEST) {
-            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder().setStatus(MessageStatus.STATUS_SUCCESS).build(), control = true)
-            if (m.channel == chNav) send(chNav, NavStatusMsg.START, aap_protobuf.service.navigationstatus.message.NavigationStatusStartOuterClass.NavigationStatusStart.getDefaultInstance())
+            if (m.channel in config.sim.ignoreChannels) return
+            val refused = m.channel in config.sim.refuseChannels
+            send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder()
+                .setStatus(if (refused) MessageStatus.STATUS_INVALID_SERVICE else MessageStatus.STATUS_SUCCESS).build(), control = true)
+            if (m.channel == chNav && !refused) send(chNav, NavStatusMsg.START, aap_protobuf.service.navigationstatus.message.NavigationStatusStartOuterClass.NavigationStatusStart.getDefaultInstance())
             return
         }
         when (m.channel) {
@@ -345,18 +351,21 @@ class HeadUnit(
                 val b = m.bodyBytes()
                 val ver = if (b.size >= 4) "${(b[0].toInt() shl 8) or (b[1].toInt() and 0xff)}.${(b[2].toInt() shl 8) or (b[3].toInt() and 0xff)}" else "?"
                 ui.status("Phone speaks protocol $ver; TLS…")
+                if (Sim.Fault.CLOSE_AFTER_VERSION in config.sim.faults) return close("test fault: hung up after the version response")
                 tlsStarted = true
                 cryptor.beginHandshake()
                 sendPlain(ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
             ControlMsg.ENCAPSULATED_SSL -> {
+                if (Sim.Fault.CLOSE_MID_TLS in config.sim.faults) return close("test fault: hung up in the middle of the TLS handshake")
                 val out = cryptor.handshake(m.bodyBytes())
                 if (out.isNotEmpty()) sendPlain(ControlMsg.ENCAPSULATED_SSL, out)
                 if (cryptor.handshakeDone && !tlsUp) {
                     // Like openauto, we accept any phone certificate.
-                    sendPlain(ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().setStatus(0).build().toByteArray())
+                    val status = if (Sim.Fault.AUTH_FAIL in config.sim.faults) config.sim.authFailStatus else 0
+                    sendPlain(ControlMsg.AUTH_COMPLETE, AuthResponse.newBuilder().setStatus(status).build().toByteArray())
                     tlsUp = true
-                    ui.status("Authenticated (${cryptor.cipherSuite}); waiting for the phone…")
+                    ui.status(if (status != 0) "Test fault: sent AUTH_COMPLETE with status $status" else "Authenticated (${cryptor.cipherSuite}); waiting for the phone…")
                 }
             }
             ControlMsg.SERVICE_DISCOVERY_REQUEST -> {
@@ -369,11 +378,11 @@ class HeadUnit(
                 ui.status("Connected to $phoneName")
                 timer.scheduleWithFixedDelay({
                     if (tlsUp && !closed.get()) send(0, ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1000).build())
-                }, 1, 1, TimeUnit.SECONDS)
+                }, config.sim.pingMs, config.sim.pingMs, TimeUnit.MILLISECONDS)
             }
             ControlMsg.PING_REQUEST -> send(0, ControlMsg.PING_RESPONSE,
                 PingResponse.newBuilder().setTimestamp(PingRequest.parseFrom(m.bodyBytes()).timestamp).build())
-            ControlMsg.AUDIO_FOCUS_REQUEST -> {
+            ControlMsg.AUDIO_FOCUS_REQUEST -> if (!config.sim.noAudioFocus) {
                 val state = when (AudioFocusRequest.parseFrom(m.bodyBytes()).audioFocusType) {
                     AudioFocusRequestType.AUDIO_FOCUS_RELEASE -> AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS
                     AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT, AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK ->
@@ -400,7 +409,7 @@ class HeadUnit(
             MediaMsg.SETUP -> {
                 send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
                     .setMaxUnacked(if (video) 4 else 8).addConfigurationIndices(0).build())
-                if (video) {
+                if (video && !config.sim.noVideoFocus) {
                     // Show the projection as soon as the phone is ready, like openauto.
                     send(m.channel, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder()
                         .setFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setUnsolicited(false).build())
@@ -415,7 +424,7 @@ class HeadUnit(
                 }
             }
             MediaMsg.STOP -> if (!video) ui.audioStop(stream!!)
-            MediaMsg.VIDEO_FOCUS_REQUEST -> {
+            MediaMsg.VIDEO_FOCUS_REQUEST -> if (!config.sim.noVideoFocus) {
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
                 val mode = if (r.mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) VideoFocusMode.VIDEO_FOCUS_NATIVE else VideoFocusMode.VIDEO_FOCUS_PROJECTED
                 send(m.channel, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder().setFocus(mode).setUnsolicited(false).build())
@@ -431,7 +440,13 @@ class HeadUnit(
                     chCluster -> ui.clusterVideo(m.body, m.bodyOffset + 8, m.bodyLength - 8, config = false)
                     else -> ui.audio(stream!!, m.body, m.bodyOffset + 8, m.bodyLength - 8)
                 }
-                send(m.channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessions[m.channel] ?: 0).setAck(1).build())
+                val ch = m.channel
+                val ack = Ack.newBuilder().setSessionId(sessions[ch] ?: 0).setAck(1).build()
+                when {
+                    !video && noAudioAck -> Unit
+                    video && config.sim.videoAckDelayMs > 0 -> later(config.sim.videoAckDelayMs) { send(ch, MediaMsg.ACK, ack) }
+                    else -> send(ch, MediaMsg.ACK, ack)
+                }
             }
         }
     }
@@ -442,9 +457,10 @@ class HeadUnit(
             MediaMsg.MICROPHONE_REQUEST -> {
                 val open = MicrophoneRequest.parseFrom(m.bodyBytes()).open
                 val session = micSession.incrementAndGet()
-                send(chMic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().setStatus(0).setSessionId(session).build())
-                micOpen = open
-                if (open) ui.micOpened() else ui.micClosed()
+                send(chMic, MediaMsg.MICROPHONE_RESPONSE, MicrophoneResponse.newBuilder().setStatus(config.sim.micStatus).setSessionId(session).build())
+                // A refused microphone (--mic-status) sends nothing.
+                micOpen = open && config.sim.micStatus == 0
+                if (micOpen) ui.micOpened() else ui.micClosed()
             }
             MediaMsg.ACK -> Unit
         }
@@ -607,6 +623,14 @@ class HeadUnit(
             synchronized(writeLock) { writer.write(channel, false, tlsUp, plain) }
         } catch (e: Exception) {
             close("send failed: ${e.message}")
+        }
+    }
+
+    /** Runs [task] on the timer after [ms]; dropped once the session is closed. */
+    private fun later(ms: Long, task: () -> Unit) {
+        try {
+            timer.schedule(task, ms, TimeUnit.MILLISECONDS)
+        } catch (_: RejectedExecutionException) {
         }
     }
 
