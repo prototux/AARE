@@ -1,6 +1,5 @@
 package net.prototux.aare.ui
 
-import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ComponentName
@@ -51,9 +50,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -143,6 +144,9 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.setup.SetupPermissions
+import net.prototux.aare.setup.ShizukuSetup
+import net.prototux.aare.setup.ShizukuSetupClient
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
@@ -420,26 +424,33 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
         }
         if (blocked) ctx.startSafely(appDetails(ctx))
     }
-    // Only the permissions this Android version has: a newer one reads as denied on older releases and
-    // can't be requested, so setup would never finish. Before 12, Bluetooth and Wi-Fi scans need location.
-    // Android 12+ ignores a request for fine location without coarse; precise stays required (wireless
-    // before 13, car apps' location).
-    val runtimePerms = buildList {
-        add(Manifest.permission.RECORD_AUDIO)
-        add(Manifest.permission.ACCESS_COARSE_LOCATION); add(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { add(Manifest.permission.BLUETOOTH_CONNECT); add(Manifest.permission.BLUETOOTH_SCAN) }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { add(Manifest.permission.POST_NOTIFICATIONS); add(Manifest.permission.NEARBY_WIFI_DEVICES) }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) add(Manifest.permission.ACCESS_LOCAL_NETWORK)
-        addAll(listOf(Manifest.permission.CALL_PHONE, Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.READ_CONTACTS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALENDAR))
-    }
+    val runtimePerms = SetupPermissions.forSdk(Build.VERSION.SDK_INT)
     @Suppress("UNUSED_EXPRESSION") refresh
     val perms = runtimePerms.all(::granted)
     val notificationAccess = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
     val audio = CaptureMethods.audioPolicyAvailable(ctx) || CaptureMethods.shizukuAvailable() || CaptureMethods.rootAvailable(ctx) || state.audioCapture
+    // Shown even once everything is granted: the result is the confirmation.
+    var granted by remember { mutableStateOf<List<ShizukuSetupClient.Item>?>(null) }
+    granted?.let { ShizukuGrantResult(it) { granted = null } }
     if (perms && notificationAccess && audio) return
 
+    val scope = rememberCoroutineScope()
+    var granting by remember { mutableStateOf(false) }
     Section(stringResource(R.string.setup_finish_title)) {
+        if ((!perms || !notificationAccess) && ShizukuSetupClient.available()) {
+            Check(stringResource(R.string.shizuku_setup_title),
+                stringResource(if (granting) R.string.shizuku_setup_working else R.string.shizuku_setup_subtitle), false) {
+                if (granting) return@Check
+                granting = true
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) { ShizukuSetupClient(ctx).grantAll() }
+                    granting = false
+                    if (result == null) Toast.makeText(ctx, R.string.shizuku_setup_helper_failed, Toast.LENGTH_LONG).show()
+                    else granted = result
+                    recheck()
+                }
+            }
+        }
         Check(stringResource(R.string.setup_check_permissions_title), stringResource(R.string.setup_check_permissions_subtitle), perms) {
             rationaleBefore = runtimePerms.filter(::rationale).toSet()
             askedBefore = settings.requestedPermissions
@@ -451,6 +462,33 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
         }
         Check(stringResource(R.string.audio_settings_title), stringResource(R.string.setup_check_audio_subtitle), audio) { open(Page.AUDIO) }
     }
+}
+
+/** What "Grant AARE's permissions with Shizuku" did, one line per permission. */
+@Composable
+private fun ShizukuGrantResult(items: List<ShizukuSetupClient.Item>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.shizuku_setup_result_title)) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (items.isEmpty()) Text(stringResource(R.string.shizuku_setup_nothing_to_grant))
+                items.forEach { item ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(if (item.ok) Icons.Rounded.CheckCircle else Icons.Rounded.Warning, null, Modifier.size(20.dp),
+                            tint = if (item.ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text(item.label, style = MaterialTheme.typography.bodyMedium)
+                            if (!item.ok) Text(stringResource(R.string.shizuku_setup_not_granted, item.detail),
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_ok)) } },
+    )
 }
 
 @Composable
@@ -527,6 +565,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 supportingText = { Text(stringResource(R.string.setup_bt_address_hint)) },
                 singleLine = true)
         }
+        AndroidAutoCard(refresh)
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
                 checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx)
@@ -583,6 +622,60 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
         }
     }
+}
+
+/**
+ * Google's Android Auto answers the same cars: switch it off, and on again, through Shizuku
+ * (pm disable-user / pm enable, never uninstalling it or clearing its data). Hidden when it isn't installed.
+ */
+@Composable
+private fun AndroidAutoCard(refresh: Int) {
+    val ctx = LocalContext.current
+    val client = remember { ShizukuSetupClient(ctx) }
+    var changed by remember { mutableIntStateOf(0) }
+    val state = remember(refresh, changed) { client.androidAutoState() }
+    if (state == ShizukuSetup.AndroidAutoState.NOT_INSTALLED) return
+    val shizuku = ShizukuSetupClient.available()
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var failure by remember { mutableStateOf<String?>(null) }
+    var confirm by remember { mutableStateOf(false) }
+    fun setEnabled(enabled: Boolean) {
+        busy = true
+        failure = null
+        scope.launch {
+            failure = withContext(Dispatchers.IO) { client.setAndroidAutoEnabled(enabled) }
+            busy = false
+            changed++
+        }
+    }
+    Section(stringResource(R.string.aa_section_title)) {
+        val enabled = state == ShizukuSetup.AndroidAutoState.ENABLED
+        Text(stringResource(if (enabled) R.string.aa_state_enabled else R.string.aa_state_disabled), style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(12.dp))
+        when {
+            busy -> Text(stringResource(R.string.aa_working), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            !shizuku -> {
+                Text(stringResource(R.string.aa_needs_shizuku), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = {
+                    ctx.startSafely(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", ShizukuSetup.ANDROID_AUTO, null)))
+                }) { Text(stringResource(R.string.aa_app_info)) }
+            }
+            enabled -> Pill(stringResource(R.string.aa_action_disable), null) { confirm = true }
+            else -> Pill(stringResource(R.string.aa_action_enable), null) { setEnabled(true) }
+        }
+        failure?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.aa_failed, it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+    }
+    if (confirm) AlertDialog(
+        onDismissRequest = { confirm = false },
+        title = { Text(stringResource(R.string.aa_confirm_title)) },
+        text = { Text(stringResource(R.string.aa_confirm_text)) },
+        confirmButton = { TextButton(onClick = { confirm = false; setEnabled(false) }) { Text(stringResource(R.string.aa_confirm_action)) } },
+        dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.common_cancel)) } },
+    )
 }
 
 /** A trusted head unit's key as the user knows it: the paired car's name, the USB accessory, or the developer server. */

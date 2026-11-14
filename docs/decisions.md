@@ -150,3 +150,21 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Setup through Shizuku
+
+When Shizuku runs and allows AARE, the "Finish setting up" card offers "Grant AARE's permissions
+with Shizuku", and the Connection page offers to stop Google's Android Auto taking the car. A small
+Shizuku user service (`setup/ShellSetupService`, process suffix `setup`, removed after each task)
+runs the commands as the shell. See `setup/ShizukuSetup.kt`.
+
+- No call takes a command line: the service only builds the commands in `ShizukuSetup`, for AARE's
+  own package and the caller's Android user (`uid / 100000`, the user AARE runs as). It runs
+  `pm grant` only for a permission the setup asks for on that release, `cmd notification
+  allow_listener` only for AARE's listener, and `pm disable-user` / `pm enable` only for Android
+  Auto. Each command and its result go to the connection log.
+- Android Auto: opt-in, behind a confirmation dialog, `pm disable-user` only. It is never
+  uninstalled and its data is never cleared, and "Enable Android Auto again" (`pm enable`) undoes it.
+  The state shown comes from PackageManager, not from the command's output.
+- Mock location (an app op) and Do Not Disturb access are not granted: the setup card doesn't ask
+  for them either.
