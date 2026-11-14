@@ -76,6 +76,9 @@
     <string name="setup_choice_colors_auto">نهار/ليل السيارة</string>
     <string name="setup_choice_dark">داكن</string>
     <string name="setup_choice_light">فاتح</string>
+    <string name="setup_choice_night_source">الوضع الليلي من</string>
+    <string name="setup_choice_night_source_car">السيارة</string>
+    <string name="setup_choice_night_source_light_sensor">مستشعر الضوء في الهاتف</string>
     <string name="setup_choice_bar">الشريط</string>
     <string name="setup_choice_bar_auto">جانب السائق</string>
     <string name="setup_choice_left">يسار</string>

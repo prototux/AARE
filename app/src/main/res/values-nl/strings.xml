@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Dag/nacht van de auto</string>
     <string name="setup_choice_dark">Donker</string>
     <string name="setup_choice_light">Licht</string>
+    <string name="setup_choice_night_source">Nachtmodus van</string>
+    <string name="setup_choice_night_source_car">De auto</string>
+    <string name="setup_choice_night_source_light_sensor">De lichtsensor van de telefoon</string>
     <string name="setup_choice_bar">Balk</string>
     <string name="setup_choice_bar_auto">Bestuurderszijde</string>
     <string name="setup_choice_left">Links</string>
