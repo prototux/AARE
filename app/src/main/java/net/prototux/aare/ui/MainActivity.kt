@@ -81,6 +81,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -122,6 +123,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
+import net.prototux.aare.SettingsBackup
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
@@ -1528,6 +1530,33 @@ private fun ThanksHandles(handles: List<String>) {
                     .clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.profile(handle)))) }
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             )
+        }
+    }
+}
+
+/** The settings to a file and back: to keep them, or to move to another phone. */
+@Composable
+private fun BackupCard() {
+    val ctx = LocalContext.current
+    val activity = ctx as? android.app.Activity
+    val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val ok = runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(SettingsBackup.export(ctx).toByteArray()) } }.isSuccess
+        Toast.makeText(ctx, if (ok) R.string.backup_exported else R.string.backup_failed, Toast.LENGTH_SHORT).show()
+    }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val ok = runCatching { SettingsBackup.import(ctx, ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() }) }.isSuccess
+        Toast.makeText(ctx, if (ok) R.string.backup_imported else R.string.backup_not_a_backup, Toast.LENGTH_SHORT).show()
+        // Every page shows the settings it read when it opened: start over with the new ones.
+        if (ok) activity?.recreate()
+    }
+    Section(stringResource(R.string.backup_title)) {
+        Text(stringResource(R.string.backup_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { export.launch("aare-settings-${java.time.LocalDate.now()}.json") }) { Text(stringResource(R.string.backup_export)) }
+            OutlinedButton(onClick = { import.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }) { Text(stringResource(R.string.backup_import)) }
         }
     }
 }

@@ -492,4 +492,12 @@
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
+    <string name="backup_title">Einstellungen sichern</string>
+    <string name="backup_hint">Speichert die Einstellungen von AARE, die vertrauten Autos und die Fahrzeug-Regeln in einer Datei und lädt sie wieder, hier oder auf einem anderen Handy. Zertifikate sind nicht dabei: dort neu herunterladen oder importieren.</string>
+    <string name="backup_export">Exportieren</string>
+    <string name="backup_import">Importieren</string>
+    <string name="backup_exported">Einstellungen exportiert</string>
+    <string name="backup_imported">Einstellungen importiert</string>
+    <string name="backup_failed">Die Datei konnte nicht geschrieben werden</string>
+    <string name="backup_not_a_backup">Keine AARE-Einstellungsdatei</string>
 </resources>
