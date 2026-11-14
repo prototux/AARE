@@ -279,6 +279,10 @@ class CarSession(
                 ch.service.mediaSinkService.audioConfigsList.joinToString("|") { "${it.samplingRate}/${it.numberOfBits}/${it.numberOfChannels}" } +
                 if (isPrimary(ch)) "" else " (not used: a second channel of this kind)"
         })
+        // Some head units hold back the streams until every channel they listed is open: say which
+        // ones AARE leaves closed, so a car that shows nothing can be read from the connection log.
+        val unopened = response.channelsList.filter { s -> channels.none { it.id == s.id } }
+        if (unopened.isNotEmpty()) DiagLog.add("not opening: " + unopened.joinToString { AapSession.serviceKind(it) + "#" + it.id })
         return channels
     }
 
