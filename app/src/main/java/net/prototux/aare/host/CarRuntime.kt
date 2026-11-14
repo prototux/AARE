@@ -15,6 +15,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.constraints.ConstraintManager
+import androidx.car.app.model.Alert
 import androidx.car.app.navigation.model.Trip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -168,7 +169,7 @@ class CarRuntime(
             }
             return
         }
-        val isNavigate = action == CarContext.ACTION_NAVIGATE || intent.data?.scheme == "geo" || intent.data?.scheme == "google.navigation"
+        val isNavigate = action == CarContext.ACTION_NAVIGATE || isNavigationData(intent.dataString)
         // As in CarContext.startCarApp's contract, an explicit component may only start the calling app itself:
         // otherwise any app could hand another a crafted intent and take over the screen. A navigation intent
         // naming another app goes to the driver's navigation app instead.
@@ -183,9 +184,52 @@ class CarRuntime(
             notice(from.info.label, if (isNavigate) context.getString(R.string.notif_no_nav_app) else context.getString(R.string.notif_cant_open))
             return
         }
-        val navIntent = if (isNavigate && intent.action != CarContext.ACTION_NAVIGATE) Intent(CarContext.ACTION_NAVIGATE, intent.data) else intent
-        target.connect(navIntent)
+        target.connect(if (isNavigate) navigationIntent(intent, target, forNavigationApp = own == null) else intent)
         show(target)
+    }
+
+    /**
+     * [intent] as the navigation app [target] gets it. A car app's request
+     * for the navigation app ([forNavigationApp]) goes on as a Google Maps URL, and every
+     * navigation intent is then put in the format the target takes (see [toCarAppNavigation]):
+     * the Car App Library's geo: form, or Waze's own for the Waze versions that take it.
+     */
+    private fun navigationIntent(intent: Intent, target: CarAppConnection, forNavigationApp: Boolean): Intent {
+        val alias = intent.hasExtra(EXTRA_LOCATION_ALIAS)
+        var action = intent.action
+        var data = intent.dataString
+        if (forNavigationApp && !alias) {
+            // Other navigation data (google.navigation:, a Maps URL) and VIEW intents go on as they are;
+            // any other action becomes a navigation.
+            val maps = data?.takeIf { it.startsWith("geo:") }?.let(::mapsUrlOf)
+            when {
+                maps != null -> { action = Intent.ACTION_VIEW; data = maps }
+                action != Intent.ACTION_VIEW -> action = CarContext.ACTION_NAVIGATE
+            }
+        }
+        val waze = AppQuirks.takesWazeNavigationFormat(target.info.packageName, target.info.versionCode)
+        val out = runCatching {
+            val request = toCarAppNavigation(action, data, alias, waze)
+            if (waze && !wazeTakes(request, alias, target.info.packageName)) return@runCatching null
+            Intent(intent).setAction(request.action).setData(request.data?.let(android.net.Uri::parse)).apply {
+                if (forNavigationApp) component = null
+                request.avoid?.let { putExtra("avoid", it) }
+            }
+        }.onFailure { Log.w(TAG, "navigation intent for ${target.info.packageName} not converted", it) }.getOrNull()
+        // A Waze request that isn't well formed, or that Waze has nothing to open with, goes as the plain
+        // navigation intent the app has always been given, so a Waze update can't lose the destination.
+        return out ?: if (intent.action != CarContext.ACTION_NAVIGATE) Intent(CarContext.ACTION_NAVIGATE, intent.data) else intent
+    }
+
+    /**
+     * Whether Waze ([pkg]) takes [request]: well formed, and for a search or a command, one of its
+     * activities answers it (a navigation goes to its car app session, which always takes it).
+     */
+    private fun wazeTakes(request: NavigationRequest, alias: Boolean, pkg: String): Boolean {
+        if (!isWazeRequest(request, alias)) return false
+        if (request.action == CarContext.ACTION_NAVIGATE) return true
+        val probe = Intent(request.action, request.data?.let(android.net.Uri::parse)).setPackage(pkg)
+        return context.packageManager.queryIntentActivities(probe, 0).isNotEmpty()
     }
 
     override fun finish(app: CarAppConnection) {
@@ -231,12 +275,39 @@ class CarRuntime(
         onTrip?.invoke(app, trip)
     }
 
+    /** Heads-up notices standing in for apps' alerts while the app's screen isn't up. */
+    private val alertNotices = HashMap<CarAppConnection, CarNotice>()
+
+    override fun alertChanged(app: CarAppConnection, alert: Alert?) {
+        alertNotices.remove(app)?.let { ui.notices.remove(it) }
+        if (alert == null || app.cluster) return
+        if (!AppQuirks.NAVIGATION_ALERTS_AS_NOTIFICATIONS.matches(app.info.packageName, app.info.versionCode)) return
+        // These apps' alerts ("Accept new route?") also reach a driver who
+        // isn't looking at the app (its dashboard card, another app): on its screen, its own card shows it.
+        val id = idOf(app) ?: return
+        if ((ui.screen as? CarScreen.App)?.appId == id) return
+        val duration = alert.durationMillis.takeIf { it > 0 } ?: ALERT_NOTICE_MS
+        val actions = alert.actions.take(2).map { action ->
+            (action.title?.toString() ?: context.getString(R.string.common_ok)) to { app.alertAction(alert, action) }
+        }
+        val n = CarNotice("n${++noticeSeq}", alert.title.toString(), alert.subtitle?.toString().orEmpty(), app.info.icon, actions)
+        ui.notices.add(n)
+        alertNotices[app] = n
+        main.postDelayed({
+            ui.notices.remove(n)
+            if (alertNotices[app] === n) app.alertTimedOut(alert)
+        }, duration)
+    }
+
     /** The instrument cluster's session of [nav], if the app has one (FEATURE_CLUSTER). */
     private val clusterConnections = HashMap<String, CarAppConnection>()
 
     fun clusterConnection(nav: CarAppEntry): CarAppConnection? {
         clusterConnections[nav.id]?.let { return it }
-        val info = carApps[nav.id]?.takeIf { CarAppInfo.CATEGORY_CLUSTER in it.categories } ?: return null
+        // Some versions of some apps get no cluster session (AppQuirks.CLUSTER_DISABLED).
+        val info = carApps[nav.id]?.takeIf {
+            CarAppInfo.CATEGORY_CLUSTER in it.categories && !AppQuirks.CLUSTER_DISABLED.matches(it.packageName, it.versionCode)
+        } ?: return null
         return CarAppConnection(context, info, this, cluster = true).also { clusterConnections[nav.id] = it }
     }
 
@@ -710,7 +781,14 @@ class CarRuntime(
                             else -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod) }
                         }
                     },
-                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) } },
+                    navMap = { app, mod ->
+                        val info = carApps[app.id]
+                        if (info != null && !AppQuirks.dashboardNavigationSupported(info.packageName, info.versionCode)) {
+                            CarAppLauncherCard(info, mod) { actions.openApp(app) }
+                        } else {
+                            shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) }
+                        }
+                    },
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
@@ -728,6 +806,8 @@ class CarRuntime(
 
     companion object {
         private const val TAG = "AareRuntime"
+        /** How long an app's alert shows as a notice when it gives no duration. */
+        private const val ALERT_NOTICE_MS = 10_000L
         fun carId(app: CarAppInfo) = "car:${app.service.flattenToShortString()}"
         fun mediaId(pkg: String) = "media:$pkg"
         fun messagingId(pkg: String) = "messages:$pkg"
