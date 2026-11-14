@@ -195,6 +195,40 @@ data class VehicleRule(
 }
 
 /**
+ * One vehicles.json quirk's global choice, kept in Settings for every car: [AUTOMATIC] keeps
+ * what vehicles.json (built-in rules and the user's file) resolves for the connected car,
+ * [ON] / [OFF] force it regardless. See [VehicleOverrides.effective].
+ */
+enum class QuirkChoice(val pref: String) {
+    AUTOMATIC("auto"), ON("on"), OFF("off");
+    companion object {
+        fun of(pref: String?): QuirkChoice = entries.firstOrNull { it.pref == pref } ?: AUTOMATIC
+    }
+}
+
+/**
+ * The "Car quirks" settings page: one global [QuirkChoice] per vehicles.json quirk that has a
+ * clear on/off meaning, applied on top of the per-car vehicles.json resolution for every car
+ * (not just the connected one). See [VehicleOverrides.effective]. Fields [VehicleOverride] has
+ * no setting for (dpi, margins, maxHeight, prefer60fps, skip/openServices, exitLabel) are never
+ * touched: those stay per-vehicle only, or have their own setting elsewhere (prefer60fps,
+ * maxHeight: Settings.prefer60fps / maxVideoHeight).
+ */
+data class QuirkSettings(
+    val pixelAspect: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val videoResolutions: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val singleChannelCapture: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val wifiMediaStartSilence: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val wifiGuidanceStartSilence: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val mediaOnGainTransient: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val pauseOnGuidanceOnly: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val wireless: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val forceElectric: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val exitToCar: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val micSetup: QuirkChoice = QuirkChoice.AUTOMATIC,
+)
+
+/**
  * Per-vehicle overrides, from two `vehicles.json` files in the same format: the one AARE ships
  * (assets, for head units known to need something), and a user-edited one in the app's external
  * files dir. Lets a specific car's density, visible-area margins or protocol quirks be fixed
@@ -229,6 +263,57 @@ object VehicleOverrides {
 
     internal fun resolve(user: List<VehicleRule>, builtIn: List<VehicleRule>, make: String, model: String, name: String): VehicleOverride? =
         resolve(user, builtIn, HeadUnitIdentity(make, model, name))
+
+    /**
+     * [resolved] (vehicles.json for the connected car, from [forHeadUnit], or null) with [quirks]'s
+     * global choices applied on top. [QuirkChoice.AUTOMATIC] keeps what [resolved] says for every
+     * field (including leaving it unset, so AARE's own default decides, exactly as without this
+     * settings page); [QuirkChoice.ON] / [QuirkChoice.OFF] force the quirk on or off for every car,
+     * regardless of what vehicles.json matched.
+     *
+     * The two start-silence counts and [videoResolutions][QuirkSettings.videoResolutions] have no
+     * single "on" value to force (how much silence, which resolutions is the head unit's or the
+     * rule's to say): their [QuirkChoice.ON] is the same as [QuirkChoice.AUTOMATIC], and only
+     * [QuirkChoice.OFF] forces a value (no silence, no resolution limit).
+     * [pixelAspect][QuirkSettings.pixelAspect]'s [QuirkChoice.ON] turns on
+     * [VehicleOverride.reportedPixelAspect] (use the head unit's reported ratio, like asking for it
+     * in vehicles.json); an explicit `pixelAspect` rule still wins over it either way.
+     * [QuirkChoice.OFF] forces no factor at all.
+     */
+    fun effective(resolved: VehicleOverride?, quirks: QuirkSettings): VehicleOverride? {
+        if (quirks == QuirkSettings()) return resolved // every quirk Automatic: today's behaviour, unchanged
+        val base = resolved ?: VehicleOverride()
+        return base.copy(
+            // Off: no factor at all (an explicit override always wins over the reported ratio, so
+            // forcing pixelAspect to 1 is enough on its own; reportedPixelAspect is forced false too,
+            // for a result that reads right on its own). On: use the head unit's reported ratio from
+            // protocol 1.2 on, same as asking for it in vehicles.json; an explicit pixelAspect rule
+            // (the built-in file's older, can't-report-it head units) still wins over it either way.
+            pixelAspect = if (quirks.pixelAspect == QuirkChoice.OFF) 1f else base.pixelAspect,
+            reportedPixelAspect = when (quirks.pixelAspect) {
+                QuirkChoice.ON -> true
+                QuirkChoice.OFF -> false
+                QuirkChoice.AUTOMATIC -> base.reportedPixelAspect
+            },
+            videoResolutions = if (quirks.videoResolutions == QuirkChoice.OFF) null else base.videoResolutions,
+            singleChannelCapture = forced(quirks.singleChannelCapture, base.singleChannelCapture),
+            wifiMediaStartSilence = if (quirks.wifiMediaStartSilence == QuirkChoice.OFF) 0 else base.wifiMediaStartSilence,
+            wifiGuidanceStartSilence = if (quirks.wifiGuidanceStartSilence == QuirkChoice.OFF) 0 else base.wifiGuidanceStartSilence,
+            mediaOnGainTransient = forced(quirks.mediaOnGainTransient, base.mediaOnGainTransient),
+            pauseOnGuidanceOnly = forced(quirks.pauseOnGuidanceOnly, base.pauseOnGuidanceOnly),
+            wireless = forced(quirks.wireless, base.wireless),
+            forceElectric = forced(quirks.forceElectric, base.forceElectric),
+            exitToCar = forced(quirks.exitToCar, base.exitToCar),
+            micSetup = forced(quirks.micSetup, base.micSetup),
+            // Nothing matched and no setting forced a field: stay null, like no vehicles.json rule at all.
+        ).takeUnless { it == VehicleOverride() }
+    }
+
+    private fun forced(choice: QuirkChoice, value: Boolean?): Boolean? = when (choice) {
+        QuirkChoice.ON -> true
+        QuirkChoice.OFF -> false
+        QuirkChoice.AUTOMATIC -> value
+    }
 
     private fun rules(text: String?, what: String): List<VehicleRule> =
         text?.let { runCatching { parse(it) }.onFailure { e -> Log.w(TAG, "$what: ${e.message}") }.getOrNull() }.orEmpty()

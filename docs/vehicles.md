@@ -13,6 +13,13 @@ There are two files in the same format:
 For one head unit, your matching rule wins, field by field, over the built-in ones: a field you
 leave out keeps the built-in value, or AARE's default.
 
+Some quirks also have a global switch, for every car, in *Advanced > Car quirks*: pixel aspect
+correction, the video resolution limit, single-channel navigation voice, the Wi-Fi start
+silences, keeping music on a transient focus grant, pausing it on guidance-only, wireless with
+head units vehicles.json lists as unsupported, forcing electric, the "Exit to car" entry and the
+microphone SETUP message. Automatic there keeps what the rules below resolve for the connected
+car (as if the setting didn't exist); On/Off force it regardless of any rule.
+
 ## Format
 
 ```json

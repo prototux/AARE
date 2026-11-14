@@ -3,6 +3,8 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.car.QuirkChoice
+import net.prototux.aare.car.QuirkSettings
 import java.util.UUID
 
 /** User settings, in one SharedPreferences file. */
@@ -355,6 +357,56 @@ class Settings(context: Context) {
     var certificateIndex: Int
         get() = prefs.getInt("cert_index", 0)
         set(v) = prefs.edit { putInt("cert_index", v) }
+
+    // ---- Car quirks: a global Automatic/On/Off per vehicles.json quirk, for every car (see
+    // VehicleOverrides.effective, applied where CarSession resolves the connected car's override).
+
+    private fun quirk(key: String): QuirkChoice = QuirkChoice.of(prefs.getString(key, null))
+    private fun setQuirk(key: String, v: QuirkChoice) = prefs.edit { putString(key, v.pref) }
+
+    var quirkPixelAspect: QuirkChoice
+        get() = quirk("quirk_pixel_aspect")
+        set(v) = setQuirk("quirk_pixel_aspect", v)
+    var quirkVideoResolutions: QuirkChoice
+        get() = quirk("quirk_video_resolutions")
+        set(v) = setQuirk("quirk_video_resolutions", v)
+    var quirkSingleChannelCapture: QuirkChoice
+        get() = quirk("quirk_single_channel_capture")
+        set(v) = setQuirk("quirk_single_channel_capture", v)
+    var quirkWifiMediaStartSilence: QuirkChoice
+        get() = quirk("quirk_wifi_media_start_silence")
+        set(v) = setQuirk("quirk_wifi_media_start_silence", v)
+    var quirkWifiGuidanceStartSilence: QuirkChoice
+        get() = quirk("quirk_wifi_guidance_start_silence")
+        set(v) = setQuirk("quirk_wifi_guidance_start_silence", v)
+    var quirkMediaOnGainTransient: QuirkChoice
+        get() = quirk("quirk_media_on_gain_transient")
+        set(v) = setQuirk("quirk_media_on_gain_transient", v)
+    var quirkPauseOnGuidanceOnly: QuirkChoice
+        get() = quirk("quirk_pause_on_guidance_only")
+        set(v) = setQuirk("quirk_pause_on_guidance_only", v)
+    var quirkWireless: QuirkChoice
+        get() = quirk("quirk_wireless")
+        set(v) = setQuirk("quirk_wireless", v)
+    var quirkForceElectric: QuirkChoice
+        get() = quirk("quirk_force_electric")
+        set(v) = setQuirk("quirk_force_electric", v)
+    var quirkExitToCar: QuirkChoice
+        get() = quirk("quirk_exit_to_car")
+        set(v) = setQuirk("quirk_exit_to_car", v)
+    var quirkMicSetup: QuirkChoice
+        get() = quirk("quirk_mic_setup")
+        set(v) = setQuirk("quirk_mic_setup", v)
+
+    /** This phone's "Car quirks" page, for [net.prototux.aare.car.VehicleOverrides.effective]. */
+    val quirkSettings: QuirkSettings
+        get() = QuirkSettings(
+            pixelAspect = quirkPixelAspect, videoResolutions = quirkVideoResolutions,
+            singleChannelCapture = quirkSingleChannelCapture, wifiMediaStartSilence = quirkWifiMediaStartSilence,
+            wifiGuidanceStartSilence = quirkWifiGuidanceStartSilence, mediaOnGainTransient = quirkMediaOnGainTransient,
+            pauseOnGuidanceOnly = quirkPauseOnGuidanceOnly, wireless = quirkWireless, forceElectric = quirkForceElectric,
+            exitToCar = quirkExitToCar, micSetup = quirkMicSetup,
+        )
 
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"

@@ -113,6 +113,37 @@
     <string name="vehicles_rule_count">%1$d rule(s) loaded</string>
     <string name="vehicles_import">Import file…</string>
     <string name="vehicles_template">Write template</string>
+
+    <!-- quirks: global Automatic/On/Off overrides for vehicles.json quirks, for every car -->
+    <string name="quirks_section_title">Car quirks</string>
+    <string name="quirks_hint">Override one of vehicles.json\'s quirks for every car, instead of per vehicle. Automatic keeps what the built-in rules and your vehicles.json say for the connected car.</string>
+    <string name="quirks_automatic">Automatic</string>
+    <string name="quirks_on">On</string>
+    <string name="quirks_off">Off</string>
+    <string name="quirks_pixel_aspect_title">Pixel aspect correction</string>
+    <string name="quirks_pixel_aspect_subtitle">On: lay the car UI out at the head unit\'s reported pixel ratio, from protocol 1.2 (vehicles.json can still ask for a specific ratio either way). Off: always square pixels.</string>
+    <string name="quirks_video_resolutions_title">Video resolution limit</string>
+    <string name="quirks_video_resolutions_subtitle">On: keep vehicles.json\'s list of resolutions to pick from, when it has one for this car. Off: pick from everything the head unit offers.</string>
+    <string name="quirks_single_channel_capture_title">Single-channel navigation voice</string>
+    <string name="quirks_single_channel_capture_subtitle">On: send navigation voice on the music channel and leave the guidance channel unused. Off: use the guidance channel normally.</string>
+    <string name="quirks_wifi_media_silence_title">Wi-Fi music start silence</string>
+    <string name="quirks_wifi_media_silence_subtitle">On: send vehicles.json\'s silent messages (or AARE\'s default) before a music stream starts over Wi-Fi. Off: send none.</string>
+    <string name="quirks_wifi_guidance_silence_title">Wi-Fi guidance start silence</string>
+    <string name="quirks_wifi_guidance_silence_subtitle">On: send vehicles.json\'s silent messages (or AARE\'s default) before a navigation-voice stream starts over Wi-Fi. Off: send none.</string>
+    <string name="quirks_media_on_gain_transient_title">Keep music on a transient focus grant</string>
+    <string name="quirks_media_on_gain_transient_subtitle">On: music keeps playing when the car grants GAIN_TRANSIENT. Off: only navigation voice does.</string>
+    <string name="quirks_pause_on_guidance_only_title">Pause music on guidance-only</string>
+    <string name="quirks_pause_on_guidance_only_subtitle">On: an unsolicited guidance-only grant from the car pauses the phone\'s music. Off: music keeps playing.</string>
+    <string name="quirks_wireless_title">Allow wireless with head units known not to support it</string>
+    <string name="quirks_wireless_subtitle">Automatic: skip wireless for head units vehicles.json lists as not supporting it. Allow: try wireless with them anyway. Block: never connect wirelessly, even to head units not on that list (like turning off Connecting\'s Wireless switch).</string>
+    <string name="quirks_wireless_allow">Allow</string>
+    <string name="quirks_wireless_block">Block</string>
+    <string name="quirks_force_electric_title">Force electric</string>
+    <string name="quirks_force_electric_subtitle">On: tell apps the car is electric even if it reports no fuel type or an unknown one. Off: use what the car reports.</string>
+    <string name="quirks_exit_to_car_title">Exit-to-car entry</string>
+    <string name="quirks_exit_to_car_subtitle">On: always show the app list\'s Exit to car entry. Off: always hide it, even for head units vehicles.json shows it for.</string>
+    <string name="quirks_mic_setup_title">Microphone SETUP message</string>
+    <string name="quirks_mic_setup_subtitle">On: send SETUP when the microphone channel opens. Off: never send it.</string>
     <string name="setup_tagline">Open-source car projection</string>
     <string name="setup_status_certificate">certificate: %1$s</string>
     <string name="setup_status_disconnected_hint">Plug the phone into the car\'s Android Auto USB port, or connect to a paired car wirelessly.</string>
