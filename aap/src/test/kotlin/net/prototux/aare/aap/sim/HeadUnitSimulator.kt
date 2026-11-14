@@ -119,6 +119,8 @@ class HeadUnitSimulator(
     val pingsAnswered = AtomicInteger()
     val focusRequests = AtomicInteger()
     val sensorRequests = ConcurrentHashMap.newKeySet<SensorType>()
+    /** Every sensor request in arrival order: (type, min_update_period). */
+    val sensorRequestLog = java.util.concurrent.LinkedBlockingQueue<Pair<SensorType, Long>>()
     val firstVideoFrame = CountDownLatch(1)
     val byeBye = CountDownLatch(1)
     val closed = CountDownLatch(1)
@@ -170,7 +172,10 @@ class HeadUnitSimulator(
             sensors -> if (m.id == SensorMsg.REQUEST) {
                 val req = SensorRequest.parseFrom(m.bodyBytes())
                 sensorRequests.add(req.type)
+                sensorRequestLog.add(req.type to req.minUpdatePeriod)
                 send(sensors, SensorMsg.RESPONSE, SensorResponse.newBuilder().apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build())
+                // A stop request (period -1) gets no data.
+                if (req.minUpdatePeriod < 0) return
                 val batch = SensorBatch.newBuilder()
                 when (req.type) {
                     SensorType.SENSOR_NIGHT_MODE -> batch.addNightModeData(NightModeData.newBuilder().setNightMode(true))

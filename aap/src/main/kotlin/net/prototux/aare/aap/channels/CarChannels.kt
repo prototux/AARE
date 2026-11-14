@@ -53,7 +53,13 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     }
 }
 
-/** Car sensors: driving status, night mode, GPS, speed, gear, fuel, odometer, doors, tyres... */
+/**
+ * Car sensors: driving status, night mode, GPS, speed, gear, fuel, odometer, doors, tyres...
+ *
+ * Only driving status is asked for when the channel opens; every other
+ * sensor when something in AARE [want]s it, and it is stopped again when nothing does. Requests
+ * go out one at a time (see [SensorRequests]).
+ */
 class SensorChannel(service: Service, private val listener: Listener) : ServiceChannel(service, "sensors") {
     interface Listener {
         fun onSensors(batch: SensorBatch)
@@ -62,26 +68,43 @@ class SensorChannel(service: Service, private val listener: Listener) : ServiceC
     /** Sensors of a type this build doesn't know read back as the default (LOCATION): skip them. */
     val available: List<SensorType> = service.sensorSourceService.sensorsList.filter { it.hasSensorType() }.map { it.sensorType }
 
-    override fun onOpened() {
-        // Everything the car offers (it only advertises what it has), the ones that drive the UI first.
-        for (type in WANTED.filter { it in available } + available.filter { it !in WANTED }.distinct()) {
+    private val requests = SensorRequests(
+        // The ones that drive the UI first, then whatever else the car offers.
+        order = (WANTED.filter { it in available } + available.filter { it !in WANTED }).distinct(),
+        periodOf = { type ->
             // min_update_period's unit isn't documented by AAP; assumed milliseconds. High-rate
             // sensors would otherwise flood the channel, so throttle just those.
-            val periodMs = if (type in HIGH_RATE) 500L else 0L
-            send(SensorMsg.REQUEST, SensorRequest.newBuilder().setType(type).setMinUpdatePeriod(periodMs).build())
-        }
-    }
+            if (type in HIGH_RATE) 500L else 0L
+        },
+        send = { type, period -> send(SensorMsg.REQUEST, SensorRequest.newBuilder().setType(type).setMinUpdatePeriod(period).build()) },
+        schedule = { task -> session.schedule(task, SensorRequests.TIMEOUT_MS, TimeUnit.MILLISECONDS) },
+        log = { session.log.i("sensors: $it") },
+    ).also { it.want(ALWAYS) }
+
+    /**
+     * The sensors AARE needs now; driving status is always among them. Any thread; before the
+     * channel is open the requests wait for it.
+     */
+    fun want(types: Set<SensorType>) = requests.want(types + ALWAYS)
+
+    override fun onOpened() = requests.start()
 
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {
             SensorMsg.BATCH -> listener.onSensors(SensorBatch.parseFrom(msg.bodyBytes()))
-            // A refused sensor just stays silent.
-            SensorMsg.RESPONSE, SensorMsg.ERROR -> Unit
+            // A refused sensor just stays silent; either way the next request may go.
+            SensorMsg.RESPONSE -> requests.answered()
+            SensorMsg.ERROR -> Unit
         }
     }
 
+    override fun onClosed() = requests.stop()
+
     companion object {
-        /** Requested first; every other advertised sensor (RPM, odometer, doors, tyres...) follows. */
+        /** Asked for at setup and kept for the whole session. */
+        val ALWAYS = setOf(SensorType.SENSOR_DRIVING_STATUS_DATA)
+
+        /** Requested first when several are due; every other one the car offers follows. */
         val WANTED = listOf(
             SensorType.SENSOR_DRIVING_STATUS_DATA,
             SensorType.SENSOR_NIGHT_MODE,
