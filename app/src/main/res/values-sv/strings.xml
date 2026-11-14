@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Utseende</string>
     <string name="setup_choice_colors">Färger</string>
-    <string name="setup_choice_colors_auto">Bilens dag/natt</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mörkt</string>
     <string name="setup_choice_light">Ljust</string>
     <string name="setup_choice_bar">Fält</string>

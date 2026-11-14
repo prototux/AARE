@@ -73,7 +73,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">المظهر</string>
     <string name="setup_choice_colors">الألوان</string>
-    <string name="setup_choice_colors_auto">نهار/ليل السيارة</string>
+    <string name="setup_choice_colors_auto">تلقائي</string>
     <string name="setup_choice_dark">داكن</string>
     <string name="setup_choice_light">فاتح</string>
     <string name="setup_choice_bar">الشريط</string>
