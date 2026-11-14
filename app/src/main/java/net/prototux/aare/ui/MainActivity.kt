@@ -1137,6 +1137,8 @@ private fun AssistantCard(settings: Settings) {
     val choices = remember { Assistants.query(ctx, CarAppCatalog.query(ctx)) }
     val phoneDefault = remember { Assistants.phoneDefault(ctx) }
     var chosen by remember { mutableStateOf(settings.assistantPackage) }
+    var onCarScreen by remember { mutableStateOf(settings.assistantOnCarScreen) }
+    val launcherAvailable = remember { AppLauncher.available(ctx) }
     fun choose(pkg: String?) { chosen = pkg; settings.assistantPackage = pkg }
     Section(stringResource(R.string.assistant_settings_title)) {
         val defaultLabel = phoneDefault?.let { pkg -> choices.firstOrNull { it.packageName == pkg }?.label ?: Assistants.label(ctx, pkg) ?: pkg }
@@ -1146,17 +1148,30 @@ private fun AssistantCard(settings: Settings) {
             app = null, selected = chosen == null, onSelect = { choose(null) },
         )
         val hasCarAppSubtitle = stringResource(R.string.assistant_has_car_app_subtitle)
+        val opensOnCarScreenSubtitle = stringResource(R.string.assistant_opens_on_car_screen)
         val opensOnPhoneSubtitle = stringResource(R.string.assistant_opens_on_phone)
         choices.forEach { app ->
             AssistantRow(
                 title = app.label,
-                subtitle = if (app.hasCarApp) hasCarAppSubtitle else opensOnPhoneSubtitle,
+                subtitle = when {
+                    app.hasCarApp -> hasCarAppSubtitle
+                    onCarScreen && launcherAvailable -> opensOnCarScreenSubtitle
+                    else -> opensOnPhoneSubtitle
+                },
                 app = app, selected = chosen == app.packageName, onSelect = { choose(app.packageName) },
             )
         }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.assistant_hint),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (launcherAvailable) {
+            Spacer(Modifier.height(8.dp))
+            Toggle(
+                stringResource(R.string.assistant_car_screen_toggle_title),
+                stringResource(R.string.assistant_car_screen_toggle_subtitle),
+                onCarScreen,
+            ) { onCarScreen = it; settings.assistantOnCarScreen = it }
+        }
     }
 }
 
