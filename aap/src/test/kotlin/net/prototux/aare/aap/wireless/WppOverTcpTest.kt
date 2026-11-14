@@ -199,11 +199,11 @@ class WppOverTcpTest {
         start(quiet.copy(wppOverTcp = true))
         assertIgnored(setupInfo())
         assertEquals(WppVersion(4, 5), phone.setups.poll(2, TimeUnit.SECONDS)!!.version)
-        // its version was not taken either: below 4.5 the phone still reports how joining went
-        send(WppMessageId.INFO_RESPONSE, WifiInfoResponse.newBuilder().setSsid("HU").setPassword("secret-passphrase")
+        // its version was not taken either: without a version the quotes of the SSID are still dropped
+        send(WppMessageId.INFO_RESPONSE, WifiInfoResponse.newBuilder().setSsid("\"HU\"").setPassword("secret-passphrase")
             .setSecurityMode(WppSecurityMode.WPA2_PERSONAL).build())
         expect(WppMessageId.START_RESPONSE)
-        expect(WppMessageId.CONNECTION_STATUS)
+        assertEquals("HU", phone.joins.poll(2, TimeUnit.SECONDS)!!.ssid)
     }
 
     @Test(timeout = 10_000)
@@ -259,7 +259,7 @@ class WppOverTcpTest {
         val version = WifiVersionResponse.parseFrom(expect(WppMessageId.VERSION_RESPONSE).payload)
         assertArrayEquals(token, version.setupToken.toByteArray())
         send(WppMessageId.START_REQUEST, WifiStartRequest.newBuilder().setIpAddress("192.168.1.1").setPort(5288).build())
-        // straight to the start response: no WifiInfoRequest, and no WifiConnectionStatus for WPP 4.5
+        // straight to the start response: no WifiInfoRequest
         val start = WifiStartResponse.parseFrom(expect(WppMessageId.START_RESPONSE).payload)
         assertEquals(WppStatus.SUCCESS, start.status.number)
         assertEquals("192.168.1.1" to 5288, phone.ready.poll(2, TimeUnit.SECONDS))

@@ -61,6 +61,11 @@ class WirelessBootstrapException(
      * or sent something unusable): a car that isn't ready yet, so trying again later can work.
      */
     val whileNegotiating: Boolean = false,
+    /**
+     * The head unit answered our version response but sent no WifiStartRequest before the message
+     * timeout: one that waits for the phone to ask, see [WirelessBootstrap.Options.phoneStartDelayMs].
+     */
+    val noStartRequest: Boolean = false,
 ) : Exception(message, cause)
 
 /**
@@ -71,8 +76,8 @@ class WirelessBootstrapException(
  * sends both back to back, real cars too), a bare start request (WirelessAndroidAutoDongle, which
  * aborts unless the next thing it reads is our WifiInfoRequest), and credentials sent without
  * being asked. The head unit is only told "success" once [Listener.connectWifi] says the phone
- * really is on the network. A head unit that answers our version response and then waits gets
- * our own WifiStartRequest (see [Options.phoneStartDelayMs]).
+ * really is on the network. A head unit that answers our version response and then waits can be
+ * sent our own WifiStartRequest (see [Options.phoneStartDelayMs]).
  *
  * The same exchange runs over TCP (WPP over TCP, [Options.tcp]) once a head unit told us where:
  * see [Listener.onWppEndpoint], [Listener.onSetupInfo] and docs/decisions.md.
@@ -144,14 +149,11 @@ class WirelessBootstrap(
          * 12 s, and [DONGLE_FIRST_MESSAGE_TIMEOUT_MS] on its first try with an adapter.
          */
         val firstMessageTimeoutMs: Long = 12_000,
-        /** Re-send WifiInfoRequest if the credentials have not come after this long (3 s). */
-        val infoRetryMs: Long = 3_000,
         /**
-         * WifiInfoRequests to send in all (3). When the last one goes unanswered too the
-         * bootstrap fails as on a broken link, [WirelessBootstrapException.whileNegotiating], so the
-         * caller drops RFCOMM and dials again.
+         * Re-send WifiInfoRequest this often while the credentials have not come; the message
+         * timeout still bounds the wait.
          */
-        val infoAttempts: Int = 3,
+        val infoRetryMs: Long = 3_000,
         /** Ping interval while joining the network; 0 disables. aa-proxy-rs uses 2 s for picky cars. */
         val keepaliveIntervalMs: Long = 2_000,
         /**
@@ -184,16 +186,16 @@ class WirelessBootstrap(
         val pingIntervalMs: Long = 1_000,
         /**
          * The frequencies (MHz) the phone's Wi-Fi can use right now, for the channel check of the
-         * version exchange (see [versionStatus]); null when unknown, which skips the check, as
-         * the same as when the Wi-Fi scanner cannot be queried.
+         * version exchange (see [versionStatus], only logged); null when unknown, which skips it.
          */
         val phoneWifiFrequencies: () -> Set<Int>? = { null },
         /**
-         * After a compatible version exchange, send our own (empty) WifiStartRequest if the head
-         * unit has sent none after this long; 0 disables. 5 s is used only when it
-         * means to project, and AARE only dials when it does.
+         * After a version exchange, send our own (empty) WifiStartRequest if the head unit has sent
+         * none after this long; 0 (the default) never does. For a redial to a head unit that
+         * waited for the phone last time ([WirelessBootstrapException.noStartRequest]); see
+         * [PHONE_START_DELAY_MS].
          */
-        val phoneStartDelayMs: Long = 5_000,
+        val phoneStartDelayMs: Long = 0,
         /** Ask again this often while the head unit answers "not yet" or "already started" (2 s)... */
         val phoneStartRetryMs: Long = 2_000,
         /** ...until this long after our first WifiStartRequest (50 s). */
@@ -315,6 +317,7 @@ class WirelessBootstrap(
         var infoRequests = 0
         var infoRequestedAt = 0L
         var heardFromHeadUnit = false
+        var versionAnswered = false
         var deadline = now() + options.firstMessageTimeoutMs
         // Our own WifiStartRequest: when the next one is due, and when the first one went out.
         var phoneStartDueAt = Long.MAX_VALUE
@@ -343,12 +346,9 @@ class WirelessBootstrap(
                         else -> "a WifiInfoResponse"
                     }
                     val waitedMs = if (heardFromHeadUnit) options.messageTimeoutMs else options.firstMessageTimeoutMs
-                    throw fail("timed out after $waitedMs ms waiting for $waitingFor")
+                    throw fail("timed out after $waitedMs ms waiting for $waitingFor", noStartRequest = start == null && versionAnswered)
                 }
                 if (now() >= infoDueAt) {
-                    if (infoRequests >= options.infoAttempts) {
-                        throw fail("no WifiInfoResponse after $infoRequests requests, ${options.infoRetryMs} ms apart")
-                    }
                     // Also nudges openauto if our first request got stuck behind another frame.
                     log.w("wireless: no credentials yet, asking again")
                     requestInfo()
@@ -375,10 +375,11 @@ class WirelessBootstrap(
             }
             when (frame.id) {
                 WppMessageId.VERSION_REQUEST -> {
-                    val compatible = answerVersionRequest(frame.payload) == WppStatus.SUCCESS
-                    // Each compatible exchange (re)starts the wait for the head unit's own request.
+                    answerVersionRequest(frame.payload)
+                    versionAnswered = true
+                    // Each exchange (re)starts the wait for the head unit's own request.
                     phoneStartFirstAt = 0L
-                    phoneStartDueAt = if (compatible && start == null && options.phoneStartDelayMs > 0) now() + options.phoneStartDelayMs else Long.MAX_VALUE
+                    phoneStartDueAt = if (start == null && options.phoneStartDelayMs > 0) now() + options.phoneStartDelayMs else Long.MAX_VALUE
                     deadline = now() + options.messageTimeoutMs
                 }
                 WppMessageId.START_REQUEST -> {
@@ -458,8 +459,8 @@ class WirelessBootstrap(
         throw fail("head unit sent an invalid port $port", WppStatus.INVALID_HOST)
     }
 
-    /** Answers a WifiVersionRequest; returns the status we answered with. */
-    private fun answerVersionRequest(payload: ByteArray): Int {
+    /** Answers a WifiVersionRequest, always with SUCCESS. */
+    private fun answerVersionRequest(payload: ByteArray) {
         val request = runCatching { WifiVersionRequest.parseFrom(payload) }.getOrNull()
         if (request == null) {
             log.w("wireless: unparsable WifiVersionRequest (${payload.size} B), answering anyway")
@@ -470,20 +471,19 @@ class WirelessBootstrap(
                 (if (request.hasSupportedWifiChannelType()) " channelType=${request.supportedWifiChannelType}" else "") +
                 (if (request.hasWppInfo()) " wpp_info=${request.wppInfo.ipAddress}:${request.wppInfo.port}" else ""))
         }
-        // A missing major or minor reads as 0, and that 0 is echoed back.
-        val major = request?.major ?: 0
-        val minor = request?.minor ?: 0
-        if (request != null) headUnitVersion = major to minor
+        if (request != null) headUnitVersion = request.major to request.minor
         if (request != null && request.hasWppInfo()) onWppInfo(request)
-        val status = versionStatus(major, minor, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
-        if (status != WppStatus.SUCCESS) log.w("wireless: answering the version request with status $status")
+        // Always SUCCESS: refusing a version or the channels could stop head units that work today.
+        // What the stricter rules would say is logged, for reports from cars that misbehave.
+        val strict = versionStatus(request?.major ?: 0, request?.minor ?: 0, request?.supportedWifiChannelsList.orEmpty(), options.phoneWifiFrequencies())
+        if (strict != WppStatus.SUCCESS) log.i("wireless: answering the version request with SUCCESS (stricter version and channel rules would answer $strict)")
         // Gearhead's answer: echo the version, the device serial, phone_info and the Wi-Fi channel
         // type the head unit said it supports. Some strict OEM head units (e.g. Toyota, #46) withhold
         // the WifiStartRequest until they get a satisfactory response, not just a bare SUCCESS.
         val response = WifiVersionResponse.newBuilder()
-            .setMajor(major)
-            .setMinor(minor)
-            .setStatus(status)
+            .setMajor(request?.takeIf { it.hasMajor() }?.major ?: 1)
+            .setMinor(request?.takeIf { it.hasMinor() }?.minor ?: 0)
+            .setStatus(WppStatus.SUCCESS)
         options.deviceSerial?.let { response.setDeviceSerial(it) }
         // No bluetooth_address: reading the phone's own MAC needs the privileged LOCAL_MAC_ADDRESS
         // permission, which AARE does not request; the receiver knows the link by its RFCOMM peer address.
@@ -501,7 +501,6 @@ class WirelessBootstrap(
         }
         send(WppMessageId.VERSION_RESPONSE, response.build().toByteArray())
         startLinkPinger()
-        return status
     }
 
     /** Reports the head unit's WPP-over-TCP endpoint where it would be kept. */
@@ -733,15 +732,11 @@ class WirelessBootstrap(
             .build().toByteArray()
 
     /**
-     * Reports how joining the network went: not at all to WPP 4.5+ head
-     * units, and with an error_message only for [WppStatus.PHONE_WIFI_DISABLED], a text the head unit
-     * may show the driver (so never our internal error text).
+     * Reports how joining the network went, with an error_message only for
+     * [WppStatus.PHONE_WIFI_DISABLED]: a text the head unit may show the driver (so never our
+     * internal error text).
      */
     private fun sendConnectionStatus(status: Int) {
-        if (headUnitAtLeast(4, 5)) {
-            log.d("wireless: no WifiConnectionStatus($status) for a WPP 4.5+ head unit")
-            return
-        }
         val message = if (status == WppStatus.PHONE_WIFI_DISABLED) PHONE_WIFI_DISABLED_MESSAGE else null
         val payload = WifiConnectionStatus.newBuilder()
             .setStatus(Status.forNumber(status) ?: Status.STATUS_WIFI_NETWORK_UNAVAILABLE)
@@ -761,8 +756,8 @@ class WirelessBootstrap(
         if (closed.get()) throw WirelessBootstrapException("wireless bootstrap cancelled")
     }
 
-    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null) =
-        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING)
+    private fun fail(message: String, status: Int = WppStatus.WIFI_NETWORK_UNAVAILABLE, cause: Throwable? = null, noStartRequest: Boolean = false) =
+        WirelessBootstrapException(message, status, cause, whileNegotiating = state == State.NEGOTIATING, noStartRequest = noStartRequest)
             .also { log.e("wireless: $message", cause) }
 
     private fun now() = System.nanoTime() / 1_000_000
@@ -804,14 +799,21 @@ class WirelessBootstrap(
          * adapter that missed the first connection.
          */
         fun isDongle(bluetoothName: String?): Boolean = bluetoothName != null && DONGLE_NAMES.any { it in bluetoothName }
-        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED); a localized text is sent. */
+
+        /**
+         * [Options.phoneStartDelayMs] for a redial to a head unit that waited for the phone last
+         * time: it gets 5 s to start by itself before we ask.
+         */
+        const val PHONE_START_DELAY_MS = 5_000L
+
+        /** error_message of WifiConnectionStatus(PHONE_WIFI_DISABLED), meant for the driver. */
         internal const val PHONE_WIFI_DISABLED_MESSAGE = "Turn on Wi-Fi on your phone to use wireless Android Auto"
 
         /**
-         * WifiVersionResponse.status: accepts a request without a
-         * version (major 0) and WPP 1 and 4 to 6, and refuses 2, 3 and 7+ with NO_COMPATIBLE_VERSION.
-         * Below 4.5 it also wants one of the head unit's channels to be usable (see [channelsUsable]).
-         * It still goes on with a head unit that starts anyway after a refusal, and so do we.
+         * The WifiVersionResponse.status stricter version rules would give, only logged (we always
+         * answer SUCCESS): a request without a version (major 0) and WPP 1 and 4 to 6 pass, 2, 3
+         * and 7+ get NO_COMPATIBLE_VERSION, and below 4.5 one of the head unit's channels must be
+         * usable (see [channelsUsable]) or it is NO_SUPPORTED_WIFI_CHANNELS.
          */
         internal fun versionStatus(major: Int, minor: Int, headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Int = when {
             major == 0 -> WppStatus.SUCCESS
@@ -821,16 +823,16 @@ class WirelessBootstrap(
             else -> WppStatus.SUCCESS
         }
 
-        /**
-         * The channel check of WifiVersionRequest.supported_wifi_channels: passes if
-         * any entry is one the phone's Wi-Fi can use, below 2400 (channel numbers, not frequencies:
-         * not checkable) or exactly 5000 (a placeholder some head units send). So a head unit that
-         * lists no channel fails it, unless the phone's frequencies are unknown (null): then it is
-         * skipped without a Wi-Fi scanner or location permission.
-         */
+        /** [s] without one pair of surrounding double quotes. */
         internal fun unquoted(s: String): String =
             if (s.length > 1 && s.startsWith('"') && s.endsWith('"')) s.substring(1, s.length - 1) else s
 
+        /**
+         * The channel check of WifiVersionRequest.supported_wifi_channels: passes if any entry is
+         * one the phone's Wi-Fi can use, below 2400 (channel numbers, not frequencies: not
+         * checkable) or exactly 5000 (a placeholder some head units send). So a head unit that lists
+         * no channel fails it, unless the phone's frequencies are unknown (null): then it passes.
+         */
         internal fun channelsUsable(headUnitChannels: List<Int>, phoneFrequencies: Set<Int>?): Boolean =
             phoneFrequencies == null || headUnitChannels.any { it < 2400 || it == 5000 || it in phoneFrequencies }
     }
