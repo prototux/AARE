@@ -95,6 +95,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -201,6 +202,9 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
+    // Bumped after a settings import: every card below is rebuilt and re-reads Settings, instead of
+    // showing (and, on the next tap, writing back) the values it remembered from before.
+    var settingsGeneration by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
@@ -211,7 +215,7 @@ private fun Home() {
     }
     BackHandler(enabled = page != null) { page = null }
 
-    AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
+    key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
             LazyColumn(
                 Modifier.fillMaxSize().systemBarsPadding(),
@@ -254,14 +258,14 @@ private fun Home() {
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { LogCard() }
-                            item { SettingsBackupCard(settings) }
+                            item { SettingsBackupCard(settings) { settingsGeneration++ } }
                         }
                         Page.ABOUT -> item { AboutScreen() }
                     }
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable
@@ -1443,20 +1447,26 @@ private fun LogCard() {
 }
 
 /**
- * Exports every setting to a JSON file the user picks (SAF), and imports one back, with a
- * confirmation before overwriting. What's left out and why is documented on SettingsBackup
- * itself; it's device- or secret-specific state that must not move between phones.
+ * Exports the settings SettingsBackup allows to a JSON file the user picks (SAF), and imports one
+ * back, with a confirmation before overwriting. What's left out and why is documented on
+ * SettingsBackup itself. The file is read and parsed off the main thread, with a size limit;
+ * [onImported] then has every card re-read the new values.
  */
 @Composable
-private fun SettingsBackupCard(settings: Settings) {
+private fun SettingsBackupCard(settings: Settings, onImported: () -> Unit) {
     val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
     var pendingImport by remember { mutableStateOf<Uri?>(null) }
     val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        runCatching {
-            val json = SettingsBackup.export(settings.all)
-            ctx.contentResolver.openOutputStream(uri)?.use { it.write(json.toString(2).toByteArray()) }
-        }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        val json = SettingsBackup.export(settings.all).toString(2)
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(json.toByteArray()) } }
+                    .onFailure { DiagLog.add("settings export failed: ${it.javaClass.simpleName}") }.isSuccess
+            }
+            if (!ok) Toast.makeText(ctx, R.string.setup_backup_export_failed, Toast.LENGTH_LONG).show()
+        }
     }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) pendingImport = uri
@@ -1477,11 +1487,25 @@ private fun SettingsBackupCard(settings: Settings) {
             confirmButton = {
                 TextButton(onClick = {
                     pendingImport = null
-                    runCatching {
-                        val text = ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().toString(Charsets.UTF_8) }
-                        settings.restore(SettingsBackup.import(org.json.JSONObject(text)))
-                        Toast.makeText(ctx, R.string.setup_backup_import_done, Toast.LENGTH_SHORT).show()
-                    }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+                    scope.launch {
+                        val imported = withContext(Dispatchers.IO) {
+                            // On failure, log only the kind: a JSON error's message quotes the whole file.
+                            runCatching {
+                                val bytes = ctx.contentResolver.openInputStream(uri)!!.use { SettingsBackup.readLimited(it) }
+                                SettingsBackup.import(org.json.JSONObject(bytes.toString(Charsets.UTF_8)))
+                            }.onFailure { DiagLog.add("settings import failed: ${it.javaClass.simpleName}") }.getOrNull()
+                        }
+                        if (imported == null) {
+                            Toast.makeText(ctx, R.string.setup_backup_import_failed, Toast.LENGTH_LONG).show()
+                            return@launch
+                        }
+                        settings.restore(imported.values)
+                        if (imported.skipped.isNotEmpty()) DiagLog.add("settings import skipped ${imported.skipped.size}: ${imported.skipped.joinToString(limit = 10)}")
+                        val done = if (imported.skipped.isEmpty()) ctx.getString(R.string.setup_backup_import_done)
+                        else ctx.getString(R.string.setup_backup_import_done_skipped, imported.skipped.size)
+                        Toast.makeText(ctx, done, Toast.LENGTH_LONG).show()
+                        onImported()
+                    }
                 }) { Text(stringResource(R.string.setup_backup_import_confirm_action)) }
             },
             dismissButton = { TextButton(onClick = { pendingImport = null }) { Text(stringResource(R.string.common_cancel)) } },
