@@ -406,15 +406,14 @@ class CarRuntime(
             if (m.packageName in hidden || m.packageName in messagingOnly || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
-        // Built in, like Android Auto's: calls, notifications and the car-side settings. Phone and
-        // Notifications can be hidden the same way as any other app, keyed by their fixed id
-        // since they have no package of their own; their ringing/call and unseen-count UI
-        // (CallOverlay, the rail's bell) is separate from this list and keeps working either way.
-        if (PHONE_ID !in hidden) entries += CarAppEntry(PHONE_ID, context.packageName, context.getString(R.string.setup_app_entry_phone), builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
-        // Settings is never hidden: it is the only way to reach the car-side settings from the car
-        // itself, so hiding it would lock the user out of them until they got back to the phone.
+        // Built in, like Android Auto's: calls, the car-side settings and notifications. Always in
+        // the list, even when the user hid Phone or Notifications: the bell, the notification card,
+        // the call card, the rail's phone button and the steering-wheel call key all open them from
+        // here. Hiding them (keyed by their fixed id, see launcherHidden below) only takes them off
+        // the app grid.
+        entries += CarAppEntry(PHONE_ID, context.packageName, context.getString(R.string.setup_app_entry_phone), builtinIcon(R.drawable.ic_car_phone), CarAppKind.PHONE)
         entries += CarAppEntry(SETTINGS_ID, context.packageName, context.getString(R.string.setup_app_entry_settings), builtinIcon(R.drawable.ic_car_settings), CarAppKind.SETTINGS)
-        if (NOTIFICATIONS_ID !in hidden) entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, context.getString(R.string.setup_app_entry_notifications), builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
+        entries += CarAppEntry(NOTIFICATIONS_ID, context.packageName, context.getString(R.string.setup_app_entry_notifications), builtinIcon(R.drawable.ic_car_notifications), CarAppKind.NOTIFICATIONS)
         if (settings.phoneScreen && phoneScreenAllowed) {
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
@@ -448,6 +447,7 @@ class CarRuntime(
         }
         ui.apps.clear()
         ui.apps.addAll(entries)
+        ui.launcherHidden = launcherHiddenIds(hidden)
         // Restore the last navigation and media apps, so the dashboard isn't empty. Not a navigation app that
         // finished itself: its map card would stay blank instead of offering the picker.
         if (ui.activeNavAppId == null) {
@@ -746,12 +746,16 @@ class CarRuntime(
         const val EXIT_ID = "exit-to-car"
 
         /**
-         * Built-in apps the user may hide from the car's app list, the same way as any
-         * third-party app (`Settings.hiddenApps`, keyed by these fixed ids instead of a package).
+         * Built-in apps the user may hide from the car's app grid, the same way as any third-party
+         * app (`Settings.hiddenApps`, keyed by these fixed ids instead of a package). Only the grid:
+         * they stay in [CarUiState.apps] for the bell, the call card and the call keys.
          * [SETTINGS_ID] is deliberately not here: hiding it would lock the user out of the car-side
          * settings from the car itself, with no way back in short of reconnecting and using the phone.
          */
         val HIDEABLE_BUILTIN_IDS = setOf(PHONE_ID, NOTIFICATIONS_ID)
+
+        /** The built-ins of [hidden] (Settings.hiddenApps) the app grid leaves out; never Settings. */
+        fun launcherHiddenIds(hidden: Set<String>): Set<String> = HIDEABLE_BUILTIN_IDS intersect hidden
 
         /** Started runtimes, oldest first. Main thread. */
         private val running = ArrayList<CarRuntime>()

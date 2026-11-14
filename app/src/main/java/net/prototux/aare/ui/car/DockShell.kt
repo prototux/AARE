@@ -162,7 +162,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
         // Two rows in landscape; a portrait screen has room for more.
         val rows = if (maxHeight > maxWidth) (maxHeight / 170.dp).toInt().coerceIn(2, 5) else 2
         val perPage = columns * rows
-        val apps = state.apps
+        val apps = state.launcherApps
         val pages = maxOf(1, (apps.size + perPage - 1) / perPage)
         val pager = rememberPagerState { pages }
         Column(Modifier.fillMaxSize().padding(vertical = 24.dp)) {

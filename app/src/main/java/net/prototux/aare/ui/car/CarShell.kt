@@ -662,7 +662,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Already in the user's order (CarRuntime.applyApps).
-        items(state.apps, key = { it.id }) { app ->
+        items(state.launcherApps, key = { it.id }) { app ->
             Column(
                 Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
