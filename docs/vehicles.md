@@ -10,7 +10,7 @@ There are two files in the same format:
 - **Yours**, in AARE's external files folder (*Advanced > Vehicle overrides*: the path is shown
   there, with *Write a template* and *Import*). It is read at every connection.
 
-For one head unit, your matching rule wins, field by field, over the built-in one: a field you
+For one head unit, your matching rule wins, field by field, over the built-in ones: a field you
 leave out keeps the built-in value, or AARE's default.
 
 ## Format
@@ -26,10 +26,34 @@ leave out keeps the built-in value, or AARE's default.
 }
 ```
 
-**`match`**: case-insensitive substrings of what the head unit reports, as the connection log
-prints it after `head unit:` (`make model head-unit-make head-unit-model`). `name` is that whole
-string. Every field you set must match; a rule without any never matches. The first matching rule
-of each file is used.
+**`match`**: what the head unit reports at service discovery. Every key you set must match; a
+rule without any never matches. A key is a string, or a list of alternatives (any one matching is
+enough); an empty string or list means "any".
+
+| Key | Matches |
+|---|---|
+| `make`, `model` | The car's make and model: case-insensitive substrings. |
+| `name` | The connection log's `head unit:` string (`make model head-unit-make head-unit-model`): a case-insensitive substring. |
+| `exact` | `true`: `make`, `model` and `name` must be the whole value (still case-insensitive). |
+| `year` | The model year the head unit reports. |
+| `headUnitMake`, `headUnitModel` | Who made the head unit, and its model (`Harman`, `MGU21`…). |
+| `headUnitBuild` | The head unit's software build. |
+| `protocol` | The projection protocol version the head unit asks for, `"major.minor"` (`"1.3"`), exactly. |
+| `minProtocol`, `maxProtocol` | The same version, at least / at most (`"maxProtocol": "1.1"` is everything before 1.2). |
+
+`year`, the `headUnit…` keys and the protocol keys are always the whole value, case-insensitive,
+like built-in car lists. A rule with a protocol key never matches a head unit whose
+version isn't known. The connection log's `vehicles.json match keys:` line shows the values a
+head unit reported.
+
+In your file the first matching rule is used. In the built-in file every matching rule is: each
+covers one quirk, and one head unit can have several (the earlier rule wins a key both set).
+
+For example, a rule for every Ford head unit by Harman older than protocol 1.4:
+
+```json
+{ "match": { "make": "Ford", "headUnitMake": "Harman", "maxProtocol": "1.3" }, "apply": { "maxHeight": 720 } }
+```
 
 **`apply`**, every key optional:
 
@@ -42,6 +66,16 @@ of each file is used.
 | `skipServices` | list | Services AARE would open that stay closed for this car. |
 | `openServices` | list | Services the car lists that AARE doesn't use, opened anyway; AARE sends nothing on them and ignores what the car sends. |
 | `micSetup` | true/false | Send SETUP on the microphone channel when it opens (default: true). |
+| `videoResolutions` | list | The only video resolutions to pick (`"800x480"`…), when the head unit offers one of them. |
+| `pixelAspect` | number | Width over height of one of the car screen's pixels (1.15: wider than tall). The UI is laid out wider (or taller, below 1) and squeezed into the video, so it looks right on the car. Default: what the head unit reports from protocol 1.2 on, else 1. |
+| `singleChannelCapture` | true/false | Navigation voice goes with the music on the media channel; the guidance channel stays unused. |
+| `forceElectric` | true/false | Tell apps the car is electric when it reports no fuel type or an unknown one. |
+| `wifiMediaStartSilence`, `wifiGuidanceStartSilence` | number | Silent audio messages sent ahead of a music / navigation voice stream, over Wi-Fi (default: 4 and 4; 0 for music from protocol 5.0 on). Over USB none are sent. |
+| `mediaOnGainTransient` | true/false | Music keeps playing when the car grants GAIN_TRANSIENT (default: false, only navigation voice does). |
+| `pauseOnGuidanceOnly` | true/false | The car saying on its own that only navigation voice may play pauses the phone's music (default: true). |
+| `wireless` | true/false | Connect to this head unit wirelessly (default: true). Known before the session from the car's last one: AARE keeps, on the phone, who each head unit said it was by Bluetooth address. |
+| `exitToCar` | true/false | The app list's "Exit to car" entry (default: true). |
+| `exitLabel` | text | What that entry is called: `"name"` (the car's display name, else its make; the default), `"make"`, or `"default"` (the generic label). |
 
 Services are named as the connection log writes them after `services:`: `video`, `mic`,
 `input`, `sensors`, `bluetooth`, `navstatus`, `playback`, `phonestatus`, `mediabrowser`,

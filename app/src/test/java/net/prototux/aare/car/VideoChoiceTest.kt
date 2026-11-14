@@ -25,6 +25,18 @@ class VideoChoiceTest {
         assertEquals(0, CarSession.chooseVideo(configs, emptyList(), maxHeight = 720, prefer60 = false, codec = h264))
     }
 
+    /** vehicles.json videoResolutions (800x480 for Subaru's Harman units). */
+    @Test fun listedResolutionsAreTheOnlyOnesPicked() {
+        val configs = listOf(config(VideoCodecResolutionType.VIDEO_1280x720), config(VideoCodecResolutionType.VIDEO_800x480))
+        assertEquals(1, CarSession.chooseVideo(configs, emptyList(), maxHeight = 1080, prefer60 = false, codec = h264, resolutions = setOf("800x480")))
+        assertEquals(0, CarSession.chooseVideo(configs, emptyList(), maxHeight = 1080, prefer60 = false, codec = h264, resolutions = null))
+    }
+
+    @Test fun listedResolutionsTheCarDoesntOfferAreIgnored() {
+        val configs = listOf(config(VideoCodecResolutionType.VIDEO_1280x720), config(VideoCodecResolutionType.VIDEO_1920x1080))
+        assertEquals(0, CarSession.chooseVideo(configs, emptyList(), maxHeight = 720, prefer60 = false, codec = h264, resolutions = setOf("800x480")))
+    }
+
     @Test fun theVisibleSizeIsTheResolutionLessTheMargins() {
         assertEquals(1920 to 720, CarSession.visibleSize(config(VideoCodecResolutionType.VIDEO_1920x1080, heightMargin = 360)))
         assertEquals(1280 to 720, CarSession.visibleSize(config(VideoCodecResolutionType.VIDEO_1280x720)))
