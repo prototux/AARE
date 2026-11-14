@@ -88,7 +88,7 @@ internal val LocalObstructions = staticCompositionLocalOf<ObstructionRegistry?> 
  * Without this the full-screen chrome squeezed into the card covered most of it, and the app,
  * told only the small uncovered part was visible, fitted its map into that (very zoomed in).
  */
-val LocalCompactMap = staticCompositionLocalOf { false }
+internal val LocalCompactMap = staticCompositionLocalOf { false }
 
 /**
  * Marks a card/strip as covering the map: its bounds shrink the visible area reported to the

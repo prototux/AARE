@@ -54,6 +54,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -338,6 +339,15 @@ private fun MicButton(listening: Boolean, onClick: () -> Unit) {
 
 // ---------------------------------------------------------------- dashboard
 
+/**
+ * The map and music cards in [dashboardOrder]. Keyed, so switching the order moves the cards
+ * instead of re-creating them: the map card keeps the navigation app's surface.
+ */
+@Composable
+private fun DashboardCards(mediaFirst: Boolean, map: @Composable () -> Unit, media: @Composable () -> Unit) {
+    dashboardOrder(mediaFirst, "map" to map, "media" to media).forEach { (id, card) -> key(id) { card() } }
+}
+
 @Composable
 internal fun Dashboard(
     state: CarUiState,
@@ -353,7 +363,7 @@ internal fun Dashboard(
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                 val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxWidth()) }
                 val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxWidth()) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
+                DashboardCards(state.mediaFirst, map, media)
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
@@ -368,14 +378,14 @@ internal fun Dashboard(
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                 val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1f).fillMaxWidth()) }
                 val media: @Composable () -> Unit = { MediaCard(state, actions, compact = true, modifier = Modifier.fillMaxWidth().height(112.dp)) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
+                DashboardCards(state.mediaFirst, map, media)
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
                 val map: @Composable () -> Unit = { NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxHeight()) }
                 val media: @Composable () -> Unit = { MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight()) }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
+                DashboardCards(state.mediaFirst, map, media)
                 val event = state.nextEvent
                 val latest = state.history.firstOrNull()
                 when {
@@ -399,7 +409,7 @@ internal fun Dashboard(
                         }
                     }
                 }
-                dashboardOrder(state.mediaFirst, map, media).forEach { it() }
+                DashboardCards(state.mediaFirst, map, media)
             }
         }
     }
