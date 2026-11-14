@@ -217,7 +217,7 @@ class CarNotificationListener : NotificationListenerService() {
     }.getOrNull()
 
     /** Speaks with the media usage, so it reaches the car along with the music. */
-    private fun speak(text: String) {
+    fun speak(text: String) {
         val t = tts
         if (t != null) { t.speak(text, TextToSpeech.QUEUE_ADD, Bundle(), null); return }
         tts = TextToSpeech(this) { status ->

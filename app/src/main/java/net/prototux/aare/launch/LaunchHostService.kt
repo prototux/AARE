@@ -15,6 +15,8 @@ import android.view.InputEvent
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
+import net.prototux.aare.BuildConfig
+import net.prototux.aare.host.CarLinks
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import kotlin.system.exitProcess
 
@@ -55,6 +57,7 @@ class LaunchHostService : ILaunchHost.Stub {
         keepDisplayAwake: Boolean,
     ): Int {
         stop()
+        approveCarLinks()
         val ctx = injectedContext ?: systemContext() ?: return -1
         val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
         display = vd
@@ -178,6 +181,19 @@ class LaunchHostService : ILaunchHost.Stub {
         }
         return null
     }
+
+    /**
+     * Car links tapped in a hosted assistant's reply open in AARE, not the browser: Android leaves that
+     * choice to the user, which adb rights may make for them. Runs aside, the launch doesn't wait for it.
+     */
+    private fun approveCarLinks() = Thread {
+        runCatching {
+            val pm = ProcessBuilder("pm", "set-app-links-user-selection", "--user", "current", "--package", BuildConfig.APPLICATION_ID, "true", CarLinks.HOST)
+                .redirectErrorStream(true).start()
+            val out = pm.inputStream.bufferedReader().readText()
+            if (pm.waitFor() != 0) Log.w(TAG, "car links not approved: $out")
+        }.onFailure { Log.w(TAG, "car links not approved: ${it.message}") }
+    }.start()
 
     /** Launch [pkg]'s main activity onto [onDisplay]. */
     @SuppressLint("QueryPermissionsNeeded")

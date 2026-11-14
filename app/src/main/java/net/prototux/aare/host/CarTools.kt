@@ -44,12 +44,12 @@ object CarTools {
             param("mode", "string", "dark, light or auto", listOf("dark", "light", "auto")) to true, silent = true))
     }
 
-    /** Runs [name] on [runtime] (main thread). */
-    fun run(runtime: CarRuntime, name: String, args: JSONObject): JSONObject = when (name) {
+    /** Runs [name] on [runtime] (main thread); a [link] (CarLinks) can't open the phone screen mirror. */
+    fun run(runtime: CarRuntime, name: String, args: JSONObject, link: Boolean = false): JSONObject = when (name) {
         "car_status" -> status(runtime)
         "car_navigate" -> navigate(runtime, args.optString("destination"))
         "car_media" -> media(runtime, args.optString("action"))
-        "car_open" -> open(runtime, args.optString("what"))
+        "car_open" -> open(runtime, args.optString("what"), link)
         "car_messages" -> messages(runtime, args.optString("app"))
         "car_reply" -> reply(runtime, args.optString("conversation"), args.optString("app"), args.optString("message"))
         "car_mark_read" -> markRead(args.optString("conversation"), args.optString("app"))
@@ -103,21 +103,27 @@ object CarTools {
         return ok(action)
     }
 
-    private fun open(rt: CarRuntime, what: String): JSONObject {
+    private fun open(rt: CarRuntime, what: String, link: Boolean = false): JSONObject {
         val w = what.trim().lowercase()
         val ui = rt.ui
         when (w) {
             "home", "dashboard", "map" -> { ui.screen = CarScreen.Dashboard; return ok("home") }
             "apps", "app list", "launcher" -> { ui.screen = CarScreen.Launcher; return ok("app list") }
         }
-        // "Exit to car" isn't an app: a loose match on "car" mustn't take the screen away.
-        val apps = ui.apps.filter { it.kind != CarAppKind.EXIT }
+        val apps = ui.apps.filter { openable(it.kind, link) }
         val app = apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
             ?: apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
             ?: return error("no app called \"$what\" in the car; apps: " + apps.joinToString { it.label })
         rt.actions.openApp(app)
         return ok("${app.label} is on the car screen")
     }
+
+    /**
+     * Whether car_open may match an app of [kind]. "Exit to car" isn't an app: a loose match on "car" mustn't take
+     * the screen away. A [link] (CarLinks) runs without the assistant's confirmation, so it can't reach the phone
+     * screen mirror either.
+     */
+    internal fun openable(kind: CarAppKind, link: Boolean) = kind != CarAppKind.EXIT && !(link && kind == CarAppKind.PHONE_SCREEN)
 
     private fun messages(rt: CarRuntime, app: String): JSONObject {
         val listener = CarNotificationListener.instance ?: return noListener(rt.context)

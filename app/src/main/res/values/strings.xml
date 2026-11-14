@@ -540,4 +540,9 @@
     <string name="carapp_error_stopped">%1$s stopped</string>
     <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
     <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
+    <string name="car_link_failed">That didn\'t work.</string>
+    <string name="car_link_no_messages">No new messages.</string>
+    <string name="car_link_playing">Playing %1$s, %2$s.</string>
+    <string name="car_link_next_turn">Next: %1$s.</string>
+    <string name="car_link_battery">Phone battery %1$d percent.</string>
 </resources>
