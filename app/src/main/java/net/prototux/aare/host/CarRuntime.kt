@@ -36,6 +36,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
+import net.prototux.aare.media.pickDefaultMediaApp
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
@@ -450,7 +451,14 @@ class CarRuntime(
             ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
         }
         if (ui.activeMediaAppId == null) {
-            ui.activeMediaAppId = entries.firstOrNull { it.kind == CarAppKind.MEDIA && it.packageName == settings.lastMediaApp }?.id
+            val mediaEntries = entries.filter { it.kind == CarAppKind.MEDIA }
+            val lastPicked = mediaEntries.firstOrNull { it.packageName == settings.lastMediaApp }
+            // Only when the user never chose one and nothing is already playing: don't fight the
+            // "what's playing" pick (set elsewhere as playback starts) or override a real choice.
+            val fallback = if (lastPicked == null && settings.lastMediaApp == null && media.playback.value == null)
+                pickDefaultMediaApp(mediaEntries.map { it.packageName })?.let { pkg -> mediaEntries.firstOrNull { it.packageName == pkg } }
+            else null
+            ui.activeMediaAppId = (lastPicked ?: fallback)?.id
         }
     }
 
