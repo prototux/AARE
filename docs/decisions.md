@@ -203,9 +203,18 @@ How it works, reversed from head unit wireless setup code:
   deletes the stored configuration and restarts at once, which falls back to RFCOMM. Credentials
   the access point refuses delete it too; a failing socket only restarts.
 
-AARE does the same, behind the head unit's WPP version as above (a head unit that sends no
-`wpp_info` or WifiSetupInfo sees no change), with these differences:
+AARE does the same, behind the head unit's WPP version as above, with these differences:
 
+- **Opt-in.** The setting "Faster wireless reconnect (WPP over TCP)" is off by default. Off, nothing
+  is stored or used, and WifiSetupInfo and `wpp_info` are only logged: Bluetooth every time, as
+  before. Switching it either way forgets every stored configuration and remembered failure.
+- **A WifiSetupInfo that fails a check is ignored** and the exchange carries on over RFCOMM, instead
+  of stopping the attempt.
+- **One TCP failure per head unit and version is enough.** Any failure on the TCP path (the
+  network not joined within 10 s, TCP, TLS, WPP, a rejection) forgets the configuration and
+  remembers the head unit with its WPP version: from then on nothing is stored or tried over TCP
+  for it, and its WifiSetupInfo is declined, until it reports another version or the setting is
+  switched. The same attempt goes on over RFCOMM, also right after a WifiSetupInfo hand-off.
 - **The head unit's TLS certificate is pinned, not checked against Google's CA**, as for AAP
   (open-source head units cannot chain to it). Trust on first use, because a TCP configuration only
   exists after an exchange over the bonded Bluetooth link, under its own key `wpp:<Bluetooth
@@ -215,9 +224,5 @@ AARE does the same, behind the head unit's WPP version as above (a head unit tha
 - **The stored configuration includes the car's Wi-Fi password**, in app-private preferences (the
   app opts out of backups). Without it the phone cannot reach the TCP endpoint before any Bluetooth
   exchange. Owner to confirm.
-- **A failed TCP attempt falls back to RFCOMM in the same attempt** instead of retrying TCP, so a
-  stale configuration never locks the phone out. The configuration is deleted on a rejection,
-  refused credentials, or any failure after the network was joined (TCP, TLS, WPP); it is kept
-  when only the network was not found (the car's access point may not be up yet).
 - The TLS socket gets a read timeout for the handshake only; afterwards the WPP link has none,
   like the RFCOMM one (pings keep it alive).
