@@ -26,6 +26,12 @@ interface ILaunchHost {
     /** Tear the display down and stop feeding the app. */
     void stop() = 5;
 
+    /**
+     * Open [uri] (an ACTION_VIEW, geo: only) in [packageName] on the display [start] created, e.g. a
+     * destination for a navigation app. False without a display or for any other URI.
+     */
+    boolean view(String uri, String packageName) = 6;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }

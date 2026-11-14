@@ -138,6 +138,7 @@ import net.prototux.aare.host.CarAppInfo
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
@@ -1047,6 +1048,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     var enabled by remember { mutableStateOf(settings.standaloneApps) }
     var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    var markedNavigation by remember { mutableStateOf(settings.standaloneNavigationPackages) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
         Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -1078,6 +1080,18 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                     AppRow(icon, label, pkg, pkg in allowed) { on ->
                         allowed = if (on) allowed + pkg else allowed - pkg
                         settings.standaloneAppPackages = allowed
+                    }
+                    if (pkg in allowed) Box(Modifier.padding(start = 52.dp)) {
+                        if (pkg in KNOWN_NAVIGATION) {
+                            Text(stringResource(R.string.standalone_nav_known), style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
+                        } else {
+                            Toggle(stringResource(R.string.standalone_nav_mark_title), stringResource(R.string.standalone_nav_mark_subtitle),
+                                pkg in markedNavigation) { on ->
+                                markedNavigation = if (on) markedNavigation + pkg else markedNavigation - pkg
+                                settings.standaloneNavigationPackages = markedNavigation
+                            }
+                        }
                     }
                 }
             }

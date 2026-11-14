@@ -25,6 +25,11 @@ class CarAppEntry(
     val label: String,
     val icon: Bitmap?,
     val kind: CarAppKind,
+    /**
+     * Takes the navigation app's place (rail, dashboard, "navigate to"): a hosted navigation app, or
+     * a phone navigation app launched on the car screen ([CarAppKind.STANDALONE]).
+     */
+    val isNavigation: Boolean = kind == CarAppKind.NAVIGATION,
 )
 
 @Stable

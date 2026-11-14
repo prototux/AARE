@@ -94,7 +94,7 @@ internal fun DockShell(
 
 @Composable
 private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) = CarTheme(night = true) {
-    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }
+    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.isNavigation }
     val media = state.app(state.activeMediaAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.MEDIA }
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {

@@ -475,10 +475,12 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
     Card(modifier) {
         if (guidance != null) {
             GuidanceCard(guidance)
+        } else if (nav != null && nav.kind == CarAppKind.STANDALONE) {
+            StandaloneNavCard(nav, actions)
         } else if (nav != null) {
             navMap(nav, Modifier.fillMaxSize())
         } else {
-            val navApps = state.apps.filter { it.kind == CarAppKind.NAVIGATION }
+            val navApps = state.apps.filter { it.isNavigation }
             Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(16.dp))
@@ -495,6 +497,25 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
                 }
             }
         }
+    }
+}
+
+/**
+ * A phone navigation app launched on the car screen has one virtual display, owned by its full-screen
+ * view: a second one on the dashboard would restart the app (and its route) on every switch. The
+ * card offers to open it instead; its directions show here once it posts them (see [GuidanceCard]).
+ */
+@Composable
+private fun StandaloneNavCard(nav: CarAppEntry, actions: CarActions) {
+    Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
+        Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.nav_dashboard_where_to), style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.nav_dashboard_standalone_hint, nav.label), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(20.dp))
+        AppChip(nav) { actions.openApp(nav) }
     }
 }
 
