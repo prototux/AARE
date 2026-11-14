@@ -83,6 +83,11 @@
     <string name="setup_choice_bottom">أسفل</string>
     <string name="setup_toggle_dark_bar_title">شريط داكن</string>
     <string name="setup_toggle_dark_bar_subtitle">إبقاء الشريط داكنًا حتى مع ألوان النهار</string>
+    <string name="setup_choice_text_size">حجم النص</string>
+    <string name="setup_choice_control_size">حجم عناصر التحكم</string>
+    <string name="setup_choice_size_default">افتراضي</string>
+    <string name="setup_choice_size_larger">أكبر</string>
+    <string name="setup_choice_size_largest">الأكبر</string>
     <string name="setup_section_dashboard">لوحة المعلومات</string>
     <string name="dash_cards_title">البطاقات</string>
     <string name="dash_cards_hint">تحصل البطاقة الأولى على أكبر مساحة، وتملأ البقية ما تتركه الشاشة. البطاقة التي ليس لديها ما تعرضه تترك مكانها للتالية.</string>

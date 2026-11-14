@@ -177,6 +177,11 @@
     <string name="setup_choice_bottom">Bottom</string>
     <string name="setup_toggle_dark_bar_title">Dark bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Keep the bar dark even with day colors</string>
+    <string name="setup_choice_text_size">Text size</string>
+    <string name="setup_choice_control_size">Control size</string>
+    <string name="setup_choice_size_default">Default</string>
+    <string name="setup_choice_size_larger">Larger</string>
+    <string name="setup_choice_size_largest">Largest</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Cards</string>
     <string name="dash_cards_hint">The first card gets the most room; the others fill what the screen leaves. A card with nothing to show gives its place to the next.</string>

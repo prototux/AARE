@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Dưới</string>
     <string name="setup_toggle_dark_bar_title">Thanh tối</string>
     <string name="setup_toggle_dark_bar_subtitle">Giữ thanh màu tối ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_choice_text_size">Cỡ chữ</string>
+    <string name="setup_choice_control_size">Cỡ nút điều khiển</string>
+    <string name="setup_choice_size_default">Mặc định</string>
+    <string name="setup_choice_size_larger">Lớn hơn</string>
+    <string name="setup_choice_size_largest">Lớn nhất</string>
     <string name="setup_section_dashboard">Bảng điều khiển</string>
     <string name="dash_cards_title">Thẻ</string>
     <string name="dash_cards_hint">Thẻ đầu tiên có nhiều chỗ nhất; các thẻ khác lấp phần còn lại của màn hình. Thẻ không có gì để hiển thị sẽ nhường chỗ cho thẻ tiếp theo.</string>

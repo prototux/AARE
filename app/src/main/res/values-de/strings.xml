@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Unten</string>
     <string name="setup_toggle_dark_bar_title">Dunkle Leiste</string>
     <string name="setup_toggle_dark_bar_subtitle">Leiste auch bei Tagfarben dunkel halten</string>
+    <string name="setup_choice_text_size">Textgröße</string>
+    <string name="setup_choice_control_size">Größe der Bedienelemente</string>
+    <string name="setup_choice_size_default">Standard</string>
+    <string name="setup_choice_size_larger">Größer</string>
+    <string name="setup_choice_size_largest">Am größten</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Karten</string>
     <string name="dash_cards_hint">Die erste Karte bekommt den meisten Platz, die anderen füllen den Rest des Bildschirms. Eine Karte ohne Inhalt überlässt ihren Platz der nächsten.</string>

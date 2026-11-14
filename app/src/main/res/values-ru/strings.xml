@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Снизу</string>
     <string name="setup_toggle_dark_bar_title">Тёмная панель</string>
     <string name="setup_toggle_dark_bar_subtitle">Оставлять панель тёмной даже со светлыми цветами</string>
+    <string name="setup_choice_text_size">Размер текста</string>
+    <string name="setup_choice_control_size">Размер элементов управления</string>
+    <string name="setup_choice_size_default">По умолчанию</string>
+    <string name="setup_choice_size_larger">Крупнее</string>
+    <string name="setup_choice_size_largest">Самый крупный</string>
     <string name="setup_section_dashboard">Панель приборов</string>
     <string name="dash_cards_title">Карточки</string>
     <string name="dash_cards_hint">Первая карточка получает больше всего места, остальные заполняют оставшийся экран. Карточка, которой нечего показать, уступает место следующей.</string>
