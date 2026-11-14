@@ -20,8 +20,8 @@ import net.prototux.aare.aap.channels.BluetoothChannel
  * request for the car and the car's passkey or PIN are matched up ([PairingCheck]), the car's PIN
  * is entered for it, and the car gets the result.
  *
- * A matching numeric comparison is also confirmed itself, using Android's pairing
- * dialog away; confirming needs BLUETOOTH_PRIVILEGED, which an app can't hold, so AARE leaves
+ * A matching numeric comparison can also be confirmed automatically, dismissing Android's
+ * pairing dialog; that needs BLUETOOTH_PRIVILEGED, which an app can't hold, so AARE leaves
  * the dialog to the user and only tells the car whether the passkeys match. Everything runs on
  * [handler]'s thread.
  */
