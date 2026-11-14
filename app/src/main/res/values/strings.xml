@@ -130,7 +130,7 @@
     <string name="setup_check_audio_subtitle">Let the phone\'s sound reach the car</string>
     <string name="setup_action_set_up">Set up</string>
     <string name="shizuku_setup_title">Grant AARE\'s permissions with Shizuku</string>
-    <string name="shizuku_setup_subtitle">The permissions and the notification access above in one go, without going through each screen</string>
+    <string name="shizuku_setup_subtitle">One tap grants what is still missing, without each permission\'s own dialog: microphone, location, contacts, call log, calendar, phone calls, nearby devices (Bluetooth, Wi-Fi), local network, notifications and notification access</string>
     <string name="shizuku_setup_working">Granting…</string>
     <string name="shizuku_setup_result_title">Granted with Shizuku</string>
     <string name="shizuku_setup_nothing_to_grant">Everything was already granted.</string>

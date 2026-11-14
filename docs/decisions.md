@@ -163,6 +163,10 @@ runs the commands as the shell. See `setup/ShizukuSetup.kt`.
   `pm grant` only for a permission the setup asks for on that release, `cmd notification
   allow_listener` only for AARE's listener, and `pm disable-user` / `pm enable` only for Android
   Auto. Each command and its result go to the connection log.
+- The one-tap grant skips each permission's own dialog, so its button says beforehand what it
+  grants (microphone, location, contacts, call log, calendar, phone calls, nearby devices, local
+  network, notifications and notification access): nothing sensitive is granted without the user
+  having read it on the button they tap.
 - Android Auto: opt-in, behind a confirmation dialog, `pm disable-user` only. It is never
   uninstalled and its data is never cleared, and "Enable Android Auto again" (`pm enable`) undoes it.
   The state shown comes from PackageManager, not from the command's output.
