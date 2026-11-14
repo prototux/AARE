@@ -216,8 +216,11 @@ private fun SplitPane(
         val density = LocalDensity.current
         val totalWidth = maxWidth
         val restRatio = state.splitRatio
+        // Where the finger has dragged the divider to (0..1), unclamped: the handle drawn on screen
+        // stops at the minimum pane width, but releasing it near an edge must still close that pane
+        // on any screen width, so the release is judged on the finger, not the clamped handle.
         var dragRatio by remember(totalWidth) { mutableStateOf<Float?>(null) }
-        val handleRatio = dragRatio ?: restRatio
+        val handleRatio = dragRatio?.let { clampDragRatio(totalWidth, it) } ?: restRatio
         Row(Modifier.fillMaxSize()) {
             Box(
                 Modifier.weight(restRatio).fillMaxHeight().focusGroup()
@@ -243,7 +246,7 @@ private fun SplitPane(
                         onDragStart = { dragRatio = restRatio },
                         onDrag = { _, drag ->
                             val usablePx = with(density) { (totalWidth - SPLIT_DIVIDER_WIDTH).toPx() }
-                            dragRatio = clampDragRatio(totalWidth, (dragRatio ?: restRatio) + drag.x / usablePx)
+                            dragRatio = ((dragRatio ?: restRatio) + drag.x / usablePx).coerceIn(0f, 1f)
                         },
                         onDragEnd = { dragRatio?.let(actions::commitSplitRatio); dragRatio = null },
                         onDragCancel = { dragRatio = null },

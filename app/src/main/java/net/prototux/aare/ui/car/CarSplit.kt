@@ -63,8 +63,10 @@ fun minPaneWidth(totalWidth: Dp, ratio: Float): Dp {
 }
 
 /**
- * Clamps a live divider drag so neither pane is ever drawn thinner than [SPLIT_MIN_PANE_WIDTH],
- * before it's released and [snapSplitRatio] decides the real rest point (or a close).
+ * Clamps where a live divider drag is drawn so neither pane is ever shown thinner than
+ * [SPLIT_MIN_PANE_WIDTH]. Only the drawing: the release passes the unclamped drag to
+ * [snapSplitRatio], since on a screen narrower than about 1470 dp this floor sits past the close
+ * threshold and a clamped release could never close a pane.
  */
 fun clampDragRatio(totalWidth: Dp, raw: Float): Float {
     val usable = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value).coerceAtLeast(1f)

@@ -75,6 +75,17 @@ class CarSplitTest {
     }
 
     @Test
+    fun onANarrowSplitOnlyTheUnclampedDragReachesTheCloseThreshold() {
+        // Why the release is judged on the finger, not the drawn handle: at the narrowest split
+        // the clamped handle can't get near enough an edge to close a pane.
+        val total = SPLIT_MIN_SCREEN_WIDTH
+        assertEquals(1f / 3f, snapSplitRatio(clampDragRatio(total, 0.02f)), 0.0001f)
+        assertEquals(2f / 3f, snapSplitRatio(clampDragRatio(total, 0.98f)), 0.0001f)
+        assertEquals(0f, snapSplitRatio(0.02f), 0.0001f)
+        assertEquals(1f, snapSplitRatio(0.98f), 0.0001f)
+    }
+
+    @Test
     fun theNarrowestSnapRatioStillClearsTheLiveDragFloorAtTheMinimumSplitWidth() {
         // Ties SPLIT_MIN_SCREEN_WIDTH to the live-drag floor: even the thinnest rest point (a
         // third) must stay comfortably above what dragging alone would ever allow.
