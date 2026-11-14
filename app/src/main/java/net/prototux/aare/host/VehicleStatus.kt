@@ -42,6 +42,8 @@ object VehicleStatus {
             f.rangeKm?.let { o.put("range_km", it) }
             if (f.low == true) warnings.put(if (electric) "battery low" else "fuel low")
         }
+        // A hybrid's battery, or an electric car that only reports it through its energy model.
+        if (!o.has("battery_percent")) s.energyModel.fresh()?.batteryPercent?.let { o.put("battery_percent", it.roundToInt()) }
         s.environment.fresh(eventDriven = true)?.let { e ->
             e.temperatureC?.let { o.put("outside_temperature_c", (it * 10).roundToInt() / 10.0) }
             e.pressureKpa?.let { o.put("air_pressure_kpa", it.roundToInt()) }

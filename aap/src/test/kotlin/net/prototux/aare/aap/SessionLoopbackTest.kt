@@ -191,10 +191,13 @@ open class SessionLoopbackTest {
         assertTrue("expected a relative (rotary) event", rotate.hasRelativeEvent())
         assertEquals(1, rotate.relativeEvent.getData(0).delta)
 
-        // sensors: driving status and night mode were requested and answered
-        assertNotNull(sensors.poll(3, TimeUnit.SECONDS))
-        assertTrue(SensorType.SENSOR_NIGHT_MODE in hu.sensorRequests)
-        assertTrue(SensorType.SENSOR_DRIVING_STATUS_DATA in hu.sensorRequests)
+        // sensors: every one the car offers is requested at setup, driving status first, one at a
+        // time (each after the previous answer), and answered with data
+        for (type in listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_LOCATION)) {
+            assertEquals(type to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
+        }
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.drivingStatusDataCount > 0)
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.nightModeDataCount > 0)
 
         // microphone
         mic!!.openMic()
