@@ -120,8 +120,7 @@ class NavStatusBridge(
         trip.currentRoad?.let { position.setCurrentRoad(NavigationRoad.newBuilder().setName(it.toString())) }
 
         // The older events most head units still use for their cluster.
-        val turn = legacyTurn(road, maneuver?.type ?: Maneuver.TYPE_UNKNOWN,
-            maneuver?.roundaboutExitNumber ?: 0, maneuver?.roundaboutExitAngle ?: 0)
+        val turn = legacyTurn(road, maneuver?.type, maneuver?.roundaboutExitNumber ?: 0, maneuver?.roundaboutExitAngle ?: 0)
         image(maneuver?.type ?: Maneuver.TYPE_UNKNOWN) { w, h -> maneuver?.let { turnImage(it, w, h) } }?.let { turn.setImage(it) }
         val distance = stepEstimate?.let { e ->
             val d = e.remainingDistance ?: return@let null
@@ -171,7 +170,7 @@ class NavStatusBridge(
                 .setMeters(d.meters).setDisplayValue(d.display)
                 .setDisplayUnits(NavigationDistance.DistanceUnits.forNumber(unitNumber(d)) ?: NavigationDistance.DistanceUnits.UNKNOWN_DISTANCE_UNIT)))
         }
-        val turn = legacyTurn(g.instruction, Maneuver.TYPE_UNKNOWN, 0, 0)
+        val turn = legacyTurn(g.instruction, null, 0, 0)
         image(Maneuver.TYPE_UNKNOWN) { w, h -> g.arrow?.let { png(it, w, h) } }?.let { turn.setImage(it) }
         val distance = g.distance?.let { d ->
             NavigationNextTurnDistanceEvent.newBuilder()
@@ -266,12 +265,9 @@ class NavStatusBridge(
             else -> d.displayDistance.toLong().toString()
         }
 
-        /**
-         * The turn's side: clockwise roundabouts (driven on the left)
-         * LEFT, counter-clockwise RIGHT; keeping to a side has none (the event says STRAIGHT).
-         */
+        /** The turn's side: clockwise roundabouts (driven on the left) LEFT, counter-clockwise RIGHT. */
         private val LEFT_TYPES = setOf(
-            Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_NORMAL_LEFT,
+            Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_NORMAL_LEFT,
             Maneuver.TYPE_TURN_SHARP_LEFT, Maneuver.TYPE_U_TURN_LEFT, Maneuver.TYPE_ON_RAMP_SLIGHT_LEFT,
             Maneuver.TYPE_ON_RAMP_NORMAL_LEFT, Maneuver.TYPE_ON_RAMP_SHARP_LEFT, Maneuver.TYPE_ON_RAMP_U_TURN_LEFT,
             Maneuver.TYPE_OFF_RAMP_SLIGHT_LEFT, Maneuver.TYPE_OFF_RAMP_NORMAL_LEFT, Maneuver.TYPE_FORK_LEFT,
@@ -281,7 +277,7 @@ class NavStatusBridge(
             Maneuver.TYPE_FERRY_TRAIN_LEFT,
         )
         private val RIGHT_TYPES = setOf(
-            Maneuver.TYPE_TURN_SLIGHT_RIGHT, Maneuver.TYPE_TURN_NORMAL_RIGHT,
+            Maneuver.TYPE_KEEP_RIGHT, Maneuver.TYPE_TURN_SLIGHT_RIGHT, Maneuver.TYPE_TURN_NORMAL_RIGHT,
             Maneuver.TYPE_TURN_SHARP_RIGHT, Maneuver.TYPE_U_TURN_RIGHT, Maneuver.TYPE_ON_RAMP_SLIGHT_RIGHT,
             Maneuver.TYPE_ON_RAMP_NORMAL_RIGHT, Maneuver.TYPE_ON_RAMP_SHARP_RIGHT, Maneuver.TYPE_ON_RAMP_U_TURN_RIGHT,
             Maneuver.TYPE_OFF_RAMP_SLIGHT_RIGHT, Maneuver.TYPE_OFF_RAMP_NORMAL_RIGHT, Maneuver.TYPE_FORK_RIGHT,
@@ -298,22 +294,24 @@ class NavStatusBridge(
         }
 
         /**
-         * Every field of the deprecated event is filled in: an unknown side, no exit
-         * number or angle and no road are sent as UNSPECIFIED, 0 and "", not left out.
+         * The deprecated event as head units below protocol 1.6 get it today: always the road ("" if
+         * unknown); the kind of turn and its side only with a maneuver ([type] null without one);
+         * the exit number and angle only when there is one.
          */
-        internal fun legacyTurn(road: String, type: Int, exitNumber: Int, exitAngle: Int): NavigationNextTurnEvent.Builder =
-            NavigationNextTurnEvent.newBuilder()
-                .setRoad(road)
-                .setEvent(legacyEvent(type))
-                .setTurnSide(sideOf(type))
-                .setTurnNumber(exitNumber.coerceAtLeast(0))
-                .setTurnAngle(exitAngle.coerceAtLeast(0))
+        internal fun legacyTurn(road: String, type: Int?, exitNumber: Int, exitAngle: Int): NavigationNextTurnEvent.Builder =
+            NavigationNextTurnEvent.newBuilder().setRoad(road).apply {
+                if (type != null) setEvent(legacyEvent(type)).setTurnSide(sideOf(type))
+                if (exitNumber > 0) setTurnNumber(exitNumber)
+                if (exitAngle > 0) setTurnAngle(exitAngle)
+            }
 
         /** The deprecated event's coarser kind of turn for a Maneuver.TYPE_* (the side goes apart). */
         internal fun legacyEvent(type: Int): NavigationNextTurnEvent.NextTurnEnum = when (type) {
             Maneuver.TYPE_DEPART -> NavigationNextTurnEvent.NextTurnEnum.DEPART
             Maneuver.TYPE_NAME_CHANGE -> NavigationNextTurnEvent.NextTurnEnum.NAME_CHANGE
-            Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_SLIGHT_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.SLIGHT_TURN
+            Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_KEEP_RIGHT,
+            Maneuver.TYPE_TURN_SLIGHT_LEFT, Maneuver.TYPE_TURN_SLIGHT_RIGHT,
+            -> NavigationNextTurnEvent.NextTurnEnum.SLIGHT_TURN
             Maneuver.TYPE_TURN_NORMAL_LEFT, Maneuver.TYPE_TURN_NORMAL_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.TURN
             Maneuver.TYPE_TURN_SHARP_LEFT, Maneuver.TYPE_TURN_SHARP_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.SHARP_TURN
             Maneuver.TYPE_U_TURN_LEFT, Maneuver.TYPE_U_TURN_RIGHT -> NavigationNextTurnEvent.NextTurnEnum.U_TURN
@@ -328,8 +326,7 @@ class NavStatusBridge(
             -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_EXIT
             in Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CW..Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW_WITH_ANGLE,
             -> NavigationNextTurnEvent.NextTurnEnum.ROUNDABOUT_ENTER_AND_EXIT
-            // Keeping to a side is going on straight, for older head units.
-            Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_KEEP_RIGHT, Maneuver.TYPE_STRAIGHT -> NavigationNextTurnEvent.NextTurnEnum.STRAIGHT
+            Maneuver.TYPE_STRAIGHT -> NavigationNextTurnEvent.NextTurnEnum.STRAIGHT
             Maneuver.TYPE_FERRY_BOAT, Maneuver.TYPE_FERRY_BOAT_LEFT, Maneuver.TYPE_FERRY_BOAT_RIGHT,
             -> NavigationNextTurnEvent.NextTurnEnum.FERRY_BOAT
             Maneuver.TYPE_FERRY_TRAIN, Maneuver.TYPE_FERRY_TRAIN_LEFT, Maneuver.TYPE_FERRY_TRAIN_RIGHT,

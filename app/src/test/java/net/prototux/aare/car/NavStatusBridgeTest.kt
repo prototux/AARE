@@ -65,22 +65,24 @@ class NavStatusBridgeTest {
     }
 
     @Test
-    fun keepingToASideIsStraightWithoutSide() {
-        for (type in listOf(Maneuver.TYPE_KEEP_LEFT, Maneuver.TYPE_KEEP_RIGHT)) {
-            assertEquals(NextTurnEnum.STRAIGHT, NavStatusBridge.legacyEvent(type))
-            assertEquals(TurnSide.UNSPECIFIED, NavStatusBridge.sideOf(type))
-        }
+    fun keepingToASideIsASlightTurnToThatSide() {
+        assertEquals(NextTurnEnum.SLIGHT_TURN, NavStatusBridge.legacyEvent(Maneuver.TYPE_KEEP_LEFT))
+        assertEquals(TurnSide.LEFT, NavStatusBridge.sideOf(Maneuver.TYPE_KEEP_LEFT))
+        assertEquals(NextTurnEnum.SLIGHT_TURN, NavStatusBridge.legacyEvent(Maneuver.TYPE_KEEP_RIGHT))
+        assertEquals(TurnSide.RIGHT, NavStatusBridge.sideOf(Maneuver.TYPE_KEEP_RIGHT))
     }
 
     @Test
-    fun legacyTurnFillsEveryField() {
-        val turn = NavStatusBridge.legacyTurn("", Maneuver.TYPE_UNKNOWN, 0, -1).build()
-        assertTrue(turn.hasRoad() && turn.hasEvent() && turn.hasTurnSide() && turn.hasTurnNumber() && turn.hasTurnAngle())
-        assertEquals("", turn.road)
-        assertEquals(NextTurnEnum.UNKNOWN, turn.event)
-        assertEquals(TurnSide.UNSPECIFIED, turn.turnSide)
-        assertEquals(0, turn.turnNumber)
-        assertEquals(0, turn.turnAngle)
+    fun legacyTurnLeavesOutWhatIsNotKnown() {
+        val none = NavStatusBridge.legacyTurn("", null, 0, -1).build()
+        assertTrue(none.hasRoad())
+        assertEquals("", none.road)
+        assertFalse(none.hasEvent() || none.hasTurnSide() || none.hasTurnNumber() || none.hasTurnAngle())
+
+        val turn = NavStatusBridge.legacyTurn("Main St", Maneuver.TYPE_TURN_NORMAL_LEFT, 0, 0).build()
+        assertEquals(NextTurnEnum.TURN, turn.event)
+        assertEquals(TurnSide.LEFT, turn.turnSide)
+        assertFalse(turn.hasTurnNumber() || turn.hasTurnAngle())
 
         val roundabout = NavStatusBridge.legacyTurn("Main St", Maneuver.TYPE_ROUNDABOUT_ENTER_AND_EXIT_CCW_WITH_ANGLE, 2, 135).build()
         assertEquals(TurnSide.RIGHT, roundabout.turnSide)
