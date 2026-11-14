@@ -129,6 +129,8 @@ class CarAppConnection(
     private val hardwareSubscriptions = HashMap<Int, ICarHardwareResult>()
     /** The microphone the app has open, closed by [cleanup] so a released app doesn't keep the car's. */
     @Volatile private var mic: MicPipe? = null
+    /** Counts [connect] attempts, so a timeout only ends the attempt it was started for. */
+    private var connectSeq = 0
 
     // ------------------------------------------------------------------ public API (main thread)
 
@@ -142,6 +144,12 @@ class CarAppConnection(
         status = Status.CONNECTING
         error = null
         cleanedUp = false
+        // An app that only accepts Google's host can bind and then never answer, rather than refuse:
+        // without a limit it showed "Starting" forever, and the driver couldn't tell why.
+        val seq = ++connectSeq
+        main.postDelayed({
+            if (connectSeq == seq && status == Status.CONNECTING) fail(context.getString(R.string.carapp_error_no_answer, info.label))
+        }, CONNECT_TIMEOUT_MS)
         val bindIntent = Intent(CarAppInfo.SERVICE_ACTION).setComponent(info.service)
         // A second session of the same app, for the cluster display: the library tells them apart by SessionInfo.
         if (cluster) SessionInfoIntentEncoder.encode(SessionInfo(SessionInfo.DISPLAY_TYPE_CLUSTER, "aare-cluster"), bindIntent)
@@ -690,6 +698,8 @@ class CarAppConnection(
 
     companion object {
         private const val TAG = "AareCarApp"
+        /** How long an app may take from bind to its first answers before it counts as not starting. */
+        private const val CONNECT_TIMEOUT_MS = 10_000L
         /** Microphone chunks queued for an app that reads slowly: about a second of 20 ms chunks. */
         private const val MIC_QUEUE_CHUNKS = 50
 
