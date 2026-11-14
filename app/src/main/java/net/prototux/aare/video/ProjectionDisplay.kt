@@ -7,6 +7,7 @@ import android.hardware.display.VirtualDisplay
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Display
 import android.view.MotionEvent
 import android.view.KeyEvent
@@ -86,24 +87,38 @@ class ProjectionDisplay(
     }
 
     fun dispatchKey(event: KeyEvent) {
-        main.post {
-            val decor = presentation?.window?.decorView ?: return@post
-            // Injected keys skip the view root's input stages, which is where a navigation key
-            // normally takes a window out of touch mode. Left in it, Compose stays in touch input
-            // mode, where clickables can't take focus: a rotary knob or D-pad would have nothing to
-            // move to. Only for navigation keys, so a stray steering-wheel key on a touch screen
-            // doesn't bring up focus highlights; and checked every time, as the window manager may
-            // put the window back in touch mode. Like the platform, the key that leaves touch mode
-            // is used up doing so (the first knob detent shows the focus, it doesn't move it on),
-            // but only if it did leave it: a refused switch must not eat every key.
-            val navigation = event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)
-            if (navigation) CarFocusVisibility.keyInput = true
-            if (navigation && decor.isInTouchMode) {
-                decor.requestFocusFromTouch()
-                if (!decor.isInTouchMode) return@post
-            }
-            decor.dispatchKeyEvent(event)
+        main.post { dispatchKeyNow(event) }
+    }
+
+    /**
+     * Moves the car screen's focus with the D-pad key [keyCode], a press and a release (main
+     * thread). True when it moved, or when this first key only showed it (left touch mode).
+     */
+    fun moveFocus(keyCode: Int): Boolean {
+        val t = SystemClock.uptimeMillis()
+        val moved = dispatchKeyNow(KeyEvent(t, t, KeyEvent.ACTION_DOWN, keyCode, 0))
+        dispatchKeyNow(KeyEvent(t, t, KeyEvent.ACTION_UP, keyCode, 0))
+        return moved
+    }
+
+    /** Main thread. True when the car screen used the key (or leaving touch mode used it up). */
+    private fun dispatchKeyNow(event: KeyEvent): Boolean {
+        val decor = presentation?.window?.decorView ?: return false
+        // Injected keys skip the view root's input stages, which is where a navigation key
+        // normally takes a window out of touch mode. Left in it, Compose stays in touch input
+        // mode, where clickables can't take focus: a rotary knob or D-pad would have nothing to
+        // move to. Only for navigation keys, so a stray steering-wheel key on a touch screen
+        // doesn't bring up focus highlights; and checked every time, as the window manager may
+        // put the window back in touch mode. Like the platform, the key that leaves touch mode
+        // is used up doing so (the first knob detent shows the focus, it doesn't move it on),
+        // but only if it did leave it: a refused switch must not eat every key.
+        val navigation = event.action == KeyEvent.ACTION_DOWN && isNavigationKey(event.keyCode)
+        if (navigation) CarFocusVisibility.keyInput = true
+        if (navigation && decor.isInTouchMode) {
+            decor.requestFocusFromTouch()
+            if (!decor.isInTouchMode) return true
         }
+        return decor.dispatchKeyEvent(event)
     }
 
     /**
