@@ -271,6 +271,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 val host = config.endpoint.ip.takeUnless { it == "0.0.0.0" } ?: joined.dhcpServer ?: joined.gateway
                     ?: throw WirelessException("the head unit's network has no DHCP server for its WPP endpoint 0.0.0.0")
                 val raw = connectTcp(headUnitNetwork, host, config.endpoint.port) { wpp = it }
+                // Small frames that each want an answer: no Nagle delay.
+                runCatching { raw.tcpNoDelay = true }
                 checkNotAborted()
                 // Its own pin key: the head unit's WPP certificate need not be its AAP one. Trusted on first
                 // use like wireless AAP, since the configuration came over the bonded Bluetooth link.
