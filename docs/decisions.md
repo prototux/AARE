@@ -78,3 +78,27 @@ Design choices:
 
 Status: unverified on a device; the PR is a starting point. Open question for the owner: whether to
 ship it as a release artifact later, or keep it build-it-yourself.
+
+## Car screen themes and layouts
+
+The car screen's look is split in two settings: the **theme** (`ui/theme/CarThemeSpec`: day and
+night colours, the colours Material has no slot for, type, shapes, app icon shape, sizes) and the
+**layout** (`ui/car/CarLayout`: the taskbar with dashboard cards, or the dock with app pages). A
+**style** picks both at once; a mix shows as "Custom". Built in: AARE, Android Auto and CarPlay.
+
+- Themes are Kotlin values, not files: new themes come as pull requests, so each is reviewed. A
+  theme is plain data, so reading themes from files stays possible later.
+- `CarThemeContrastTest` holds every theme to WCAG AA in day and night: 4.5:1 for text, 3:1 for
+  icons, app status colours and white on the accent (it only fills icon buttons and big labels).
+  A faithful colour that fails gives way to a darker one, commented in the theme.
+- Android Auto and CarPlay are reproduced from Google's and Apple's published design rules and
+  system colours where they exist, else measured from their screenshots or estimated (each value
+  says which). Their fonts (Google Sans, San Francisco) can't be bundled: the system font stands in.
+  No code or assets were taken from other projects.
+- Android Auto stays black in the day, as the real one does; the car apps still get the car's
+  day/night signal, so a map turns light in the day.
+- The phone's accent colours (Material You) replace only the accents, not the surfaces.
+- The cluster display follows the main screen's theme and day/night colours.
+- Existing users keep their look: the old CarPlay style maps to the CarPlay theme on the dock,
+  everything else to AARE on the taskbar. The old `car_style` key is only read.
+
