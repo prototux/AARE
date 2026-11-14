@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Na telefonie nie ustawiono domyślnego asystenta</string>
     <string name="assistant_has_car_app_subtitle">Na ekranie samochodu, z mikrofonu samochodu</string>
     <string name="assistant_opens_on_phone">Otwiera się na telefonie</string>
+    <string name="assistant_opens_on_car_screen">Otwiera się na ekranie samochodu po zaparkowaniu, na telefonie podczas jazdy</string>
     <string name="assistant_hint">Przycisk głosowy na kierownicy i mikrofon na listwie otwierają tego asystenta. Najlepiej działają asystenci z aplikacją samochodową, jak Lapin.</string>
+    <string name="assistant_car_screen_toggle_title">Otwieraj asystentów bez aplikacji samochodowej na ekranie samochodu</string>
+    <string name="assistant_car_screen_toggle_subtitle">Po zaparkowaniu pokazuje interfejs głosowy asystenta na ekranie samochodu zamiast na telefonie. Podczas jazdy otwiera się na telefonie, chyba że włączony jest tryb pasażera. Wymaga roota lub Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Połączenie z samochodem</string>

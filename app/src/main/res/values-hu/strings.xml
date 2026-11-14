@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Nincs alapértelmezett asszisztens beállítva a telefonon</string>
     <string name="assistant_has_car_app_subtitle">Az autó képernyőjén, az autó mikrofonjával</string>
     <string name="assistant_opens_on_phone">A telefonon nyílik meg</string>
+    <string name="assistant_opens_on_car_screen">Álló autóban az autó képernyőjén nyílik meg, vezetés közben a telefonon</string>
     <string name="assistant_hint">A kormánykeréken lévő hanggomb és a sáv mikrofonja ezt az asszisztenst nyitja meg. A saját autós alkalmazással rendelkező asszisztensek, mint a Lapin, működnek a legjobban.</string>
+    <string name="assistant_car_screen_toggle_title">Autós alkalmazás nélküli asszisztensek megnyitása az autó képernyőjén</string>
+    <string name="assistant_car_screen_toggle_subtitle">Álló autóban az asszisztens hangalapú felületét az autó képernyőjén jeleníti meg a telefon helyett. Vezetés közben a telefonon nyílik meg, kivéve, ha az utas mód be van kapcsolva. Root vagy Shizuku szükséges.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Autókapcsolat</string>

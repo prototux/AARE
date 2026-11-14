@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Kein Standardassistent auf dem Telefon festgelegt</string>
     <string name="assistant_has_car_app_subtitle">Auf dem Autobildschirm, mit dem Mikrofon des Autos</string>
     <string name="assistant_opens_on_phone">Öffnet auf dem Telefon</string>
+    <string name="assistant_opens_on_car_screen">Öffnet beim Parken auf dem Autobildschirm, während der Fahrt auf dem Telefon</string>
     <string name="assistant_hint">Die Sprachtaste am Lenkrad und das Mikrofon der Leiste öffnen diesen Assistenten. Assistenten mit einer Auto-App, wie Lapin, funktionieren am besten.</string>
+    <string name="assistant_car_screen_toggle_title">Assistenten ohne Auto-App auf dem Autobildschirm öffnen</string>
+    <string name="assistant_car_screen_toggle_subtitle">Beim Parken zeigt dies die Sprachoberfläche des Assistenten auf dem Autobildschirm statt auf dem Telefon. Während der Fahrt öffnet er sich auf dem Telefon, außer im Beifahrermodus. Benötigt root oder Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Autoverbindung</string>
