@@ -17,11 +17,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.car.CarData
+import net.prototux.aare.car.DtcCodes
 import net.prototux.aare.service.ProjectionService
 
 /**
@@ -56,6 +58,7 @@ internal fun CarDataScreen(modifier: Modifier) {
 @Composable
 private fun carDataLines(car: CarData.State, proj: ProjectionService.State): List<Pair<String, String>> {
     if (!car.connected) return emptyList()
+    val context = LocalContext.current
     val rows = ArrayList<Pair<String, String>>()
     fun add(label: String, value: String?) { if (value != null) rows += label to value }
     val on = stringResource(R.string.car_data_on); val off = stringResource(R.string.car_data_off)
@@ -100,7 +103,8 @@ private fun carDataLines(car: CarData.State, proj: ProjectionService.State): Lis
     add(stringResource(R.string.car_data_toll), yesNo(car.tollCardPresent?.value))
     add(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
     add(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
-    add(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }?.joinToString(" ") { "%02x".format(it) })
+    add(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }
+        ?.let { DtcCodes.describeAll(context, it).joinToString("\n") })
     return rows
 }
 
