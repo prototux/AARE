@@ -97,12 +97,21 @@ night colours, the colours Material has no slot for, type, shapes, app icon shap
   No code or assets were taken from other projects.
 - Android Auto stays black in the day, as the real one does; the car apps still get the car's
   day/night signal, so a map turns light in the day.
-- Two ways to use the phone's colours (Android 12 and later): the Material You theme takes all of
-  them, surfaces included, light in the day and dark at night (`CarThemeSpec.phoneColors`, applied
-  by `forPhone` when the settings are read); the "phone's accent colours" option keeps any other
-  theme's surfaces and swaps only its accents. The option is hidden with Material You. Material You
+- The Material You theme takes all the phone's colours, surfaces included, light in the day and
+  dark at night (`CarThemeSpec.phoneColors`, applied by `forPhone` when the settings are read). It
   has no call or status colours, so it uses AARE's by day and Android Auto's by night. Its
   contrast is Material 3's to guarantee: the test checks its Material 3 baseline stand-in.
+- The accent colour is its own setting (`CarAccents`): the theme's, the phone's, or a fixed colour
+  with hand-picked tones for dark and light surfaces. It swaps only a theme's accent roles. On a
+  single-colour theme (`singleColor`: Night, Retro) it colours everything (`tinted`): black,
+  surfaces faintly lit, text and app icons in it. Calls and the colours apps use for warnings keep
+  their hues there, so a warning still reads as one. The contrast test covers every theme with
+  every accent.
+- Retro is its own theme rather than an option of Night: a colour alone doesn't make an old
+  screen. It adds the phone's monospace font, a glow around text, square corners and outlined
+  cards. A segment-display font would look closer, but it would be a bundled asset (owner's call).
+- Android Auto (2019) has its own layout (`ClassicShell`): a bottom bar and the app grid as home.
+  It reuses the taskbar's content area, so rotary focus and screen changes behave the same.
 - The cluster display follows the main screen's theme and day/night colours.
 - Existing users keep their look: the old CarPlay style maps to the CarPlay theme on the dock,
   everything else to AARE on the taskbar. The old `car_style` key is only read.

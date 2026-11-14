@@ -193,12 +193,15 @@ moving, for a passenger. The driver must not use the screen while driving.
 - **Phone screen:** the phone's own screen (see below).
 
 **Styles** (*Car screen > Look* on the phone, or *Settings* in the car) change how the car screen
-looks: **AARE** (its own teal look), **Android Auto** (Google's black design) and **CarPlay**
-(Apple's look, with a dock and pages of app icons) and, on Android 12 and later, **Material You**
-(the phone's own colours, from its wallpaper). A style is a theme (colours, type, shapes) with
-a layout (a taskbar with dashboard cards, or a dock with app pages); either can be changed on its
-own. On Android 12 and later any theme can also take just its accent colours from the phone. AARE is not
-affiliated with Google or Apple.
+looks: **AARE** (its own teal look), **Android Auto** (Google's current black design), **Android
+Auto (2019)** (the design before it, with a bottom bar and the app grid as home), **CarPlay**
+(Apple's look, with a dock and pages of app icons), **Material You** (Android 12 and later: the
+phone's own colours), **High contrast** (for sun glare and weaker eyes), **Night** (one colour on
+black, like a car's night lighting) and **Retro** (a green phosphor screen or an early digital
+dashboard). A style is a theme (colours, type, shapes) with a layout (a taskbar with dashboard
+cards, a dock with app pages, or a bottom bar with the app grid); either can be changed on its
+own. The accent colour can be the theme's, the phone's or amber, red, green, cyan, blue or white;
+on Night and Retro it colours everything (a red Night, an amber Retro). AARE is not affiliated with Google or Apple.
 
 | | |
 |---|---|
