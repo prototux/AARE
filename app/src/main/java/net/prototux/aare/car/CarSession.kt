@@ -933,8 +933,7 @@ class CarSession(
                 if (track != lastTrack || !sameArt(lastArt, p.art)) {
                     lastTrack = track
                     lastArt = p.art
-                    val meta = MediaPlaybackMetadata.newBuilder().setSong(p.title).setArtist(p.artist).setAlbum(p.album)
-                        .setDurationSeconds((p.durationMs / 1000).toInt().coerceAtLeast(0))
+                    val meta = fillMediaMetadata(MediaPlaybackMetadata.newBuilder(), p)
                     p.art?.let { art ->
                         val small = Bitmap.createScaledBitmap(art, 256, 256 * art.height / maxOf(1, art.width), true)
                         meta.setAlbumArt(ByteString.copyFrom(ByteArrayOutputStream().also { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()))
