@@ -136,7 +136,8 @@ private fun Details(state: SourceState, info: PlaybackInfo, source: PlaybackSour
 
 /**
  * The transport row across the full width: previous / play-pause / next in the middle, the app's
- * own buttons split on both sides, the queue at the end. Extra buttons are dropped when narrow.
+ * own buttons split on both sides (and in an unusable skip button's place, see [transportRow]),
+ * the queue at the end. Extra buttons are dropped when narrow.
  */
 @Composable
 private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: SourceState, setView: (MediaView) -> Unit) {
@@ -144,17 +145,18 @@ private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: Source
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val hasQueue = state.queue.isNotEmpty()
         val slots = ((maxWidth - PLAY_SIZE - touch * 2) / touch).toInt() - (if (hasQueue) 1 else 0)
-        val actions = state.actions.take(slots.coerceAtLeast(0))
-        val left = actions.take((actions.size + 1) / 2)
+        val row = transportRow(state.actions, slots, state.canPrevious, state.canNext, state.reservePrevious, state.reserveNext)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-            left.forEach { ActionButton(hub, it) }
-            CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
+            row.left.forEach { ActionButton(hub, it) }
+            row.previous?.let { ActionButton(hub, it) }
+                ?: CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
             CircleButton(
                 if (state.showPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (state.showPause) R.string.media_action_pause else R.string.media_action_play),
                 onClick = source::playPause, filled = true, size = PLAY_SIZE,
             )
-            CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
-            actions.drop(left.size).forEach { ActionButton(hub, it) }
+            row.next?.let { ActionButton(hub, it) }
+                ?: CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
+            row.right.forEach { ActionButton(hub, it) }
             if (hasQueue) CircleButton(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.media_queue_title), onClick = { setView(MediaView.QUEUE) })
         }
     }

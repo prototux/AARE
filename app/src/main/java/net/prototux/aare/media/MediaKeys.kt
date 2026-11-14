@@ -28,6 +28,12 @@ internal object MediaKeys {
     const val COMPLETION_STATUS = "android.media.extra.PLAYBACK_STATUS"
     const val COMPLETION_PERCENTAGE = "androidx.media.MediaItem.Extras.COMPLETION_PERCENTAGE"
 
+    // ---- session extras: keep a skip button's slot even while it can't be used
+    const val RESERVE_PREVIOUS = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS"
+    const val RESERVE_NEXT = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT"
+    const val RESERVE_PREVIOUS_LEGACY = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS"
+    const val RESERVE_NEXT_LEGACY = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT"
+
     // ---- playback error resolution (PlaybackException / PlaybackState extras)
     const val ERROR_RESOLUTION_ACTION_LABEL = "android.media.extras.ERROR_RESOLUTION_ACTION_LABEL"
     const val ERROR_RESOLUTION_ACTION_INTENT = "android.media.extras.ERROR_RESOLUTION_ACTION_INTENT"

@@ -421,6 +421,8 @@ internal class MediaConnection(
 
         override fun onAvailableSessionCommandsChanged(controller: MediaController, commands: androidx.media3.session.SessionCommands) = updateState()
 
+        override fun onExtrasChanged(controller: MediaController, extras: Bundle) = updateState()
+
         /** Non-fatal errors the app sends to controllers (e.g. "sign in"); shown for a while. */
         override fun onError(controller: MediaController, sessionError: SessionError) {
             val (label, intent) = errorAction(sessionError.extras)
@@ -483,11 +485,14 @@ internal class MediaConnection(
             val (label, intent) = errorAction(e.extras)
             MediaError(e.message?.takeIf { it.isNotBlank() } ?: errorText(context, e.errorCode, app.label), label, intent)
         } ?: notice
+        val (reservePrevious, reserveNext) = reservesSkipSlots(b.sessionExtras)
         _state.value = SourceState(
             info = info,
             showPause = !Util.shouldShowPlayButton(b),
             canPrevious = b.isCommandAvailable(Player.COMMAND_SEEK_TO_PREVIOUS),
             canNext = b.isCommandAvailable(Player.COMMAND_SEEK_TO_NEXT),
+            reservePrevious = reservePrevious,
+            reserveNext = reserveNext,
             canSeek = b.isCommandAvailable(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM) && b.isCurrentMediaItemSeekable,
             actions = actionsOf(b),
             queue = queueOf(b),
