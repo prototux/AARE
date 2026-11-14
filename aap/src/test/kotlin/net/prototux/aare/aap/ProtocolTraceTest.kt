@@ -42,6 +42,7 @@ class ProtocolTraceTest {
         assertEquals("VIDEO_FOCUS_REQUEST", ProtocolTrace.name("video", MediaMsg.VIDEO_FOCUS_REQUEST))
         assertEquals("NAV_TURN_EVENT", ProtocolTrace.name("navstatus", NavStatusMsg.TURN_EVENT))
         assertEquals("0x8001", ProtocolTrace.name("bluetooth", BluetoothMsg.PAIRING_REQUEST))
+        assertEquals("FRAMING_ERROR", ProtocolTrace.name(null, ControlMsg.FRAMING_ERROR))
         assertEquals("0x63", ProtocolTrace.name(null, 99))
     }
 }
