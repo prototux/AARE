@@ -129,6 +129,8 @@ class CarAppConnection(
     private val hardwareSubscriptions = HashMap<Int, ICarHardwareResult>()
     /** The microphone the app has open, closed by [cleanup] so a released app doesn't keep the car's. */
     @Volatile private var mic: MicPipe? = null
+    /** Counts [connect] attempts, so a timeout only ends the attempt it was started for. */
+    private var connectSeq = 0
 
     // ------------------------------------------------------------------ public API (main thread)
 
@@ -142,6 +144,12 @@ class CarAppConnection(
         status = Status.CONNECTING
         error = null
         cleanedUp = false
+        // An app that only accepts Google's host can bind and then never answer, rather than refuse:
+        // without a limit it showed "Starting" forever, and the driver couldn't tell why.
+        val seq = ++connectSeq
+        main.postDelayed({
+            if (connectSeq == seq && status == Status.CONNECTING) fail(context.getString(R.string.carapp_error_no_answer, info.label))
+        }, CONNECT_TIMEOUT_MS)
         val bindIntent = Intent(CarAppInfo.SERVICE_ACTION).setComponent(info.service)
         // A second session of the same app, for the cluster display: the library tells them apart by SessionInfo.
         if (cluster) SessionInfoIntentEncoder.encode(SessionInfo(SessionInfo.DISPLAY_TYPE_CLUSTER, "aare-cluster"), bindIntent)
@@ -210,6 +218,15 @@ class CarAppConnection(
 
     fun surfaceAvailable(owner: Any, s: Surface, width: Int, height: Int, dpi: Int) {
         surfaceOwner?.takeIf { it !== owner }?.let { surfaceDestroyed(it) }
+        // The same surface at a new size (the map area resized: a card opened, the dashboard's map
+        // card going full screen). Apps that render through a VirtualDisplay of their own size it
+        // once, when the surface comes, and never follow a second onSurfaceAvailable: their map
+        // froze. Telling them the old surface is gone first makes them build it afresh.
+        val previous = surface
+        if (surfaceOwner === owner && previous != null &&
+            (previous.width != width || previous.height != height || previous.dpi != dpi)) {
+            surfaceCallback?.let { cb -> call("onSurfaceDestroyed") { cb.onSurfaceDestroyed(Bundleable.create(previous), it) } }
+        }
         surfaceOwner = owner
         surface = SurfaceContainer(s, width, height, dpi)
         sendSurface()
@@ -681,6 +698,8 @@ class CarAppConnection(
 
     companion object {
         private const val TAG = "AareCarApp"
+        /** How long an app may take from bind to its first answers before it counts as not starting. */
+        private const val CONNECT_TIMEOUT_MS = 10_000L
         /** Microphone chunks queued for an app that reads slowly: about a second of 20 ms chunks. */
         private const val MIC_QUEUE_CHUNKS = 50
 
