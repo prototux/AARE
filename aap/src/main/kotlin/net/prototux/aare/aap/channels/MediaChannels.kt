@@ -27,6 +27,7 @@ import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import java.util.ArrayDeque
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -364,22 +365,27 @@ class VideoChannel(
     }
 
     /**
-     * The head unit changes the layout at runtime (insets, margins), as [UiConfigUpdate] says. As
-     * the reply carries the config now in use and goes only once the
-     * projection is laid out with it and a frame has followed; a request it refuses gets no reply
-     * (ending the session over it is one option; AARE only logs it).
+     * The head unit changes the layout at runtime (insets, margins), as [UiConfigUpdate] says.
+     * Every request gets a reply with the config now in use. It goes once the projection is laid
+     * out with it and a frame has followed, or [UI_REPLY_WAIT_MS] after the layout at the latest,
+     * so a still screen (no new frame) doesn't hold it back.
      */
     private fun onUiConfigRequest(request: UpdateUiConfigRequest) {
         val current = chosen ?: run { earlyUiRequest = request; return }
         val ui = current.uiConfig.takeIf { current.hasUiConfig() }
-        when (val r = UiConfigUpdate.apply(ui, request, session.headUnitAtLeast(4, 3))) {
-            is UiConfigUpdate.Refused -> session.log.w("video: UI config update refused, ${r.why}")
-            is UiConfigUpdate.Accepted -> {
-                chosen = current.toBuilder().setUiConfig(r.config).build()
-                listener.onUiConfig(r.config) {
-                    // Nothing on the car's screen to wait for: confirm at once.
-                    if (started && focused) uiReplies.add(r.config) else sendUiConfigReply(r.config)
-                }
+        val next = UiConfigUpdate.apply(ui, request, session.headUnitAtLeast(4, 3))
+        if (!request.hasUiConfig()) {
+            session.log.w("video: UI config request without a config; answering with the one in use")
+            return sendUiConfigReply(next)
+        }
+        if (request.uiConfig.hasUiTheme()) session.log.i("video: UI config update names a theme; the theme is left as it is")
+        chosen = current.toBuilder().setUiConfig(next).build()
+        listener.onUiConfig(next) {
+            if (started && focused) {
+                uiReplies.add(next)
+                session.schedule({ if (uiReplies.remove(next)) sendUiConfigReply(next) }, UI_REPLY_WAIT_MS, TimeUnit.MILLISECONDS)
+            } else {
+                sendUiConfigReply(next) // nothing on the car's screen to wait for
             }
         }
     }
@@ -492,6 +498,8 @@ class VideoChannel(
     companion object {
         /** About a quarter second at 30 fps: more than that and we're just adding latency. */
         const val MAX_PENDING = 8
+        /** The longest a UI config reply waits for a frame with the new layout. */
+        const val UI_REPLY_WAIT_MS = 250L
 
         /** Our projection is on screen, with or without input focus (native, transient native: not). */
         private fun isProjected(mode: VideoFocusMode) =

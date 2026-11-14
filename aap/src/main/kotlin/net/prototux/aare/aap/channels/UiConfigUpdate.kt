@@ -2,30 +2,20 @@ package net.prototux.aare.aap.channels
 
 import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.UpdateUiConfigRequest
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
-import aap_protobuf.service.media.shared.message.UiThemeOuterClass.UiTheme
 
 /**
- * A head unit's UPDATE_UI_CONFIG_REQUEST, applied as expected. A head
- * unit before protocol 4.3 sends only what changes, merged into the config in use; a newer one
- * sends the whole config, which replaces it. Neither may change the theme this way (older ones
- * may not even name it), and a request without a config is wrong.
+ * A head unit's UPDATE_UI_CONFIG_REQUEST applied to the config in use. A head unit before
+ * protocol 4.3 sends only what changes, merged into the config in use; a newer one sends the
+ * whole config, which replaces it. The theme is not changed by an update: one the request names
+ * is left out and the rest applied. A request without a config changes nothing.
  */
 internal object UiConfigUpdate {
-    sealed interface Result
-    /** The config in use from now on. */
-    class Accepted(val config: UiConfig) : Result
-    class Refused(val why: String) : Result
-
-    fun apply(current: UiConfig?, request: UpdateUiConfigRequest, headUnitAtLeast43: Boolean): Result {
-        if (!request.hasUiConfig()) return Refused("no UI config in the request")
-        val update = request.uiConfig
-        if (!headUnitAtLeast43) {
-            if (update.hasUiTheme()) return Refused("a head unit before 4.3 may not set the theme in an update")
-            return Accepted((current ?: UiConfig.getDefaultInstance()).toBuilder().mergeFrom(update).build())
-        }
-        // Unset counts as automatic, on both sides.
-        val theme = current?.uiTheme ?: UiTheme.UI_THEME_AUTOMATIC
-        if (update.uiTheme != theme) return Refused("the theme can't change in an update (${theme.name} -> ${update.uiTheme.name})")
-        return Accepted(update)
+    /** The config in use after [request]. */
+    fun apply(current: UiConfig?, request: UpdateUiConfigRequest, headUnitAtLeast43: Boolean): UiConfig {
+        val base = current ?: UiConfig.getDefaultInstance()
+        if (!request.hasUiConfig()) return base
+        val update = request.uiConfig.toBuilder().clearUiTheme().build()
+        if (!headUnitAtLeast43) return base.toBuilder().mergeFrom(update).build()
+        return if (base.hasUiTheme()) update.toBuilder().setUiTheme(base.uiTheme).build() else update
     }
 }

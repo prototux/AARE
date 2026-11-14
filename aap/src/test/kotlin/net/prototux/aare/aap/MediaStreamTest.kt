@@ -58,6 +58,8 @@ class MediaStreamTest {
         val running = CountDownLatch(1)
         val videoStarted = CountDownLatch(1)
         val focused = CountDownLatch(1)
+        /** Set to stop the stand-in encoder's frames, as a still car screen gives none. */
+        @Volatile var still = false
         /** UI configs handed to the phone's layout, in order. */
         val laidOut = LinkedBlockingQueue<UiConfig>()
         /** Video frames the head unit had when each layout was done. */
@@ -127,7 +129,7 @@ class MediaStreamTest {
                     while (encoding.get()) {
                         val key = n % 30 == 0
                         val size = if (key) 4_000 else 300
-                        video!!.sendFrame(ByteArray(10 + size), 10, size, n * 33_333L, key) {}
+                        if (!still) video!!.sendFrame(ByteArray(10 + size), 10, size, n * 33_333L, key) {}
                         n++
                         Thread.sleep(10)
                     }
@@ -262,10 +264,36 @@ class MediaStreamTest {
         val laidOutAt = link.framesWhenLaidOut.poll()!!
         assertTrue("the reply follows a frame sent after the layout", link.hu.framesAtUiConfigReply.poll()!! > laidOutAt)
 
-        // A 1.6 head unit may not set the theme this way: refused, no reply, layout unchanged.
-        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setUiTheme(UiTheme.UI_THEME_DARK).build()))
-        assertEquals(null, link.hu.uiConfigReplies.poll(500, TimeUnit.MILLISECONDS))
-        assertEquals(null, link.laidOut.poll())
+        // A theme in the request is left out, the rest applied, and the request answered.
+        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setContentInsets(insets(40)).setUiTheme(UiTheme.UI_THEME_DARK).build()))
+        val themed = link.hu.uiConfigReplies.poll(3, TimeUnit.SECONDS)!!
+        assertFalse(themed.hasUiTheme())
+        assertEquals(40, themed.contentInsets.top)
+
+        // A request without a config is answered with the config in use, nothing laid out again.
+        link.laidOut.clear()
+        link.hu.updateUiConfig(UpdateUiConfigRequest.getDefaultInstance())
+        assertEquals(themed, link.hu.uiConfigReplies.poll(3, TimeUnit.SECONDS))
+        assertEquals(null, link.laidOut.poll(200, TimeUnit.MILLISECONDS))
+    }
+
+    @Test
+    fun uiConfigReplyWaitsForAFrameAtMostAQuarterSecond() {
+        val link = Link()
+        assertTrue(link.focused.await(5, TimeUnit.SECONDS))
+        assertTrue(link.hu.firstVideoFrame.await(5, TimeUnit.SECONDS))
+        // A still screen: no frame comes after the layout, the reply goes anyway.
+        link.still = true
+        Thread.sleep(100)
+        val frames = link.hu.videoFrames.get()
+        val asked = System.nanoTime()
+        link.hu.updateUiConfig(uiRequest(UiConfig.newBuilder().setContentInsets(insets(30)).build()))
+        val reply = link.hu.uiConfigReplies.poll(3, TimeUnit.SECONDS)
+        val waitedMs = (System.nanoTime() - asked) / 1_000_000
+        assertEquals(30, reply!!.contentInsets.top)
+        assertEquals("no frame went out meanwhile", frames, link.hu.framesAtUiConfigReply.poll())
+        // 100 ms of layout (the test listener) plus the 250 ms wait.
+        assertTrue("waited $waitedMs ms", waitedMs >= 300)
     }
 
     @Test
