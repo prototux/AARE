@@ -167,11 +167,35 @@ private fun replay(context: android.content.Context, viewW: Int, viewH: Int, poi
     else touch.tap(mapped.first().first, mapped.first().second)
 }
 
-/** Navigation apps that can't be hosted, recognised even before they post guidance. */
-private val KNOWN_NAVIGATION = setOf(
+/**
+ * Navigation apps that can't be hosted, recognised even before they post guidance: while driving,
+ * the phone screen shows only these (or the app guiding). Many have no Android Auto support, or
+ * only Google's, so the phone screen is how they reach the car.
+ */
+internal val KNOWN_NAVIGATION = setOf(
     "com.google.android.apps.maps",
+    "com.google.android.apps.mapslite", // Google Maps Go
     "com.waze",
     "com.here.app.maps",
     "com.sygic.aura",
     "com.tomtom.gplay.navapp",
+    "com.generalmagic.magicearth",
+    "com.mapfactor.navigator",
+    "cz.seznam.mapy", // Mapy.com
+    "com.huawei.maps.app", // Petal Maps, on phones without Google services
+    // China (#150)
+    "com.autonavi.minimap", // Amap (Gaode)
+    "com.autonavi.amapauto", // Amap Auto
+    "com.baidu.BaiduMap",
+    "com.tencent.map",
+    // Russia and neighbours
+    "ru.yandex.yandexnavi",
+    "ru.yandex.yandexmaps",
+    "ru.dublgis.dgismobile", // 2GIS
+    "com.navitel",
+    // South Korea
+    "com.nhn.android.nmap", // Naver Map
+    "net.daum.android.map", // KakaoMap
+    "com.locnall.KimGiSa", // Kakao Navi
+    "com.skt.tmap.ku", // TMAP
 )
