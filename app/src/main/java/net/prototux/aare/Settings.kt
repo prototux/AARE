@@ -127,6 +127,14 @@ class Settings(context: Context) {
     private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
 
     /**
+     * Two apps side by side on the car screen (the taskbar layout only, and only when the screen is
+     * wide enough): off by default, like any screen real estate change the driver didn't ask for.
+     */
+    var splitScreen: Boolean
+        get() = prefs.getBoolean("split_screen", false)
+        set(v) = prefs.edit { putBoolean("split_screen", v) }
+
+    /**
      * The accent colour, an id from `CarAccents`: the theme's own ("theme"), the phone's ("phone",
      * Android 12 and later) or a colour. On a single-colour theme it colours everything.
      */

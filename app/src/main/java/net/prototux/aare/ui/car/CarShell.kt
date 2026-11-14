@@ -8,7 +8,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -71,12 +74,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -170,12 +176,82 @@ internal fun ContentArea(
             CarScreen.Launcher -> Launcher(state, actions, Modifier.fillMaxSize())
             is CarScreen.App -> {
                 val app = state.app(screen.appId)
+                val secondary = app?.let { state.app(state.secondaryAppId) }
                 when {
+                    app != null && secondary != null -> SplitPane(app, secondary, state, actions, appContent, Modifier.fillMaxSize())
                     app != null -> appContent(app, Modifier.fillMaxSize())
                     launcherHome -> Launcher(state, actions, Modifier.fillMaxSize())
                     else -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
                 }
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- split screen
+
+/**
+ * [primary] and [secondary] side by side with a draggable divider. Only a built-in or non-hosted
+ * app ([canOpenBeside]) ever reaches here as [secondary]: a Car App Library connection owns one
+ * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
+ * so a navigation or templated app stays full screen only.
+ *
+ * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
+ * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
+ * every drag frame, which would otherwise tear it down and rebuild it dozens of times a second).
+ */
+@Composable
+private fun SplitPane(
+    primary: CarAppEntry,
+    secondary: CarAppEntry,
+    state: CarUiState,
+    actions: CarActions,
+    appContent: @Composable (CarAppEntry, Modifier) -> Unit,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(modifier) {
+        // Too narrow for two usable panes (a rotation, a smaller mirrored display): show the
+        // primary alone. The secondary stays remembered and returns once there's room again.
+        if (!splitScreenFits(maxWidth)) { appContent(primary, Modifier.fillMaxSize()); return@BoxWithConstraints }
+        val density = LocalDensity.current
+        val totalWidth = maxWidth
+        val restRatio = state.splitRatio
+        var dragRatio by remember(totalWidth) { mutableStateOf<Float?>(null) }
+        val handleRatio = dragRatio ?: restRatio
+        Row(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.weight(restRatio).fillMaxHeight().focusGroup()
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) },
+            ) { appContent(primary, Modifier.fillMaxSize()) }
+            Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
+            Box(
+                Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) },
+            ) {
+                appContent(secondary, Modifier.fillMaxSize())
+                Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                    RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
+                }
+            }
+        }
+        Box(
+            Modifier
+                .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
+                .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                .pointerInput(totalWidth) {
+                    detectDragGestures(
+                        onDragStart = { dragRatio = restRatio },
+                        onDrag = { _, drag ->
+                            val usablePx = with(density) { (totalWidth - SPLIT_DIVIDER_WIDTH).toPx() }
+                            dragRatio = clampDragRatio(totalWidth, (dragRatio ?: restRatio) + drag.x / usablePx)
+                        },
+                        onDragEnd = { dragRatio?.let(actions::commitSplitRatio); dragRatio = null },
+                        onDragCancel = { dragRatio = null },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.width(3.dp).fillMaxHeight(0.4f).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.outlineVariant))
         }
     }
 }
@@ -220,7 +296,15 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val media = state.app(state.activeMediaAppId)
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val settings = state.apps.firstOrNull { it.kind == CarAppKind.SETTINGS }
-    fun on(app: CarAppEntry?) = app != null && state.screen == CarScreen.App(app.id)
+    fun on(app: CarAppEntry?) = app != null && (state.screen == CarScreen.App(app.id) || state.secondaryAppId == app.id)
+    // Long-press a rail app to put it in the second pane beside whatever is already open, when
+    // split screen is on and the app is one [canOpenBeside] allows there. The rail (not the
+    // launcher) because it's the one place reachable without leaving the app that's already open.
+    fun beside(app: CarAppEntry?): (() -> Unit)? {
+        val primaryId = (state.screen as? CarScreen.App)?.appId
+        if (app == null || primaryId == null || app.id == primaryId || !state.splitScreenSetting || !canOpenBeside(app.kind)) return null
+        return { actions.openBeside(app) }
+    }
     // Like Android Auto's taskbar: the apps used last, besides the fixed ones (one on a side rail, for height).
     val fixed = setOfNotNull(nav?.id, media?.id, phone?.id, settings?.id)
     val recent = state.recentAppIds.filter { it !in fixed }.mapNotNull(state::app)
@@ -229,11 +313,11 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val tightBar = horizontal && area.height > area.width && area.width < 800.dp
     val tighterBar = tightBar && area.width < 640.dp
     val apps: @Composable (Int, Boolean) -> Unit = { recentSlots, withSettings ->
-        RailApp(nav, Icons.Rounded.Map, on(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
-        RailApp(media, Icons.Rounded.MusicNote, on(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
-        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app)) { actions.openApp(app) } }
-        phone?.let { RailApp(it, Icons.Rounded.Call, on(it)) { actions.openApp(it) } }
-        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it)) { actions.openApp(it) } }
+        RailApp(nav, Icons.Rounded.Map, on(nav), onLongClick = beside(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
+        RailApp(media, Icons.Rounded.MusicNote, on(media), onLongClick = beside(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
+        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), onLongClick = beside(app)) { actions.openApp(app) } }
+        phone?.let { RailApp(it, Icons.Rounded.Call, on(it), onLongClick = beside(it)) { actions.openApp(it) } }
+        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it), onLongClick = beside(it)) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), selected = false) { actions.openLauncher() }
@@ -335,15 +419,17 @@ private fun RailButton(icon: ImageVector, label: String, selected: Boolean, onCl
 }
 
 @Composable
-private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean, onClick: () -> Unit) {
+private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
     val d = LocalCarDimens.current
     if (app?.icon == null) {
+        // No custom icon to show "open beside" on; a rare fallback (an app without one at all).
         RailButton(fallback, app?.label ?: "", selected, onClick)
         return
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium)
+            .combinedClickable(onLongClickLabel = stringResource(R.string.car_split_open_beside), onLongClick = onLongClick, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
