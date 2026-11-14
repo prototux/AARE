@@ -1,15 +1,18 @@
 package net.prototux.aare.ui.car
 
+import android.content.Context
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -41,12 +44,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.car.AgendaDay
+import net.prototux.aare.car.AgendaItem
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.car.labelAgenda
+import net.prototux.aare.ui.theme.LocalCarDimens
 import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
@@ -81,22 +87,42 @@ internal fun WeatherCard(weather: Weather) {
 }
 
 /**
- * The calendar card: one event looks exactly as it always has ([CalendarCard]); more than one
- * (Settings.calendarAgendaCount > 1) becomes an agenda, each row labelled with its day ("today",
- * "tomorrow", or the weekday) and time, still with a shortcut to navigate where it has a place.
+ * The calendar card: one event looks as it always has ([CalendarCard], with its day when it isn't
+ * today); more than one (Settings.calendarAgendaCount > 1) becomes an agenda, each row labelled
+ * with its day ("today", "tomorrow", or the weekday) and time, still with a shortcut to navigate
+ * where it has a place. Only the rows the card's height holds are shown.
  */
 @Composable
 internal fun CalendarAgendaCard(events: List<NextEvent>, onNavigate: (String) -> Unit, modifier: Modifier) {
-    val single = events.singleOrNull()
-    if (single != null) {
-        CalendarCard(single, onNavigate, modifier)
-        return
-    }
     val context = LocalContext.current
     val items = remember(events) { labelAgenda(events, System.currentTimeMillis(), ZoneId.systemDefault()) }
-    Column(modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+    val rowHeight = LocalCarDimens.current.touchTarget
+    BoxWithConstraints(modifier) {
+        // As many rows as the card's height holds (each the navigate button's touch target tall),
+        // never a clipped one; room for one only, or one event: the single-event card.
+        val rows = agendaRowsThatFit(maxHeight, rowHeight, padding = AGENDA_PADDING, spacing = AGENDA_SPACING)
+        val first = items.first()
+        if (items.size == 1 || rows <= 1) {
+            // A later day's event says which day; today's keeps the card's usual time (or "Today").
+            CalendarCard(first.event, onNavigate, Modifier.fillMaxSize(), whenLabel = agendaWhen(first, context).takeIf { first.day != AgendaDay.Today })
+        } else {
+            AgendaRows(items.take(rows), rowHeight, context, onNavigate)
+        }
+    }
+}
+
+private val AGENDA_PADDING = 16.dp
+private val AGENDA_SPACING = 8.dp
+
+/** How many agenda rows of [rowHeight] fit in [height], inside [padding] (top and bottom) and [spacing] apart. */
+internal fun agendaRowsThatFit(height: Dp, rowHeight: Dp, padding: Dp, spacing: Dp): Int =
+    ((height - padding * 2 + spacing) / (rowHeight + spacing)).toInt().coerceAtLeast(0)
+
+@Composable
+private fun AgendaRows(items: List<AgendaItem>, rowHeight: Dp, context: Context, onNavigate: (String) -> Unit) {
+    Column(Modifier.padding(horizontal = 20.dp, vertical = AGENDA_PADDING), verticalArrangement = Arrangement.spacedBy(AGENDA_SPACING)) {
         items.forEach { item ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().height(rowHeight), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(agendaWhen(item, context), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Text(item.event.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -110,7 +136,7 @@ internal fun CalendarAgendaCard(events: List<NextEvent>, onNavigate: (String) ->
 }
 
 /** "Today", "Tomorrow · 3:00 PM"...: the agenda row's day and (for a timed event) its time. */
-private fun agendaWhen(item: net.prototux.aare.car.AgendaItem, context: android.content.Context): String {
+private fun agendaWhen(item: AgendaItem, context: Context): String {
     val day = when (val d = item.day) {
         AgendaDay.Today -> context.getString(R.string.dash_event_today)
         AgendaDay.Tomorrow -> context.getString(R.string.dash_agenda_tomorrow)
@@ -121,9 +147,9 @@ private fun agendaWhen(item: net.prototux.aare.car.AgendaItem, context: android.
 
 /** The next calendar event, with a shortcut to navigate to its place. */
 @Composable
-internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier) {
+internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier, whenLabel: String? = null) {
     val context = LocalContext.current
-    val time = if (event.allDay) stringResource(R.string.dash_event_today) else DateFormat.getTimeFormat(context).format(event.startMs)
+    val time = whenLabel ?: if (event.allDay) stringResource(R.string.dash_event_today) else DateFormat.getTimeFormat(context).format(event.startMs)
     Column(modifier.padding(24.dp), verticalArrangement = Arrangement.Center) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Event, null, tint = MaterialTheme.colorScheme.primary)

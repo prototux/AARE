@@ -13,7 +13,9 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.util.Locale
 
 /** The weather where the car is, for the rail. */
@@ -33,13 +35,38 @@ sealed interface AgendaDay {
 data class AgendaItem(val event: NextEvent, val day: AgendaDay)
 
 /**
- * Labels [events] for the agenda card ("today", "tomorrow", or the weekday), earliest first. Pure:
- * takes [nowMs] and [zone] instead of reading the real clock, so it's deterministic and testable.
+ * The calendar day [this] event falls on for a reader in [zone]. All-day events are stored at UTC
+ * midnight of their date (CalendarContract), so their date is read in UTC: in local time they
+ * would land a day early west of UTC. Timed events are read in [zone].
+ */
+internal fun NextEvent.day(zone: ZoneId): LocalDate =
+    Instant.ofEpochMilli(startMs).atZone(if (allDay) ZoneOffset.UTC else zone).toLocalDate()
+
+/**
+ * The events the calendar card shows, from the calendar's rows ([events], any order). One event
+ * ([limit] 1, the card as it always was): the next timed one, an all-day one only when there is
+ * none. More: an agenda in calendar order, day by day, a day's all-day events heading it, then by
+ * start time. All-day events of a day already over are dropped: east of UTC, yesterday's one
+ * still overlaps the query window until its UTC-midnight end. Pure, like [labelAgenda].
+ */
+fun selectAgenda(events: List<NextEvent>, limit: Int, nowMs: Long, zone: ZoneId): List<NextEvent> {
+    if (limit <= 0) return emptyList()
+    val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
+    val ordered = events.filter { !it.allDay || !it.day(zone).isBefore(today) }
+        .sortedWith(compareBy<NextEvent>({ it.day(zone) }, { !it.allDay }, { it.startMs }))
+    return if (limit == 1) listOfNotNull(ordered.firstOrNull { !it.allDay } ?: ordered.firstOrNull())
+    else ordered.take(limit)
+}
+
+/**
+ * Labels [events] for the agenda card ("today", "tomorrow", or the weekday), in the given order.
+ * Pure: takes [nowMs] and [zone] instead of reading the real clock, so it's deterministic and
+ * testable. All-day events are labelled by their own (UTC) date, see [day].
  */
 fun labelAgenda(events: List<NextEvent>, nowMs: Long, zone: ZoneId): List<AgendaItem> {
     val today = Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
     return events.map { event ->
-        val day = Instant.ofEpochMilli(event.startMs).atZone(zone).toLocalDate()
+        val day = event.day(zone)
         val label = when {
             day == today -> AgendaDay.Today
             day == today.plusDays(1) -> AgendaDay.Tomorrow
@@ -87,8 +114,8 @@ object DashboardInfo {
     }
 
     /**
-     * The next [limit] events (timed events first), earliest first; empty without the calendar
-     * permission or [limit] <= 0. A single event still looks only 12 hours ahead, as before; asking
+     * The next [limit] events, ordered by [selectAgenda]; empty without the calendar permission or
+     * [limit] <= 0. A single event still looks only 12 hours ahead, as before; asking
      * for more widens the window to a week, so day labels like "tomorrow" have something to show.
      * Blocking.
      */
@@ -104,12 +131,14 @@ object DashboardInfo {
             context.contentResolver.query(uri,
                 arrayOf(CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.ALL_DAY,
                     CalendarContract.Instances.EVENT_LOCATION),
-                "${CalendarContract.Instances.VISIBLE} = 1", null, "${CalendarContract.Instances.ALL_DAY} ASC, ${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
-                val events = ArrayList<NextEvent>(limit)
-                while (events.size < limit && c.moveToNext()) {
+                "${CalendarContract.Instances.VISIBLE} = 1", null, "${CalendarContract.Instances.BEGIN} ASC")?.use { c ->
+                // All rows of the window, ordered here: SQL can't sort all-day events (UTC midnight)
+                // into the right local day. A week of events is small; the cap only guards odd calendars.
+                val events = ArrayList<NextEvent>()
+                while (events.size < 500 && c.moveToNext()) {
                     events += NextEvent(c.getString(0).orEmpty().ifBlank { "Event" }, c.getLong(1), c.getInt(2) == 1, c.getString(3).orEmpty())
                 }
-                events
+                selectAgenda(events, limit, now, ZoneId.systemDefault())
             }
         }.getOrNull() ?: emptyList()
     }

@@ -56,4 +56,45 @@ class DashboardInfoAgendaTest {
         val event = NextEvent("Late", ZonedDateTime.of(2024, 1, 10, 23, 30, 0, 0, zone).toInstant().toEpochMilli(), false, "")
         assertEquals(AgendaDay.Tomorrow, labelAgenda(listOf(event), nowThere, plusOne).single().day)
     }
+
+    /** An all-day event as CalendarContract stores it: BEGIN at UTC midnight of its date. */
+    private fun allDay(title: String, day: Int) =
+        NextEvent(title, ZonedDateTime.of(2024, 1, day, 0, 0, 0, 0, zone).toInstant().toEpochMilli(), allDay = true, location = "")
+
+    private fun timed(title: String, day: Int, hour: Int, at: ZoneId = zone) =
+        NextEvent(title, ZonedDateTime.of(2024, 1, day, hour, 0, 0, 0, at).toInstant().toEpochMilli(), allDay = false, location = "")
+
+    @Test
+    fun anAllDayEventKeepsItsDateWestOfUtc() {
+        // 2024-01-11 00:00 UTC is still the 10th in New York, but the all-day event is the 11th's.
+        val ny = ZoneId.of("America/New_York")
+        val nowNy = ZonedDateTime.of(2024, 1, 10, 9, 0, 0, 0, ny).toInstant().toEpochMilli()
+        assertEquals(AgendaDay.Tomorrow, labelAgenda(listOf(allDay("Holiday", 11)), nowNy, ny).single().day)
+    }
+
+    @Test
+    fun theAgendaGoesDayByDayWithAllDayEventsFirst() {
+        // Calendar rows come in BEGIN order; a week's agenda must not put every timed event first.
+        val rows = listOf(timed("Wed 15h", 10, 15), allDay("Thu all day", 11), timed("Thu 8h", 11, 8), allDay("Wed all day", 10))
+        assertEquals(listOf("Wed all day", "Wed 15h", "Thu all day", "Thu 8h"), selectAgenda(rows, 5, now, zone).map { it.title })
+        assertEquals(listOf("Wed all day", "Wed 15h"), selectAgenda(rows, 2, now, zone).map { it.title })
+    }
+
+    @Test
+    fun aSingleEventStillPrefersTheNextTimedOne() {
+        val rows = listOf(allDay("Wed all day", 10), timed("Wed 15h", 10, 15))
+        assertEquals(listOf("Wed 15h"), selectAgenda(rows, 1, now, zone).map { it.title })
+        assertEquals(listOf("Wed all day"), selectAgenda(listOf(allDay("Wed all day", 10)), 1, now, zone).map { it.title })
+    }
+
+    @Test
+    fun yesterdaysAllDayEventIsDroppedEastOfUtc() {
+        // 08:00 on the 10th in Tokyo is 23:00 UTC on the 9th: the 9th's all-day event (to 00:00 UTC
+        // on the 10th) still overlaps the query window, but that day is over there.
+        val tokyo = ZoneId.of("Asia/Tokyo")
+        val nowTokyo = ZonedDateTime.of(2024, 1, 10, 8, 0, 0, 0, tokyo).toInstant().toEpochMilli()
+        val rows = listOf(allDay("Yesterday", 9), allDay("Today", 10))
+        assertEquals(listOf("Today"), selectAgenda(rows, 5, nowTokyo, tokyo).map { it.title })
+        assertEquals(AgendaDay.Today, labelAgenda(selectAgenda(rows, 5, nowTokyo, tokyo), nowTokyo, tokyo).single().day)
+    }
 }
