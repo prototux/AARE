@@ -22,6 +22,8 @@ class CarAudioOut(
     private val source: PcmSource,
     private val channel: AudioChannel,
     private val focus: Focus,
+    /** Silent messages sent ahead of each stream, at most (see [StartSilence]). */
+    private val startSilence: Int = 0,
     private val onFailed: () -> Unit = {},
 ) {
     interface Focus {
@@ -141,6 +143,13 @@ class CarAudioOut(
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
                     // not a raised one left over from the last stream's underflow.
                     while (queued.size > baseBacklog) queued.removeFirst()
+                    // Silence ahead of the sound, stamped like the sound's start. Not
+                    // more than the stream was quiet for (stoppedAtMs is 0 before the first one).
+                    val silent = StartSilence.cap(startSilence, now - stoppedAtMs, 1000.0 / chunkMs)
+                    if (silent > 0) {
+                        val at = queued.firstOrNull()?.second ?: ts
+                        repeat(silent) { queued.addFirst(ByteArray(10 + chunk) to at) }
+                    }
                     priming = true
                 } else if (!focus.granted) {
                     // Focus lost mid-stream (the Ford answers a nav prompt's request with LOSS):

@@ -1,10 +1,154 @@
 {
-  "_comment": "Rules AARE ships for head units known to need them, same format as the user's vehicles.json (docs/vehicles.md). A user rule for the same head unit wins, field by field.",
+  "_comment": "Rules AARE ships for head units known to need them, same format as the user's vehicles.json (docs/vehicles.md). Every matching rule here applies (the earlier one wins a key both set); a user rule for the same head unit wins, field by field. Some rules copy a known car list.",
   "rules": [
     {
       "_comment": "VW Play (Visteon MIB Regio), e.g. the 2023 VW Polo GTS (#166): answers a SETUP on the microphone channel with 'unexpected message', then shows no video (#162).",
       "match": { "make": "Volkswagen", "name": "MIB Regio" },
       "apply": { "micSetup": false }
+    },
+
+    {
+      "_comment": "Non-square pixels on head units older than protocol 1.2, which can't report them.",
+      "match": { "exact": true, "make": "MITSUBISHI MOTORS", "year": "2015", "maxProtocol": "1.1",
+                 "model": ["3M25RU", "3M25EU", "3M25MA", "3M45RU", "3M45EU", "3M45MA", "4P45RU", "4P45EU", "4P45MA"] },
+      "apply": { "pixelAspect": 1.15 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "MITSUBISHI MOTORS", "year": "2016", "maxProtocol": "1.1",
+                 "model": ["4P27RU", "4P27EU", "4P27MA", "4P47RU", "4P47EU", "4P47MA", "4B00RU", "4B00EU", "4B00MA", "4B00JP",
+                           "4B00CA", "4B00ME", "4B00US", "PHEV4B00RU", "PHEV4B00EU", "PHEV4B00MA", "PHEV4B00JP"] },
+      "apply": { "pixelAspect": 1.15 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "Pioneer", "year": "2015", "maxProtocol": "1.1", "model": ["AV Receiver", "Car Navigation"] },
+      "apply": { "pixelAspect": 1.1515 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "Pioneer", "year": "2016", "maxProtocol": "1.1", "model": ["AV Receiver", "Car Navigation - High"] },
+      "apply": { "pixelAspect": 1.1515 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "KENWOOD Top Menu", "year": "2015", "maxProtocol": "1.1", "model": ["DDX9902S", "DDX9702S"] },
+      "apply": { "pixelAspect": 1.15 }
+    },
+
+    {
+      "_comment": "Subaru head units by Harman get 800x480 video only.",
+      "match": { "exact": true, "make": "Subaru", "headUnitMake": "HARMAN" },
+      "apply": { "videoResolutions": ["800x480"] }
+    },
+
+    {
+      "_comment": "Navigation voice mixed into the music, the guidance channel unused.",
+      "match": { "exact": true, "make": ["KIA", "HYUNDAI"], "protocol": "1.0", "headUnitModel": "avn_40" },
+      "apply": { "singleChannelCapture": true }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": ["KIA", "HYUNDAI"], "model": "daudio", "protocol": "1.0" },
+      "apply": { "singleChannelCapture": true }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "SYNC", "protocol": "1.0" },
+      "apply": { "singleChannelCapture": true }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "Volkswagen", "protocol": "1.3", "year": "2016", "headUnitMake": "Generic", "headUnitModel": "Generic" },
+      "apply": { "singleChannelCapture": true }
+    },
+
+    {
+      "_comment": "Electric cars that report no fuel type, or an unknown one.",
+      "match": { "exact": true, "make": "hyundai", "model": ["ceev", "neev", "osev"] },
+      "apply": { "forceElectric": true }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "kia", "model": ["cvev", "sg2ev"] },
+      "apply": { "forceElectric": true }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "genesis", "model": "jw" },
+      "apply": { "forceElectric": true }
+    },
+
+    {
+      "_comment": "More silence ahead of the music over Wi-Fi.",
+      "match": { "exact": true, "make": ["RAM", "Uconnect"], "headUnitMake": "Mitsubishi Electric Corporation" },
+      "apply": { "wifiMediaStartSilence": 8, "wifiGuidanceStartSilence": 4 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "Uconnect", "protocol": "1.3", "headUnitMake": "Panasonic" },
+      "apply": { "wifiMediaStartSilence": 8, "wifiGuidanceStartSilence": 4 }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "exact": true, "make": "BMW", "headUnitMake": "BMW", "headUnitModel": "MGU21" },
+      "apply": { "wifiMediaStartSilence": 8, "wifiGuidanceStartSilence": 4 }
+    },
+    {
+      "_comment": "More silence ahead of navigation voice over Wi-Fi.",
+      "match": { "headUnitMake": "HMG", "headUnitModel": "connect_s" },
+      "apply": { "wifiGuidanceStartSilence": 8 }
+    },
+
+    {
+      "_comment": "The one head unit make whose GAIN_TRANSIENT for a navigation prompt lets music play too.",
+      "match": { "headUnitMake": "ZJ" },
+      "apply": { "mediaOnGainTransient": true }
+    },
+    {
+      "_comment": "An unsolicited GAIN_TRANSIENT_GUIDANCE_ONLY doesn't stop the phone's music.",
+      "match": { "exact": true, "make": "SYNC" },
+      "apply": { "pauseOnGuidanceOnly": false }
+    },
+
+    {
+      "_comment": "Head units that don't connect wirelessly.",
+      "match": { "headUnitMake": "DENSO TEN", "headUnitModel": "Hi_01" },
+      "apply": { "wireless": false }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "year": ["2020", "2021"], "headUnitMake": "Pioneer", "headUnitModel": "9inch Display Audio" },
+      "apply": { "wireless": false }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "headUnitMake": "Huizhou Desay SV Automotive Co., Ltd.",
+                 "headUnitModel": ["TR8622/40", "NV6002/58", "NV6014/58", "NV6032/58", "TR6012/58", "TR6022/58", "TR6023/58",
+                                   "TR6032/58", "TR6092/58", "703000584AA", "703000627AA", "703000628AA", "703000737AA",
+                                   "703000738AA", "703000757AA", "703000763AA", "703000765AA"] },
+      "apply": { "wireless": false }
+    },
+    {
+      "_comment": "As above.",
+      "match": { "headUnitMake": "ALPINE", "headUnitModel": ["iLX-F905D", "iLX-705D", "iLX-F115D"] },
+      "apply": { "wireless": false }
+    },
+
+    {
+      "_comment": "No 'Exit to car' entry in the app list.",
+      "match": { "exact": true, "make": "xiaomi" },
+      "apply": { "exitToCar": false }
+    },
+    {
+      "_comment": "The generic 'Exit to car' label, not the make's name.",
+      "match": { "exact": true, "make": ["gmc", "cadillac", "chevrolet", "buick", "hummer", "byd"] },
+      "apply": { "exitLabel": "default" }
+    },
+    {
+      "_comment": "The make's name, not the display name.",
+      "match": { "exact": true, "make": ["audi", "jaguar", "land rover", "land-rover", "land_rover"] },
+      "apply": { "exitLabel": "make" }
     }
   ]
 }
