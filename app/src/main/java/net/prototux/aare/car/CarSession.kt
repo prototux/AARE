@@ -284,10 +284,7 @@ class CarSession(
                             DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
                             main.post { maybeAutoPair(carAddress, alreadyPaired) }
                         }
-                        override fun onAuthenticationData(authData: String) {
-                            btPairing?.onAuthenticationData(authData)
-                            main.post { carAuthData = authData; autoPair?.onAuthenticationData(authData) }
-                        }
+                        override fun onAuthenticationData(authData: String) { btPairing?.onAuthenticationData(authData) }
                     }).also { btPairing = BluetoothPairing(context, it, main).apply { start() } }
                 }
             }
@@ -977,8 +974,6 @@ class CarSession(
 
     /** Opt-in automatic pairing with this car's Bluetooth (main thread), see [maybeAutoPair]. */
     private var autoPair: BluetoothAutoPair? = null
-    /** The passkey or PIN the car sent for its pairing, which can come before the pairing response. */
-    private var carAuthData: String? = null
 
     /**
      * The car answered our pairing request: if the phone isn't paired with it yet and the user
@@ -992,21 +987,24 @@ class CarSession(
             context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty()
                 .any { it.address.equals(carAddress, ignoreCase = true) }
         }.getOrDefault(false)
-        if (!AutoPairing.shouldStart(settings.autoPairCarBluetooth, CaptureMethods.shizukuAvailable(), carAddress, alreadyPaired, bonded)) {
+        val shizuku = CaptureMethods.shizukuAvailable()
+        if (!AutoPairing.shouldStart(settings.autoPairCarBluetooth, shizuku, carAddress, alreadyPaired, bonded)) {
             if (settings.autoPairCarBluetooth && !alreadyPaired && !bonded) {
-                DiagLog.add("car bluetooth: not pairing automatically (${if (!CaptureMethods.shizukuAvailable()) "Shizuku isn't available" else "no usable car address"})")
+                DiagLog.add("car bluetooth: not pairing automatically (${AutoPairing.whyNot(Build.VERSION.SDK_INT, shizuku)})")
             }
             return
         }
         DiagLog.add("car bluetooth: not paired with $carAddress yet; pairing through Shizuku")
+        // The checks stay BluetoothPairing's (#229): this only answers, through Shizuku, what they accepted.
         autoPair = BluetoothAutoPair(context, carAddress).also { p ->
+            btPairing?.privileged = p
             p.start()
-            carAuthData?.let(p::onAuthenticationData)
         }
     }
 
     private fun teardown() {
         closed = true
+        btPairing?.privileged = null
         autoPair?.stop(); autoPair = null
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))

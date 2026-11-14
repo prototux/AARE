@@ -22,11 +22,23 @@ import net.prototux.aare.aap.channels.BluetoothChannel
  *
  * A matching numeric comparison can also be confirmed automatically, dismissing Android's
  * pairing dialog; that needs BLUETOOTH_PRIVILEGED, which an app can't hold, so AARE leaves
- * the dialog to the user and only tells the car whether the passkeys match. Everything runs on
- * [handler]'s thread.
+ * the dialog to the user and only tells the car whether the passkeys match, unless the user
+ * opted in to pairing through Shizuku: then [privileged] confirms it (and enters a PIN AARE's own
+ * setPin couldn't). Everything runs on [handler]'s thread.
  */
 @SuppressLint("MissingPermission") // BLUETOOTH_CONNECT: without it no pairing request arrives, and setPin is wrapped
 class BluetoothPairing(private val context: Context, private val channel: BluetoothChannel, private val handler: Handler) {
+    /** What only a privileged caller can do, for a pairing [PairingCheck] accepted. */
+    interface Privileged {
+        /** Still able to answer: it hasn't ended (paired, failed, timed out) and its helper is up. */
+        val active: Boolean
+        fun confirmPairing()
+        fun setPin(pin: String)
+    }
+
+    /** The opt-in Shizuku layer ([BluetoothAutoPair]) while it runs; set on [handler]'s thread. */
+    var privileged: Privileged? = null
+
     private var registered = false
     @Volatile private var stopped = false
 
@@ -91,11 +103,18 @@ class BluetoothPairing(private val context: Context, private val channel: Blueto
         // One answer per pairing: the next one starts from scratch.
         variant = null; passkey = Int.MIN_VALUE; authData = null; device = null
         val pin = decision.pin
+        val shell = privileged?.takeIf { it.active }
         val line = if (pin != null) {
             val entered = runCatching { d?.setPin(pin.toByteArray(Charsets.UTF_8)) == true }.getOrDefault(false)
-            if (entered) "entered the car's PIN" else "couldn't enter the car's PIN; type it in Android's dialog"
+            when {
+                entered -> "entered the car's PIN"
+                shell != null -> { shell.setPin(pin); "couldn't enter the car's PIN; entering it through Shizuku" }
+                else -> "couldn't enter the car's PIN; type it in Android's dialog"
+            }
         } else when (decision.result) {
-            MessageStatus.STATUS_SUCCESS -> "the car's passkey matches; confirm it on the phone"
+            MessageStatus.STATUS_SUCCESS -> if (shell != null) { shell.confirmPairing(); "the car's passkey matches; confirming it through Shizuku" }
+                else "the car's passkey matches; confirm it on the phone"
+            // Never confirmed, Shizuku or not: the dialog stays for the user to refuse.
             else -> "the car's passkey doesn't match the phone's; don't confirm"
         }
         DiagLog.add("car bluetooth: $line")

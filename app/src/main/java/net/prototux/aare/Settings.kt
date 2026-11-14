@@ -193,7 +193,7 @@ class Settings(context: Context) {
     /**
      * When the car's Bluetooth answers AARE's pairing request and the phone isn't paired with it,
      * pair with that car (and only it) through Shizuku instead of Android's dialog, accepting only
-     * the passkey the car sent over Android Auto (BluetoothAutoPair). Off by default.
+     * the passkey the car sent over Android Auto (PairingCheck, BluetoothAutoPair). Android 12+. Off by default.
      */
     var autoPairCarBluetooth: Boolean
         get() = prefs.getBoolean("auto_pair_car_bluetooth", false)

@@ -25,17 +25,6 @@ class ShellBluetoothService : IShellBluetooth.Stub {
 
     // The shell holds the Bluetooth permissions; lint only sees AARE's manifest.
     @SuppressLint("MissingPermission")
-    override fun createBond(address: String): String? = withDevice(address) { device ->
-        when {
-            device.bondState == BluetoothDevice.BOND_BONDED -> null
-            // The car may have started the pairing itself: nothing to start then.
-            device.bondState == BluetoothDevice.BOND_BONDING -> null
-            device.createBond() -> null
-            else -> "Bluetooth refused to start pairing"
-        }
-    }
-
-    @SuppressLint("MissingPermission")
     override fun confirmPairing(address: String): String? = withDevice(address) { device ->
         if (device.setPairingConfirmation(true)) null else "Bluetooth refused the confirmation"
     }

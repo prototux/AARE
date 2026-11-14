@@ -1,6 +1,5 @@
 package net.prototux.aare.car
 
-import net.prototux.aare.car.AutoPairing.Answer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,31 +21,11 @@ class AutoPairingTest {
     }
 
     @Test
-    fun neverAnswersForAnotherDevice() {
-        assertEquals(Answer.Leave("not the connected car"),
-            AutoPairing.answer(car, "11:22:33:44:55:66", AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 123456, "123456"))
-    }
-
-    @Test
-    fun confirmsOnlyTheCarsPasskey() {
-        assertEquals(Answer.Confirm, AutoPairing.answer(car, car.lowercase(), AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 123456, "123456"))
-        assertEquals("zero-padded", Answer.Confirm, AutoPairing.answer(car, car, AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 42137, "042137"))
-        assertTrue(AutoPairing.answer(car, car, AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 123456, "654321") is Answer.Leave)
-        assertTrue(AutoPairing.answer(car, car, AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 123456, "abc") is Answer.Leave)
-        assertTrue(AutoPairing.answer(car, car, AutoPairing.VARIANT_PASSKEY_CONFIRMATION, null, "123456") is Answer.Leave)
-        assertEquals("the car's code isn't there yet", Answer.Wait, AutoPairing.answer(car, car, AutoPairing.VARIANT_PASSKEY_CONFIRMATION, 123456, null))
-    }
-
-    @Test
-    fun pinFromTheCar() {
-        assertEquals(Answer.Pin("0000"), AutoPairing.answer(car, car, AutoPairing.VARIANT_PIN, null, " 0000 "))
-        assertEquals(Answer.Wait, AutoPairing.answer(car, car, AutoPairing.VARIANT_PIN, null, null))
-        assertTrue(AutoPairing.answer(car, car, AutoPairing.VARIANT_PIN, null, "") is Answer.Leave)
-    }
-
-    @Test
-    fun otherVariantsAreLeftToAndroid() {
-        assertTrue(AutoPairing.answer(car, car, 1, 123456, "123456") is Answer.Leave)
-        assertTrue(AutoPairing.answer(car, car, -1, null, "123456") is Answer.Leave)
+    fun theLogSaysWhyItDidntStart() {
+        // Android 10 and 11: Shizuku reads as unavailable there, but the release is the reason.
+        assertEquals("it needs Android 12 or later", AutoPairing.whyNot(29, shizukuAvailable = false))
+        assertEquals("it needs Android 12 or later", AutoPairing.whyNot(30, shizukuAvailable = false))
+        assertEquals("Shizuku isn't available", AutoPairing.whyNot(31, shizukuAvailable = false))
+        assertEquals("no usable car address", AutoPairing.whyNot(34, shizukuAvailable = true))
     }
 }
