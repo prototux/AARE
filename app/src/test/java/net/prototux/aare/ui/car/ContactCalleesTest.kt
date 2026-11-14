@@ -4,7 +4,9 @@ import net.prototux.aare.car.VoipApp
 import net.prototux.aare.car.VoipCalls
 import net.prototux.aare.car.VoipTarget
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ContactCalleesTest {
@@ -60,5 +62,18 @@ class ContactCalleesTest {
     fun onlyListedAppsWithAPhoneAccount() {
         assertEquals(setOf("com.whatsapp"), VoipCalls.callingApps(listOf("com.whatsapp", "com.example.voip")))
         assertEquals(emptySet<String>(), VoipCalls.callingApps(listOf("com.example.voip")))
+        assertEquals(setOf("com.whatsapp", "com.whatsapp.w4b"), VoipCalls.callingApps(listOf("com.whatsapp", "com.whatsapp.w4b")))
+    }
+
+    @Test
+    fun aCallIsntReportedPlacedWhenAndroidWouldBlockItsScreen() {
+        // Locked: never, whatever else holds.
+        assertTrue(VoipCalls.startBlocked(sdk = 34, locked = true, activityVisible = true, canDrawOverlays = true))
+        // From the background on Android 10+: blocked unless AARE is in front or may draw over apps.
+        assertTrue(VoipCalls.startBlocked(sdk = 34, locked = false, activityVisible = false, canDrawOverlays = false))
+        assertFalse(VoipCalls.startBlocked(sdk = 34, locked = false, activityVisible = true, canDrawOverlays = false))
+        assertFalse(VoipCalls.startBlocked(sdk = 34, locked = false, activityVisible = false, canDrawOverlays = true))
+        // Before Android 10 there was no such limit.
+        assertFalse(VoipCalls.startBlocked(sdk = 28, locked = false, activityVisible = false, canDrawOverlays = false))
     }
 }

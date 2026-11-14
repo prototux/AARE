@@ -2,6 +2,8 @@ package net.prototux.aare.car
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -37,7 +39,11 @@ object VoipCalls {
     private const val MIC_NOTIFICATION_ID = 6
 
     /** The contact data MIME type of a voice call through an app, to the app's package. */
-    val CALL_MIME_TYPES = mapOf("vnd.android.cursor.item/vnd.com.whatsapp.voip.call" to "com.whatsapp")
+    val CALL_MIME_TYPES = mapOf(
+        "vnd.android.cursor.item/vnd.com.whatsapp.voip.call" to "com.whatsapp",
+        // WhatsApp Business: the same rows under its own package name.
+        "vnd.android.cursor.item/vnd.com.whatsapp.w4b.voip.call" to "com.whatsapp.w4b",
+    )
 
     /**
      * The apps of [CALL_MIME_TYPES] calls can go through, by package: the installed ones that hand
@@ -69,9 +75,13 @@ object VoipCalls {
 
     /**
      * Starts the call by opening the contact's row in the app, as the contacts app does. Returns false
-     * when nothing took it (or Android kept a background start from happening).
+     * when nothing took it, or when Android would keep the start from happening ([startBlocked]).
      */
     fun place(context: Context, target: VoipTarget): Boolean {
+        if (startBlocked(context)) {
+            Log.w(TAG, "the phone is locked or AARE isn't in front: ${target.app.packageName} can't start the call")
+            return false
+        }
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI, target.dataId), target.mimeType)
             .setPackage(target.app.packageName)
@@ -84,6 +94,31 @@ object VoipCalls {
             return false
         }
         return runCatching { context.startActivity(intent) }.onFailure { Log.w(TAG, "can't start the call", it) }.isSuccess
+    }
+
+    /**
+     * Whether a call screen started now would never show. startActivity() doesn't fail when Android
+     * blocks a start from the background (it just drops it), so the car would wrongly show the call
+     * as placed: checked beforehand instead.
+     */
+    private fun startBlocked(context: Context): Boolean {
+        val locked = context.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
+        val state = ActivityManager.RunningAppProcessInfo().also { ActivityManager.getMyMemoryState(it) }
+        // An activity of AARE's on the phone screen (the car's own screen is a Presentation, not one).
+        val visible = state.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND ||
+            state.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE
+        return startBlocked(Build.VERSION.SDK_INT, locked, visible, Settings.canDrawOverlays(context))
+    }
+
+    /**
+     * [startBlocked]'s rules, apart from the system calls: behind the lock screen the app's call
+     * screen can't come up; from Android 10, a start from the background is blocked unless AARE has
+     * a visible activity or may draw over other apps (one of Android's exemptions).
+     */
+    internal fun startBlocked(sdk: Int, locked: Boolean, activityVisible: Boolean, canDrawOverlays: Boolean): Boolean = when {
+        locked -> true
+        sdk < Build.VERSION_CODES.Q -> false
+        else -> !activityVisible && !canDrawOverlays
     }
 
     /** A phone notification asking to let [target]'s app use the microphone; a tap opens its settings. */
