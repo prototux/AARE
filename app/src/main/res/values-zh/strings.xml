@@ -429,6 +429,11 @@
     <string name="setup_section_updates">更新</string>
     <string name="setup_toggle_updates_title">检查更新</string>
     <string name="setup_toggle_updates_subtitle">GitHub 上有新版本时，在主屏幕提示。关闭后绝不会连接网络。</string>
+    <string name="update_check_now">立即检查</string>
+    <string name="update_checking">正在检查…</string>
+    <string name="update_check_latest">你已是最新版本（%1$s）。</string>
+    <string name="update_check_available">AARE %1$s 已推出：请查看主屏幕。</string>
+    <string name="update_check_failed">无法连接 GitHub，请稍后再试。</string>
     <string name="update_available_title">有可用更新 — %1$s</string>
     <string name="update_available_subtitle">当前版本为 %1$s。点按查看该版本。</string>
     <string name="setup_log_save">保存</string>

@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Päivitykset</string>
     <string name="setup_toggle_updates_title">Tarkista päivitykset</string>
     <string name="setup_toggle_updates_subtitle">Varoita etusivulla, kun GitHubissa on uudempi julkaisu. Pois päältä ei koskaan muodosta yhteyttä internetiin.</string>
+    <string name="update_check_now">Tarkista nyt</string>
+    <string name="update_checking">Tarkistetaan…</string>
+    <string name="update_check_latest">Sinulla on uusin versio (%1$s).</string>
+    <string name="update_check_available">AARE %1$s on saatavilla: katso aloitusnäyttö.</string>
+    <string name="update_check_failed">GitHubiin ei saatu yhteyttä. Yritä myöhemmin uudelleen.</string>
     <string name="update_available_title">Päivitys saatavilla — %1$s</string>
     <string name="update_available_subtitle">Käytössäsi on %1$s. Napauta nähdäksesi julkaisun.</string>
     <string name="setup_log_save">Tallenna</string>

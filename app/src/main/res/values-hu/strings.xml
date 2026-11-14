@@ -446,6 +446,11 @@
     <string name="setup_section_updates">Frissítések</string>
     <string name="setup_toggle_updates_title">Frissítések keresése</string>
     <string name="setup_toggle_updates_subtitle">Figyelmeztetés a kezdőképernyőn, ha újabb kiadás érhető el a GitHubon. Kikapcsolva soha nem csatlakozik az internethez.</string>
+    <string name="update_check_now">Ellenőrzés most</string>
+    <string name="update_checking">Ellenőrzés…</string>
+    <string name="update_check_latest">A legújabb verzió van telepítve (%1$s).</string>
+    <string name="update_check_available">Elérhető az AARE %1$s: lásd a kezdőképernyőt.</string>
+    <string name="update_check_failed">A GitHub nem érhető el. Próbáld újra később.</string>
     <string name="update_available_title">Elérhető frissítés — %1$s</string>
     <string name="update_available_subtitle">A jelenlegi verziód: %1$s. Koppints a kiadás megtekintéséhez.</string>
     <string name="setup_log_save">Mentés</string>

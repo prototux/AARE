@@ -122,6 +122,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
+import net.prototux.aare.BuildConfig
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
@@ -154,6 +155,13 @@ import kotlin.math.roundToInt
 
 /** The phone side: what's connected, what's set up, and the settings. */
 class MainActivity : ComponentActivity() {
+    // Each time the app comes to the front, not only when it starts: a release published while
+    // AARE stayed in memory shows the next time it's opened (UpdateChecker limits how often it asks).
+    override fun onResume() {
+        super.onResume()
+        UpdateChecker.refresh(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -200,7 +208,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx); CertificateUpdates.refresh(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -497,6 +505,9 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
+    // What "Check now" found, shown next to it; [checking] while it asks.
+    var updateStatus by remember { mutableStateOf<String?>(null) }
+    val checking = stringResource(R.string.update_checking)
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
@@ -529,7 +540,23 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         }
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
-                checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx)
+                checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx, force = it)
+                updateStatus = null
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(enabled = checkUpdates && updateStatus != checking, onClick = {
+                    updateStatus = checking
+                    UpdateChecker.checkNow(ctx) { r ->
+                        updateStatus = when {
+                            r.version == null -> ctx.getString(R.string.update_check_failed)
+                            r.newer -> ctx.getString(R.string.update_check_available, r.version)
+                            else -> ctx.getString(R.string.update_check_latest, BuildConfig.VERSION_NAME)
+                        }
+                    }
+                }) { Text(stringResource(R.string.update_check_now)) }
+                updateStatus?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         Section(stringResource(R.string.setup_section_location)) {

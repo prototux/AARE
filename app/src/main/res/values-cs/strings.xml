@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Aktualizace</string>
     <string name="setup_toggle_updates_title">Kontrolovat aktualizace</string>
     <string name="setup_toggle_updates_subtitle">Upozorní na domovské obrazovce, pokud je na GitHubu k dispozici novější verze. Když je vypnuto, nikdy se nepřipojuje k internetu.</string>
+    <string name="update_check_now">Zkontrolovat teď</string>
+    <string name="update_checking">Kontroluji…</string>
+    <string name="update_check_latest">Máte nejnovější verzi (%1$s).</string>
+    <string name="update_check_available">Je dostupné AARE %1$s: viz domovskou obrazovku.</string>
+    <string name="update_check_failed">GitHub není dostupný. Zkuste to později.</string>
     <string name="update_available_title">Dostupná aktualizace — %1$s</string>
     <string name="update_available_subtitle">Máte %1$s. Klepnutím zobrazíte verzi.</string>
     <string name="setup_log_save">Uložit</string>

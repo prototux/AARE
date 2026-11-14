@@ -446,6 +446,11 @@
     <string name="setup_section_updates">Opdateringer</string>
     <string name="setup_toggle_updates_title">Søg efter opdateringer</string>
     <string name="setup_toggle_updates_subtitle">Advar på hjemmeskærmen, når en nyere udgivelse er tilgængelig på GitHub. Slået fra opretter aldrig forbindelse til internettet.</string>
+    <string name="update_check_now">Tjek nu</string>
+    <string name="update_checking">Tjekker…</string>
+    <string name="update_check_latest">Du har den nyeste version (%1$s).</string>
+    <string name="update_check_available">AARE %1$s er tilgængelig: se startskærmen.</string>
+    <string name="update_check_failed">Kunne ikke nå GitHub. Prøv igen senere.</string>
     <string name="update_available_title">Opdatering tilgængelig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryk for at se udgivelsen.</string>
     <string name="setup_log_save">Gem</string>

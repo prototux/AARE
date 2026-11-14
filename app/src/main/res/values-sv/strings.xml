@@ -446,6 +446,11 @@
     <string name="setup_section_updates">Uppdateringar</string>
     <string name="setup_toggle_updates_title">Sök efter uppdateringar</string>
     <string name="setup_toggle_updates_subtitle">Varna på hemskärmen när en nyare version finns på GitHub. Av ansluter aldrig till internet.</string>
+    <string name="update_check_now">Kontrollera nu</string>
+    <string name="update_checking">Kontrollerar…</string>
+    <string name="update_check_latest">Du har den senaste versionen (%1$s).</string>
+    <string name="update_check_available">AARE %1$s finns: se startskärmen.</string>
+    <string name="update_check_failed">Kunde inte nå GitHub. Försök igen senare.</string>
     <string name="update_available_title">Uppdatering tillgänglig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryck för att visa versionen.</string>
     <string name="setup_log_save">Spara</string>

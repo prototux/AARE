@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Оновлення</string>
     <string name="setup_toggle_updates_title">Перевіряти оновлення</string>
     <string name="setup_toggle_updates_subtitle">Попереджати на головному екрані, коли на GitHub з\'являється новіший випуск. Якщо вимкнено, застосунок ніколи не підключається до інтернету.</string>
+    <string name="update_check_now">Перевірити зараз</string>
+    <string name="update_checking">Перевірка…</string>
+    <string name="update_check_latest">У вас остання версія (%1$s).</string>
+    <string name="update_check_available">Доступна AARE %1$s: див. головний екран.</string>
+    <string name="update_check_failed">Не вдалося з’єднатися з GitHub. Спробуйте пізніше.</string>
     <string name="update_available_title">Доступне оновлення — %1$s</string>
     <string name="update_available_subtitle">У вас %1$s. Натисніть, щоб переглянути випуск.</string>
     <string name="setup_log_save">Зберегти</string>
