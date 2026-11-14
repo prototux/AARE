@@ -219,8 +219,8 @@ class PhoneStatusBridge(
     }
 
     /**
-     * The contact's thumbnail as a PNG within [THUMB_SIZE] (well under the 256 px bound
-     * 256x256 cap, to keep the phone-status channel light): gearhead decodes the caller thumbnail
+     * The contact's thumbnail as a PNG within [THUMB_SIZE] (well under the 256x256
+     * cap, to keep the phone-status channel light): the head unit decodes the caller thumbnail
      * and refuses it unless it's PNG and within the bound, so the provider's JPEG always needs
      * re-encoding, not just the rare oversized one. [lookup] already caches this per number per
      * connection, so it isn't redone on every call status tick.

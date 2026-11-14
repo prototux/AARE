@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream
 
 /**
  * Only PNG images of at most 256x256 go on the wire for media album art
- * and phone-status caller thumbnails: it decodes whatever the phone sends and refuses it unless
+ * and phone-status caller thumbnails: the head unit decodes whatever the phone sends and refuses it unless
  * the format is PNG and both sides are within the bound. AARE scales to fit inside that box,
  * keeping aspect ratio, and never upscales past the source (there's nothing to gain from it, and
  * it would just cost more CPU to encode).
