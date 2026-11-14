@@ -121,7 +121,8 @@ class CarSession(
     private val aap = AapSession(transport, identity, PhoneDescription(
         deviceName = deviceName(), label = "Android", instanceId = settings.instanceId,
         smallIcon = icon(32), mediumIcon = icon(64), largeIcon = icon(128),
-    ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse))
+    ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse,
+        clockNanos = SystemClock::elapsedRealtimeNanos))
 
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null

@@ -394,6 +394,15 @@ open class SessionLoopbackTest {
     }
 
     @Test
+    fun phonePingsCarryAnExplicitBugReportFlag() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val ping = hu.pingRequests.poll(3, TimeUnit.SECONDS)!!
+        assertTrue(ping.hasBugReport())
+        assertFalse(ping.bugReport)
+        assertTrue(ping.timestamp > 0)
+    }
+
+    @Test
     fun headUnitFocusRequestWithoutInputStaysProjected() {
         assertTrue(running.await(10, TimeUnit.SECONDS))
         assertTrue(focusGained.await(5, TimeUnit.SECONDS))

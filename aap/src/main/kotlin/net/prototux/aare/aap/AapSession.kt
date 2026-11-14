@@ -58,6 +58,8 @@ class SessionOptions(
     val peerKey: String? = null,
     /** Trust the first certificate of a head unit with nothing trusted yet (Bluetooth-bonded ones). */
     val trustOnFirstUse: Boolean = false,
+    /** Clock for ping timestamps, in nanoseconds (elapsedRealtimeNanos). */
+    val clockNanos: () -> Long = System::nanoTime,
 ) {
     init {
         require(pins == null || peerKey != null) { "peerKey is required with pins" }
@@ -180,14 +182,18 @@ class AapSession(
     @Volatile private var lastOutboundMs = now()
     @Volatile private var writingSinceMs = -1L
     @Volatile private var slowestWriteMs = 0L
-    @Volatile private var pingIntervalMs = 1_000L
     /**
      * Silence that means the link is dead. Only applied once the head unit has shown it takes part
      * in keep-alives (some never answer the phone's pings); USB unplugs are caught by I/O errors.
      * Generous because some Wi-Fi head units go off channel for 20 s while scanning.
+     *
+     * Missing pings alone are usually recorded, with a 10 s read timeout on the socket; AARE's
+     * transports have none, so without this a Wi-Fi link that silently died would hang the session.
      */
     @Volatile private var deadAfterMs = 20_000L
     @Volatile private var pingEvidence = false
+    /** Timestamps of the phone's pings not answered yet, oldest first (guarded by itself). */
+    private val pingsInFlight = ArrayDeque<Long>()
 
     /** Round trip of the last ping, for diagnostics. */
     @Volatile var lastRttMs = -1L
@@ -416,8 +422,7 @@ class AapSession(
             }
             ControlMsg.PING_RESPONSE -> {
                 pingEvidence = true
-                val resp = PingResponse.parseFrom(msg.bodyBytes())
-                lastRttMs = (System.nanoTime() / 1_000 - resp.timestamp) / 1_000
+                onPingResponse(PingResponse.parseFrom(msg.bodyBytes()).timestamp)
             }
             ControlMsg.AUDIO_FOCUS_NOTIFICATION -> {
                 val n = AudioFocusNotification.parseFrom(msg.bodyBytes())
@@ -547,8 +552,9 @@ class AapSession(
         }
         discovery = resp
         log.i("head unit: ${describe(resp)}")
+        // A discovery response with no ping configuration (field 16) still gets pings
+        // at a fixed rate; aasdk-based head units send one, so its timeout still sizes the watchdog.
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
-            if (pc.hasIntervalMs() && pc.intervalMs > 0) pingIntervalMs = pc.intervalMs.toLong().coerceIn(250, 5_000)
             if (pc.hasTimeoutMs() && pc.timeoutMs > 0) deadAfterMs = maxOf(pc.timeoutMs.toLong() * 3, 20_000L)
         }
         val wanted = callbacks.onServiceDiscovery(this, resp)
@@ -612,12 +618,35 @@ class AapSession(
     private fun startKeepAlive() {
         scheduler.scheduleWithFixedDelay({
             if (closed.get()) return@scheduleWithFixedDelay
-            if (options.sendPings) {
-                sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1_000).build())
-            }
+            if (options.sendPings) sendPing()
             val silent = now() - lastInboundMs
             if (silent > (if (pingEvidence) deadAfterMs else 60_000L)) fail("head unit silent for $silent ms", null)
-        }, pingIntervalMs, pingIntervalMs, TimeUnit.MILLISECONDS)
+        }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * On wireless: the phone's clock in nanoseconds, bug_report explicitly
+     * false, and no new ping while [MAX_PINGS_IN_FLIGHT] are unanswered.
+     */
+    private fun sendPing() {
+        val timestamp = options.clockNanos()
+        synchronized(pingsInFlight) {
+            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) return
+            pingsInFlight.addLast(timestamp)
+        }
+        sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(timestamp).setBugReport(false).build())
+    }
+
+    private fun onPingResponse(timestamp: Long) {
+        synchronized(pingsInFlight) {
+            // Answers come in order: pings older than this one were lost. One that isn't ours
+            // empties the list.
+            while (true) {
+                val sent = pingsInFlight.removeFirstOrNull() ?: return
+                if (sent == timestamp) break
+            }
+        }
+        lastRttMs = (options.clockNanos() - timestamp) / 1_000_000
     }
 
     // ------------------------------------------------------------------ teardown
@@ -674,6 +703,9 @@ class AapSession(
         const val PROTOCOL_MINOR = 7
         /** How long the phone waits for the head unit's answer to its bye-bye. */
         private const val BYEBYE_TIMEOUT_MS = 200L
+        /** The phone's ping period on wireless (default). */
+        private const val PING_INTERVAL_MS = 1_000L
+        private const val MAX_PINGS_IN_FLIGHT = 10
         /** Longest wait for the sensor channel's answer before opening the other channels. */
         private const val DEFERRED_OPEN_MS = 1_000L
 
