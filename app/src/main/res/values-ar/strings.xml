@@ -207,6 +207,12 @@
     <string name="audio_playback_ready">جاهز. الوسائط فقط: بلا صوت تنقّل، وبعض التطبيقات تستثني نفسها، ويستمر الهاتف في التشغيل أيضًا.</string>
     <string name="audio_playback_not_ready">يعمل في كل مكان، مع قيود: الوسائط فقط، بلا صوت تنقّل. يطلب نظام Android تسجيل الشاشة: اختر الشاشة بالكامل (تُستخدم أيضًا لشاشة الهاتف).</string>
     <string name="audio_notice_setup_hint">افتح AARE على الهاتف وأعدّ صوت السيارة لسماع الهاتف في السيارة</string>
+    <string name="audio_section_car_mic">ميكروفون السيارة</string>
+    <string name="audio_toggle_car_mic_title">ميكروفون السيارة لتطبيقات الهاتف</string>
+    <string name="audio_toggle_car_mic_subtitle">أثناء الاتصال بسيارة فيها ميكروفون، يسمع الإملاء الصوتي ومسجّلات الصوت والرسائل الصوتية على الهاتف ميكروفون السيارة بدلًا من الهاتف. تحتفظ المكالمات بميكروفونها. يتطلب Shizuku.</string>
+    <string name="audio_car_mic_ready">جاهز: التشغيل أو الإيقاف يسري فورًا، حتى أثناء الاتصال.</string>
+    <string name="audio_car_mic_needs_android10">يتطلب Android 10 أو إصدارًا أحدث.</string>
+    <string name="audio_car_mic_needs_shizuku">يتطلب Shizuku قيد التشغيل ومسموحًا لـ AARE (راجع طريقة Shizuku أعلاه).</string>
 
     <string name="phone_section_title">شاشة الهاتف</string>
     <string name="phone_toggle_enable_title">شاشة الهاتف في السيارة</string>

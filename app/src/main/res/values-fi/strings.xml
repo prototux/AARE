@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Valmis. Vain media: ei navigoinnin ääniohjausta, jotkin sovellukset kieltäytyvät, ja puhelin jatkaa toistoa myös itse.</string>
     <string name="audio_playback_not_ready">Toimii kaikkialla, rajoituksin: vain media, ei navigoinnin ääniohjausta. Android pyytää näytön kaappausta: valitse Koko näyttö (sama kuin puhelimen näytössä).</string>
     <string name="audio_notice_setup_hint">Avaa AARE puhelimella ja ota auton äänet käyttöön kuullaksesi puhelimen autossa</string>
+    <string name="audio_section_car_mic">Auton mikrofoni</string>
+    <string name="audio_toggle_car_mic_title">Auton mikrofoni puhelimen sovelluksille</string>
+    <string name="audio_toggle_car_mic_subtitle">Kun puhelin on yhdistetty mikrofonilliseen autoon, puhelimen puhekirjoitus, äänitallentimet ja ääniviestit kuulevat auton puhelimen sijaan. Puhelut käyttävät omaa mikrofoniaan. Vaatii Shizukun.</string>
+    <string name="audio_car_mic_ready">Valmis: päälle tai pois kytkeminen tulee voimaan heti, myös yhteyden aikana.</string>
+    <string name="audio_car_mic_needs_android10">Vaatii Android 10:n tai uudemman.</string>
+    <string name="audio_car_mic_needs_shizuku">Vaatii Shizukun käynnissä ja AARElle sallittuna (katso Shizuku-menetelmä yllä).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Puhelimen näyttö</string>

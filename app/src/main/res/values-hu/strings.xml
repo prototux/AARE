@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Kész. Csak média: navigációs hang nélkül, néhány alkalmazás kimaradhat, és a telefon is tovább játssza a hangot.</string>
     <string name="audio_playback_not_ready">Mindenhol működik, korlátokkal: csak média, navigációs hang nélkül. Az Android a képernyő rögzítését kéri: válaszd a Teljes képernyőt (ezt használja a telefon képernyője is).</string>
     <string name="audio_notice_setup_hint">Nyisd meg az AARE-t a telefonon, és állítsd be az autó hangját, hogy halld a telefont az autóban</string>
+    <string name="audio_section_car_mic">Az autó mikrofonja</string>
+    <string name="audio_toggle_car_mic_title">Az autó mikrofonja a telefon alkalmazásaihoz</string>
+    <string name="audio_toggle_car_mic_subtitle">Mikrofonos autóhoz csatlakoztatva a telefon hangalapú gépelése, hangrögzítői és hangüzenetei az autót hallják a telefon helyett. A hívások megtartják saját mikrofonjukat. Shizuku szükséges.</string>
+    <string name="audio_car_mic_ready">Kész: a be- vagy kikapcsolás azonnal érvényes, csatlakozás közben is.</string>
+    <string name="audio_car_mic_needs_android10">Android 10 vagy újabb szükséges.</string>
+    <string name="audio_car_mic_needs_shizuku">Futó, az AARE számára engedélyezett Shizuku szükséges (lásd a fenti Shizuku módszert).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Telefon képernyője</string>
