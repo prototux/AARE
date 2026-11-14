@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">La pantalla del teléfono está en pausa mientras el teléfono está bloqueado. Desbloquéalo para mostrarla.</string>
     <string name="mirror_driving_no_accessibility">La pantalla del teléfono está en pausa mientras conduces. Para mostrar apps de navegación mientras conduces, activa AARE en los ajustes de accesibilidad del teléfono: así AARE sabe qué app está abierta.</string>
     <string name="mirror_driving_nav_only">La pantalla del teléfono está en pausa mientras conduces. Solo muestra apps de navegación.</string>
-    <string name="mirror_need_car_audio">Activa Audio del coche en AARE en el teléfono y elige Pantalla completa cuando Android lo pida: la pantalla del teléfono usa el mismo permiso.</string>
     <string name="mirror_need_accessibility">Para usar el teléfono desde el coche, activa AARE en los ajustes de accesibilidad del teléfono.</string>
 
     <!-- common: shared across screens -->

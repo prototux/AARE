@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Ekran telefonu jest wstrzymany, gdy telefon jest zablokowany. Odblokuj telefon, aby go wyświetlić.</string>
     <string name="mirror_driving_no_accessibility">Ekran telefonu jest wstrzymany podczas jazdy. Aby wyświetlać aplikacje nawigacyjne podczas jazdy, włącz AARE w ustawieniach ułatwień dostępu telefonu: to pozwala AARE wiedzieć, która aplikacja jest otwarta.</string>
     <string name="mirror_driving_nav_only">Ekran telefonu jest wstrzymany podczas jazdy. Wyświetla tylko aplikacje nawigacyjne.</string>
-    <string name="mirror_need_car_audio">Włącz Dźwięk w samochodzie w AARE na telefonie i wybierz Cały ekran, gdy Android zapyta: ekran telefonu używa tego samego uprawnienia.</string>
     <string name="mirror_need_accessibility">Aby korzystać z telefonu z samochodu, włącz AARE w ustawieniach ułatwień dostępu telefonu.</string>
 
     <!-- common: shared across screens -->

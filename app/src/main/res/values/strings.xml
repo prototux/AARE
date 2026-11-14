@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">The phone screen is paused while the phone is locked. Unlock the phone to show it.</string>
     <string name="mirror_driving_no_accessibility">The phone screen is paused while driving. To show navigation apps while driving, turn on AARE in the phone\'s accessibility settings: it tells AARE which app is open.</string>
     <string name="mirror_driving_nav_only">The phone screen is paused while driving. It shows navigation apps only.</string>
-    <string name="mirror_need_car_audio">Turn on Car audio in AARE on the phone, and choose Entire screen when Android asks: the phone screen uses the same permission.</string>
+    <string name="mirror_need_screen_capture">The phone screen needs Android\'s screen-capture permission. On the phone, open AARE\'s Car audio settings, tap Screen-capture permission and choose Entire screen.</string>
+    <string name="mirror_capture_failed">Android refused to share the phone screen. On the phone, tap Screen-capture permission again in AARE\'s Car audio settings and choose Entire screen.</string>
     <string name="mirror_need_accessibility">To use the phone from the car, turn on AARE in the phone\'s accessibility settings.</string>
 
     <!-- common: shared across screens -->

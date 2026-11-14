@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Màn hình điện thoại tạm dừng khi điện thoại đang khóa. Mở khóa điện thoại để hiển thị.</string>
     <string name="mirror_driving_no_accessibility">Màn hình điện thoại tạm dừng khi đang lái xe. Để hiển thị ứng dụng điều hướng khi lái xe, hãy bật AARE trong cài đặt trợ năng của điện thoại: điều này giúp AARE biết ứng dụng nào đang mở.</string>
     <string name="mirror_driving_nav_only">Màn hình điện thoại tạm dừng khi đang lái xe. Nó chỉ hiển thị ứng dụng điều hướng.</string>
-    <string name="mirror_need_car_audio">Bật Âm thanh xe hơi trong AARE trên điện thoại, và chọn Toàn bộ màn hình khi Android hỏi: màn hình điện thoại dùng chung quyền này.</string>
     <string name="mirror_need_accessibility">Để dùng điện thoại từ xe, hãy bật AARE trong cài đặt trợ năng của điện thoại.</string>
 
     <!-- common: shared across screens -->

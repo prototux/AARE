@@ -8,6 +8,7 @@ import android.media.projection.MediaProjection
 import android.util.Log
 import android.view.Display
 import android.view.Surface
+import net.prototux.aare.DiagLog
 
 /**
  * The phone's own screen, mirrored into a surface of the car screen through the screen-capture
@@ -23,7 +24,10 @@ object PhoneMirror {
 
     /** Mirrors the phone screen into [surface] ([width]×[height] pixels). False without a usable consent. */
     fun attach(projection: MediaProjection?, surface: Surface, width: Int, height: Int, dpi: Int): Boolean {
-        if (projection == null) return false
+        if (projection == null) {
+            DiagLog.add("phone screen: no screen-capture permission (Car audio > Screen-capture permission on the phone)")
+            return false
+        }
         if (owner !== projection) release()
         val d = display
         if (d != null) {
@@ -35,7 +39,10 @@ object PhoneMirror {
             display = projection.createVirtualDisplay("aare-phone-screen", width, height, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, surface, null, null)
             owner = projection
-        }.onFailure { Log.w(TAG, "can't mirror the phone screen", it) }.isSuccess
+        }.onFailure {
+            Log.w(TAG, "can't mirror the phone screen", it)
+            DiagLog.add("phone screen: Android refused to mirror the screen: ${it.javaClass.simpleName}: ${it.message}")
+        }.isSuccess
     }
 
     /** Stops drawing (the display stays, for the next [attach]). */

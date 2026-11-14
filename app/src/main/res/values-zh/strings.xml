@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">手机锁屏时屏幕镜像会暂停。解锁手机即可显示。</string>
     <string name="mirror_driving_no_accessibility">行驶中手机屏幕会暂停。若要在行驶中显示导航应用，请在手机的无障碍设置中开启 AARE：它会告诉 AARE 当前打开的是哪个应用。</string>
     <string name="mirror_driving_nav_only">行驶中手机屏幕会暂停，仅显示导航应用。</string>
-    <string name="mirror_need_car_audio">在手机上的 AARE 中开启车载音频，Android 询问时选择“整个屏幕”：手机屏幕镜像使用同一权限。</string>
     <string name="mirror_need_accessibility">要在车机上操作手机，请在手机的无障碍设置中开启 AARE。</string>
 
     <string name="common_back">返回</string>

@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Lo schermo del telefono è in pausa mentre il telefono è bloccato. Sbloccalo per mostrarlo.</string>
     <string name="mirror_driving_no_accessibility">Lo schermo del telefono è in pausa durante la guida. Per mostrare le app di navigazione durante la guida, attiva AARE nelle impostazioni di accessibilità del telefono: questo indica ad AARE quale app è aperta.</string>
     <string name="mirror_driving_nav_only">Lo schermo del telefono è in pausa durante la guida. Mostra solo le app di navigazione.</string>
-    <string name="mirror_need_car_audio">Attiva "Audio auto" in AARE sul telefono e scegli "Schermo intero" quando Android lo richiede: lo schermo del telefono usa lo stesso permesso.</string>
     <string name="mirror_need_accessibility">Per usare il telefono dall\'auto, attiva AARE nelle impostazioni di accessibilità del telefono.</string>
 
     <!-- common: shared across screens -->

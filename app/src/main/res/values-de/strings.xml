@@ -5,7 +5,6 @@
     <string name="mirror_locked_placeholder">Der Telefonbildschirm ist pausiert, solange das Telefon gesperrt ist. Entsperren Sie das Telefon, um ihn anzuzeigen.</string>
     <string name="mirror_driving_no_accessibility">Der Telefonbildschirm ist während der Fahrt pausiert. Um Navigations-Apps während der Fahrt anzuzeigen, aktivieren Sie AARE in den Bedienungshilfen des Telefons: So erfährt AARE, welche App geöffnet ist.</string>
     <string name="mirror_driving_nav_only">Der Telefonbildschirm ist während der Fahrt pausiert. Er zeigt nur Navigations-Apps an.</string>
-    <string name="mirror_need_car_audio">Aktivieren Sie Autoaudio in AARE auf dem Telefon und wählen Sie Gesamten Bildschirm, wenn Android danach fragt: Der Telefonbildschirm nutzt dieselbe Berechtigung.</string>
     <string name="mirror_need_accessibility">Um das Telefon vom Auto aus zu nutzen, aktivieren Sie AARE in den Bedienungshilfen des Telefons.</string>
 
     <!-- common: shared across screens -->
