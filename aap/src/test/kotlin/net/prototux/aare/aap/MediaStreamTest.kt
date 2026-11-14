@@ -3,14 +3,19 @@ package net.prototux.aare.aap
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
 import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
+import aap_protobuf.service.media.shared.message.StartOuterClass.Start
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
+import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import net.prototux.aare.aap.channels.AudioChannel
+import net.prototux.aare.aap.channels.MediaSinkChannel
+import net.prototux.aare.aap.channels.StartMediaOptions
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.sim.HeadUnitSimulator
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.ServerSocket
@@ -83,6 +88,23 @@ class MediaStreamTest {
 
         fun audio(type: String) = audio.first { it.streamType.name.endsWith(type) }
 
+        /** Starts playback on an audio stream once the head unit has said it is ready. */
+        fun startAudio(type: String): AudioChannel {
+            val channel = audio(type)
+            val until = System.currentTimeMillis() + 5000
+            while (!channel.ready && System.currentTimeMillis() < until) Thread.sleep(20)
+            assertTrue("$type should become ready", channel.ready)
+            channel.startPlayback()
+            return channel
+        }
+
+        /** The latest START the head unit got on [channel]. */
+        fun start(channel: Int): Start {
+            val until = System.currentTimeMillis() + 3000
+            while (hu.starts[channel].isNullOrEmpty() && System.currentTimeMillis() < until) Thread.sleep(20)
+            return hu.starts[channel]!!.last()
+        }
+
         /** Stands in for the encoder: a key frame, then small P frames while projected. */
         private inner class Listener : VideoChannel.Listener {
             override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>) = 0
@@ -129,5 +151,66 @@ class MediaStreamTest {
         val frames = link.hu.videoFrames.get()
         Thread.sleep(300)
         assertTrue("video keeps flowing", link.hu.videoFrames.get() > frames)
+    }
+
+    @Test
+    fun olderHeadUnitsGetPlainStarts() {
+        val link = Link(major = 1, minor = 6)
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        val video = link.start(link.hu.video)
+        assertFalse(video.hasAckMode())
+        assertFalse(video.hasMediaOptions())
+        val media = link.startAudio("MEDIA")
+        val audio = link.start(link.hu.mediaAudio)
+        assertFalse(audio.hasAckMode())
+        assertFalse(audio.hasMediaOptions())
+        assertFalse("acks pace a 1.6 head unit", media.ackless)
+    }
+
+    @Test
+    fun audioDropsOverflowFromProtocolFive() {
+        // 5.x: audio in drop overflow mode with media options (no statistics yet); video unchanged.
+        val link = Link(major = 5, minor = 0)
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        assertFalse(link.start(link.hu.video).hasAckMode())
+        val media = link.startAudio("MEDIA")
+        val start = link.start(link.hu.mediaAudio)
+        assertEquals(MediaSinkChannel.ACK_MODE_DROP_OVERFLOW, start.ackMode)
+        assertEquals(StartMediaOptions.audio(AudioStreamType.AUDIO_STREAM_MEDIA, 5), start.mediaOptions)
+        assertEquals(300_000_000, start.mediaOptions.audioBufferLimit.nanos)
+        assertFalse(start.mediaOptions.hasMediaStatsReportInterval())
+        assertTrue("acks don't pace a drop overflow stream", media.ackless)
+        assertTrue("the window is at least 24", media.maxUnacked >= 24)
+
+        // The head unit acks nothing: chunks keep going out, none dropped.
+        link.hu.ackAudio = false
+        repeat(40) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, it * 20_000L)) }
+        Thread.sleep(300)
+        assertEquals(40, link.hu.audioChunks.get())
+    }
+
+    @Test
+    fun videoDropsOverflowFromProtocolSix() {
+        val link = Link(major = 6, minor = 0)
+        link.hu.ackVideo = false
+        assertTrue(link.videoStarted.await(5, TimeUnit.SECONDS))
+        val start = link.start(link.hu.video)
+        assertEquals(MediaSinkChannel.ACK_MODE_DROP_OVERFLOW, start.ackMode)
+        assertEquals(StartMediaOptions.video(), start.mediaOptions)
+        assertTrue(start.mediaOptions.enableMediaStats)
+        assertEquals(5L, start.mediaOptions.mediaStatsReportInterval.seconds)
+        assertEquals(9_000_000, start.mediaOptions.videoTimingMinDelay.nanos)
+        // Frames flow without a single ack, far past the head unit's window of 2.
+        assertTrue(link.focused.await(5, TimeUnit.SECONDS))
+        Thread.sleep(800)
+        assertTrue("frames sent without acks: ${link.hu.videoFrames.get()}", link.hu.videoFrames.get() > 20)
+        assertTrue(link.video!!.ackless)
+
+        // Navigation voice reports statistics more often.
+        link.startAudio("GUIDANCE")
+        val guidance = link.start(link.hu.guidance).mediaOptions
+        assertTrue(guidance.enableMediaStats)
+        assertEquals(500_000_000, guidance.mediaStatsReportInterval.nanos)
+        assertEquals(400_000_000, guidance.audioBufferLimit.nanos)
     }
 }

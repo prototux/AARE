@@ -126,6 +126,8 @@ class HeadUnitSimulator(
     val audioChunks = AtomicInteger()
     /** Set false to simulate a head unit that stops acking audio mid-stream (#82). */
     @Volatile var ackAudio = true
+    /** Set false to simulate a head unit that doesn't ack video. */
+    @Volatile var ackVideo = true
     val pingsAnswered = AtomicInteger()
     val focusRequests = AtomicInteger()
     val sensorRequests = ConcurrentHashMap.newKeySet<SensorType>()
@@ -281,7 +283,7 @@ class HeadUnitSimulator(
                     audioChunks.incrementAndGet()
                 }
                 val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
-                if (m.channel == video || ackAudio)
+                if (if (m.channel == video) ackVideo else ackAudio)
                     send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
         }

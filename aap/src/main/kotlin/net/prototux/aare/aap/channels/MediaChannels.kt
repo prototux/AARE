@@ -6,6 +6,7 @@ import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.Upda
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
+import aap_protobuf.service.media.shared.message.MediaOptionsOuterClass.MediaOptions
 import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.SetupOuterClass.Setup
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
@@ -52,7 +53,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     /**
      * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
      * mid-stream. Either way we eventually stop counting acks rather than stall the stream; an ack
-     * arriving later turns counting back on.
+     * arriving later turns counting back on. A [dropsOverflow] stream is ackless from its START.
      */
     @Volatile var ackless = false
         private set
@@ -83,11 +84,15 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             MediaMsg.CONFIG -> {
                 val cfg = Config.parseFrom(msg.bodyBytes())
                 maxUnacked = if (cfg.hasMaxUnacked() && cfg.maxUnacked > 0) cfg.maxUnacked else 1
+                // At least this window applies in drop overflow mode (it never waits on it).
+                if (dropsOverflow) maxUnacked = maxOf(maxUnacked, DROP_OVERFLOW_MIN_UNACKED)
                 configIndices = cfg.configurationIndicesList
                 ready = cfg.status == Config.Status.STATUS_READY
                 onConfig(cfg)
             }
             MediaMsg.ACK -> {
+                // Acks on a drop overflow stream pace nothing: they are ignored.
+                if (dropsOverflow) return
                 val ack = Ack.parseFrom(msg.bodyBytes())
                 sinceAck.set(0)
                 ackSeen = true
@@ -133,6 +138,18 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
      */
     protected abstract val dataPriority: Int
 
+    /**
+     * Whether this stream runs in "drop overflow" mode for this head unit (video
+     * to 6.0 and later, audio to 5.0 and later): its START says so (field 3 = 2) and carries media
+     * options (field 4), and from then on sends without waiting for acks and ignores
+     * those that come; the head unit drops what it can't take. Valid once the channel is attached
+     * (the head unit's version is known before any channel opens).
+     */
+    protected abstract val dropsOverflow: Boolean
+
+    /** The media options a [dropsOverflow] stream's START carries. */
+    protected abstract fun startMediaOptions(): MediaOptions
+
     protected open fun onConfig(cfg: Config) {}
     protected open fun onAcked() {}
     protected open fun onOtherMessage(msg: AapMessage) {}
@@ -144,7 +161,12 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
         sinceAck.set(0)
         lastAckNs = System.nanoTime()
         streamSent = 0; streamAcks = 0; maxAckGapMs = 0
-        send(MediaMsg.START, Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex).build(), dataPriority)
+        val start = Start.newBuilder().setSessionId(mediaSession).setConfigurationIndex(configIndex)
+        if (dropsOverflow) {
+            start.setAckMode(ACK_MODE_DROP_OVERFLOW).setMediaOptions(startMediaOptions())
+            ackless = true
+        }
+        send(MediaMsg.START, start.build(), dataPriority)
         started = true
     }
 
@@ -214,6 +236,9 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     }
 
     companion object {
+        /** START field 3 for a stream the head unit paces by dropping, not by holding acks back. */
+        const val ACK_MODE_DROP_OVERFLOW = 2
+        const val DROP_OVERFLOW_MIN_UNACKED = 24
         const val ACKLESS_AFTER = 16
         /** No ack for this long (window full) from a head unit that did ack: it has stalled (#82). */
         const val ACK_STALL_MS = 2_000L
@@ -284,6 +309,8 @@ class VideoChannel(
 
     override val openPriority = 0
     override val dataPriority = Priority.VIDEO
+    override val dropsOverflow: Boolean get() = session.headUnitAtLeast(6, 0)
+    override fun startMediaOptions() = StartMediaOptions.video()
 
     override fun onConfig(cfg: Config) {
         // Whatever its status: video starts on any Config (it only checks the
@@ -453,6 +480,8 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
 
     val streamType: AudioStreamType = service.mediaSinkService.audioType
     override val dataPriority = Priority.AUDIO
+    override val dropsOverflow: Boolean get() = session.headUnitAtLeast(5, 0)
+    override fun startMediaOptions() = StartMediaOptions.audio(streamType, session.headUnitVersion?.first ?: 0)
     /** Underflows the car reported on this stream (0x800B). */
     @Volatile var underflows = 0
         private set
