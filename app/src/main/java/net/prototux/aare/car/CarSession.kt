@@ -1034,6 +1034,12 @@ class CarSession(
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
 
+        /** The part of [c]'s resolution the car shows: the resolution less its declared margins. */
+        fun visibleSize(c: VideoConfiguration): Pair<Int, Int> {
+            val (w, h) = resolution(c.codecResolution)
+            return (w - c.widthMargin.coerceIn(0, w)).coerceAtLeast(1) to (h - c.heightMargin.coerceIn(0, h)).coerceAtLeast(1)
+        }
+
         fun resolution(r: VideoCodecResolutionType): Pair<Int, Int> = when (r) {
             VideoCodecResolutionType.VIDEO_800x480 -> 800 to 480
             VideoCodecResolutionType.VIDEO_1280x720 -> 1280 to 720
@@ -1061,6 +1067,10 @@ class CarSession(
          * Picks the best configuration the phone can encode comfortably: the largest one within
          * [maxHeight] (short side), preferring 60 fps when asked, among the head unit's preferred
          * indices when it gave any.
+         *
+         * Sizes are what the car shows: the configuration's resolution less its margins. A wide
+         * screen can offer 1920x1080 with 360 rows of margin for a 1920x720 picture, which is
+         * within a 720 limit, while its 1280x720 configuration gets stretched across that width.
          */
         fun chooseVideo(configs: List<VideoConfiguration>, preferred: List<Int>, maxHeight: Int, prefer60: Boolean, codec: MediaCodecType): Int {
             fun portrait(i: Int) = resolution(configs[i].codecResolution).let { it.second > it.first }
@@ -1070,13 +1080,15 @@ class CarSession(
                 val shape = portrait(preferred.firstOrNull { it in all } ?: all.firstOrNull() ?: return 0)
                 all.filter { portrait(it) == shape }
             }
-            fun shortSide(i: Int) = resolution(configs[i].codecResolution).let { minOf(it.first, it.second) }
-            fun score(i: Int): Int {
+            fun shortSide(i: Int) = visibleSize(configs[i]).let { minOf(it.first, it.second) }
+            fun score(i: Int): Long {
                 val c = configs[i]
                 val s = shortSide(i)
                 val fits = s <= maxHeight
                 val fps60 = c.frameRate == VideoFrameRateType.VIDEO_FPS_60
-                return (if (fits) 1_000_000 else 0) + (if (fits) s else -s) * 10 + (if (fps60 == prefer60) 1 else 0)
+                // Same short side: the wider visible picture is the car's real shape (the other gets stretched).
+                val long = visibleSize(c).let { maxOf(it.first, it.second) }
+                return (if (fits) 1_000_000_000L else 0L) + (if (fits) s else -s) * 100_000L + long * 10L + (if (fps60 == prefer60) 1 else 0)
             }
             return candidates.maxByOrNull(::score) ?: 0
         }
