@@ -42,7 +42,7 @@ object CarHardwareResults {
         for (t in types) when (t) {
             SPEED -> add(SensorType.SENSOR_SPEED)
             MILEAGE -> add(SensorType.SENSOR_ODOMETER)
-            ENERGY_LEVEL -> add(SensorType.SENSOR_FUEL)
+            ENERGY_LEVEL -> { add(SensorType.SENSOR_FUEL); add(SensorType.SENSOR_VEHICLE_ENERGY_MODEL_DATA) }
             TOLL -> add(SensorType.SENSOR_TOLL_CARD)
             ACCELEROMETER -> add(SensorType.SENSOR_ACCELEROMETER_DATA)
             GYROSCOPE -> add(SensorType.SENSOR_GYROSCOPE_DATA)
@@ -58,7 +58,7 @@ object CarHardwareResults {
         for (k in changed) when (k) {
             CarData.Kind.SPEED -> add(SPEED)
             CarData.Kind.ODOMETER -> add(MILEAGE)
-            CarData.Kind.FUEL -> add(ENERGY_LEVEL)
+            CarData.Kind.FUEL, CarData.Kind.ENERGY_MODEL -> add(ENERGY_LEVEL)
             CarData.Kind.TOLL_CARD -> add(TOLL)
             CarData.Kind.ACCELEROMETER -> add(ACCELEROMETER)
             CarData.Kind.GYROSCOPE -> add(GYROSCOPE)
@@ -87,7 +87,7 @@ object CarHardwareResults {
                 .setFuelTypes(intList(s.fuelTypes))
                 .setEvConnectorTypes(intList(s.evConnectorTypes))
                 .build()
-            ENERGY_LEVEL -> if (!s.has(SensorType.SENSOR_FUEL)) null else energyLevel(s)
+            ENERGY_LEVEL -> if (!s.has(SensorType.SENSOR_FUEL) && !s.has(SensorType.SENSOR_VEHICLE_ENERGY_MODEL_DATA)) null else energyLevel(s)
             SPEED -> if (!s.has(SensorType.SENSOR_SPEED)) null else Speed.Builder()
                 .setRawSpeedMetersPerSecond(s.speed?.let { CarValue(it.value.metersPerSecond, it.atMillis, CarValue.STATUS_SUCCESS) } ?: unavailable())
                 // The speed the dashboard shows (usually a little above the real one) and its unit aren't in AAP.
@@ -124,9 +124,18 @@ object CarHardwareResults {
         // An electric-only car reports its battery as "fuel".
         val electric = s.fuelTypes.isNotEmpty() && s.fuelTypes.all { it == EnergyProfile.FUEL_TYPE_ELECTRIC }
         val level: CarValue<Float> = f?.value?.levelPercent?.let { CarValue(it.toFloat(), f.atMillis, CarValue.STATUS_SUCCESS) } ?: unavailable()
+        // The energy model's charge (stored / capacity) when the car sends one: a hybrid's battery,
+        // or an electric car that leaves the fuel level out.
+        val model: CarValue<Float>? = s.energyModel?.let { e -> e.value.batteryPercent?.let { CarValue(it, e.atMillis, CarValue.STATUS_SUCCESS) } }
+        val battery: CarValue<Float> = when {
+            electric && level.status == CarValue.STATUS_SUCCESS -> level
+            model != null -> model
+            electric || s.has(SensorType.SENSOR_VEHICLE_ENERGY_MODEL_DATA) -> unavailable()
+            else -> unimplemented()
+        }
         return EnergyLevel.Builder()
             .setFuelPercent(if (electric) unimplemented() else level)
-            .setBatteryPercent(if (electric) level else unimplemented())
+            .setBatteryPercent(battery)
             .setEnergyIsLow(f?.value?.low?.let { CarValue(it, f.atMillis, CarValue.STATUS_SUCCESS) } ?: unavailable())
             .setRangeRemainingMeters(f?.value?.rangeKm?.let { CarValue(it * 1000f, f.atMillis, CarValue.STATUS_SUCCESS) } ?: unavailable())
             .setDistanceDisplayUnit(unimplemented())

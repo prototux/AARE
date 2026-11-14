@@ -3,6 +3,8 @@ package net.prototux.aare.car
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
+import aap_protobuf.service.sensorsource.message.VehicleEnergyModelDataOuterClass.VehicleEnergyModelData
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.CopyOnWriteArrayList
@@ -39,6 +41,14 @@ object CarData {
     data class Lights(val headLights: HeadLights?, val turn: Turn?, val hazard: Boolean?)
     data class Vector3(val x: Float?, val y: Float?, val z: Float?)
     data class Satellites(val inUse: Int, val inView: Int?)
+    /** An electric car's battery as the energy model reads it (sensor 23). */
+    data class EnergyModel(
+        val batteryWh: Int?, val capacityWh: Int?, val hvacOn: Boolean?,
+        val outsideTemperatureC: Float?, val batteryTemperatureC: Float?,
+    ) {
+        val batteryPercent: Float? get() =
+            if (batteryWh != null && capacityWh != null && capacityWh > 0) 100f * batteryWh / capacityWh else null
+    }
 
     data class State(
         /** False until a car is connected; values below are then all null. */
@@ -75,6 +85,7 @@ object CarData {
         val tollCardPresent: Timed<Boolean>? = null,
         /** Raw OBD-II trouble codes, as the car sends them. */
         val diagnostics: Timed<ByteArray>? = null,
+        val energyModel: Timed<EnergyModel>? = null,
     ) {
         fun has(type: SensorType) = type in advertised
 
@@ -88,6 +99,7 @@ object CarData {
     enum class Kind {
         LOCATION, COMPASS, SPEED, RPM, ODOMETER, FUEL, PARKING_BRAKE, GEAR, DIAGNOSTICS, NIGHT_MODE, ENVIRONMENT, HVAC,
         DRIVING_STATUS, DEAD_RECKONING, PASSENGER, DOORS, LIGHTS, TIRE_PRESSURE, ACCELEROMETER, GYROSCOPE, GPS_SATELLITES, TOLL_CARD,
+        ENERGY_MODEL,
     }
 
     fun interface Listener {
@@ -99,6 +111,8 @@ object CarData {
     val state: StateFlow<State> = _state
     private val listeners = CopyOnWriteArrayList<Listener>()
     private val lock = Any()
+    /** Batch fields AARE has no use for that this car was already logged as sending. */
+    private val loggedUnused = HashSet<String>()
     /** Whoever last called [discovered]: a quick reconnect's teardown must not [reset] a car the new session already found. */
     private var owner: Any? = null
 
@@ -134,6 +148,7 @@ object CarData {
         val sensors = response.channelsList.firstOrNull { it.hasSensorSourceService() }?.sensorSourceService
         synchronized(lock) {
             this.owner = owner
+            loggedUnused.clear()
             _state.value = State(
                 connected = true,
                 identity = Identity(hu.make.ifEmpty { response.make }, hu.model.ifEmpty { response.model },
@@ -225,10 +240,31 @@ object CarData {
                 s = s.copy(satellites = Timed(Satellites(g.numberInUse, if (g.hasNumberInView()) g.numberInView else null), now)); changed += Kind.GPS_SATELLITES
             }
             batch.tollCardDataList.lastOrNull()?.let { s = s.copy(tollCardPresent = Timed(it.isCardPresent, now)); changed += Kind.TOLL_CARD }
+            batch.vehicleEnergyModelDataList.lastOrNull()?.takeIf { it.hasVehicleInfo() }?.vehicleInfo?.let { v ->
+                s = s.copy(energyModel = Timed(EnergyModel(
+                    if (v.hasBatteryLevelWh()) v.batteryLevelWh.value else null,
+                    if (v.hasBatteryCapacityWh()) v.batteryCapacityWh.value else null,
+                    if (v.hasHvacStatus() && v.hvacStatus != VehicleEnergyModelData.HvacStatus.UNKNOWN_HVAC_STATUS)
+                        v.hvacStatus == VehicleEnergyModelData.HvacStatus.ON_HVAC_STATUS else null,
+                    if (v.hasExternalTempCelsius()) v.externalTempCelsius else null,
+                    if (v.hasBatteryTempCelsius()) v.batteryTempCelsius else null,
+                ), now)); changed += Kind.ENERGY_MODEL
+            }
+            // Nothing in AARE (nor in the Car App Library) takes these: say once that the car sends them.
+            if (batch.trailerDataCount > 0) logUnused("trailer data")
+            batch.rawVehicleEnergyModelDataList.lastOrNull()?.let { logUnused("raw energy model (${it.data.size()} bytes)", "raw energy model") }
+            batch.rawEvTripSettingsDataList.lastOrNull()?.let { logUnused("raw EV trip settings (${it.data.size()} bytes)", "raw EV trip settings") }
             _state.value = s
             s
         }
         if (changed.isNotEmpty()) for (l in listeners) runCatching { l.onCarData(next, changed) }
         return changed
     }
+
+    /** Called under [lock]. */
+    private fun logUnused(what: String, key: String = what) {
+        if (loggedUnused.add(key)) Log.i(TAG, "the car sends $what, which AARE doesn't use")
+    }
+
+    private const val TAG = "AareCarData"
 }

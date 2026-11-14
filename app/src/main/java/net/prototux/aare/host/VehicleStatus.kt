@@ -19,6 +19,7 @@ object VehicleStatus {
         SensorType.SENSOR_ODOMETER, SensorType.SENSOR_FUEL, SensorType.SENSOR_ENVIRONMENT_DATA, SensorType.SENSOR_HVAC_DATA,
         SensorType.SENSOR_DOOR_DATA, SensorType.SENSOR_LIGHT_DATA, SensorType.SENSOR_TIRE_PRESSURE_DATA,
         SensorType.SENSOR_PASSENGER_DATA, SensorType.SENSOR_TOLL_CARD, SensorType.SENSOR_OBDII_DIAGNOSTIC_CODE,
+        SensorType.SENSOR_VEHICLE_ENERGY_MODEL_DATA,
     )
 
     /** Values older than this are left out: the car stopped sending them. */
@@ -51,6 +52,8 @@ object VehicleStatus {
             f.rangeKm?.let { o.put("range_km", it) }
             if (f.low == true) warnings.put(if (electric) "battery low" else "fuel low")
         }
+        // A hybrid's battery, or an electric car that only reports it through its energy model.
+        if (!o.has("battery_percent")) s.energyModel.fresh()?.batteryPercent?.let { o.put("battery_percent", it.roundToInt()) }
         s.environment.fresh(eventDriven = true)?.let { e ->
             e.temperatureC?.let { o.put("outside_temperature_c", (it * 10).roundToInt() / 10.0) }
             e.pressureKpa?.let { o.put("air_pressure_kpa", it.roundToInt()) }
