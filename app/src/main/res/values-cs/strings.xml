@@ -492,4 +492,24 @@
     <string name="carapp_error_stopped">%1$s se zastavilo</string>
     <string name="carapp_error_google_only">%1$s akceptuje pouze Android Auto od Googlu. Musí povolit AARE (viz seznam aplikací na telefonu).</string>
     <string name="carapp_error_cant_start">%1$s se nepodařilo spustit: %2$s</string>
+    <string name="shizuku_setup_title">Udělit oprávnění AARE přes Shizuku</string>
+    <string name="shizuku_setup_subtitle">Jedno klepnutí udělí vše, co ještě chybí, bez vlastního dialogu pro každé oprávnění: mikrofon, poloha, kontakty, seznam hovorů, kalendář, telefonní hovory, zařízení v okolí (Bluetooth, Wi-Fi), místní síť, oznámení a přístup k oznámením</string>
+    <string name="shizuku_setup_working">Uděluje se…</string>
+    <string name="shizuku_setup_result_title">Uděleno přes Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Vše už bylo uděleno.</string>
+    <string name="shizuku_setup_not_granted">Neuděleno: %1$s</string>
+    <string name="shizuku_setup_notification_access">Přístup k oznámením</string>
+    <string name="shizuku_setup_helper_failed">Pomocník Shizuku se nespustil. Zkontrolujte, že Shizuku běží a povoluje AARE.</string>
+    <string name="aa_section_title">Google Android Auto</string>
+    <string name="aa_state_enabled">Nainstalováno a povoleno: když se připojí auto, Android ho může předat Android Auto místo AARE, nebo se zeptá, kterou aplikaci použít.</string>
+    <string name="aa_state_disabled">Zakázáno: Android Auto si auto nepřevezme. Jeho data zůstávají zachována.</string>
+    <string name="aa_action_disable">Zabránit Android Auto převzít auto</string>
+    <string name="aa_action_enable">Znovu povolit Android Auto</string>
+    <string name="aa_working">Pracuje se…</string>
+    <string name="aa_needs_shizuku">Přes Shizuku (běžící a povolující AARE), nebo ručně v informacích o aplikaci Android Auto.</string>
+    <string name="aa_app_info">Informace o aplikaci Android Auto</string>
+    <string name="aa_failed">Nepodařilo se: %1$s</string>
+    <string name="aa_confirm_title">Zakázat Android Auto?</string>
+    <string name="aa_confirm_text">AARE zakáže Google Android Auto pro tohoto uživatele přes Shizuku (pm disable-user). Aplikace se zastaví, zmizí ze seznamu aplikací a při připojení auta už nereaguje, takže auto si vždy vezme AARE.\n\nNic se neodinstaluje a data zůstávají zachována. Auta, aplikace nebo funkce, které potřebují Google Android Auto, nebudou fungovat, dokud ho zde tlačítkem znovu nepovolíte.</string>
+    <string name="aa_confirm_action">Zakázat</string>
 </resources>

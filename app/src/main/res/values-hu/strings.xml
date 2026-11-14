@@ -493,4 +493,24 @@
     <string name="carapp_error_stopped">%1$s leállt</string>
     <string name="carapp_error_google_only">%1$s csak a Google Android Auto alkalmazását fogadja el. Engedélyeznie kell az AARE-t (lásd az alkalmazáslistát a telefonon).</string>
     <string name="carapp_error_cant_start">%1$s nem tudott elindulni: %2$s</string>
+    <string name="shizuku_setup_title">Az AARE engedélyeinek megadása Shizukuval</string>
+    <string name="shizuku_setup_subtitle">Egy koppintás megadja, amit még nem adtál meg, az egyes engedélyek saját párbeszédpanelje nélkül: mikrofon, helyadatok, névjegyek, híváselőzmények, naptár, telefonhívások, közeli eszközök (Bluetooth, Wi-Fi), helyi hálózat, értesítések és értesítés-hozzáférés</string>
+    <string name="shizuku_setup_working">Megadás…</string>
+    <string name="shizuku_setup_result_title">Megadva Shizukuval</string>
+    <string name="shizuku_setup_nothing_to_grant">Minden már megadva volt.</string>
+    <string name="shizuku_setup_not_granted">Nincs megadva: %1$s</string>
+    <string name="shizuku_setup_notification_access">Értesítés-hozzáférés</string>
+    <string name="shizuku_setup_helper_failed">A Shizuku segédprogramja nem indult el. Ellenőrizd, hogy a Shizuku fut, és engedélyezi az AARE-t.</string>
+    <string name="aa_section_title">A Google Android Autója</string>
+    <string name="aa_state_enabled">Telepítve és engedélyezve: amikor egy autó csatlakozik, az Android az AARE helyett az Android Autónak adhatja, vagy megkérdezheti, melyik alkalmazást használd.</string>
+    <string name="aa_state_disabled">Letiltva: az Android Auto nem veszi át az autót. Az adatai megmaradnak.</string>
+    <string name="aa_action_disable">Az Android Auto megakadályozása az autó átvételében</string>
+    <string name="aa_action_enable">Az Android Auto újbóli engedélyezése</string>
+    <string name="aa_working">Folyamatban…</string>
+    <string name="aa_needs_shizuku">A Shizukun keresztül (fut, és engedélyezi az AARE-t), vagy kézzel az Android Auto alkalmazásinfójában.</string>
+    <string name="aa_app_info">Az Android Auto alkalmazásinfója</string>
+    <string name="aa_failed">Nem sikerült: %1$s</string>
+    <string name="aa_confirm_title">Letiltod az Android Autót?</string>
+    <string name="aa_confirm_text">Az AARE a Shizukun keresztül (pm disable-user) letiltja a Google Android Autóját ennél a felhasználónál. Leáll, eltűnik az alkalmazáslistából, és nem válaszol többé, amikor egy autó csatlakozik, így az autó mindig az AARE-hoz kerül.\n\nSemmi nem lesz eltávolítva, az adatai megmaradnak. Azok az autók, alkalmazások vagy funkciók, amelyeknek szükségük van a Google Android Autójára, nem fognak működni, amíg itt a gombbal újra nem engedélyezed.</string>
+    <string name="aa_confirm_action">Letiltás</string>
 </resources>

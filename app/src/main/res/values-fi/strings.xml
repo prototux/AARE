@@ -492,4 +492,24 @@
     <string name="carapp_error_stopped">%1$s pysähtyi</string>
     <string name="carapp_error_google_only">%1$s hyväksyy vain Googlen Android Auton. Sen täytyy sallia AARE (katso sovellusluettelo puhelimesta).</string>
     <string name="carapp_error_cant_start">%1$s ei voinut käynnistyä: %2$s</string>
+    <string name="shizuku_setup_title">Myönnä AAREn käyttöoikeudet Shizukulla</string>
+    <string name="shizuku_setup_subtitle">Yksi napautus myöntää sen, mikä puuttuu vielä, ilman kunkin käyttöoikeuden omaa valintaikkunaa: mikrofoni, sijainti, yhteystiedot, puhelulokit, kalenteri, puhelut, lähellä olevat laitteet (Bluetooth, Wi-Fi), paikallinen verkko, ilmoitukset ja ilmoitusten käyttöoikeus</string>
+    <string name="shizuku_setup_working">Myönnetään…</string>
+    <string name="shizuku_setup_result_title">Myönnetty Shizukulla</string>
+    <string name="shizuku_setup_nothing_to_grant">Kaikki oli jo myönnetty.</string>
+    <string name="shizuku_setup_not_granted">Ei myönnetty: %1$s</string>
+    <string name="shizuku_setup_notification_access">Ilmoitusten käyttöoikeus</string>
+    <string name="shizuku_setup_helper_failed">Shizukun apuohjelma ei käynnistynyt. Tarkista, että Shizuku on käynnissä ja sallii AAREn.</string>
+    <string name="aa_section_title">Googlen Android Auto</string>
+    <string name="aa_state_enabled">Asennettu ja käytössä: kun auto yhdistetään, Android voi antaa sen Android Autolle AAREn sijaan tai kysyä, mitä sovellusta käytetään.</string>
+    <string name="aa_state_disabled">Pois käytöstä: Android Auto ei ota autoa. Sen tiedot säilyvät.</string>
+    <string name="aa_action_disable">Estä Android Autoa ottamasta autoa</string>
+    <string name="aa_action_enable">Ota Android Auto käyttöön uudelleen</string>
+    <string name="aa_working">Käsitellään…</string>
+    <string name="aa_needs_shizuku">Shizukun kautta (käynnissä ja sallii AAREn), tai käsin Android Auton sovellustiedoissa.</string>
+    <string name="aa_app_info">Android Auton sovellustiedot</string>
+    <string name="aa_failed">Ei onnistunut: %1$s</string>
+    <string name="aa_confirm_title">Poistetaanko Android Auto käytöstä?</string>
+    <string name="aa_confirm_text">AARE poistaa Googlen Android Auton käytöstä tälle käyttäjälle Shizukun kautta (pm disable-user). Se lakkaa toimimasta, katoaa sovellusluettelosta eikä vastaa enää, kun auto yhdistetään, niin auto tulee aina AARElle.\n\nMitään ei poisteta, ja sen tiedot säilyvät. Autot, sovellukset tai ominaisuudet, jotka tarvitsevat Googlen Android Autoa, eivät toimi, ennen kuin otat sen käyttöön uudelleen tästä painikkeesta.</string>
+    <string name="aa_confirm_action">Poista käytöstä</string>
 </resources>

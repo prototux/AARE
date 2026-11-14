@@ -493,4 +493,24 @@
     <string name="carapp_error_stopped">%1$s stoppades</string>
     <string name="carapp_error_google_only">%1$s accepterar endast Googles Android Auto. Den måste tillåta AARE (se applistan på telefonen).</string>
     <string name="carapp_error_cant_start">%1$s kunde inte starta: %2$s</string>
+    <string name="shizuku_setup_title">Ge AARE behörigheter med Shizuku</string>
+    <string name="shizuku_setup_subtitle">Ett tryck ger det som fortfarande saknas, utan varje behörighets egen dialog: mikrofon, plats, kontakter, samtalslogg, kalender, telefonsamtal, enheter i närheten (Bluetooth, Wi-Fi), lokalt nätverk, aviseringar och aviseringsåtkomst</string>
+    <string name="shizuku_setup_working">Ger behörighet…</string>
+    <string name="shizuku_setup_result_title">Gett med Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Allt var redan gett.</string>
+    <string name="shizuku_setup_not_granted">Inte gett: %1$s</string>
+    <string name="shizuku_setup_notification_access">Aviseringsåtkomst</string>
+    <string name="shizuku_setup_helper_failed">Shizukus hjälpare startade inte. Kontrollera att Shizuku körs och tillåter AARE.</string>
+    <string name="aa_section_title">Googles Android Auto</string>
+    <string name="aa_state_enabled">Installerad och aktiverad: när en bil ansluter kan Android ge den till Android Auto istället för AARE, eller fråga vilken app som ska användas.</string>
+    <string name="aa_state_disabled">Inaktiverad: Android Auto tar inte bilen. Dess data bevaras.</string>
+    <string name="aa_action_disable">Hindra Android Auto från att ta bilen</string>
+    <string name="aa_action_enable">Aktivera Android Auto igen</string>
+    <string name="aa_working">Arbetar…</string>
+    <string name="aa_needs_shizuku">Via Shizuku (körs och tillåter AARE), eller manuellt i Android Autos appinfo.</string>
+    <string name="aa_app_info">Android Autos appinfo</string>
+    <string name="aa_failed">Fungerade inte: %1$s</string>
+    <string name="aa_confirm_title">Inaktivera Android Auto?</string>
+    <string name="aa_confirm_text">AARE inaktiverar Googles Android Auto för denna användare via Shizuku (pm disable-user). Den slutar köra, försvinner från applistan och svarar inte längre när en bil ansluter, så bilen går alltid till AARE.\n\nInget avinstalleras och dess data bevaras. Bilar, appar eller funktioner som behöver Googles Android Auto fungerar inte förrän du aktiverar den igen med knappen här.</string>
+    <string name="aa_confirm_action">Inaktivera</string>
 </resources>
