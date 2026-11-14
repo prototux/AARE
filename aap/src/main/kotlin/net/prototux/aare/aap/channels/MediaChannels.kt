@@ -468,9 +468,12 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
         underflows++
         listener?.onUnderflow(this)
     }
-    /** The configuration the head unit picked in its Config (the index START announces), else the first. */
+    /** The configuration this stream plays, the one its START announces (see [chooseConfig]). */
     val config: AudioConfiguration?
-        get() = service.mediaSinkService.audioConfigsList.let { it.getOrNull(configIndices.firstOrNull() ?: 0) ?: it.firstOrNull() }
+        get() = service.mediaSinkService.audioConfigsList.getOrNull(configIndex)
+
+    private val configIndex: Int
+        get() = chooseConfig(streamType, service.mediaSinkService.audioConfigsList, configIndices, session.headUnitAtLeast(1, 6))
     @Volatile var droppedChunks = 0L
         private set
 
@@ -480,7 +483,7 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
 
     /** Opens a playback session on the head unit (call when sound starts). */
     fun startPlayback() {
-        if (ready && !started) startStream(configIndices.firstOrNull() ?: 0)
+        if (ready && !started) startStream(configIndex)
     }
 
     /** Closes the session (call after a short silence, so the head unit can restore its own audio). */
@@ -503,6 +506,23 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
     companion object {
         /** Head units ack audio in bursts; allow a little beyond the window before dropping. */
         const val SLACK = 4
+
+        /**
+         * The audio configuration played on a stream, from the head unit's list
+         * (it doesn't look at the Config's preferred indices): 48 kHz stereo for media; for the
+         * others 48 kHz mono on head units 1.6 and later, else 16 kHz mono. A list without it
+         * (the stream would then be refused) falls back to the Config's preferred index, else
+         * the first. Returns an index into [configs].
+         */
+        internal fun chooseConfig(type: AudioStreamType, configs: List<AudioConfiguration>, preferred: List<Int>, headUnitAtLeast16: Boolean): Int {
+            fun find(rate: Int, stereo: Boolean) = configs.indexOfFirst { it.samplingRate == rate && (it.numberOfChannels == 2) == stereo }
+            val wanted = when {
+                type == AudioStreamType.AUDIO_STREAM_MEDIA -> find(48_000, stereo = true)
+                headUnitAtLeast16 -> find(48_000, stereo = false).takeIf { it >= 0 } ?: find(16_000, stereo = false)
+                else -> find(16_000, stereo = false)
+            }
+            return wanted.takeIf { it >= 0 } ?: preferred.firstOrNull()?.takeIf { it in configs.indices } ?: 0
+        }
     }
 }
 
