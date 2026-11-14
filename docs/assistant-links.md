@@ -82,15 +82,17 @@ emoji does nothing: the macro taps it for real, through Shizuku.
 - **Trigger:** *Screen Content*, only in the assistant app (for example Claude), text matches the
   regular expression `^(🧭|▶|⏸|⏭|⏮|📱|🌓|ℹ|📨)\x{FE0F}?$`.
 - **Action:** *Shell Script*, with *Shizuku*: `sh /sdcard/Download/aare-tap.sh`.
-- **Constraint (optional):** only while the phone is connected to the car.
 
 `/sdcard/Download/aare-tap.sh` finds the newest link emoji on the screen, taps it, and then taps
-*Open* in the assistant's "Open this website?" prompt. It remembers the answer it tapped, so
+*Open* in the assistant's "Open this website?" prompt, only while AARE is connected to a car
+(it checks AARE's `aare:projection` wake lock, held exactly then). It remembers the answer it tapped, so
 reopening an old chat doesn't run its link again:
 
 ```sh
 # Taps the newest AARE car link emoji in the assistant's reply, then "Open" in the app's link prompt.
 # Remembers the reply it tapped, so reopening an old chat doesn't run its link again.
+# Only while AARE runs a car session: it holds this wake lock exactly then. At home, nothing.
+dumpsys power | grep -q 'aare:projection' || exit 0
 dir=/sdcard/Download
 links='&#129517;|▶️?|⏸️?|⏭️?|⏮️?|&#128241;|&#127763;|ℹ️?|&#128232;'
 dump() { uiautomator dump $dir/aare-ui.xml >/dev/null 2>&1; }
