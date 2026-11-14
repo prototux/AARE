@@ -223,6 +223,10 @@ class AapSession(
     @Volatile private var pingEvidence = false
     /** Timestamps of the phone's pings not answered yet, oldest first (guarded by itself). */
     private val pingsInFlight = ArrayDeque<Long>()
+    /** The head unit answered one of the phone's pings: only then are unanswered pings capped. */
+    @Volatile private var pingAnswered = false
+    /** The phone's ping period: the head unit's ping configuration if it gives one. */
+    @Volatile private var pingIntervalMs = DEFAULT_PING_INTERVAL_MS
 
     /** Round trip of the last ping, for diagnostics. */
     @Volatile var lastRttMs = -1L
@@ -589,9 +593,8 @@ class AapSession(
         discovery = resp
         log.i("head unit: ${describe(resp)}")
         if (resp.sessionConfiguration != 0) log.i("head unit UI chrome: ${UiChrome(resp.sessionConfiguration)}")
-        // A discovery response with no ping configuration (field 16) still gets pings
-        // at a fixed rate; aasdk-based head units send one, so its timeout still sizes the watchdog.
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
+            if (pc.hasIntervalMs() && pc.intervalMs > 0) pingIntervalMs = pc.intervalMs.toLong().coerceIn(250, 5_000)
             if (pc.hasTimeoutMs() && pc.timeoutMs > 0) deadAfterMs = maxOf(pc.timeoutMs.toLong() * 3, 20_000L)
         }
         val wanted = callbacks.onServiceDiscovery(this, resp)
@@ -667,17 +670,22 @@ class AapSession(
             if (options.sendPings) sendPing()
             val silent = now() - lastInboundMs
             if (silent > (if (pingEvidence) deadAfterMs else 60_000L)) fail("head unit silent for $silent ms", null)
-        }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS)
+        }, pingIntervalMs, pingIntervalMs, TimeUnit.MILLISECONDS)
     }
 
     /**
-     * On wireless: the phone's clock in nanoseconds, bug_report explicitly
-     * false, and no new ping while [MAX_PINGS_IN_FLIGHT] are unanswered.
+     * On wireless: the phone's clock in nanoseconds, bug_report explicitly false. Once the head
+     * unit has answered a ping, no new one goes out while [MAX_PINGS_IN_FLIGHT] are unanswered;
+     * until then pings keep going as they always have (some head units never answer them), and
+     * only the latest are remembered.
      */
     private fun sendPing() {
         val timestamp = options.clockNanos()
         synchronized(pingsInFlight) {
-            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) return
+            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) {
+                if (pingAnswered) return
+                pingsInFlight.removeFirst()
+            }
             pingsInFlight.addLast(timestamp)
         }
         sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(timestamp).setBugReport(false).build())
@@ -692,6 +700,7 @@ class AapSession(
                 if (sent == timestamp) break
             }
         }
+        pingAnswered = true
         lastRttMs = (options.clockNanos() - timestamp) / 1_000_000
     }
 
@@ -749,8 +758,8 @@ class AapSession(
         const val PROTOCOL_MINOR = 7
         /** How long the phone waits for the head unit's answer to its bye-bye. */
         private const val BYEBYE_TIMEOUT_MS = 1_000L
-        /** The phone's ping period on wireless (default). */
-        private const val PING_INTERVAL_MS = 1_000L
+        /** The phone's ping period on wireless when the head unit doesn't give one. */
+        private const val DEFAULT_PING_INTERVAL_MS = 1_000L
         private const val MAX_PINGS_IN_FLIGHT = 10
         /** Longest wait for the sensor channel's answer before opening the other channels. */
         private const val DEFERRED_OPEN_MS = 1_000L
