@@ -321,7 +321,7 @@ class CarSession(
         main.post {
             if (closed) return@post
             listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
-            navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png) }
+            navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png, turnIcons::png) }
             navBridge?.updatePhone(runtime.ui.phoneGuidance)
             // A route that started before the session was running still gets the focus.
             requestNavFocus()
@@ -883,6 +883,7 @@ class CarSession(
     // ------------------------------------------------------------------ status to the head unit
 
     private var navBridge: NavStatusBridge? = null
+    private val turnIcons = TurnIcons()
     // Guarded by navLock: trips, phone guidance and onRunning come from different threads.
     private val navLock = Any()
     private var hostedGuiding = false
