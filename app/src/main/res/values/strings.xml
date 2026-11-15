@@ -340,7 +340,7 @@
     <string name="setup_section_overview">App overview</string>
     <string name="setup_overview_hint">The car\'s app list, in this order. Each app is in one place: the rail, the shortcuts or here.</string>
     <string name="setup_section_more_apps">More apps</string>
-    <string name="setup_more_apps_hint">Apps not in the car yet, every app on the phone included. Tap + to give one a place; phone apps show their normal screen, only while parked (navigation apps also while driving).</string>
+    <string name="setup_more_apps_hint">Apps not in the car yet, every app on the phone included. Tap + to give one a place; phone apps show their normal screen while parked or in passenger mode (navigation apps always).</string>
     <string name="setup_more_apps_hint_no_helper">Apps not in the car yet. Phone apps need Shizuku or root.</string>
     <string name="setup_section_app_options">Options</string>
     <string name="app_place_change">Place</string>
@@ -349,7 +349,7 @@
     <string name="app_place_overview">App overview</string>
     <string name="app_place_off">Not in the car</string>
     <string name="app_full_title">The whole app</string>
-    <string name="app_full_subtitle">Parked, the app\'s own screen, keyboard included, instead of AARE\'s view of it. While driving, AARE\'s view.</string>
+    <string name="app_full_subtitle">Parked or in passenger mode, the app\'s own screen, keyboard included, instead of AARE\'s view of it. While driving, AARE\'s view.</string>
     <string name="standalone_search">Search apps</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
