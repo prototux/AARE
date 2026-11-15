@@ -1142,16 +1142,7 @@ private fun LazyListScope.appsPage(p: AppsPage) {
     val at = items.groupBy { places.placeOf(it.key, it.optIn) }
     fun ordered(keys: List<String>, place: AppPlace) = at[place].orEmpty().sortedWith(
         compareBy<AppItem>({ keys.indexOf(it.key).let { i -> if (i < 0) Int.MAX_VALUE else i } }, { it.label.lowercase() }))
-    placeSection(p, "rail", R.string.setup_section_rail, R.string.setup_rail_hint, ordered(places.rail, AppPlace.RAIL)) { keys ->
-        p.save(p.places().copy(rail = keys))
-    }
-    placeSection(p, "shortcuts", R.string.setup_section_shortcuts, R.string.setup_shortcuts_hint, ordered(places.shortcuts, AppPlace.SHORTCUTS)) { keys ->
-        p.save(p.places().copy(shortcuts = keys))
-    }
-    placeSection(p, "overview", R.string.setup_section_overview, R.string.setup_overview_hint, ordered(places.order, AppPlace.OVERVIEW)) { keys ->
-        p.save(p.places().copy(order = keys + p.order.filter { it !in keys }))
-    }
-    moreApps(p, at[AppPlace.OFF].orEmpty())
+    // Options first: the app lists below run long.
     card("app-options", R.string.setup_section_app_options, intro = {
         Toggle(stringResource(R.string.setup_toggle_pane_swipe_title), stringResource(R.string.setup_toggle_pane_swipe_subtitle), p.paneSwipe) {
             p.paneSwipe = it; p.settings.paneSwipe = it
@@ -1172,6 +1163,16 @@ private fun LazyListScope.appsPage(p: AppsPage) {
             )
         }
     })
+    placeSection(p, "rail", R.string.setup_section_rail, R.string.setup_rail_hint, ordered(places.rail, AppPlace.RAIL)) { keys ->
+        p.save(p.places().copy(rail = keys))
+    }
+    placeSection(p, "shortcuts", R.string.setup_section_shortcuts, R.string.setup_shortcuts_hint, ordered(places.shortcuts, AppPlace.SHORTCUTS)) { keys ->
+        p.save(p.places().copy(shortcuts = keys))
+    }
+    placeSection(p, "overview", R.string.setup_section_overview, R.string.setup_overview_hint, ordered(places.order, AppPlace.OVERVIEW)) { keys ->
+        p.save(p.places().copy(order = keys + p.order.filter { it !in keys }))
+    }
+    moreApps(p, at[AppPlace.OFF].orEmpty())
     if (p.unsupported.isNotEmpty()) card("unsupported", R.string.setup_section_unsupported_apps, rows = p.unsupported.map { app -> row(app.packageName) { UnsupportedRow(app) } })
     item(key = "allowlist") { Hint(stringResource(R.string.setup_hint_allowlist)) }
 }
