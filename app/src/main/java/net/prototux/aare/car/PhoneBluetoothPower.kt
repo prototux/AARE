@@ -29,42 +29,54 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * Turns the phone's Bluetooth on when a car that offers calls through it (it lists a Bluetooth
- * service) connects while it is off. Without Bluetooth the car can't connect hands-free, so calls
- * stay on the phone, and nothing said why.
+ * Keeps the phone's Bluetooth on while a car that offers calls through it (it lists a Bluetooth
+ * service) is connected, as Android Auto does. Without Bluetooth the car can't connect hands-free,
+ * so calls stay on the phone, and nothing said why. Off when the car connects, or switched off
+ * during the drive: it is turned on again, and [onTurnedOn] (main thread) asks the car to connect.
  *
  * Since Android 13 an app may turn Bluetooth on only by asking the user. So: through Shizuku or
  * root when AARE may already use them (the same `cmd bluetooth_manager enable` as over adb), else
- * a notification whose tap shows Android's own "turn on Bluetooth?" prompt. [onTurnedOn] runs on
- * the main thread once Bluetooth is on, so the car can be asked to connect again.
+ * a notification whose tap shows Android's own "turn on Bluetooth?" prompt. Turned off again and
+ * again (more than [MAX_AUTO] times in [AUTO_WINDOW_MS]), AARE stops fighting it and only asks.
  */
 class PhoneBluetoothPower(private val context: Context, private val onTurnedOn: () -> Unit) {
     private val adapter: BluetoothAdapter? = context.getSystemService(BluetoothManager::class.java)?.adapter
     private val main = Handler(Looper.getMainLooper())
     private var receiver: BroadcastReceiver? = null
     @Volatile private var stopped = false
+    /** When AARE turned Bluetooth on by itself (main thread). */
+    private val autoTimes = ArrayList<Long>()
 
-    /** Main thread. Does nothing when Bluetooth is already on, or the phone has none. */
+    /** Main thread, once per session. Watches Bluetooth until [stop]; does nothing on a phone without it. */
     fun start() {
         val a = adapter ?: return
-        if (a.isEnabled) return
-        DiagLog.add("car bluetooth: the phone's Bluetooth is off, so calls stay on the phone; turning it on")
         val r = object : BroadcastReceiver() {
             override fun onReceive(c: Context?, intent: Intent?) {
-                if (intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) != BluetoothAdapter.STATE_ON || stopped) return
-                DiagLog.add("car bluetooth: the phone's Bluetooth is on")
-                stop()
-                onTurnedOn()
+                if (stopped) return
+                when (intent?.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1)) {
+                    BluetoothAdapter.STATE_ON -> {
+                        DiagLog.add("car bluetooth: the phone's Bluetooth is on")
+                        context.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+                        onTurnedOn()
+                    }
+                    BluetoothAdapter.STATE_OFF -> {
+                        DiagLog.add("car bluetooth: the phone's Bluetooth was turned off during the session")
+                        turnOnInBackground()
+                    }
+                }
             }
         }
         receiver = r
         // A protected system broadcast: delivered whatever the export flag.
         runCatching { ContextCompat.registerReceiver(context, r, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED) }
             .onFailure { Log.w(TAG, "register", it) }
-        Thread({ turnOn() }, "aare-bt-power").apply { isDaemon = true }.start()
+        if (!a.isEnabled) {
+            DiagLog.add("car bluetooth: the phone's Bluetooth is off, so calls stay on the phone")
+            turnOnInBackground()
+        }
     }
 
-    /** Main thread: the session ended, or Bluetooth is on. */
+    /** Main thread: the session ended. */
     fun stop() {
         stopped = true
         receiver?.let { runCatching { context.unregisterReceiver(it) } }
@@ -72,13 +84,24 @@ class PhoneBluetoothPower(private val context: Context, private val onTurnedOn: 
         context.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
     }
 
-    private fun turnOn() {
+    /** Main thread. */
+    private fun turnOnInBackground() {
+        val now = System.currentTimeMillis()
+        val auto = mayTurnOnAgain(autoTimes, now)
+        if (auto) autoTimes += now
+        else DiagLog.add("car bluetooth: turned off ${MAX_AUTO} times in a few minutes; only asking on the phone now")
+        Thread({ turnOn(auto) }, "aare-bt-power").apply { isDaemon = true }.start()
+    }
+
+    private fun turnOn(auto: Boolean) {
         val (how, error) = when {
+            !auto -> null to null
             CaptureMethods.shizukuAvailable() -> "Shizuku" to viaShizuku()
             CaptureMethods.rootAvailable(context) -> "root" to run(listOf("su", "-c", ENABLE_COMMAND))
             else -> null to null
         }
         if (how != null) {
+            DiagLog.add("car bluetooth: turning Bluetooth on through $how")
             if (error == null && waitUntilOn()) return
             DiagLog.add("car bluetooth: couldn't turn Bluetooth on through $how (${error ?: "still off after ${WAIT_S} s"}); asking on the phone")
         }
@@ -141,6 +164,15 @@ class PhoneBluetoothPower(private val context: Context, private val onTurnedOn: 
         private const val TAG = "AareBtPower"
         private const val NOTIFICATION_ID = 0xB7
         private const val WAIT_S = 10L
+        /** At most this many automatic turn-ons in [AUTO_WINDOW_MS]; then only the notification. */
+        const val MAX_AUTO = 3
+        const val AUTO_WINDOW_MS = 5 * 60_000L
+
+        /** Whether AARE may turn Bluetooth on by itself again, given when it did before ([times], pruned here). */
+        fun mayTurnOnAgain(times: MutableList<Long>, now: Long): Boolean {
+            times.removeAll { now - it > AUTO_WINDOW_MS }
+            return times.size < MAX_AUTO
+        }
 
         /** `cmd bluetooth_manager` is Android 13+; `svc bluetooth` covers Android 12. */
         const val ENABLE_COMMAND = "cmd bluetooth_manager enable || svc bluetooth enable"

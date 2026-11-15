@@ -134,7 +134,7 @@ class CarSession(
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
-    /** Turns the phone's Bluetooth on if it was off when the car connected (main thread). */
+    /** Keeps the phone's Bluetooth on while connected, as Android Auto does (main thread). */
     private var bluetoothPower: PhoneBluetoothPower? = null
     private val audio = ArrayList<AudioChannel>()
 
@@ -1015,8 +1015,8 @@ class CarSession(
     }
 
     /**
-     * Bluetooth came on after the car connected: the pairing request sent when the channel opened
-     * found it off (or wasn't sent), so ask the car again to connect hands-free.
+     * Bluetooth came on during the session (it was off when the car connected, or was switched off
+     * and on again): the car's hands-free link is down, so ask the car again to connect.
      */
     private fun announceAgain(bt: BluetoothChannel) {
         val address = phoneBtAddress() ?: return
