@@ -318,7 +318,8 @@ class CarSession(
     }
 
     override fun onRunning(session: AapSession) {
-        if (bluetooth?.announceAgain() == true) DiagLog.add("car bluetooth: announcing the phone again, session running")
+        if (vehicleOverride?.pairAgainWhenRunning == true && bluetooth?.announceAgain() == true)
+            DiagLog.add("car bluetooth: announcing the phone again, session running (vehicles.json)")
         main.post {
             if (closed) return@post
             listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
@@ -991,7 +992,7 @@ class CarSession(
         return if (m.startsWith(Build.MANUFACTURER, ignoreCase = true)) m else "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} $m"
     }
 
-    /** The car's Bluetooth service, to announce the phone again once the session runs. */
+    /** The car's Bluetooth service, to announce the phone again once the session runs (vehicles.json `pairAgainWhenRunning`). */
     private var bluetooth: BluetoothChannel? = null
 
     /**
