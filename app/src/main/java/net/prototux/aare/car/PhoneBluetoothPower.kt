@@ -132,8 +132,10 @@ class PhoneBluetoothPower(private val context: Context, private val onTurnedOn: 
         }
         runCatching { Shizuku.bindUserService(args, connection) }.onFailure { return "bind: ${it.message}" }
         return try {
-            if (!bound.await(8, TimeUnit.SECONDS)) "the helper didn't start"
-            else helper?.let { h -> runCatching { h.enable() }.getOrElse { "helper: ${it.message}" } } ?: "the helper didn't start"
+            val connected = bound.await(8, TimeUnit.SECONDS)
+            val h = helper.takeIf { connected } ?: return "the helper didn't start"
+            // enable() answers null when the command ran: not to be read as "no helper".
+            runCatching { h.enable() }.getOrElse { "helper: ${it.message}" }
         } finally {
             runCatching { Shizuku.unbindUserService(args, connection, true) }
         }
