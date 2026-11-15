@@ -103,6 +103,24 @@ class CarAudioOut(
             queued.addLast(buf.copyOf() to ts)
             while (queued.size > queueLimit) queued.removeFirst()
         }
+        // A head unit that only takes AAC-LC (#82) gets the chunks encoded; the window, backlog and
+        // drops stay counted in PCM chunks (one 2048-sample chunk is two AAC frames).
+        val encoder = if (channel.isAac) try {
+            AacEncoder(rate, channels, chunk).also { DiagLog.add("car audio ($label): the car takes ${channel.codec.name.removePrefix("MEDIA_CODEC_AUDIO_")}, encoding to AAC") }
+        } catch (e: Exception) {
+            Log.w(TAG, "no AAC encoder", e)
+            DiagLog.add("car audio ($label): the car takes AAC only and this phone's AAC encoder failed (${e.message})")
+            running = false
+            source.release()
+            return
+        } else null
+        /** Sends one PCM chunk (10 bytes of headroom), encoded first if the car takes AAC. */
+        fun send(b: ByteArray, t: Long): Boolean {
+            if (encoder == null) return channel.sendPcm(b, 10, chunk, t)
+            if (!channel.hasRoom) { channel.dropChunk(); return false }
+            encoder.encode(b, 10, chunk, t) { f, off, len, ts -> channel.sendFrame(f, off, len, ts) }
+            return true
+        }
         try {
             while (running) {
                 var got = 0
@@ -136,6 +154,7 @@ class CarAudioOut(
                     if (!focus.granted) { queue(ts); continue }
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
+                    encoder?.reset()
                     startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
@@ -159,21 +178,21 @@ class CarAudioOut(
                     if (queued.size < primeChunks) continue
                     priming = false
                     if (queued.size > maxQueued) maxQueued = queued.size
-                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> send(b, t) }
                     continue
                 }
                 if (queued.isEmpty() && channel.hasRoom) {
                     // A copy: the writer thread sends the array later, and buf is refilled meanwhile.
-                    channel.sendPcm(buf.copyOf(), 10, chunk, ts)
+                    send(buf.copyOf(), ts)
                     continue
                 }
                 // Catching up: send the backlog in order, as fast as the car's ack window allows.
                 queue(ts)
                 if (queued.size > maxQueued) maxQueued = queued.size
-                while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> send(b, t) }
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
-                // through sendPcm so dropped chunks still count towards ack-less detection.
-                while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                // through send so dropped chunks still count towards ack-less detection.
+                while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> send(b, t) }
             }
         } catch (e: Exception) {
             Log.w(TAG, "audio capture stopped", e)
@@ -181,6 +200,7 @@ class CarAudioOut(
             if (playing) { runCatching { noteStream(SystemClock.elapsedRealtime()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
             playing = false
             queued.clear()
+            encoder?.release()
             source.release()
             if (died) onFailed()
         }

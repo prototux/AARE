@@ -111,6 +111,13 @@ class HeadUnit(
          * so the phone drives the UI entirely from keys and rotary detents.
          */
         val noTouch: Boolean = false,
+        /**
+         * What the music sink asks for: PCM (default), or AAC-LC raw / ADTS like the head units of
+         * #82 (--aac raw|adts). AAC is played back through ffmpeg ([AacPlayback]).
+         */
+        val mediaCodec: MediaCodecType = MediaCodecType.MEDIA_CODEC_AUDIO_PCM,
+        /** With an AAC music sink, also save each stream as an .aac file next to this path (--aac-dump). */
+        val aacDump: java.io.File? = null,
     )
 
     interface Listener {
@@ -371,9 +378,16 @@ class HeadUnit(
         }
     }
 
+    /** Decodes the music when the sink takes AAC (--aac). */
+    private val aacMedia: AacPlayback? = if (config.mediaCodec == MediaCodecType.MEDIA_CODEC_AUDIO_PCM) null else
+        AacPlayback(48_000, 2, adts = config.mediaCodec == MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS, dump = config.aacDump) { b, o, n ->
+            ui.audio(AudioStreamType.AUDIO_STREAM_MEDIA, b, o, n)
+        }
+
     private fun mediaSink(m: AapMessage) {
         val stream = streamOf(m.channel)
         val video = m.channel == chVideo || m.channel == chCluster
+        val aac = if (m.channel == chMedia) aacMedia else null
         when (m.id) {
             MediaMsg.SETUP -> {
                 send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
@@ -389,10 +403,10 @@ class HeadUnit(
                 when (m.channel) {
                     chVideo -> ui.videoStarted(codecSize.second, codecSize.third)
                     chCluster -> ui.clusterStarted(800, 480)
-                    else -> audioConfig(m.channel)?.let { ui.audioStart(stream!!, it) }
+                    else -> audioConfig(m.channel)?.let { ui.audioStart(stream!!, it); aac?.start() }
                 }
             }
-            MediaMsg.STOP -> if (!video) ui.audioStop(stream!!)
+            MediaMsg.STOP -> if (!video) { aac?.stop(); ui.audioStop(stream!!) }
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
                 val mode = if (r.mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) VideoFocusMode.VIDEO_FOCUS_NATIVE else VideoFocusMode.VIDEO_FOCUS_PROJECTED
@@ -402,12 +416,15 @@ class HeadUnit(
             MediaMsg.CODEC_CONFIG -> when (m.channel) {
                 chVideo -> ui.videoCodecConfig(m.body, m.bodyOffset, m.bodyLength)
                 chCluster -> ui.clusterVideo(m.body, m.bodyOffset, m.bodyLength, config = true)
+                chMedia -> aac?.codecConfig(m.body, m.bodyOffset, m.bodyLength)
+                    ?: System.err.println("audio: a CODEC_CONFIG on the PCM music channel")
             }
             MediaMsg.DATA -> {
                 when (m.channel) {
                     chVideo -> ui.video(m.body, m.bodyOffset + 8, m.bodyLength - 8)
                     chCluster -> ui.clusterVideo(m.body, m.bodyOffset + 8, m.bodyLength - 8, config = false)
-                    else -> ui.audio(stream!!, m.body, m.bodyOffset + 8, m.bodyLength - 8)
+                    else -> if (aac != null) aac.frame(m.body, m.bodyOffset + 8, m.bodyLength - 8)
+                        else ui.audio(stream!!, m.body, m.bodyOffset + 8, m.bodyLength - 8)
                 }
                 send(m.channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessions[m.channel] ?: 0).setAck(1).build())
             }
@@ -508,7 +525,8 @@ class HeadUnit(
     private fun discovery(): ServiceDiscoveryResponse {
         val res = codecSize.first
         fun audio(id: Int, type: AudioStreamType, rate: Int, ch: Int) = Service.newBuilder().setId(id).setMediaSinkService(
-            MediaSinkService.newBuilder().setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type).addAudioConfigs(pcm(rate, ch)))
+            MediaSinkService.newBuilder().setAvailableType(if (id == chMedia) config.mediaCodec else MediaCodecType.MEDIA_CODEC_AUDIO_PCM)
+                .setAudioType(type).addAudioConfigs(pcm(rate, ch)))
         return ServiceDiscoveryResponse.newBuilder()
             .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake("AARE").setModel("Desktop").setYear("2026")
                 .setHeadUnitMake("AARE").setHeadUnitModel("desktop head unit").setHeadUnitSoftwareVersion("1.0"))

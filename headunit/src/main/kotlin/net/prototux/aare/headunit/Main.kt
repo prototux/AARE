@@ -2,6 +2,7 @@ package net.prototux.aare.headunit
 
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
+import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.SocketTransport
@@ -61,6 +62,9 @@ private const val USAGE = """AARE desktop head unit: a car screen on your deskto
   --rhd                  right-hand drive
   --cluster              also offer an 800x480 instrument-cluster display (shown in a second window)
   --no-touch             present as a rotary/D-pad-only unit with no touchscreen (like a Mazda commander)
+  --aac [raw|adts]       music sink takes AAC-LC only (raw frames, the default, or ADTS), like the units in #82;
+                         played back through ffmpeg, which must be on the PATH
+  --aac-dump FILE        with --aac, also save each music stream as FILE-N.aac
   --route NAME|FILE      simulated drive (default paris-marseille); "none" to disable
   --speed KMH            cruising speed on open road (default 130)
   --time-scale X         drive X times faster than real time (default 1)
@@ -157,6 +161,12 @@ private class DesktopHeadUnit(val opts: Map<String, String>) {
         rightHandDrive = opts.containsKey("rhd"),
         cluster = opts.containsKey("cluster"),
         noTouch = opts.containsKey("no-touch"),
+        mediaCodec = when (opts["aac"]) {
+            null -> MediaCodecType.MEDIA_CODEC_AUDIO_PCM
+            "adts" -> MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS
+            else -> MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC
+        },
+        aacDump = opts["aac-dump"]?.let { java.io.File(it) },
     )
     val identity: PhoneIdentity = loadIdentity()
     val route: RouteDrive? = opts["route"].let { r -> if (r == "none") null else runCatching { RouteDrive.load(r ?: "paris-marseille") }.getOrNull() }

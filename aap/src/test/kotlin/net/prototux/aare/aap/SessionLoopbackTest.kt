@@ -5,6 +5,7 @@ import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.Audi
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
+import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.sink.message.VideoConfigurationOuterClass.VideoConfiguration
 import aap_protobuf.service.media.video.message.VideoFocusModeOuterClass.VideoFocusMode
 import aap_protobuf.service.navigationstatus.message.NavigationDestinationOuterClass.NavigationDestination
@@ -43,6 +44,9 @@ open class SessionLoopbackTest {
 
     /** The protocol minor version the simulated head unit announces (1.x). */
     protected open val headUnitMinor = 6
+
+    /** What the simulated head unit's music sink asks for (PCM, or AAC-LC raw / ADTS, #82). */
+    protected open val mediaCodec = MediaCodecType.MEDIA_CODEC_AUDIO_PCM
     private val modernNav get() = headUnitMinor >= 6
 
     private lateinit var hu: HeadUnitSimulator
@@ -71,7 +75,7 @@ open class SessionLoopbackTest {
         val phoneSocket = server.accept()
         server.close()
 
-        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, omitZeroFields = omitZeroFields, protocolMinor = headUnitMinor)
+        hu = HeadUnitSimulator(SocketTransport(huSocket), maxUnacked = 2, omitZeroFields = omitZeroFields, protocolMinor = headUnitMinor, mediaCodec = mediaCodec)
         val id = SelfSignedCertificate.generate("phone")
         phone = AapSession(
             InterruptibleCloseTransport(SocketTransport(phoneSocket)),
@@ -233,6 +237,35 @@ open class SessionLoopbackTest {
         assertTrue(hu.byeBye.await(3, TimeUnit.SECONDS))
         assertTrue(closed.await(3, TimeUnit.SECONDS))
         assertEquals(null, closeError)
+    }
+
+    /**
+     * The music stream follows the codec the head unit's sink asks for (#82): SETUP names it; an
+     * AAC-LC sink gets the AudioSpecificConfig (48 kHz stereo: 0x1190) right after START and then
+     * the raw frames; an ADTS sink gets every frame behind a 7-byte ADTS header; PCM is unchanged.
+     */
+    @Test
+    fun mediaStreamFollowsTheSinkCodec() {
+        assertTrue(running.await(5, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        assertEquals(mediaCodec, media.codec)
+        assertEquals("SETUP ${mediaCodec.name}", hu.mediaEvents.poll(3, TimeUnit.SECONDS))
+        phone.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
+        assertNotNull(audioFocus.poll(3, TimeUnit.SECONDS))
+        repeat(2) { stream ->
+            media.startPlayback()
+            // A frame as the encoder hands it over: headroom, then 100 bytes starting 0x21 0x1a.
+            repeat(3) {
+                val frame = ByteArray(AudioChannel.FRAME_HEADROOM + 100).also { f -> f[AudioChannel.FRAME_HEADROOM] = 0x21; f[AudioChannel.FRAME_HEADROOM + 1] = 0x1a }
+                assertTrue(media.sendFrame(frame, AudioChannel.FRAME_HEADROOM, 100, it * 21_333L))
+            }
+            assertEquals("stream $stream", "START", hu.mediaEvents.poll(3, TimeUnit.SECONDS))
+            if (mediaCodec == MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC)
+                assertEquals("CODEC_CONFIG 1190", hu.mediaEvents.poll(3, TimeUnit.SECONDS))
+            val data = if (mediaCodec == MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS) "DATA fff1 107" else "DATA 211a 100"
+            repeat(3) { assertEquals(data, hu.mediaEvents.poll(3, TimeUnit.SECONDS)) }
+            media.stopPlayback()
+        }
     }
 
     /**
@@ -433,4 +466,14 @@ class ZeroOmittingSessionLoopbackTest : SessionLoopbackTest() {
  */
 class ProtocolOneFiveSessionLoopbackTest : SessionLoopbackTest() {
     override val headUnitMinor = 5
+}
+
+/** The same sessions against a head unit whose music sink takes AAC-LC frames only (#82). */
+class AacSessionLoopbackTest : SessionLoopbackTest() {
+    override val mediaCodec = MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC
+}
+
+/** The same sessions against a head unit whose music sink takes ADTS-framed AAC-LC only. */
+class AdtsSessionLoopbackTest : SessionLoopbackTest() {
+    override val mediaCodec = MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS
 }

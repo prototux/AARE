@@ -407,9 +407,18 @@ class VideoChannel(
     }
 }
 
-/** One of the head unit's audio outputs: media, guidance (navigation voice), system sounds, telephony. */
+/**
+ * One of the head unit's audio outputs: media, guidance (navigation voice), system sounds, telephony.
+ *
+ * Most head units take PCM. Some only list an AAC-LC sink (raw frames, or ADTS-framed): Android
+ * Auto encodes AAC-LC for those, and so do we ([codec]; the caller encodes, see [sendFrame]).
+ */
 class AudioChannel(service: Service, private val listener: Listener? = null) :
-    MediaSinkChannel(service, "audio:${service.mediaSinkService.audioType}", MediaCodecType.MEDIA_CODEC_AUDIO_PCM) {
+    MediaSinkChannel(service, "audio:${service.mediaSinkService.audioType}", codecFor(service)) {
+
+    /** What this sink takes: PCM, AAC-LC (raw frames) or AAC-LC with ADTS headers. */
+    val codec: MediaCodecType = codecFor(service)
+    val isAac: Boolean get() = codec != MediaCodecType.MEDIA_CODEC_AUDIO_PCM
 
     interface Listener {
         fun onAudioReady(channel: AudioChannel, config: AudioConfiguration)
@@ -439,9 +448,19 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
         if (ready) config?.let { listener?.onAudioReady(this, it) }
     }
 
-    /** Opens a playback session on the head unit (call when sound starts). */
+    /**
+     * Opens a playback session on the head unit (call when sound starts). An AAC-LC sink gets the
+     * AudioSpecificConfig right after START, before any frame, like Android Auto (gearhead-notes
+     * §4.1); an ADTS sink doesn't need it, every frame carries its own header.
+     */
     fun startPlayback() {
-        if (ready && !started) startStream(configIndices.firstOrNull() ?: 0)
+        if (!ready || started) return
+        startStream(configIndices.firstOrNull() ?: 0)
+        val cfg = config
+        if (codec == MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC && cfg != null) {
+            val asc = Aac.audioSpecificConfig(cfg.samplingRate, cfg.numberOfChannels)
+            sendCodecConfigData(asc, 0, asc.size, Priority.AUDIO)
+        }
     }
 
     /** Closes the session (call after a short silence, so the head unit can restore its own audio). */
@@ -456,14 +475,73 @@ class AudioChannel(service: Service, private val listener: Listener? = null) :
 
     fun sendPcm(buf: ByteArray, offset: Int, length: Int, timestampUs: Long): Boolean {
         if (!started) return false
-        if (!ackless && unacked.get() >= maxUnacked + SLACK) { droppedChunks++; noteAttempt(); return false }
+        if (!ackless && unacked.get() >= maxUnacked + SLACK) { dropChunk(); return false }
         sendData(buf, offset, length, timestampUs, Priority.AUDIO)
         return true
+    }
+
+    /**
+     * Sends one encoded AAC-LC frame (raw, as the encoder gives it). An ADTS sink gets the 7-byte
+     * header written in front of it, so [buf] needs [FRAME_HEADROOM] bytes before [offset].
+     * Returns false, dropping the frame, when the head unit is too far behind.
+     */
+    fun sendFrame(buf: ByteArray, offset: Int, length: Int, timestampUs: Long): Boolean {
+        if (codec != MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS) return sendPcm(buf, offset, length, timestampUs)
+        val cfg = config ?: return false
+        val start = offset - Aac.ADTS_HEADER
+        Aac.writeAdtsHeader(buf, start, cfg.samplingRate, cfg.numberOfChannels, length)
+        return sendPcm(buf, start, length + Aac.ADTS_HEADER, timestampUs)
+    }
+
+    /** Counts a chunk the caller dropped because there was no room ([hasRoom] false). */
+    fun dropChunk() {
+        droppedChunks++
+        noteAttempt()
     }
 
     companion object {
         /** Head units ack audio in bursts; allow a little beyond the window before dropping. */
         const val SLACK = 4
+        /** Bytes [sendFrame] needs before an encoded frame: message id + timestamp, and an ADTS header. */
+        const val FRAME_HEADROOM = 10 + Aac.ADTS_HEADER
+
+        /** AAC-LC (raw or ADTS) when the sink asks for it, else PCM (the proto default). */
+        fun codecFor(service: Service): MediaCodecType = when (service.mediaSinkService.availableType) {
+            MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC -> MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC
+            MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS -> MediaCodecType.MEDIA_CODEC_AUDIO_AAC_LC_ADTS
+            else -> MediaCodecType.MEDIA_CODEC_AUDIO_PCM
+        }
+    }
+}
+
+/** The AAC-LC framing bits Android Auto head units expect (ISO/IEC 14496-3). */
+object Aac {
+    const val ADTS_HEADER = 7
+    /** Samples per AAC-LC frame, per channel. */
+    const val FRAME_SAMPLES = 1024
+
+    private val RATES = intArrayOf(96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350)
+
+    /** The sampling-frequency index of [rate]; it must be one of the standard AAC rates. */
+    fun rateIndex(rate: Int): Int = RATES.indexOf(rate).also { require(it >= 0) { "no AAC sampling index for $rate Hz" } }
+
+    /** AudioSpecificConfig for AAC-LC: object type 2, rate index, channel configuration (2 bytes). */
+    fun audioSpecificConfig(rate: Int, channels: Int): ByteArray {
+        val v = (2 shl 11) or (rateIndex(rate) shl 7) or (channels shl 3)
+        return byteArrayOf((v shr 8).toByte(), v.toByte())
+    }
+
+    /** Writes an ADTS header (MPEG-4, AAC-LC, no CRC) for a [payload]-byte raw frame at [buf][at]. */
+    fun writeAdtsHeader(buf: ByteArray, at: Int, rate: Int, channels: Int, payload: Int) {
+        val len = payload + ADTS_HEADER
+        val fi = rateIndex(rate)
+        buf[at] = 0xFF.toByte()
+        buf[at + 1] = 0xF1.toByte() // sync, MPEG-4, layer 0, no CRC
+        buf[at + 2] = (((2 - 1) shl 6) or (fi shl 2) or (channels shr 2)).toByte() // profile LC
+        buf[at + 3] = (((channels and 3) shl 6) or (len shr 11)).toByte()
+        buf[at + 4] = ((len shr 3) and 0xFF).toByte()
+        buf[at + 5] = (((len and 7) shl 5) or 0x1F).toByte() // buffer fullness 0x7FF (VBR)
+        buf[at + 6] = 0xFC.toByte()
     }
 }
 

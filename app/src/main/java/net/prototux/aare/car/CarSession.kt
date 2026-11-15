@@ -142,7 +142,10 @@ class CarSession(
      * made their captures stop each other (Shizuku records once for the whole phone, and an output
      * replaced by the second channel releases that recording), so the car only got silence.
      */
-    private fun isPrimary(channel: AudioChannel) = audio.firstOrNull { it.streamType == channel.streamType } === channel
+    /** The channel used for its stream type: the first PCM one the car lists, else the first (AAC). */
+    private fun isPrimary(channel: AudioChannel) =
+        (audio.firstOrNull { it.streamType == channel.streamType && !it.isAac }
+            ?: audio.firstOrNull { it.streamType == channel.streamType }) === channel
 
     // @Volatile: written on main (startProjection), read on the AAP reader thread (input) and the
     // encoder callback thread; without it a restart can leave them seeing a stale display/mapper.
@@ -257,14 +260,14 @@ class CarSession(
                     when {
                         // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
                         sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
-                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
-                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
-                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
-                        // becomes the primary instead. Codecs default to PCM, so cars that don't
-                        // advertise one are unaffected.
-                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
-                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
-                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
+                        // A codec we can't send at all (not PCM, not AAC-LC): skip it, so a sink of
+                        // the same stream that we can feed becomes the primary.
+                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM &&
+                            AudioChannel.codecFor(s) == MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
+                            DiagLog.add("not opening ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_")}")
+                        // PCM, or AAC-LC (raw or ADTS), which we encode (#82). A car that lists both
+                        // for a stream gets PCM: see isPrimary.
                         else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
                     }
                 }

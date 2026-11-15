@@ -93,6 +93,8 @@ class HeadUnitSimulator(
     omitZeroFields: Boolean = false,
     /** The protocol minor version the head unit announces (1.x). */
     private val protocolMinor: Int = 6,
+    /** The codec the media (music) sink asks for: PCM, or AAC-LC raw / ADTS like some units (#82). */
+    private val mediaCodec: MediaCodecType = MediaCodecType.MEDIA_CODEC_AUDIO_PCM,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -114,6 +116,11 @@ class HeadUnitSimulator(
     val videoBytes = AtomicInteger()
     val codecConfigs = AtomicInteger()
     val audioChunks = AtomicInteger()
+    /**
+     * What the phone sent on the media (music) channel, in order: "SETUP <codec>", "START",
+     * "CODEC_CONFIG <hex>", "DATA <hex of the first payload bytes> <payload length>".
+     */
+    val mediaEvents = LinkedBlockingQueue<String>()
     /** Set false to simulate a head unit that stops acking audio mid-stream (#82). */
     @Volatile var ackAudio = true
     val pingsAnswered = AtomicInteger()
@@ -230,6 +237,7 @@ class HeadUnitSimulator(
     }
 
     private fun mediaSink(m: AapMessage) {
+        if (m.channel == mediaAudio) noteMedia(m)
         when (m.id) {
             MediaMsg.SETUP -> send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
                 .setMaxUnacked(maxUnacked).addConfigurationIndices(0).build())
@@ -325,6 +333,16 @@ class HeadUnitSimulator(
 
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 
+    private fun noteMedia(m: AapMessage) {
+        fun hex(off: Int, n: Int) = (off until minOf(off + n, m.bodyOffset + m.bodyLength)).joinToString("") { "%02x".format(m.body[it]) }
+        when (m.id) {
+            MediaMsg.SETUP -> mediaEvents.add("SETUP " + aap_protobuf.service.media.shared.message.SetupOuterClass.Setup.parseFrom(m.bodyBytes()).type.name)
+            MediaMsg.START -> mediaEvents.add("START")
+            MediaMsg.CODEC_CONFIG -> mediaEvents.add("CODEC_CONFIG " + hex(m.bodyOffset, m.bodyLength))
+            MediaMsg.DATA -> mediaEvents.add("DATA " + hex(m.bodyOffset + 8, 2) + " " + (m.bodyLength - 8))
+        }
+    }
+
     fun discoveryResponse(): ServiceDiscoveryResponse {
         val res = when {
             width >= 1920 -> VideoCodecResolutionType.VIDEO_1920x1080
@@ -332,7 +350,7 @@ class HeadUnitSimulator(
             else -> VideoCodecResolutionType.VIDEO_800x480
         }
         fun audio(id: Int, type: AudioStreamType, rate: Int, ch: Int) = Service.newBuilder().setId(id).setMediaSinkService(
-            MediaSinkService.newBuilder().setAvailableType(MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type)
+            MediaSinkService.newBuilder().setAvailableType(if (id == mediaAudio) mediaCodec else MediaCodecType.MEDIA_CODEC_AUDIO_PCM).setAudioType(type)
                 .addAudioConfigs(AudioConfiguration.newBuilder().setSamplingRate(rate).setNumberOfBits(16).setNumberOfChannels(ch)))
         return ServiceDiscoveryResponse.newBuilder()
             .setHeadunitInfo(HeadUnitInfo.newBuilder().setMake("AARE").setModel("Simulator").setYear("2026")
