@@ -41,7 +41,8 @@ import net.prototux.aare.media.Placeholder
  * [TextureView] gives its surface to the privileged [AppLauncher], which puts a virtual display
  * there, launches [packageName] on it, and receives the car's touches we forward.
  *
- * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving. The
+ * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving
+ * ([driving]; false for a navigation app, which runs on). The
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable

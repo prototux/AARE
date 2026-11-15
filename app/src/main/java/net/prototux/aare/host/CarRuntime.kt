@@ -46,6 +46,7 @@ import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
 import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.car.BrowserScreen
 import net.prototux.aare.ui.car.CarActions
@@ -786,7 +787,8 @@ class CarRuntime(
                             CarAppKind.MESSAGING -> if (fullApp(app.packageName in settings.fullApps)) StandaloneAppScreen(this, false, app.packageName, mod, backId = app.id)
                                 else MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)
-                            CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted, app.packageName, mod)
+                            // A navigation app (Google Maps, Waze) keeps running while driving, as on the phone screen.
+                            CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted && !runsWhileDriving(app.packageName), app.packageName, mod)
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.PHONE -> {
@@ -842,6 +844,9 @@ class CarRuntime(
 
 /** Whether a messaging app or the phone app shows as the phone's own app: [chosen] in AARE, parked, and with a [helper] (Shizuku or root). */
 internal fun showsFullApp(chosen: Boolean, driving: Boolean, helper: Boolean) = chosen && !driving && helper
+
+/** Whether a phone app hosted on the car screen keeps running while driving: only known navigation apps. */
+internal fun runsWhileDriving(packageName: String) = packageName in KNOWN_NAVIGATION
 
 /**
  * The phone apps hosted on the car screen: those allowed on the phone when [enabled], and the
