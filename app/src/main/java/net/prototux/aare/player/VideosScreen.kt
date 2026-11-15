@@ -66,6 +66,35 @@ sealed interface VideoPage {
     data class Playing(val item: VideoItem) : VideoPage
 }
 
+/**
+ * What the Videos app remembers while AARE runs: the page it was on, and where each video was
+ * left (with whether it was playing), so leaving and coming back carries on. Main thread.
+ */
+internal object VideosMemory {
+    var stack: List<VideoPage> = listOf(VideoPage.Home)
+    private class Spot(val positionMs: Long, val playing: Boolean)
+    private val spots = object : LinkedHashMap<String, Spot>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Spot>?) = size > KEEP
+    }
+
+    /** Where to start [uri]: where it was left, or 0. */
+    fun resumeAt(uri: String): Long = spots[uri]?.positionMs ?: 0L
+
+    /** Whether [uri] should play on opening: yes, unless it was left paused. */
+    fun wasPlaying(uri: String): Boolean = spots[uri]?.playing ?: true
+
+    /** The video closed at [positionMs]: kept unless it hardly started or was (nearly) finished. */
+    fun save(uri: String, positionMs: Long, durationMs: Long, playing: Boolean, ended: Boolean) {
+        val nearEnd = durationMs > 0 && positionMs > durationMs - END_MARGIN_MS
+        if (ended || nearEnd || positionMs < START_MARGIN_MS) spots.remove(uri)
+        else spots[uri] = Spot(positionMs, playing)
+    }
+
+    private const val KEEP = 50
+    private const val START_MARGIN_MS = 5_000L
+    private const val END_MARGIN_MS = 15_000L
+}
+
 /** One row of a Videos list. [thumb] loads its picture, off the main thread. */
 data class VideoRow(
     val key: String,
@@ -83,13 +112,15 @@ data class VideoRow(
  */
 @Composable
 internal fun VideosScreen(runtime: CarRuntime, driving: Boolean, settings: Settings, modifier: Modifier) {
-    var stack by remember { mutableStateOf(listOf<VideoPage>(VideoPage.Home)) }
+    // Kept outside the screen: coming back to Videos opens the page (or video) it was on.
+    var stack by remember { mutableStateOf(VideosMemory.stack) }
     val page = stack.last()
-    fun open(p: VideoPage) { stack = stack + p }
-    fun up() { if (stack.size > 1) stack = stack.dropLast(1) }
+    fun go(s: List<VideoPage>) { stack = s; VideosMemory.stack = s }
+    fun open(p: VideoPage) = go(stack + p)
+    fun up() { if (stack.size > 1) go(stack.dropLast(1)) }
 
     if (page is VideoPage.Playing) {
-        VideoPlayerScreen(runtime, driving, page.item, onClose = ::up, modifier = modifier)
+        VideoPlayerScreen(runtime, driving, page.item, settings, onClose = ::up, modifier = modifier)
         return
     }
     DisposableEffect(page) {

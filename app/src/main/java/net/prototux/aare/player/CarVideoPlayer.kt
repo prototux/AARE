@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.ForwardingAudioSink
 import androidx.media3.exoplayer.audio.TeeAudioProcessor
 import net.prototux.aare.DiagLog
 import net.prototux.aare.aap.pcm.PcmFormat
@@ -36,13 +37,24 @@ object CarVideoPlayer {
     /** The car's media format when no car has said yet (the usual Android Auto media channel). */
     val DEFAULT_FORMAT = PcmFormat(48_000, 2)
 
+    /**
+     * Sound-to-picture sync in ms (the Videos player's setting), applied live. The picture follows
+     * the player's clock, which is the phone's (muted) output: moving the clock moves the picture
+     * against the sound the car plays. Positive: the clock runs ahead, so frames show earlier and
+     * the sound comes later against them; negative: the picture waits for a sound that's late.
+     */
+    @Volatile var syncMs = 0
+
     fun create(context: Context): ExoPlayer {
         val format = CarPlayerAudio.mediaFormat ?: DEFAULT_FORMAT
         val renderers = object : DefaultRenderersFactory(context) {
             override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioOutputPlaybackParameters: Boolean): AudioSink =
-                DefaultAudioSink.Builder(context)
-                    .setAudioProcessors(carProcessors(format))
-                    .build()
+                object : ForwardingAudioSink(DefaultAudioSink.Builder(context).setAudioProcessors(carProcessors(format)).build()) {
+                    override fun getCurrentPositionUs(sourceEnded: Boolean): Long {
+                        val us = super.getCurrentPositionUs(sourceEnded)
+                        return if (us == AudioSink.CURRENT_POSITION_NOT_SET) us else (us + syncMs * 1000L).coerceAtLeast(0L)
+                    }
+                }
         }
         val player = ExoPlayer.Builder(context, renderers).build()
         // A movie, with audio focus: other apps' music pauses while it plays, and it pauses for a call.

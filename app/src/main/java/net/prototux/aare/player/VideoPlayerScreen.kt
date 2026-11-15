@@ -20,10 +20,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +59,7 @@ import androidx.media3.common.VideoSize
 import kotlinx.coroutines.delay
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
+import net.prototux.aare.Settings
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.CircleButton
 import net.prototux.aare.media.Placeholder
@@ -67,9 +72,13 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
  * A video on the car screen, with AARE's own player ([CarVideoPlayer]).
  *
  * Like Android Auto, the picture is for parked use only: while driving it is hidden behind a
- * notice and the sound carries on (a film becomes an audiobook). Knob and keys: pressing (or the
- * car's play/pause) plays or pauses, turning seeks by 10 s per detent, left and right seek too,
- * up and down show the controls; Back closes the video ([onClose]).
+ * notice and the sound carries on (a film becomes an audiobook). Knob: turning moves between the
+ * on-screen buttons (back 10 s, play/pause, forward 10 s, the sound sync) and pressing presses the
+ * one in focus; with the controls hidden, the first turn or press only shows them, focus on
+ * play/pause. The car's media keys play, pause and seek. Back closes the video ([onClose]).
+ *
+ * Leaving the video, by Back or for another app, keeps its position ([VideosMemory]): opening it
+ * again carries on from there.
  *
  * The picture is a [SurfaceView]: the car screen is a Presentation on a virtual display, so
  * SurfaceFlinger composites the video layer into the encoder's input like any window, without the
@@ -77,7 +86,7 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
  * plays DRM content.
  */
 @Composable
-fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, settings: Settings, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     // One player per video: it's released when the video closes (below), never reused after that.
     val player = remember(item.uri) { CarVideoPlayer.create(context) }
@@ -90,6 +99,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
     /** Bumped on every key or touch: shows the controls for a while. */
     var pokes by remember { mutableIntStateOf(0) }
     var controls by remember { mutableStateOf(true) }
+    var syncMs by remember { mutableIntStateOf(settings.videoSyncMs) }
 
     DisposableEffect(item.uri) {
         val listener = object : Player.Listener {
@@ -108,9 +118,16 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
         CarPlayerAudio.setActive(true)
         DiagLog.add("car video: playing ${item.title}")
         player.setMediaItem(MediaItem.Builder().setUri(item.uri).setMediaMetadata(MediaMetadata.Builder().setTitle(item.title).build()).build())
+        CarVideoPlayer.syncMs = settings.videoSyncMs
+        val resume = VideosMemory.resumeAt(item.uri)
+        if (resume > 0) {
+            player.seekTo(resume)
+            DiagLog.add("car video: carrying on from ${formatTime(resume)}")
+        }
         player.prepare()
-        player.playWhenReady = true
+        player.playWhenReady = VideosMemory.wasPlaying(item.uri)
         onDispose {
+            VideosMemory.save(item.uri, player.currentPosition, player.duration, player.playWhenReady, player.playbackState == Player.STATE_ENDED)
             player.removeListener(listener)
             player.release()
             CarPlayerAudio.setActive(false)
@@ -140,6 +157,12 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
         position = to
         pokes++
     }
+    fun nudgeSync(ms: Int) {
+        syncMs = (syncMs + ms).coerceIn(-SYNC_MAX_MS, SYNC_MAX_MS)
+        settings.videoSyncMs = syncMs
+        CarVideoPlayer.syncMs = syncMs
+        pokes++
+    }
     fun playPause() {
         if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
         player.playWhenReady = !player.playWhenReady
@@ -152,22 +175,32 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
         runtime.screenBack = back
         val input = object : CarRuntime.CarScreenInput {
             override fun onKey(code: Int, down: Boolean, longPress: Boolean): Boolean {
+                if (code in KNOB_KEYS) {
+                    // Controls showing: the knob presses and moves between the buttons (the focus).
+                    if (controls || driving) { pokes++; return false }
+                    // Hidden: the first press or tilt only brings them back.
+                    if (!down) pokes++
+                    return true
+                }
                 when (code) {
-                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER,
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) playPause()
                     KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && !player.playWhenReady) playPause()
                     KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down && player.playWhenReady) playPause()
-                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND -> if (down) seek(-SEEK_MS)
-                    KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> if (down) seek(SEEK_MS)
+                    KeyEvent.KEYCODE_MEDIA_REWIND -> if (down) seek(-SEEK_MS)
+                    KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> if (down) seek(SEEK_MS)
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) seek(-BIG_SEEK_MS)
                     KeyEvent.KEYCODE_MEDIA_NEXT -> if (!down) seek(BIG_SEEK_MS)
-                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> if (down) pokes++
                     else -> return false
                 }
                 return true
             }
 
-            override fun onRotary(delta: Int): Boolean { seek(delta * SEEK_MS); return true }
+            // Turning moves the focus between the buttons; with the controls hidden it shows them first.
+            override fun onRotary(delta: Int): Boolean {
+                val shown = controls || driving
+                pokes++
+                return !shown
+            }
         }
         runtime.screenInput = input
         onDispose {
@@ -190,13 +223,19 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, on
             }
         }
         AnimatedVisibility(controls || driving, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.fillMaxSize()) {
-            Controls(item, playing, position, duration, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek)
+            Controls(item, playing, position, duration, syncMs, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync)
         }
     }
 }
 
 @Composable
-private fun Controls(item: VideoItem, playing: Boolean, position: Long, duration: Long, onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit) {
+private fun Controls(
+    item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int,
+    onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit, onSync: (Int) -> Unit,
+) {
+    // Each time the controls come up, the knob starts on play/pause.
+    val playFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { runCatching { playFocus.requestFocus() } }
     Column(Modifier.fillMaxSize()) {
         Row(
             Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent))).padding(12.dp),
@@ -223,11 +262,22 @@ private fun Controls(item: VideoItem, playing: Boolean, position: Long, duration
                 Text(if (duration > 0) formatTime(duration) else "--:--", color = Color.White, style = MaterialTheme.typography.labelLarge)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
                 CircleButton(Icons.Rounded.Replay10, stringResource(R.string.video_back_10), onClick = { onSeek(-SEEK_MS) })
                 Spacer(Modifier.width(24.dp))
-                CircleButton(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (playing) R.string.video_pause else R.string.video_play), onClick = onPlayPause, filled = true)
+                CircleButton(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (playing) R.string.video_pause else R.string.video_play),
+                    onClick = onPlayPause, filled = true, modifier = Modifier.focusRequester(playFocus))
                 Spacer(Modifier.width(24.dp))
                 CircleButton(Icons.Rounded.Forward10, stringResource(R.string.video_forward_10), onClick = { onSeek(SEEK_MS) })
+                // Sound sync, on the right: earlier, the offset, later.
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    CircleButton(Icons.Rounded.Remove, stringResource(R.string.video_sync_earlier), onClick = { onSync(-SYNC_STEP_MS) })
+                    Column(Modifier.padding(horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(stringResource(R.string.video_sync_label), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
+                        Text(if (syncMs == 0) "0 ms" else "%+d ms".format(syncMs), color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    }
+                    CircleButton(Icons.Rounded.Add, stringResource(R.string.video_sync_later), onClick = { onSync(SYNC_STEP_MS) })
+                }
             }
         }
     }
@@ -236,3 +286,11 @@ private fun Controls(item: VideoItem, playing: Boolean, position: Long, duration
 private const val SEEK_MS = 10_000L
 private const val BIG_SEEK_MS = 60_000L
 private const val CONTROLS_MS = 4_000L
+private const val SYNC_STEP_MS = 50
+private const val SYNC_MAX_MS = 2_000
+
+/** The knob's press and tilt (and a D-pad's keys): they work the on-screen buttons. */
+private val KNOB_KEYS = setOf(
+    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER,
+    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+)

@@ -249,6 +249,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("videos", false)
         set(v) = prefs.edit { putBoolean("videos", v) }
 
+    /** The Videos player's sound sync, in ms: positive plays the sound later against the picture, negative earlier. */
+    var videoSyncMs: Int
+        get() = prefs.getInt("video_sync_ms", 0)
+        set(v) = prefs.edit { putInt("video_sync_ms", v) }
+
     /** The Jellyfin server for the Videos app (an http(s) address), and the signed-in account (see JellyfinAccount). */
     var jellyfinServer: String?
         get() = prefs.getString("jellyfin_server", null)
