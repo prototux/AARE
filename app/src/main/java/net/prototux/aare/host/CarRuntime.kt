@@ -667,6 +667,19 @@ class CarRuntime(
     /** Set by a screen with its own back stack (a conversation in a messaging app): true if it handled back. */
     var screenBack: (() -> Boolean)? = null
 
+    /**
+     * Set by a screen that drives the car's keys itself (the video player): it gets the car's keys
+     * (not Home or Back) and knob turns first, on the main thread.
+     */
+    var screenInput: CarScreenInput? = null
+
+    interface CarScreenInput {
+        /** A car key went down or up; true if handled (the car screen's focus doesn't see it). */
+        fun onKey(code: Int, down: Boolean, longPress: Boolean): Boolean
+        /** The knob turned [delta] detents (positive: clockwise); true if handled. */
+        fun onRotary(delta: Int): Boolean
+    }
+
     /** Back key from the car. */
     fun back() {
         if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
