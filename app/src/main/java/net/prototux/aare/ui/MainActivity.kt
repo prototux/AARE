@@ -1174,7 +1174,6 @@ private fun LazyListScope.appsPage(p: AppsPage) {
     }
     moreApps(p, at[AppPlace.OFF].orEmpty())
     if (p.unsupported.isNotEmpty()) card("unsupported", R.string.setup_section_unsupported_apps, rows = p.unsupported.map { app -> row(app.packageName) { UnsupportedRow(app) } })
-    item(key = "allowlist") { Hint(stringResource(R.string.setup_hint_allowlist)) }
 }
 
 /**
