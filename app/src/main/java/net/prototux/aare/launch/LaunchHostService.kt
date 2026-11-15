@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
@@ -84,6 +85,19 @@ class LaunchHostService : ILaunchHost.Stub {
         val ev = KeyEvent(eventTime, eventTime, action, keyCode, 0, 0, -1, 0, 0, SOURCE_KEYBOARD)
         setDisplayId(ev, displayId)
         inject(ev)
+    }
+
+    override fun view(uri: String, packageName: String): Boolean {
+        val id = displayId
+        if (id < 0 || !launcherMayView(uri)) return false
+        val ctx = injectedContext ?: systemContext() ?: return false
+        return runCatching {
+            // No CLEAR_TASK, unlike launch(): the app keeps its task and gets the place as a new intent.
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).setPackage(packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ctx.startActivity(intent, ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle())
+            true
+        }.onFailure { Log.w(TAG, "view on display $id failed: ${it.message}") }.getOrDefault(false)
     }
 
     override fun stop() {

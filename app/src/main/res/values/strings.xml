@@ -340,6 +340,9 @@
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
     <string name="standalone_paused_driving">Paused while driving.</string>
+    <string name="standalone_nav_known">Navigation app: takes the car\'s navigation slot and stays on screen while driving.</string>
+    <string name="standalone_nav_mark_title">Use as the navigation app</string>
+    <string name="standalone_nav_mark_subtitle">Takes the car\'s navigation slot and stays on screen while driving, like the phone screen\'s navigation apps. Only for real navigation apps.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">A web browser on the car screen, for when you\'re parked</string>
@@ -428,6 +431,7 @@
     <string name="nav_dashboard_where_to">Where to?</string>
     <string name="nav_dashboard_install_hint">Install a navigation app that supports Android Auto on the phone</string>
     <string name="nav_dashboard_choose_app">Choose your maps app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is a phone app: its map opens full screen.</string>
     <string name="nav_guidance_on_phone">%1$s, on the phone</string>
     <string name="nav_next_step_then">Then</string>
 

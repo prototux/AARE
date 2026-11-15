@@ -150,3 +150,15 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Phone navigation apps launched on the car screen
+
+A launched phone app (root/Shizuku launcher) counts as the car's navigation app when it is a known
+navigation app (the phone screen's `KNOWN_NAVIGATION`) or the user marks it as one. It then takes
+the rail's navigation slot, receives "navigate to" as an `ACTION_VIEW` of the same `geo:` URI hosted
+apps get (through the launcher's `view`, which only accepts `geo:`, as the helper starts activities
+with shell or root rights), and stays on screen while driving, like the phone screen's navigation
+apps. The dashboard's map card doesn't show its map: the launcher has one display per app, owned
+by the full-screen view, and moving it between the card and full screen would restart the app and
+its route at each switch. The card offers to open it, and shows its directions once it posts them.
+No Home/Work shortcuts: AARE has none for hosted navigation apps either.
