@@ -1214,13 +1214,13 @@ private fun LazyListScope.pickList(
 private class RowAction(val icon: ImageVector, val label: String, val enabled: Boolean = true, val onClick: () -> Unit)
 
 /** The row being dragged to a new place in a list, by its item key, and how far it is from its slot. */
-private class RowDrag {
+internal class RowDrag {
     var key by mutableStateOf<Any?>(null)
     var offset by mutableFloatStateOf(0f)
 }
 
 /** Sorting an [EntryRow] by dragging: its [index] of [count], its list item's [itemKey], and [move] a step up or down. */
-private class Reorder(val index: Int, val count: Int, val itemKey: Any, val drag: RowDrag, val move: (by: Int) -> Unit)
+internal class Reorder(val index: Int, val count: Int, val itemKey: Any, val drag: RowDrag, val move: (by: Int) -> Unit)
 
 /**
  * An app in a list: with [reorder], a handle to drag it up or down; then its icon, its name and a
@@ -1256,7 +1256,7 @@ private fun EntryRow(icon: Bitmap?, label: String, actions: List<RowAction> = em
  * neighbour once past half of its height ([rowHeight]).
  */
 @Composable
-private fun DragHandle(reorder: Reorder, rowHeight: () -> Int) {
+internal fun DragHandle(reorder: Reorder, rowHeight: () -> Int) {
     val r by rememberUpdatedState(reorder)
     Icon(
         Icons.Rounded.DragIndicator, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
