@@ -989,8 +989,10 @@ private class AppsPage(private val ctx: Context, val settings: Settings) {
     /** The car launcher's visible apps, in no particular order. */
     fun entries(): List<LauncherEntry> {
         val l = lists ?: return emptyList()
-        val apps = l.carApps.map { LauncherEntry(it.packageName, it.label, it.icon) } +
-            (l.media + l.messaging + l.navigation).map { LauncherEntry(it.packageName, it.label, it.icon) }
+        val apps = (l.carApps.map { LauncherEntry(it.packageName, it.label, it.icon) } +
+            (l.media + l.messaging + l.navigation).map { LauncherEntry(it.packageName, it.label, it.icon) } +
+            // The phone apps picked for the car screen, so they can go on the rail too.
+            launchable.orEmpty().filter { standalone && it.first in allowed }).distinctBy { it.first }
         val shown = mapOf(CarRuntime.PHONE_SCREEN_ID to phoneScreen, CarRuntime.BROWSER_ID to browser)
         return apps.filter { it.first !in hidden } + builtIns.filter { (id, b) -> b.third || shown[id] == true }
             .map { (id, b) -> LauncherEntry(id, ctx.getString(b.first), b.second) }
@@ -1016,18 +1018,16 @@ private fun rememberAppsPage(settings: Settings): AppsPage {
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
             val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            // With a helper, AARE hosts these as phone apps (CarRuntime.applyApps), so they can go on the rail: the
-            // navigation apps and the apps whose Android Auto side only Google's Android Auto can show.
+            // With a helper, AARE hosts navigation apps as phone apps without being picked (CarRuntime.applyApps), so
+            // they can go on the rail. Any other app, those whose Android Auto side only Google's Android Auto can show
+            // included, is a phone app once picked below, so the list of apps AARE can't show goes.
             val pm = ctx.packageManager
-            val unsupported = AndroidAutoApps.unsupported(ctx, car.map { it.packageName })
-            val hosted = if (!page.launcherAvailable) emptyList() else
-                unsupported.map { PhoneApp(it.packageName, it.label, it.icon) } +
-                    KNOWN_NAVIGATION.filter { pkg -> pkg !in carPkgs && unsupported.none { it.packageName == pkg } }.mapNotNull { pkg ->
-                        runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull()?.let { info ->
-                            PhoneApp(pkg, pm.getApplicationLabel(info).toString(), runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull())
-                        }
-                    }
-            page.unsupported = if (page.launcherAvailable) emptyList() else unsupported
+            val hosted = if (!page.launcherAvailable) emptyList() else KNOWN_NAVIGATION.filter { it !in carPkgs }.mapNotNull { pkg ->
+                runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull()?.let { info ->
+                    PhoneApp(pkg, pm.getApplicationLabel(info).toString(), runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull())
+                }
+            }
+            page.unsupported = if (page.launcherAvailable) emptyList() else AndroidAutoApps.unsupported(ctx, car.map { it.packageName })
             LauncherLists(car, media, messaging.filter { it.packageName !in shown }, hosted)
         }
         page.lists = l
