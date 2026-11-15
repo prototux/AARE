@@ -45,7 +45,7 @@ import net.prototux.aare.media.Placeholder
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
+internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier, backId: String = CarRuntime.standaloneId(packageName)) {
     val context = LocalContext.current
     // A helper per app: a hosted app and a media app's video each keep their own display.
     val launcher = remember(packageName) { AppLauncher(context, "launch-$packageName") }
@@ -59,9 +59,9 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
             launcher.connected
         }
-        runtime.setScreenBack(CarRuntime.standaloneId(packageName), back)
+        runtime.setScreenBack(backId, back)
         onDispose {
-            runtime.clearScreenBack(CarRuntime.standaloneId(packageName), back)
+            runtime.clearScreenBack(backId, back)
             launcher.release()
         }
     }

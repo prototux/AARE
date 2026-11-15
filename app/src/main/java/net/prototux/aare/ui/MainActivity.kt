@@ -963,6 +963,8 @@ private class AppsPage(private val ctx: Context, val settings: Settings) {
     val drag = RowDrag()
     var standalone by mutableStateOf(settings.standaloneApps)
     var keepAwake by mutableStateOf(settings.standaloneKeepScreenAwake)
+    var messagingFull by mutableStateOf(settings.messagingFullApp)
+    var phoneFull by mutableStateOf(settings.phoneFullApp)
     var allowed by mutableStateOf(settings.standaloneAppPackages)
     var launchable by mutableStateOf<List<LauncherEntry>?>(null)
     val launcherAvailable = AppLauncher.available(ctx)
@@ -1328,6 +1330,15 @@ private fun LazyListScope.standaloneApps(p: AppsPage) {
         if (p.standalone) {
             Toggle(stringResource(R.string.standalone_keep_awake_title), stringResource(R.string.standalone_keep_awake_subtitle), p.keepAwake) {
                 p.keepAwake = it; p.settings.standaloneKeepScreenAwake = it
+            }
+        }
+        // Apart from the list below: messaging apps and the phone app are in the car anyway.
+        if (p.launcherAvailable) {
+            Toggle(stringResource(R.string.messaging_full_app_title), stringResource(R.string.messaging_full_app_subtitle), p.messagingFull) {
+                p.messagingFull = it; p.settings.messagingFullApp = it
+            }
+            Toggle(stringResource(R.string.phone_full_app_title), stringResource(R.string.phone_full_app_subtitle), p.phoneFull) {
+                p.phoneFull = it; p.settings.phoneFullApp = it
             }
         }
     }, rows = rows)

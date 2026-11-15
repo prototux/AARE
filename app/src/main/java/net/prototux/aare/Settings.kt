@@ -222,6 +222,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("standalone_apps", false)
         set(v) = prefs.edit { putBoolean("standalone_apps", v) }
 
+    /** Messaging apps show as the app itself on the car screen when parked (with Shizuku or root), not as their notifications. */
+    var messagingFullApp: Boolean
+        get() = prefs.getBoolean("messaging_full_app", false)
+        set(v) = prefs.edit { putBoolean("messaging_full_app", v) }
+
+    /** The phone's own phone app (the default dialer) on the car screen when parked, instead of AARE's dialer. */
+    var phoneFullApp: Boolean
+        get() = prefs.getBoolean("phone_full_app", false)
+        set(v) = prefs.edit { putBoolean("phone_full_app", v) }
+
     /** Keep standalone apps active when Android links their display to the phone display. */
     var standaloneKeepScreenAwake: Boolean
         get() = prefs.getBoolean("standalone_keep_screen_awake", false)
