@@ -96,6 +96,12 @@
     <string name="setup_choice_wallpaper">Fond d\'écran</string>
     <string name="setup_wallpaper_none">Aucun</string>
     <string name="setup_wallpaper_photo">Photo</string>
+    <string name="setup_choice_map_inset">Marge sous la carte</string>
+    <string name="setup_map_inset_none">Aucune</string>
+    <string name="setup_map_inset_small">Petite</string>
+    <string name="setup_map_inset_medium">Moyenne</string>
+    <string name="setup_map_inset_large">Grande</string>
+    <string name="setup_hint_map_inset">Remonte ce que l\'application de navigation dessine en bas de la carte sur le tableau de bord. Par exemple, quand la vitesse actuelle de la voiture est masquée par le logo de l\'application (cela arrive souvent avec HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Météo</string>
     <string name="setup_toggle_weather_subtitle">À côté de l\'horloge, via Open-Meteo (une position approximative, à environ 10 km, lui est transmise)</string>
     <string name="setup_section_driving">Conduite</string>

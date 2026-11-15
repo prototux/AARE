@@ -188,6 +188,12 @@
     <string name="setup_choice_wallpaper">Wallpaper</string>
     <string name="setup_wallpaper_none">None</string>
     <string name="setup_wallpaper_photo">Photo</string>
+    <string name="setup_choice_map_inset">Margin under the map card</string>
+    <string name="setup_map_inset_none">None</string>
+    <string name="setup_map_inset_small">Small</string>
+    <string name="setup_map_inset_medium">Medium</string>
+    <string name="setup_map_inset_large">Large</string>
+    <string name="setup_hint_map_inset">Lifts what the navigation app draws at the bottom of the map on the dashboard. For example, when the car\'s current speed is hidden by the app\'s logo (as often happens in HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Weather</string>
     <string name="setup_toggle_weather_subtitle">Next to the clock, from Open-Meteo (it gets an approximate position, about 10 km)</string>
     <string name="setup_section_driving">Driving</string>

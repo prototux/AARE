@@ -142,6 +142,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("ignore_driving", false)
         set(v) = prefs.edit { putBoolean("ignore_driving", v) }
 
+    /**
+     * Room (dp) kept free along the bottom of the dashboard's map card, in the visible area given
+     * to the navigation app: lifts what the app draws there itself (HERE WeGo's speed, over its
+     * logo). 0 gives the app the whole card.
+     */
+    var mapCardBottomInset: Int
+        get() = prefs.getInt("map_card_bottom_inset", 0)
+        set(v) = prefs.edit { putInt("map_card_bottom_inset", v) }
+
     /** The weather next to the clock (from Open-Meteo, with an approximate position). */
     var showWeather: Boolean
         get() = prefs.getBoolean("show_weather", true)
