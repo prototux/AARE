@@ -77,7 +77,12 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         val adapter = adapter ?: return emptyList()
         if (!adapter.isEnabled) return emptyList()
         return adapter.bondedDevices.orEmpty().filter { device ->
-            if (refresh || device.uuids.isNullOrEmpty()) device.fetchUuidsWithSdp()
+            if (refresh) {
+                WirelessAutoStarter.recordSdpQuery(context, device.address, pending = true)
+                device.fetchUuidsWithSdp()
+            } else {
+                WirelessAutoStarter.querySdpIfNeeded(context, device, log, "scan")
+            }
             isHeadUnit(device)
         }
     }
@@ -86,20 +91,29 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
      * Bonded head units offering wireless Android Auto that are already connected over Bluetooth.
      * For the case where the car was connected before AARE could react to the ACL-connect
      * broadcast (#56): we can't wait for an edge that already passed, so we look at the current
-     * state. Uses the hidden isConnected(); if it can't be read, returns empty and the normal
-     * ACL-connect path is unaffected.
+     * state. Connected devices whose UUIDs are missing get a throttled SDP query so ACTION_UUID
+     * can start the session a moment later.
      */
     @SuppressLint("MissingPermission")
     fun findConnectedHeadUnits(): List<BluetoothDevice> {
         requirePermissions(bluetoothPermissions())
         val adapter = adapter ?: return emptyList()
         if (!adapter.isEnabled) return emptyList()
-        return adapter.bondedDevices.orEmpty().filter { isHeadUnit(it) && isConnected(it) }
+        val connected = adapter.bondedDevices.orEmpty().filter { isConnected(it) }
+        return connected.filter { device ->
+            val uuids = runCatching { device.uuids }.getOrNull()
+            if (isHeadUnit(device)) {
+                log.i("wireless: probe found connected head unit ${WirelessAutoStarter.deviceLabel(device)} uuids=${WirelessAutoStarter.formatUuids(uuids)}")
+                true
+            } else {
+                val sdp = WirelessAutoStarter.querySdpIfNeeded(context, device, log, "probe")
+                if (!sdp) {
+                    log.i("wireless: probe skipping ${WirelessAutoStarter.deviceLabel(device)} uuids=${WirelessAutoStarter.formatUuids(uuids)} sdp=skipped")
+                }
+                false
+            }
+        }
     }
-
-    private fun isConnected(device: BluetoothDevice): Boolean = runCatching {
-        BluetoothDevice::class.java.getMethod("isConnected").invoke(device) as Boolean
-    }.getOrDefault(false)
 
     /**
      * Connects to [device] and returns the AAP byte pipe. Cancelling the coroutine aborts the
@@ -329,6 +343,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /** Whether [device]'s cached SDP services include Android Auto wireless. Needs BLUETOOTH_CONNECT. */
         @SuppressLint("MissingPermission")
         fun isHeadUnit(device: BluetoothDevice): Boolean = hasAaUuid(device.uuids)
+
+        /** Whether [device] currently has an active Bluetooth ACL link (hidden API, false on failure). */
+        fun isConnected(device: BluetoothDevice): Boolean = runCatching {
+            BluetoothDevice::class.java.getMethod("isConnected").invoke(device) as Boolean
+        }.getOrDefault(false)
 
         internal fun hasAaUuid(uuids: Array<out ParcelUuid>?): Boolean =
             uuids.orEmpty().any { it.uuid == AA_UUID || it.uuid == AA_UUID_REVERSED }
