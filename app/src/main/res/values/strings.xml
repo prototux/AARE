@@ -343,7 +343,7 @@
     <string name="setup_more_apps_hint">Apps not in the car yet, every app on the phone included. Tap + to give one a place; phone apps show their normal screen while parked or in passenger mode (navigation apps always).</string>
     <string name="setup_more_apps_hint_no_helper">Apps not in the car yet. Phone apps need Shizuku or root.</string>
     <string name="setup_section_app_options">Options</string>
-    <string name="app_place_change">Place</string>
+    <string name="app_place_change">Options</string>
     <string name="app_place_rail">Rail</string>
     <string name="app_place_shortcuts">Shortcuts</string>
     <string name="app_place_overview">App overview</string>

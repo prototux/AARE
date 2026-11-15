@@ -372,7 +372,7 @@
     <string name="setup_more_apps_hint">Apps, die noch nicht im Auto sind, alle Apps des Handys eingeschlossen. Mit + bekommt eine App ihren Platz; Handy-Apps zeigen ihren normalen Bildschirm im Stand oder im Beifahrermodus (Navi-Apps immer).</string>
     <string name="setup_more_apps_hint_no_helper">Apps, die noch nicht im Auto sind. Handy-Apps brauchen Shizuku oder Root.</string>
     <string name="setup_section_app_options">Optionen</string>
-    <string name="app_place_change">Platz</string>
+    <string name="app_place_change">Optionen</string>
     <string name="app_place_rail">Leiste</string>
     <string name="app_place_shortcuts">Schnellliste</string>
     <string name="app_place_overview">App-Übersicht</string>

@@ -80,7 +80,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.SwapVert
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BugReport
@@ -1184,7 +1184,7 @@ private fun LazyListScope.placeSection(p: AppsPage, key: String, title: Int, hin
     val keys = apps.map { it.key }
     card(key, title, intro = { Hint(stringResource(hint)) }, drag = p.drag, rows = apps.mapIndexed { i, app ->
         row(app.key) {
-            EntryRow(app.icon, app.label, listOf(RowAction(Icons.Rounded.SwapVert, stringResource(R.string.app_place_change)) { p.editing = app }),
+            EntryRow(app.icon, app.label, listOf(RowAction(Icons.Rounded.Settings, stringResource(R.string.app_place_change)) { p.editing = app }),
                 Reorder(i, apps.size, "$key:${app.key}", p.drag) { by -> save(keys.shifted(i, by)) })
         }
     })
