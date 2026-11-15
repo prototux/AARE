@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Replay10
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,8 +41,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
+import android.os.SystemClock
+import net.prototux.aare.ui.car.carFocusHighlight
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -74,7 +86,8 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
  * Like Android Auto, the picture is for parked use only: while driving it is hidden behind a
  * notice and the sound carries on (a film becomes an audiobook). Knob: turning moves between the
  * on-screen buttons (back 10 s, play/pause, forward 10 s, the sound sync) and pressing presses the
- * one in focus; with the controls hidden, the first turn or press only shows them, focus on
+ * one in focus. On the progress bar, turning (or tilting left and right) scrubs: 10 s a detent,
+ * faster the quicker it turns; touch taps or drags it. With the controls hidden, the first turn or press only shows them, focus on
  * play/pause. The car's media keys play, pause and seek. Back closes the video ([onClose]).
  *
  * Leaving the video, by Back or for another app, keeps its position ([VideosMemory]): opening it
@@ -100,6 +113,9 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     var pokes by remember { mutableIntStateOf(0) }
     var controls by remember { mutableStateOf(true) }
     var syncMs by remember { mutableIntStateOf(settings.videoSyncMs) }
+    /** The knob is on the progress bar: turning scrubs. */
+    var barFocused by remember { mutableStateOf(false) }
+    var lastScrub by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(item.uri) {
         val listener = object : Player.Listener {
@@ -157,6 +173,26 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         position = to
         pokes++
     }
+    /** Scrubs [detents] knob steps: the quicker the turns come, the bigger each step. */
+    fun scrub(detents: Int) {
+        val now = SystemClock.uptimeMillis()
+        val gap = now - lastScrub
+        lastScrub = now
+        val step = when {
+            gap < 120 -> 120_000L
+            gap < 250 -> 60_000L
+            gap < 450 -> 30_000L
+            else -> SEEK_MS
+        }
+        // Long films: never less than 1% of the film a step once turning fast.
+        val d = player.duration
+        seek(detents * if (step > SEEK_MS && d > 0) maxOf(step, d / 100) else step)
+    }
+    fun seekTo(ms: Long) {
+        player.seekTo(ms.coerceAtLeast(0L))
+        position = ms.coerceAtLeast(0L)
+        pokes++
+    }
     fun nudgeSync(ms: Int) {
         syncMs = (syncMs + ms).coerceIn(-SYNC_MAX_MS, SYNC_MAX_MS)
         settings.videoSyncMs = syncMs
@@ -177,7 +213,15 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             override fun onKey(code: Int, down: Boolean, longPress: Boolean): Boolean {
                 if (code in KNOB_KEYS) {
                     // Controls showing: the knob presses and moves between the buttons (the focus).
-                    if (controls || driving) { pokes++; return false }
+                    if (controls || driving) {
+                        pokes++
+                        // On the progress bar, left and right scrub too.
+                        if (barFocused && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+                            if (down) scrub(if (code == KeyEvent.KEYCODE_DPAD_RIGHT) 1 else -1)
+                            return true
+                        }
+                        return false
+                    }
                     // Hidden: the first press or tilt only brings them back.
                     if (!down) pokes++
                     return true
@@ -199,6 +243,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             override fun onRotary(delta: Int): Boolean {
                 val shown = controls || driving
                 pokes++
+                if (shown && barFocused) { scrub(delta); return true }
                 return !shown
             }
         }
@@ -223,7 +268,8 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             }
         }
         AnimatedVisibility(controls || driving, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.fillMaxSize()) {
-            Controls(item, playing, position, duration, syncMs, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync)
+            Controls(item, playing, position, duration, syncMs, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync,
+                onSeekTo = ::seekTo, onBarFocus = { barFocused = it })
         }
     }
 }
@@ -232,7 +278,10 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
 private fun Controls(
     item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int,
     onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit, onSync: (Int) -> Unit,
+    onSeekTo: (Long) -> Unit, onBarFocus: (Boolean) -> Unit,
 ) {
+    // The controls leaving take the focus with them.
+    DisposableEffect(Unit) { onDispose { onBarFocus(false) } }
     // Each time the controls come up, the knob starts on play/pause.
     val playFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { playFocus.requestFocus() } }
@@ -255,10 +304,7 @@ private fun Controls(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(formatTime(position), color = Color.White, style = MaterialTheme.typography.labelLarge)
-                LinearProgressIndicator(
-                    progress = { if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f },
-                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                )
+                SeekBar(position, duration, onSeekTo, onBarFocus, Modifier.weight(1f).padding(horizontal = 12.dp))
                 Text(if (duration > 0) formatTime(duration) else "--:--", color = Color.White, style = MaterialTheme.typography.labelLarge)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -280,6 +326,35 @@ private fun Controls(
                 }
             }
         }
+    }
+}
+
+/**
+ * The progress bar, which the knob can land on (highlighted, thicker, with a thumb) to scrub; a
+ * tap or a drag seeks there by touch.
+ */
+@Composable
+private fun SeekBar(position: Long, duration: Long, onSeekTo: (Long) -> Unit, onFocus: (Boolean) -> Unit, modifier: Modifier) {
+    var focused by remember { mutableStateOf(false) }
+    val fraction = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
+    val track = Color.White.copy(alpha = 0.3f)
+    val fill = MaterialTheme.colorScheme.primary
+    val shape = RoundedCornerShape(16.dp)
+    fun at(x: Float, width: Int) { if (duration > 0 && width > 0) onSeekTo((duration * (x / width).coerceIn(0f, 1f)).toLong()) }
+    Canvas(
+        modifier.height(32.dp).clip(shape).carFocusHighlight(shape)
+            .onFocusChanged { focused = it.isFocused; onFocus(it.isFocused) }
+            .focusable()
+            .pointerInput(duration) { detectTapGestures { at(it.x, size.width) } }
+            .pointerInput(duration) { detectHorizontalDragGestures { change, _ -> at(change.position.x, size.width) } },
+    ) {
+        val y = size.height / 2
+        val inset = 12.dp.toPx()
+        val w = size.width - 2 * inset
+        val stroke = (if (focused) 8.dp else 4.dp).toPx()
+        drawLine(track, Offset(inset, y), Offset(inset + w, y), strokeWidth = stroke, cap = StrokeCap.Round)
+        drawLine(fill, Offset(inset, y), Offset(inset + w * fraction, y), strokeWidth = stroke, cap = StrokeCap.Round)
+        if (focused) drawCircle(Color.White, radius = 10.dp.toPx(), center = Offset(inset + w * fraction, y))
     }
 }
 
