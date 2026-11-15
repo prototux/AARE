@@ -134,6 +134,8 @@ class CarSession(
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
+    /** Turns the phone's Bluetooth on if it was off when the car connected (main thread). */
+    private var bluetoothPower: PhoneBluetoothPower? = null
     private val audio = ArrayList<AudioChannel>()
 
     /**
@@ -275,11 +277,15 @@ class CarSession(
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
                 s.hasWifiProjectionService() -> channels += WifiProjectionChannel(s)
-                s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
-                    override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
-                        DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
-                    }
-                })
+                s.hasBluetoothService() -> {
+                    val bt = BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
+                        override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
+                            DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
+                        }
+                    })
+                    channels += bt
+                    main.post { if (!closed) bluetoothPower = PhoneBluetoothPower(context) { announceAgain(bt) }.also { it.start() } }
+                }
             }
         }
         // The input service for the projected (main) display: match its display id, require a real
@@ -975,6 +981,7 @@ class CarSession(
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
         callSpeaker?.stop(); callSpeaker = null
+        bluetoothPower?.stop(); bluetoothPower = null
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
@@ -1005,6 +1012,17 @@ class CarSession(
                 context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.address else null
         }.getOrNull()
         return listOf(set, fromSecure, fromAdapter).firstOrNull(::isValidBtMac)
+    }
+
+    /**
+     * Bluetooth came on after the car connected: the pairing request sent when the channel opened
+     * found it off (or wasn't sent), so ask the car again to connect hands-free.
+     */
+    private fun announceAgain(bt: BluetoothChannel) {
+        val address = phoneBtAddress() ?: return
+        if (!bt.opened || closed) return
+        DiagLog.add("car bluetooth: announcing the phone again, Bluetooth is on")
+        bt.requestPairing(address)
     }
 
     private fun isValidBtMac(s: String?): Boolean =
