@@ -1322,6 +1322,11 @@ private fun LazyListScope.standaloneApps(p: AppsPage) {
         if (!p.standalone) return@buildList
         val list = p.launchable
         if (list == null) { add(row("loading") { Loading() }); return@buildList }
+        // Right above the apps: every app on the phone is in the list, and a search keeps it short.
+        add(row("search") {
+            OutlinedTextField(p.query, { p.query = it }, Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.standalone_search)) }, singleLine = true)
+        })
         val q = p.query.trim()
         list.filter { (pkg, label, _) -> q.isEmpty() || label.contains(q, ignoreCase = true) || pkg.contains(q, ignoreCase = true) }.forEach { (pkg, label, icon) ->
             add(row(pkg) {
@@ -1346,9 +1351,6 @@ private fun LazyListScope.standaloneApps(p: AppsPage) {
             Toggle(stringResource(R.string.standalone_keep_awake_title), stringResource(R.string.standalone_keep_awake_subtitle), p.keepAwake) {
                 p.keepAwake = it; p.settings.standaloneKeepScreenAwake = it
             }
-            // Every app on the phone is in the list: a search keeps it short.
-            OutlinedTextField(p.query, { p.query = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
-                label = { Text(stringResource(R.string.standalone_search)) }, singleLine = true)
         }
         // Apart from the list below: messaging apps and the phone app are in the car anyway.
         if (p.launcherAvailable) {
