@@ -95,8 +95,8 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
  * Like Android Auto, the picture is for parked use only: while driving it is hidden behind a
  * notice and the sound carries on (a film becomes an audiobook). Knob: turning moves between the
  * on-screen buttons (back 10 s, play/pause, forward 10 s, the sound sync) and pressing presses the
- * one in focus. On the progress bar, turning (or tilting left and right) scrubs: 10 s a detent,
- * faster the quicker it turns; touch taps or drags it. With the controls hidden, the first turn or press only shows them, focus on
+ * one in focus. On the progress bar, turning (or tilting left and right) scrubs: 10 s a click,
+ * building up slowly while the clicks keep coming (see scrub); touch taps or drags it. With the controls hidden, the first turn or press only shows them, focus on
  * play/pause. The car's media keys play, pause and seek. Back closes the video ([onClose]).
  *
  * Leaving the video, by Back or for another app, keeps its position ([VideosMemory]): opening it
@@ -126,6 +126,9 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     /** The knob is on the progress bar: turning scrubs. */
     var barFocused by remember { mutableStateOf(false) }
     var lastScrub by remember { mutableLongStateOf(0L) }
+    /** Clicks in a row the same way (each within [SCRUB_STREAK_MS] of the last): the step grows with it. */
+    var scrubStreak by remember { mutableIntStateOf(0) }
+    var scrubDir by remember { mutableIntStateOf(0) }
 
     DisposableEffect(item.uri) {
         val listener = object : Player.Listener {
@@ -215,20 +218,29 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         position = to
         pokes++
     }
-    /** Scrubs [detents] knob steps: the quicker the turns come, the bigger each step. */
+    /**
+     * Scrubs [detents] knob clicks. The step builds up slowly while the clicks keep coming the
+     * same way: 10 s for the first three, then 30 s for three, then 1 min for four, then 2 min.
+     * A pause or a turn back starts again at 10 s.
+     */
     fun scrub(detents: Int) {
+        if (detents == 0) return
         val now = SystemClock.uptimeMillis()
-        val gap = now - lastScrub
+        val dir = if (detents > 0) 1 else -1
+        if (now - lastScrub > SCRUB_STREAK_MS || dir != scrubDir) scrubStreak = 0
         lastScrub = now
-        val step = when {
-            gap < 120 -> 120_000L
-            gap < 250 -> 60_000L
-            gap < 450 -> 30_000L
-            else -> SEEK_MS
+        scrubDir = dir
+        var total = 0L
+        repeat(kotlin.math.abs(detents)) {
+            scrubStreak++
+            total += when {
+                scrubStreak <= 3 -> SEEK_MS
+                scrubStreak <= 6 -> 30_000L
+                scrubStreak <= 10 -> 60_000L
+                else -> 120_000L
+            }
         }
-        // Long films: never less than 1% of the film a step once turning fast.
-        val d = player.duration
-        seek(detents * if (step > SEEK_MS && d > 0) maxOf(step, d / 100) else step)
+        seek(dir * total)
     }
     fun seekTo(ms: Long) {
         player.seekTo(ms.coerceAtLeast(0L))
@@ -401,6 +413,8 @@ private fun SeekBar(position: Long, duration: Long, onSeekTo: (Long) -> Unit, on
 }
 
 private const val SEEK_MS = 10_000L
+/** Clicks closer together than this keep a scrub's step growing. */
+private const val SCRUB_STREAK_MS = 700L
 /** The server re-encodes running for a player, to end when it closes (main thread). */
 private val encodings = HashMap<Player, () -> Unit>()
 private const val BIG_SEEK_MS = 60_000L
