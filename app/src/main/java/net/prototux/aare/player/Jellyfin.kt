@@ -124,7 +124,8 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
     fun stream(itemId: String, maxKbps: Int, audioLanguage: String?): JellyfinStream {
         val source = get("/Items/${enc(itemId)}?userId=${enc(account.userId)}&Fields=MediaSources").optJSONArray("MediaSources")?.optJSONObject(0)
         val kbps = (source?.optLong("Bitrate", 0L) ?: 0L) / 1000
-        if (maxKbps <= 0 || kbps <= 0 || kbps <= maxKbps) {
+        // A little over the cap still plays as it is: re-encoding loses more than the extra costs.
+        if (maxKbps <= 0 || kbps <= 0 || kbps <= maxKbps * CAP_MARGIN) {
             return JellyfinStream(streamUrl(itemId), null, if (kbps > 0) "the file as it is ($kbps kbps)" else "the file as it is")
         }
         val sourceId = source?.optString("Id")?.takeIf { it.isNotEmpty() } ?: itemId
@@ -137,9 +138,16 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
         val totalBps = maxKbps * 1000L
         val url = "$base/Videos/${enc(itemId)}/master.m3u8?MediaSourceId=${enc(sourceId)}&DeviceId=${enc(account.deviceId)}&PlaySessionId=$session" +
             "&VideoCodec=h264&AudioCodec=aac&MaxAudioChannels=2&AudioBitrate=$AUDIO_BPS&VideoBitrate=${(totalBps - AUDIO_BPS).coerceAtLeast(500_000L)}" +
-            "&SegmentContainer=ts&BreakOnNonKeyFrames=false" + (audioIndex?.let { "&AudioStreamIndex=$it" } ?: "") + "&api_key=${enc(account.token)}"
+            "&SegmentContainer=ts&BreakOnNonKeyFrames=false" + (audioIndex?.let { "&AudioStreamIndex=$it" } ?: "") + "&ApiKey=${enc(account.token)}"
         return JellyfinStream(url, session, "re-encoded by the server: $kbps kbps file, at most $maxKbps kbps" + (audioIndex?.let { ", soundtrack $audioLanguage" } ?: ""))
     }
+
+    /**
+     * The headers for the player's requests to the server. Jellyfin 12 refuses a re-encode's
+     * playlists and segments with only the key in the URL's old `api_key` form, so the sign-in
+     * goes as a header too.
+     */
+    fun playbackHeaders(): Map<String, String> = authHeaders(account.token) - "Accept"
 
     /** Ends the server's re-encode of a [stream] (best effort; the server also ends idle ones). */
     fun stopEncoding(playSessionId: String) {
@@ -147,7 +155,7 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
     }
 
     /** The video file as it is on the server (ExoPlayer plays MP4, MKV, WebM...), authorised by the URL. */
-    fun streamUrl(itemId: String): String = "$base/Videos/${enc(itemId)}/stream?static=true&api_key=${enc(account.token)}"
+    fun streamUrl(itemId: String): String = "$base/Videos/${enc(itemId)}/stream?static=true&ApiKey=${enc(account.token)}"
 
     fun imageBytes(itemId: String, maxHeight: Int): ByteArray? {
         val (code, body) = http.request("GET", "$base/Items/${enc(itemId)}/Images/Primary?maxHeight=$maxHeight&quality=80", authHeaders(account.token), null)
@@ -172,6 +180,7 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
     companion object {
         private const val PAGE = 500
         private const val AUDIO_BPS = 192_000L
+        private const val CAP_MARGIN = 1.15
         private val images = LruCache<String, Bitmap>(48)
         private val VIDEO_TYPES = setOf("Movie", "Episode", "Video", "MusicVideo", "Trailer")
         /** Library kinds without videos. */

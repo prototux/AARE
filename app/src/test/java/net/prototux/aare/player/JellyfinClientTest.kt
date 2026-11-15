@@ -114,6 +114,6 @@ class JellyfinClientTest {
     }
 
     @Test fun streamUrlIsTheDirectFile() {
-        assertEquals("http://jf.local:8096/Videos/e%201/stream?static=true&api_key=tok123", JellyfinClient(account).streamUrl("e 1"))
+        assertEquals("http://jf.local:8096/Videos/e%201/stream?static=true&ApiKey=tok123", JellyfinClient(account).streamUrl("e 1"))
     }
 }

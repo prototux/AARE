@@ -66,6 +66,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
@@ -105,6 +107,7 @@ data class VideoItem(val uri: String, val title: String, val subtitle: String? =
  * extra GPU copy a TextureView makes. A secure (DRM) surface would stay black there; nothing here
  * plays DRM content.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, settings: Settings, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -153,10 +156,12 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     LaunchedEffect(item.uri) {
         var url = item.uri
         var hls = false
+        var headers: Map<String, String>? = null
         val id = item.jellyfinId
         val account = if (id != null) JellyfinAccount.load(settings) else null
         if (id != null && account != null) {
             val client = JellyfinClient(account)
+            headers = client.playbackHeaders()
             withContext(Dispatchers.IO) { runCatching { client.stream(id, settings.jellyfinMaxKbps, java.util.Locale.getDefault().isO3Language) } }
                 .onSuccess { s ->
                     url = s.url
@@ -168,7 +173,12 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         }
         val media = MediaItem.Builder().setUri(url).setMediaMetadata(MediaMetadata.Builder().setTitle(item.title).build())
         if (hls) media.setMimeType(MimeTypes.APPLICATION_M3U8)
-        player.setMediaItem(media.build())
+        val h = headers
+        if (h != null) {
+            // Jellyfin: every request (playlists, segments, the file) carries the sign-in.
+            val http = DefaultHttpDataSource.Factory().setDefaultRequestProperties(h).setAllowCrossProtocolRedirects(true)
+            player.setMediaSource(DefaultMediaSourceFactory(http).createMediaSource(media.build()))
+        } else player.setMediaItem(media.build())
         val resume = VideosMemory.resumeAt(item.uri)
         if (resume > 0) {
             player.seekTo(resume)
