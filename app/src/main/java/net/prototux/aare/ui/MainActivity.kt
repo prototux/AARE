@@ -1200,12 +1200,13 @@ private fun LazyListScope.pickList(
                     Reorder(i, shown.size, "$key:$k", drag) { by -> move(i, by) })
             })
         }
-        add(row("add") { TextButton(onClick = { setAdding(!adding) }) { Text(stringResource(if (adding) R.string.common_done else R.string.common_add_apps)) } })
         if (adding) {
             entries.filter { it.first !in shown }.sortedBy { it.second.lowercase() }.forEach { (k, label, icon) ->
                 add(row("+$k") { EntryRow(icon, label, listOf(RowAction(Icons.Rounded.Add, stringResource(R.string.common_add_apps)) { onChange(shown + k) })) })
             }
         }
+        // Under the apps to add, so "Done" closes the list instead of reading as its heading.
+        add(row("add") { TextButton(onClick = { setAdding(!adding) }) { Text(stringResource(if (adding) R.string.common_done else R.string.common_add_apps)) } })
     }
     card(key, title, intro = { Hint(stringResource(hint)) }, rows = rows, drag = drag)
 }
