@@ -128,6 +128,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -306,8 +309,9 @@ private fun CategoryRow(page: Page, onClick: () -> Unit) {
 @Composable
 private fun Header() {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.DirectionsCar, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+        // The app's own icon, as on the home screen: its background, and its picture at the icon's usual size.
+        Box(Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).paint(painterResource(R.drawable.ic_launcher_background)), contentAlignment = Alignment.Center) {
+            Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.requiredSize(60.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column {
