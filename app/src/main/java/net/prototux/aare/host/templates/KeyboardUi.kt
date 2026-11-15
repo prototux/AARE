@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.ui.car.carFocusHighlight
+import net.prototux.aare.ui.car.rotaryArea
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** Layout of the on-screen keyboard, from InputSignInMethod.KEYBOARD_* or search. */
@@ -109,7 +110,8 @@ internal fun CarKeyboard(mode: KeyboardMode, sink: KeyboardSink, submitIcon: Ima
     }
     val scheme = MaterialTheme.colorScheme
     Column(
-        modifier.fillMaxWidth().background(scheme.surfaceContainerLow).padding(8.dp),
+        // Its own knob pane: turning goes key to key, and tilting moves between keys, not to the rail.
+        modifier.rotaryArea(tiltWithin = true).fillMaxWidth().background(scheme.surfaceContainerLow).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         rows.forEach { row ->

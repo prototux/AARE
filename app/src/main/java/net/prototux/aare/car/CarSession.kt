@@ -77,6 +77,8 @@ import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
+import net.prototux.aare.ui.car.CarFocusVisibility
+import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.video.BitrateController
 import net.prototux.aare.video.ProjectionDisplay
@@ -599,6 +601,8 @@ class CarSession(
                 }
             }
             if (report.hasRelativeEvent()) {
+                // A knob is present: tilting it now jumps between panes, see rotaryWrap.
+                main.post { if (!closed) CarFocusVisibility.rotary = true }
                 for (r in report.relativeEvent.dataList) {
                     Log.d(TAG, "input rotary: keycode=${r.keycode} delta=${r.delta}")
                 }
@@ -617,8 +621,13 @@ class CarSession(
         }
     }
 
-    /** HOME goes to the dashboard; held, it hands the screen back to the car. */
-    private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
+    /** HOME goes to the dashboard, or from it to the app list; held, it hands the screen back to the car. */
+    private val homeKey = LongPressKey(onPress = ::home, onLongPress = ::exitToCar)
+
+    /** Home, like the rail's menu button: already there, it opens the app list (and closes it again). */
+    private fun home() {
+        if (runtime.ui.screen == CarScreen.Dashboard) runtime.actions.openLauncher() else runtime.actions.goHome()
+    }
 
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
         // Some head units send a media key while they set up, before AARE has a car screen (a
@@ -632,7 +641,10 @@ class CarSession(
         when (code) {
             KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
-            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
+            // Cars without Call keys over Android Auto (Mazda) send Search from the wheel's pick-up
+            // button: while a call rings it answers. During a call it does nothing: an assistant
+            // would take the microphone from the call. No call: the assistant, as before.
+            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down && !callKey()) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) media.pause()
@@ -647,6 +659,21 @@ class CarSession(
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+        }
+    }
+
+    /** For the voice key: answers a ringing call; true (handled) while there is any call. */
+    private fun callKey(): Boolean {
+        val state = Calls.state(context)
+        val call = runtime.ui.call
+        return when {
+            state == android.telephony.TelephonyManager.CALL_STATE_RINGING || call?.ringing == true -> {
+                Log.i(TAG, "voice key: answering the ringing call"); runtime.actions.answerCall(); true
+            }
+            state == android.telephony.TelephonyManager.CALL_STATE_OFFHOOK || call != null -> {
+                Log.i(TAG, "voice key: ignored during a call"); true
+            }
+            else -> false
         }
     }
 
@@ -971,6 +998,7 @@ class CarSession(
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         main.removeCallbacks(videoFocusCheck)
+        CarFocusVisibility.rotary = false // the next car may have no knob
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
