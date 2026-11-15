@@ -69,14 +69,6 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
     Box(modifier.background(Color.Black)) {
         if (!driving) {
             HostedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize()) { started = it }
-            // A quiet reminder that this isn't an Android Auto app.
-            Text(
-                stringResource(R.string.standalone_not_native),
-                style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = 12.dp, vertical = 3.dp),
-            )
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)

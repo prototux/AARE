@@ -340,6 +340,7 @@
     <string name="messaging_full_app_subtitle">Parked, Signal, WhatsApp and the like show their own screen, keyboard included, instead of only their messages. While driving, only the messages.</string>
     <string name="phone_full_app_title">Your own phone app</string>
     <string name="phone_full_app_subtitle">Parked, the phone app set as default on the phone shows with all its features instead of AARE\'s dialer. While driving, AARE\'s dialer.</string>
+    <string name="standalone_search">Search apps</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>

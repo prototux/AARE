@@ -432,8 +432,12 @@ class CarRuntime(
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
         // Ordinary phone apps the user allowed onto the car screen (parked only; needs root/Shizuku).
-        if (settings.standaloneApps && AppLauncher.available(context)) {
-            for (pkg in settings.standaloneAppPackages) {
+        if (AppLauncher.available(context)) {
+            val taken = entries.mapTo(HashSet()) { it.packageName }
+            // Apps whose Android Auto side only Google's Android Auto can show (Google Maps, the Play Store) and the
+            // other navigation apps are there as phone apps without being picked.
+            val hostedAnyway = KNOWN_NAVIGATION + AndroidAutoApps.unsupported(context, taken, iconSizePx = 1).map { it.packageName }
+            for (pkg in standalonePackages(settings.standaloneApps, settings.standaloneAppPackages, taken, hostedAnyway)) {
                 if (pkg in hidden) continue
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
@@ -839,3 +843,15 @@ class CarRuntime(
 
 /** Whether a messaging app or the phone app shows as the phone's own app: [chosen] in AARE, parked, and with a [helper] (Shizuku or root). */
 internal fun showsFullApp(chosen: Boolean, driving: Boolean, helper: Boolean) = chosen && !driving && helper
+
+/**
+ * The phone apps hosted on the car screen: those allowed on the phone when [enabled], and the
+ * [navigation] apps hosted without being picked, unless another entry already shows their package
+ * ([taken]: its car app).
+ */
+internal fun standalonePackages(
+    enabled: Boolean, allowed: Collection<String>, taken: Set<String>, navigation: Collection<String> = emptyList(),
+): List<String> = buildList {
+    if (enabled) addAll(allowed)
+    navigation.filterTo(this) { it !in taken && it !in this }
+}

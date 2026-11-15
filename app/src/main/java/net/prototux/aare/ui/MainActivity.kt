@@ -159,6 +159,7 @@ import net.prototux.aare.host.CarAppInfo
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
@@ -936,7 +937,7 @@ private fun Choices(title: String, options: List<Pair<String, String>>, selected
 // ---------------------------------------------------------------- apps
 
 /** Everything the car's launcher lists, as it groups it. */
-private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>)
+private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>, val navigation: List<PhoneApp> = emptyList())
 
 /** An app of the car's launcher: its order key (CarRuntime.orderKey: package, or a built-in app's id), name and icon. */
 private typealias LauncherEntry = Triple<String, String, Bitmap?>
@@ -967,6 +968,8 @@ private class AppsPage(private val ctx: Context, val settings: Settings) {
     var phoneFull by mutableStateOf(settings.phoneFullApp)
     var allowed by mutableStateOf(settings.standaloneAppPackages)
     var launchable by mutableStateOf<List<LauncherEntry>?>(null)
+    /** What the phone app list is filtered by. */
+    var query by mutableStateOf("")
     val launcherAvailable = AppLauncher.available(ctx)
 
     /** AARE's own apps, with the icons the car shows for them. */
@@ -987,7 +990,7 @@ private class AppsPage(private val ctx: Context, val settings: Settings) {
     fun entries(): List<LauncherEntry> {
         val l = lists ?: return emptyList()
         val apps = l.carApps.map { LauncherEntry(it.packageName, it.label, it.icon) } +
-            (l.media + l.messaging).map { LauncherEntry(it.packageName, it.label, it.icon) }
+            (l.media + l.messaging + l.navigation).map { LauncherEntry(it.packageName, it.label, it.icon) }
         val shown = mapOf(CarRuntime.PHONE_SCREEN_ID to phoneScreen, CarRuntime.BROWSER_ID to browser)
         return apps.filter { it.first !in hidden } + builtIns.filter { (id, b) -> b.third || shown[id] == true }
             .map { (id, b) -> LauncherEntry(id, ctx.getString(b.first), b.second) }
@@ -1013,10 +1016,21 @@ private fun rememberAppsPage(settings: Settings): AppsPage {
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
             val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
+            // With a helper, AARE hosts these as phone apps (CarRuntime.applyApps), so they can go on the rail: the
+            // navigation apps and the apps whose Android Auto side only Google's Android Auto can show.
+            val pm = ctx.packageManager
+            val unsupported = AndroidAutoApps.unsupported(ctx, car.map { it.packageName })
+            val hosted = if (!page.launcherAvailable) emptyList() else
+                unsupported.map { PhoneApp(it.packageName, it.label, it.icon) } +
+                    KNOWN_NAVIGATION.filter { pkg -> pkg !in carPkgs && unsupported.none { it.packageName == pkg } }.mapNotNull { pkg ->
+                        runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull()?.let { info ->
+                            PhoneApp(pkg, pm.getApplicationLabel(info).toString(), runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull())
+                        }
+                    }
+            page.unsupported = if (page.launcherAvailable) emptyList() else unsupported
+            LauncherLists(car, media, messaging.filter { it.packageName !in shown }, hosted)
         }
         page.lists = l
-        page.unsupported = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
     }
     LaunchedEffect(page.standalone) {
         if (page.standalone && page.launchable == null) page.launchable = withContext(Dispatchers.IO) { launchableApps(ctx) }
@@ -1192,7 +1206,7 @@ private fun LazyListScope.pickList(
 ) {
     val byKey = entries.associateBy { it.first }
     // An app hidden or gone since stays out of view; the next change drops it.
-    val shown = picked.filter { it in byKey }
+    val shown = picked.filter { it in byKey }.distinct()
     fun move(i: Int, by: Int) = onChange(shown.toMutableList().apply { add((i + by).coerceIn(0, lastIndex), removeAt(i)) })
     val rows = buildList {
         shown.forEachIndexed { i, k ->
@@ -1308,7 +1322,8 @@ private fun LazyListScope.standaloneApps(p: AppsPage) {
         if (!p.standalone) return@buildList
         val list = p.launchable
         if (list == null) { add(row("loading") { Loading() }); return@buildList }
-        list.forEach { (pkg, label, icon) ->
+        val q = p.query.trim()
+        list.filter { (pkg, label, _) -> q.isEmpty() || label.contains(q, ignoreCase = true) || pkg.contains(q, ignoreCase = true) }.forEach { (pkg, label, icon) ->
             add(row(pkg) {
                 AppRow(icon, label, pkg, pkg in p.allowed) { on ->
                     p.allowed = if (on) p.allowed + pkg else p.allowed - pkg
@@ -1331,6 +1346,9 @@ private fun LazyListScope.standaloneApps(p: AppsPage) {
             Toggle(stringResource(R.string.standalone_keep_awake_title), stringResource(R.string.standalone_keep_awake_subtitle), p.keepAwake) {
                 p.keepAwake = it; p.settings.standaloneKeepScreenAwake = it
             }
+            // Every app on the phone is in the list: a search keeps it short.
+            OutlinedTextField(p.query, { p.query = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
+                label = { Text(stringResource(R.string.standalone_search)) }, singleLine = true)
         }
         // Apart from the list below: messaging apps and the phone app are in the car anyway.
         if (p.launcherAvailable) {

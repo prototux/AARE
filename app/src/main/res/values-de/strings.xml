@@ -369,6 +369,7 @@
     <string name="messaging_full_app_subtitle">Im Stand zeigen Signal, WhatsApp und Co. ihren eigenen Bildschirm samt Tastatur statt nur ihrer Nachrichten. Während der Fahrt nur die Nachrichten.</string>
     <string name="phone_full_app_title">Deine eigene Telefon-App</string>
     <string name="phone_full_app_subtitle">Im Stand erscheint die am Handy als Standard gewählte Telefon-App mit allen Funktionen statt der Wähltasten von AARE. Während der Fahrt die Wähltasten von AARE.</string>
+    <string name="standalone_search">Apps suchen</string>
     <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
