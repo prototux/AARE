@@ -331,7 +331,7 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps on the car screen (advanced)</string>
-    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked, and needs root or Shizuku. Use at your own risk.</string>
+    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked (navigation apps such as Google Maps also while driving), and needs root or Shizuku. Use at your own risk.</string>
     <string name="standalone_toggle_title">Launch phone apps on the car screen</string>
     <string name="standalone_toggle_subtitle">Pick the apps below. Shown only when parked.</string>
     <string name="standalone_keep_awake_title">No-sleep mode for standalone apps</string>
