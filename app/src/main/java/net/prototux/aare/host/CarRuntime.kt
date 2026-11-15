@@ -782,7 +782,7 @@ class CarRuntime(
                                 if (m != null) CompositionLocalProvider(LocalPhoneVideo provides video) { media.Screen(m, ui.drivingRestricted, mod) }
                             }
                             // Parked, with the user's choice and a helper: the phone app itself instead of AARE's view of it.
-                            CarAppKind.MESSAGING -> if (fullApp(settings.messagingFullApp)) StandaloneAppScreen(this, false, app.packageName, mod, backId = app.id)
+                            CarAppKind.MESSAGING -> if (fullApp(app.packageName in settings.fullApps)) StandaloneAppScreen(this, false, app.packageName, mod, backId = app.id)
                                 else MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)
                             CarAppKind.STANDALONE -> StandaloneAppScreen(this, ui.drivingRestricted, app.packageName, mod)
@@ -790,7 +790,7 @@ class CarRuntime(
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.PHONE -> {
                                 val dialer = remember { context.getSystemService(TelecomManager::class.java)?.defaultDialerPackage }
-                                if (dialer != null && fullApp(settings.phoneFullApp)) StandaloneAppScreen(this, false, dialer, mod, backId = app.id) else PhoneScreen(this, mod)
+                                if (dialer != null && fullApp(app.id in settings.fullApps)) StandaloneAppScreen(this, false, dialer, mod, backId = app.id) else PhoneScreen(this, mod)
                             }
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
