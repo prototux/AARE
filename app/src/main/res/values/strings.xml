@@ -396,6 +396,9 @@
     <string name="jellyfin_sign_in">Sign in</string>
     <string name="jellyfin_signing_in">Signing in…</string>
     <string name="jellyfin_sign_out">Sign out</string>
+    <string name="jellyfin_quality_title">Highest quality in the car</string>
+    <string name="jellyfin_quality_original">Original</string>
+    <string name="jellyfin_quality_hint">Videos above this are re-encoded by your Jellyfin server to fit, so they start quickly over mobile data. Original plays every file as it is.</string>
     <string name="jellyfin_signed_in">Signed in as %1$s on %2$s</string>
     <string name="jellyfin_cleartext_warning">This address isn\'t https: the password and videos cross the network unencrypted. Fine at home, not over the internet.</string>
     <string name="jellyfin_hint">Your Jellyfin server\'s libraries appear in the car\'s Videos app. The password isn\'t kept: AARE keeps the sign-in Jellyfin gives it.</string>

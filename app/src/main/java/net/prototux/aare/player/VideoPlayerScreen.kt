@@ -65,10 +65,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
@@ -77,8 +80,12 @@ import net.prototux.aare.media.CircleButton
 import net.prototux.aare.media.Placeholder
 import net.prototux.aare.media.formatTime
 
-/** Something the player can play: a content:// or http(s) URI, with a title for the screen. */
-data class VideoItem(val uri: String, val title: String, val subtitle: String? = null)
+/**
+ * Something the player can play: a content:// or http(s) URI, with a title for the screen. A
+ * Jellyfin video also has its [jellyfinId]: the player asks the server how to play it (as it is,
+ * or re-encoded to the bitrate cap) and falls back to [uri].
+ */
+data class VideoItem(val uri: String, val title: String, val subtitle: String? = null, val jellyfinId: String? = null)
 
 /**
  * A video on the car screen, with AARE's own player ([CarVideoPlayer]).
@@ -133,8 +140,35 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         player.addListener(listener)
         CarPlayerAudio.setActive(true)
         DiagLog.add("car video: playing ${item.title}")
-        player.setMediaItem(MediaItem.Builder().setUri(item.uri).setMediaMetadata(MediaMetadata.Builder().setTitle(item.title).build()).build())
         CarVideoPlayer.syncMs = settings.videoSyncMs
+        onDispose {
+            // Only once it started: a video closed while its stream was still being asked for keeps its place.
+            if (player.currentMediaItem != null) VideosMemory.save(item.uri, player.currentPosition, player.duration, player.playWhenReady, player.playbackState == Player.STATE_ENDED)
+            player.removeListener(listener)
+            player.release()
+            CarPlayerAudio.setActive(false)
+        }
+    }
+    // What to play: the URI, or for Jellyfin what the server says (the file, or a re-encode).
+    LaunchedEffect(item.uri) {
+        var url = item.uri
+        var hls = false
+        val id = item.jellyfinId
+        val account = if (id != null) JellyfinAccount.load(settings) else null
+        if (id != null && account != null) {
+            val client = JellyfinClient(account)
+            withContext(Dispatchers.IO) { runCatching { client.stream(id, settings.jellyfinMaxKbps, java.util.Locale.getDefault().isO3Language) } }
+                .onSuccess { s ->
+                    url = s.url
+                    hls = s.playSessionId != null
+                    DiagLog.add("car video: Jellyfin, ${s.note}")
+                    s.playSessionId?.let { session -> encodings[player] = { runCatching { client.stopEncoding(session) } } }
+                }
+                .onFailure { DiagLog.add("car video: Jellyfin didn't say how to play it (${it.message}), playing the file as it is") }
+        }
+        val media = MediaItem.Builder().setUri(url).setMediaMetadata(MediaMetadata.Builder().setTitle(item.title).build())
+        if (hls) media.setMimeType(MimeTypes.APPLICATION_M3U8)
+        player.setMediaItem(media.build())
         val resume = VideosMemory.resumeAt(item.uri)
         if (resume > 0) {
             player.seekTo(resume)
@@ -142,12 +176,10 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         }
         player.prepare()
         player.playWhenReady = VideosMemory.wasPlaying(item.uri)
-        onDispose {
-            VideosMemory.save(item.uri, player.currentPosition, player.duration, player.playWhenReady, player.playbackState == Player.STATE_ENDED)
-            player.removeListener(listener)
-            player.release()
-            CarPlayerAudio.setActive(false)
-        }
+    }
+    // A server re-encode ends with the video.
+    DisposableEffect(player) {
+        onDispose { encodings.remove(player)?.let { stop -> Thread(stop, "jellyfin-stop").start() } }
     }
     // On the phone's speaker only when no car takes the sound.
     LaunchedEffect(player) { CarPlayerAudio.toCar.collect { player.volume = if (it) 0f else 1f } }
@@ -359,6 +391,8 @@ private fun SeekBar(position: Long, duration: Long, onSeekTo: (Long) -> Unit, on
 }
 
 private const val SEEK_MS = 10_000L
+/** The server re-encodes running for a player, to end when it closes (main thread). */
+private val encodings = HashMap<Player, () -> Unit>()
 private const val BIG_SEEK_MS = 60_000L
 private const val CONTROLS_MS = 4_000L
 private const val SYNC_STEP_MS = 50

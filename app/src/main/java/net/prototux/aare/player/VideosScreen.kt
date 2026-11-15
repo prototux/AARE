@@ -218,7 +218,7 @@ private fun jellyfinRow(client: JellyfinClient, item: JellyfinItem): VideoRow {
         item.seriesName,
     ).joinToString(" · ").ifBlank { null }
     val open = if (item.isFolder) VideoPage.Jellyfin(item.id, item.name)
-        else VideoPage.Playing(VideoItem(client.streamUrl(item.id), item.name, item.seriesName))
+        else VideoPage.Playing(VideoItem(client.streamUrl(item.id), item.name, item.seriesName, jellyfinId = item.id))
     return VideoRow("jf:${item.id}", item.name, subtitle, if (item.isFolder) Icons.Rounded.Folder else Icons.Rounded.Movie,
         thumb = if (item.hasImage) ({ client.image(item.id, THUMB_H * 2) }) else null, open = open)
 }

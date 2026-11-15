@@ -13,6 +13,7 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
 import java.net.URLEncoder
+import java.util.UUID
 
 /** A signed-in Jellyfin account (kept in the app's private settings; the password never is). */
 data class JellyfinAccount(val server: String, val userId: String, val userName: String, val token: String, val deviceId: String) {
@@ -48,6 +49,13 @@ data class JellyfinItem(
     val seriesName: String?,
     val hasImage: Boolean,
 )
+
+/**
+ * How to play one video: [url] is the file as it is, or (with [playSessionId]) an HLS stream the
+ * server re-encodes to fit the bitrate cap, which [JellyfinClient.stopEncoding] ends. [note] says
+ * which, for the log.
+ */
+data class JellyfinStream(val url: String, val playSessionId: String?, val note: String)
 
 /** What a Jellyfin request failed with, in words for the car screen or the phone. */
 class JellyfinException(message: String, val code: Int = 0) : IOException(message)
@@ -107,6 +115,37 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
             "&Fields=ProductionYear,RunTimeTicks&EnableImageTypes=Primary&ImageTypeLimit=1&Limit=$PAGE",
     ), views = false)
 
+    /**
+     * How to play [itemId] within [maxKbps] (0: no cap): the file as it is when it fits (or its
+     * bitrate is unknown), else an HLS stream the server re-encodes (H.264, stereo AAC) to fit.
+     * [audioLanguage] (ISO 639-2, "eng") picks the soundtrack of a re-encode; a file played as it
+     * is leaves that to the player.
+     */
+    fun stream(itemId: String, maxKbps: Int, audioLanguage: String?): JellyfinStream {
+        val source = get("/Items/${enc(itemId)}?userId=${enc(account.userId)}&Fields=MediaSources").optJSONArray("MediaSources")?.optJSONObject(0)
+        val kbps = (source?.optLong("Bitrate", 0L) ?: 0L) / 1000
+        if (maxKbps <= 0 || kbps <= 0 || kbps <= maxKbps) {
+            return JellyfinStream(streamUrl(itemId), null, if (kbps > 0) "the file as it is ($kbps kbps)" else "the file as it is")
+        }
+        val sourceId = source?.optString("Id")?.takeIf { it.isNotEmpty() } ?: itemId
+        val audioIndex = source?.optJSONArray("MediaStreams")?.let { streams ->
+            (0 until streams.length()).mapNotNull { streams.optJSONObject(it) }
+                .firstOrNull { it.optString("Type") == "Audio" && audioLanguage != null && it.optString("Language").equals(audioLanguage, ignoreCase = true) }
+                ?.optInt("Index", -1)?.takeIf { it >= 0 }
+        }
+        val session = UUID.randomUUID().toString().replace("-", "")
+        val totalBps = maxKbps * 1000L
+        val url = "$base/Videos/${enc(itemId)}/master.m3u8?MediaSourceId=${enc(sourceId)}&DeviceId=${enc(account.deviceId)}&PlaySessionId=$session" +
+            "&VideoCodec=h264&AudioCodec=aac&MaxAudioChannels=2&AudioBitrate=$AUDIO_BPS&VideoBitrate=${(totalBps - AUDIO_BPS).coerceAtLeast(500_000L)}" +
+            "&SegmentContainer=ts&BreakOnNonKeyFrames=false" + (audioIndex?.let { "&AudioStreamIndex=$it" } ?: "") + "&api_key=${enc(account.token)}"
+        return JellyfinStream(url, session, "re-encoded by the server: $kbps kbps file, at most $maxKbps kbps" + (audioIndex?.let { ", soundtrack $audioLanguage" } ?: ""))
+    }
+
+    /** Ends the server's re-encode of a [stream] (best effort; the server also ends idle ones). */
+    fun stopEncoding(playSessionId: String) {
+        http.request("DELETE", "$base/Videos/ActiveEncodings?DeviceId=${enc(account.deviceId)}&PlaySessionId=${enc(playSessionId)}", authHeaders(account.token), null)
+    }
+
     /** The video file as it is on the server (ExoPlayer plays MP4, MKV, WebM...), authorised by the URL. */
     fun streamUrl(itemId: String): String = "$base/Videos/${enc(itemId)}/stream?static=true&api_key=${enc(account.token)}"
 
@@ -132,6 +171,7 @@ class JellyfinClient(private val account: JellyfinAccount, private val http: Jel
 
     companion object {
         private const val PAGE = 500
+        private const val AUDIO_BPS = 192_000L
         private val images = LruCache<String, Bitmap>(48)
         private val VIDEO_TYPES = setOf("Movie", "Episode", "Video", "MusicVideo", "Trailer")
         /** Library kinds without videos. */

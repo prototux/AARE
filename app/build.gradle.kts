@@ -123,6 +123,8 @@ dependencies {
     implementation(libs.media3.session)
     // The car screen's own video player (local videos, Jellyfin).
     implementation(libs.media3.exoplayer)
+    // Jellyfin re-encodes heavy files for the car as HLS.
+    implementation(libs.media3.exoplayer.hls)
     implementation(libs.kotlinx.coroutines.android)
     // Car audio without the screen-capture consent: through Shizuku (adb rights), or Android's
     // audio-policy interface when installed as a privileged app (tools/magisk).

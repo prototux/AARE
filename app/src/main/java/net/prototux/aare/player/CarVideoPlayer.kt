@@ -57,6 +57,9 @@ object CarVideoPlayer {
                 }
         }
         val player = ExoPlayer.Builder(context, renderers).build()
+        // Files with several soundtracks (Japanese and English...): the phone's language first.
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .setPreferredAudioLanguage(java.util.Locale.getDefault().language).build()
         // A movie, with audio focus: other apps' music pauses while it plays, and it pauses for a call.
         player.setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), true)
         player.addListener(object : Player.Listener {

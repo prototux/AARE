@@ -1082,6 +1082,11 @@ private fun JellyfinSettings(settings: Settings) {
                 DiagLog.add("jellyfin: signed out")
                 account = null
             }) { Text(stringResource(R.string.jellyfin_sign_out)) }
+            var maxKbps by remember { mutableIntStateOf(settings.jellyfinMaxKbps) }
+            Choices(stringResource(R.string.jellyfin_quality_title), listOf(0, 8_000, 4_000, 2_000).map {
+                "$it" to if (it == 0) stringResource(R.string.jellyfin_quality_original) else "${it / 1000} Mbps"
+            }, "$maxKbps") { maxKbps = it.toInt(); settings.jellyfinMaxKbps = maxKbps }
+            Text(stringResource(R.string.jellyfin_quality_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@Column
         }
         Text(stringResource(R.string.jellyfin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

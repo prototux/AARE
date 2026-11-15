@@ -255,6 +255,11 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putInt("video_sync_ms", v) }
 
     /** The Jellyfin server for the Videos app (an http(s) address), and the signed-in account (see JellyfinAccount). */
+    /** Jellyfin videos above this bitrate (kbps) are re-encoded by the server to fit; 0 plays every file as it is. */
+    var jellyfinMaxKbps: Int
+        get() = prefs.getInt("jellyfin_max_kbps", 4_000)
+        set(v) = prefs.edit { putInt("jellyfin_max_kbps", v) }
+
     var jellyfinServer: String?
         get() = prefs.getString("jellyfin_server", null)
         set(v) = prefs.edit { if (v == null) remove("jellyfin_server") else putString("jellyfin_server", v) }
