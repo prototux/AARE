@@ -65,12 +65,32 @@ object CarVideoPlayer {
         player.addListener(object : Player.Listener {
             // The car shouldn't keep playing what was buffered before a pause.
             override fun onIsPlayingChanged(isPlaying: Boolean) { if (!isPlaying) CarPlayerAudio.flush() }
+            override fun onPlaybackSuppressionReasonChanged(reason: Int) {
+                if (reason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) DiagLog.add("car video: paused, another app (voice typing, a call...) has the phone's sound")
+                else if (reason == Player.PLAYBACK_SUPPRESSION_REASON_NONE) DiagLog.add("car video: the phone's sound is back, playing on")
+            }
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 Log.w(TAG, "playback", error)
                 DiagLog.add("car video: playback error ${error.errorCodeName}: ${error.message}")
             }
         })
         return player
+    }
+
+    /** Paused only because another app has the phone's audio focus for a while: play is still on. */
+    fun heldBack(player: Player): Boolean =
+        player.playWhenReady && player.playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS
+
+    /**
+     * Asks for the phone's audio focus again (dropping focus handling and turning it back on makes
+     * the player request it anew, which takes it from the app holding it), so playback goes on.
+     */
+    fun retakeFocus(player: ExoPlayer) {
+        val attrs = player.audioAttributes
+        player.setAudioAttributes(attrs, false)
+        player.setAudioAttributes(attrs, true)
+        player.playWhenReady = true
+        DiagLog.add("car video: play pressed while another app had the phone's sound: taking it back")
     }
 
     /** Down/up-mix to the car's channels, resample to its rate, then copy for the car. */

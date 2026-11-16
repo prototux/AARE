@@ -261,7 +261,10 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     }
     fun playPause() {
         if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
-        player.playWhenReady = !player.playWhenReady
+        // Held back by another app's sound (the keyboard's voice typing can keep it for a minute):
+        // play means play, so take the phone's audio focus back instead of toggling.
+        if (CarVideoPlayer.heldBack(player)) CarVideoPlayer.retakeFocus(player)
+        else player.playWhenReady = !player.playWhenReady
         pokes++
     }
 
@@ -288,8 +291,8 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
                 }
                 when (code) {
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) playPause()
-                    KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && !player.playWhenReady) playPause()
-                    KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down && player.playWhenReady) playPause()
+                    KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && (!player.playWhenReady || CarVideoPlayer.heldBack(player))) playPause()
+                    KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down && player.playWhenReady) { player.playWhenReady = false; pokes++ }
                     KeyEvent.KEYCODE_MEDIA_REWIND -> if (down) seek(-SEEK_MS)
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> if (down) seek(SEEK_MS)
                     KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) seek(-BIG_SEEK_MS)
