@@ -179,7 +179,7 @@ private fun PinCode(pin: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         pin.forEach { c ->
             Box(
-                Modifier.size(width = 56.dp, height = 76.dp).clip(RoundedCornerShape(16.dp)).background(scheme.surfaceContainerHigh),
+                Modifier.size(width = 56.dp, height = 76.dp).clip(MaterialTheme.shapes.small).background(scheme.surfaceContainerHigh),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(c.toString(), fontSize = 40.sp, color = scheme.onSurface, textAlign = TextAlign.Center)
@@ -199,7 +199,7 @@ private fun QrCodeView(text: String) {
     BoxWithConstraints {
         val side = minOf(maxWidth, maxHeight, 320.dp)
         Box(
-            Modifier.size(side).clip(RoundedCornerShape(20.dp)).background(Color.White).padding(side / (qr.size + 8) * 4),
+            Modifier.size(side).clip(MaterialTheme.shapes.medium).background(Color.White).padding(side / (qr.size + 8) * 4),
         ) {
             Canvas(Modifier.fillMaxSize().aspectRatio(1f)) {
                 val cell = size.width / qr.size

@@ -81,7 +81,7 @@ internal fun MessageBody(
                 Spacer(Modifier.height(16.dp))
                 CarTextView(
                     debug,
-                    Modifier.widthIn(max = 720.dp).clip(RoundedCornerShape(16.dp)).background(scheme.surfaceContainer).padding(16.dp),
+                    Modifier.widthIn(max = 720.dp).clip(MaterialTheme.shapes.small).background(scheme.surfaceContainer).padding(16.dp),
                     style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace, fontSize = 16.sp),
                     color = scheme.onSurfaceVariant,
                     maxLines = 8,
@@ -110,7 +110,7 @@ internal fun LongMessageTemplateView(t: LongMessageTemplate) {
         }
         Column(Modifier.fillMaxSize().padding(start = 24.dp, end = 24.dp, bottom = 24.dp)) {
             Box(
-                Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(24.dp))
+                Modifier.weight(1f).fillMaxWidth().clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceContainer),
             ) {
                 CarTextView(

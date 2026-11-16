@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -63,6 +64,16 @@ internal fun WeatherChip(weather: Weather?) {
     }
 }
 
+/** The weather as a dashboard card: the sky and the temperature, big. */
+@Composable
+internal fun WeatherCard(weather: Weather) {
+    Row(Modifier.fillMaxSize().padding(24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Icon(weatherIcon(weather), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(72.dp))
+        Spacer(Modifier.width(16.dp))
+        Text("${weather.temperature}${weather.unit}", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
 /** The next calendar event, with a shortcut to navigate to its place. */
 @Composable
 internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifier: Modifier) {
@@ -79,7 +90,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
         if (event.location.isNotBlank()) {
             Spacer(Modifier.height(10.dp))
             Row(
-                Modifier.clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
+                Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.secondaryContainer)
                     .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

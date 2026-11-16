@@ -22,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -45,18 +46,23 @@ import net.prototux.aare.ui.car.CarActions
 import net.prototux.aare.ui.car.CarAppEntry
 import net.prototux.aare.ui.car.CarAppKind
 import net.prototux.aare.ui.car.CarCall
+import net.prototux.aare.ui.car.CarLayout
 import net.prototux.aare.ui.car.CarNotice
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
+import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
 import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
 import net.prototux.aare.ui.theme.CarTheme
+import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.theme.forPhone
+import net.prototux.aare.ui.theme.withAccent
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -107,6 +113,8 @@ class CarRuntime(
     override var screenWidthDp by mutableIntStateOf(1280)
     override var screenHeightDp by mutableIntStateOf(720)
     override var densityDpi by mutableIntStateOf(160)
+    /** The car's screen takes touch (false for cars with only a knob or a touchpad), from its input service. */
+    var touchscreen by mutableStateOf(true)
     @Volatile override var carLocation: Location? = null
     @Volatile override var carHeading: Float? = null
 
@@ -282,13 +290,16 @@ class CarRuntime(
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
-        ui.carPlayStyle = settings.carStyle == Settings.STYLE_CARPLAY
+        ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
+        ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
         val barHidden = settings.hideBar
         if (ui.barHidden != barHidden) {
             ui.barHidden = barHidden
             ui.barTemporarilyVisible = false
         }
+        ui.dashboardCards = DashCard.parse(settings.dashboardCards)
+        ui.weatherInBar = settings.showWeather
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -311,7 +322,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "car_style", "dark_bar", "hide_bar", "ignore_driving" -> main.post { applyScreenSettings() }
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "hide_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -395,9 +406,10 @@ class CarRuntime(
             }
             entries += CarAppEntry(id, app.packageName, app.label, app.icon, kind)
         }
+        val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
         for (m in media.apps.value) {
-            // An app that has a car UI of its own is shown once, as that.
-            if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
+            // An app that has a car UI of its own is shown once, as that; a messaging app, as messaging.
+            if (m.packageName in hidden || m.packageName in messagingOnly || entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
         // Built in, like Android Auto's: calls and the car-side settings.
@@ -453,14 +465,15 @@ class CarRuntime(
         var lastWeather = 0L
         while (true) {
             val now = System.currentTimeMillis()
-            if (!settings.showWeather) ui.weather = null
+            // For the bar's clock or the dashboard's weather card.
+            if (!settings.showWeather && DashCard.WEATHER !in ui.dashboardCards) ui.weather = null
             else if (now - lastWeather > 30 * 60_000) {
                 val where = carLocation ?: DashboardInfo.phoneLocation(context)
                 if (where != null) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.weather(where) }?.let { ui.weather = it; lastWeather = now }
                 }
             }
-            ui.nextEvent = if (settings.showCalendar)
+            ui.nextEvent = if (DashCard.CALENDAR in ui.dashboardCards)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvent(context) } else null
             kotlinx.coroutines.delay(5 * 60_000)
         }
@@ -470,7 +483,7 @@ class CarRuntime(
     fun navigateTo(place: String): Boolean {
         val nav = ui.app(ui.activeNavAppId) ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION } ?: return false
         val conn = connection(nav.id) ?: return false
-        conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(place))))
+        conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(navigationQuery(place)))))
         ui.activeNavAppId = nav.id
         ui.screen = CarScreen.App(nav.id)
         return true
@@ -681,7 +694,7 @@ class CarRuntime(
     @Composable
     fun Root(modifier: Modifier = Modifier) {
         val mediaApps by media.apps.collectAsState()
-        CarTheme(night = ui.night) {
+        CarTheme(night = ui.night, theme = ui.theme) {
             CompositionLocalProvider(LocalCarDimens provides LocalCarDimens.current) {
                 CarShell(
                     state = ui,
@@ -703,7 +716,7 @@ class CarRuntime(
                             else -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod) }
                         }
                     },
-                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true) } },
+                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) } },
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }

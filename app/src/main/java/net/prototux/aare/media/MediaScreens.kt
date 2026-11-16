@@ -169,8 +169,8 @@ internal fun AppBadge(app: MediaApp, sizeDp: Int) {
 private fun NowPlayingChip(source: SourceState, onClick: () -> Unit) {
     val info = source.info ?: return
     Row(
-        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick).padding(start = 8.dp, end = 20.dp),
+        Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.secondaryContainer)
+            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick).padding(start = 8.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.size(48.dp), CircleShape)
@@ -279,8 +279,8 @@ private fun ItemRow(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, 
     val md = item.mediaMetadata
     val art = rememberArt(hub.art, md.artworkUri, md.artworkData, hub.connection.value?.packageName, 192)
     Row(
-        Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
-            .carFocusHighlight(RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium)
+            .carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (style.isCategory) {
@@ -289,7 +289,7 @@ private fun ItemRow(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, 
             if (art != null) Icon(art.asImageBitmap(), null, tint = tint, modifier = Modifier.size(40.dp))
             else Icon(Icons.Rounded.Folder, null, tint = tint, modifier = Modifier.size(40.dp))
         } else {
-            ArtBox(art, placeholderFor(item), Modifier.size(64.dp), RoundedCornerShape(12.dp))
+            ArtBox(art, placeholderFor(item), Modifier.size(64.dp), MaterialTheme.shapes.small)
         }
         Spacer(Modifier.width(16.dp))
         Column(Modifier.weight(1f)) {
@@ -319,8 +319,8 @@ private fun Tile(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, onC
     val art = rememberArt(hub.art, md.artworkUri, md.artworkData, hub.connection.value?.packageName, 384)
     if (style.isCategory) {
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
-                .carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick).padding(16.dp),
+            Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer)
+                .carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick).padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val tint = MaterialTheme.colorScheme.primary
@@ -332,10 +332,10 @@ private fun Tile(hub: DefaultMediaHub, item: MediaItem, style: ContentStyle, onC
         return
     }
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
-            .carFocusHighlight(RoundedCornerShape(20.dp)).clickable(onClick = onClick).padding(bottom = 8.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+            .carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick).padding(bottom = 8.dp),
     ) {
-        ArtBox(art, placeholderFor(item), Modifier.fillMaxWidth().aspectRatio(1f), RoundedCornerShape(20.dp))
+        ArtBox(art, placeholderFor(item), Modifier.fillMaxWidth().aspectRatio(1f), MaterialTheme.shapes.medium)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp)) {
             if (item.isExplicit) ExplicitBadge()

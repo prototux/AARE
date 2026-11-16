@@ -60,7 +60,7 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
             }
         }
         items(ui.history, key = { it.key }) { n ->
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer).padding(16.dp)) {
+            Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer).padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val icon = n.icon
                     if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(44.dp).clip(CircleShape))

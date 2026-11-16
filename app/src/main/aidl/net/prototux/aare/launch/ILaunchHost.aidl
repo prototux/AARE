@@ -12,7 +12,7 @@ import android.view.Surface;
  */
 interface ILaunchHost {
     /** Create the display into [surface] and launch [packageName] on it. Returns the virtual display id, or -1. */
-    int start(in Surface surface, int width, int height, int dpi, String packageName) = 1;
+    int start(in Surface surface, int width, int height, int dpi, String packageName, boolean keepDisplayAwake) = 1;
 
     /** The car screen's surface changed size (new [surface]/size). */
     void resize(in Surface surface, int width, int height, int dpi) = 2;

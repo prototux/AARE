@@ -48,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +60,7 @@ import net.prototux.aare.car.Calls
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.Pill
 import net.prototux.aare.media.Placeholder
+import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /** One number to call: a recent call or a contact. */
@@ -127,16 +127,16 @@ internal fun PhoneScreen(runtime: CarRuntime, modifier: Modifier) {
 @Composable
 private fun InCallCard(onHangUp: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(24.dp))
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(14.dp))
         Text(stringResource(R.string.phone_call_in_progress), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
-        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(Color(0xFFD32F2F)).clickable(onClick = onHangUp),
+        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(LocalCarColors.current.decline).clickable(onClick = onHangUp),
             contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = Color.White)
+            Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = LocalCarColors.current.onCall)
         }
     }
 }
@@ -149,7 +149,7 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
         else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
             items(list) { c ->
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(20.dp))
+                    Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium)
                         .clickable { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -188,9 +188,9 @@ private fun Keypad(onCall: (String) -> Unit) {
                 Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Rounded.Backspace, stringResource(R.string.phone_keypad_delete))
                 }
-                Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(Color(0xFF2E7D32))
+                Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(LocalCarColors.current.accept)
                     .clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = Color.White)
+                    Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = LocalCarColors.current.onCall)
                 }
             }
         }
@@ -198,7 +198,7 @@ private fun Keypad(onCall: (String) -> Unit) {
             keys.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { k ->
-                        Box(Modifier.weight(1f).height(64.dp).clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        Box(Modifier.weight(1f).height(64.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                             .clickable { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
                             Text(k, style = MaterialTheme.typography.headlineSmall)
                         }
