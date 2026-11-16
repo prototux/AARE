@@ -8,7 +8,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -106,12 +105,12 @@ fun CarShell(
     modifier: Modifier = Modifier,
 ) {
     when (state.layout) {
-        CarLayout.DOCK -> { DockShell(state, actions, appContent, navMap, overlay, modifier); return }
-        CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
+        CarLayout.DOCK -> { DockShell(state, actions, appContent, navMap, overlay, modifier.rotaryWrap()); return }
+        CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier.rotaryWrap()); return }
         CarLayout.TASKBAR -> Unit
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier).rotaryWrap()) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
@@ -159,7 +158,7 @@ internal fun ContentArea(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
         modifier = modifier.fillMaxHeight().onFocusChanged { contentFocused = it.hasFocus }
-            .focusRequester(focusEntry).focusGroup(),
+            .focusRequester(focusEntry).rotaryArea(),
         label = "screen",
     ) { screen ->
         when (screen) {
@@ -244,7 +243,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp),
+            Modifier.fillMaxWidth().height(d.railWidth).background(container).padding(horizontal = 16.dp).rotaryArea(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val driverEnd: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -262,7 +261,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     } else {
         val fit = sideRailFit(area.height - 32.dp)
         Column(
-            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp),
+            Modifier.fillMaxHeight().width(d.railWidth).background(container).padding(vertical = 16.dp).rotaryArea(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Clock()
@@ -460,7 +459,9 @@ private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Co
     val r = LocalCarDimens.current.cardRadius
     val border = LocalCarTheme.current.cardBorder
     Box(
+        // Each card is its own pane for the knob: turning stays in it, tilting moves to the next card.
         modifier
+            .rotaryArea()
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .let { if (border > 0.dp) it.border(border, MaterialTheme.colorScheme.outline, RoundedCornerShape(r)) else it }
@@ -645,7 +646,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
     val d = LocalCarDimens.current
     val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).carFocusHighlight(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = fg, modifier = Modifier.size(d.iconSize))
     }
 }
@@ -664,7 +665,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
         // Already in the user's order (CarRuntime.applyApps).
         items(state.apps, key = { it.id }) { app ->
             Column(
-                Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                Modifier.clip(MaterialTheme.shapes.medium).carFocusHighlight(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AppIcon(app, 80)
@@ -702,7 +703,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         notice.actions.forEach { (label, run) ->
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
+                modifier = Modifier.clip(MaterialTheme.shapes.medium).carFocusHighlight(MaterialTheme.shapes.medium).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }

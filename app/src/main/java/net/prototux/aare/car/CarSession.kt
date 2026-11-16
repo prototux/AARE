@@ -80,6 +80,8 @@ import net.prototux.aare.aap.pcm.PcmFormat
 import net.prototux.aare.tts.CarVoice
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
+import net.prototux.aare.ui.car.CarFocusVisibility
+import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.media.MediaHub
 import net.prototux.aare.video.BitrateController
 import net.prototux.aare.video.ProjectionDisplay
@@ -602,6 +604,8 @@ class CarSession(
                 }
             }
             if (report.hasRelativeEvent()) {
+                // A knob is present: tilting it now jumps between panes, see rotaryWrap.
+                main.post { if (!closed) CarFocusVisibility.rotary = true }
                 for (r in report.relativeEvent.dataList) {
                     Log.d(TAG, "input rotary: keycode=${r.keycode} delta=${r.delta}")
                 }
@@ -620,8 +624,13 @@ class CarSession(
         }
     }
 
-    /** HOME goes to the dashboard; held, it hands the screen back to the car. */
-    private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
+    /** HOME goes to the dashboard, or from it to the app list; held, it hands the screen back to the car. */
+    private val homeKey = LongPressKey(onPress = ::home, onLongPress = ::exitToCar)
+
+    /** Home, like the rail's menu button: already there, it opens the app list (and closes it again). */
+    private fun home() {
+        if (runtime.ui.screen == CarScreen.Dashboard) runtime.actions.openLauncher() else runtime.actions.goHome()
+    }
 
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
         // Some head units send a media key while they set up, before AARE has a car screen (a
@@ -1042,6 +1051,7 @@ class CarSession(
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         main.removeCallbacks(videoFocusCheck)
+        CarFocusVisibility.rotary = false // the next car may have no knob
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         readyAudio.clear(); audioMethods.clear()
