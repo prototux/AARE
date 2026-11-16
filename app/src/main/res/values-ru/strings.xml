@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Внешний вид</string>
     <string name="setup_choice_colors">Цвета</string>
-    <string name="setup_choice_colors_auto">День/ночь автомобиля</string>
+    <string name="setup_choice_colors_auto">Авто</string>
     <string name="setup_choice_dark">Тёмный</string>
     <string name="setup_choice_light">Светлый</string>
     <string name="setup_choice_bar">Панель</string>

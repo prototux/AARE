@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Apparence</string>
     <string name="setup_choice_colors">Couleurs</string>
-    <string name="setup_choice_colors_auto">Jour/nuit de la voiture</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Sombre</string>
     <string name="setup_choice_light">Clair</string>
     <string name="setup_choice_bar">Barre</string>
