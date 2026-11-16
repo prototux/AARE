@@ -401,18 +401,23 @@ class CarSession(
     }
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
-        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int {
+            val index = chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
                 vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
+            // The stream starts once the car grants focus: ask again while it says nothing.
+            main.post {
+                videoFocusAsks = 0
+                main.removeCallbacks(videoFocusCheck)
+                main.postDelayed(videoFocusCheck, VIDEO_FOCUS_RETRY_MS)
+            }
+            return index
+        }
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
                 if (closed) return@post
                 try {
                     startProjection(config, rightHandDrive)
-                    videoFocusAsks = 0
-                    main.removeCallbacks(videoFocusCheck)
-                    main.postDelayed(videoFocusCheck, VIDEO_FOCUS_RETRY_MS)
                 } catch (e: Exception) {
                     // Never crash the app over one car: end this session and say why.
                     Log.e(TAG, "can't start the projection", e)
@@ -468,7 +473,7 @@ class CarSession(
         teardownVideo()
         videoConfig = config
         val (w, h) = resolution(config.codecResolution)
-        val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
+        val fps = fpsOf(config)
         val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
         val layout = ProjectionLayout.of(config, w, h).let { base ->
             val o = vehicleOverride
@@ -803,16 +808,17 @@ class CarSession(
     private val focusLock = Any()
     private val focusCheck = Runnable { checkMediaFocus() }
 
-    // The head unit normally answers the focus request sent with START. Some setups (Mazda with an
-    // AAWireless dongle) sometimes never do, and the car screen stays black until the driver
+    // The head unit normally answers the focus request sent with the video config. Some setups (Mazda
+    // with an AAWireless dongle) sometimes never do, and the car screen stays black until the driver
     // switches to the car's own screen and back: ask again a few times while it has said nothing.
+    // If it still says nothing, send video anyway: it may be waiting for video before it answers.
     private var videoFocusAsks = 0
     private val videoFocusCheck = object : Runnable {
         override fun run() {
             val ch = video ?: return
             if (closed || ch.focusHeard) return
             if (videoFocusAsks >= VIDEO_FOCUS_RETRIES) {
-                Log.w(TAG, "video focus: the car never answered")
+                if (ch.assumeProjectedIfUnanswered()) DiagLog.add("video focus: the car never answered, sending video anyway")
                 return
             }
             videoFocusAsks++
@@ -1041,6 +1047,9 @@ class CarSession(
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
 
+        /** A car that doesn't state a frame rate gets 30: protobuf would read the missing field as the enum's first value, 60. */
+        fun fpsOf(c: VideoConfiguration): Int = if (c.hasFrameRate() && c.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
+
         /** The part of [c]'s resolution the car shows: the resolution less its declared margins. */
         fun visibleSize(c: VideoConfiguration): Pair<Int, Int> {
             val (w, h) = resolution(c.codecResolution)
@@ -1092,7 +1101,7 @@ class CarSession(
                 val c = configs[i]
                 val s = shortSide(i)
                 val fits = s <= maxHeight
-                val fps60 = c.frameRate == VideoFrameRateType.VIDEO_FPS_60
+                val fps60 = fpsOf(c) == 60
                 // Same short side: the wider visible picture is the car's real shape (the other gets stretched).
                 val long = visibleSize(c).let { maxOf(it.first, it.second) }
                 return (if (fits) 1_000_000_000L else 0L) + (if (fits) s else -s) * 100_000L + long * 10L + (if (fps60 == prefer60) 1 else 0)
