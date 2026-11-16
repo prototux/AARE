@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Nástěnka</string>
     <string name="dash_cards_title">Karty</string>
     <string name="dash_cards_hint">První karta dostane nejvíc místa, ostatní vyplní, co obrazovka zbude. Karta, která nemá co ukázat, uvolní místo další.</string>
+    <string name="dash_map_big_title">Mapa vždy velká</string>
+    <string name="dash_map_big_subtitle">Ať je v pořadí kdekoli, mapa dostane nejvíc místa</string>
     <string name="dash_card_map">Mapa</string>
     <string name="dash_card_media">Hudba</string>
     <string name="dash_card_calendar">Další událost v kalendáři</string>

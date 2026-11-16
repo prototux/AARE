@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Панель приладів</string>
     <string name="dash_cards_title">Картки</string>
     <string name="dash_cards_hint">Перша картка отримує найбільше місця, решта заповнюють залишок екрана. Картка, якій нічого показати, поступається місцем наступній.</string>
+    <string name="dash_map_big_title">Мапа завжди велика</string>
+    <string name="dash_map_big_subtitle">Хоч би де мапа стояла у списку, вона отримує найбільше місця</string>
     <string name="dash_card_map">Мапа</string>
     <string name="dash_card_media">Музика</string>
     <string name="dash_card_calendar">Наступна подія календаря</string>
