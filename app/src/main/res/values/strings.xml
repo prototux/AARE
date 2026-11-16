@@ -141,6 +141,11 @@
     <string name="setup_section_updates">Updates</string>
     <string name="setup_toggle_updates_title">Check for updates</string>
     <string name="setup_toggle_updates_subtitle">Warn on the home screen when a newer release is on GitHub. Off never connects to the internet.</string>
+    <string name="update_check_now">Check now</string>
+    <string name="update_checking">Checking…</string>
+    <string name="update_check_latest">You have the latest version (%1$s).</string>
+    <string name="update_check_available">AARE %1$s is available: see the home screen.</string>
+    <string name="update_check_failed">Couldn\'t reach GitHub. Try again later.</string>
     <string name="update_available_title">Update available — %1$s</string>
     <string name="update_available_subtitle">You have %1$s. Tap to view the release.</string>
     <string name="setup_section_location">Location</string>

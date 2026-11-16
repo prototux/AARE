@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Actualizări</string>
     <string name="setup_toggle_updates_title">Verifică actualizările</string>
     <string name="setup_toggle_updates_subtitle">Avertizează pe ecranul principal când există o versiune mai nouă pe GitHub. Dezactivat, nu se conectează niciodată la internet.</string>
+    <string name="update_check_now">Verifică acum</string>
+    <string name="update_checking">Se verifică…</string>
+    <string name="update_check_latest">Ai cea mai recentă versiune (%1$s).</string>
+    <string name="update_check_available">AARE %1$s este disponibil: vezi ecranul principal.</string>
+    <string name="update_check_failed">GitHub nu poate fi accesat. Încearcă mai târziu.</string>
     <string name="update_available_title">Actualizare disponibilă — %1$s</string>
     <string name="update_available_subtitle">Ai %1$s. Apasă pentru a vedea versiunea.</string>
     <string name="setup_log_save">Salvează</string>

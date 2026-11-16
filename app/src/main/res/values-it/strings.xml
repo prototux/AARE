@@ -445,6 +445,11 @@
     <string name="setup_section_updates">Aggiornamenti</string>
     <string name="setup_toggle_updates_title">Controlla aggiornamenti</string>
     <string name="setup_toggle_updates_subtitle">Avvisa nella schermata principale quando è disponibile una versione più recente su GitHub. Se disattivato, non si connette mai a Internet.</string>
+    <string name="update_check_now">Controlla ora</string>
+    <string name="update_checking">Controllo in corso…</string>
+    <string name="update_check_latest">Hai l\'ultima versione (%1$s).</string>
+    <string name="update_check_available">AARE %1$s è disponibile: vedi la schermata principale.</string>
+    <string name="update_check_failed">Impossibile raggiungere GitHub. Riprova più tardi.</string>
     <string name="update_available_title">Aggiornamento disponibile — %1$s</string>
     <string name="update_available_subtitle">Hai %1$s. Tocca per visualizzare la release.</string>
     <string name="setup_log_save">Salva</string>

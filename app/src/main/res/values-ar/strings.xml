@@ -429,6 +429,11 @@
     <string name="setup_section_updates">التحديثات</string>
     <string name="setup_toggle_updates_title">التحقق من وجود تحديثات</string>
     <string name="setup_toggle_updates_subtitle">التنبيه على الشاشة الرئيسية عند توفر إصدار أحدث على GitHub. عند التعطيل، لا يتم الاتصال بالإنترنت مطلقًا.</string>
+    <string name="update_check_now">تحقّق الآن</string>
+    <string name="update_checking">جارٍ التحقّق…</string>
+    <string name="update_check_latest">لديك أحدث إصدار (%1$s).</string>
+    <string name="update_check_available">AARE %1$s متاح: انظر الشاشة الرئيسية.</string>
+    <string name="update_check_failed">تعذّر الوصول إلى GitHub. حاول لاحقًا.</string>
     <string name="update_available_title">يتوفر تحديث — %1$s</string>
     <string name="update_available_subtitle">لديك %1$s. اضغط لعرض الإصدار.</string>
     <string name="setup_log_save">حفظ</string>
