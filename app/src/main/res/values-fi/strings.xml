@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Vaalea</string>
     <string name="setup_choice_bar">Palkki</string>
     <string name="setup_choice_bar_auto">Kuljettajan puoli</string>
+    <string name="setup_choice_status_items">Kello, signaali ja akku</string>
+    <string name="setup_choice_status_items_auto">Auton mukaan</string>
+    <string name="setup_choice_status_items_show">Näytä aina</string>
+    <string name="setup_choice_status_items_hide">Piilota aina</string>
+    <string name="setup_hint_status_items">Auton mukaan jättää pois sen, minkä auto jo näyttää näytöllään.</string>
     <string name="setup_choice_left">Vasen</string>
     <string name="setup_choice_right">Oikea</string>
     <string name="setup_choice_bottom">Alaosa</string>

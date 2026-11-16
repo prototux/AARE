@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.notify.PhoneGuidance
@@ -118,6 +119,8 @@ class CarUiState {
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */
     var weatherInBar by mutableStateOf(true)
+    /** The clock, phone signal and battery the bar shows: not those the car draws itself (and a setting). */
+    var chrome by mutableStateOf(CarChrome.ALL)
     /** The theme (a setting, with the phone's accent colours if asked). */
     var theme by mutableStateOf(AareTheme)
     /** Where things go: a taskbar and dashboard, or a dock and app pages (a setting). */

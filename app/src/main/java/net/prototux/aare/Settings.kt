@@ -148,6 +148,14 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
 
+    /**
+     * The clock, phone signal and battery in the car screen's bar: [CHROME_AUTO] leaves out those
+     * the car shows itself, [CHROME_SHOW] / [CHROME_HIDE] always show or hide all three.
+     */
+    var carChrome: String
+        get() = prefs.getString("car_chrome", CHROME_AUTO) ?: CHROME_AUTO
+        set(v) = prefs.edit { putString("car_chrome", v) }
+
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
         get() = prefs.getString("wallpaper", "none") ?: "none"
@@ -365,6 +373,9 @@ class Settings(context: Context) {
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
+        const val CHROME_AUTO = "auto"
+        const val CHROME_SHOW = "show"
+        const val CHROME_HIDE = "hide"
         const val WALLPAPER_CUSTOM = "custom"
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"

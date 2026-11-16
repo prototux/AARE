@@ -529,6 +529,10 @@ class CarSession(
         runtime.screenWidthDp = layout.contentWidth * 160 / dpi
         runtime.screenHeightDp = layout.contentHeight * 160 / dpi
         runtime.rightHandDrive = rightHandDrive
+        // Here, not at discovery: a UI config update can change what the head unit draws.
+        val chrome = CarChrome.drawnByHeadUnit(aap.headUnitAtLeast(4, 3), aap.uiChrome?.bits ?: 0, config.uiConfig.uiElementsList)
+        if (chrome != runtime.headUnitChrome) Log.i(TAG, "the head unit draws its own: $chrome")
+        runtime.headUnitChrome = chrome
         // Assigned before show(), so that a failing show() still has teardownVideo() release the display.
         val pd = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
             val d = LocalDensity.current
