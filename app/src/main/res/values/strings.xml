@@ -178,7 +178,7 @@
     <string name="setup_toggle_dark_bar_title">Dark bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Keep the bar dark even with day colors</string>
     <string name="setup_toggle_hide_bar_title">Hide bar</string>
-    <string name="setup_toggle_hide_bar_subtitle">Use the floating B button to show apps and notifications temporarily. Long-press and drag it to move it.</string>
+    <string name="setup_toggle_hide_bar_subtitle">Use the floating bar button to show apps and notifications temporarily. Long-press and drag it to move it.</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Cards</string>
     <string name="dash_cards_hint">The first card gets the most room; the others fill what the screen leaves. A card with nothing to show gives its place to the next.</string>
@@ -238,7 +238,7 @@
     <string name="accent_blue">Blue</string>
     <string name="accent_white">White</string>
     <string name="setup_switch_dark_bar">Dark bar, even with day colors</string>
-    <string name="setup_switch_hide_bar">Hide bar; tap the floating B button to show it, or long-press and drag to move it</string>
+    <string name="setup_switch_hide_bar">Hide bar; tap the floating bar button to show it, or long-press and drag to move it</string>
     <string name="bar_reveal">Show bar temporarily. Long-press and drag to move.</string>
     <string name="setup_switch_passenger">Passenger mode: no driving restrictions (the driver must not use the screen)</string>
     <string name="setup_switch_message_notifications">Message notifications</string>
