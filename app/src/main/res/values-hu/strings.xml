@@ -580,6 +580,26 @@
     <string name="about_oss_libraries_title">Könyvtárak</string>
     <string name="about_oss_protocol_title">Protokolldefiníciók</string>
 
+    <string name="obd_adapter_title">OBD2-adapter olvasása</string>
+    <string name="obd_adapter_subtitle">Bluetoothon párosított ELM327-adapter, amelyet az autó csatlakozása alatt olvas: motoradatok, amelyeket az autó nem küld az AARE-nek. Csak olvasás: az AARE soha nem ír az autóba.</string>
+    <string name="obd_simulated_title">Szimulált OBD2-adapter (hibakeresés)</string>
+    <string name="obd_simulated_subtitle">Szimulált autó valódi adapter helyett, az oldal kipróbálásához</string>
+    <string name="obd_section">OBD2-adapter</string>
+    <string name="obd_status_off">Ki</string>
+    <string name="obd_status_searching">Párosított adapter keresése (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: az autó nem válaszol (gyújtás kikapcsolva?)</string>
+    <string name="obd_status_gave_up">Nem található adapter: párosítson egyet a telefon Bluetooth-beállításaiban</string>
+    <string name="obd_rpm">Fordulatszám</string>
+    <string name="obd_speed">Sebesség</string>
+    <string name="obd_coolant">Hűtőfolyadék</string>
+    <string name="obd_intake_air">Szívott levegő</string>
+    <string name="obd_outside">Külső levegő</string>
+    <string name="obd_boost">Töltőnyomás</string>
+    <string name="obd_load">Motorterhelés</string>
+    <string name="obd_battery">Akkumulátor</string>
+    <string name="obd_fuel">Üzemanyag</string>
+    <string name="obd_ethanol">Etanol</string>
     <string name="vehicles_section_title">Autónkénti beállítások</string>
     <string name="vehicles_hint">Javítsd egy adott autó sűrűségét vagy a látható terület margóit új build nélkül. Szerkeszd a vehicles.json fájlt egy fájlkezelővel, az autót márka/modell/név alapján azonosítva.</string>
     <string name="vehicles_rule_count">%1$d szabály betöltve</string>

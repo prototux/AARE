@@ -580,6 +580,26 @@
     <string name="about_oss_libraries_title">Bibliothèques</string>
     <string name="about_oss_protocol_title">Définitions du protocole</string>
 
+    <string name="obd_adapter_title">Lire un adaptateur OBD2</string>
+    <string name="obd_adapter_subtitle">Un adaptateur ELM327 appairé en Bluetooth, lu pendant que la voiture est connectée : des données moteur que la voiture n\'envoie pas à AARE. Lecture seule : AARE n\'écrit jamais dans la voiture.</string>
+    <string name="obd_simulated_title">Adaptateur OBD2 simulé (débogage)</string>
+    <string name="obd_simulated_subtitle">Une voiture simulée au lieu d\'un vrai adaptateur, pour essayer cette page</string>
+    <string name="obd_section">Adaptateur OBD2</string>
+    <string name="obd_status_off">Désactivé</string>
+    <string name="obd_status_searching">Recherche d\'un adaptateur appairé (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s : la voiture ne répond pas (contact coupé ?)</string>
+    <string name="obd_status_gave_up">Aucun adaptateur trouvé : appairez-en un dans les réglages Bluetooth du téléphone</string>
+    <string name="obd_rpm">Régime</string>
+    <string name="obd_speed">Vitesse</string>
+    <string name="obd_coolant">Liquide de refroidissement</string>
+    <string name="obd_intake_air">Air d\'admission</string>
+    <string name="obd_outside">Air extérieur</string>
+    <string name="obd_boost">Pression turbo</string>
+    <string name="obd_load">Charge moteur</string>
+    <string name="obd_battery">Batterie</string>
+    <string name="obd_fuel">Carburant</string>
+    <string name="obd_ethanol">Éthanol</string>
     <string name="vehicles_section_title">Réglages par voiture</string>
     <string name="vehicles_hint">Corrigez la densité ou les marges de la zone visible d\'une voiture précise sans nouvelle build. Modifiez vehicles.json avec un gestionnaire de fichiers, en faisant correspondre la voiture par marque/modèle/nom.</string>
     <string name="vehicles_rule_count">%1$d règle(s) chargée(s)</string>
