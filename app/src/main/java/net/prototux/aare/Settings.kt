@@ -254,6 +254,11 @@ class Settings(context: Context) {
         get() = prefs.getInt("video_sync_ms", 0)
         set(v) = prefs.edit { putInt("video_sync_ms", v) }
 
+    /** How the picture fills the car screen: a [net.prototux.aare.player.VideoFit] id. */
+    var videoFit: String
+        get() = prefs.getString("video_fit", "fit") ?: "fit"
+        set(v) = prefs.edit { putString("video_fit", v) }
+
     /** The Jellyfin server for the Videos app (an http(s) address), and the signed-in account (see JellyfinAccount). */
     /** Jellyfin videos above this bitrate (kbps) are re-encoded by the server to fit; 0 plays every file as it is. */
     var jellyfinMaxKbps: Int

@@ -376,6 +376,11 @@
     <string name="video_sync_label">Sound sync</string>
     <string name="video_sync_earlier">Sound earlier</string>
     <string name="video_sync_later">Sound later</string>
+    <string name="video_fit_label">Picture</string>
+    <string name="video_fit_change">Change the picture size</string>
+    <string name="video_fit_fit">Fit</string>
+    <string name="video_fit_zoom">Zoom</string>
+    <string name="video_fit_stretch">Stretch</string>
     <string name="videos_app_label">Videos</string>
     <string name="videos_app_row_subtitle">The phone\'s videos on the car screen, for when you\'re parked; the sound goes to the car</string>
     <string name="videos_check_permission_title">Allow AARE to see your videos</string>

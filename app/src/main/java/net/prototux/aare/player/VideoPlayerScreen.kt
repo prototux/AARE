@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.Pause
@@ -123,6 +123,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     var pokes by remember { mutableIntStateOf(0) }
     var controls by remember { mutableStateOf(true) }
     var syncMs by remember { mutableIntStateOf(settings.videoSyncMs) }
+    var fit by remember { mutableStateOf(VideoFit.of(settings.videoFit)) }
     /** The knob is on the progress bar: turning scrubs. */
     var barFocused by remember { mutableStateOf(false) }
     var lastScrub by remember { mutableLongStateOf(0L) }
@@ -253,6 +254,11 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         CarVideoPlayer.syncMs = syncMs
         pokes++
     }
+    fun nextFit() {
+        fit = fit.next()
+        settings.videoFit = fit.id
+        pokes++
+    }
     fun playPause() {
         if (player.playbackState == Player.STATE_ENDED) player.seekTo(0)
         player.playWhenReady = !player.playWhenReady
@@ -314,15 +320,16 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             driving -> Placeholder(stringResource(R.string.video_paused_driving), loading = false, icon = Icons.Rounded.Movie)
             else -> {
                 AndroidView(
-                    factory = { ctx -> SurfaceView(ctx).also { player.setVideoSurfaceView(it) } },
-                    onRelease = { player.clearVideoSurfaceView(it) },
-                    modifier = Modifier.align(Alignment.Center).aspectRatio(ratio),
+                    factory = { ctx -> VideoFrame(ctx).also { player.setVideoSurfaceView(it.surface) } },
+                    update = { it.ratio = ratio; it.fit = fit },
+                    onRelease = { player.clearVideoSurfaceView(it.surface) },
+                    modifier = Modifier.fillMaxSize(),
                 )
                 if (buffering) Placeholder("", loading = true)
             }
         }
         AnimatedVisibility(controls || driving, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.fillMaxSize()) {
-            Controls(item, playing, position, duration, syncMs, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync,
+            Controls(item, playing, position, duration, syncMs, fit, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync, onFit = ::nextFit,
                 onSeekTo = ::seekTo, onBarFocus = { barFocused = it })
         }
     }
@@ -330,8 +337,8 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
 
 @Composable
 private fun Controls(
-    item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int,
-    onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit, onSync: (Int) -> Unit,
+    item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int, fit: VideoFit,
+    onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit, onSync: (Int) -> Unit, onFit: () -> Unit,
     onSeekTo: (Long) -> Unit, onBarFocus: (Boolean) -> Unit,
 ) {
     // The controls leaving take the focus with them.
@@ -362,7 +369,15 @@ private fun Controls(
                 Text(if (duration > 0) formatTime(duration) else "--:--", color = Color.White, style = MaterialTheme.typography.labelLarge)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Spacer(Modifier.weight(1f))
+                // Picture size, on the left: pressing goes fit, zoom, stretch.
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+                    CircleButton(Icons.Rounded.AspectRatio, stringResource(R.string.video_fit_change), onClick = onFit)
+                    Column(Modifier.padding(horizontal = 8.dp)) {
+                        Text(stringResource(R.string.video_fit_label), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
+                        Text(stringResource(when (fit) { VideoFit.FIT -> R.string.video_fit_fit; VideoFit.ZOOM -> R.string.video_fit_zoom; VideoFit.STRETCH -> R.string.video_fit_stretch }),
+                            color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    }
+                }
                 CircleButton(Icons.Rounded.Replay10, stringResource(R.string.video_back_10), onClick = { onSeek(-SEEK_MS) })
                 Spacer(Modifier.width(24.dp))
                 CircleButton(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (playing) R.string.video_pause else R.string.video_play),
