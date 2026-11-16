@@ -1,6 +1,7 @@
 package net.prototux.aare.aap
 
 import aap_protobuf.service.ServiceOuterClass.Service
+import aap_protobuf.service.control.message.ByeByeReasonOuterClass.ByeByeReason
 import aap_protobuf.service.control.message.ChannelOpenResponseOuterClass.ChannelOpenResponse
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
@@ -26,6 +27,16 @@ class ControlMessagesTest {
         assertTrue(AapSession.openAccepted(ByteArray(0)))
         assertFalse(AapSession.unknownOpenStatus(ByteArray(0)))
         assertFalse(AapSession.unknownOpenStatus(response(MessageStatus.STATUS_INVALID_CHANNEL)))
+    }
+
+    @Test
+    fun wirelessTurnedOffReasonFollowsTheHeadUnitVersion() {
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(null))
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(1 to 7))
+        assertEquals(ByeByeReason.USER_SELECTION, AapSession.wirelessDisabledReason(4 to 4))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(4 to 5))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(5 to 0))
+        assertEquals(ByeByeReason.WIRELESS_PROJECTION_DISABLED, AapSession.wirelessDisabledReason(6 to 1))
     }
 
     @Test
