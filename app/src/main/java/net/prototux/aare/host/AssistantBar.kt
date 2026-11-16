@@ -80,6 +80,7 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
     val d = LocalCarDimens.current
     val ui = runtime.ui
     val outer = when {
+        !ui.barVisible -> Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp)
         ui.railBottom -> Modifier.padding(bottom = d.railWidth + 12.dp, start = 12.dp, end = 12.dp)
         ui.railOnRight -> Modifier.padding(end = d.railWidth + 12.dp, start = 12.dp, bottom = 12.dp)
         else -> Modifier.padding(start = d.railWidth + 12.dp, end = 12.dp, bottom = 12.dp)

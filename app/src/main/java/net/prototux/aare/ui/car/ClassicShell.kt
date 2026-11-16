@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarFormat
@@ -59,7 +61,8 @@ internal fun ClassicShell(
     modifier: Modifier = Modifier,
 ) {
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().then(modifier)) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+            val area = DpSize(maxWidth, maxHeight)
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Clock()
@@ -67,7 +70,20 @@ internal fun ClassicShell(
                     PhoneStatusIcons()
                 }
                 ContentArea(state, actions, appContent, navMap, Modifier.weight(1f).fillMaxWidth(), launcherHome = true)
-                BottomBar(state, actions)
+                if (!state.barHidden) BottomBar(state, actions)
+            }
+            if (state.barHidden) {
+                if (state.barTemporarilyVisible) {
+                    Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { BottomBar(state, actions) }
+                } else {
+                    BarRevealButton(
+                        onClick = { state.barTemporarilyVisible = true },
+                        area = area,
+                        defaultX = barButtonDefaultX(railBottom = true, railOnRight = state.railOnRight),
+                        positionKey = state.railPosition,
+                        modifier = Modifier.align(Alignment.TopStart),
+                    )
+                }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
             NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))

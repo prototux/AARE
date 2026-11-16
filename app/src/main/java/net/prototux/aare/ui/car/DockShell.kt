@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.prototux.aare.ui.theme.CarTheme
@@ -63,6 +64,7 @@ internal fun DockShell(
     // colour (song titles, events) takes. Without it that text is black, unreadable at night.
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+            val portrait = maxHeight > maxWidth
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
                     when (val screen = state.screen) {
@@ -72,7 +74,25 @@ internal fun DockShell(
                     }
                 }
             }
-            if (maxHeight > maxWidth) {
+            if (state.barHidden) {
+                content(Modifier.fillMaxSize())
+                if (state.barTemporarilyVisible) {
+                    if (portrait) {
+                        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) { Dock(state, actions, horizontal = true) }
+                    } else {
+                        val alignment = if (state.driverOnRight) Alignment.CenterEnd else Alignment.CenterStart
+                        Box(Modifier.align(alignment).fillMaxHeight()) { Dock(state, actions) }
+                    }
+                } else {
+                    BarRevealButton(
+                        onClick = { state.barTemporarilyVisible = true },
+                        area = DpSize(maxWidth, maxHeight),
+                        defaultX = barButtonDefaultX(state.railBottom, state.railOnRight),
+                        positionKey = state.railPosition,
+                        modifier = Modifier.align(Alignment.TopStart),
+                    )
+                }
+            } else if (portrait) {
                 // Portrait screens: the dock along the bottom, as in CarPlay on tall screens.
                 Column(Modifier.fillMaxSize()) {
                     content(Modifier.weight(1f).fillMaxWidth())
