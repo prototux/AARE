@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Panel</string>
     <string name="dash_cards_title">Karty</string>
     <string name="dash_cards_hint">Pierwsza karta dostaje najwięcej miejsca, pozostałe wypełniają resztę ekranu. Karta, która nie ma nic do pokazania, ustępuje miejsca następnej.</string>
+    <string name="dash_map_big_title">Mapa zawsze duża</string>
+    <string name="dash_map_big_subtitle">Niezależnie od miejsca w kolejności mapa dostaje najwięcej miejsca</string>
     <string name="dash_card_map">Mapa</string>
     <string name="dash_card_media">Muzyka</string>
     <string name="dash_card_calendar">Następne wydarzenie w kalendarzu</string>

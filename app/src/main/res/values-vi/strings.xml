@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Bảng điều khiển</string>
     <string name="dash_cards_title">Thẻ</string>
     <string name="dash_cards_hint">Thẻ đầu tiên có nhiều chỗ nhất; các thẻ khác lấp phần còn lại của màn hình. Thẻ không có gì để hiển thị sẽ nhường chỗ cho thẻ tiếp theo.</string>
+    <string name="dash_map_big_title">Bản đồ luôn lớn</string>
+    <string name="dash_map_big_subtitle">Dù ở vị trí nào trong thứ tự, bản đồ vẫn có nhiều không gian nhất</string>
     <string name="dash_card_map">Bản đồ</string>
     <string name="dash_card_media">Nhạc</string>
     <string name="dash_card_calendar">Sự kiện lịch tiếp theo</string>

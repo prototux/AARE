@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Karten</string>
     <string name="dash_cards_hint">Die erste Karte bekommt den meisten Platz, die anderen füllen den Rest des Bildschirms. Eine Karte ohne Inhalt überlässt ihren Platz der nächsten.</string>
+    <string name="dash_map_big_title">Landkarte immer groß</string>
+    <string name="dash_map_big_subtitle">Wo auch immer sie in der Reihenfolge steht, bekommt die Landkarte den meisten Platz</string>
     <string name="dash_card_map">Landkarte</string>
     <string name="dash_card_media">Musik</string>
     <string name="dash_card_calendar">Nächster Kalendertermin</string>
