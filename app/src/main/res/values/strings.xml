@@ -381,6 +381,8 @@
     <string name="video_fit_fit">Fit</string>
     <string name="video_fit_zoom">Zoom</string>
     <string name="video_fit_stretch">Stretch</string>
+    <string name="video_zoom_out">Zoom out</string>
+    <string name="video_zoom_in">Zoom in</string>
     <string name="videos_app_label">Videos</string>
     <string name="videos_app_row_subtitle">The phone\'s videos on the car screen, for when you\'re parked; the sound goes to the car</string>
     <string name="videos_check_permission_title">Allow AARE to see your videos</string>

@@ -124,6 +124,9 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
     var controls by remember { mutableStateOf(true) }
     var syncMs by remember { mutableIntStateOf(settings.videoSyncMs) }
     var fit by remember { mutableStateOf(VideoFit.of(settings.videoFit)) }
+    /** Zoom in percent of the fitted picture, 0 for just filling the screen; [fillPct] is what that is now. */
+    var zoomPct by remember { mutableIntStateOf(settings.videoZoomPct) }
+    var fillPct by remember { mutableIntStateOf(100) }
     /** The knob is on the progress bar: turning scrubs. */
     var barFocused by remember { mutableStateOf(false) }
     var lastScrub by remember { mutableLongStateOf(0L) }
@@ -254,6 +257,11 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
         CarVideoPlayer.syncMs = syncMs
         pokes++
     }
+    fun zoomBy(steps: Int) {
+        zoomPct = nudgeZoom(zoomPct, fillPct, steps)
+        settings.videoZoomPct = zoomPct
+        pokes++
+    }
     fun nextFit() {
         fit = fit.next()
         settings.videoFit = fit.id
@@ -324,7 +332,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             else -> {
                 AndroidView(
                     factory = { ctx -> VideoFrame(ctx).also { player.setVideoSurfaceView(it.surface) } },
-                    update = { it.ratio = ratio; it.fit = fit },
+                    update = { it.ratio = ratio; it.fit = fit; it.zoomPct = zoomPct; it.onFillPct = { pct -> fillPct = pct } },
                     onRelease = { player.clearVideoSurfaceView(it.surface) },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -332,7 +340,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             }
         }
         AnimatedVisibility(controls || driving, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.fillMaxSize()) {
-            Controls(item, playing, position, duration, syncMs, fit, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync, onFit = ::nextFit,
+            Controls(item, playing, position, duration, syncMs, fit, if (zoomPct > 0) zoomPct else fillPct, onZoom = ::zoomBy, onBack = onClose, onPlayPause = ::playPause, onSeek = ::seek, onSync = ::nudgeSync, onFit = ::nextFit,
                 onSeekTo = ::seekTo, onBarFocus = { barFocused = it })
         }
     }
@@ -340,7 +348,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
 
 @Composable
 private fun Controls(
-    item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int, fit: VideoFit,
+    item: VideoItem, playing: Boolean, position: Long, duration: Long, syncMs: Int, fit: VideoFit, zoomShown: Int, onZoom: (Int) -> Unit,
     onBack: () -> Unit, onPlayPause: () -> Unit, onSeek: (Long) -> Unit, onSync: (Int) -> Unit, onFit: () -> Unit,
     onSeekTo: (Long) -> Unit, onBarFocus: (Boolean) -> Unit,
 ) {
@@ -377,8 +385,15 @@ private fun Controls(
                     CircleButton(Icons.Rounded.AspectRatio, stringResource(R.string.video_fit_change), onClick = onFit)
                     Column(Modifier.padding(horizontal = 8.dp)) {
                         Text(stringResource(R.string.video_fit_label), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
-                        Text(stringResource(when (fit) { VideoFit.FIT -> R.string.video_fit_fit; VideoFit.ZOOM -> R.string.video_fit_zoom; VideoFit.STRETCH -> R.string.video_fit_stretch }),
+                        Text(stringResource(when (fit) { VideoFit.FIT -> R.string.video_fit_fit; VideoFit.ZOOM -> R.string.video_fit_zoom; VideoFit.STRETCH -> R.string.video_fit_stretch }) +
+                            (if (fit == VideoFit.ZOOM) " $zoomShown%" else ""),
                             color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    }
+                    // Zoom: less and more, 5 % a press, for any shape of screen.
+                    if (fit == VideoFit.ZOOM) {
+                        CircleButton(Icons.Rounded.Remove, stringResource(R.string.video_zoom_out), onClick = { onZoom(-1) })
+                        Spacer(Modifier.width(4.dp))
+                        CircleButton(Icons.Rounded.Add, stringResource(R.string.video_zoom_in), onClick = { onZoom(1) })
                     }
                 }
                 CircleButton(Icons.Rounded.Replay10, stringResource(R.string.video_back_10), onClick = { onSeek(-SEEK_MS) })
