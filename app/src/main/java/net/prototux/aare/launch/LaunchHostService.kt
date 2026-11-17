@@ -1,12 +1,22 @@
 package net.prototux.aare.launch
 
+import android.os.Binder
 import android.os.IBinder
 import android.os.Bundle
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.app.PendingIntent
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.UiAutomation
+import android.content.pm.LauncherApps
+import android.graphics.Rect
+import android.text.Spanned
+import android.text.style.URLSpan
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
+import android.os.SystemClock
+import android.view.accessibility.AccessibilityNodeInfo
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
@@ -83,21 +93,6 @@ class LaunchHostService : ILaunchHost.Stub {
         return displayId
     }
 
-    override fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, packageName: String): Int {
-        stop()
-        val ctx = callerContext() ?: return -1
-        val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
-        display = vd
-        displayId = vd.display.displayId
-        if (!launchAssistant(ctx, packageName, displayId)) {
-            // Unlike start(), no empty display: the caller opens the assistant on the phone instead.
-            Log.w(TAG, "created display $displayId but could not open $packageName's assistant on it")
-            stop()
-            return -1
-        }
-        return displayId
-    }
-
     override fun resize(surface: Surface, width: Int, height: Int, dpi: Int) {
         val vd = display ?: return
         runCatching { vd.resize(width, height, dpi.coerceAtLeast(MIN_DPI)) }
@@ -105,10 +100,7 @@ class LaunchHostService : ILaunchHost.Stub {
     }
 
     override fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {
-        // A finger, as the phone's own screen reports one: Compose apps (Claude) ignore a tap of unknown tool type.
-        val props = MotionEvent.PointerProperties().apply { id = 0; toolType = MotionEvent.TOOL_TYPE_FINGER }
-        val coords = MotionEvent.PointerCoords().apply { this.x = x; this.y = y; pressure = 1f; size = 1f }
-        val ev = MotionEvent.obtain(downTime, eventTime, action, 1, arrayOf(props), arrayOf(coords), 0, 0, 1f, 1f, 0, 0, SOURCE_TOUCHSCREEN, 0)
+        val ev = finger(downTime, eventTime, action, x, y)
         setDisplayId(ev, displayId)
         inject(ev)
         ev.recycle()
@@ -123,18 +115,11 @@ class LaunchHostService : ILaunchHost.Stub {
         ev.recycle()
     }
 
-    override fun openLink(url: String, packageName: String): Boolean {
-        val id = displayId
-        if (id < 0) return false
-        val ctx = callerContext() ?: return false
-        // From here, not through AARE: with the car's screen only on a display of its own, AARE counts as in the
-        // background, and Android blocks the start it asks for.
-        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            // Afresh, the app shows only what the link opens: Google Maps ignores a new destination while it guides.
-            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle()
-        return startAsCaller(ctx, packageName, id, intent, opts) ?: runCatching { ctx.startActivity(intent, opts); true }
-            .onFailure { Log.w(TAG, "openLink($packageName) failed: ${it.message}") }.getOrDefault(false)
+    /** A finger on a touchscreen, as the phone's own screen reports one: some apps ignore a touch of unknown tool type. */
+    private fun finger(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float): MotionEvent {
+        val props = MotionEvent.PointerProperties().apply { id = 0; toolType = MotionEvent.TOOL_TYPE_FINGER }
+        val coords = MotionEvent.PointerCoords().apply { this.x = x; this.y = y; pressure = 1f; size = 1f }
+        return MotionEvent.obtain(downTime, eventTime, action, 1, arrayOf(props), arrayOf(coords), 0, 0, 1f, 1f, 0, 0, SOURCE_TOUCHSCREEN, 0)
     }
 
     override fun key(eventTime: Long, action: Int, keyCode: Int) {
@@ -145,6 +130,7 @@ class LaunchHostService : ILaunchHost.Stub {
 
     @Synchronized
     override fun stop() {
+        asHelper { synchronized(this) { if (ui != null) { uiHandler.removeCallbacks(uiIdle); disconnectUi() } } }
         phoneScreen(false, false, false)
         unwatchScreen?.let { runCatching { it() } }
         unwatchScreen = null
@@ -227,6 +213,19 @@ class LaunchHostService : ILaunchHost.Stub {
         stopMirror()
         exitProcess(0)
     }
+
+    /**
+     * Car links tapped in a hosted assistant's reply open in AARE, not the browser: Android leaves that
+     * choice to the user, which adb rights may make for them. Runs aside, the launch doesn't wait for it.
+     */
+    private fun approveCarLinks() = Thread {
+        runCatching {
+            val pm = ProcessBuilder("pm", "set-app-links-user-selection", "--user", "current", "--package", BuildConfig.APPLICATION_ID, "true", CarLinks.HOST)
+                .redirectErrorStream(true).start()
+            val out = pm.inputStream.bufferedReader().readText()
+            if (pm.waitFor() != 0) Log.w(TAG, "car links not approved: $out")
+        }.onFailure { Log.w(TAG, "car links not approved: ${it.message}") }
+    }.start()
 
     // ---------------------------------------------------------------- privileged plumbing (reflection)
 
@@ -351,7 +350,6 @@ class LaunchHostService : ILaunchHost.Stub {
     override fun topApp(): String? = runCatching {
         topResumedPackage(shell("dumpsys", "activity", "activities"))
     }.onFailure { Log.w(TAG, "top app unknown: ${it.message}") }.getOrNull()
-
     override fun openPending(intent: PendingIntent): Boolean {
         val id = displayId
         if (id < 0) return false
@@ -366,6 +364,215 @@ class LaunchHostService : ILaunchHost.Stub {
         }.onFailure { Log.w(TAG, "openPending on display $id failed: ${it.message}") }.getOrDefault(false)
     }
 
+    override fun openLink(url: String, packageName: String, warm: Boolean): Boolean {
+        val id = displayId
+        if (id < 0) return false
+        // Only when a tap follows (the assistant's voice button): Android has one screen reader at a time,
+        // and Maps' helper holding it after a destination left the assistant's next start without one.
+        if (warm) warmUi()
+        val ctx = callerContext() ?: return false
+        // From here, not through AARE: with the car's screen only on a display of its own, AARE counts as in the
+        // background, and Android blocks the start it asks for.
+        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            // Afresh, the app shows only what the link opens: Google Maps ignores a new destination while it
+            // guides (and a bare map ends the route), and an assistant left on another page had its buttons
+            // tapped there before its project's page came up, a chat outside the project.
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle()
+        return startAsCaller(ctx, packageName, id, intent, opts) ?: runCatching { ctx.startActivity(intent, opts); true }
+            .onFailure { Log.w(TAG, "openLink($packageName) failed: ${it.message}") }.getOrDefault(false)
+    }
+
+    override fun openShortcut(packageName: String, keyword: String): Boolean {
+        val id = displayId
+        if (id < 0) return false
+        warmUi()
+        // As the shell, which may start other apps' shortcuts like a launcher (ACCESS_SHORTCUTS).
+        val ctx = callerContext() ?: return false
+        return runCatching {
+            val apps = ctx.getSystemService(LauncherApps::class.java)
+            val user = android.os.Process.myUserHandle()
+            val query = LauncherApps.ShortcutQuery().setPackage(packageName)
+                .setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST)
+            val shortcut = shortcutFor(apps.getShortcuts(query, user).orEmpty().map { it.id }, keyword)
+            if (shortcut == null) {
+                Log.w(TAG, "no '$keyword' shortcut in $packageName")
+                return false
+            }
+            apps.startShortcut(packageName, shortcut, null, ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle(), user)
+            true
+        }.onFailure { Log.w(TAG, "openShortcut($packageName) on display $id failed: ${it.message}") }.getOrDefault(false)
+    }
+
+    // The screen reader belongs to whoever connected it; AARE's calls arrive under AARE's identity, the
+    // background connect under the helper's own. As the helper, always: else "not trusted UID".
+    override fun tapLabel(pattern: String, timeoutMs: Long): Boolean = asHelper { findAndTap(pattern, timeoutMs) }
+
+    private fun findAndTap(pattern: String, timeoutMs: Long): Boolean {
+        val id = displayId
+        if (id < 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return false
+        val regex = runCatching { Regex(pattern, RegexOption.IGNORE_CASE) }.getOrNull() ?: return false
+        val until = SystemClock.uptimeMillis() + timeoutMs
+        // Another helper may still hold the one screen reader Android allows a moment longer: wait for it.
+        var ui = connectedUi()
+        while (ui == null && SystemClock.uptimeMillis() < until) { Thread.sleep(300); ui = connectedUi() }
+        try {
+            if (ui == null) return false
+            while (true) {
+                // The tree as it is now: a cached node is the button just tapped, before the app redrew.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ui.clearCache()
+                val node = ui.windowsOnAllDisplays.get(id).orEmpty().firstNotNullOfOrNull { w -> w.root?.let { findLabel(it, regex) } }
+                if (node != null) {
+                    // A finger's tap on its middle: some apps (web pages) ignore an accessibility click.
+                    val r = Rect().also(node::getBoundsInScreen)
+                    val t = SystemClock.uptimeMillis()
+                    // Through the UiAutomation, as uiautomator taps: injected the plain way, the tap reached Claude without pressing.
+                    for (action in intArrayOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+                        if (action == MotionEvent.ACTION_UP) Thread.sleep(60)
+                        val ev = finger(t, SystemClock.uptimeMillis(), action, r.exactCenterX(), r.exactCenterY())
+                        setDisplayId(ev, id)
+                        ui.injectInputEvent(ev, true)
+                        ev.recycle()
+                    }
+                    Log.i(TAG, "tapped '$pattern' at $r on display $id")
+                    return true
+                }
+                if (SystemClock.uptimeMillis() >= until) {
+                    val seen = ui.windowsOnAllDisplays.get(id).orEmpty().flatMap { w -> w.root?.let(::labels).orEmpty() }
+                    Log.w(TAG, "no button matching '$pattern' on display $id, only: ${seen.take(40).joinToString(" | ")}")
+                    return false
+                }
+                Thread.sleep(LABEL_POLL_MS)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "tapLabel on display $id failed: ${e.message}")
+            return false
+        } finally {
+            releaseUiLater()
+        }
+    }
+
+    override fun carLinks(host: String, tapPattern: String): String? = asHelper { readCarLinks(host, tapPattern) }
+
+    /** Null when it couldn't look, so the caller doesn't take that for a screen without links. */
+    private fun readCarLinks(host: String, tapPattern: String): String? {
+        val id = displayId
+        if (id < 0 || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+        val tap = runCatching { Regex(tapPattern) }.getOrNull() ?: return null
+        val ui = connectedUi() ?: return null
+        return try {
+            val found = ArrayList<String>()
+            fun walk(node: AccessibilityNodeInfo) {
+                if (node.isVisibleToUser) {
+                    val text = node.text
+                    val urls = (text as? Spanned)?.getSpans(0, text.length, URLSpan::class.java).orEmpty()
+                        .map { it.url }.filter { host in it }
+                        // Or the address written out, as the app's "Open this website?" prompt shows it.
+                        .ifEmpty { listOfNotNull(text?.toString()?.trim()?.takeIf { it.startsWith("https://$host") && ' ' !in it }) }
+                    if (urls.isNotEmpty()) urls.forEach { found += "url\t$it" }
+                    else if (text != null && tap.matches(text.toString().trim())) {
+                        val r = Rect().also(node::getBoundsInScreen)
+                        found += "tap\t${text.toString().trim()}\t${r.exactCenterX()},${r.exactCenterY()}"
+                    }
+                }
+                for (i in 0 until node.childCount) node.getChild(i)?.let(::walk)
+            }
+            // The tree as it is now: cached nodes miss what an app added since the last look.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ui.clearCache()
+            ui.windowsOnAllDisplays.get(id).orEmpty().forEach { w -> w.root?.let(::walk) }
+            found.joinToString("\n")
+        } catch (e: Exception) {
+            Log.w(TAG, "carLinks on display $id failed: ${e.message}")
+            null
+        } finally {
+            releaseUiLater()
+        }
+    }
+
+    override fun tapAt(x: Float, y: Float) = asHelper { tapAtNow(x, y) }
+
+    private fun tapAtNow(x: Float, y: Float) {
+        val id = displayId
+        val ui = (if (id < 0) null else connectedUi()) ?: return
+        try {
+            val t = SystemClock.uptimeMillis()
+            for (action in intArrayOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+                if (action == MotionEvent.ACTION_UP) Thread.sleep(60)
+                val ev = finger(t, SystemClock.uptimeMillis(), action, x, y)
+                setDisplayId(ev, id)
+                ui.injectInputEvent(ev, true)
+                ev.recycle()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "tapAt on display $id failed: ${e.message}")
+        } finally {
+            releaseUiLater()
+        }
+    }
+
+    // One connection for the steps that follow each other (link, new chat, voice), closed once idle:
+    // each connect switches accessibility on system-wide, which costs time and makes apps rebuild their tree.
+    private val uiThread by lazy { HandlerThread("aare-ui").apply { start() } }
+    private val uiHandler by lazy { Handler(uiThread.looper) }
+    private var ui: UiAutomation? = null
+    private val uiIdle = Runnable { synchronized(this) { disconnectUi() } }
+
+    @Synchronized
+    private fun connectedUi(): UiAutomation? {
+        uiHandler.removeCallbacks(uiIdle)
+        return ui ?: uiAutomation(uiThread.looper).also { ui = it }
+    }
+
+    /**
+     * Connects the screen reader in the background while the app opens: the button search that follows
+     * would otherwise only start connecting (about a second) once the app is up.
+     */
+    // Its own thread, not the UiAutomation's looper: connecting waits for a callback on that looper.
+    private fun warmUi() { Thread { connectedUi(); releaseUiLater() }.start() }
+
+    @Synchronized
+    private fun releaseUiLater() { uiHandler.postDelayed(uiIdle, UI_IDLE_MS) }
+
+    /** Runs [block] as the helper itself, not as the app that called it through the binder. */
+    private inline fun <T> asHelper(block: () -> T): T {
+        val id = Binder.clearCallingIdentity()
+        try { return block() } finally { Binder.restoreCallingIdentity(id) }
+    }
+
+    private fun disconnectUi() {
+        ui?.let { runCatching { UiAutomation::class.java.getMethod("disconnect").invoke(it) }.onFailure { e -> Log.w(TAG, "UiAutomation not disconnected: ${e.cause ?: e}") } }
+        ui = null
+    }
+
+    /** Every text and description under [node], for the log when a label isn't there. */
+    private fun labels(node: AccessibilityNodeInfo): List<String> =
+        listOfNotNull(node.text, node.contentDescription).map { it.toString() }.filter { it.isNotBlank() } +
+            (0 until node.childCount).flatMap { i -> node.getChild(i)?.let(::labels).orEmpty() }
+
+    /** The first node under [node] whose text or description matches [regex], depth first. */
+    private fun findLabel(node: AccessibilityNodeInfo, regex: Regex): AccessibilityNodeInfo? {
+        // Only what is on screen: a hidden drawer's entry would be tapped wherever it lies.
+        if (node.isVisibleToUser && listOfNotNull(node.text, node.contentDescription).any { regex.containsMatchIn(it) }) return node
+        for (i in 0 until node.childCount) node.getChild(i)?.let { c -> findLabel(c, regex)?.let { return it } }
+        return null
+    }
+
+    /**
+     * Reads other apps' screens the way test tools do (uiautomator): a UiAutomation on its own
+     * connection, which the shell may open. It leaves the phone's accessibility services running.
+     */
+    private fun uiAutomation(looper: Looper): UiAutomation? = runCatching {
+        val iface = Class.forName("android.app.IUiAutomationConnection")
+        val connection = Class.forName("android.app.UiAutomationConnection").getDeclaredConstructor().newInstance()
+        val ui = runCatching { UiAutomation::class.java.getDeclaredConstructor(Looper::class.java, iface).newInstance(looper, connection) }
+            .getOrElse { UiAutomation::class.java.getDeclaredConstructor(Context::class.java, iface).newInstance(callerContext(), connection) }
+        UiAutomation::class.java.getMethod("connect", Int::class.javaPrimitiveType).invoke(ui, UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES)
+        // Views an app doesn't mark important too: Claude's voice mode shows its reply only through those.
+        ui.serviceInfo = ui.serviceInfo.apply {
+            flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+        }
+        ui
+    }.onFailure { Log.w(TAG, "no UiAutomation: ${it.cause ?: it}") }.getOrNull()
     /**
      * The keyboard of an app on [id] shows there, in the car, not on the phone's screen: Android
      * keeps it on the phone for a display of this kind. Like scrcpy's --display-ime-policy=local.
@@ -381,19 +588,6 @@ class LaunchHostService : ILaunchHost.Stub {
             wm.javaClass.getMethod("setShouldShowIme", Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType).invoke(wm, id, true)
         }
     }.onFailure { Log.w(TAG, "keyboard on display $id: ${it.cause ?: it}") }
-
-    /**
-     * Car links tapped in a hosted assistant's reply open in AARE, not the browser: Android leaves that
-     * choice to the user, which adb rights may make for them. Runs aside, the launch doesn't wait for it.
-     */
-    private fun approveCarLinks() = Thread {
-        runCatching {
-            val pm = ProcessBuilder("pm", "set-app-links-user-selection", "--user", "current", "--package", BuildConfig.APPLICATION_ID, "true", CarLinks.HOST)
-                .redirectErrorStream(true).start()
-            val out = pm.inputStream.bufferedReader().readText()
-            if (pm.waitFor() != 0) Log.w(TAG, "car links not approved: $out")
-        }.onFailure { Log.w(TAG, "car links not approved: ${it.message}") }
-    }.start()
 
     /** Launch [pkg]'s main activity onto [onDisplay]. */
     @SuppressLint("QueryPermissionsNeeded")
@@ -421,29 +615,16 @@ class LaunchHostService : ILaunchHost.Stub {
         result >= 0
     }.onFailure { Log.w(TAG, "startActivityAsUser($pkg) unavailable: ${it.message}") }.getOrNull()
 
-    /**
-     * Open [pkg]'s voice UI onto [onDisplay] (what the voice button asks of an assistant, as
-     * Assistants.startOnPhone does on the phone), or its main activity if it has none.
-     */
-    @SuppressLint("QueryPermissionsNeeded")
-    private fun launchAssistant(ctx: Context, pkg: String, onDisplay: Int): Boolean {
-        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay).toBundle()
-        for (action in listOf(Intent.ACTION_VOICE_COMMAND, Intent.ACTION_ASSIST)) {
-            val intent = Intent(action).setPackage(pkg)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            if (ctx.packageManager.resolveActivity(intent, 0) == null) continue
-            val opened = runCatching { ctx.startActivity(intent, opts) }
-                .onFailure { Log.w(TAG, "startActivity($action, $pkg) failed: ${it.message}") }.isSuccess
-            if (opened) return true
-        }
-        return launch(ctx, pkg, onDisplay)
-    }
-
     /** Inject one event into the launched app's display via InputManager's hidden injectInputEvent. */
+    // Looked up once: a pinch injects an event per finger movement.
+    private var injectMethod: java.lang.reflect.Method? = null
+    // Filled from several binder threads at once (touches, taps).
+    private val displayIdMethods = java.util.concurrent.ConcurrentHashMap<Class<*>, java.lang.reflect.Method>()
+
     private fun inject(event: InputEvent) {
         runCatching {
             val im = inputManager ?: return
-            val method = im.javaClass.getMethod("injectInputEvent", InputEvent::class.java, Int::class.javaPrimitiveType)
+            val method = injectMethod ?: im.javaClass.getMethod("injectInputEvent", InputEvent::class.java, Int::class.javaPrimitiveType).also { injectMethod = it }
             method.invoke(im, event, INJECT_INPUT_EVENT_MODE_ASYNC)
         }.onFailure { Log.w(TAG, "injectInputEvent failed: ${it.message}") }
     }
@@ -461,7 +642,7 @@ class LaunchHostService : ILaunchHost.Stub {
 
     private fun setDisplayId(event: InputEvent, id: Int) {
         if (id < 0) return
-        runCatching { event.javaClass.getMethod("setDisplayId", Int::class.javaPrimitiveType).invoke(event, id) }
+        runCatching { displayIdMethods.getOrPut(event.javaClass) { event.javaClass.getMethod("setDisplayId", Int::class.javaPrimitiveType) }.invoke(event, id) }
     }
 
     /**
@@ -489,10 +670,8 @@ class LaunchHostService : ILaunchHost.Stub {
         runCatching {
             HiddenApiBypass.addHiddenApiExemptions(
                 "Landroid/app/ActivityThread;", "Landroid/app/ActivityManager;", "Landroid/app/IActivityManager", "Landroid/app/IApplicationThread;",
-                "Landroid/app/ProfilerInfo;", "Landroid/hardware/input/InputManager;", "Landroid/hardware/input/InputManagerGlobal;",
-                "Landroid/hardware/display/DisplayManager;", "Landroid/view/WindowManagerGlobal;", "Landroid/view/IWindowManager",
-                "Landroid/os/ServiceManager;", "Landroid/os/PowerManager;", "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
-                "Landroid/hardware/display/IDisplayManager",
+                "Landroid/app/ProfilerInfo;", "Landroid/app/UiAutomation", "Landroid/app/IUiAutomationConnection", "Landroid/hardware/input/InputManager;", "Landroid/hardware/input/InputManagerGlobal;",
+                "Landroid/hardware/display/DisplayManager;", "Landroid/hardware/display/IDisplayManager", "Landroid/os/ServiceManager;", "Landroid/view/WindowManagerGlobal;", "Landroid/view/IWindowManager", "Landroid/os/PowerManager;", "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
             )
         }
     }
@@ -516,11 +695,18 @@ class LaunchHostService : ILaunchHost.Stub {
         const val FLAG_OWN_FOCUS = 1 shl 14 // hidden, API 34+: touches here leave the phone's focus alone
         const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
         const val USER_CURRENT = -2
+        /** How long a screen reader connection stays open after its last use. */
+        const val UI_IDLE_MS = 15_000L
         const val DISPLAY_IME_POLICY_LOCAL = 0 // WindowManager.DISPLAY_IME_POLICY_LOCAL, hidden
+        /** How often a button search looks again. */
+        const val LABEL_POLL_MS = 150L
         /** The lowest density a display gets, on creation and on resize alike. */
         const val MIN_DPI = 120
     }
 }
+
+/** The id among an app's shortcut [ids] that contains [keyword], whatever its case; null when none does. */
+internal fun shortcutFor(ids: List<String>, keyword: String): String? = ids.firstOrNull { it.contains(keyword, ignoreCase = true) }
 
 /**
  * The package of the activity resumed on top of the phone's own screen (display 0), from
@@ -541,12 +727,13 @@ internal fun topResumedPackage(dump: String): String? {
     return Regex("""topResumedActivity=ActivityRecord\{\S+ u\d+ ([\w.]+)/""").find(dump.substring(display, next))?.groupValues?.get(1)
 }
 
-/** What `cmd window user-rotation` printed, as the arguments that put it back ("free" or "lock N"); null for anything else. */
 /**
  * Whether the panel is switched for [off] asked while it was set [wasOff]: on a change, and a dark
  * panel asked again too, as the power key may have lit it since.
  */
 internal fun switchesPanel(off: Boolean, wasOff: Boolean) = off || off != wasOff
 
+
+/** What `cmd window user-rotation` printed, as the arguments that put it back ("free" or "lock N"); null for anything else. */
 internal fun savedRotation(output: String): String? =
     output.trim().lowercase().takeIf { Regex("free|lock [0-3]").matches(it) }

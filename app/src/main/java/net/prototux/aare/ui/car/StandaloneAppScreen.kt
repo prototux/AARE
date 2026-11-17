@@ -1,15 +1,12 @@
 package net.prototux.aare.ui.car
 
 import android.graphics.SurfaceTexture
-import android.os.Handler
-import android.os.Looper
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.TextureView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -17,9 +14,9 @@ import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,15 +30,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import android.net.Uri
+import net.prototux.aare.host.CarLinkActivity
+import net.prototux.aare.host.CarLinks
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.media.Placeholder
-import java.util.concurrent.atomic.AtomicBoolean
+import net.prototux.aare.notify.CarNotificationListener
 
 /**
  * Hosts an ordinary phone app on the car screen (NewPipe, an emulator, a browser app…). A
@@ -55,10 +59,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Composable
 internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier, backId: String = CarRuntime.standaloneId(packageName), card: Boolean = false) {
     val context = LocalContext.current
-    // A helper per app: a hosted app and a media app's video each keep their own display. The map card
-    // has one of its own, laid out as on a tablet so the map keeps most of the small card.
+    // A helper per app: two phone apps side by side each keep their own display. The map card has
+    // one of its own, laid out as on a tablet so the map keeps most of the small card.
     val launcher = remember(packageName) { AppLauncher(context, (if (card) "card-" else "launch-") + packageName) }
     var started by remember(packageName) { mutableStateOf(false) }
+    // Voice sessions started here: each opens a fresh chat, so the car links' memory starts afresh.
+    var voiceStarts by remember(packageName) { mutableIntStateOf(0) }
 
     DisposableEffect(packageName) {
         // Hardware / head-unit Back goes to the launched app.
@@ -71,7 +77,9 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
         runtime.setScreenBack(backId, back)
         onDispose {
             runtime.clearScreenBack(backId, back)
-            // A navigation it never got to (left before the app was up) isn't started when it is opened later by hand.
+            // A voice request it never got to (left before the app was up) isn't kept for the next time it opens.
+            if (runtime.ui.assistantVoice == packageName) runtime.ui.assistantVoice = null
+            // Nor a navigation: opened later by hand, the app would start that old route over the driver's own.
             // Not by the map card: leaving it is how the request reaches the app full screen.
             if (!card && runtime.ui.navigationRequest?.first == packageName) runtime.ui.navigationRequest = null
             launcher.release()
@@ -81,7 +89,20 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
     Box(modifier.background(Color.Black)) {
         if (!driving) {
             HostedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(), tablet = card) { started = it }
-            // A navigation asked for in this app (an event on the calendar card, say): its address, opened once it runs.
+            // The voice button: the assistant opens straight into its voice mode, where it has one.
+            LaunchedEffect(started, runtime.ui.assistantVoice) {
+                if (started && runtime.ui.assistantVoice == packageName) try {
+                    voiceStarts++
+                    val link = Settings(context).assistantLink
+                    withContext(Dispatchers.IO) {
+                        startVoice(link, { launcher.openLink(it, packageName, warm = true) }, launcher::tapLabel) { launcher.openShortcut(packageName, VOICE_SHORTCUT) }
+                    }
+                } finally {
+                    // Only once done or left: the request is this effect's key, and clearing it cancels the effect.
+                    if (runtime.ui.assistantVoice == packageName) runtime.ui.assistantVoice = null
+                }
+            }
+            // A navigation asked for in this app (a car link, a calendar event): its address, opened once it runs.
             // Not by the map card: the request opens the app full screen, which takes the card, and the address, away.
             LaunchedEffect(started, runtime.ui.navigationRequest) {
                 val request = runtime.ui.navigationRequest?.takeIf { started && !card && it.first == packageName } ?: return@LaunchedEffect
@@ -89,8 +110,54 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                 try { withContext(Dispatchers.IO) { launcher.openLink(request.second, packageName) } }
                 finally { if (runtime.ui.navigationRequest == request) runtime.ui.navigationRequest = null }
             }
+            // The assistant's car links, read off the car screen and run here: MacroDroid and the phone's own
+            // tools only see the phone's display, not this one. Links already in the chat when it shows stay put.
+            LaunchedEffect(started, voiceStarts) {
+                if (!started || packageName != Settings(context).assistantPackage) return@LaunchedEffect
+                var seen: Map<String, Int> = emptyMap()
+                // The chat may still be drawing at first: what shows in that time is the chat's, not a new reply's.
+                val since = SystemClock.uptimeMillis()
+                // When AARE last tapped a link emoji: only then is an address in the app's prompt this reply's.
+                var tappedAt = 0L
+                while (true) {
+                    // A failed look says nothing about the chat: it neither counts nor runs anything.
+                    val lines = withContext(Dispatchers.IO) { launcher.carLinks(CarLinks.HOST + CarLinks.PATH, CAR_LINK_TAP) }
+                    if (lines == null) { delay(CAR_LINK_POLL_MS); continue }
+                    val (fresh, next) = newCarLinks(seen, lines)
+                    if (SystemClock.uptimeMillis() - since >= CAR_LINK_SETTLE_MS) carLinksToRun(fresh, lines).forEach { line ->
+                        val part = line.split('\t')
+                        if (part[0] == "url") {
+                            // Only the prompt AARE's tap opened: a link the driver tapped is theirs to open.
+                            if (!ownPrompt(tappedAt, SystemClock.uptimeMillis())) return@forEach
+                            tappedAt = 0L
+                            // Its "Open this website?" prompt goes, by the Back key, which a tap that comes too
+                            // early can't miss; then the voice conversation ends, which would otherwise go on listening.
+                            // Both before the link runs: a link that shows another app (navigation) takes this
+                            // screen away, and its helper with it, and the conversation went on on the phone.
+                            withContext(Dispatchers.IO) {
+                                val t = SystemClock.uptimeMillis()
+                                launcher.key(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)
+                                launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
+                                // Its call notification's hang-up button, else the voice mode's own end button.
+                                CarNotificationListener.instance?.hangUp(packageName) == true || launcher.tapLabel(END_VOICE_BUTTON, CLOSE_WAIT_MS)
+                            }
+                            CarLinkActivity.runCarLink(context, Uri.parse(part[1]), packageName)
+                        } else withContext(Dispatchers.IO) {
+                            tappedAt = SystemClock.uptimeMillis()
+                            // Drawn without its address: tapped like a finger would. The app then asks whether to
+                            // open the website, with the address written out, which the next look reads as a link.
+                            val (x, y) = part[2].split(',').map(String::toFloat)
+                            launcher.tapAt(x, y)
+                        }
+                    }
+                    seen = next
+                    delay(CAR_LINK_POLL_MS)
+                }
+            }
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
+            // Driving, a voice request isn't kept for later: it would open voice mode unasked once parked.
+            LaunchedEffect(Unit) { if (runtime.ui.assistantVoice == packageName) runtime.ui.assistantVoice = null }
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
         }
     }
@@ -186,77 +253,72 @@ internal fun touchEvents(before: List<Finger>, after: List<Finger>): List<Touch>
 internal fun hostedDpi(w: Int, h: Int, dpi: Int): Int = minOf(dpi, minOf(w, h) * 160 / 600).coerceAtLeast(120)
 
 /**
- * A launched app's picture and touches: a [TextureView] whose surface [start] hands to [launcher]
- * (after connecting it, which blocks, so off the main thread), and the car's touches forwarded to
- * the app's display. [onStarted] gets whether it started, on the main thread.
- *
- * The connection can finish after this left the screen (the app closed, or driving began), and
- * after its owner released [launcher]: then nothing is started, or what was started is released
- * again, and [onStarted] isn't called.
+ * Starts an assistant listening. With a start [link] (a project), the link first, then its voice
+ * button; a project opens on its page, so a new chat there first, which has the button. Without a
+ * link, or when the buttons don't show, the app's voice [shortcut], in a new chat.
  */
-@Composable
-internal fun LaunchedAppSurface(
-    launcher: AppLauncher,
-    packageName: String,
-    /** The car screen's density, for the display. */
-    dpi: Int,
-    modifier: Modifier,
-    /** Creates the display into the surface (width, height) and launches the app: its id, or -1. */
-    start: (Surface, Int, Int) -> Int,
-    onStarted: (Boolean) -> Unit,
-) {
-    val shown = remember(launcher) { AtomicBoolean(true) }
-    DisposableEffect(shown) {
-        shown.set(true)
-        onDispose { shown.set(false) }
-    }
-    val latestStart by rememberUpdatedState(start)
-    val latestOnStarted by rememberUpdatedState(onStarted)
-    val latestDpi by rememberUpdatedState(dpi)
-    androidx.compose.ui.viewinterop.AndroidView(
-        factory = { ctx ->
-            TextureView(ctx).apply {
-                surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
-                        val surface = Surface(st)
-                        Thread {
-                            val id = if (shown.get() && launcher.connect() && shown.get()) latestStart(surface, w, h) else -1
-                            if (!shown.get()) {
-                                // Gone meanwhile: its owner's release() may have run before this connected or started.
-                                launcher.release()
-                                return@Thread
-                            }
-                            Handler(Looper.getMainLooper()).post { if (shown.get()) latestOnStarted(id >= 0) }
-                        }.apply { isDaemon = true }.start()
-                    }
-                    override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
-                        launcher.resize(Surface(st), w, h, latestDpi)
-                    }
-                    override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean = true
-                    override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
-                }
-            }
-        },
-        modifier = modifier,
-    )
-    // Forward the car's touches to the launched app's display (single pointer for now).
-    Box(modifier.pointerInput(packageName) {
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            val t0 = down.uptimeMillis
-            launcher.touch(t0, t0, MotionEvent.ACTION_DOWN, down.position.x, down.position.y, 0)
-            down.consume()
-            while (true) {
-                val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                if (change.pressed) {
-                    launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_MOVE, change.position.x, change.position.y, 0)
-                } else {
-                    launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_UP, change.position.x, change.position.y, 0)
-                    change.consume()
-                    break
-                }
-                change.consume()
-            }
-        }
-    })
+internal fun startVoice(link: String, openLink: (String) -> Boolean, tapLabel: (String, Long) -> Boolean, shortcut: () -> Boolean) {
+    // Whichever the page shows first: a project's page has had either. After a new chat, its voice button;
+    // after the voice button, nothing matches any more, so the second look just runs out.
+    val linked = link.isNotEmpty() && openLink(link) &&
+        tapLabel("$VOICE_BUTTON|$NEW_CHAT_BUTTON", VOICE_BUTTON_WAIT_MS).also { if (it) tapLabel(VOICE_BUTTON, VOICE_AFTER_CHAT_MS) }
+    if (!linked) shortcut()
 }
+
+/** What an assistant's voice-mode shortcut has in its id (Claude: quick_action_voice). */
+private const val VOICE_SHORTCUT = "voice"
+
+/** The emojis the assistant puts car links behind (docs/assistant-links.md), when it draws them without their address. */
+internal const val CAR_LINK_TAP = "^(\uD83E\uDDED|\uD83C\uDFC1|\u25B6|\u23F8|\u23ED|\u23EE|\uD83D\uDCF1|\uD83C\uDF19|\u2600|\u2139|\uD83D\uDCE8|\u2709|\u2705)\uFE0F?$"
+
+
+/** The assistant's voice mode's end button (Claude: "Beenden"), pressed once a car link ran. */
+private const val END_VOICE_BUTTON = "^(Beenden|End)$"
+private const val CLOSE_WAIT_MS = 1_500L
+
+/** Whether an address in the assistant's "Open this website?" prompt is from the emoji AARE tapped at [tappedAt]. */
+internal fun ownPrompt(tappedAt: Long, now: Long) = tappedAt > 0 && now - tappedAt < OWN_PROMPT_MS
+
+/** How long after AARE taps a link emoji the prompt it opens counts as that tap's. */
+private const val OWN_PROMPT_MS = 15_000L
+private const val CAR_LINK_POLL_MS = 1_500L
+
+/** How long after the assistant shows its car links count as the chat's own, not a new reply's. */
+private const val CAR_LINK_SETTLE_MS = 3_000L
+
+/**
+ * Of the [fresh] car links, those to run: every address, but of the emojis only the lowest on screen
+ * ([now]), where a new reply ends. One higher up came into view by scrolling back.
+ */
+internal fun carLinksToRun(fresh: List<String>, now: List<String>): List<String> {
+    val lowest = now.lastOrNull { it.startsWith("tap\t") }
+    return fresh.filter { !it.startsWith("tap\t") || it == lowest }
+}
+
+/**
+ * The car links in [now] (the helper's carLinks lines, top to bottom) that weren't there before: more of
+ * one than ever [seen] at once. A tapped emoji counts by its text, not its place, which moves as the chat
+ * scrolls. An address counts only while shown: the app's "Open this website?" prompt shows it, then goes,
+ * and the same place asked for again shows it anew. Returns them in screen order, with the counts to
+ * remember next time.
+ */
+internal fun newCarLinks(seen: Map<String, Int>, now: List<String>): Pair<List<String>, Map<String, Int>> {
+    fun key(line: String) = line.split('\t').take(2).joinToString("\t")
+    val counts = now.groupingBy(::key).eachCount()
+    val fresh = counts.flatMap { (k, n) ->
+        now.indices.filter { key(now[it]) == k }.takeLast((n - (seen[k] ?: 0)).coerceAtLeast(0))
+    }.sorted().map { now[it] }
+    return fresh to (seen.filterKeys { !it.startsWith("url\t") } + counts.mapValues { (k, n) -> if (k.startsWith("url\t")) n else maxOf(n, seen[k] ?: 0) })
+}
+
+/** The label of an assistant's voice-mode button, in English or German (Claude: "Voice mode", "Sprachmodus"). */
+internal const val VOICE_BUTTON = "^(voice mode|sprachmodus)"
+
+/** The label of the button that starts a chat on a project's page (Claude: "New session", "Neue Sitzung"). */
+internal const val NEW_CHAT_BUTTON = "^(new session|new chat|neue sitzung|neuer chat)$"
+
+/** How long the start link may take to show a button: a project's page can take seconds to load in the car. */
+private const val VOICE_BUTTON_WAIT_MS = 8_000L
+
+/** How long to look for the voice button after a new chat. */
+private const val VOICE_AFTER_CHAT_MS = 4_000L

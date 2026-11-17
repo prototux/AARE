@@ -1,5 +1,6 @@
 package net.prototux.aare.ui
 
+import net.prototux.aare.host.CarLinks
 import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.mutableFloatStateOf
@@ -1447,6 +1448,24 @@ private fun AssistantCard(settings: Settings) {
                 stringResource(R.string.assistant_car_screen_toggle_subtitle),
                 onCarScreen,
             ) { onCarScreen = it; settings.assistantOnCarScreen = it }
+            if (onCarScreen) {
+                // Claude: a project with AARE's car link instructions, opened through the start link below.
+                var project by remember { mutableStateOf(settings.assistantProject) }
+                OutlinedTextField(project, { project = it; settings.assistantProject = it.trim() }, Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text(stringResource(R.string.assistant_project_label)) }, singleLine = true,
+                    isError = !CarLinks.goodProjectName(project),
+                    supportingText = { Text(stringResource(R.string.assistant_project_hint)) })
+                Text(stringResource(R.string.assistant_project_steps, project.trim()),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = {
+                    ctx.getSystemService(ClipboardManager::class.java)
+                        ?.setPrimaryClip(ClipData.newPlainText(project.trim(), CarLinks.INSTRUCTIONS))
+                }) { Text(stringResource(R.string.assistant_copy_instructions)) }
+                var link by remember { mutableStateOf(settings.assistantLink) }
+                OutlinedTextField(link, { link = it; settings.assistantLink = it.trim() }, Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text(stringResource(R.string.assistant_link_label)) }, singleLine = true,
+                    supportingText = { Text(stringResource(R.string.assistant_link_hint)) })
+            }
         }
     }
 }

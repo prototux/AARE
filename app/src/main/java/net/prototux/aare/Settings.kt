@@ -227,6 +227,19 @@ class Settings(context: Context) {
         set(v) = prefs.edit { if (v == null) remove("assistant_pkg") else putString("assistant_pkg", v) }
 
     /**
+     * A link the assistant hosted on the car screen opens before it listens (a Claude project, say),
+     * so the voice button starts it there; empty = its own voice mode, in a new chat.
+     */
+    var assistantLink: String
+        get() = prefs.getString("assistant_link", "") ?: ""
+        set(v) = prefs.edit { putString("assistant_link", v) }
+
+    /** The name of the assistant's project with the car link instructions, as the setup steps call it. */
+    var assistantProject: String
+        get() = prefs.getString("assistant_project", "Car001") ?: "Car001"
+        set(v) = prefs.edit { putString("assistant_project", v) }
+
+    /**
      * For an assistant without a car app: show its voice UI on the car screen (through the same
      * launcher as standalone apps) instead of opening it on the phone, while parked or in passenger
      * mode. Off by default (today's behaviour); needs root or Shizuku, checked separately

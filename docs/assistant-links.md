@@ -20,6 +20,7 @@ make only `http` and `https` addresses tappable, which is why it is not an `aare
 | Link | Does |
 |---|---|
 | `…/go/car_navigate?destination=Berlin` | navigates to the place in the car's navigation app |
+| `…/go/car_stop_navigation` | ends the route in the car's navigation app |
 | `…/go/car_media?action=next` | `play`, `pause`, `next` or `previous` |
 | `…/go/car_display?mode=dark` | `dark`, `light` or `auto` (the car's day/night setting) |
 | `…/go/car_open?what=Spotify` | shows an app, `home` or `apps`; never the phone screen mirror |
@@ -53,6 +54,7 @@ When I want something done in the car, answer briefly and add a last line with o
 emoji that links to the car action. Only one such line per answer. Arguments are URL-encoded.
 
 - Navigate:      [🧭](https://aare.internal/go/car_navigate?destination=<place>)
+- End the route: [🏁](https://aare.internal/go/car_stop_navigation)
 - Play:          [▶️](https://aare.internal/go/car_media?action=play)
 - Pause:         [⏸️](https://aare.internal/go/car_media?action=pause)
 - Next:          [⏭️](https://aare.internal/go/car_media?action=next)
@@ -80,7 +82,7 @@ Assistant apps draw their links as text without a clickable node, so an accessib
 emoji does nothing: the macro taps it for real, through Shizuku.
 
 - **Trigger:** *Screen Content*, only in the assistant app (for example Claude), text matches the
-  regular expression `^(🧭|▶|⏸|⏭|⏮|📱|🌓|ℹ|📨)\x{FE0F}?$`.
+  regular expression `^(🧭|🏁|▶|⏸|⏭|⏮|📱|🌓|ℹ|📨)\x{FE0F}?$`.
 - **Action:** *Shell Script*, with *Shizuku*: `sh /sdcard/Download/aare-tap.sh`.
 
 `/sdcard/Download/aare-tap.sh` finds the newest link emoji on the screen, taps it, and then taps

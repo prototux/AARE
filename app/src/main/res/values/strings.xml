@@ -596,4 +596,10 @@
     <string name="car_link_playing">Playing %1$s, %2$s.</string>
     <string name="car_link_next_turn">Next: %1$s.</string>
     <string name="car_link_battery">Phone battery %1$d percent.</string>
+    <string name="assistant_project_label">Project name</string>
+    <string name="assistant_project_hint">Recommended: one word without spaces, such as Car001.</string>
+    <string name="assistant_project_steps">Car links: 1. In Claude, create a project named %1$s. 2. Copy the instructions and paste them into its instructions. 3. Copy the project\'s link and paste it below as start link.</string>
+    <string name="assistant_copy_instructions">Copy instructions</string>
+    <string name="assistant_link_label">Start link</string>
+    <string name="assistant_link_hint">The project\'s link (https://claude.ai/project/…): open the project at claude.ai and copy the address. The assistant opens it before it listens.</string>
 </resources>

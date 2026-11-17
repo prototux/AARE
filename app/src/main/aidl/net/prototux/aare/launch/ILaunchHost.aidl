@@ -49,18 +49,28 @@ interface ILaunchHost {
     /** Whether an app still shows on the display [start] made: Back on its first screen closes it. */
     boolean hasApp() = 19;
 
-    /** Open [url] in [packageName] on that display, afresh (its task cleared), started by this helper (which may start activities from the background). */
-    boolean openLink(String url, String packageName) = 12;
+    /** Open [url] in [packageName] on that display, afresh (its task cleared), started by this helper (which may start activities from the background); [warm]: a tap on that display follows. */
+    boolean openLink(String url, String packageName, boolean warm) = 12;
 
     /** Fingers on the launched app's display at once (pinch to zoom): [xy] their x, y in turn, [ids] their pointer ids, in that order. */
     oneway void touches(long downTime, long eventTime, int action, in float[] xy, in int[] ids) = 18;
 
+
+    /** Start [packageName]'s app shortcut whose id contains [keyword] (its voice mode, say) on that display. False if it can't. */
+    boolean openShortcut(String packageName, String keyword) = 9;
+
+    /** Tap the button on that display whose label matches [pattern] (a regex, any case), waiting up to [timeoutMs] for it. False if none showed. */
+    boolean tapLabel(String pattern, long timeoutMs) = 10;
+
     /**
-     * Like [start], but opens [packageName]'s voice UI (ACTION_VOICE_COMMAND, else ACTION_ASSIST),
-     * or its main activity if it has neither: for an assistant on the car screen. Returns the
-     * display id, or -1 (and no display) if nothing could be opened.
+     * What on that display looks like a car link, top to bottom, one per line: "url<TAB>address" for
+     * a link whose address contains [host], or "tap<TAB>text<TAB>x,y" for a text matching [tapPattern]
+     * (an emoji drawn without its address), with its middle. Null when it couldn't look.
      */
-    int startAssistant(in Surface surface, int width, int height, int dpi, String packageName) = 17;
+    String carLinks(String host, String tapPattern) = 13;
+
+    /** A finger's tap at [x], [y] on that display, as [tapLabel] taps. */
+    void tapAt(float x, float y) = 14;
 
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;

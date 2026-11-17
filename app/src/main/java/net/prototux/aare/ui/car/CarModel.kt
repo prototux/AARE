@@ -135,6 +135,8 @@ class CarUiState {
     val apps = mutableStateListOf<CarAppEntry>()
     /** A navigation for a phone app on the car screen: its package and the address to open there, until it does. */
     var navigationRequest by mutableStateOf<Pair<String, String>?>(null)
+    /** A phone app on the car screen (its package) that the voice button asked to listen, until it does. */
+    var assistantVoice by mutableStateOf<String?>(null)
     var nowPlaying by mutableStateOf<NowPlaying?>(null)
     /** The navigation app whose map is shown on the dashboard. */
     var activeNavAppId by mutableStateOf<String?>(null)
@@ -165,8 +167,6 @@ class CarUiState {
     val recentAppIds = mutableStateListOf<String>()
     /** The voice assistant showing as a bar over the screen (an app entry id), or null. */
     var assistantAppId by mutableStateOf<String?>(null)
-    /** A phone assistant without a car app, opened on the car screen through the launcher (see [assistantAppId]). */
-    var assistantStandalonePkg by mutableStateOf<String?>(null)
     /** Turn-by-turn from a navigation app running on the phone (Google Maps, Waze…). */
     var phoneGuidance by mutableStateOf<PhoneGuidance?>(null)
     /** Right-hand drive: the rail goes to the right, next to the driver. */

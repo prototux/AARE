@@ -153,6 +153,12 @@ class CarNotificationListener : NotificationListenerService() {
 
     fun readAloud(c: Conversation) = speak(c.spoken())
 
+    /** Hangs up [packageName]'s ongoing call, by its notification's hang-up button (Notification.EXTRA_HANG_UP_INTENT, API 31); an assistant's voice mode is one (Claude). */
+    fun hangUp(packageName: String): Boolean = runCatching { activeNotifications }.getOrNull().orEmpty()
+        .filter { it.packageName == packageName }
+        .firstNotNullOfOrNull { androidx.core.os.BundleCompat.getParcelable(it.notification.extras, "android.hangUpIntent", android.app.PendingIntent::class.java) }
+        ?.let { intent -> runCatching { intent.send() }.onFailure { Log.w(TAG, "hang up", it) }.isSuccess }.also { Log.i(TAG, "hang up $packageName: $it") } ?: false
+
     /** The newest guidance notification still showing, if any. */
     private fun refreshGuidance() {
         _guidance.value = runCatching { activeNotifications }.getOrNull().orEmpty()

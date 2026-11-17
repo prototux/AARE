@@ -22,3 +22,18 @@ internal class LongPressKey(private val onPress: () -> Unit, private val onLongP
         }
     }
 }
+
+/**
+ * A car key that acts once per press, as early as it can: on its first down, or on its up when the
+ * head unit sent no down (some report a held key only as it is let go). Repeated downs while it is
+ * held do nothing. Main thread.
+ */
+internal class PressOnce {
+    private var acted = false
+
+    /** Whether this event is the one to act on. */
+    fun pressed(down: Boolean): Boolean {
+        if (down) return !acted.also { acted = true }
+        return !acted.also { acted = false }
+    }
+}

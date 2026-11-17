@@ -306,8 +306,6 @@ class CarRuntime(
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
-        // A phone assistant shown through the launcher is parked only, like other launched apps.
-        if (ui.drivingRestricted) ui.assistantStandalonePkg = null
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.darkBar = settings.darkBar
@@ -442,7 +440,9 @@ class CarRuntime(
         if (AppLauncher.available(context)) {
             val taken = entries.mapTo(HashSet()) { it.packageName }
             // Navigation apps with no car app AARE can host (Google Maps) are there as phone apps without being picked.
-            for (pkg in standalonePackages(settings.standaloneApps, settings.standaloneAppPackages, taken, KNOWN_NAVIGATION)) {
+            // The assistant with no car app, when set to show on the car screen: hosted like the others.
+            val assistant = if (settings.assistantOnCarScreen) assistantPackage() else null
+            for (pkg in standalonePackages(settings.standaloneApps, settings.standaloneAppPackages, assistant, taken, KNOWN_NAVIGATION)) {
                 if (pkg in hidden) continue
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
@@ -509,20 +509,32 @@ class CarRuntime(
         }
     }
 
-    /** Navigates to [place] in the car's navigation app (geo: query), or false without one. */
-    fun navigateTo(place: String): Boolean {
+    /** Navigates to [place] in the car's navigation app (geo: query); the app used, or null without one. */
+    fun navigateTo(place: String): CarAppEntry? {
         // Google Maps in the map card: opened full screen, and the address follows once it runs.
         ui.app(ui.activeNavAppId)?.takeIf { it.kind == CarAppKind.STANDALONE }?.let { maps ->
             ui.navigationRequest = maps.packageName to phoneNavigationUri(maps.packageName, place)
             actions.openApp(maps)
-            return true
+            return maps
         }
-        val nav = ui.app(ui.activeNavAppId) ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION } ?: return false
-        val conn = connection(nav.id) ?: return false
+        val nav = ui.app(ui.activeNavAppId) ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION } ?: return null
+        val conn = connection(nav.id) ?: return null
         conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(navigationQuery(place)))))
         ui.activeNavAppId = nav.id
         if (!ui.screen.shows(nav.id)) ui.screen = CarScreen.App(nav.id)
-        return true
+        return nav
+    }
+
+    /**
+     * Ends the route guidance: a car navigation app's by its own end, else Google Maps', opened afresh
+     * on its map (Maps has no intent to end one). The app it ended in, or null without one.
+     */
+    fun stopNavigation(): CarAppEntry? {
+        navigatingApp?.let { c -> c.stopNavigation(); return idOf(c)?.let(ui::app) }
+        val maps = ui.app(ui.activeNavAppId)?.takeIf { it.kind == CarAppKind.STANDALONE } ?: return null
+        ui.navigationRequest = maps.packageName to "geo:0,0"
+        actions.openApp(maps)
+        return maps
     }
 
     /** Phone calls for the car's call card: polled, as no telephony listener needs fewer permissions. */
@@ -701,7 +713,7 @@ class CarRuntime(
         override fun answerCall() = Calls.answer(context)
         override fun endCall() = Calls.end(context)
         override fun navigateTo(place: String) {
-            if (!this@CarRuntime.navigateTo(place)) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
+            if (this@CarRuntime.navigateTo(place) == null) notice(context.getString(R.string.notif_navigation_title), context.getString(R.string.notif_navigation_no_app_text))
         }
     }
 
@@ -712,8 +724,8 @@ class CarRuntime(
      * Steering-wheel voice button or the rail's mic. An assistant with a car app (Lapin, for example)
      * opens on the car screen and is asked to listen with ACTION_VOICE_COMMAND. Any other assistant
      * opens on the phone, unless [Settings.assistantOnCarScreen] and the launcher are available: then,
-     * while parked (or in passenger mode), its voice UI is shown on the car screen instead (see
-     * [CarUiState.assistantStandalonePkg]), parked only like other launched phone apps.
+     * while parked (or in passenger mode), it is hosted as a phone app in the right half of the car
+     * screen, next to what was on it, and asked to listen ([CarUiState.assistantVoice]).
      */
     fun assistant() {
         onAssistant?.invoke()
@@ -731,17 +743,13 @@ class CarRuntime(
             conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
             return
         }
-        if (settings.assistantOnCarScreen && !ui.drivingRestricted && AppLauncher.available(context)) {
-            ui.assistantStandalonePkg = pkg
+        // Hosted: in the right half, next to what is on screen. Narrow, it lays out like on a phone, and the map
+        // or video stays; a bar of a fixed size covered most of a short, wide screen (an MBUX: 1165x532 dp).
+        if (entry?.kind == CarAppKind.STANDALONE && !ui.drivingRestricted) {
+            ui.assistantVoice = pkg
+            actions.openInPane(entry, left = false)
             return
         }
-        assistantOnPhone(pkg)
-    }
-
-    /** The assistant opened on the car screen through the launcher ([ui].assistantStandalonePkg) failed to start. */
-    fun assistantStandaloneFailed(pkg: String) {
-        if (ui.assistantStandalonePkg != pkg) return
-        ui.assistantStandalonePkg = null
         assistantOnPhone(pkg)
     }
 
@@ -769,7 +777,6 @@ class CarRuntime(
 
     /** Back key from the car. */
     fun back() {
-        if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
         if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
         val target = when (val s = ui.screen) {
             is CarScreen.App -> s.appId
@@ -842,13 +849,10 @@ class CarRuntime(
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
-                        val standalonePkg = ui.assistantStandalonePkg
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
-                        } else if (standalonePkg != null) {
-                            StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
                         }
                     },
                     modifier = modifier,
@@ -890,13 +894,14 @@ internal fun showsFullApp(chosen: Boolean, driving: Boolean, helper: Boolean) = 
 internal fun runsWhileDriving(packageName: String) = packageName in KNOWN_NAVIGATION
 
 /**
- * The phone apps hosted on the car screen: those allowed on the phone when [enabled], and the
- * [navigation] apps hosted without being picked, unless another entry already shows their package
- * ([taken]: its car app).
+ * The phone apps hosted on the car screen: those allowed on the phone when [enabled], the
+ * [assistant] set to show there, and the [navigation] apps hosted without being picked, unless
+ * another entry already shows their package ([taken]: its car app).
  */
 internal fun standalonePackages(
-    enabled: Boolean, allowed: Collection<String>, taken: Set<String>, navigation: Collection<String> = emptyList(),
+    enabled: Boolean, allowed: Collection<String>, assistant: String?, taken: Set<String>, navigation: Collection<String> = emptyList(),
 ): List<String> = buildList {
     if (enabled) addAll(allowed)
+    if (assistant != null && assistant !in taken && assistant !in this) add(assistant)
     navigation.filterTo(this) { it !in taken && it !in this }
 }

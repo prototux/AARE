@@ -548,4 +548,10 @@
     <string name="car_link_playing">Es läuft %1$s, %2$s.</string>
     <string name="car_link_next_turn">Als Nächstes: %1$s.</string>
     <string name="car_link_battery">Handy-Akku %1$d Prozent.</string>
+    <string name="assistant_project_label">Projektname</string>
+    <string name="assistant_project_hint">Empfohlen: ein Wort ohne Leerzeichen, etwa Car001.</string>
+    <string name="assistant_project_steps">Auto-Links: 1. In Claude ein Projekt namens %1$s anlegen. 2. Die Anweisungen kopieren und in seine Anweisungen einfügen. 3. Den Link des Projekts kopieren und unten als Start-Link einfügen.</string>
+    <string name="assistant_copy_instructions">Anweisungen kopieren</string>
+    <string name="assistant_link_label">Start-Link</string>
+    <string name="assistant_link_hint">Der Link des Projekts (https://claude.ai/project/…): das Projekt auf claude.ai öffnen und die Adresse kopieren. Der Assistent öffnet ihn, bevor er zuhört.</string>
 </resources>
