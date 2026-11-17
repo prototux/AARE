@@ -188,6 +188,13 @@ class LaunchHostService : ILaunchHost.Stub {
         return null
     }
 
+    override fun hasApp(): Boolean = displayId.let { id ->
+        id >= 0 && runCatching {
+            val p = ProcessBuilder("dumpsys", "activity", "activities").redirectErrorStream(true).start()
+            displayHasActivity(p.inputStream.bufferedReader().use { it.readText() }.also { p.waitFor() }, id)
+        }.getOrDefault(true)
+    }
+
     override fun openPending(intent: PendingIntent): Boolean {
         val id = displayId
         if (id < 0) return false
@@ -301,4 +308,12 @@ class LaunchHostService : ILaunchHost.Stub {
         /** The lowest density a display gets, on creation and on resize alike. */
         const val MIN_DPI = 120
     }
+}
+
+/** Whether `dumpsys activity activities` lists an activity on the display [id]. */
+internal fun displayHasActivity(dump: String, id: Int): Boolean {
+    val start = dump.indexOf("Display #$id ")
+    if (start < 0) return false
+    val next = dump.indexOf("Display #", start + 1).let { if (it < 0) dump.length else it }
+    return "ActivityRecord{" in dump.substring(start, next)
 }
