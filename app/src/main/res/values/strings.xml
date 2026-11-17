@@ -588,4 +588,9 @@
     <string name="phone_check_touch_not_needed">Not needed: Shizuku or root is active, and replays the touches itself</string>
     <string name="video_toggle_landscape_title">Videos in full screen right away</string>
     <string name="video_toggle_landscape_subtitle">While a media app shows its video in the car, the phone turns to landscape, so players fill the picture as soon as a video plays. Off, the app shows its own player screen, with its own full screen button.</string>
+    <string name="car_link_failed">That didn\'t work.</string>
+    <string name="car_link_no_messages">No new messages.</string>
+    <string name="car_link_playing">Playing %1$s, %2$s.</string>
+    <string name="car_link_next_turn">Next: %1$s.</string>
+    <string name="car_link_battery">Phone battery %1$d percent.</string>
 </resources>

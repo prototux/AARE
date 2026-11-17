@@ -540,4 +540,9 @@
     <string name="phone_check_touch_not_needed">Nicht nötig: Shizuku oder Root ist aktiv und gibt die Berührungen selbst weiter</string>
     <string name="video_toggle_landscape_title">Videos sofort im Vollbild</string>
     <string name="video_toggle_landscape_subtitle">Solange eine Medien-App ihr Video im Auto zeigt, dreht sich das Handy ins Querformat. So füllen Player das Bild, sobald ein Video läuft. Aus zeigt die App ihre eigene Player-Ansicht mit ihrem eigenen Vollbild-Knopf.</string>
+    <string name="car_link_failed">Das hat nicht geklappt.</string>
+    <string name="car_link_no_messages">Keine neuen Nachrichten.</string>
+    <string name="car_link_playing">Es läuft %1$s, %2$s.</string>
+    <string name="car_link_next_turn">Als Nächstes: %1$s.</string>
+    <string name="car_link_battery">Handy-Akku %1$d Prozent.</string>
 </resources>

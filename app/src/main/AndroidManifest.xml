@@ -113,6 +113,22 @@
                 android:resource="@xml/accessory_filter" />
         </activity>
 
+        <!-- Car links tapped in an assistant's reply (see CarLinks); the hosted assistant's start approves the domain. -->
+        <activity
+            android:name=".host.CarLinkActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="aare.internal" android:pathPrefix="/go/" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".service.ProjectionService"
             android:exported="false"
