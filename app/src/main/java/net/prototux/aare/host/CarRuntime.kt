@@ -86,7 +86,7 @@ class CarRuntime(
     /** Release [media] in [stop]: true when this runtime created it (the preview), false when shared. */
     private val ownsMedia: Boolean = true,
     /** The car session's runtime (false for the on-phone preview): it takes [active] over a preview. */
-    private val primary: Boolean = true,
+    val primary: Boolean = true,
     /** Offer the "Phone screen" entry at all (off for sessions from the developer TCP server unless opted in). */
     private val phoneScreenAllowed: Boolean = true,
 ) : HostEnvironment {

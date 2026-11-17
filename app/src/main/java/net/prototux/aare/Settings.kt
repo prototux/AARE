@@ -152,6 +152,24 @@ class Settings(context: Context) {
         get() = prefs.getStringSet("video_apps", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("video_apps", v) }
 
+    /** While a media app shows its video in the car, the phone turns to landscape: players go full screen at once. */
+    var videoLandscape: Boolean
+        get() = prefs.getBoolean("video_landscape", false)
+        set(v) = prefs.edit { putBoolean("video_landscape", v) }
+
+    /**
+     * With Shizuku or root, what "Phone screen" shows parked: [PHONE_SCREEN_MIRROR] the phone's own
+     * screen turned to landscape, or [PHONE_SCREEN_DESKTOP] a desktop of its own at the car screen's size.
+     */
+    var phoneScreenMode: String
+        get() = prefs.getString("phone_screen_mode", PHONE_SCREEN_MIRROR) ?: PHONE_SCREEN_MIRROR
+        set(v) = prefs.edit { putString("phone_screen_mode", v) }
+
+    /** While the phone's screen is mirrored with Shizuku or root, its panel is off (the power key turns it back on). */
+    var phoneScreenOff: Boolean
+        get() = prefs.getBoolean("phone_screen_off", true)
+        set(v) = prefs.edit { putBoolean("phone_screen_off", v) }
+
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
@@ -224,7 +242,7 @@ class Settings(context: Context) {
 
     /** Keep standalone apps active when Android links their display to the phone display. */
     var standaloneKeepScreenAwake: Boolean
-        get() = prefs.getBoolean("standalone_keep_screen_awake", false)
+        get() = prefs.getBoolean("standalone_keep_screen_awake", android.os.Build.VERSION.SDK_INT >= 37)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
 
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
@@ -387,6 +405,8 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putInt("cert_index", v) }
 
     companion object {
+        const val PHONE_SCREEN_MIRROR = "mirror"
+        const val PHONE_SCREEN_DESKTOP = "desktop"
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val RAIL_AUTO = "auto"
         const val RAIL_LEFT = "left"

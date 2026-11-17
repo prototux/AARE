@@ -125,6 +125,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -477,8 +478,10 @@ private fun Setup(state: ProjectionService.State, refresh: Int, recheck: () -> U
 }
 
 @Composable
-private fun Check(title: String, subtitle: String, done: Boolean, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(enabled = !done, onClick = onClick).padding(vertical = 10.dp),
+private fun Check(title: String, subtitle: String, done: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+    // Not needed here (Shizuku or root does it): grayed out, and nothing to set up.
+    Row(Modifier.fillMaxWidth().alpha(if (enabled) 1f else 0.38f).clip(RoundedCornerShape(16.dp))
+        .clickable(enabled = enabled && !done, onClick = onClick).padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Icon(if (done) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
             tint = if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
@@ -487,7 +490,7 @@ private fun Check(title: String, subtitle: String, done: Boolean, onClick: () ->
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        if (!done) Text(stringResource(R.string.setup_action_set_up), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
+        if (enabled && !done) Text(stringResource(R.string.setup_action_set_up), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -773,8 +776,35 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.phone_toggle_enable_title), stringResource(R.string.phone_toggle_enable_subtitle), phoneScreen) {
                 phoneScreen = it; settings.phoneScreen = it
             }
+            if (phoneScreen && remember { AppLauncher.available(ctx) }) {
+                var mode by remember { mutableStateOf(settings.phoneScreenMode) }
+                Choices(stringResource(R.string.phone_mode_title), listOf(
+                    Settings.PHONE_SCREEN_MIRROR to stringResource(R.string.phone_mode_mirror),
+                    Settings.PHONE_SCREEN_DESKTOP to stringResource(R.string.phone_mode_desktop),
+                ), mode) { mode = it; settings.phoneScreenMode = it }
+                Text(stringResource(if (mode == Settings.PHONE_SCREEN_MIRROR) R.string.phone_mode_mirror_hint else R.string.phone_mode_desktop_hint),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Switching the panel off needs Android 15.
+                if (mode == Settings.PHONE_SCREEN_MIRROR && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    var off by remember { mutableStateOf(settings.phoneScreenOff) }
+                    Toggle(stringResource(R.string.phone_toggle_off_title), stringResource(R.string.phone_toggle_off_subtitle), off) {
+                        off = it; settings.phoneScreenOff = it
+                    }
+                }
+            }
+            // Media apps' videos run through the helper whether or not the phone screen is offered.
+            if (remember { AppLauncher.available(ctx) }) {
+                var landscape by remember { mutableStateOf(settings.videoLandscape) }
+                Toggle(stringResource(R.string.video_toggle_landscape_title), stringResource(R.string.video_toggle_landscape_subtitle), landscape) {
+                    landscape = it; settings.videoLandscape = it
+                }
+            }
+            // Without a helper the touches go through it; with one the helper replays them and tells the app in
+            // front while driving, so it isn't needed.
             if (phoneScreen) {
-                Check(stringResource(R.string.phone_check_touch_title), stringResource(R.string.phone_check_touch_subtitle), touch) {
+                val helper = remember { AppLauncher.available(ctx) }
+                Check(stringResource(R.string.phone_check_touch_title),
+                    stringResource(if (helper) R.string.phone_check_touch_not_needed else R.string.phone_check_touch_subtitle), touch, enabled = !helper) {
                     ctx.startSafely(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS), appDetails(ctx))
                 }
                 Text(stringResource(R.string.phone_hint_touch_capture),

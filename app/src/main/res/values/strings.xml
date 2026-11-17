@@ -563,4 +563,14 @@
     <string name="setup_toggle_pane_swipe_subtitle">A sideways swipe on an app in the bar or the app list opens it in that half of the car screen.</string>
     <string name="setup_toggle_pane_menu_title">Hold for the halves menu</string>
     <string name="setup_toggle_pane_menu_subtitle">Holding an app in the bar or the app list offers to open it in the left or right half.</string>
+    <string name="phone_mode_title">With Shizuku or root</string>
+    <string name="phone_mode_mirror">Phone, landscape</string>
+    <string name="phone_mode_desktop">Own screen</string>
+    <string name="phone_mode_mirror_hint">The phone\'s own screen, turned to landscape while it shows in the car, touched live. Apps that only run upright stay a strip in the middle.</string>
+    <string name="phone_mode_desktop_hint">Parked, a screen of its own at the car screen\'s size, with Android\'s desktop and taskbar: apps run there in landscape, and the phone keeps showing what it showed.</string>
+    <string name="phone_toggle_off_title">Phone display off</string>
+    <string name="phone_toggle_off_subtitle">Its panel stays dark while the car shows it (Android 15 or newer). The power key turns it back on.</string>
+    <string name="phone_check_touch_not_needed">Not needed: Shizuku or root is active, and replays the touches itself</string>
+    <string name="video_toggle_landscape_title">Videos in full screen right away</string>
+    <string name="video_toggle_landscape_subtitle">While a media app shows its video in the car, the phone turns to landscape, so players fill the picture as soon as a video plays. Off, the app shows its own player screen, with its own full screen button.</string>
 </resources>
