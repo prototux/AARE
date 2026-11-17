@@ -36,7 +36,10 @@ import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.media.MediaHub
+import net.prototux.aare.mirror.LocalPhoneVideo
 import net.prototux.aare.mirror.MirrorScreen
+import net.prototux.aare.mirror.PhoneVideo
+import net.prototux.aare.mirror.PhoneVideoSlot
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
 import net.prototux.aare.launch.AppLauncher
@@ -314,10 +317,15 @@ class CarRuntime(
         }
     }
 
+    /** [Settings.videoApps], kept current for the car screen. */
+    private var videoApps by mutableStateOf(settings.videoApps)
+
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
+            // Switched from the car's media screen: show or drop the video now.
+            "video_apps" -> main.post { videoApps = settings.videoApps }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
         }
@@ -697,7 +705,12 @@ class CarRuntime(
                         when (app.kind) {
                             CarAppKind.MEDIA -> {
                                 val m = mediaApps.firstOrNull { it.packageName == app.packageName }
-                                if (m != null) media.Screen(m, ui.drivingRestricted, mod)
+                                // Parked: the app itself, its video, can take the art's place (the camera button, per app).
+                                val toggleVideo = { val p = app.packageName; settings.videoApps = if (p in videoApps) videoApps - p else videoApps + p }
+                                val video = if (phoneScreenAllowed && !ui.drivingRestricted) {
+                                    PhoneVideoSlot(app.packageName in videoApps, toggleVideo) { v, p -> PhoneVideo(this, app.packageName, v, onCover = toggleVideo, player = p) }
+                                } else null
+                                if (m != null) CompositionLocalProvider(LocalPhoneVideo provides video) { media.Screen(m, ui.drivingRestricted, mod) }
                             }
                             CarAppKind.MESSAGING -> MessagingScreen(app, ui.drivingRestricted, this, mod)
                             CarAppKind.PHONE_SCREEN -> MirrorScreen(this, ui.drivingRestricted, mod)

@@ -52,6 +52,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -110,7 +113,8 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    val fullScreen = remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
+    CompositionLocalProvider(LocalFullScreen provides fullScreen) { Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
@@ -127,12 +131,16 @@ fun CarShell(
                     if (state.railOnRight) Rail(state, actions, horizontal = false, area)
                 }
             }
+            fullScreen.value?.let { content -> Box(Modifier.fillMaxSize().background(Color.Black)) { content() } }
             overlay(Modifier.align(Alignment.BottomCenter))
             NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
-    }
+    } }
 }
+
+/** What the car shell draws over the whole car screen, rail included (a video in full screen), or null. Null outside the shell. */
+val LocalFullScreen = compositionLocalOf<MutableState<(@Composable () -> Unit)?>?> { null }
 
 /** The screen's content: the dashboard (or, with [launcherHome], the app grid as the home screen), the app grid or an app. */
 @Composable

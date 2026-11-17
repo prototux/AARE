@@ -147,6 +147,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
+    /** The media apps shown as themselves on the car screen (their video) instead of their art, parked: packages. */
+    var videoApps: Set<String>
+        get() = prefs.getStringSet("video_apps", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("video_apps", v) }
+
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String

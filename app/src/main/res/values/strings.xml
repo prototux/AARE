@@ -540,4 +540,9 @@
     <string name="carapp_error_stopped">%1$s stopped</string>
     <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
     <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
+    <string name="media_action_show_video">Show the phone\'s video</string>
+    <string name="media_action_show_art">Show the cover</string>
+    <string name="video_full_screen">Full screen</string>
+    <string name="video_exit_full_screen">Leave full screen</string>
+    <string name="standalone_failed">Couldn\'t start the app on the car screen.</string>
 </resources>
