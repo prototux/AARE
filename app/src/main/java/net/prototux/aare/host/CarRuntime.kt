@@ -42,6 +42,7 @@ import net.prototux.aare.mirror.LocalPhoneVideo
 import net.prototux.aare.mirror.MirrorScreen
 import net.prototux.aare.mirror.PhoneVideo
 import net.prototux.aare.mirror.PhoneVideoSlot
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.notify.MessagingScreen
 import net.prototux.aare.launch.AppLauncher
