@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AARE's voice engine: its settings are on AARE's Car audio page. -->
+<tts-engine xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="net.prototux.aare.ui.MainActivity" />

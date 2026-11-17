@@ -382,7 +382,7 @@ private fun StatusCard(state: ProjectionService.State) {
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pill(stringResource(R.string.setup_preview_car_screen), Icons.Rounded.Tv) { ctx.startActivity(Intent(ctx, CarPreviewActivity::class.java)) }
-            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.stop(ctx) }
+            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.disconnect(ctx) }
         }
     }
 }
@@ -824,6 +824,8 @@ private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: I
 private fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
     val ctx = LocalContext.current
     var enabled by remember { mutableStateOf(settings.carAudio) }
+    var keepNotifications by remember { mutableStateOf(settings.keepNotificationsWhileCapturing) }
+    var mutePhone by remember { mutableStateOf(settings.mutePhoneWhileCapturing) }
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
@@ -854,6 +856,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
             Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
                 style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
         }
+        CarVoiceSection(settings, refresh)
         Section(stringResource(R.string.audio_section_methods)) {
             Check(stringResource(CaptureMethod.AUDIO_POLICY.title),
                 if (policy) stringResource(R.string.audio_policy_ready)
@@ -887,14 +890,62 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 else stringResource(R.string.audio_playback_not_ready),
                 state.audioCapture) {
                 val mpm = ctx.getSystemService(MediaProjectionManager::class.java)
-                consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
-                    else mpm.createScreenCaptureIntent())
+                // Audio capture takes whatever app is shared: the shared app only picks the video,
+                // which car audio doesn't use. "A single app" avoids Android's screen-share
+                // protections, which mute notifications while the entire screen is shared; the
+                // phone screen needs the entire screen.
+                consent.launch(when {
+                    Build.VERSION.SDK_INT < 34 -> mpm.createScreenCaptureIntent()
+                    keepNotifications -> mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForUserChoice())
+                    else -> mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
+                })
+            }
+            Toggle(stringResource(R.string.audio_toggle_mute_phone_title), stringResource(R.string.audio_toggle_mute_phone_subtitle), mutePhone) {
+                mutePhone = it; settings.mutePhoneWhileCapturing = it
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                Toggle(stringResource(R.string.audio_toggle_keep_notifications_title),
+                    stringResource(if (keepNotifications) R.string.audio_toggle_keep_notifications_on else R.string.audio_toggle_keep_notifications_off),
+                    keepNotifications) {
+                    keepNotifications = it; settings.keepNotificationsWhileCapturing = it
+                }
+                if (state.audioCapture) Text(stringResource(R.string.audio_keep_notifications_next_time),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
 private const val SHIZUKU_REQUEST = 42
+
+/**
+ * Navigation voice through AARE's voice engine: whether it's on, whether AARE is the phone's voice
+ * engine (the one step only the user can do, in the system settings), and which engine speaks.
+ */
+@Composable
+private fun CarVoiceSection(settings: Settings, refresh: Int) {
+    val ctx = LocalContext.current
+    var enabled by remember { mutableStateOf(settings.carVoice) }
+    @Suppress("UNUSED_EXPRESSION") refresh
+    val isDefault = net.prototux.aare.tts.VoiceEngines.aareIsDefault(ctx)
+    val speaker = net.prototux.aare.tts.VoiceEngines.delegate(ctx, settings.voiceEngine)
+    Section(stringResource(R.string.voice_section_title)) {
+        Toggle(stringResource(R.string.voice_toggle_title), stringResource(R.string.voice_toggle_subtitle), enabled) {
+            enabled = it; settings.carVoice = it
+        }
+        if (!enabled) return@Section
+        Spacer(Modifier.height(4.dp))
+        Check(stringResource(R.string.voice_default_title),
+            if (isDefault) stringResource(R.string.voice_default_ready) else stringResource(R.string.voice_default_not_ready),
+            isDefault) {
+            runCatching { ctx.startActivity(net.prototux.aare.tts.VoiceEngines.settingsIntent()) }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(speaker?.let { stringResource(R.string.voice_speaks_with, it.label) } ?: stringResource(R.string.voice_no_engine),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (speaker == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
 
 /** A labelled row of mutually exclusive options. */
 @Composable
@@ -922,6 +973,17 @@ private fun AppsCard(settings: Settings) {
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
+    var videos by remember { mutableStateOf(settings.videos) }
+    var videosAllowed by remember { mutableStateOf(net.prototux.aare.player.LocalVideos.granted(ctx)) }
+    val videoPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        videosAllowed = ok
+        // Refused for good (no rationale left after a refusal): Android won't ask again, so open
+        // AARE's settings to allow it there.
+        val activity = ctx as? android.app.Activity
+        if (!ok && activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, net.prototux.aare.player.LocalVideos.permission)) {
+            ctx.startSafely(appDetails(ctx))
+        }
+    }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
     val lists by produceState<LauncherLists?>(null) {
         value = withContext(Dispatchers.IO) {
@@ -977,8 +1039,15 @@ private fun AppsCard(settings: Settings) {
                 Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             }
+            AppRow(null, stringResource(R.string.videos_app_label), stringResource(R.string.videos_app_row_subtitle), videos) { videos = it; settings.videos = it }
+            if (videos) {
+                Check(stringResource(R.string.videos_check_permission_title), stringResource(R.string.videos_check_permission_subtitle), videosAllowed) {
+                    videoPermission.launch(net.prototux.aare.player.LocalVideos.permission)
+                }
+                JellyfinSettings(settings)
+            }
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
+        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser, videos)
         StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
@@ -993,9 +1062,73 @@ private fun AppsCard(settings: Settings) {
     }
 }
 
+/** Signing in to a Jellyfin server for the car's Videos app. The password is sent once and not kept. */
+@Composable
+private fun JellyfinSettings(settings: Settings) {
+    val scope = rememberCoroutineScope()
+    var account by remember { mutableStateOf(net.prototux.aare.player.JellyfinAccount.load(settings)) }
+    var server by remember { mutableStateOf(settings.jellyfinServer ?: "") }
+    var user by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.jellyfin_title), style = MaterialTheme.typography.titleSmall)
+        val a = account
+        if (a != null) {
+            Text(stringResource(R.string.jellyfin_signed_in, a.userName, a.serverLabel), style = MaterialTheme.typography.bodyMedium)
+            androidx.compose.material3.OutlinedButton(onClick = {
+                net.prototux.aare.player.JellyfinAccount.clear(settings)
+                DiagLog.add("jellyfin: signed out")
+                account = null
+            }) { Text(stringResource(R.string.jellyfin_sign_out)) }
+            var maxKbps by remember { mutableIntStateOf(settings.jellyfinMaxKbps) }
+            Choices(stringResource(R.string.jellyfin_quality_title), listOf(0, 8_000, 4_000, 2_000).map {
+                "$it" to if (it == 0) stringResource(R.string.jellyfin_quality_original) else "${it / 1000} Mbps"
+            }, "$maxKbps") { maxKbps = it.toInt(); settings.jellyfinMaxKbps = maxKbps }
+            Text(stringResource(R.string.jellyfin_quality_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            return@Column
+        }
+        Text(stringResource(R.string.jellyfin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(value = server, onValueChange = { server = it }, label = { Text(stringResource(R.string.jellyfin_server_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri))
+        if (server.trim().startsWith("http://") || (server.isNotBlank() && "://" !in server)) {
+            Text(stringResource(R.string.jellyfin_cleartext_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text(stringResource(R.string.jellyfin_user_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text(stringResource(R.string.jellyfin_password_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password))
+        error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+        androidx.compose.material3.Button(enabled = !busy && server.isNotBlank() && user.isNotBlank(), onClick = {
+            busy = true; error = null
+            val s = server; val u = user; val p = password
+            scope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { net.prototux.aare.player.JellyfinClient.signIn(s, u, p, settings.instanceId) }
+                }
+                busy = false
+                result.onSuccess {
+                    it.save(settings)
+                    DiagLog.add("jellyfin: signed in to ${it.serverLabel} as ${it.userName}")
+                    password = ""
+                    account = it
+                }.onFailure {
+                    // The message never holds the password or the token (JellyfinClient).
+                    error = it.message ?: it.javaClass.simpleName
+                    DiagLog.add("jellyfin: sign-in failed: $error")
+                }
+            }
+        }) { Text(stringResource(if (busy) R.string.jellyfin_signing_in else R.string.jellyfin_sign_in)) }
+    }
+}
+
 /** The order of the car's app list: the visible apps, with up and down buttons. */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean, videos: Boolean) {
     // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
     val all = buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -1007,6 +1140,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
         if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
+        if (videos) Triple(CarRuntime.VIDEOS_ID, stringResource(R.string.videos_app_label), null) else null,
     )
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }

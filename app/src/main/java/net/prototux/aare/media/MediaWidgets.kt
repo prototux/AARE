@@ -87,11 +87,12 @@ internal fun CircleButton(
     filled: Boolean = false,
     enabled: Boolean = true,
     size: Dp = LocalCarDimens.current.touchTarget,
+    modifier: Modifier = Modifier,
 ) {
     val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Box(
-        Modifier.size(size).clip(CircleShape).background(bg).alpha(if (enabled) 1f else 0.38f)
+        modifier.size(size).clip(CircleShape).background(bg).alpha(if (enabled) 1f else 0.38f)
             .carFocusHighlight(CircleShape).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
