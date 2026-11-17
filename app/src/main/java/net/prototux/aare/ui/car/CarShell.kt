@@ -52,12 +52,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +85,14 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.composed
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import net.prototux.aare.R
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
@@ -110,8 +123,18 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
+    // A long press on a rail or launcher app asks which pane to open it in (see PaneChooser).
+    var paneChoice by remember { mutableStateOf<PaneChoice?>(null) }
+    var origin by remember { mutableStateOf(Offset.Zero) }
+    val menus = remember(state) {
+        RailMenus { app, center, horizontal -> paneChoice = PaneChoice(app, center - origin, horizontal, state.railOnRight) }
+    }
+    // Closed by the car's Back key, and when something else takes the screen (a call, the assistant).
+    BackHandler(enabled = paneChoice != null) { paneChoice = null }
+    LaunchedEffect(state.screen) { paneChoice = null }
+    val fullScreen = remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
+    CompositionLocalProvider(LocalFullScreen provides fullScreen, LocalRailMenus provides menus) { Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(Modifier.fillMaxSize().then(modifier).onGloballyPositioned { origin = it.positionInRoot() }) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
             val area = DpSize(maxWidth, maxHeight)
@@ -127,12 +150,19 @@ fun CarShell(
                     if (state.railOnRight) Rail(state, actions, horizontal = false, area)
                 }
             }
+            paneChoice?.let { c ->
+                PaneChooser(c, onPick = { left -> paneChoice = null; actions.openInPane(c.app, left) }, onDismiss = { paneChoice = null })
+            }
+            fullScreen.value?.let { content -> Box(Modifier.fillMaxSize().background(Color.Black)) { content() } }
             overlay(Modifier.align(Alignment.BottomCenter))
             NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
-    }
+    } }
 }
+
+/** What the car shell draws over the whole car screen, rail included (a video in full screen), or null. Null outside the shell. */
+val LocalFullScreen = compositionLocalOf<MutableState<(@Composable () -> Unit)?>?> { null }
 
 /** The screen's content: the dashboard (or, with [launcherHome], the app grid as the home screen), the app grid or an app. */
 @Composable
@@ -155,9 +185,19 @@ internal fun ContentArea(
     val inputMode = LocalInputModeManager.current.inputMode
     LaunchedEffect(state.screen) { runCatching { focusEntry.requestFocus() } }
     LaunchedEffect(inputMode) { if (!contentFocused) runCatching { focusEntry.requestFocus() } }
+    // Each app's screen is movable content, so it moves between full screen and a pane (or from one
+    // pane to the other) instead of being torn down and built again: the phone screen, a standalone
+    // app and the browser would lose their picture, process or page. For the same reason app
+    // screens and splits share one content key and don't cross-fade: a fade composes both at once.
+    val currentAppContent by rememberUpdatedState(appContent)
+    val appScreens = remember { HashMap<String, @Composable (Modifier) -> Unit>() }
+    val appScreen: @Composable (CarAppEntry, Modifier) -> Unit = { app, mod ->
+        appScreens.getOrPut(app.id) { movableContentOf { m: Modifier -> state.app(app.id)?.let { currentAppContent(it, m) } } }(mod)
+    }
     AnimatedContent(
         targetState = state.screen,
         transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(120)) },
+        contentKey = { if (it is CarScreen.App || it is CarScreen.Split) "apps" else it },
         modifier = modifier.fillMaxHeight().onFocusChanged { contentFocused = it.hasFocus }
             .focusRequester(focusEntry).focusGroup(),
         label = "screen",
@@ -171,11 +211,12 @@ internal fun ContentArea(
             is CarScreen.App -> {
                 val app = state.app(screen.appId)
                 when {
-                    app != null -> appContent(app, Modifier.fillMaxSize())
+                    app != null -> appScreen(app, Modifier.fillMaxSize())
                     launcherHome -> Launcher(state, actions, Modifier.fillMaxSize())
                     else -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
                 }
             }
+            is CarScreen.Split -> SplitPane(screen, state, actions, appScreen, Modifier.fillMaxSize())
         }
     }
 }
@@ -220,7 +261,10 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val media = state.app(state.activeMediaAppId)
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val settings = state.apps.firstOrNull { it.kind == CarAppKind.SETTINGS }
-    fun on(app: CarAppEntry?) = app != null && state.screen == CarScreen.App(app.id)
+    fun on(app: CarAppEntry?) = app != null && state.screen.shows(app.id)
+    // Held: offer the two panes for it, next to the icon.
+    val menus = LocalRailMenus.current
+    val hold: (CarAppEntry?) -> ((Offset) -> Unit)? = { app -> app?.let { a -> { center: Offset -> menus.choosePane(a, center, horizontal) } } }
     // Like Android Auto's taskbar: the apps used last, besides the fixed ones (one on a side rail, for height).
     val fixed = setOfNotNull(nav?.id, media?.id, phone?.id, settings?.id)
     val recent = state.recentAppIds.filter { it !in fixed }.mapNotNull(state::app)
@@ -229,11 +273,11 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val tightBar = horizontal && area.height > area.width && area.width < 800.dp
     val tighterBar = tightBar && area.width < 640.dp
     val apps: @Composable (Int, Boolean) -> Unit = { recentSlots, withSettings ->
-        RailApp(nav, Icons.Rounded.Map, on(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
-        RailApp(media, Icons.Rounded.MusicNote, on(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
-        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app)) { actions.openApp(app) } }
-        phone?.let { RailApp(it, Icons.Rounded.Call, on(it)) { actions.openApp(it) } }
-        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it)) { actions.openApp(it) } }
+        RailApp(nav, Icons.Rounded.Map, on(nav), hold(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
+        RailApp(media, Icons.Rounded.MusicNote, on(media), hold(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
+        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), hold(app)) { actions.openApp(app) } }
+        phone?.let { RailApp(it, Icons.Rounded.Call, on(it), hold(it)) { actions.openApp(it) } }
+        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it), hold(it)) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), selected = false) { actions.openLauncher() }
@@ -335,7 +379,7 @@ private fun RailButton(icon: ImageVector, label: String, selected: Boolean, onCl
 }
 
 @Composable
-private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean, onClick: () -> Unit) {
+private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean, hold: ((Offset) -> Unit)? = null, onClick: () -> Unit) {
     val d = LocalCarDimens.current
     if (app?.icon == null) {
         RailButton(fallback, app?.label ?: "", selected, onClick)
@@ -343,7 +387,7 @@ private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).railClick(hold, onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
@@ -654,6 +698,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 
 @Composable
 internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
+    val menus = LocalRailMenus.current
     LazyVerticalGrid(
         columns = GridCells.Adaptive(150.dp),
         modifier = modifier,
@@ -664,7 +709,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
         // Already in the user's order (CarRuntime.applyApps).
         items(state.apps, key = { it.id }) { app ->
             Column(
-                Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                Modifier.clip(MaterialTheme.shapes.medium).railClick({ center -> menus.choosePane(app, center, true) }) { actions.openApp(app) }.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AppIcon(app, 80)
@@ -706,4 +751,16 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }
+}
+
+/** The shell's menu over everything: the panes for an app held at a point (root coordinates), in the rail or not. */
+private class RailMenus(val choosePane: (CarAppEntry, Offset, Boolean) -> Unit)
+
+private val LocalRailMenus = staticCompositionLocalOf { RailMenus { _, _, _ -> } }
+
+/** A tap opens; with [hold], a long press hands it the element's center in root coordinates. */
+private fun Modifier.railClick(hold: ((Offset) -> Unit)?, onClick: () -> Unit): Modifier = composed {
+    var center by remember { mutableStateOf(Offset.Zero) }
+    onGloballyPositioned { center = it.boundsInRoot().center }
+        .combinedClickable(onClick = onClick, onLongClick = hold?.let { h -> { h(center) } })
 }

@@ -1,7 +1,10 @@
 package net.prototux.aare.launch
 
+import android.os.IBinder
+import android.os.Bundle
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -55,20 +58,23 @@ class LaunchHostService : ILaunchHost.Stub {
         keepDisplayAwake: Boolean,
     ): Int {
         stop()
-        val ctx = injectedContext ?: systemContext() ?: return -1
+        val ctx = callerContext() ?: return -1
         val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
         display = vd
         displayId = vd.display.displayId
         if (keepDisplayAwake) enableKeepAwakeFallback(ctx, displayId)
         if (!launch(ctx, packageName, displayId)) {
+            // Left empty the display would only stay black: say it failed instead.
             Log.w(TAG, "created display ${displayId} but could not launch $packageName on it")
+            stop()
+            return -1
         }
         return displayId
     }
 
     override fun resize(surface: Surface, width: Int, height: Int, dpi: Int) {
         val vd = display ?: return
-        runCatching { vd.resize(width, height, dpi) }
+        runCatching { vd.resize(width, height, dpi.coerceAtLeast(MIN_DPI)) }
         runCatching { vd.surface = surface }
     }
 
@@ -170,8 +176,11 @@ class LaunchHostService : ILaunchHost.Stub {
         val dm = ctx.getSystemService(DisplayManager::class.java) ?: return null
         // Preferred flags for hosting a foreign app interactively; fall back to the plain public ones
         // if the framework rejects the hidden bits for this uid/version.
-        for (flags in intArrayOf(FULL_FLAGS, FLAG_PUBLIC or FLAG_PRESENTATION)) {
-            val vd = runCatching { dm.createVirtualDisplay("AARE app", w, h, dpi.coerceAtLeast(120), surface, flags) }
+        // Only its own content: a public display without it mirrors the phone's screen while empty,
+        // and Android then also puts it in the phone's display group.
+        val full = FULL_FLAGS or (if (Build.VERSION.SDK_INT >= 34) FLAG_OWN_FOCUS else 0)
+        for (flags in intArrayOf(full, FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY)) {
+            val vd = runCatching { dm.createVirtualDisplay("AARE app", w, h, dpi.coerceAtLeast(MIN_DPI), surface, flags) }
                 .onFailure { Log.w(TAG, "createVirtualDisplay(flags=$flags) failed: ${it.message}") }
                 .getOrNull()
             if (vd != null) return vd
@@ -179,15 +188,52 @@ class LaunchHostService : ILaunchHost.Stub {
         return null
     }
 
+    override fun hasApp(): Boolean = displayId.let { id ->
+        id >= 0 && runCatching {
+            val p = ProcessBuilder("dumpsys", "activity", "activities").redirectErrorStream(true).start()
+            displayHasActivity(p.inputStream.bufferedReader().use { it.readText() }.also { p.waitFor() }, id)
+        }.getOrDefault(true)
+    }
+
+    override fun openPending(intent: PendingIntent): Boolean {
+        val id = displayId
+        if (id < 0) return false
+        return runCatching {
+            val opts = ActivityOptions.makeBasic().setLaunchDisplayId(id)
+            // Sent from here, not from the app: Android lets it start only when the sender says so.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                opts.setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+            }
+            intent.send(null, 0, null, null, null, null, opts.toBundle())
+            true
+        }.onFailure { Log.w(TAG, "openPending on display $id failed: ${it.message}") }.getOrDefault(false)
+    }
+
     /** Launch [pkg]'s main activity onto [onDisplay]. */
     @SuppressLint("QueryPermissionsNeeded")
-    private fun launch(ctx: Context, pkg: String, onDisplay: Int): Boolean = runCatching {
-        val intent = ctx.packageManager.getLaunchIntentForPackage(pkg)
-            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK) ?: return false
-        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay)
-        ctx.startActivity(intent, opts.toBundle())
-        true
-    }.onFailure { Log.w(TAG, "startActivity($pkg) failed: ${it.message}") }.getOrDefault(false)
+    private fun launch(ctx: Context, pkg: String, onDisplay: Int): Boolean {
+        // A new task, not a cleared one: an app already playing keeps playing.
+        val intent = ctx.packageManager.getLaunchIntentForPackage(pkg)?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) ?: return false
+        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay).toBundle()
+        // Hidden API gone or changed: the plain call still works where the caller owns its package (root).
+        return startAsCaller(ctx, pkg, onDisplay, intent, opts) ?: runCatching { ctx.startActivity(intent, opts); true }
+            .onFailure { Log.w(TAG, "startActivity($pkg) failed: ${it.message}") }.getOrDefault(false)
+    }
+
+    /** Started through the activity manager as [ctx]'s package: the result, or null when the hidden call isn't there. */
+    private fun startAsCaller(ctx: Context, pkg: String, onDisplay: Int, intent: Intent, opts: Bundle?): Boolean? = runCatching {
+        // Straight to the activity manager with [ctx]'s package as the caller: Context.startActivity
+        // sends AARE's package, which the shell uid doesn't own, and is refused. Like scrcpy.
+        val am = Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null)
+        val int = Int::class.javaPrimitiveType
+        val start = am.javaClass.getMethod(
+            "startActivityAsUser", Class.forName("android.app.IApplicationThread"), String::class.java, Intent::class.java,
+            String::class.java, IBinder::class.java, String::class.java, int, int, Class.forName("android.app.ProfilerInfo"), Bundle::class.java, int,
+        )
+        val result = start.invoke(am, null, ctx.packageName, intent, null, null, null, 0, 0, null, opts, USER_CURRENT) as Int
+        if (result < 0) Log.w(TAG, "startActivity($pkg) on display $onDisplay: result $result")
+        result >= 0
+    }.onFailure { Log.w(TAG, "startActivityAsUser($pkg) unavailable: ${it.message}") }.getOrNull()
 
     /** Inject one event into the launched app's display via InputManager's hidden injectInputEvent. */
     private fun inject(event: InputEvent) {
@@ -211,6 +257,18 @@ class LaunchHostService : ILaunchHost.Stub {
         runCatching { event.javaClass.getMethod("setDisplayId", Int::class.javaPrimitiveType).invoke(event, id) }
     }
 
+    /**
+     * The context to call the framework with. Under Shizuku this process runs as the shell (uid
+     * 2000) while the injected context names AARE's package, and the display service refuses a
+     * package that isn't the caller's ("packageName must match the owner uid"): the shell's own
+     * package context, then.
+     */
+    private fun callerContext(): Context? {
+        val ctx = injectedContext ?: systemContext() ?: return null
+        if (android.os.Process.myUid() != SHELL_UID) return ctx
+        return runCatching { ctx.createPackageContext("com.android.shell", 0) }
+            .onFailure { Log.w(TAG, "no shell context: ${it.message}") }.getOrDefault(ctx)
+    }
     /** The system context of this (app_process) process, when Shizuku did not inject one. */
     @SuppressLint("PrivateApi")
     private fun systemContext(): Context? = runCatching {
@@ -223,15 +281,16 @@ class LaunchHostService : ILaunchHost.Stub {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
         runCatching {
             HiddenApiBypass.addHiddenApiExemptions(
-                "Landroid/app/ActivityThread;", "Landroid/hardware/input/InputManager;",
-                "Landroid/hardware/display/DisplayManager;", "Landroid/os/PowerManager;",
-                "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
+                "Landroid/app/ActivityThread;", "Landroid/app/ActivityManager;", "Landroid/app/IActivityManager", "Landroid/app/IApplicationThread;",
+                "Landroid/app/ProfilerInfo;", "Landroid/hardware/input/InputManager;",
+                "Landroid/hardware/display/DisplayManager;", "Landroid/os/PowerManager;", "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
             )
         }
     }
 
     private companion object {
         const val TAG = "AareLaunchHost"
+        const val SHELL_UID = 2000
         const val SOURCE_TOUCHSCREEN = 0x00001002 // InputDevice.SOURCE_TOUCHSCREEN
         const val SOURCE_KEYBOARD = 0x00000101 // InputDevice.SOURCE_KEYBOARD
         const val INJECT_INPUT_EVENT_MODE_ASYNC = 0
@@ -242,6 +301,19 @@ class LaunchHostService : ILaunchHost.Stub {
         const val FLAG_TRUSTED = 1 shl 10 // hidden, API 29+
         const val FLAG_OWN_DISPLAY_GROUP = 1 shl 11 // hidden, API 31+
         const val FLAG_ALWAYS_UNLOCKED = 1 shl 12 // hidden, API 30+
-        const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
+        const val FLAG_OWN_CONTENT_ONLY = 1 shl 3
+        const val FLAG_OWN_FOCUS = 1 shl 14 // hidden, API 34+: touches here leave the phone's focus alone
+        const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_OWN_CONTENT_ONLY or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
+        const val USER_CURRENT = -2
+        /** The lowest density a display gets, on creation and on resize alike. */
+        const val MIN_DPI = 120
     }
+}
+
+/** Whether `dumpsys activity activities` lists an activity on the display [id]. */
+internal fun displayHasActivity(dump: String, id: Int): Boolean {
+    val start = dump.indexOf("Display #$id ")
+    if (start < 0) return false
+    val next = dump.indexOf("Display #", start + 1).let { if (it < 0) dump.length else it }
+    return "ActivityRecord{" in dump.substring(start, next)
 }

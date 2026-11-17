@@ -1,5 +1,6 @@
 package net.prototux.aare.media
 
+import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
@@ -266,6 +267,7 @@ internal class SessionSource(
     override fun next() = controller.transportControls.skipToNext()
     override fun previous() = controller.transportControls.skipToPrevious()
     override fun seekTo(positionMs: Long) = controller.transportControls.seekTo(positionMs)
+    override val sessionActivity: PendingIntent? get() = controller.sessionActivity
     override fun skipTo(entry: QueueEntry) = controller.transportControls.skipToQueueItem(entry.id)
 
     companion object {
