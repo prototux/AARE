@@ -1017,7 +1017,8 @@ private class AppsPage(private val ctx: Context, val settings: Settings) {
 
     /** The places as the settings keep them; the phone screen and the browser count as picked when on. */
     fun places() = AppPlaces(rail, shortcuts, order, hidden,
-        allowed + listOfNotNull(CarRuntime.PHONE_SCREEN_ID.takeIf { phoneScreen }, CarRuntime.BROWSER_ID.takeIf { browser }))
+        // Phone apps switched off on an older version: their list doesn't count, or the first edit here would put them all in the car.
+        (if (standalone) allowed else emptySet()) + listOfNotNull(CarRuntime.PHONE_SCREEN_ID.takeIf { phoneScreen }, CarRuntime.BROWSER_ID.takeIf { browser }))
 
     /** Moves [item] to [to] and saves it. A phone app with a place turns the phone apps on. */
     fun place(item: AppItem, to: AppPlace) = save(places().moved(item.key, to, item.optIn))
@@ -1168,10 +1169,10 @@ private fun LazyListScope.appsPage(p: AppsPage) {
         }
     })
     placeSection(p, "rail", R.string.setup_section_rail, R.string.setup_rail_hint, ordered(places.rail, AppPlace.RAIL)) { keys ->
-        p.save(p.places().copy(rail = keys))
+        p.save(p.places().copy(rail = keptOrder(keys, p.rail)))
     }
     placeSection(p, "shortcuts", R.string.setup_section_shortcuts, R.string.setup_shortcuts_hint, ordered(places.shortcuts, AppPlace.SHORTCUTS)) { keys ->
-        p.save(p.places().copy(shortcuts = keys))
+        p.save(p.places().copy(shortcuts = keptOrder(keys, p.shortcuts)))
     }
     placeSection(p, "overview", R.string.setup_section_overview, R.string.setup_overview_hint, ordered(places.order, AppPlace.OVERVIEW)) { keys ->
         p.save(p.places().copy(order = keys + p.order.filter { it !in keys }))

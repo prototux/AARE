@@ -38,3 +38,9 @@ data class AppPlaces(
 
 /** This list with the item at [index] moved [by] places, kept inside the list. */
 fun <T> List<T>.shifted(index: Int, by: Int): List<T> = toMutableList().apply { add((index + by).coerceIn(0, lastIndex), removeAt(index)) }
+
+/**
+ * A place's new order: the [shown] apps as dragged, then those of [all] the page didn't list
+ * (phone apps still loading, or with no helper), so a drag never drops them.
+ */
+fun keptOrder(shown: List<String>, all: List<String>): List<String> = shown + all.filter { it !in shown }

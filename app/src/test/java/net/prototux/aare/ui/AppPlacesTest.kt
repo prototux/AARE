@@ -48,4 +48,11 @@ class AppPlacesTest {
         assertEquals(listOf("b", "a", "c"), listOf("a", "b", "c").shifted(0, 1))
         assertEquals(listOf("c", "a", "b"), listOf("a", "b", "c").shifted(2, -5))
     }
+
+    @Test
+    fun aDragKeepsTheAppsThePageDoesNotListYet() {
+        // A phone app on the rail, while the phone apps still load: the drag mustn't drop it.
+        assertEquals(listOf("b", "a", "maps"), keptOrder(listOf("b", "a"), listOf("a", "maps", "b")))
+        assertEquals(listOf("a", "b"), keptOrder(listOf("a", "b"), listOf("b", "a")))
+    }
 }
