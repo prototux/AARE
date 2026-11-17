@@ -28,6 +28,12 @@ class CarAppEntry(
     val kind: CarAppKind,
 )
 
+/** The rail's standard space between its icons, in dp: a bottom bar has more room sideways. */
+fun railGapDp(bottom: Boolean) = if (bottom) 12 else 4
+
+/** That standard space in the pixels of a car screen of [dpi], rounded as Compose draws it. */
+fun railGapPx(bottom: Boolean, dpi: Int) = (railGapDp(bottom) * dpi + 80) / 160
+
 @Stable
 class NowPlaying(
     val appId: String,
@@ -109,6 +115,8 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
+    /** A tap on it: its app on the car screen, if there is one. */
+    val open: (() -> Unit)? = null,
 )
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
@@ -182,6 +190,8 @@ class CarUiState {
     var shortcutAppIds by mutableStateOf<List<String>>(emptyList())
     /** The launcher leaves out the apps in [railAppIds] and [shortcutAppIds]. */
     var launcherHidesPinned by mutableStateOf(false)
+    /** The space between the rail's icons in the car screen's pixels, negative drawing them closer; null for the standard space. */
+    var railSpacing by mutableStateOf<Int?>(null)
     /** A sideways swipe on an app in the rail or launcher opens it in that side's pane. */
     var paneSwipe by mutableStateOf(true)
     /** A long press on an app in the rail or launcher offers the panes. */

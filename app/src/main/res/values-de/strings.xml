@@ -79,6 +79,9 @@
     <string name="setup_choice_dark">Dunkel</string>
     <string name="setup_choice_light">Hell</string>
     <string name="setup_choice_bar">Leiste</string>
+    <string name="setup_choice_bar_spacing">Abstand der Symbole in der Leiste</string>
+    <string name="setup_spacing_px">%1$d px</string>
+    <string name="setup_spacing_reset">Standard</string>
     <string name="setup_choice_bar_auto">Fahrerseite</string>
     <string name="setup_choice_left">Links</string>
     <string name="setup_choice_right">Rechts</string>
@@ -182,6 +185,8 @@
     <string name="msg_toggle_group_subtitle">Auch Nachrichten aus Gruppenunterhaltungen anzeigen</string>
     <string name="msg_toggle_read_aloud_title">Nachrichten vorlesen</string>
     <string name="msg_toggle_read_aloud_subtitle">Jede neue Nachricht beim Eintreffen vorlesen</string>
+    <string name="msg_apps_title">Apps, die im Auto angezeigt werden</string>
+    <string name="msg_apps_subtitle">Ihre Nachrichten als Banner und in der Benachrichtigungszentrale</string>
     <string name="msg_hint_apps">Messaging-Apps (WhatsApp, Signal, SMS…) haben auch ihre eigene Seite in der App-Liste des Autos.</string>
     <string name="msg_section_while_driving">Während der Fahrt</string>
     <string name="msg_toggle_dnd_title">Nicht stören</string>

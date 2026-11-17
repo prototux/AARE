@@ -12,9 +12,16 @@ class SwipeSideTest {
     }
 
     @Test
+    fun aSlantedSwipeUpTo45DegreesStillCounts() {
+        assertEquals(false, swipeSide(50f, 30f, 36f))
+        assertEquals(true, swipeSide(-60f, -55f, 36f))
+    }
+
+    @Test
     fun tooShortOrTooSteepIsNoSwipe() {
         assertNull(swipeSide(20f, 0f, 36f))
-        assertNull(swipeSide(50f, 30f, 36f))
+        assertNull(swipeSide(40f, 50f, 36f))
+        assertNull(swipeSide(50f, 50f, 36f))
         assertNull(swipeSide(0f, 80f, 36f))
     }
 }

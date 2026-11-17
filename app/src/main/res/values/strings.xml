@@ -171,6 +171,9 @@
     <string name="setup_choice_dark">Dark</string>
     <string name="setup_choice_light">Light</string>
     <string name="setup_choice_bar">Bar</string>
+    <string name="setup_choice_bar_spacing">Space between the icons in the bar</string>
+    <string name="setup_spacing_px">%1$d px</string>
+    <string name="setup_spacing_reset">Standard</string>
     <string name="setup_choice_bar_auto">Driver\'s side</string>
     <string name="setup_choice_left">Left</string>
     <string name="setup_choice_right">Right</string>
@@ -284,6 +287,8 @@
     <string name="msg_toggle_group_subtitle">Also show messages from group conversations</string>
     <string name="msg_toggle_read_aloud_title">Read messages aloud</string>
     <string name="msg_toggle_read_aloud_subtitle">Read each new message aloud as it arrives</string>
+    <string name="msg_apps_title">Apps shown in the car</string>
+    <string name="msg_apps_subtitle">Its messages as banners and in the notification centre</string>
     <string name="msg_hint_apps">Messaging apps (WhatsApp, Signal, SMS…) also have their own page in the car\'s app list.</string>
     <string name="msg_section_while_driving">While driving</string>
     <string name="msg_toggle_dnd_title">Do Not Disturb</string>

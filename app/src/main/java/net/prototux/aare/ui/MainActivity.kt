@@ -71,6 +71,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -168,6 +169,7 @@ import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
+import net.prototux.aare.ui.car.railGapPx
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
@@ -671,6 +673,22 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         Toggle(stringResource(R.string.msg_toggle_banners_title), stringResource(R.string.msg_toggle_banners_subtitle), banners) { banners = it; settings.messageBanners = it }
         Toggle(stringResource(R.string.msg_toggle_group_title), stringResource(R.string.msg_toggle_group_subtitle), groups) { groups = it; settings.groupMessages = it }
         Toggle(stringResource(R.string.msg_toggle_read_aloud_title), stringResource(R.string.msg_toggle_read_aloud_subtitle), aloud) { aloud = it; settings.readMessagesAloud = it }
+        // Which apps' messages show in the car: all of them until one is switched off.
+        val apps by produceState(emptyList<net.prototux.aare.host.PhoneApp>()) {
+            // Only those switched on for the car on the apps page: a hidden one shows nothing there anyway.
+            value = withContext(Dispatchers.IO) { net.prototux.aare.host.AndroidAutoApps.messagingApps(ctx).filter { it.packageName !in settings.hiddenApps } }
+        }
+        var muted by remember { mutableStateOf(settings.mutedMessageApps) }
+        if (apps.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.msg_apps_title), style = MaterialTheme.typography.titleSmall)
+            apps.forEach { app ->
+                Toggle(app.label, stringResource(R.string.msg_apps_subtitle), app.packageName !in muted) { on ->
+                    muted = if (on) muted - app.packageName else muted + app.packageName
+                    settings.mutedMessageApps = muted
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.msg_hint_apps),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -711,6 +729,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var layoutId by remember { mutableStateOf(settings.carLayoutId) }
     var accent by remember { mutableStateOf(settings.carAccent) }
     var rail by remember { mutableStateOf(settings.railPosition) }
+    var spacing by remember { mutableStateOf(settings.railSpacing) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
@@ -748,6 +767,21 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
                 rail = it; settings.railPosition = it
+            }
+            Spacer(Modifier.height(12.dp))
+            // In the car screen's pixels, one at a time from the standard space. The row keeps its layout
+            // whatever the value: the buttons stay where they were, for the next tap.
+            val standard = railGapPx(bottom = rail == Settings.RAIL_BOTTOM, dpi = settings.carDpi)
+            // Below 0 too: the icons' own margins can be drawn closer together.
+            val px = spacing ?: standard
+            Text(stringResource(R.string.setup_choice_bar_spacing), style = MaterialTheme.typography.bodyLarge)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton(onClick = { spacing = px - 1; settings.railSpacing = spacing }, enabled = px > -40) { Text("−") }
+                Text(stringResource(R.string.setup_spacing_px, px), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center,
+                    modifier = Modifier.width(72.dp))
+                OutlinedButton(onClick = { spacing = px + 1; settings.railSpacing = spacing }, enabled = px < 60) { Text("+") }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { spacing = null; settings.railSpacing = null }, enabled = spacing != null) { Text(stringResource(R.string.setup_spacing_reset)) }
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
         }

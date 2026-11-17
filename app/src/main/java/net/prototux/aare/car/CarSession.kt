@@ -328,9 +328,10 @@ class CarSession(
             drivingMode.start()
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
-                if (!m.group || settings.groupMessages) {
-                    runtime.remember(m.title, m.text, m.icon, m.actions)
-                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
+                if ((!m.group || settings.groupMessages) && showsMessage(m.packageName, settings.mutedMessageApps, settings.hiddenApps)) {
+                    val open = runtime.opener(m.packageName)
+                    runtime.remember(m.title, m.text, m.icon, m.actions, open)
+                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
                     if (settings.readMessagesAloud) m.readAloud()
                 }
             }
@@ -524,6 +525,7 @@ class CarSession(
         encoder = enc
 
         runtime.densityDpi = dpi
+        settings.carDpi = dpi
         runtime.screenWidthDp = layout.contentWidth * 160 / dpi
         runtime.screenHeightDp = layout.contentHeight * 160 / dpi
         runtime.rightHandDrive = rightHandDrive
@@ -1142,3 +1144,6 @@ class CarSession(
 }
 
 private fun androidx.compose.ui.graphics.ImageBitmap.asAndroidBitmapCompat(): Bitmap = asAndroidBitmap()
+
+/** Whether a message from [packageName] reaches the car screen: not muted, and its app not set "not in the car" ([hidden]). */
+internal fun showsMessage(packageName: String, muted: Set<String>, hidden: Set<String>) = packageName !in muted && packageName !in hidden

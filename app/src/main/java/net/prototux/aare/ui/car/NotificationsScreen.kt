@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,7 +62,8 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
             }
         }
         items(ui.history, key = { it.key }) { n ->
-            Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer).padding(16.dp)) {
+            Column(Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer)
+                .let { m -> n.open?.let { m.clickable(onClick = it) } ?: m }.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val icon = n.icon
                     if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(44.dp).clip(CircleShape))
@@ -86,16 +89,16 @@ internal fun NotificationsScreen(ui: CarUiState, modifier: Modifier) {
     }
 }
 
-/** The bell next to the clock, with the number of unseen notifications. */
+/** The bell next to the clock, with the number of unseen notifications; none while there are no notifications. */
 @Composable
 internal fun NotificationBell(ui: CarUiState, onClick: () -> Unit) {
+    if (ui.history.isEmpty()) return
     Box(Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(Icons.Rounded.Notifications, stringResource(R.string.notif_title), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
-        if (ui.unseen > 0) {
-            Box(Modifier.align(Alignment.TopEnd).size(18.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error),
-                contentAlignment = Alignment.Center) {
-                Text(if (ui.unseen > 9) stringResource(R.string.notif_unseen_overflow) else "${ui.unseen}", color = Color.White, fontSize = 10.sp)
-            }
+        // The badge inside the bell's circle, not on its edge, where the circle cut it off.
+        BadgedBox(badge = {
+            if (ui.unseen > 0) Badge { Text(if (ui.unseen > 9) stringResource(R.string.notif_unseen_overflow) else "${ui.unseen}") }
+        }) {
+            Icon(Icons.Rounded.Notifications, stringResource(R.string.notif_title), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         }
     }
 }
