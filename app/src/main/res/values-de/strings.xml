@@ -58,6 +58,10 @@
     <string name="setup_section_location">Standort</string>
     <string name="setup_toggle_car_gps_title">GPS des Autos verwenden</string>
     <string name="setup_toggle_car_gps_subtitle">Während der Verbindung sehen Apps auf dem Telefon die Position des Autos statt der eigenen, damit Navigations-Apps beide nicht vermischen</string>
+    <string name="setup_toggle_location_on_title">Standort an, wenn verbunden</string>
+    <string name="setup_toggle_location_on_subtitle">Schaltet den Standort des Handys ein, sobald ein Auto verbunden ist, weil Navi- und Blitzer-Apps ihn brauchen. Mit Shizuku oder Root.</string>
+    <string name="setup_toggle_location_off_title">Standort aus, wenn getrennt</string>
+    <string name="setup_toggle_location_off_subtitle">Schaltet den Standort des Handys aus, sobald das Auto nicht mehr verbunden ist. Mit Shizuku oder Root.</string>
     <string name="setup_check_mock_location_title">AARE erlauben, den Standort festzulegen</string>
     <string name="setup_check_mock_location_subtitle">Entwickleroptionen &gt; App für simulierten Standort auswählen &gt; AARE</string>
     <string name="setup_section_video">Video</string>

@@ -46,6 +46,7 @@ import net.prototux.aare.aap.Transport
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
+import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
@@ -121,6 +122,8 @@ class ProjectionService : Service() {
         media = MediaHub(this, scope)
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
+        // And the car's position left on the phone's location providers.
+        PhoneLocationFeed.recover(this)
         createChannel()
         _state.update { it.copy(running = true) }
     }

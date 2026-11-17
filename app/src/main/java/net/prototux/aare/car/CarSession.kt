@@ -326,6 +326,7 @@ class CarSession(
             // A route that started before the session was running still gets the focus.
             requestNavFocus()
             drivingMode.start()
+            locationSwitch.start(settings.locationOnInCar)
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (!m.group || settings.groupMessages) {
@@ -668,6 +669,9 @@ class CarSession(
     /** The car's GPS as the phone's location, so apps don't mix two positions. */
     private val locationFeed = PhoneLocationFeed(context)
 
+    /** The phone's location on when connected and off afterwards, each if chosen. */
+    private val locationSwitch = PhoneLocationSwitch(context)
+
     private val sensorListener = object : SensorChannel.Listener {
         override fun onSensors(batch: SensorBatch) {
             CarData.update(batch) // every sensor, for car apps and the assistant
@@ -975,7 +979,8 @@ class CarSession(
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
         callSpeaker?.stop(); callSpeaker = null
-        locationFeed.stop()
+        locationFeed.close()
+        if (settings.locationOffAfterCar) locationSwitch.stop()
         drivingMode.stop()
         cluster?.stop()
         micRouter.shutdown()
