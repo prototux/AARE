@@ -271,7 +271,7 @@ class Settings(context: Context) {
      * consent is for the entire screen, which the phone screen needs.
      */
     var keepNotificationsWhileCapturing: Boolean
-        get() = prefs.getBoolean("keep_notifications_capturing", true)
+        get() = prefs.getBoolean("keep_notifications_capturing", false)
         set(v) = prefs.edit { putBoolean("keep_notifications_capturing", v) }
 
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
