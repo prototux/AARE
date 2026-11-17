@@ -1,5 +1,6 @@
 package net.prototux.aare.launch;
 
+import android.view.MotionEvent;
 import android.view.Surface;
 
 /**
@@ -17,8 +18,8 @@ interface ILaunchHost {
     /** The car screen's surface changed size (new [surface]/size). */
     void resize(in Surface surface, int width, int height, int dpi) = 2;
 
-    /** Inject a touch (MotionEvent) at car-screen coordinates into the launched app's display. */
-    void touch(long downTime, long eventTime, int action, float x, float y, int pointerId) = 3;
+    /** Inject a complete touch event at car-screen coordinates into the launched app's display. */
+    void touch(in MotionEvent event) = 3;
 
     /** Inject a key (e.g. Back) into the launched app's display. */
     void key(long eventTime, int action, int keyCode) = 4;
