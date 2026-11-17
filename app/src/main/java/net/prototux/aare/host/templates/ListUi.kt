@@ -324,7 +324,7 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
         }
         if (row.numericDecoration != Row.NO_DECORATION && row.numericDecoration >= 0) {
             Box(
-                Modifier.padding(horizontal = 8.dp).heightIn(min = 36.dp).widthIn(min = 36.dp).clip(RoundedCornerShape(18.dp))
+                Modifier.padding(horizontal = 8.dp).heightIn(min = 36.dp).widthIn(min = 36.dp).clip(MaterialTheme.shapes.small)
                     .background(scheme.primaryContainer).padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -332,7 +332,7 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
             }
         }
         row.endImage?.let { end ->
-            CarIconView(end, imageSize(row.rowEndImageType), Modifier.padding(horizontal = 8.dp), shape = RoundedCornerShape(10.dp))
+            CarIconView(end, imageSize(row.rowEndImageType), Modifier.padding(horizontal = 8.dp), shape = MaterialTheme.shapes.small)
         }
         if (toggle != null) {
             ToggleSwitch(toggle, checked, setChecked)

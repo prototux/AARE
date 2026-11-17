@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +59,7 @@ internal fun PaneContent(pane: Pane, modifier: Modifier = Modifier) {
                             pane.image,
                             160.dp,
                             Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = MaterialTheme.shapes.medium,
                             contentScale = ContentScale.Fit,
                         )
                     }
@@ -72,7 +73,7 @@ internal fun PaneContent(pane: Pane, modifier: Modifier = Modifier) {
             if (side) {
                 Spacer(Modifier.width(24.dp))
                 Box(Modifier.weight(0.7f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                    CarIconView(pane.image, 280.dp, shape = RoundedCornerShape(28.dp), contentScale = ContentScale.Fit)
+                    CarIconView(pane.image, 280.dp, shape = MaterialTheme.shapes.large, contentScale = ContentScale.Fit)
                 }
             }
         }

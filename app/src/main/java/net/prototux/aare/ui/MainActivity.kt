@@ -38,6 +38,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -58,11 +60,14 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
@@ -70,6 +75,7 @@ import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tv
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -123,6 +129,7 @@ import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
+import net.prototux.aare.cert.CertificateUpdates
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
 import net.prototux.aare.host.Assistants
@@ -136,6 +143,9 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
@@ -179,6 +189,7 @@ private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: Image
     CONNECTION(R.string.setup_page_connection_title, R.string.setup_page_connection_subtitle, Icons.Rounded.Bluetooth),
     CAR_DATA(R.string.setup_page_car_data_title, R.string.setup_page_car_data_subtitle, Icons.Rounded.DirectionsCar),
     ADVANCED(R.string.setup_page_advanced_title, R.string.setup_page_advanced_subtitle, Icons.Rounded.Tune),
+    ABOUT(R.string.setup_page_about_title, R.string.setup_page_about_subtitle, Icons.Rounded.Info),
 }
 
 @Composable
@@ -189,7 +200,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -208,6 +219,7 @@ private fun Home() {
             ) {
                 item { Header() }
                 item { UpdateBanner() }
+                item { CertificateExpiryBanner() }
                 item { StatusCard(state) }
                 item { Setup(state, refresh, { refresh++ }) { page = it } }
                 item {
@@ -215,7 +227,6 @@ private fun Home() {
                         Page.entries.forEach { CategoryRow(it) { page = it } }
                     }
                 }
-                item { About() }
             }
         } else {
             Column(Modifier.fillMaxSize().systemBarsPadding()) {
@@ -243,6 +254,7 @@ private fun Home() {
                             item { VehicleOverridesCard() }
                             item { LogCard() }
                         }
+                        Page.ABOUT -> item { AboutScreen() }
                     }
                 }
             }
@@ -308,6 +320,34 @@ private fun UpdateBanner() {
             }
             IconButton(onClick = { UpdateChecker.dismiss(ctx) }) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+            }
+        }
+    }
+}
+
+/** The Google-issued certificate expires soon or has expired (see CertificateUpdates): tap to download a newer one. */
+@Composable
+private fun CertificateExpiryBanner() {
+    val ctx = LocalContext.current
+    val expiring by CertificateUpdates.expiring.collectAsState()
+    expiring?.let { e ->
+        val date = DateFormat.getDateInstance().format(e.notAfter)
+        Row(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.errorContainer)
+                .clickable { ctx.startService(Intent(ctx, ProjectionService::class.java).setAction(ProjectionService.ACTION_DOWNLOAD_CERT)) }
+                .padding(start = 18.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Rounded.Warning, null, tint = MaterialTheme.colorScheme.onErrorContainer)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(if (e.expired) R.string.cert_expired_banner_title else R.string.cert_expiring_banner_title, date),
+                    style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onErrorContainer)
+                Text(stringResource(R.string.cert_expiry_banner_subtitle),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)
+            }
+            IconButton(onClick = { CertificateUpdates.dismiss(ctx) }) {
+                Icon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         }
     }
@@ -460,7 +500,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
+    var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
     var btAddr by remember { mutableStateOf(settings.phoneBluetoothAddress) }
@@ -476,6 +518,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
+                callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
+            }
             Spacer(Modifier.height(8.dp))
             OutlinedTextField(btAddr, { btAddr = it; settings.phoneBluetoothAddress = it.trim() }, Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.setup_bt_address_label)) },
@@ -502,6 +547,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
             Text(stringResource(R.string.setup_hint_lower_resolution), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_force_h264_title), stringResource(R.string.setup_toggle_force_h264_subtitle), forceH264) { forceH264 = it; settings.forceH264 = it }
+            Toggle(stringResource(R.string.setup_toggle_constant_bitrate_title), stringResource(R.string.setup_toggle_constant_bitrate_subtitle), constantBitrate) {
+                constantBitrate = it; settings.constantBitrateVideo = it
+            }
         }
         Section(stringResource(R.string.setup_section_your_cars)) {
             if (cars.isEmpty()) Text(stringResource(R.string.setup_cars_empty), style = MaterialTheme.typography.bodyMedium)
@@ -636,9 +684,13 @@ private fun Toggle(title: String, subtitle: String, checked: Boolean, onChange: 
 private fun CarScreenSettings(settings: Settings, refresh: Int) {
     val ctx = LocalContext.current
     var theme by remember { mutableStateOf(settings.carTheme) }
+    var themeId by remember { mutableStateOf(settings.carThemeId) }
+    var layoutId by remember { mutableStateOf(settings.carLayoutId) }
+    var accent by remember { mutableStateOf(settings.carAccent) }
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
@@ -655,12 +707,18 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
         }
     }
-    var calendar by remember { mutableStateOf(settings.showCalendar) }
     @Suppress("UNUSED_EXPRESSION") refresh
     val touch = AndroidSettings.Secure.getString(ctx.contentResolver, AndroidSettings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
         .split(':').any { ComponentName.unflattenFromString(it) == ComponentName(ctx, MirrorTouchService::class.java) }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_look)) {
+            StyleChoices(
+                themeId, layoutId, accent,
+                choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) },
+                onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
+                onAccent = { accent = it; settings.carAccent = it },
+            )
+            Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
                 theme = it; settings.carTheme = it
             }
@@ -680,9 +738,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.setup_toggle_weather_title), stringResource(R.string.setup_toggle_weather_subtitle), weather) {
                 weather = it; settings.showWeather = it
             }
-            Toggle(stringResource(R.string.setup_toggle_calendar_title), stringResource(R.string.setup_toggle_calendar_subtitle), calendar) {
-                calendar = it; settings.showCalendar = it
-            }
+            Spacer(Modifier.height(8.dp))
+            DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {
@@ -794,17 +851,17 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 enabled = it; settings.carAudio = it
             }
             Spacer(Modifier.height(4.dp))
-            Text(best?.let { stringResource(R.string.audio_using_method, it.label) } ?: stringResource(R.string.audio_no_method),
+            Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
                 style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
         }
         Section(stringResource(R.string.audio_section_methods)) {
-            Check(CaptureMethod.AUDIO_POLICY.label,
+            Check(stringResource(CaptureMethod.AUDIO_POLICY.title),
                 if (policy) stringResource(R.string.audio_policy_ready)
                 else stringResource(R.string.audio_policy_not_ready),
                 policy) {
                 ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
             }
-            Check(CaptureMethod.SHIZUKU.label,
+            Check(stringResource(CaptureMethod.SHIZUKU.title),
                 when {
                     shizuku -> stringResource(R.string.audio_shizuku_ready)
                     root -> stringResource(R.string.audio_root_ready)
@@ -825,7 +882,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                     }
                 }
             }
-            Check(CaptureMethod.PLAYBACK_CAPTURE.label,
+            Check(stringResource(CaptureMethod.PLAYBACK_CAPTURE.title),
                 if (state.audioCapture) stringResource(R.string.audio_playback_ready)
                 else stringResource(R.string.audio_playback_not_ready),
                 state.audioCapture) {
@@ -870,9 +927,11 @@ private fun AppsCard(settings: Settings) {
         value = withContext(Dispatchers.IO) {
             val car = CarAppCatalog.query(ctx)
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
-            val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs }
+            val messaging = AndroidAutoApps.messagingApps(ctx)
+            val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
+            val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, AndroidAutoApps.messagingApps(ctx).filter { it.packageName !in shown })
+            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
         }
     }
     fun toggle(pkg: String, visible: Boolean) {
@@ -986,6 +1045,7 @@ private fun AppGroup(title: String) {
 @Composable
 private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
     var enabled by remember { mutableStateOf(settings.standaloneApps) }
+    var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
@@ -999,6 +1059,13 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
         }
         if (enabled) {
+            Toggle(
+                stringResource(R.string.standalone_keep_awake_title),
+                stringResource(R.string.standalone_keep_awake_subtitle),
+                keepAwake,
+            ) {
+                keepAwake = it; settings.standaloneKeepScreenAwake = it
+            }
             val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
                 value = withContext(Dispatchers.IO) { launchableApps(ctx) }
             }
@@ -1120,6 +1187,8 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
     var error by remember { mutableStateOf<String?>(null) }
     var p12 by rememberSaveable { mutableStateOf<Uri?>(null) }
     var downloading by remember { mutableStateOf(false) }
+    val settings = remember { Settings(ctx) }
+    var autoUpdate by remember { mutableStateOf(settings.certAutoUpdate) }
     val scope = rememberCoroutineScope()
     val keyPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { keyUri ->
         val certUri = pickCert ?: return@rememberLauncherForActivityResult
@@ -1163,12 +1232,16 @@ private fun CertificatesCard(certs: CertificateStore, state: ProjectionService.S
                         val d = withContext(Dispatchers.IO) { CertificateDownload.fetch() }
                         certs.importDownloaded(d)
                         entries = certs.entries()
+                        CertificateUpdates.refresh(ctx)
                     }.exceptionOrNull()?.let { downloadError(ctx, it) }
                     downloading = false
                 }
             }) { Text(stringResource(if (downloading) R.string.cert_action_downloading else R.string.cert_action_download)) }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+        Toggle(stringResource(R.string.cert_auto_update_title), stringResource(R.string.cert_auto_update_subtitle), autoUpdate) {
+            autoUpdate = it; settings.certAutoUpdate = it; CertificateUpdates.refresh(ctx)
+        }
     }
     p12?.let { uri ->
         var password by remember { mutableStateOf("") }
@@ -1368,11 +1441,93 @@ private fun LogCard() {
 }
 
 @Composable
-private fun About() {
+private fun LicenceLine() {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
         HorizontalDivider()
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.setup_about_text, net.prototux.aare.BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** The About page: what AARE is, links to the project, and everyone who helped build it. */
+@Composable
+private fun AboutScreen() {
+    val ctx = LocalContext.current
+    Section(stringResource(R.string.about_section_what_title)) {
+        Text(stringResource(R.string.about_text), style = MaterialTheme.typography.bodyMedium)
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_links_title)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pill(stringResource(R.string.about_link_repository), Icons.Rounded.Code) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.REPOSITORY)))
+            }
+            Pill(stringResource(R.string.about_link_issues), Icons.Rounded.BugReport) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.ISSUES)))
+            }
+            Pill(stringResource(R.string.about_link_discussions), Icons.Rounded.Forum) {
+                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.DISCUSSIONS)))
+            }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_thanks_title)) {
+        AboutThanks.GROUPS.forEachIndexed { i, group ->
+            if (i > 0) Spacer(Modifier.height(12.dp))
+            Text(stringResource(group.titleRes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            ThanksHandles(group.handles)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    Section(stringResource(R.string.about_section_oss_title)) {
+        AboutOss.GROUPS.forEachIndexed { i, group ->
+            if (i > 0) Spacer(Modifier.height(12.dp))
+            Text(stringResource(group.titleRes), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            group.components.forEach { OssComponentRow(it) }
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+    LicenceLine()
+}
+
+/** One open-source component's name and licence; tapping it opens its project or licence page. */
+@Composable
+private fun OssComponentRow(component: OssComponent) {
+    val ctx = LocalContext.current
+    Row(
+        Modifier.fillMaxWidth().clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(component.url))) }
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(component.name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(
+            component.licence,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** The handles of one Thanks group, wrapped onto as many lines as needed; each opens its GitHub profile. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ThanksHandles(handles: List<String>) {
+    val ctx = LocalContext.current
+    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        handles.forEach { handle ->
+            Text(
+                "@$handle",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .clickable { ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.profile(handle)))) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+            )
+        }
     }
 }

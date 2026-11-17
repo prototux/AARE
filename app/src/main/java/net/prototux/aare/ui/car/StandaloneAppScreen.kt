@@ -75,7 +75,10 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
                                 // connect() blocks (binds Shizuku / spawns su), so do it off the main thread.
                                 Thread {
                                     if (launcher.connect()) {
-                                        val id = launcher.start(surface, w, h, runtime.densityDpi, packageName)
+                                        val id = launcher.start(
+                                            surface, w, h, runtime.densityDpi, packageName,
+                                            runtime.settings.standaloneKeepScreenAwake,
+                                        )
                                         started = id >= 0
                                     }
                                 }.apply { isDaemon = true }.start()

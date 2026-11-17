@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">手机锁屏时屏幕镜像会暂停。解锁手机即可显示。</string>
     <string name="mirror_driving_no_accessibility">行驶中手机屏幕会暂停。若要在行驶中显示导航应用，请在手机的无障碍设置中开启 AARE：它会告诉 AARE 当前打开的是哪个应用。</string>
     <string name="mirror_driving_nav_only">行驶中手机屏幕会暂停，仅显示导航应用。</string>
-    <string name="mirror_need_car_audio">在手机上的 AARE 中开启车载音频，Android 询问时选择“整个屏幕”：手机屏幕镜像使用同一权限。</string>
+    <string name="mirror_need_screen_capture">手机屏幕需要 Android 的屏幕录制权限。请在手机上打开 AARE 的车载音频设置，点按“屏幕录制权限”，然后选择“整个屏幕”。</string>
+    <string name="mirror_capture_failed">Android 拒绝共享手机屏幕。请在手机上的 AARE 车载音频设置中再次点按“屏幕录制权限”，然后选择“整个屏幕”。</string>
     <string name="mirror_need_accessibility">要在车机上操作手机，请在手机的无障碍设置中开启 AARE。</string>
 
     <string name="common_back">返回</string>
@@ -50,6 +51,8 @@
     <string name="setup_toggle_wireless_subtitle">已配对车辆进入蓝牙范围时，通过 Wi-Fi 自动连接</string>
     <string name="setup_toggle_resume_music_title">恢复音乐播放</string>
     <string name="setup_toggle_resume_music_subtitle">车机连接时自动播放上次使用的音乐应用</string>
+    <string name="setup_bt_address_label">手机蓝牙地址（可选）</string>
+    <string name="setup_bt_address_hint">有些车机在确认连接的是哪台手机之前会显示黑屏。可在设置 &gt; 关于手机 &gt; 状态中找到该地址。如果你的车已经能正常使用，留空即可。</string>
     <string name="setup_section_location">位置</string>
     <string name="setup_toggle_car_gps_title">使用车辆的 GPS</string>
     <string name="setup_toggle_car_gps_subtitle">连接期间，手机上的应用会获取车辆的位置而非手机自身的位置，避免导航应用混淆两者</string>
@@ -81,13 +84,18 @@
     <string name="setup_toggle_dark_bar_title">深色导航条</string>
     <string name="setup_toggle_dark_bar_subtitle">即使使用日间配色，导航条仍保持深色</string>
     <string name="setup_section_dashboard">仪表盘</string>
+    <string name="dash_cards_title">卡片</string>
+    <string name="dash_cards_hint">第一张卡片占用最多空间，其余卡片填满屏幕剩下的部分。没有内容可显示的卡片会把位置让给下一张。</string>
+    <string name="dash_card_map">地图</string>
+    <string name="dash_card_media">音乐</string>
+    <string name="dash_card_calendar">下一个日历活动</string>
+    <string name="dash_card_notification">最新通知</string>
+    <string name="dash_card_weather">天气</string>
     <string name="setup_choice_wallpaper">壁纸</string>
     <string name="setup_wallpaper_none">无</string>
     <string name="setup_wallpaper_photo">照片</string>
     <string name="setup_toggle_weather_title">天气</string>
     <string name="setup_toggle_weather_subtitle">显示在时钟旁，数据来自 Open-Meteo（仅获取大致位置，精度约 10 公里）</string>
-    <string name="setup_toggle_calendar_title">下一个日历事件</string>
-    <string name="setup_toggle_calendar_subtitle">显示在音乐信息下方，并提供前往该地点的导航快捷方式</string>
     <string name="setup_section_driving">驾驶</string>
     <string name="setup_toggle_passenger_title">乘客模式</string>
     <string name="setup_toggle_passenger_subtitle">忽略车辆的行驶状态：行驶中仍可输入文字、浏览长列表并使用手机屏幕镜像，供乘客使用。驾驶员行驶中不得操作屏幕。</string>
@@ -112,8 +120,24 @@
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · 与 Google 无关联。Android Auto 是 Google LLC 的商标。</string>
     <string name="setup_choice_style">样式</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">主题</string>
+    <string name="setup_choice_layout">布局</string>
+    <string name="setup_layout_taskbar">任务栏</string>
+    <string name="setup_layout_dock">程序坞</string>
+    <string name="setup_layout_classic">应用网格</string>
+    <string name="setup_style_custom">自定义</string>
+    <string name="theme_high_contrast">高对比度</string>
+    <string name="theme_night">夜间</string>
+    <string name="theme_retro">复古</string>
+    <string name="setup_choice_accent">强调色</string>
+    <string name="accent_theme">主题自带</string>
+    <string name="accent_phone">手机</string>
+    <string name="accent_amber">琥珀色</string>
+    <string name="accent_red">红色</string>
+    <string name="accent_green">绿色</string>
+    <string name="accent_cyan">青色</string>
+    <string name="accent_blue">蓝色</string>
+    <string name="accent_white">白色</string>
     <string name="setup_switch_dark_bar">深色导航条（即使使用日间配色）</string>
     <string name="setup_switch_passenger">乘客模式：不限制行驶中操作（驾驶员不得使用屏幕）</string>
     <string name="setup_switch_message_notifications">消息通知</string>
@@ -141,6 +165,8 @@
     <string name="huserver_toggle_lanonce_subtitle">更安全：每次会话都需要重新允许网络访问。若车机会自动重新连接（如 openauto 或 Headunit Revived），请关闭此选项。</string>
     <string name="huserver_toggle_mirror_title">服务器上的手机屏幕镜像</string>
     <string name="huserver_toggle_mirror_subtitle">同时向任何连接到此处的设备提供“手机屏幕”。有风险：对方可以查看手机屏幕并进行点击操作，因此除非信任该车机，否则请保持关闭。</string>
+    <string name="huserver_toggle_localhost_title">允许 localhost（webaa / paath）</string>
+    <string name="huserver_toggle_localhost_subtitle">允许来自手机上某个浏览器版 Android Auto 应用的连接，适用于没有 Android Auto 的车辆（例如 Tesla）。手机上的任何应用都有可能发起连接，因此除非你会用到此类应用，否则请保持关闭。</string>
 
     <string name="msg_settings_title">消息</string>
     <string name="msg_page_subtitle">横幅通知与朗读</string>
@@ -169,6 +195,10 @@
     <string name="audio_no_method">尚未设置任何方式：请从下方选择一种。</string>
     <string name="audio_section_methods">可用方式（按推荐程度排序）</string>
     <string name="audio_policy_ready">已就绪。音乐与导航语音会分别传到车机，手机保持静音。</string>
+    <string name="audio_method_policy">系统音频路由（类似 Android Auto）</string>
+    <string name="audio_method_shizuku_policy">Shizuku，音乐与导航分开（类似 Android Auto）</string>
+    <string name="audio_method_shizuku">Shizuku 或 root</string>
+    <string name="audio_method_playback_capture">屏幕录制权限</string>
     <string name="audio_policy_not_ready">效果类似 Android Auto：音乐与导航语音分开，手机扬声器关闭。需要已获取 root 权限的手机：通过 Magisk 模块将 AARE 安装为系统应用（详见 README）。</string>
     <string name="audio_shizuku_ready">已就绪。手机播放的所有声音（包括导航语音）都会传到车机，手机保持静音。</string>
     <string name="audio_shizuku_needs_android12">需要 Android 12 或更高版本。</string>
@@ -197,6 +227,14 @@
     <string name="notif_channel_connection">车辆连接</string>
     <string name="notif_action_stop">停止</string>
     <string name="notif_action_trust">信任</string>
+    <string name="notif_action_download_cert">下载证书</string>
+    <string name="notif_cert_download_title">车机拒绝了 AARE 的证书</string>
+    <string name="notif_cert_download_message">此车机只接受 Google 签发的证书。请从最新版 Android Auto 应用下载该证书，然后重新连接。</string>
+    <string name="notif_cert_download_progress">正在下载 Android Auto 的证书…</string>
+    <string name="notif_cert_download_ready_title">证书已就绪</string>
+    <string name="notif_cert_download_ready_message">已添加 Android Auto 的证书。请重新连接车机以使用它。</string>
+    <string name="notif_cert_download_reconnecting">已添加 Android Auto 的证书。正在重新连接车机…</string>
+    <string name="notif_cert_download_failed">无法下载证书：%1$s</string>
     <string name="notif_status_connecting_wirelessly">正在无线连接…</string>
     <string name="notif_status_not_connected">未连接</string>
     <string name="notif_keeping_consent_suffix">%1$s · 保留车载音频的屏幕录制授权（点击“停止”可释放）</string>
@@ -309,6 +347,8 @@
     <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
     <string name="standalone_toggle_title">在车载屏幕上启动手机应用</string>
     <string name="standalone_toggle_subtitle">在下方选择应用。仅在停车时显示。</string>
+    <string name="standalone_keep_awake_title">独立应用的常亮模式</string>
+    <string name="standalone_keep_awake_subtitle">应用打开时，使手机的物理屏幕保持常亮。在受影响的 Android 17 手机上，手机屏幕关闭时虚拟显示会停止。会消耗更多电量。</string>
     <string name="standalone_need_root">需要 root 或 Shizuku。请在车载音频设置中配置其中之一，然后返回。</string>
     <string name="standalone_not_native">不是 Android Auto 应用 · 仅限停车时使用</string>
     <string name="standalone_starting">正在启动…</string>
@@ -319,6 +359,10 @@
     <string name="browser_url_label">主页</string>
     <string name="browser_hint_parked">行车时浏览器会暂停。</string>
     <string name="browser_paused_driving">行车时浏览器会暂停。</string>
+    <string name="browser_forward">前进</string>
+    <string name="browser_reload">刷新</string>
+    <string name="browser_home">主页</string>
+    <string name="browser_address_hint">搜索或输入网址</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">车辆数据</string>
     <string name="setup_page_car_data_subtitle">车辆的实时速度、挡位和传感器数据</string>
@@ -369,6 +413,14 @@
     <string name="car_data_accelerometer">加速度计</string>
     <string name="car_data_gyroscope">陀螺仪</string>
     <string name="car_data_dtc">故障码</string>
+    <string name="car_data_app_label">车载数据</string>
+    <string name="car_data_show_in_car_title">在车机屏幕上显示</string>
+    <string name="car_data_show_in_car_subtitle">在车机中添加一个诊断应用来显示这些实时数据</string>
+    <string name="vehicles_section_title">车辆覆盖设置</string>
+    <string name="vehicles_hint">无需重新构建应用，即可调整特定车辆的屏幕密度或可视区域边距。使用文件管理器编辑 vehicles.json，按品牌/型号/名称匹配车辆。</string>
+    <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
+    <string name="vehicles_import">导入文件…</string>
+    <string name="vehicles_template">写入模板</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>

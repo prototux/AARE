@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">Der Telefonbildschirm ist pausiert, solange das Telefon gesperrt ist. Entsperren Sie das Telefon, um ihn anzuzeigen.</string>
     <string name="mirror_driving_no_accessibility">Der Telefonbildschirm ist während der Fahrt pausiert. Um Navigations-Apps während der Fahrt anzuzeigen, aktivieren Sie AARE in den Bedienungshilfen des Telefons: So erfährt AARE, welche App geöffnet ist.</string>
     <string name="mirror_driving_nav_only">Der Telefonbildschirm ist während der Fahrt pausiert. Er zeigt nur Navigations-Apps an.</string>
-    <string name="mirror_need_car_audio">Aktivieren Sie Autoaudio in AARE auf dem Telefon und wählen Sie Gesamten Bildschirm, wenn Android danach fragt: Der Telefonbildschirm nutzt dieselbe Berechtigung.</string>
+    <string name="mirror_need_screen_capture">Der Telefonbildschirm benötigt Androids Bildschirmaufnahme-Berechtigung. Öffnen Sie auf dem Telefon die Einstellungen für Autoaudio in AARE, tippen Sie auf Bildschirmaufnahme-Berechtigung und wählen Sie Gesamten Bildschirm.</string>
+    <string name="mirror_capture_failed">Android hat die Freigabe des Telefonbildschirms abgelehnt. Tippen Sie auf dem Telefon in den Einstellungen für Autoaudio in AARE erneut auf Bildschirmaufnahme-Berechtigung und wählen Sie Gesamten Bildschirm.</string>
     <string name="mirror_need_accessibility">Um das Telefon vom Auto aus zu nutzen, aktivieren Sie AARE in den Bedienungshilfen des Telefons.</string>
 
     <!-- common: shared across screens -->
@@ -52,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Verbindet sich über Wi-Fi mit gekoppelten Autos, sobald sie in Bluetooth-Reichweite kommen</string>
     <string name="setup_toggle_resume_music_title">Musik fortsetzen</string>
     <string name="setup_toggle_resume_music_subtitle">Startet die zuletzt verwendete Musik-App, wenn sich das Auto verbindet</string>
+    <string name="setup_bt_address_label">Bluetooth-Adresse des Telefons (optional)</string>
+    <string name="setup_bt_address_hint">Manche Head Units zeigen einen schwarzen Bildschirm, bis sie wissen, welches Telefon verbunden ist. Sie finden sie unter Einstellungen &gt; Über das Telefon &gt; Status. Lassen Sie das Feld leer, wenn Ihr Auto bereits funktioniert.</string>
     <string name="setup_section_location">Standort</string>
     <string name="setup_toggle_car_gps_title">GPS des Autos verwenden</string>
     <string name="setup_toggle_car_gps_subtitle">Während der Verbindung sehen Apps auf dem Telefon die Position des Autos statt der eigenen, damit Navigations-Apps beide nicht vermischen</string>
@@ -83,13 +86,18 @@
     <string name="setup_toggle_dark_bar_title">Dunkle Leiste</string>
     <string name="setup_toggle_dark_bar_subtitle">Leiste auch bei Tagfarben dunkel halten</string>
     <string name="setup_section_dashboard">Dashboard</string>
+    <string name="dash_cards_title">Karten</string>
+    <string name="dash_cards_hint">Die erste Karte bekommt den meisten Platz, die anderen füllen den Rest des Bildschirms. Eine Karte ohne Inhalt überlässt ihren Platz der nächsten.</string>
+    <string name="dash_card_map">Landkarte</string>
+    <string name="dash_card_media">Musik</string>
+    <string name="dash_card_calendar">Nächster Kalendertermin</string>
+    <string name="dash_card_notification">Letzte Benachrichtigung</string>
+    <string name="dash_card_weather">Wetter</string>
     <string name="setup_choice_wallpaper">Hintergrundbild</string>
     <string name="setup_wallpaper_none">Kein</string>
     <string name="setup_wallpaper_photo">Foto</string>
     <string name="setup_toggle_weather_title">Wetter</string>
     <string name="setup_toggle_weather_subtitle">Neben der Uhr, von Open-Meteo (es erhält eine ungefähre Position von etwa 10 km)</string>
-    <string name="setup_toggle_calendar_title">Nächster Kalendertermin</string>
-    <string name="setup_toggle_calendar_subtitle">Unter der Musik, mit einer Verknüpfung zur Navigation zum entsprechenden Ort</string>
     <string name="setup_section_driving">Fahren</string>
     <string name="setup_toggle_passenger_title">Beifahrermodus</string>
     <string name="setup_toggle_passenger_subtitle">Ignoriert den Fahrstatus des Autos: Tippen, lange Listen und der Telefonbildschirm bleiben während der Fahrt für einen Beifahrer verfügbar. Der Fahrer darf den Bildschirm während der Fahrt nicht benutzen.</string>
@@ -114,8 +122,24 @@
     <string name="setup_section_connection_log">Verbindungsprotokoll</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nicht mit Google verbunden. Android Auto ist eine Marke von Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Design</string>
+    <string name="setup_choice_layout">Layout</string>
+    <string name="setup_layout_taskbar">Taskleiste</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_layout_classic">App-Raster</string>
+    <string name="setup_style_custom">Eigene</string>
+    <string name="theme_high_contrast">Hoher Kontrast</string>
+    <string name="theme_night">Nacht</string>
+    <string name="theme_retro">Retro</string>
+    <string name="setup_choice_accent">Akzentfarbe</string>
+    <string name="accent_theme">Vom Design</string>
+    <string name="accent_phone">Vom Telefon</string>
+    <string name="accent_amber">Bernstein</string>
+    <string name="accent_red">Rot</string>
+    <string name="accent_green">Grün</string>
+    <string name="accent_cyan">Cyan</string>
+    <string name="accent_blue">Blau</string>
+    <string name="accent_white">Weiß</string>
     <string name="setup_switch_dark_bar">Dunkle Leiste, auch bei Tagfarben</string>
     <string name="setup_switch_passenger">Beifahrermodus: keine Fahreinschränkungen (der Fahrer darf den Bildschirm nicht benutzen)</string>
     <string name="setup_switch_message_notifications">Nachrichtenbenachrichtigungen</string>
@@ -145,6 +169,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Sicherer: Das Netzwerk muss für jede Sitzung erneut erlaubt werden. Schalten Sie dies für Head Units aus, die sich selbst wieder verbinden, wie openauto oder Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Telefonbildschirm auf dem Server</string>
     <string name="huserver_toggle_mirror_subtitle">Bietet auch „Telefonbildschirm" jedem an, der sich hier verbindet. Riskant: Diese Person sieht den Bildschirm des Telefons und kann darauf tippen, also lassen Sie es aus, außer Sie vertrauen der Head Unit.</string>
+    <string name="huserver_toggle_localhost_title">Localhost erlauben (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Eine Verbindung von einer Android-Auto-im-Browser-App auf diesem Telefon akzeptieren, für Autos ohne Android Auto (z. B. Tesla). Jede App auf dem Telefon könnte sich verbinden, lassen Sie es also aus, außer Sie nutzen eine solche App.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Nachrichten</string>
@@ -175,6 +201,10 @@
     <string name="audio_no_method">Noch keine Methode eingerichtet: Wählen Sie unten eine aus.</string>
     <string name="audio_section_methods">Methoden, beste zuerst</string>
     <string name="audio_policy_ready">Bereit. Musik und Navigationsstimme gehen getrennt ins Auto, das Telefon bleibt stumm.</string>
+    <string name="audio_method_policy">Systemweite Audioweiterleitung (wie Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, Musik und Navigation getrennt (wie Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku oder root</string>
+    <string name="audio_method_playback_capture">Bildschirmaufnahme-Berechtigung</string>
     <string name="audio_policy_not_ready">Wie Android Auto: Musik und Navigationsstimme getrennt, Telefonlautsprecher aus. Erfordert ein gerootetes Telefon: Installieren Sie AARE als Systemapp mit dem Magisk-Modul (siehe die README).</string>
     <string name="audio_shizuku_ready">Bereit. Alles, was das Telefon abspielt, geht ins Auto, einschließlich Navigationsstimme; das Telefon bleibt stumm.</string>
     <string name="audio_shizuku_needs_android12">Erfordert Android 12 oder neuer.</string>
@@ -206,6 +236,14 @@
     <string name="notif_channel_connection">Autoverbindung</string>
     <string name="notif_action_stop">Stopp</string>
     <string name="notif_action_trust">Vertrauen</string>
+    <string name="notif_action_download_cert">Zertifikat herunterladen</string>
+    <string name="notif_cert_download_title">Head Unit hat das Zertifikat von AARE abgelehnt</string>
+    <string name="notif_cert_download_message">Diese Head Unit akzeptiert nur das Zertifikat von Google. Laden Sie es aus der neuesten Android-Auto-App herunter und verbinden Sie sich dann erneut.</string>
+    <string name="notif_cert_download_progress">Zertifikat von Android Auto wird heruntergeladen…</string>
+    <string name="notif_cert_download_ready_title">Zertifikat bereit</string>
+    <string name="notif_cert_download_ready_message">Das Zertifikat von Android Auto wurde hinzugefügt. Verbinden Sie sich erneut mit der Head Unit, um es zu verwenden.</string>
+    <string name="notif_cert_download_reconnecting">Das Zertifikat von Android Auto wurde hinzugefügt. Verbindung mit der Head Unit wird erneut aufgebaut…</string>
+    <string name="notif_cert_download_failed">Das Zertifikat konnte nicht heruntergeladen werden: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Kabellose Verbindung wird aufgebaut…</string>
     <string name="notif_status_not_connected">Nicht verbunden</string>
     <string name="notif_keeping_consent_suffix">%1$s · Zustimmung zur Bildschirmaufnahme für Autoaudio wird beibehalten (Stopp gibt sie frei)</string>
@@ -325,6 +363,8 @@
     <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
     <string name="standalone_toggle_title">Telefon-Apps auf dem Autobildschirm starten</string>
     <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus. Nur beim Parken angezeigt.</string>
+    <string name="standalone_keep_awake_title">Kein-Schlaf-Modus für eigenständige Apps</string>
+    <string name="standalone_keep_awake_subtitle">Hält den physischen Telefonbildschirm wach, solange eine App geöffnet ist. Auf betroffenen Android-17-Telefonen stoppen virtuelle Displays, wenn der Telefonbildschirm aus ist. Verbraucht mehr Akku.</string>
     <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
@@ -335,6 +375,10 @@
     <string name="browser_url_label">Startseite</string>
     <string name="browser_hint_parked">Der Browser ist während der Fahrt pausiert.</string>
     <string name="browser_paused_driving">Der Browser ist während der Fahrt pausiert.</string>
+    <string name="browser_forward">Vorwärts</string>
+    <string name="browser_reload">Neu laden</string>
+    <string name="browser_home">Startseite</string>
+    <string name="browser_address_hint">Suchen oder eine Webadresse eingeben</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Fahrzeugdaten</string>
     <string name="setup_page_car_data_subtitle">Geschwindigkeit, Gang und Sensoren live aus dem Auto</string>
@@ -385,6 +429,14 @@
     <string name="car_data_accelerometer">Beschleunigungssensor</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Fehlercodes</string>
+    <string name="car_data_app_label">Fahrzeugdaten</string>
+    <string name="car_data_show_in_car_title">Auf dem Autobildschirm anzeigen</string>
+    <string name="car_data_show_in_car_subtitle">Fügen Sie im Auto eine Diagnose-App für diese Live-Daten hinzu</string>
+    <string name="vehicles_section_title">Fahrzeugspezifische Ausnahmen</string>
+    <string name="vehicles_hint">Korrigieren Sie die Dichte oder die Ränder des sichtbaren Bereichs für ein bestimmtes Auto ohne einen neuen Build. Bearbeiten Sie vehicles.json mit einem Dateimanager und ordnen Sie das Auto nach Marke/Modell/Name zu.</string>
+    <string name="vehicles_rule_count">%1$d Regel(n) geladen</string>
+    <string name="vehicles_import">Datei importieren…</string>
+    <string name="vehicles_template">Vorlage schreiben</string>
     <string name="setup_toggle_force_h264_title">H.264-Video erzwingen</string>
     <string name="setup_toggle_force_h264_subtitle">Standardmäßig verwendet AARE den besten Codec, den Auto und Telefon gemeinsam unterstützen (H.265…). Aktivieren Sie dies, wenn das Bild im Auto ruckelt oder gestört ist.</string>
     <string name="common_ok">OK</string>

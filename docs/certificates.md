@@ -100,6 +100,14 @@ check, so not every factory head unit does. Reports from real cars are welcome (
   SHA-256 `49e52efc…c4ad17f`), the CA signed the leaf, and the key signs data the leaf's public key
   verifies. A new download replaces the previous one; certificates you imported stay.
   [extract_key.py](../extract_key.py) gets the same files from an Android Auto APK.
+- **Keeping it current:** a downloaded certificate expires a few months after the Android Auto
+  build it comes from. With *Update the downloaded certificate automatically* on (off by default),
+  AARE asks that repository for its version at most once a day, never while a car is connected,
+  and downloads the new certificate only if it lasts longer than the Google-issued one on the
+  phone; it then replaces the previous download and is offered first. Whether or not it is on,
+  when the longest-lasting Google-issued certificate expires within two weeks, the home screen
+  warns and one notification says so (another once it has expired), with a *Download certificate*
+  action. These checks run when AARE opens and after each session.
 - **Fallback order:** imported certificates first, then the built-in one, then the generated one;
   AARE offers them in turn. When a head unit
   refuses one (a failed handshake, or a non-zero `AUTH_COMPLETE`), the next connection offers

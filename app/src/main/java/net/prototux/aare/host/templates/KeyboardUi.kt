@@ -170,8 +170,8 @@ private fun fnIcon(kind: FnKind, submit: ImageVector): ImageVector = when (kind)
 @Composable
 private fun KeyCap(modifier: Modifier, bg: Color, onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
-        modifier.clip(RoundedCornerShape(14.dp)).background(bg)
-            .carFocusHighlight(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
+        modifier.clip(MaterialTheme.shapes.small).background(bg)
+            .carFocusHighlight(MaterialTheme.shapes.small).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
