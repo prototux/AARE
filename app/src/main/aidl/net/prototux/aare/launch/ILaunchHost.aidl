@@ -55,6 +55,13 @@ interface ILaunchHost {
     /** Fingers on the launched app's display at once (pinch to zoom): [xy] their x, y in turn, [ids] their pointer ids, in that order. */
     oneway void touches(long downTime, long eventTime, int action, in float[] xy, in int[] ids) = 18;
 
+    /**
+     * Like [start], but opens [packageName]'s voice UI (ACTION_VOICE_COMMAND, else ACTION_ASSIST),
+     * or its main activity if it has neither: for an assistant on the car screen. Returns the
+     * display id, or -1 (and no display) if nothing could be opened.
+     */
+    int startAssistant(in Surface surface, int width, int height, int dpi, String packageName) = 17;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }

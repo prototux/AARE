@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Niciun asistent implicit setat pe telefon</string>
     <string name="assistant_has_car_app_subtitle">Pe ecranul mașinii, cu microfonul mașinii</string>
     <string name="assistant_opens_on_phone">Se deschide pe telefon</string>
+    <string name="assistant_opens_on_car_screen">Se deschide pe ecranul mașinii la parcare, pe telefon în timpul condusului</string>
     <string name="assistant_hint">Butonul vocal de pe volan și microfonul din bară deschid acest asistent. Asistenții cu o aplicație auto, precum Lapin, funcționează cel mai bine.</string>
+    <string name="assistant_car_screen_toggle_title">Deschide pe ecranul mașinii asistenții fără aplicație pentru mașină</string>
+    <string name="assistant_car_screen_toggle_subtitle">La parcare, afișează interfața vocală a asistentului pe ecranul mașinii în loc de telefon. În timpul condusului se deschide pe telefon, cu excepția cazului în care modul pasager este activ. Necesită root sau Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Conexiune mașină</string>

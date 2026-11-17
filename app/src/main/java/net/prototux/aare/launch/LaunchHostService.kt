@@ -83,6 +83,21 @@ class LaunchHostService : ILaunchHost.Stub {
         return displayId
     }
 
+    override fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, packageName: String): Int {
+        stop()
+        val ctx = callerContext() ?: return -1
+        val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
+        display = vd
+        displayId = vd.display.displayId
+        if (!launchAssistant(ctx, packageName, displayId)) {
+            // Unlike start(), no empty display: the caller opens the assistant on the phone instead.
+            Log.w(TAG, "created display $displayId but could not open $packageName's assistant on it")
+            stop()
+            return -1
+        }
+        return displayId
+    }
+
     override fun resize(surface: Surface, width: Int, height: Int, dpi: Int) {
         val vd = display ?: return
         runCatching { vd.resize(width, height, dpi.coerceAtLeast(MIN_DPI)) }
@@ -405,6 +420,24 @@ class LaunchHostService : ILaunchHost.Stub {
         if (result < 0) Log.w(TAG, "startActivity($pkg) on display $onDisplay: result $result")
         result >= 0
     }.onFailure { Log.w(TAG, "startActivityAsUser($pkg) unavailable: ${it.message}") }.getOrNull()
+
+    /**
+     * Open [pkg]'s voice UI onto [onDisplay] (what the voice button asks of an assistant, as
+     * Assistants.startOnPhone does on the phone), or its main activity if it has none.
+     */
+    @SuppressLint("QueryPermissionsNeeded")
+    private fun launchAssistant(ctx: Context, pkg: String, onDisplay: Int): Boolean {
+        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay).toBundle()
+        for (action in listOf(Intent.ACTION_VOICE_COMMAND, Intent.ACTION_ASSIST)) {
+            val intent = Intent(action).setPackage(pkg)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            if (ctx.packageManager.resolveActivity(intent, 0) == null) continue
+            val opened = runCatching { ctx.startActivity(intent, opts) }
+                .onFailure { Log.w(TAG, "startActivity($action, $pkg) failed: ${it.message}") }.isSuccess
+            if (opened) return true
+        }
+        return launch(ctx, pkg, onDisplay)
+    }
 
     /** Inject one event into the launched app's display via InputManager's hidden injectInputEvent. */
     private fun inject(event: InputEvent) {

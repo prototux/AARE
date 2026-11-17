@@ -230,7 +230,10 @@
     <string name="assistant_no_default">V telefonu není nastaven výchozí asistent</string>
     <string name="assistant_has_car_app_subtitle">Na obrazovce auta, s mikrofonem auta</string>
     <string name="assistant_opens_on_phone">Otevírá se na telefonu</string>
+    <string name="assistant_opens_on_car_screen">Otevírá se na obrazovce auta při zaparkování, během jízdy na telefonu</string>
     <string name="assistant_hint">Tlačítko hlasu na volantu a mikrofon na liště otevírají tohoto asistenta. Nejlépe funguje asistent s aplikací pro auto, jako je Lapin.</string>
+    <string name="assistant_car_screen_toggle_title">Otevírat asistenty bez aplikace pro auto na obrazovce auta</string>
+    <string name="assistant_car_screen_toggle_subtitle">Při zaparkování zobrazí hlasové rozhraní asistenta na obrazovce auta místo na telefonu. Během jízdy se otevře na telefonu, pokud není zapnutý režim spolujezdce. Vyžaduje root nebo Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Připojení k autu</string>
