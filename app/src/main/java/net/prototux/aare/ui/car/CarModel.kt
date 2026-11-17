@@ -3,6 +3,7 @@ package net.prototux.aare.ui.car
 import android.graphics.Bitmap
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,6 +28,12 @@ class CarAppEntry(
     val kind: CarAppKind,
 )
 
+/** The rail's standard space between its icons, in dp: a bottom bar has more room sideways. */
+fun railGapDp(bottom: Boolean) = if (bottom) 12 else 4
+
+/** That standard space in the pixels of a car screen of [dpi], rounded as Compose draws it. */
+fun railGapPx(bottom: Boolean, dpi: Int) = (railGapDp(bottom) * dpi + 80) / 160
+
 @Stable
 class NowPlaying(
     val appId: String,
@@ -39,11 +46,62 @@ class NowPlaying(
     val updatedAtMs: Long,
 )
 
-/** The car UI's navigation: the dashboard, the app grid, or one app full screen. */
+/** The car UI's navigation: the dashboard, the app grid, one app full screen, or two side by side. */
 sealed interface CarScreen {
     data object Dashboard : CarScreen
     data object Launcher : CarScreen
     data class App(val appId: String) : CarScreen
+    /** Two apps side by side, never the same one twice. */
+    data class Split(val left: String, val right: String) : CarScreen
+}
+
+/** Whether the app [id] is on screen, full screen or in either pane. */
+fun CarScreen.shows(id: String?): Boolean = when (this) {
+    is CarScreen.App -> appId == id
+    is CarScreen.Split -> left == id || right == id
+    else -> false
+}
+
+/** A pane released within this share of the width from an edge closes. */
+const val SPLIT_SNAP = 0.1f
+
+/**
+ * The screen after opening [appId] in the left or right pane. The other pane keeps what is on
+ * screen: the app open full screen, or the other pane of a split (the same app swaps sides). With
+ * nothing on screen it takes the most recent other app, and with none the app opens full screen.
+ */
+fun splitWith(current: CarScreen, appId: String, left: Boolean, recent: List<String>): CarScreen {
+    val onScreen = when (current) {
+        is CarScreen.App -> current.appId
+        is CarScreen.Split -> when (appId) {
+            current.left -> current.right
+            current.right -> current.left
+            else -> if (left) current.right else current.left
+        }
+        else -> null
+    }
+    val other = onScreen?.takeIf { it != appId } ?: recent.firstOrNull { it != appId } ?: return CarScreen.App(appId)
+    return if (left) CarScreen.Split(appId, other) else CarScreen.Split(other, appId)
+}
+
+/**
+ * The screen once the apps for which [gone] is true have left the app list (hidden, uninstalled,
+ * switched off): the other app of a split takes the whole screen, and with both gone the
+ * dashboard. A single app full screen stays as it is (the shell shows the dashboard for it).
+ */
+fun CarScreen.withoutApps(gone: (String) -> Boolean): CarScreen = when {
+    this !is CarScreen.Split -> this
+    gone(left) && gone(right) -> CarScreen.Dashboard
+    gone(left) -> CarScreen.App(right)
+    gone(right) -> CarScreen.App(left)
+    else -> this
+}
+
+/** The screen once the divider is released at [fraction] (the left pane's share of the width). */
+fun snapSplit(split: CarScreen.Split, fraction: Float): CarScreen = when {
+    fraction < SPLIT_SNAP -> CarScreen.App(split.right)
+    fraction > 1 - SPLIT_SNAP -> CarScreen.App(split.left)
+    else -> split
 }
 
 /** A transient card, e.g. an incoming message or a toast from a car app. */
@@ -57,6 +115,8 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
+    /** A tap on it: its app on the car screen, if there is one. */
+    val open: (() -> Unit)? = null,
 )
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
@@ -124,6 +184,22 @@ class CarUiState {
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** The rail's apps picked on the phone, in order (ids); empty: the automatic ones. */
+    var railAppIds by mutableStateOf<List<String>>(emptyList())
+    /** The apps a long press on the launcher button offers, in order (ids). */
+    var shortcutAppIds by mutableStateOf<List<String>>(emptyList())
+    /** The launcher leaves out the apps in [railAppIds] and [shortcutAppIds]. */
+    var launcherHidesPinned by mutableStateOf(false)
+    /** The space between the rail's icons in the car screen's pixels, negative drawing them closer; null for the standard space. */
+    var railSpacing by mutableStateOf<Int?>(null)
+    /** A sideways swipe on an app in the rail or launcher opens it in that side's pane. */
+    var paneSwipe by mutableStateOf(true)
+    /** A long press on an app in the rail or launcher offers the panes. */
+    var paneMenu by mutableStateOf(true)
+    /** The left pane's share of the width in a split, kept between splits. */
+    var splitFraction by mutableFloatStateOf(0.5f)
+    /** The pane touched last in a split: the car's Back key goes to its app. */
+    var splitActiveLeft by mutableStateOf(true)
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }
@@ -135,6 +211,10 @@ data class CarCall(val ringing: Boolean, val name: String, val sinceMs: Long)
 /** Actions the car UI asks for; implemented by the session. */
 interface CarActions {
     fun openApp(app: CarAppEntry)
+    /** Opens [app] in the left or right pane, next to what is on screen ([splitWith]). */
+    fun openInPane(app: CarAppEntry, left: Boolean)
+    /** The split's divider was let go at [fraction]: near an edge that pane closes ([snapSplit]), else the panes take that size. */
+    fun releaseDivider(fraction: Float)
     fun goHome()
     fun openLauncher()
     fun assistant()

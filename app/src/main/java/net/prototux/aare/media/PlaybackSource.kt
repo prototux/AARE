@@ -20,6 +20,8 @@ internal interface PlaybackSource {
     fun next()
     fun previous()
     fun seekTo(positionMs: Long)
+    /** The app's own screen for what plays (its player), as its media session gives it; null if none. */
+    val sessionActivity: PendingIntent? get() = null
     fun skipTo(entry: QueueEntry)
 }
 

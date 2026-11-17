@@ -79,6 +79,9 @@
     <string name="setup_choice_dark">Dunkel</string>
     <string name="setup_choice_light">Hell</string>
     <string name="setup_choice_bar">Leiste</string>
+    <string name="setup_choice_bar_spacing">Abstand der Symbole in der Leiste</string>
+    <string name="setup_spacing_px">%1$d px</string>
+    <string name="setup_spacing_reset">Standard</string>
     <string name="setup_choice_bar_auto">Fahrerseite</string>
     <string name="setup_choice_left">Links</string>
     <string name="setup_choice_right">Rechts</string>
@@ -182,6 +185,8 @@
     <string name="msg_toggle_group_subtitle">Auch Nachrichten aus Gruppenunterhaltungen anzeigen</string>
     <string name="msg_toggle_read_aloud_title">Nachrichten vorlesen</string>
     <string name="msg_toggle_read_aloud_subtitle">Jede neue Nachricht beim Eintreffen vorlesen</string>
+    <string name="msg_apps_title">Apps, die im Auto angezeigt werden</string>
+    <string name="msg_apps_subtitle">Ihre Nachrichten als Banner und in der Benachrichtigungszentrale</string>
     <string name="msg_hint_apps">Messaging-Apps (WhatsApp, Signal, SMS…) haben auch ihre eigene Seite in der App-Liste des Autos.</string>
     <string name="msg_section_while_driving">Während der Fahrt</string>
     <string name="msg_toggle_dnd_title">Nicht stören</string>
@@ -492,4 +497,27 @@
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
+    <string name="media_action_show_video">Video vom Handy zeigen</string>
+    <string name="media_action_show_art">Cover zeigen</string>
+    <string name="video_full_screen">Vollbild</string>
+    <string name="video_exit_full_screen">Vollbild verlassen</string>
+    <string name="standalone_failed">Die App ließ sich nicht auf dem Autobildschirm starten.</string>
+    <string name="split_open_left">Links öffnen</string>
+    <string name="split_open_right">Rechts öffnen</string>
+    <string name="split_divider">Ziehen zum Ändern der Größe, an den Rand zum Schließen</string>
+    <string name="setup_section_rail">Leiste im Auto</string>
+    <string name="setup_rail_hint">Die Apps in der Seitenleiste im Auto, in dieser Reihenfolge; passen nicht alle, lässt sie sich scrollen. Ohne Auswahl zeigt sie die letzte Navigations- und Medien-App und Telefon.</string>
+    <string name="setup_section_shortcuts">Schnellliste</string>
+    <string name="setup_shortcuts_hint">Im Auto den App-Menü-Knopf gedrückt halten, um diese zu öffnen. Wie in der Leiste: zur Seite wischen öffnet die App in diesem Fenster, gedrückt halten zum Wählen.</string>
+    <string name="setup_section_app_list_filter">App-Menü im Auto</string>
+    <string name="setup_toggle_hide_pinned_title">Apps aus Leiste und Schnellliste ausblenden</string>
+    <string name="setup_toggle_hide_pinned_subtitle">Aus: Das App-Menü zeigt alle Apps.</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="common_done">Fertig</string>
+    <string name="common_add_apps">Apps hinzufügen</string>
+    <string name="setup_section_pane_gestures">Gesten für geteilten Bildschirm</string>
+    <string name="setup_toggle_pane_swipe_title">Wischen öffnet in einer Hälfte</string>
+    <string name="setup_toggle_pane_swipe_subtitle">Seitliches Wischen über eine App in der Leiste oder App-Liste öffnet sie in dieser Hälfte des Autobildschirms.</string>
+    <string name="setup_toggle_pane_menu_title">Gedrückt halten für Hälften-Menü</string>
+    <string name="setup_toggle_pane_menu_subtitle">Gedrückt halten auf einer App in der Leiste oder App-Liste bietet an, sie in der linken oder rechten Hälfte zu öffnen.</string>
 </resources>
