@@ -150,3 +150,25 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+
+## Phone assistants on the car screen (no car app)
+
+The voice button's fallback for an assistant without a car app (Claude, Google Assistant and most
+others) opened it on the phone (`Assistants.startOnPhone`). An opt-in setting
+(`Settings.assistantOnCarScreen`) instead hosts it on the car screen as a phone app, through the
+same virtual-display launcher as standalone apps (`AppLauncher`), in the right half of the split
+screen next to what was on screen.
+
+- Off by default (today's behaviour kept); only offered when the launcher is available (root or
+  Shizuku), same gate as standalone apps. With it on, the assistant is one of the standalone
+  entries (`standalonePackages`), so it can be put in the rail like any other.
+- A half rather than a bar of a fixed size: a 960x420 dp bar covered about four fifths of a short,
+  wide screen (an MBUX at 240 dpi shows about 1165x532 dp), map included. In the half, the map or
+  video stays, the divider resizes it, and the assistant lays out as on a phone.
+- With a start link (`Settings.assistantLink`, a Claude project's address), the voice button opens
+  it afresh and taps the assistant's voice or new chat button through the helper's screen reader
+  (`startVoice`); without one, the assistant's own voice shortcut. Car links in its replies are read
+  off its display and run (`CarLinks`), and the voice conversation is hung up after a link.
+- Parked only, like other launched phone apps: while driving (`ui.drivingRestricted`, so passenger
+  mode lifts it) the voice button opens the assistant on the phone, as with the setting off.
+

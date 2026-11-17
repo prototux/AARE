@@ -23,6 +23,7 @@ object CarTools {
             "only what this car provides). Use it before answering questions about the trip or the car."))
         put(tool("car_navigate", "Start navigation to a place in the car's navigation app, shown on the car screen.",
             param("destination", "string", "address, place name or category as the user said it") to true))
+        put(tool("car_stop_navigation", "End the route guidance running in the car's navigation app.", silent = true))
         put(tool("car_media", "Control the music or podcast playing in the car.",
             param("action", "string", "play, pause, next or previous", listOf("play", "pause", "next", "previous")) to true, silent = true))
         put(tool("car_open", "Show something on the car screen: an app by its name (\"CoMaps\", \"Spotify\", \"WhatsApp\"…), " +
@@ -44,12 +45,13 @@ object CarTools {
             param("mode", "string", "dark, light or auto", listOf("dark", "light", "auto")) to true, silent = true))
     }
 
-    /** Runs [name] on [runtime] (main thread). */
-    fun run(runtime: CarRuntime, name: String, args: JSONObject): JSONObject = when (name) {
+    /** Runs [name] on [runtime] (main thread); a [link] (CarLinks) can't open the phone screen mirror. */
+    fun run(runtime: CarRuntime, name: String, args: JSONObject, link: Boolean = false): JSONObject = when (name) {
         "car_status" -> status(runtime)
         "car_navigate" -> navigate(runtime, args.optString("destination"))
+        "car_stop_navigation" -> runtime.stopNavigation()?.let { ok("route ended in ${it.label}") } ?: error("no route running in a navigation app on the car screen")
         "car_media" -> media(runtime, args.optString("action"))
-        "car_open" -> open(runtime, args.optString("what"))
+        "car_open" -> open(runtime, args.optString("what"), link)
         "car_messages" -> messages(runtime, args.optString("app"))
         "car_reply" -> reply(runtime, args.optString("conversation"), args.optString("app"), args.optString("message"))
         "car_mark_read" -> markRead(args.optString("conversation"), args.optString("app"))
@@ -67,6 +69,7 @@ object CarTools {
                 CarScreen.Dashboard -> "home"
                 CarScreen.Launcher -> "app list"
                 is CarScreen.App -> ui.app(s.appId)?.label ?: "an app"
+                is CarScreen.Split -> listOf(s.left, s.right).joinToString(" and ") { ui.app(it)?.label ?: "an app" } + ", side by side"
             })
         ui.phoneGuidance?.let { g ->
             o.put("navigation", JSONObject().put("app", g.appLabel).put("next", listOf(g.primary, g.secondary).filter { it.isNotBlank() }.joinToString(", "))
@@ -86,8 +89,7 @@ object CarTools {
     private fun navigate(rt: CarRuntime, destination: String): JSONObject {
         if (destination.isBlank()) return error("no destination")
         // The Car App Library's navigation intent: a geo: query the app resolves itself.
-        if (!rt.navigateTo(destination)) return error("no navigation app in the car; the phone's own navigation app can be used instead")
-        val nav = rt.ui.app(rt.ui.activeNavAppId)?.label ?: "the navigation app"
+        val nav = rt.navigateTo(destination)?.label ?: return error("no navigation app in the car; the phone's own navigation app can be used instead")
         return ok("searching for \"$destination\" in $nav on the car screen; the driver picks the result if there are several")
     }
 
@@ -103,21 +105,27 @@ object CarTools {
         return ok(action)
     }
 
-    private fun open(rt: CarRuntime, what: String): JSONObject {
+    private fun open(rt: CarRuntime, what: String, link: Boolean = false): JSONObject {
         val w = what.trim().lowercase()
         val ui = rt.ui
         when (w) {
             "home", "dashboard", "map" -> { ui.screen = CarScreen.Dashboard; return ok("home") }
             "apps", "app list", "launcher" -> { ui.screen = CarScreen.Launcher; return ok("app list") }
         }
-        // "Exit to car" isn't an app: a loose match on "car" mustn't take the screen away.
-        val apps = ui.apps.filter { it.kind != CarAppKind.EXIT }
+        val apps = ui.apps.filter { openable(it.kind, link) }
         val app = apps.firstOrNull { it.label.equals(what.trim(), ignoreCase = true) }
             ?: apps.firstOrNull { it.label.lowercase().contains(w) || w.contains(it.label.lowercase()) }
             ?: return error("no app called \"$what\" in the car; apps: " + apps.joinToString { it.label })
         rt.actions.openApp(app)
         return ok("${app.label} is on the car screen")
     }
+
+    /**
+     * Whether car_open may match an app of [kind]. "Exit to car" isn't an app: a loose match on "car" mustn't take
+     * the screen away. A [link] (CarLinks) runs without the assistant's confirmation, so it can't reach the phone
+     * screen mirror either.
+     */
+    internal fun openable(kind: CarAppKind, link: Boolean) = kind != CarAppKind.EXIT && !(link && kind == CarAppKind.PHONE_SCREEN)
 
     private fun messages(rt: CarRuntime, app: String): JSONObject {
         val listener = CarNotificationListener.instance ?: return noListener(rt.context)

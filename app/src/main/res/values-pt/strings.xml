@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Nenhum assistente predefinido no telemóvel</string>
     <string name="assistant_has_car_app_subtitle">No ecrã do carro, com o microfone do carro</string>
     <string name="assistant_opens_on_phone">Abre no telemóvel</string>
+    <string name="assistant_opens_on_car_screen">Abre no ecrã do carro quando estacionado, no telemóvel durante a condução</string>
     <string name="assistant_hint">O botão de voz do volante e o microfone da barra abrem este assistente. Os assistentes com uma aplicação de carro, como o Lapin, funcionam melhor.</string>
+    <string name="assistant_car_screen_toggle_title">Abrir no ecrã do carro os assistentes sem app para o carro</string>
+    <string name="assistant_car_screen_toggle_subtitle">Quando estacionado, mostra a interface de voz do assistente no ecrã do carro em vez do telemóvel. Durante a condução abre no telemóvel, a menos que o modo passageiro esteja ativo. Precisa de root ou Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Ligação ao carro</string>

@@ -230,7 +230,10 @@
     <string name="assistant_no_default">Kein Standardassistent auf dem Telefon festgelegt</string>
     <string name="assistant_has_car_app_subtitle">Auf dem Autobildschirm, mit dem Mikrofon des Autos</string>
     <string name="assistant_opens_on_phone">Öffnet auf dem Telefon</string>
+    <string name="assistant_opens_on_car_screen">Öffnet beim Parken auf dem Autobildschirm, während der Fahrt auf dem Telefon</string>
     <string name="assistant_hint">Die Sprachtaste am Lenkrad und das Mikrofon der Leiste öffnen diesen Assistenten. Assistenten mit einer Auto-App, wie Lapin, funktionieren am besten.</string>
+    <string name="assistant_car_screen_toggle_title">Assistenten ohne Auto-App auf dem Autobildschirm öffnen</string>
+    <string name="assistant_car_screen_toggle_subtitle">Beim Parken zeigt dies die Sprachoberfläche des Assistenten auf dem Autobildschirm statt auf dem Telefon. Während der Fahrt öffnet er sich auf dem Telefon, außer im Beifahrermodus. Benötigt root oder Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Autoverbindung</string>
@@ -360,11 +363,26 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps auf dem Autobildschirm (erweitert)</string>
-    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
+    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist (Navi-Apps wie Google Maps auch während der Fahrt), und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
     <string name="standalone_toggle_title">Telefon-Apps auf dem Autobildschirm starten</string>
     <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus. Nur beim Parken angezeigt.</string>
     <string name="standalone_keep_awake_title">Kein-Schlaf-Modus für eigenständige Apps</string>
     <string name="standalone_keep_awake_subtitle">Hält den physischen Telefonbildschirm wach, solange eine App geöffnet ist. Auf betroffenen Android-17-Telefonen stoppen virtuelle Displays, wenn der Telefonbildschirm aus ist. Verbraucht mehr Akku.</string>
+    <string name="setup_app_kind_phone_app">Handy-App</string>
+    <string name="setup_section_overview">App-Übersicht</string>
+    <string name="setup_overview_hint">Die App-Liste im Auto, in dieser Reihenfolge. Jede App hat einen Platz: Leiste, Schnellliste oder hier.</string>
+    <string name="setup_section_more_apps">Weitere Apps</string>
+    <string name="setup_more_apps_hint">Apps, die noch nicht im Auto sind, alle Apps des Handys eingeschlossen. Mit + bekommt eine App ihren Platz; Handy-Apps zeigen ihren normalen Bildschirm im Stand oder im Beifahrermodus (Navi-Apps immer).</string>
+    <string name="setup_more_apps_hint_no_helper">Apps, die noch nicht im Auto sind. Handy-Apps brauchen Shizuku oder Root.</string>
+    <string name="setup_section_app_options">Optionen</string>
+    <string name="app_place_change">Optionen</string>
+    <string name="app_place_rail">Leiste</string>
+    <string name="app_place_shortcuts">Schnellliste</string>
+    <string name="app_place_overview">App-Übersicht</string>
+    <string name="app_place_off">Nicht im Auto</string>
+    <string name="app_full_title">Ganze App</string>
+    <string name="app_full_subtitle">Im Stand oder im Beifahrermodus der eigene Bildschirm der App samt Tastatur statt der Ansicht von AARE. Während der Fahrt die Ansicht von AARE.</string>
+    <string name="standalone_search">Apps suchen</string>
     <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
@@ -492,4 +510,48 @@
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
+    <string name="media_action_show_video">Video vom Handy zeigen</string>
+    <string name="media_action_show_art">Cover zeigen</string>
+    <string name="video_full_screen">Vollbild</string>
+    <string name="video_exit_full_screen">Vollbild verlassen</string>
+    <string name="standalone_failed">Die App ließ sich nicht auf dem Autobildschirm starten.</string>
+    <string name="split_open_left">Links öffnen</string>
+    <string name="split_open_right">Rechts öffnen</string>
+    <string name="split_divider">Ziehen zum Ändern der Größe, an den Rand zum Schließen</string>
+    <string name="setup_section_rail">Leiste im Auto</string>
+    <string name="setup_rail_hint">Die Apps in der Seitenleiste im Auto, in dieser Reihenfolge; passen nicht alle, lässt sie sich scrollen. Ohne Auswahl zeigt sie die letzte Navigations- und Medien-App und Telefon.</string>
+    <string name="setup_section_shortcuts">Schnellliste</string>
+    <string name="setup_shortcuts_hint">Im Auto den App-Menü-Knopf gedrückt halten, um diese zu öffnen. Wie in der Leiste: zur Seite wischen öffnet die App in diesem Fenster, gedrückt halten zum Wählen.</string>
+    <string name="setup_section_app_list_filter">App-Menü im Auto</string>
+    <string name="setup_toggle_hide_pinned_title">Apps aus Leiste und Schnellliste ausblenden</string>
+    <string name="setup_toggle_hide_pinned_subtitle">Aus: Das App-Menü zeigt alle Apps.</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="common_done">Fertig</string>
+    <string name="common_add_apps">Apps hinzufügen</string>
+    <string name="setup_section_pane_gestures">Gesten für geteilten Bildschirm</string>
+    <string name="setup_toggle_pane_swipe_title">Wischen öffnet in einer Hälfte</string>
+    <string name="setup_toggle_pane_swipe_subtitle">Seitliches Wischen über eine App in der Leiste oder App-Liste öffnet sie in dieser Hälfte des Autobildschirms.</string>
+    <string name="setup_toggle_pane_menu_title">Gedrückt halten für Hälften-Menü</string>
+    <string name="setup_toggle_pane_menu_subtitle">Gedrückt halten auf einer App in der Leiste oder App-Liste bietet an, sie in der linken oder rechten Hälfte zu öffnen.</string>
+    <string name="phone_mode_title">Mit Shizuku oder Root</string>
+    <string name="phone_mode_mirror">Handy, quer</string>
+    <string name="phone_mode_desktop">Eigener Bildschirm</string>
+    <string name="phone_mode_mirror_hint">Der Bildschirm des Telefons selbst, ins Querformat gedreht, solange er im Auto angezeigt wird, live bedienbar. Apps, die nur hochkant laufen, bleiben ein Streifen in der Mitte.</string>
+    <string name="phone_mode_desktop_hint">Beim Parken ein eigener Bildschirm in der Größe des Autobildschirms, mit Androids Desktop und Taskleiste: Apps laufen dort quer, und das Telefon zeigt weiter, was es zeigte.</string>
+    <string name="phone_toggle_off_title">Handy-Display aus</string>
+    <string name="phone_toggle_off_subtitle">Das Panel bleibt dunkel, solange das Auto den Bildschirm zeigt (ab Android 15). Die Ein-Taste schaltet es wieder ein.</string>
+    <string name="phone_check_touch_not_needed">Nicht nötig: Shizuku oder Root ist aktiv und gibt die Berührungen selbst weiter</string>
+    <string name="video_toggle_landscape_title">Videos sofort im Vollbild</string>
+    <string name="video_toggle_landscape_subtitle">Solange eine Medien-App ihr Video im Auto zeigt, dreht sich das Handy ins Querformat. So füllen Player das Bild, sobald ein Video läuft. Aus zeigt die App ihre eigene Player-Ansicht mit ihrem eigenen Vollbild-Knopf.</string>
+    <string name="car_link_failed">Das hat nicht geklappt.</string>
+    <string name="car_link_no_messages">Keine neuen Nachrichten.</string>
+    <string name="car_link_playing">Es läuft %1$s, %2$s.</string>
+    <string name="car_link_next_turn">Als Nächstes: %1$s.</string>
+    <string name="car_link_battery">Handy-Akku %1$d Prozent.</string>
+    <string name="assistant_project_label">Projektname</string>
+    <string name="assistant_project_hint">Empfohlen: ein Wort ohne Leerzeichen, etwa Car001.</string>
+    <string name="assistant_project_steps">Auto-Links: 1. In Claude ein Projekt namens %1$s anlegen. 2. Die Anweisungen kopieren und in seine Anweisungen einfügen. 3. Den Link des Projekts kopieren und unten als Start-Link einfügen.</string>
+    <string name="assistant_copy_instructions">Anweisungen kopieren</string>
+    <string name="assistant_link_label">Start-Link</string>
+    <string name="assistant_link_hint">Der Link des Projekts (https://claude.ai/project/…): das Projekt auf claude.ai öffnen und die Adresse kopieren. Der Assistent öffnet ihn, bevor er zuhört.</string>
 </resources>

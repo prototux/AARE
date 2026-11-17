@@ -147,6 +147,29 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
+    /** The media apps shown as themselves on the car screen (their video) instead of their art, parked: packages. */
+    var videoApps: Set<String>
+        get() = prefs.getStringSet("video_apps", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("video_apps", v) }
+
+    /** While a media app shows its video in the car, the phone turns to landscape: players go full screen at once. */
+    var videoLandscape: Boolean
+        get() = prefs.getBoolean("video_landscape", false)
+        set(v) = prefs.edit { putBoolean("video_landscape", v) }
+
+    /**
+     * With Shizuku or root, what "Phone screen" shows parked: [PHONE_SCREEN_MIRROR] the phone's own
+     * screen turned to landscape, or [PHONE_SCREEN_DESKTOP] a desktop of its own at the car screen's size.
+     */
+    var phoneScreenMode: String
+        get() = prefs.getString("phone_screen_mode", PHONE_SCREEN_MIRROR) ?: PHONE_SCREEN_MIRROR
+        set(v) = prefs.edit { putString("phone_screen_mode", v) }
+
+    /** While the phone's screen is mirrored with Shizuku or root, its panel is off (the power key turns it back on). */
+    var phoneScreenOff: Boolean
+        get() = prefs.getBoolean("phone_screen_off", true)
+        set(v) = prefs.edit { putBoolean("phone_screen_off", v) }
+
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
@@ -203,6 +226,29 @@ class Settings(context: Context) {
         get() = prefs.getString("assistant_pkg", null)
         set(v) = prefs.edit { if (v == null) remove("assistant_pkg") else putString("assistant_pkg", v) }
 
+    /**
+     * A link the assistant hosted on the car screen opens before it listens (a Claude project, say),
+     * so the voice button starts it there; empty = its own voice mode, in a new chat.
+     */
+    var assistantLink: String
+        get() = prefs.getString("assistant_link", "") ?: ""
+        set(v) = prefs.edit { putString("assistant_link", v) }
+
+    /** The name of the assistant's project with the car link instructions, as the setup steps call it. */
+    var assistantProject: String
+        get() = prefs.getString("assistant_project", "Car001") ?: "Car001"
+        set(v) = prefs.edit { putString("assistant_project", v) }
+
+    /**
+     * For an assistant without a car app: show its voice UI on the car screen (through the same
+     * launcher as standalone apps) instead of opening it on the phone, while parked or in passenger
+     * mode. Off by default (today's behaviour); needs root or Shizuku, checked separately
+     * ([net.prototux.aare.launch.AppLauncher.available]).
+     */
+    var assistantOnCarScreen: Boolean
+        get() = prefs.getBoolean("assistant_on_car_screen", false)
+        set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
+
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
         get() = prefs.getBoolean("phone_screen", false)
@@ -217,9 +263,18 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("standalone_apps", false)
         set(v) = prefs.edit { putBoolean("standalone_apps", v) }
 
+    /**
+     * Apps (messaging apps by package, the phone by its app id) shown on the car screen as the phone
+     * app itself when parked, with Shizuku or root: a messenger's own screen instead of its
+     * messages, the phone's default dialer instead of AARE's.
+     */
+    var fullApps: Set<String>
+        get() = prefs.getStringSet("full_apps", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("full_apps", HashSet(v)) }
+
     /** Keep standalone apps active when Android links their display to the phone display. */
     var standaloneKeepScreenAwake: Boolean
-        get() = prefs.getBoolean("standalone_keep_screen_awake", false)
+        get() = prefs.getBoolean("standalone_keep_screen_awake", android.os.Build.VERSION.SDK_INT >= 37)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
 
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
@@ -317,6 +372,31 @@ class Settings(context: Context) {
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
 
+    /** The car rail's apps, by [appOrder] key, in order. Empty: the automatic ones (last navigation and media apps, Phone). */
+    var railApps: List<String>
+        get() = prefs.getString("rail_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("rail_apps", v.joinToString("\n")) }
+
+    /** The apps a long press on the car's launcher button offers, by [appOrder] key, in order. */
+    var shortcutApps: List<String>
+        get() = prefs.getString("shortcut_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("shortcut_apps", v.joinToString("\n")) }
+
+    /** A sideways swipe on an app in the car's rail or launcher opens it in the pane on that side. */
+    var paneSwipe: Boolean
+        get() = prefs.getBoolean("pane_swipe", true)
+        set(v) = prefs.edit { putBoolean("pane_swipe", v) }
+
+    /** A long press on an app in the car's rail or launcher offers the two panes for it. */
+    var paneMenu: Boolean
+        get() = prefs.getBoolean("pane_menu", true)
+        set(v) = prefs.edit { putBoolean("pane_menu", v) }
+
+    /** The car's launcher leaves out the apps in [railApps] and [shortcutApps]. */
+    var launcherHidesPinned: Boolean
+        get() = prefs.getBoolean("launcher_hides_pinned", false)
+        set(v) = prefs.edit { putBoolean("launcher_hides_pinned", v) }
+
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
         get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()
@@ -357,6 +437,8 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putInt("cert_index", v) }
 
     companion object {
+        const val PHONE_SCREEN_MIRROR = "mirror"
+        const val PHONE_SCREEN_DESKTOP = "desktop"
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val RAIL_AUTO = "auto"
         const val RAIL_LEFT = "left"

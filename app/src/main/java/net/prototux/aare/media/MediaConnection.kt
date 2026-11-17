@@ -1,5 +1,6 @@
 package net.prototux.aare.media
 
+import android.app.PendingIntent
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.browse.MediaBrowser as FwBrowser
@@ -389,6 +390,8 @@ internal class MediaConnection(
     override fun previous() {
         browser?.seekToPrevious()
     }
+
+    override val sessionActivity: PendingIntent? get() = browser?.sessionActivity
 
     override fun seekTo(positionMs: Long) {
         browser?.seekTo(positionMs)

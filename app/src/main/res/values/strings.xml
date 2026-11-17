@@ -331,11 +331,26 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps on the car screen (advanced)</string>
-    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked, and needs root or Shizuku. Use at your own risk.</string>
+    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked (navigation apps such as Google Maps also while driving), and needs root or Shizuku. Use at your own risk.</string>
     <string name="standalone_toggle_title">Launch phone apps on the car screen</string>
     <string name="standalone_toggle_subtitle">Pick the apps below. Shown only when parked.</string>
     <string name="standalone_keep_awake_title">No-sleep mode for standalone apps</string>
     <string name="standalone_keep_awake_subtitle">Keeps the physical phone screen awake while an app is open. On affected Android 17 phones, virtual displays stop when the phone screen is off. Uses more battery.</string>
+    <string name="setup_app_kind_phone_app">Phone app</string>
+    <string name="setup_section_overview">App overview</string>
+    <string name="setup_overview_hint">The car\'s app list, in this order. Each app is in one place: the rail, the shortcuts or here.</string>
+    <string name="setup_section_more_apps">More apps</string>
+    <string name="setup_more_apps_hint">Apps not in the car yet, every app on the phone included. Tap + to give one a place; phone apps show their normal screen while parked or in passenger mode (navigation apps always).</string>
+    <string name="setup_more_apps_hint_no_helper">Apps not in the car yet. Phone apps need Shizuku or root.</string>
+    <string name="setup_section_app_options">Options</string>
+    <string name="app_place_change">Options</string>
+    <string name="app_place_rail">Rail</string>
+    <string name="app_place_shortcuts">Shortcuts</string>
+    <string name="app_place_overview">App overview</string>
+    <string name="app_place_off">Not in the car</string>
+    <string name="app_full_title">The whole app</string>
+    <string name="app_full_subtitle">Parked or in passenger mode, the app\'s own screen, keyboard included, instead of AARE\'s view of it. While driving, AARE\'s view.</string>
+    <string name="standalone_search">Search apps</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
@@ -358,7 +373,10 @@
     <string name="assistant_no_default">No default assistant set on the phone</string>
     <string name="assistant_has_car_app_subtitle">On the car screen, with the car\'s microphone</string>
     <string name="assistant_opens_on_phone">Opens on the phone</string>
+    <string name="assistant_opens_on_car_screen">Opens on the car screen when parked, on the phone while driving</string>
     <string name="assistant_hint">The steering-wheel voice button and the rail\'s microphone open this assistant. Assistants with a car app, such as Lapin, work best.</string>
+    <string name="assistant_car_screen_toggle_title">Open assistants without a car app on the car screen</string>
+    <string name="assistant_car_screen_toggle_subtitle">While parked, shows the assistant\'s voice UI on the car screen instead of the phone. While driving it opens on the phone, unless passenger mode is on. Needs root or Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Car connection</string>
@@ -540,4 +558,48 @@
     <string name="carapp_error_stopped">%1$s stopped</string>
     <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
     <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
+    <string name="media_action_show_video">Show the phone\'s video</string>
+    <string name="media_action_show_art">Show the cover</string>
+    <string name="video_full_screen">Full screen</string>
+    <string name="video_exit_full_screen">Leave full screen</string>
+    <string name="standalone_failed">Couldn\'t start the app on the car screen.</string>
+    <string name="split_open_left">Open on the left</string>
+    <string name="split_open_right">Open on the right</string>
+    <string name="split_divider">Drag to resize, to an edge to close</string>
+    <string name="setup_section_rail">Car rail</string>
+    <string name="setup_rail_hint">The apps in the car\'s side bar, in this order; it scrolls when they don\'t fit. With none picked, it shows the last navigation and media apps and Phone.</string>
+    <string name="setup_section_shortcuts">Shortcuts</string>
+    <string name="setup_shortcuts_hint">Hold the app list button in the car to open these. Like in the bar: swipe one sideways to open it in that pane, hold it to choose.</string>
+    <string name="setup_section_app_list_filter">App list in the car</string>
+    <string name="setup_toggle_hide_pinned_title">Leave out the rail\'s and the shortcuts\' apps</string>
+    <string name="setup_toggle_hide_pinned_subtitle">Off, the app list shows every app.</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_done">Done</string>
+    <string name="common_add_apps">Add apps</string>
+    <string name="setup_section_pane_gestures">Split screen gestures</string>
+    <string name="setup_toggle_pane_swipe_title">Swipe to open in a half</string>
+    <string name="setup_toggle_pane_swipe_subtitle">A sideways swipe on an app in the bar or the app list opens it in that half of the car screen.</string>
+    <string name="setup_toggle_pane_menu_title">Hold for the halves menu</string>
+    <string name="setup_toggle_pane_menu_subtitle">Holding an app in the bar or the app list offers to open it in the left or right half.</string>
+    <string name="phone_mode_title">With Shizuku or root</string>
+    <string name="phone_mode_mirror">Phone, landscape</string>
+    <string name="phone_mode_desktop">Own screen</string>
+    <string name="phone_mode_mirror_hint">The phone\'s own screen, turned to landscape while it shows in the car, touched live. Apps that only run upright stay a strip in the middle.</string>
+    <string name="phone_mode_desktop_hint">Parked, a screen of its own at the car screen\'s size, with Android\'s desktop and taskbar: apps run there in landscape, and the phone keeps showing what it showed.</string>
+    <string name="phone_toggle_off_title">Phone display off</string>
+    <string name="phone_toggle_off_subtitle">Its panel stays dark while the car shows it (Android 15 or newer). The power key turns it back on.</string>
+    <string name="phone_check_touch_not_needed">Not needed: Shizuku or root is active, and replays the touches itself</string>
+    <string name="video_toggle_landscape_title">Videos in full screen right away</string>
+    <string name="video_toggle_landscape_subtitle">While a media app shows its video in the car, the phone turns to landscape, so players fill the picture as soon as a video plays. Off, the app shows its own player screen, with its own full screen button.</string>
+    <string name="car_link_failed">That didn\'t work.</string>
+    <string name="car_link_no_messages">No new messages.</string>
+    <string name="car_link_playing">Playing %1$s, %2$s.</string>
+    <string name="car_link_next_turn">Next: %1$s.</string>
+    <string name="car_link_battery">Phone battery %1$d percent.</string>
+    <string name="assistant_project_label">Project name</string>
+    <string name="assistant_project_hint">Recommended: one word without spaces, such as Car001.</string>
+    <string name="assistant_project_steps">Car links: 1. In Claude, create a project named %1$s. 2. Copy the instructions and paste them into its instructions. 3. Copy the project\'s link and paste it below as start link.</string>
+    <string name="assistant_copy_instructions">Copy instructions</string>
+    <string name="assistant_link_label">Start link</string>
+    <string name="assistant_link_hint">The project\'s link (https://claude.ai/project/…): open the project at claude.ai and copy the address. The assistant opens it before it listens.</string>
 </resources>
