@@ -123,8 +123,11 @@ object AndroidAutoApps {
         }.toSet().filterTo(HashSet()) { pkg ->
             @Suppress("DEPRECATION")
             val app = runCatching { pm.getApplicationInfo(pkg, PackageManager.GET_META_DATA) }.getOrNull() ?: return@filterTo true
-            app.metaData?.containsKey(META_CAR_APPLICATION) != true || "media" in uses(pm, app)
+            staysMedia(app.metaData?.containsKey(META_CAR_APPLICATION) == true) { uses(pm, app) }
         }
+
+    /** Whether an app with a media browser stays a media app: unless it declares Android Auto support without media ([uses]). */
+    internal fun staysMedia(declaresCarApp: Boolean, uses: () -> Set<String>): Boolean = !declaresCarApp || "media" in uses()
 
     private fun reason(uses: Set<String>): String = when {
         "media" in uses -> "Declares media support but has no media browser service AARE can use"
