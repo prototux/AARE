@@ -1155,7 +1155,7 @@ private fun LazyListScope.appsPage(p: AppsPage) {
         Toggle(stringResource(R.string.setup_toggle_pane_menu_title), stringResource(R.string.setup_toggle_pane_menu_subtitle), p.paneMenu) {
             p.paneMenu = it; p.settings.paneMenu = it
         }
-        if (p.allowed.isNotEmpty()) {
+        if (p.launcherAvailable && p.allowed.isNotEmpty()) {
             Toggle(stringResource(R.string.standalone_keep_awake_title), stringResource(R.string.standalone_keep_awake_subtitle), p.keepAwake) {
                 p.keepAwake = it; p.settings.standaloneKeepScreenAwake = it
             }
