@@ -665,7 +665,8 @@ class CarRuntime(
         override fun openInPane(app: CarAppEntry, left: Boolean) {
             if (app.kind == CarAppKind.EXIT) { exitToCar?.invoke(); return }
             // Recent apps can include one hidden or removed since: it would leave its pane blank.
-            val next = splitWith(ui.screen, app.id, left, ui.recentAppIds.filter { ui.app(it) != null })
+            // From the dashboard, its map's app is the other pane when no app was open yet (a new session).
+            val next = splitWith(ui.screen, app.id, left, (ui.recentAppIds + listOfNotNull(ui.activeNavAppId)).filter { ui.app(it) != null })
             // The other pane may be a recent app that isn't running any more.
             if (next is CarScreen.Split) ui.app(if (left) next.right else next.left)?.let { start(it) }
             start(app)
