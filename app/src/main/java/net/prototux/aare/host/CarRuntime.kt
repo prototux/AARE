@@ -64,6 +64,16 @@ import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
 
+/** Which version of an installed package belongs in the car launcher. */
+internal enum class AppListingMode { HIDDEN, NATIVE, STANDALONE }
+
+/** A selected standalone app replaces its native car entry, even when that package is hidden. */
+internal fun appListingMode(packageName: String, hidden: Set<String>, standalone: Set<String>): AppListingMode = when (packageName) {
+    in standalone -> AppListingMode.STANDALONE
+    in hidden -> AppListingMode.HIDDEN
+    else -> AppListingMode.NATIVE
+}
+
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
  * hosted car apps, media, notices and the root composable. A projection session (real head unit)
@@ -319,7 +329,8 @@ class CarRuntime(
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
-            "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
+            "hidden_apps", "phone_screen", "standalone_apps", "standalone_app_pkgs", "assistant_pkg", "app_order" ->
+                main.post { refreshApps() }
         }
     }
 
@@ -386,13 +397,14 @@ class CarRuntime(
 
     private fun applyApps(found: List<CarAppInfo>, messaging: List<PhoneApp>) {
         val hidden = settings.hiddenApps
+        val standalone = if (settings.standaloneApps && AppLauncher.available(context)) settings.standaloneAppPackages else emptySet()
         val assistantPkg = assistantPackage()
         carApps.clear()
         val entries = ArrayList<CarAppEntry>()
         for (app in found) {
             val id = carId(app)
             carApps[id] = app
-            if (app.packageName in hidden) continue
+            if (appListingMode(app.packageName, hidden, standalone) != AppListingMode.NATIVE) continue
             val kind = when {
                 app.isNavigation -> CarAppKind.NAVIGATION
                 app.packageName == assistantPkg -> CarAppKind.ASSISTANT
@@ -403,7 +415,9 @@ class CarRuntime(
         val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
         for (m in media.apps.value) {
             // An app that has a car UI of its own is shown once, as that; a messaging app, as messaging.
-            if (m.packageName in hidden || m.packageName in messagingOnly || entries.any { it.packageName == m.packageName }) continue
+            if (appListingMode(m.packageName, hidden, standalone) != AppListingMode.NATIVE ||
+                m.packageName in messagingOnly ||
+                entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(mediaId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MEDIA)
         }
         // Built in, like Android Auto's: calls and the car-side settings.
@@ -414,9 +428,8 @@ class CarRuntime(
             entries += CarAppEntry(PHONE_SCREEN_ID, context.packageName, context.getString(R.string.phone_section_title), builtinIcon(R.drawable.ic_phone_screen), CarAppKind.PHONE_SCREEN)
         }
         // Ordinary phone apps the user allowed onto the car screen (parked only; needs root/Shizuku).
-        if (settings.standaloneApps && AppLauncher.available(context)) {
-            for (pkg in settings.standaloneAppPackages) {
-                if (pkg in hidden) continue
+        if (standalone.isNotEmpty()) {
+            for (pkg in standalone) {
                 val info = runCatching { context.packageManager.getApplicationInfo(pkg, 0) }.getOrNull() ?: continue
                 val label = context.packageManager.getApplicationLabel(info).toString()
                 val icon = runCatching { context.packageManager.getApplicationIcon(info).toBitmap(128, 128) }.getOrNull()
@@ -430,7 +443,8 @@ class CarRuntime(
             entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
         }
         for (m in messaging) {
-            if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
+            if (appListingMode(m.packageName, hidden, standalone) != AppListingMode.NATIVE ||
+                entries.any { it.packageName == m.packageName }) continue
             entries += CarAppEntry(messagingId(m.packageName), m.packageName, m.label, m.icon, CarAppKind.MESSAGING)
         }
         // The order chosen on the phone first, then alphabetical.
