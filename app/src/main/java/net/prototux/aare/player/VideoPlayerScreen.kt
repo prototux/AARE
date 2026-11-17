@@ -157,6 +157,7 @@ fun VideoPlayerScreen(runtime: CarRuntime, driving: Boolean, item: VideoItem, se
             player.removeListener(listener)
             player.release()
             CarPlayerAudio.setActive(false)
+            CarPlayerAudio.setPlaying(false)
         }
     }
     // What to play: the URI, or for Jellyfin what the server says (the file, or a re-encode).

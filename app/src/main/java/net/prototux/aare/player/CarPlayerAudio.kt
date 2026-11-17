@@ -12,10 +12,11 @@ import net.prototux.aare.audio.PcmSource
  * and the phone stays quiet.
  *
  * The player taps its decoded sound, already in the car's format ([mediaFormat]), and [push]es
- * it here. While the player is open ([active]) the car session plays a [Source] on the media
- * channel instead of capturing the phone; when it closes, the session goes back to capturing.
- * With no car session listening ([toCar] false) nothing is pushed anywhere and the player plays
- * on the phone as usual.
+ * it here. While the player is open and playing ([wantsChannel]) the car session plays a
+ * [Source] on the media channel instead of capturing the phone; paused, held back by another app's
+ * sound, or closed, the session goes back to capturing, so another app started meanwhile (YouTube,
+ * music) is heard in the car rather than on the phone. With no car session listening ([toCar]
+ * false) nothing is pushed anywhere and the player plays on the phone as usual.
  */
 object CarPlayerAudio {
     /** The car's media channel format, set by the car session once the car has set it up. */
@@ -25,17 +26,35 @@ object CarPlayerAudio {
     @Volatile var active = false
         private set
 
-    /** Called (any thread) when [active] changes; the car session sets it. */
+    /** The player means to play: play is on and no other app holds the phone's sound. */
+    @Volatile var playing = false
+        private set
+
+    /** The player's sound should have the car's media channel now. */
+    val wantsChannel: Boolean get() = active && playing
+
+    /**
+     * Called (any thread) when [wantsChannel] may have changed. The car session sets it while it
+     * runs, which also mutes the player on the phone ([toCar]), paused or not, so a press on play
+     * never reaches the phone's speaker before the car has the sound.
+     */
     @Volatile var listener: (() -> Unit)? = null
+        set(v) { field = v; _toCar.value = v != null }
 
     @Volatile private var queue: PacedPcmQueue? = null
     private val _toCar = MutableStateFlow(false)
-    /** A car session is playing the player's sound: the player mutes itself on the phone. */
+    /** A car session takes the player's sound: the player mutes itself on the phone. */
     val toCar: StateFlow<Boolean> = _toCar.asStateFlow()
 
     fun setActive(on: Boolean) {
         if (active == on) return
         active = on
+        listener?.invoke()
+    }
+
+    fun setPlaying(on: Boolean) {
+        if (playing == on) return
+        playing = on
         listener?.invoke()
     }
 
@@ -58,7 +77,6 @@ object CarPlayerAudio {
             q = created
             queue?.close()
             queue = created
-            _toCar.value = true
             return true
         }
 
@@ -69,7 +87,7 @@ object CarPlayerAudio {
             q = null
             mine.close()
             // Only clear what's still ours: a newer session may have replaced it.
-            if (queue === mine) { queue = null; _toCar.value = false }
+            if (queue === mine) queue = null
         }
     }
 }

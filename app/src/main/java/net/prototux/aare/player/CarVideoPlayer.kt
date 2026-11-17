@@ -65,6 +65,11 @@ object CarVideoPlayer {
         player.addListener(object : Player.Listener {
             // The car shouldn't keep playing what was buffered before a pause.
             override fun onIsPlayingChanged(isPlaying: Boolean) { if (!isPlaying) CarPlayerAudio.flush() }
+            // Playing means play is on and nothing holds it back; buffering keeps the channel.
+            override fun onEvents(p: Player, events: Player.Events) {
+                CarPlayerAudio.setPlaying(p.playWhenReady && p.playbackSuppressionReason == Player.PLAYBACK_SUPPRESSION_REASON_NONE &&
+                    p.playbackState != Player.STATE_ENDED && p.playbackState != Player.STATE_IDLE)
+            }
             override fun onPlaybackSuppressionReasonChanged(reason: Int) {
                 if (reason == Player.PLAYBACK_SUPPRESSION_REASON_TRANSIENT_AUDIO_FOCUS_LOSS) DiagLog.add("car video: paused, another app (voice typing, a call...) has the phone's sound")
                 else if (reason == Player.PLAYBACK_SUPPRESSION_REASON_NONE) DiagLog.add("car video: the phone's sound is back, playing on")

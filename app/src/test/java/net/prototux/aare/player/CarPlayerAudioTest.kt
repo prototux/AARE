@@ -35,24 +35,35 @@ class CarPlayerAudioTest {
 
     @Test fun sourceRoutesPushedSoundAndLetsGo() {
         val src = CarPlayerAudio.Source(PcmFormat(8000, 1))
-        assertFalse(CarPlayerAudio.toCar.value)
         src.start()
-        assertTrue(CarPlayerAudio.toCar.value)
         CarPlayerAudio.push(byteArrayOf(5, 0, 6, 0))
         val buf = ByteArray(4)
         assertEquals(4, src.read(buf, 0, 4))
         assertArrayEquals(byteArrayOf(5, 0, 6, 0), buf)
         src.release()
-        assertFalse(CarPlayerAudio.toCar.value)
         CarPlayerAudio.push(byteArrayOf(1, 0)) // nobody listening: dropped, no crash
     }
 
-    @Test fun activeChangesNotifyTheSession() {
+    @Test fun aSessionListeningMutesThePlayerOnThePhone() {
+        // Paused or playing: the phone stays quiet while a car session takes the sound.
+        assertFalse(CarPlayerAudio.toCar.value)
+        CarPlayerAudio.listener = {}
+        assertTrue(CarPlayerAudio.toCar.value)
+        CarPlayerAudio.listener = null
+        assertFalse(CarPlayerAudio.toCar.value)
+    }
+
+    @Test fun theChannelGoesToThePlayerOnlyWhileItPlays() {
         var calls = 0
         CarPlayerAudio.listener = { calls++ }
         CarPlayerAudio.setActive(true); CarPlayerAudio.setActive(true)
+        assertFalse(CarPlayerAudio.wantsChannel) // open, not playing yet
+        CarPlayerAudio.setPlaying(true)
+        assertTrue(CarPlayerAudio.wantsChannel)
+        CarPlayerAudio.setPlaying(false) // paused, or another app took the sound: back to the capture
+        assertFalse(CarPlayerAudio.wantsChannel)
         CarPlayerAudio.setActive(false)
         CarPlayerAudio.listener = null
-        assertEquals(2, calls)
+        assertEquals(4, calls)
     }
 }

@@ -737,7 +737,7 @@ class CarSession(
                     mediaChannel = channel
                     CarPlayerAudio.mediaFormat = PcmFormat(config.samplingRate, config.numberOfChannels)
                     CarPlayerAudio.listener = playerAudioListener
-                    if (CarPlayerAudio.active) { startPlayerAudio(channel); return@post }
+                    if (CarPlayerAudio.wantsChannel) { startPlayerAudio(channel); return@post }
                 }
                 if (!wanted) return@post
                 readyAudio += channel
@@ -765,7 +765,7 @@ class CarSession(
         for (ch in readyAudio) {
             if (ch.streamType != AudioStreamType.AUDIO_STREAM_MEDIA) continue
             // AARE's video player has the media channel: the capture comes back when it closes.
-            if (CarPlayerAudio.active) continue
+            if (CarPlayerAudio.wantsChannel) continue
             val method = audioMethods[ch.streamType]
             // Better methods (root, Shizuku) don't need the consent: leave them running.
             if (audioOuts[ch.streamType] != null && method != CaptureMethod.PLAYBACK_CAPTURE) continue
@@ -870,9 +870,13 @@ class CarSession(
      * gets the copy (the copy is taken before the volume). Main thread.
      */
     private fun updatePhoneMute() {
-        val copying = !closed && audioOuts[AudioStreamType.AUDIO_STREAM_MEDIA] != null &&
+        val media = audioOuts[AudioStreamType.AUDIO_STREAM_MEDIA]
+        val copying = !closed && media != null &&
             audioMethods[AudioStreamType.AUDIO_STREAM_MEDIA] == CaptureMethod.PLAYBACK_CAPTURE
-        phoneMute.set(copying && settings.mutePhoneWhileCapturing)
+        // AARE's player has the channel: the capture is off, so another app's first moments (until
+        // the player gets its focus loss, ~2 s with Android's fade) would play on the phone.
+        val player = !closed && media != null && !audioMethods.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA)
+        phoneMute.set((copying || player) && settings.mutePhoneWhileCapturing)
     }
 
     /** The car's media channel, once set up (main thread). */
@@ -883,8 +887,14 @@ class CarSession(
         main.post {
             val ch = mediaChannel
             if (!closed && ch != null) {
-                audioOuts.remove(AudioStreamType.AUDIO_STREAM_MEDIA)?.stop()
-                if (CarPlayerAudio.active) startPlayerAudio(ch) else if (settings.carAudio) { readyAudio += ch; startAudio(ch) } else updatePhoneMute()
+                // The player's stream is the one running with no capture method.
+                val playerHasIt = !audioMethods.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA) && audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA)
+                // Only switch when the owner changes: a repeat call mustn't restart the stream.
+                if (CarPlayerAudio.wantsChannel) { if (!playerHasIt) startPlayerAudio(ch) }
+                else if (playerHasIt || !audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA)) {
+                    audioOuts.remove(AudioStreamType.AUDIO_STREAM_MEDIA)?.stop()
+                    if (settings.carAudio) { DiagLog.add("car video: ${if (CarPlayerAudio.active) "not playing" else "closed"}, the capture has the media channel"); readyAudio += ch; startAudio(ch) } else updatePhoneMute()
+                }
             }
         }
     }
