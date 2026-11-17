@@ -112,12 +112,22 @@ object AndroidAutoApps {
             .map { it to uses(pm, it) }
     }
 
-    /** Packages with a media browser service, which AARE lists as media apps (see MediaDiscovery). */
+    /**
+     * Packages with a media browser service, which AARE lists as media apps (see MediaDiscovery),
+     * less those declaring Android Auto support without media: those are messaging apps.
+     */
     private fun mediaPackages(pm: PackageManager): Set<String> =
         listOf(MediaDiscovery.ACTION_MEDIA3_LIBRARY, MediaDiscovery.ACTION_LEGACY_BROWSER).flatMap { action ->
             @Suppress("DEPRECATION") pm.queryIntentServices(Intent(action), 0)
                 .mapNotNull { ri -> ri.serviceInfo?.takeIf { it.exported }?.packageName }
-        }.toSet()
+        }.toSet().filterTo(HashSet()) { pkg ->
+            @Suppress("DEPRECATION")
+            val app = runCatching { pm.getApplicationInfo(pkg, PackageManager.GET_META_DATA) }.getOrNull() ?: return@filterTo true
+            staysMedia(app.metaData?.containsKey(META_CAR_APPLICATION) == true) { uses(pm, app) }
+        }
+
+    /** Whether an app with a media browser stays a media app: unless it declares Android Auto support without media ([uses]). */
+    internal fun staysMedia(declaresCarApp: Boolean, uses: () -> Set<String>): Boolean = !declaresCarApp || "media" in uses()
 
     private fun reason(uses: Set<String>): String = when {
         "media" in uses -> "Declares media support but has no media browser service AARE can use"
