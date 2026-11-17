@@ -52,7 +52,7 @@ class AppPlacesTest {
     @Test
     fun aDragKeepsTheAppsThePageDoesNotListYet() {
         // A phone app on the rail, while the phone apps still load: the drag mustn't drop it.
-        assertEquals(listOf("b", "a", "maps"), keptOrder(listOf("b", "a"), listOf("a", "maps", "b")))
-        assertEquals(listOf("a", "b"), keptOrder(listOf("a", "b"), listOf("b", "a")))
+        assertEquals(listOf("b", "a", "maps"), listOf("a", "maps", "b").sortedAs(listOf("b", "a")))
+        assertEquals(listOf("a", "b"), listOf("b", "a").sortedAs(listOf("a", "b")))
     }
 }

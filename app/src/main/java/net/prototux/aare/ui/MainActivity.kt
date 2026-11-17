@@ -1169,10 +1169,10 @@ private fun LazyListScope.appsPage(p: AppsPage) {
         }
     })
     placeSection(p, "rail", R.string.setup_section_rail, R.string.setup_rail_hint, ordered(places.rail, AppPlace.RAIL)) { keys ->
-        p.save(p.places().copy(rail = keptOrder(keys, p.rail)))
+        p.save(p.places().copy(rail = p.rail.sortedAs(keys)))
     }
     placeSection(p, "shortcuts", R.string.setup_section_shortcuts, R.string.setup_shortcuts_hint, ordered(places.shortcuts, AppPlace.SHORTCUTS)) { keys ->
-        p.save(p.places().copy(shortcuts = keptOrder(keys, p.shortcuts)))
+        p.save(p.places().copy(shortcuts = p.shortcuts.sortedAs(keys)))
     }
     placeSection(p, "overview", R.string.setup_section_overview, R.string.setup_overview_hint, ordered(places.order, AppPlace.OVERVIEW)) { keys ->
         p.save(p.places().copy(order = keys + p.order.filter { it !in keys }))
