@@ -46,6 +46,9 @@ sealed interface CarScreen {
     data class App(val appId: String) : CarScreen
 }
 
+/** Whether a media app is on screen; [kind] looks an app up by id. */
+fun CarScreen.showsMedia(kind: (String) -> CarAppKind?): Boolean = this is CarScreen.App && kind(appId) == CarAppKind.MEDIA
+
 /** A transient card, e.g. an incoming message or a toast from a car app. */
 @Stable
 class CarNotice(
