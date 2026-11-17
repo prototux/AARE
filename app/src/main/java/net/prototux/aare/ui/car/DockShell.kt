@@ -69,6 +69,7 @@ internal fun DockShell(
                         CarScreen.Dashboard -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(12.dp))
                         CarScreen.Launcher -> Home(state, actions)
                         is CarScreen.App -> state.app(screen.appId)?.let { appContent(it, Modifier.fillMaxSize()) } ?: Home(state, actions)
+                        is CarScreen.Split -> SplitPane(screen, state, actions, appContent, Modifier.fillMaxSize())
                     }
                 }
             }
