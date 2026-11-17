@@ -240,6 +240,15 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("standalone_apps", false)
         set(v) = prefs.edit { putBoolean("standalone_apps", v) }
 
+    /**
+     * Apps (messaging apps by package, the phone by its app id) shown on the car screen as the phone
+     * app itself when parked, with Shizuku or root: a messenger's own screen instead of its
+     * messages, the phone's default dialer instead of AARE's.
+     */
+    var fullApps: Set<String>
+        get() = prefs.getStringSet("full_apps", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("full_apps", HashSet(v)) }
+
     /** Keep standalone apps active when Android links their display to the phone display. */
     var standaloneKeepScreenAwake: Boolean
         get() = prefs.getBoolean("standalone_keep_screen_awake", android.os.Build.VERSION.SDK_INT >= 37)

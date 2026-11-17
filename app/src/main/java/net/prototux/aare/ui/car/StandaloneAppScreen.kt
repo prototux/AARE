@@ -41,11 +41,12 @@ import net.prototux.aare.media.Placeholder
  * [TextureView] gives its surface to the privileged [AppLauncher], which puts a virtual display
  * there, launches [packageName] on it, and receives the car's touches we forward.
  *
- * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving. The
+ * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving
+ * ([driving]; false for a navigation app, which runs on). The
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
+internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier, backId: String = CarRuntime.standaloneId(packageName)) {
     val context = LocalContext.current
     // A helper per app: a hosted app and a media app's video each keep their own display.
     val launcher = remember(packageName) { AppLauncher(context, "launch-$packageName") }
@@ -59,9 +60,9 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
             launcher.connected
         }
-        runtime.setScreenBack(CarRuntime.standaloneId(packageName), back)
+        runtime.setScreenBack(backId, back)
         onDispose {
-            runtime.clearScreenBack(CarRuntime.standaloneId(packageName), back)
+            runtime.clearScreenBack(backId, back)
             launcher.release()
         }
     }
@@ -69,14 +70,6 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
     Box(modifier.background(Color.Black)) {
         if (!driving) {
             HostedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize()) { started = it }
-            // A quiet reminder that this isn't an Android Auto app.
-            Text(
-                stringResource(R.string.standalone_not_native),
-                style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = 12.dp, vertical = 3.dp),
-            )
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
