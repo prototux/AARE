@@ -118,6 +118,32 @@
             android:exported="false"
             android:foregroundServiceType="connectedDevice|mediaProjection|microphone|location" />
 
+        <!-- AARE as a voice engine: navigation apps' prompts go to the car's guidance channel. -->
+        <service
+            android:name=".tts.CarTtsService"
+            android:exported="true"
+            android:label="@string/tts_engine_label">
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.speech.tts"
+                android:resource="@xml/tts_engine" />
+        </service>
+
+        <activity
+            android:name=".tts.CheckVoiceDataActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.speech.tts.engine.CHECK_TTS_DATA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".notify.CarNotificationListener"
             android:exported="true"
