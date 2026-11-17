@@ -746,7 +746,7 @@ class CarRuntime(
         }
         // Hosted: in the right half, next to what is on screen. Narrow, it lays out like on a phone, and the map
         // or video stays; a bar of a fixed size covered most of a short, wide screen (an MBUX: 1165x532 dp).
-        if (entry?.kind == CarAppKind.STANDALONE && !ui.drivingRestricted) {
+        if (entry?.kind == CarAppKind.STANDALONE && settings.assistantOnCarScreen && !ui.drivingRestricted) {
             ui.assistantVoice = pkg
             actions.openInPane(entry, left = false)
             return

@@ -41,6 +41,7 @@ import net.prototux.aare.R
 import net.prototux.aare.Settings
 import android.net.Uri
 import net.prototux.aare.host.CarLinkActivity
+import net.prototux.aare.host.Assistants
 import net.prototux.aare.host.CarLinks
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.launch.AppLauncher
@@ -113,7 +114,9 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             // The assistant's car links, read off the car screen and run here: MacroDroid and the phone's own
             // tools only see the phone's display, not this one. Links already in the chat when it shows stay put.
             LaunchedEffect(started, voiceStarts) {
-                if (!started || packageName != Settings(context).assistantPackage) return@LaunchedEffect
+                // Only for the assistant set to show here: the one the voice button uses, AARE's pick or the phone's.
+                val settings = Settings(context)
+                if (!started || !settings.assistantOnCarScreen || packageName != Assistants.authorized(context, settings.assistantPackage)) return@LaunchedEffect
                 var seen: Map<String, Int> = emptyMap()
                 // The chat may still be drawing at first: what shows in that time is the chat's, not a new reply's.
                 val since = SystemClock.uptimeMillis()
@@ -157,7 +160,11 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
             // Driving, a voice request isn't kept for later: it would open voice mode unasked once parked.
-            LaunchedEffect(Unit) { if (runtime.ui.assistantVoice == packageName) runtime.ui.assistantVoice = null }
+            LaunchedEffect(Unit) {
+                if (runtime.ui.assistantVoice == packageName) runtime.ui.assistantVoice = null
+                // A voice conversation going on hidden would answer without its car links running: it ends here.
+                CarNotificationListener.instance?.hangUp(packageName)
+            }
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
         }
     }
