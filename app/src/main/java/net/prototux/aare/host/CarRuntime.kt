@@ -764,7 +764,7 @@ class CarRuntime(
                                 // Parked: the app itself, its video, can take the art's place (the camera button, per app).
                                 val toggleVideo = { val p = app.packageName; settings.videoApps = if (p in videoApps) videoApps - p else videoApps + p }
                                 val video = if (phoneScreenAllowed && !ui.drivingRestricted) {
-                                    PhoneVideoSlot(app.packageName in videoApps, toggleVideo) { v, p, c -> PhoneVideo(this, app.packageName, v, onCover = toggleVideo, player = p, controls = c) }
+                                    PhoneVideoSlot(app.packageName in videoApps, toggleVideo) { v, p -> PhoneVideo(this, app.id, app.packageName, v, onCover = toggleVideo, player = p) }
                                 } else null
                                 if (m != null) CompositionLocalProvider(LocalPhoneVideo provides video) { media.Screen(m, ui.drivingRestricted, mod) }
                             }

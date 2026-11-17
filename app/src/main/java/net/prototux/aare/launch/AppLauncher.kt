@@ -91,6 +91,9 @@ class AppLauncher(private val context: Context, key: String = "launch") {
     val connected: Boolean get() = host != null
 
     /** Start [intent] on the display [start] made, in place of the app's start screen; false if it can't. */
+    /** Whether an app still shows on the display [start] made; true when it can't tell. */
+    fun hasApp(): Boolean = runCatching { host?.hasApp() }.onFailure { Log.w(TAG, "hasApp", it) }.getOrNull() ?: true
+
     fun openPending(intent: PendingIntent): Boolean =
         runCatching { host?.openPending(intent) ?: false }.onFailure { Log.w(TAG, "openPending", it) }.getOrDefault(false)
 
