@@ -320,7 +320,7 @@ class CarRuntime(
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "show_weather", "ignore_driving" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
-            "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
+            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "videos" -> main.post { refreshApps() }
         }
     }
 
