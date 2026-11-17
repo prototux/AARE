@@ -260,9 +260,9 @@ class Settings(context: Context) {
         get() = prefs.getFloat("call_bar_y", 0f)
         set(v) = prefs.edit { putFloat("call_bar_y", v) }
 
-    /** Phone media volume at 0 while the car plays a screen-capture copy of its sound (see PhoneMute). */
+    /** Phone media volume at 0 while the car plays a screen-capture copy of its sound (see PhoneMute). Off by default: most users have Shizuku or root, which don't need it. */
     var mutePhoneWhileCapturing: Boolean
-        get() = prefs.getBoolean("mute_phone_capturing", true)
+        get() = prefs.getBoolean("mute_phone_capturing", false)
         set(v) = prefs.edit { putBoolean("mute_phone_capturing", v) }
 
     /**
