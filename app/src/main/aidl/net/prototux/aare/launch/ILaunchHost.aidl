@@ -30,6 +30,9 @@ interface ILaunchHost {
     /** Start [intent] (an app's own activity, say its player) on the display made by [start]. False if it can't. */
     boolean openPending(in PendingIntent intent) = 6;
 
+    /** Whether an app still shows on the display [start] made: Back on its first screen closes it. */
+    boolean hasApp() = 19;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }
