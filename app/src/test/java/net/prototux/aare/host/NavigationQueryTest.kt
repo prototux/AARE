@@ -21,4 +21,11 @@ class NavigationQueryTest {
         assertEquals("48.8584,2.2945", navigationQuery("48.8584,2.2945"))
         assertEquals("-33.8568, 151.2153", navigationQuery(" -33.8568, 151.2153 "))
     }
+
+    @Test
+    fun googleMapsAndWazeStartTheRouteOthersSearch() {
+        assertEquals("google.navigation:q=Berlin%20Hauptbahnhof", phoneNavigationUri("com.google.android.apps.maps", "Berlin Hauptbahnhof"))
+        assertEquals("https://waze.com/ul?q=Berlin%20Hauptbahnhof&navigate=yes", phoneNavigationUri("com.waze", "Berlin Hauptbahnhof"))
+        assertEquals("geo:0,0?q=Musterstra%C3%9Fe%201%2012345%20Musterstadt", phoneNavigationUri("app.comaps.fdroid", "Musterstraße 1, 12345 Musterstadt"))
+    }
 }
