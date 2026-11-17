@@ -147,6 +147,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
+    /** The media apps shown as themselves on the car screen (their video) instead of their art, parked: packages. */
+    var videoApps: Set<String>
+        get() = prefs.getStringSet("video_apps", emptySet()) ?: emptySet()
+        set(v) = prefs.edit { putStringSet("video_apps", v) }
+
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
@@ -316,6 +321,31 @@ class Settings(context: Context) {
     var appOrder: List<String>
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
+
+    /** The car rail's apps, by [appOrder] key, in order. Empty: the automatic ones (last navigation and media apps, Phone). */
+    var railApps: List<String>
+        get() = prefs.getString("rail_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("rail_apps", v.joinToString("\n")) }
+
+    /** The apps a long press on the car's launcher button offers, by [appOrder] key, in order. */
+    var shortcutApps: List<String>
+        get() = prefs.getString("shortcut_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("shortcut_apps", v.joinToString("\n")) }
+
+    /** A sideways swipe on an app in the car's rail or launcher opens it in the pane on that side. */
+    var paneSwipe: Boolean
+        get() = prefs.getBoolean("pane_swipe", true)
+        set(v) = prefs.edit { putBoolean("pane_swipe", v) }
+
+    /** A long press on an app in the car's rail or launcher offers the two panes for it. */
+    var paneMenu: Boolean
+        get() = prefs.getBoolean("pane_menu", true)
+        set(v) = prefs.edit { putBoolean("pane_menu", v) }
+
+    /** The car's launcher leaves out the apps in [railApps] and [shortcutApps]. */
+    var launcherHidesPinned: Boolean
+        get() = prefs.getBoolean("launcher_hides_pinned", false)
+        set(v) = prefs.edit { putBoolean("launcher_hides_pinned", v) }
 
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
