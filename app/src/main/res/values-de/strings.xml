@@ -492,4 +492,22 @@
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
+    <string name="media_action_show_video">Video vom Handy zeigen</string>
+    <string name="media_action_show_art">Cover zeigen</string>
+    <string name="video_full_screen">Vollbild</string>
+    <string name="video_exit_full_screen">Vollbild verlassen</string>
+    <string name="standalone_failed">Die App ließ sich nicht auf dem Autobildschirm starten.</string>
+    <string name="split_open_left">Links öffnen</string>
+    <string name="split_open_right">Rechts öffnen</string>
+    <string name="split_divider">Ziehen zum Ändern der Größe, an den Rand zum Schließen</string>
+    <string name="setup_section_rail">Leiste im Auto</string>
+    <string name="setup_rail_hint">Die Apps in der Seitenleiste im Auto, in dieser Reihenfolge; passen nicht alle, lässt sie sich scrollen. Ohne Auswahl zeigt sie die letzte Navigations- und Medien-App und Telefon.</string>
+    <string name="setup_section_shortcuts">Schnellliste</string>
+    <string name="setup_shortcuts_hint">Im Auto den App-Menü-Knopf gedrückt halten, um diese zu öffnen. Wie in der Leiste: gedrückt halten öffnet eine davon in einer Bildschirmhälfte.</string>
+    <string name="setup_section_app_list_filter">App-Menü im Auto</string>
+    <string name="setup_toggle_hide_pinned_title">Apps aus Leiste und Schnellliste ausblenden</string>
+    <string name="setup_toggle_hide_pinned_subtitle">Aus: Das App-Menü zeigt alle Apps.</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="common_done">Fertig</string>
+    <string name="common_add_apps">Apps hinzufügen</string>
 </resources>

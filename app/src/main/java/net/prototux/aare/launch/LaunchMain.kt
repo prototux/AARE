@@ -23,6 +23,8 @@ object LaunchMain {
     @JvmStatic
     fun main(args: Array<String>) {
         val appPackage = args.getOrNull(0) ?: return
+        // Which launcher started this helper: several can wait for their binder at once.
+        val nonce = args.getOrNull(1).orEmpty()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             runCatching { HiddenApiBypass.addHiddenApiExemptions("Landroid/app/ActivityThread;") }
         Looper.prepareMainLooper()
@@ -30,7 +32,7 @@ object LaunchMain {
         val ctx = systemContext()
         if (ctx != null) {
             val bundle = Bundle().apply { putBinder(EXTRA_BINDER, service) }
-            val intent = Intent(ACTION_HOST).setPackage(appPackage).putExtra(EXTRA_BUNDLE, bundle)
+            val intent = Intent(ACTION_HOST).setPackage(appPackage).putExtra(EXTRA_BUNDLE, bundle).putExtra(EXTRA_NONCE, nonce)
             runCatching { ctx.sendBroadcast(intent) }.onFailure { Log.w(TAG, "could not hand the binder back", it) }
         }
         Looper.loop()
@@ -46,5 +48,6 @@ object LaunchMain {
     const val ACTION_HOST = "net.prototux.aare.LAUNCH_HOST"
     const val EXTRA_BUNDLE = "bundle"
     const val EXTRA_BINDER = "host"
+    const val EXTRA_NONCE = "nonce"
     private const val TAG = "AareLaunchMain"
 }

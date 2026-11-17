@@ -1,5 +1,26 @@
 package net.prototux.aare.ui
 
+import androidx.compose.material.icons.rounded.DragIndicator
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.rounded.Add
 import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -235,14 +256,16 @@ private fun Home() {
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(p.titleRes), style = MaterialTheme.typography.titleLarge)
                 }
+                // The apps page spaces its cards itself: its rows are items too.
+                val appsPage = if (p == Page.APPS) rememberAppsPage(settings) else null
                 LazyColumn(
                     Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (appsPage != null) 0.dp else 16.dp),
                 ) {
                     when (p) {
                         Page.CAR_SCREEN -> item { CarScreenSettings(settings, refresh) }
-                        Page.APPS -> item { AppsCard(settings) }
+                        Page.APPS -> appsPage(appsPage!!)
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
                         Page.AUDIO -> item { AudioSettings(settings, state, refresh) { refresh++ } }
@@ -915,17 +938,72 @@ private fun Choices(title: String, options: List<Pair<String, String>>, selected
 /** Everything the car's launcher lists, as it groups it. */
 private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>)
 
+/** An app of the car's launcher: its order key (CarRuntime.orderKey: package, or a built-in app's id), name and icon. */
+private typealias LauncherEntry = Triple<String, String, Bitmap?>
+
+/**
+ * The apps page's state. The page is lazy, one item per row: a long app list then composes only
+ * the rows on screen, which also keeps accessibility services from walking every row each frame.
+ */
+private class AppsPage(private val ctx: Context, val settings: Settings) {
+    var hidden by mutableStateOf(settings.hiddenApps)
+    var phoneScreen by mutableStateOf(settings.phoneScreen)
+    var browser by mutableStateOf(settings.browser)
+    var browserUrl by mutableStateOf(settings.browserUrl)
+    var lists by mutableStateOf<LauncherLists?>(null)
+    var unsupported by mutableStateOf(emptyList<UnsupportedCarApp>())
+    var order by mutableStateOf(settings.appOrder)
+    var rail by mutableStateOf(settings.railApps)
+    var shortcuts by mutableStateOf(settings.shortcutApps)
+    var hidePinned by mutableStateOf(settings.launcherHidesPinned)
+    var addingRail by mutableStateOf(false)
+    var addingShortcuts by mutableStateOf(false)
+    val drag = RowDrag()
+    var standalone by mutableStateOf(settings.standaloneApps)
+    var keepAwake by mutableStateOf(settings.standaloneKeepScreenAwake)
+    var allowed by mutableStateOf(settings.standaloneAppPackages)
+    var launchable by mutableStateOf<List<LauncherEntry>?>(null)
+    val launcherAvailable = AppLauncher.available(ctx)
+
+    /** AARE's own apps, with the icons the car shows for them. */
+    private val builtIns by lazy {
+        fun icon(res: Int) = ContextCompat.getDrawable(ctx, res)?.toBitmap(96, 96)
+        mapOf(
+            CarRuntime.PHONE_ID to Triple(R.string.setup_app_entry_phone, icon(R.drawable.ic_car_phone), true),
+            CarRuntime.SETTINGS_ID to Triple(R.string.setup_app_entry_settings, icon(R.drawable.ic_car_settings), true),
+            CarRuntime.NOTIFICATIONS_ID to Triple(R.string.setup_app_entry_notifications, icon(R.drawable.ic_car_notifications), true),
+            CarRuntime.PHONE_SCREEN_ID to Triple(R.string.phone_section_title, icon(R.drawable.ic_phone_screen), false),
+            CarRuntime.BROWSER_ID to Triple(R.string.browser_app_label, icon(R.drawable.ic_car_browser), false),
+        )
+    }
+
+    fun icon(id: String) = builtIns[id]?.second
+
+    /** The car launcher's visible apps, in no particular order. */
+    fun entries(): List<LauncherEntry> {
+        val l = lists ?: return emptyList()
+        val apps = l.carApps.map { LauncherEntry(it.packageName, it.label, it.icon) } +
+            (l.media + l.messaging).map { LauncherEntry(it.packageName, it.label, it.icon) }
+        val shown = mapOf(CarRuntime.PHONE_SCREEN_ID to phoneScreen, CarRuntime.BROWSER_ID to browser)
+        return apps.filter { it.first !in hidden } + builtIns.filter { (id, b) -> b.third || shown[id] == true }
+            .map { (id, b) -> LauncherEntry(id, ctx.getString(b.first), b.second) }
+    }
+
+    fun toggle(pkg: String, visible: Boolean) {
+        hidden = if (visible) hidden - pkg else hidden + pkg
+        settings.hiddenApps = hidden
+    }
+}
+
 @Composable
-private fun AppsCard(settings: Settings) {
+private fun rememberAppsPage(settings: Settings): AppsPage {
     val ctx = LocalContext.current
-    var hidden by remember { mutableStateOf(settings.hiddenApps) }
-    var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
-    var browser by remember { mutableStateOf(settings.browser) }
-    var browserUrl by remember { mutableStateOf(settings.browserUrl) }
-    // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
-    val lists by produceState<LauncherLists?>(null) {
-        value = withContext(Dispatchers.IO) {
-            val car = CarAppCatalog.query(ctx)
+    val page = remember { AppsPage(ctx.applicationContext, settings) }
+    LaunchedEffect(Unit) {
+        // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
+        val l = withContext(Dispatchers.IO) {
+            // One row per app: the rows are keyed by package, and a duplicate key would crash the page.
+            val car = CarAppCatalog.query(ctx).distinctBy { it.packageName }
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
             val messaging = AndroidAutoApps.messagingApps(ctx)
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
@@ -933,83 +1011,151 @@ private fun AppsCard(settings: Settings) {
             val shown = carPkgs + media.map { it.packageName }
             LauncherLists(car, media, messaging.filter { it.packageName !in shown })
         }
+        page.lists = l
+        page.unsupported = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
     }
-    fun toggle(pkg: String, visible: Boolean) {
-        hidden = if (visible) hidden - pkg else hidden + pkg
-        settings.hiddenApps = hidden
+    LaunchedEffect(page.standalone) {
+        if (page.standalone && page.launchable == null) page.launchable = withContext(Dispatchers.IO) { launchableApps(ctx) }
     }
-    val l = lists
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Section(stringResource(R.string.setup_section_app_list)) {
-            Text(stringResource(R.string.setup_app_list_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (l == null) {
-                Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
-                return@Section
+    return page
+}
+
+/** A row of a [card]: its item key and content. */
+private fun row(key: Any, content: @Composable () -> Unit): Pair<Any, @Composable () -> Unit> = key to content
+
+/**
+ * A card like [Section], spread over lazy items: [title] and [intro] in the first, then each of
+ * [rows] in its own, then the gap to the next card. [key] keeps the item keys apart.
+ */
+private fun LazyListScope.card(
+    key: String, title: Int, intro: (@Composable () -> Unit)? = null, rows: List<Pair<Any, @Composable () -> Unit>> = emptyList(),
+    /** For a list sorted by dragging: lifts the dragged row and slides the others. */
+    drag: RowDrag? = null,
+) {
+    item(key = "$key:head") {
+        CardPart(top = true, bottom = rows.isEmpty()) {
+            Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            intro?.invoke()
+        }
+    }
+    rows.forEachIndexed { i, (k, content) ->
+        val itemKey = "$key:$k"
+        item(key = itemKey) {
+            val lifted = drag != null && drag.key == itemKey
+            val m = when {
+                lifted -> Modifier.zIndex(1f).graphicsLayer { translationY = drag!!.offset; shadowElevation = 8.dp.toPx() }
+                // Only while a row is dragged: animating every row costs each scrolling frame.
+                drag != null && drag.key != null -> Modifier.animateItem()
+                else -> Modifier
             }
-            AppGroup(stringResource(R.string.setup_app_group_nav))
-            if (l.carApps.isEmpty()) Text(stringResource(R.string.setup_app_list_no_nav), style = MaterialTheme.typography.bodyMedium)
-            val navigationKind = stringResource(R.string.setup_app_kind_navigation)
-            val genericKind = stringResource(R.string.setup_app_kind_generic)
-            l.carApps.forEach { app ->
-                val kind = if (app.isNavigation) navigationKind
-                    else app.categories.firstOrNull()?.substringAfterLast('.')?.lowercase()?.replaceFirstChar { it.uppercase() } ?: genericKind
-                AppRow(app.icon, app.label, kind, app.packageName !in hidden) { toggle(app.packageName, it) }
+            CardPart(top = false, bottom = i == rows.lastIndex, modifier = m) { content() }
+        }
+    }
+    item(key = "$key:gap") { Spacer(Modifier.height(16.dp)) }
+}
+
+/** A slice of a card: rounded and padded at the [top] and [bottom] ends only. */
+@Composable
+private fun CardPart(top: Boolean, bottom: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val r = 24.dp
+    Column(
+        modifier.fillMaxWidth()
+            // A shaped background, not a clip: nothing reaches into the corners, and a clip is a
+            // layer more for every row scrolling in.
+            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(if (top) r else 0.dp, if (top) r else 0.dp, if (bottom) r else 0.dp, if (bottom) r else 0.dp))
+            .padding(start = 20.dp, end = 20.dp, top = if (top) 20.dp else 0.dp, bottom = if (bottom) 20.dp else 0.dp),
+    ) { content() }
+}
+
+@Composable
+private fun Hint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun Loading() {
+    Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
+}
+
+private fun LazyListScope.appsPage(p: AppsPage) {
+    appList(p)
+    if (p.lists != null) {
+        val entries = p.entries()
+        appOrder(p, entries)
+        pickList("rail", R.string.setup_section_rail, R.string.setup_rail_hint, entries, p.rail, p.drag, p.addingRail, { p.addingRail = it }) {
+            p.rail = it; p.settings.railApps = it
+        }
+        pickList("shortcuts", R.string.setup_section_shortcuts, R.string.setup_shortcuts_hint, entries, p.shortcuts, p.drag, p.addingShortcuts, { p.addingShortcuts = it }) {
+            p.shortcuts = it; p.settings.shortcutApps = it
+        }
+        card("filter", R.string.setup_section_app_list_filter, intro = {
+            Toggle(stringResource(R.string.setup_toggle_hide_pinned_title), stringResource(R.string.setup_toggle_hide_pinned_subtitle), p.hidePinned) {
+                p.hidePinned = it; p.settings.launcherHidesPinned = it
             }
-            if (l.media.isNotEmpty()) {
-                AppGroup(stringResource(R.string.setup_app_group_media))
-                val mediaKind = stringResource(R.string.setup_app_kind_media)
-                l.media.forEach { app -> AppRow(app.icon, app.label, mediaKind, app.packageName !in hidden) { toggle(app.packageName, it) } }
+        })
+    }
+    standaloneApps(p)
+    if (p.unsupported.isNotEmpty()) card("unsupported", R.string.setup_section_unsupported_apps, rows = p.unsupported.map { app -> row(app.packageName) { UnsupportedRow(app) } })
+    item(key = "allowlist") { Hint(stringResource(R.string.setup_hint_allowlist)) }
+}
+
+/** Which apps the car shows, grouped as its launcher groups them. */
+private fun LazyListScope.appList(p: AppsPage) {
+    val l = p.lists
+    val rows = buildList {
+        if (l == null) { add(row("loading") { Loading() }); return@buildList }
+        add(row("g-nav") { AppGroup(stringResource(R.string.setup_app_group_nav)) })
+        if (l.carApps.isEmpty()) add(row("no-nav") { Text(stringResource(R.string.setup_app_list_no_nav), style = MaterialTheme.typography.bodyMedium) })
+        l.carApps.forEach { app ->
+            add(row(app.packageName) {
+                val kind = if (app.isNavigation) stringResource(R.string.setup_app_kind_navigation)
+                    else app.categories.firstOrNull()?.substringAfterLast('.')?.lowercase()?.replaceFirstChar { it.uppercase() }
+                        ?: stringResource(R.string.setup_app_kind_generic)
+                AppRow(app.icon, app.label, kind, app.packageName !in p.hidden) { p.toggle(app.packageName, it) }
+            })
+        }
+        if (l.media.isNotEmpty()) {
+            add(row("g-media") { AppGroup(stringResource(R.string.setup_app_group_media)) })
+            l.media.forEach { app ->
+                add(row(app.packageName) { AppRow(app.icon, app.label, stringResource(R.string.setup_app_kind_media), app.packageName !in p.hidden) { p.toggle(app.packageName, it) } })
             }
-            if (l.messaging.isNotEmpty()) {
-                AppGroup(stringResource(R.string.setup_app_group_messaging))
-                val messagingKind = stringResource(R.string.setup_app_kind_messaging)
-                l.messaging.forEach { app -> AppRow(app.icon, app.label, messagingKind, app.packageName !in hidden) { toggle(app.packageName, it) } }
+        }
+        if (l.messaging.isNotEmpty()) {
+            add(row("g-messaging") { AppGroup(stringResource(R.string.setup_app_group_messaging)) })
+            l.messaging.forEach { app ->
+                add(row(app.packageName) { AppRow(app.icon, app.label, stringResource(R.string.setup_app_kind_messaging), app.packageName !in p.hidden) { p.toggle(app.packageName, it) } })
             }
-            AppGroup(stringResource(R.string.setup_app_group_aare))
-            AppRow(null, stringResource(R.string.phone_section_title), stringResource(R.string.phone_app_row_subtitle), phoneScreen) { phoneScreen = it; settings.phoneScreen = it }
-            AppRow(null, stringResource(R.string.browser_app_label), stringResource(R.string.browser_app_row_subtitle), browser) { browser = it; settings.browser = it }
-            if (browser) {
+        }
+        add(row("g-aare") { AppGroup(stringResource(R.string.setup_app_group_aare)) })
+        add(row(CarRuntime.PHONE_SCREEN_ID) {
+            AppRow(p.icon(CarRuntime.PHONE_SCREEN_ID), stringResource(R.string.phone_section_title), stringResource(R.string.phone_app_row_subtitle), p.phoneScreen) {
+                p.phoneScreen = it; p.settings.phoneScreen = it
+            }
+        })
+        add(row(CarRuntime.BROWSER_ID) {
+            AppRow(p.icon(CarRuntime.BROWSER_ID), stringResource(R.string.browser_app_label), stringResource(R.string.browser_app_row_subtitle), p.browser) {
+                p.browser = it; p.settings.browser = it
+            }
+        })
+        if (p.browser) {
+            add(row("browser-url") {
                 OutlinedTextField(
-                    value = browserUrl, onValueChange = { browserUrl = it; settings.browserUrl = it },
+                    value = p.browserUrl, onValueChange = { p.browserUrl = it; p.settings.browserUrl = it },
                     label = { Text(stringResource(R.string.browser_url_label)) }, singleLine = true,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 )
                 Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-            }
+            })
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
-        StandaloneAppsSection(settings, ctx)
-        val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
-            if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
-        }
-        if (unsupported.isNotEmpty()) {
-            Section(stringResource(R.string.setup_section_unsupported_apps)) {
-                unsupported.forEach { UnsupportedRow(it) }
-            }
-        }
-        Text(stringResource(R.string.setup_hint_allowlist),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+    card("apps", R.string.setup_section_app_list, intro = { Hint(stringResource(R.string.setup_app_list_hint)) }, rows = rows)
 }
 
 /** The order of the car's app list: the visible apps, with up and down buttons. */
-@Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
-    // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
-    val all = buildList {
-        l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
-        l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
-        l.messaging.forEach { add(Triple(it.packageName, it.label, it.icon)) }
-    }.filter { it.first !in hidden } + listOfNotNull(
-        Triple(CarRuntime.PHONE_ID, stringResource(R.string.setup_app_entry_phone), null),
-        Triple(CarRuntime.SETTINGS_ID, stringResource(R.string.setup_app_entry_settings), null),
-        Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null),
-        if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
-        if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
-    )
-    var order by remember { mutableStateOf(settings.appOrder) }
-    val index = order.withIndex().associate { (i, k) -> k to i }
+private fun LazyListScope.appOrder(p: AppsPage, all: List<LauncherEntry>) {
+    val index = p.order.withIndex().associate { (i, k) -> k to i }
     val sorted = all.sortedWith(compareBy({ index[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
     fun move(i: Int, by: Int) {
         val keys = sorted.map { it.first }.toMutableList()
@@ -1019,20 +1165,122 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         // the shown keys fill their old slots in the new order, new ones go at the end.
         val queue = ArrayDeque(keys)
         val shown = keys.toSet()
-        val merged = order.mapNotNull { if (it in shown) queue.removeFirstOrNull() else it } + queue
-        order = merged; settings.appOrder = merged
+        val merged = p.order.mapNotNull { if (it in shown) queue.removeFirstOrNull() else it } + queue
+        p.order = merged; p.settings.appOrder = merged
     }
-    Section(stringResource(R.string.setup_section_app_order)) {
-        sorted.forEachIndexed { i, (_, label, icon) ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
-                else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
-                Spacer(Modifier.width(12.dp))
-                Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { move(i, -1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
-                IconButton(onClick = { move(i, 1) }, enabled = i < sorted.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
+    card("order", R.string.setup_section_app_order, drag = p.drag, rows = sorted.mapIndexed { i, (key, label, icon) ->
+        row(key) { EntryRow(icon, label, reorder = Reorder(i, sorted.size, "order:$key", p.drag) { by -> move(i, by) }) }
+    })
+}
+
+/** Apps picked from [entries], in order: up, down and remove on each, and the others to add while [adding]. */
+private fun LazyListScope.pickList(
+    key: String, title: Int, hint: Int, entries: List<LauncherEntry>, picked: List<String>, drag: RowDrag,
+    adding: Boolean, setAdding: (Boolean) -> Unit, onChange: (List<String>) -> Unit,
+) {
+    val byKey = entries.associateBy { it.first }
+    // An app hidden or gone since stays out of view; the next change drops it.
+    val shown = picked.filter { it in byKey }
+    fun move(i: Int, by: Int) = onChange(shown.toMutableList().apply { add((i + by).coerceIn(0, lastIndex), removeAt(i)) })
+    val rows = buildList {
+        shown.forEachIndexed { i, k ->
+            val (_, label, icon) = byKey.getValue(k)
+            add(row(k) {
+                EntryRow(icon, label, listOf(RowAction(Icons.Rounded.Close, stringResource(R.string.common_remove)) { onChange(shown - k) }),
+                    Reorder(i, shown.size, "$key:$k", drag) { by -> move(i, by) })
+            })
+        }
+        add(row("add") { TextButton(onClick = { setAdding(!adding) }) { Text(stringResource(if (adding) R.string.common_done else R.string.common_add_apps)) } })
+        if (adding) {
+            entries.filter { it.first !in shown }.sortedBy { it.second.lowercase() }.forEach { (k, label, icon) ->
+                add(row("+$k") { EntryRow(icon, label, listOf(RowAction(Icons.Rounded.Add, stringResource(R.string.common_add_apps)) { onChange(shown + k) })) })
             }
         }
+    }
+    card(key, title, intro = { Hint(stringResource(hint)) }, rows = rows, drag = drag)
+}
+
+/** A button of an [EntryRow]. */
+private class RowAction(val icon: ImageVector, val label: String, val enabled: Boolean = true, val onClick: () -> Unit)
+
+/** The row being dragged to a new place in a list, by its item key, and how far it is from its slot. */
+private class RowDrag {
+    var key by mutableStateOf<Any?>(null)
+    var offset by mutableFloatStateOf(0f)
+}
+
+/** Sorting an [EntryRow] by dragging: its [index] of [count], its list item's [itemKey], and [move] a step up or down. */
+private class Reorder(val index: Int, val count: Int, val itemKey: Any, val drag: RowDrag, val move: (by: Int) -> Unit)
+
+/**
+ * An app in a list: with [reorder], a handle to drag it up or down; then its icon, its name and a
+ * button for each of [actions]. One accessibility node with the buttons and the moves as its
+ * actions: accessibility services walk every node on each frame, and a node per part made
+ * scrolling stutter.
+ */
+@Composable
+private fun EntryRow(icon: Bitmap?, label: String, actions: List<RowAction> = emptyList(), reorder: Reorder? = null) {
+    val up = stringResource(R.string.common_up)
+    val down = stringResource(R.string.common_down)
+    var height by remember { mutableIntStateOf(1) }
+    Row(
+        Modifier.fillMaxWidth().onSizeChanged { height = it.height }.padding(vertical = 4.dp).clearAndSetSemantics {
+            contentDescription = label
+            customActions = listOfNotNull(
+                reorder?.takeIf { it.index > 0 }?.let { r -> CustomAccessibilityAction(up) { r.move(-1); true } },
+                reorder?.takeIf { it.index < it.count - 1 }?.let { r -> CustomAccessibilityAction(down) { r.move(1); true } },
+            ) + actions.filter { it.enabled }.map { a -> CustomAccessibilityAction(a.label) { a.onClick(); true } }
+        },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (reorder != null) DragHandle(reorder) { height }
+        AppIcon(icon, label, 32.dp)
+        Spacer(Modifier.width(12.dp))
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        actions.forEach { a -> IconButton(onClick = a.onClick, enabled = a.enabled) { Icon(a.icon, a.label) } }
+    }
+}
+
+/**
+ * The dotted grip that drags its row: the row follows the finger and swaps places with a
+ * neighbour once past half of its height ([rowHeight]).
+ */
+@Composable
+private fun DragHandle(reorder: Reorder, rowHeight: () -> Int) {
+    val r by rememberUpdatedState(reorder)
+    Icon(
+        Icons.Rounded.DragIndicator, null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(end = 8.dp).size(32.dp).pointerInput(Unit) {
+            // One step at a time: the next waits until the list has the row in its new place.
+            var waitFor = -1
+            fun drop() { r.drag.key = null; r.drag.offset = 0f }
+            detectVerticalDragGestures(
+                onDragStart = { r.drag.key = r.itemKey; r.drag.offset = 0f; waitFor = -1 },
+                onDragEnd = { drop() },
+                onDragCancel = { drop() },
+            ) { change, dy ->
+                change.consume()
+                val d = r.drag
+                d.offset += dy
+                if (r.index == waitFor) return@detectVerticalDragGestures
+                val h = rowHeight().toFloat().coerceAtLeast(1f)
+                val step = when {
+                    d.offset > h / 2 && r.index < r.count - 1 -> 1
+                    d.offset < -h / 2 && r.index > 0 -> -1
+                    else -> 0
+                }
+                if (step != 0) { waitFor = r.index; d.offset -= step * h; r.move(step) }
+            }
+        },
+    )
+}
+
+/** An app''s icon in a circle, or its initial when it has none. */
+@Composable
+private fun AppIcon(icon: Bitmap?, label: String, size: Dp) {
+    if (icon != null) Image(remember(icon) { icon.asImageBitmap() }, null, Modifier.size(size).clip(CircleShape))
+    else Box(Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+        Text(label.take(1), color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 
@@ -1042,47 +1290,36 @@ private fun AppGroup(title: String) {
 }
 
 /** Opt-in: launch ordinary phone apps on the car screen (parked only; needs root or Shizuku). */
-@Composable
-private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
-    var enabled by remember { mutableStateOf(settings.standaloneApps) }
-    var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
-    var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
-    val available = remember { AppLauncher.available(ctx) }
-    Section(stringResource(R.string.standalone_section_title)) {
+private fun LazyListScope.standaloneApps(p: AppsPage) {
+    val rows = buildList {
+        if (!p.standalone) return@buildList
+        val list = p.launchable
+        if (list == null) { add(row("loading") { Loading() }); return@buildList }
+        list.forEach { (pkg, label, icon) ->
+            add(row(pkg) {
+                AppRow(icon, label, pkg, pkg in p.allowed) { on ->
+                    p.allowed = if (on) p.allowed + pkg else p.allowed - pkg
+                    p.settings.standaloneAppPackages = p.allowed
+                }
+            })
+        }
+    }
+    card("standalone", R.string.standalone_section_title, intro = {
         Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(8.dp))
-        Toggle(stringResource(R.string.standalone_toggle_title), stringResource(R.string.standalone_toggle_subtitle), enabled) {
-            enabled = it; settings.standaloneApps = it
+        Toggle(stringResource(R.string.standalone_toggle_title), stringResource(R.string.standalone_toggle_subtitle), p.standalone) {
+            p.standalone = it; p.settings.standaloneApps = it
         }
-        if (enabled && !available) {
+        if (p.standalone && !p.launcherAvailable) {
             Text(stringResource(R.string.standalone_need_root), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp))
         }
-        if (enabled) {
-            Toggle(
-                stringResource(R.string.standalone_keep_awake_title),
-                stringResource(R.string.standalone_keep_awake_subtitle),
-                keepAwake,
-            ) {
-                keepAwake = it; settings.standaloneKeepScreenAwake = it
-            }
-            val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
-                value = withContext(Dispatchers.IO) { launchableApps(ctx) }
-            }
-            val list = apps
-            if (list == null) {
-                Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
-            } else {
-                Spacer(Modifier.height(8.dp))
-                list.forEach { (pkg, label, icon) ->
-                    AppRow(icon, label, pkg, pkg in allowed) { on ->
-                        allowed = if (on) allowed + pkg else allowed - pkg
-                        settings.standaloneAppPackages = allowed
-                    }
-                }
+        if (p.standalone) {
+            Toggle(stringResource(R.string.standalone_keep_awake_title), stringResource(R.string.standalone_keep_awake_subtitle), p.keepAwake) {
+                p.keepAwake = it; p.settings.standaloneKeepScreenAwake = it
             }
         }
-    }
+    }, rows = rows)
 }
 
 /** Every app with a launcher icon, except AARE itself, for the standalone allow-list. */
@@ -1102,24 +1339,30 @@ private fun launchableApps(ctx: android.content.Context): List<Triple<String, St
 
 @Composable
 private fun AppRow(icon: android.graphics.Bitmap?, label: String, kind: String, visible: Boolean, onVisible: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().clickable { onVisible(!visible) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(40.dp).clip(CircleShape))
-        else Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-            Text(label.take(1), color = MaterialTheme.colorScheme.onPrimaryContainer)
-        }
+    // One accessibility node, the row as the switch: accessibility services walk every node on
+    // each frame, and five per row made scrolling a long list stutter.
+    Row(
+        Modifier.fillMaxWidth()
+            .toggleable(visible, role = Role.Switch, onValueChange = onVisible)
+            .clearAndSetSemantics { contentDescription = "$label, $kind"; toggleableState = ToggleableState(visible); role = Role.Switch }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppIcon(icon, label, 40.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.bodyLarge)
             Text(kind, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = visible, onCheckedChange = onVisible)
+        Switch(checked = visible, onCheckedChange = null)
     }
 }
 
 @Composable
 private fun UnsupportedRow(app: UnsupportedCarApp) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        app.icon?.let { Image(it.asImageBitmap(), null, Modifier.size(40.dp).clip(CircleShape)) }
+    // One accessibility node, like the other rows.
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp).clearAndSetSemantics { contentDescription = "${app.label}, ${app.reason}" }, verticalAlignment = Alignment.CenterVertically) {
+        app.icon?.let { Image(remember(it) { it.asImageBitmap() }, null, Modifier.size(40.dp).clip(CircleShape)) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(app.label, style = MaterialTheme.typography.bodyLarge)

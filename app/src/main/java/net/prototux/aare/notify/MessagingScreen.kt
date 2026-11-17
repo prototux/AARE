@@ -92,9 +92,9 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
                 else -> false
             }
         }
-        runtime.screenBack = back
+        runtime.setScreenBack(app.id, back)
         // The next screen installs its own handler before this one fades out: leave that one alone.
-        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
+        onDispose { runtime.clearScreenBack(app.id, back) }
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background)) {

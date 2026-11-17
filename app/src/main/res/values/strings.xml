@@ -540,4 +540,22 @@
     <string name="carapp_error_stopped">%1$s stopped</string>
     <string name="carapp_error_google_only">%1$s only accepts Google\'s Android Auto. It needs to allow AARE (see the app list on the phone).</string>
     <string name="carapp_error_cant_start">%1$s couldn\'t start: %2$s</string>
+    <string name="media_action_show_video">Show the phone\'s video</string>
+    <string name="media_action_show_art">Show the cover</string>
+    <string name="video_full_screen">Full screen</string>
+    <string name="video_exit_full_screen">Leave full screen</string>
+    <string name="standalone_failed">Couldn\'t start the app on the car screen.</string>
+    <string name="split_open_left">Open on the left</string>
+    <string name="split_open_right">Open on the right</string>
+    <string name="split_divider">Drag to resize, to an edge to close</string>
+    <string name="setup_section_rail">Car rail</string>
+    <string name="setup_rail_hint">The apps in the car\'s side bar, in this order; it scrolls when they don\'t fit. With none picked, it shows the last navigation and media apps and Phone.</string>
+    <string name="setup_section_shortcuts">Shortcuts</string>
+    <string name="setup_shortcuts_hint">Hold the app list button in the car to open these. Like in the bar: hold one to open it in a half of the screen.</string>
+    <string name="setup_section_app_list_filter">App list in the car</string>
+    <string name="setup_toggle_hide_pinned_title">Leave out the rail\'s and the shortcuts\' apps</string>
+    <string name="setup_toggle_hide_pinned_subtitle">Off, the app list shows every app.</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_done">Done</string>
+    <string name="common_add_apps">Add apps</string>
 </resources>
