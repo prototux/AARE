@@ -115,6 +115,8 @@ class CarAppConnection(
     private var started = false
     private var pendingIntent: Intent? = null
     private var retries = 0
+    /** When it last came up (onAppCreate done), on the elapsed-realtime clock. */
+    private var readyAt = 0L
     /** Screen stack of the last template applied, top first (as ScreenManager lists it). */
     private var screenStack: List<TemplateInfo> = emptyList()
     /** getTemplate calls started / the newest one applied: replies can come back out of order. */
@@ -170,7 +172,11 @@ class CarAppConnection(
         if (visible == v) return
         visible = v
         if (status == Status.READY) applyVisibility()
-        else if (v && (status == Status.IDLE || status == Status.FAILED)) connect()
+        else if (v && (status == Status.IDLE || status == Status.FAILED)) {
+            // Opened again: a fresh set of reconnects, not what was left from the last time it gave up.
+            retries = 0
+            connect()
+        }
     }
 
     fun newIntent(intent: Intent) {
@@ -206,6 +212,8 @@ class CarAppConnection(
         cleanup()
         unbind()
         status = Status.IDLE
+        // A next start counts its crashes afresh, not from this run's time up.
+        readyAt = 0L
     }
 
     /** Pushes a new screen configuration (night mode or size changed). */
@@ -238,7 +246,12 @@ class CarAppConnection(
         surfaceOwner = null
         surface = null
         val cb = surfaceCallback ?: return
-        if (container != null) call("onSurfaceDestroyed") { cb.onSurfaceDestroyed(Bundleable.create(container), it) }
+        if (container == null) return
+        // The surface goes once this returns: wait for the app to have let go of it. An app still
+        // drawing on it then (Blitzer.de, its render thread) aborts with "no surface".
+        val answered = java.util.concurrent.CountDownLatch(1)
+        call("onSurfaceDestroyed", answered = answered) { cb.onSurfaceDestroyed(Bundleable.create(container), it) }
+        answered.await(SURFACE_RELEASE_WAIT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
     }
 
     fun setVisibleArea(r: Rect) {
@@ -313,7 +326,7 @@ class CarAppConnection(
                     }) { app.getManager("navigation", it) }
                 }
                 status = Status.READY
-                retries = 0
+                readyAt = android.os.SystemClock.elapsedRealtime()
                 screenStack = emptyList() // a new session: its first template is never a refresh
                 fetchTemplate()
                 applyVisibility()
@@ -374,7 +387,8 @@ class CarAppConnection(
     }
 
     private fun onAppDied() {
-        if (status == Status.IDLE) return
+        // FAILED: this death was handled already (the death recipient and the disconnect both report one crash).
+        if (status == Status.IDLE || status == Status.FAILED) return
         Log.w(TAG, "${info.packageName} died or unbound")
         // It won't send navigationEnded any more: don't leave its trip on the dashboard and cluster.
         if (navigating) { navigating = false; trip = null; env.navigationEnded(this) }
@@ -384,8 +398,15 @@ class CarAppConnection(
         unbind()
         status = Status.FAILED
         error = context.getString(R.string.carapp_error_stopped, info.label)
-        // Reconnect while it's on screen, a few times: apps get killed and restarted by the OS.
+        // Reconnect while it's on screen, a few times: apps get killed and restarted by the OS. The count
+        // starts afresh only after a while up: an app that crashes right after it starts (Blitzer.de with
+        // the phone's location off) would otherwise come back forever.
+        // Never up since the last crash: no time up at all.
+        retries = retriesAfterCrash(retries, if (readyAt == 0L) 0L else android.os.SystemClock.elapsedRealtime() - readyAt)
+        readyAt = 0L
         if (visible && retries++ < 3) main.postDelayed({ if (visible && status == Status.FAILED) connect() }, 1_000L * retries)
+        // Given up: say so, so the driver knows the app is the trouble, not the car screen.
+        else if (visible) error = context.getString(R.string.carapp_error_stopped_repeatedly, info.label)
     }
 
     private fun fail(message: String) {
@@ -424,16 +445,18 @@ class CarAppConnection(
      * and delivered on the main thread; failures are logged and, during the handshake, end the
      * connection with an explanation.
      */
-    private fun call(name: String, onSuccess: ((Any?) -> Unit)? = null, block: (IOnDoneCallback) -> Unit) {
+    private fun call(name: String, onSuccess: ((Any?) -> Unit)? = null, answered: java.util.concurrent.CountDownLatch? = null, block: (IOnDoneCallback) -> Unit) {
         val cb = object : IOnDoneCallback.Stub() {
         override fun getInterfaceVersion(): Int = IOnDoneCallback.VERSION
 
             override fun onSuccess(response: Bundleable?) {
+                answered?.countDown()
                 val value = runCatching { response?.get() }.getOrElse { e -> main.post { onFailure(name, e.toString()) }; return }
                 main.post { onSuccess?.invoke(value) }
             }
 
             override fun onFailure(response: Bundleable) {
+                answered?.countDown()
                 val msg = runCatching { (response.get() as FailureResponse).stackTrace }.getOrDefault("unknown error")
                 main.post { onFailure(name, msg) }
             }
@@ -441,6 +464,7 @@ class CarAppConnection(
         try {
             block(cb)
         } catch (e: Exception) {
+            answered?.countDown()
             onFailure(name, e.toString())
         }
     }
@@ -700,6 +724,8 @@ class CarAppConnection(
         private const val TAG = "AareCarApp"
         /** How long an app may take from bind to its first answers before it counts as not starting. */
         private const val CONNECT_TIMEOUT_MS = 10_000L
+        /** How long a map surface waits for its app to let go of it before it goes anyway. */
+        private const val SURFACE_RELEASE_WAIT_MS = 500L
         /** Microphone chunks queued for an app that reads slowly: about a second of 20 ms chunks. */
         private const val MIC_QUEUE_CHUNKS = 50
 
@@ -712,3 +738,9 @@ class CarAppConnection(
         }
     }
 }
+
+/** How long an app must have been up for a crash to start the reconnect count afresh. */
+internal const val STABLE_MS = 60_000L
+
+/** The reconnects already used before this crash: none once it ran [STABLE_MS] since it came up. */
+internal fun retriesAfterCrash(retries: Int, upMs: Long) = if (upMs >= STABLE_MS) 0 else retries

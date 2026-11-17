@@ -10,7 +10,9 @@ package net.prototux.aare.host.templates
  * Almost every opaque pixel must be both light (luminance) and unsaturated (chroma): a logo with
  * one accent colour on a mostly-white glyph still counts as coloured and is left alone. A bitmap
  * with too few opaque pixels (mostly transparent, or just noise) is never called a glyph either,
- * so a tiny or empty icon doesn't get tinted on a guess.
+ * so a tiny or empty icon doesn't get tinted on a guess. Nor is one that fills nearly its whole
+ * box: a glyph leaves clear space around its shape, a white tile or a bright photo doesn't, and
+ * tinting those would turn them into a solid block of the content colour.
  */
 internal fun looksLikeMonochromeGlyph(
     pixels: IntArray,
@@ -19,6 +21,7 @@ internal fun looksLikeMonochromeGlyph(
     maxChroma: Float = 0.1f,
     minLightFraction: Float = 0.9f,
     minOpaquePixels: Int = 16,
+    maxOpaqueFraction: Float = 0.85f,
 ): Boolean {
     var opaque = 0
     var lightAndUnsaturated = 0
@@ -33,6 +36,6 @@ internal fun looksLikeMonochromeGlyph(
         val chroma = maxOf(r, g, b) - minOf(r, g, b)
         if (luminance > minLuminance && chroma < maxChroma) lightAndUnsaturated++
     }
-    if (opaque < minOpaquePixels) return false
+    if (opaque < minOpaquePixels || opaque >= pixels.size * maxOpaqueFraction) return false
     return lightAndUnsaturated >= opaque * minLightFraction
 }

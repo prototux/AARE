@@ -19,7 +19,7 @@ class MonochromeGlyphTest {
 
     @Test
     fun aNearWhiteGlyphStillCounts() {
-        val pixels = IntArray(32) { nearWhite }
+        val pixels = IntArray(64) { if (it % 2 == 0) nearWhite else transparent }
         assertTrue(looksLikeMonochromeGlyph(pixels))
     }
 
@@ -50,7 +50,7 @@ class MonochromeGlyphTest {
     @Test
     fun aMostlyWhiteGlyphWithAFewColouredAccentPixelsStillCounts() {
         val red = argb(255, 220, 20, 20)
-        val pixels = IntArray(100) { if (it < 5) red else white }
+        val pixels = IntArray(100) { if (it < 5) red else if (it < 50) white else transparent }
         assertTrue(looksLikeMonochromeGlyph(pixels))
     }
 
@@ -59,5 +59,11 @@ class MonochromeGlyphTest {
         val red = argb(255, 220, 20, 20)
         val pixels = IntArray(100) { if (it < 50) red else white }
         assertFalse(looksLikeMonochromeGlyph(pixels))
+    }
+
+    @Test
+    fun aWhiteTileFillingItsBoxIsNotAGlyph() {
+        assertFalse(looksLikeMonochromeGlyph(IntArray(100) { white }))
+        assertFalse(looksLikeMonochromeGlyph(IntArray(100) { if (it < 90) white else transparent }))
     }
 }
