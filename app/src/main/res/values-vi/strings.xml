@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Đã sẵn sàng. Chỉ phương tiện: không có giọng điều hướng, một số ứng dụng không hỗ trợ, và điện thoại vẫn tiếp tục phát.</string>
     <string name="audio_playback_not_ready">Hoạt động ở mọi nơi, nhưng có hạn chế: chỉ phương tiện, không có giọng điều hướng. Android sẽ hỏi quyền ghi màn hình: chọn Toàn bộ màn hình (cũng được dùng cho màn hình điện thoại).</string>
     <string name="audio_notice_setup_hint">Mở AARE trên điện thoại và thiết lập âm thanh xe hơi để nghe điện thoại trên xe</string>
+    <string name="audio_section_car_mic">Micrô của xe</string>
+    <string name="audio_toggle_car_mic_title">Micrô của xe cho ứng dụng điện thoại</string>
+    <string name="audio_toggle_car_mic_subtitle">Khi kết nối với xe có micrô, tính năng nhập bằng giọng nói, ứng dụng ghi âm và tin nhắn thoại trên điện thoại sẽ nghe từ xe thay vì điện thoại. Cuộc gọi vẫn dùng micrô riêng. Cần Shizuku.</string>
+    <string name="audio_car_mic_ready">Đã sẵn sàng: bật hoặc tắt có hiệu lực ngay, kể cả khi đang kết nối.</string>
+    <string name="audio_car_mic_needs_android10">Cần Android 10 hoặc mới hơn.</string>
+    <string name="audio_car_mic_needs_shizuku">Cần Shizuku đang chạy và đã cấp quyền cho AARE (xem phương thức Shizuku ở trên).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Màn hình điện thoại</string>

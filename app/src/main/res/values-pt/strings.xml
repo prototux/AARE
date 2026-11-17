@@ -213,6 +213,12 @@
     <string name="audio_playback_ready">Pronto. Apenas multimédia: sem voz de navegação, algumas aplicações optam por não participar, e o telemóvel continua também a reproduzir.</string>
     <string name="audio_playback_not_ready">Funciona em qualquer lado, com limitações: apenas multimédia, sem voz de navegação. O Android pede para capturar o ecrã: escolha Ecrã inteiro (também utilizado pelo ecrã do telemóvel).</string>
     <string name="audio_notice_setup_hint">Abra a AARE no telemóvel e configure o áudio do carro para ouvir o telemóvel no carro</string>
+    <string name="audio_section_car_mic">Microfone do carro</string>
+    <string name="audio_toggle_car_mic_title">Microfone do carro para as apps do telemóvel</string>
+    <string name="audio_toggle_car_mic_subtitle">Ligado a um carro com microfone, a escrita por voz, os gravadores de voz e as mensagens de voz do telemóvel ouvem o carro em vez do telemóvel. As chamadas mantêm o seu próprio microfone. Requer Shizuku.</string>
+    <string name="audio_car_mic_ready">Pronto: ativar ou desativar aplica-se de imediato, mesmo com ligação ativa.</string>
+    <string name="audio_car_mic_needs_android10">Requer Android 10 ou mais recente.</string>
+    <string name="audio_car_mic_needs_shizuku">Requer o Shizuku, em execução e permitido para o AARE (veja o método Shizuku acima).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Ecrã do telemóvel</string>
