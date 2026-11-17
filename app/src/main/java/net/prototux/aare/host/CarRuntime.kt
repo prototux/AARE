@@ -56,6 +56,7 @@ import net.prototux.aare.ui.car.CarCall
 import net.prototux.aare.ui.car.CarLayout
 import net.prototux.aare.ui.car.CarNotice
 import net.prototux.aare.ui.car.CarScreen
+import net.prototux.aare.ui.car.isNavigation
 import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
@@ -478,8 +479,9 @@ class CarRuntime(
         // Restore the last navigation and media apps, so the dashboard isn't empty. Not a navigation app that
         // finished itself: its map card would stay blank instead of offering the picker.
         if (ui.activeNavAppId == null) {
-            val nav = entries.filter { it.kind == CarAppKind.NAVIGATION && it.id !in finished }
-            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull())?.id
+            val nav = entries.filter { it.isNavigation && it.id !in finished }
+            // Google Maps only when last used: not started unasked on a helper display at each connection.
+            ui.activeNavAppId = (nav.firstOrNull { it.packageName == settings.lastNavApp } ?: nav.singleOrNull { it.kind == CarAppKind.NAVIGATION })?.id
         }
         if (ui.activeMediaAppId == null) {
             ui.activeMediaAppId = entries.firstOrNull { it.kind == CarAppKind.MEDIA && it.packageName == settings.lastMediaApp }?.id
@@ -507,6 +509,12 @@ class CarRuntime(
 
     /** Navigates to [place] in the car's navigation app (geo: query), or false without one. */
     fun navigateTo(place: String): Boolean {
+        // Google Maps in the map card: opened full screen, and the address follows once it runs.
+        ui.app(ui.activeNavAppId)?.takeIf { it.kind == CarAppKind.STANDALONE }?.let { maps ->
+            ui.navigationRequest = maps.packageName to phoneNavigationUri(maps.packageName, place)
+            actions.openApp(maps)
+            return true
+        }
         val nav = ui.app(ui.activeNavAppId) ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION } ?: return false
         val conn = connection(nav.id) ?: return false
         conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse("geo:0,0?q=" + android.net.Uri.encode(navigationQuery(place)))))
@@ -575,7 +583,9 @@ class CarRuntime(
     private fun shownConnection(id: String): CarAppConnection? = if (id in finished) connections[id] else connection(id)
 
     private fun navConnection(): CarAppConnection? {
-        val id = ui.activeNavAppId ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }?.id ?: return null
+        // A car navigation app: Google Maps in the map card can't take a car app's navigation intent.
+        val id = ui.app(ui.activeNavAppId)?.takeIf { it.kind == CarAppKind.NAVIGATION }?.id
+            ?: ui.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }?.id ?: return null
         ui.activeNavAppId = id
         return connection(id)
     }
@@ -660,13 +670,14 @@ class CarRuntime(
 
         /** Gets [app] ready to show (connected, or chosen as the active nav or media app) and makes it the most recent. */
         private fun start(app: CarAppEntry) {
-            when (app.kind) {
-                CarAppKind.MEDIA -> {
+            when {
+                app.kind == CarAppKind.MEDIA -> {
                     ui.activeMediaAppId = app.id
                     settings.lastMediaApp = app.packageName
                     media.apps.value.firstOrNull { it.packageName == app.packageName }?.let { media.select(it) }
                 }
-                CarAppKind.NAVIGATION -> {
+                // Google Maps hosted on the phone too: the map card shows it from then on.
+                app.isNavigation -> {
                     ui.activeNavAppId = app.id
                     settings.lastNavApp = app.packageName
                     connection(app.id)?.connect()
@@ -802,7 +813,11 @@ class CarRuntime(
                             else -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod) }
                         }
                     },
-                    navMap = { app, mod -> shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) } },
+                    navMap = { app, mod ->
+                        // A phone navigation app (Google Maps) on a display of the card's own; not while it shows full screen too.
+                        if (app.kind == CarAppKind.STANDALONE) { if (!ui.screen.shows(app.id)) StandaloneAppScreen(this, false, app.packageName, mod, card = true) }
+                        else shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) }
+                    },
                     overlay = { mod ->
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }

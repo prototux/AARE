@@ -97,6 +97,29 @@ class LaunchHostService : ILaunchHost.Stub {
         ev.recycle()
     }
 
+    override fun touches(downTime: Long, eventTime: Long, action: Int, xy: FloatArray, ids: IntArray) {
+        val props = Array(ids.size) { i -> MotionEvent.PointerProperties().apply { id = ids[i]; toolType = MotionEvent.TOOL_TYPE_FINGER } }
+        val coords = Array(ids.size) { i -> MotionEvent.PointerCoords().apply { x = xy[2 * i]; y = xy[2 * i + 1]; pressure = 1f; size = 1f } }
+        val ev = MotionEvent.obtain(downTime, eventTime, action, ids.size, props, coords, 0, 0, 1f, 1f, 0, 0, SOURCE_TOUCHSCREEN, 0)
+        setDisplayId(ev, displayId)
+        inject(ev)
+        ev.recycle()
+    }
+
+    override fun openLink(url: String, packageName: String): Boolean {
+        val id = displayId
+        if (id < 0) return false
+        val ctx = callerContext() ?: return false
+        // From here, not through AARE: with the car's screen only on a display of its own, AARE counts as in the
+        // background, and Android blocks the start it asks for.
+        val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).setPackage(packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            // Afresh, the app shows only what the link opens: Google Maps ignores a new destination while it guides.
+            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle()
+        return startAsCaller(ctx, packageName, id, intent, opts) ?: runCatching { ctx.startActivity(intent, opts); true }
+            .onFailure { Log.w(TAG, "openLink($packageName) failed: ${it.message}") }.getOrDefault(false)
+    }
+
     override fun key(eventTime: Long, action: Int, keyCode: Int) {
         val ev = KeyEvent(eventTime, eventTime, action, keyCode, 0, 0, -1, 0, 0, SOURCE_KEYBOARD)
         setDisplayId(ev, displayId)

@@ -601,12 +601,13 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
     val nav = state.app(state.activeNavAppId)
     val guidance = state.phoneGuidance
     Card(modifier) {
-        if (guidance != null) {
+        // Google Maps in the card shows its own guidance: the card stays, its helper display too.
+        if (guidance != null && guidance.packageName != nav?.packageName) {
             GuidanceCard(guidance)
         } else if (nav != null) {
             navMap(nav, Modifier.fillMaxSize())
         } else {
-            val navApps = state.apps.filter { it.kind == CarAppKind.NAVIGATION }
+            val navApps = state.apps.filter { it.isNavigation }
             Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(16.dp))

@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.mirror.KNOWN_NAVIGATION
 import android.graphics.Bitmap
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -27,6 +28,10 @@ class CarAppEntry(
     val icon: Bitmap?,
     val kind: CarAppKind,
 )
+
+/** Whether [this] can fill the map card: a car navigation app, or a phone navigation app (Google Maps) hosted on its own display. */
+val CarAppEntry.isNavigation: Boolean
+    get() = kind == CarAppKind.NAVIGATION || (kind == CarAppKind.STANDALONE && packageName in KNOWN_NAVIGATION)
 
 @Stable
 class NowPlaying(
@@ -128,6 +133,8 @@ class CarUiState {
     var night by mutableStateOf(true)
     var screen by mutableStateOf<CarScreen>(CarScreen.Dashboard)
     val apps = mutableStateListOf<CarAppEntry>()
+    /** A navigation for a phone app on the car screen: its package and the address to open there, until it does. */
+    var navigationRequest by mutableStateOf<Pair<String, String>?>(null)
     var nowPlaying by mutableStateOf<NowPlaying?>(null)
     /** The navigation app whose map is shown on the dashboard. */
     var activeNavAppId by mutableStateOf<String?>(null)

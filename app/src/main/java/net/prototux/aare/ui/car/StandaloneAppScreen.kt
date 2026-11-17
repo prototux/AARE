@@ -30,6 +30,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.host.CarRuntime
@@ -46,10 +49,11 @@ import net.prototux.aare.media.Placeholder
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier, backId: String = CarRuntime.standaloneId(packageName)) {
+internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier, backId: String = CarRuntime.standaloneId(packageName), card: Boolean = false) {
     val context = LocalContext.current
-    // A helper per app: a hosted app and a media app's video each keep their own display.
-    val launcher = remember(packageName) { AppLauncher(context, "launch-$packageName") }
+    // A helper per app: a hosted app and a media app's video each keep their own display. The map card
+    // has one of its own, laid out as on a tablet so the map keeps most of the small card.
+    val launcher = remember(packageName) { AppLauncher(context, (if (card) "card-" else "launch-") + packageName) }
     var started by remember(packageName) { mutableStateOf(false) }
 
     DisposableEffect(packageName) {
@@ -63,13 +67,24 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
         runtime.setScreenBack(backId, back)
         onDispose {
             runtime.clearScreenBack(backId, back)
+            // A navigation it never got to (left before the app was up) isn't started when it is opened later by hand.
+            // Not by the map card: leaving it is how the request reaches the app full screen.
+            if (!card && runtime.ui.navigationRequest?.first == packageName) runtime.ui.navigationRequest = null
             launcher.release()
         }
     }
 
     Box(modifier.background(Color.Black)) {
         if (!driving) {
-            HostedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize()) { started = it }
+            HostedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(), tablet = card) { started = it }
+            // A navigation asked for in this app (an event on the calendar card, say): its address, opened once it runs.
+            // Not by the map card: the request opens the app full screen, which takes the card, and the address, away.
+            LaunchedEffect(started, runtime.ui.navigationRequest) {
+                val request = runtime.ui.navigationRequest?.takeIf { started && !card && it.first == packageName } ?: return@LaunchedEffect
+                // Cleared only once done: the request is this effect's key, and clearing it cancels the effect.
+                try { withContext(Dispatchers.IO) { launcher.openLink(request.second, packageName) } }
+                finally { if (runtime.ui.navigationRequest == request) runtime.ui.navigationRequest = null }
+            }
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
             Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
@@ -97,7 +112,8 @@ internal fun HostedAppSurface(launcher: AppLauncher, packageName: String, dpi: I
                             val surface = Surface(st)
                             // connect() blocks (binds Shizuku / spawns su), so do it off the main thread.
                             Thread {
-                                if (launcher.connected) launcher.resize(surface, w, h, dpiFor(w, h))
+                                // Already running (the kept assistant): only moved onto this surface.
+                                if (launcher.connected) { launcher.resize(surface, w, h, dpiFor(w, h)); onStarted(true) }
                                 else if (launcher.connect()) onStarted(launcher.start(surface, w, h, dpiFor(w, h), packageName, Settings(ctx).standaloneKeepScreenAwake) >= 0)
                             }.apply { isDaemon = true }.start()
                         }
@@ -111,26 +127,54 @@ internal fun HostedAppSurface(launcher: AppLauncher, packageName: String, dpi: I
             },
             modifier = Modifier.fillMaxSize(),
         )
-        // Forward the car's touches to the launched app's display (single pointer for now).
+        // Forward the car's touches to the launched app's display, every finger: two pinch to zoom a map.
         Box(Modifier.fillMaxSize().pointerInput(packageName) {
-            awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                val t0 = down.uptimeMillis
-                launcher.touch(t0, t0, MotionEvent.ACTION_DOWN, down.position.x, down.position.y, 0)
-                down.consume()
+            awaitPointerEventScope {
+                var fingers = emptyList<Finger>()
+                var downTime = 0L
+                val ids = HashMap<androidx.compose.ui.input.pointer.PointerId, Int>()
                 while (true) {
-                    val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                    if (change.pressed) {
-                        launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_MOVE, change.position.x, change.position.y, 0)
-                    } else {
-                        launcher.touch(t0, change.uptimeMillis, MotionEvent.ACTION_UP, change.position.x, change.position.y, 0)
-                        change.consume()
-                        break
-                    }
-                    change.consume()
+                    val event = awaitPointerEvent()
+                    val pressed = event.changes.filter { it.pressed }
+                    ids.keys.retainAll(pressed.mapTo(HashSet()) { it.id })
+                    // A new finger gets an id no finger had a moment ago: one lifting just now still counts as down until its UP.
+                    val now = pressed.map { c -> Finger(ids.getOrPut(c.id) { (0..ids.size + fingers.size).first { id -> id !in ids.values && fingers.none { it.id == id } } }, c.position.x, c.position.y) }
+                    val t = event.changes.maxOf { it.uptimeMillis }
+                    if (fingers.isEmpty() && now.isNotEmpty()) downTime = t
+                    touchEvents(fingers, now).forEach { launcher.touches(downTime, t, it) }
+                    fingers = now
+                    event.changes.forEach { it.consume() }
                 }
             }
         })
+    }
+}
+
+/** A finger on the car screen: its pointer [id] (0 for the first) and where it is. */
+data class Finger(val id: Int, val x: Float, val y: Float)
+
+/** A touch event for an app's display: its MotionEvent [action] and every finger down then, in order. */
+data class Touch(val action: Int, val fingers: List<Finger>)
+
+/**
+ * The touch events from the fingers [before] to those [after], as Android expects them: every event
+ * names exactly the fingers Android counts as down then, in one order. First a MOVE if one moved
+ * (lifted ones too, still down until their UP), then fingers lifted (a POINTER_UP, the last an UP),
+ * then new fingers (the first a DOWN, any more a POINTER_DOWN). Android drops an event naming other
+ * fingers, and from then on every event, until the app took no touch at all any more.
+ */
+internal fun touchEvents(before: List<Finger>, after: List<Finger>): List<Touch> = buildList {
+    fun pointer(action: Int, index: Int) = action or (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT)
+    // Those Android counts as down, where they are now (a lifted one where it was last).
+    var held = before.map { b -> after.firstOrNull { it.id == b.id } ?: b }
+    if (held != before) add(Touch(MotionEvent.ACTION_MOVE, held))
+    for (f in held.filter { h -> after.none { it.id == h.id } }) {
+        add(Touch(if (held.size == 1) MotionEvent.ACTION_UP else pointer(MotionEvent.ACTION_POINTER_UP, held.indexOf(f)), held))
+        held = held - f
+    }
+    for (f in after.filter { n -> before.none { it.id == n.id } }) {
+        held = held + f
+        add(Touch(if (held.size == 1) MotionEvent.ACTION_DOWN else pointer(MotionEvent.ACTION_POINTER_DOWN, held.size - 1), held))
     }
 }
 

@@ -19,7 +19,7 @@ interface ILaunchHost {
     void resize(in Surface surface, int width, int height, int dpi) = 2;
 
     /** Inject a touch (MotionEvent) at car-screen coordinates into the launched app's display. */
-    void touch(long downTime, long eventTime, int action, float x, float y, int pointerId) = 3;
+    oneway void touch(long downTime, long eventTime, int action, float x, float y, int pointerId) = 3;
 
     /** Inject a key (e.g. Back) into the launched app's display. */
     void key(long eventTime, int action, int keyCode) = 4;
@@ -48,6 +48,12 @@ interface ILaunchHost {
 
     /** Whether an app still shows on the display [start] made: Back on its first screen closes it. */
     boolean hasApp() = 19;
+
+    /** Open [url] in [packageName] on that display, afresh (its task cleared), started by this helper (which may start activities from the background). */
+    boolean openLink(String url, String packageName) = 12;
+
+    /** Fingers on the launched app's display at once (pinch to zoom): [xy] their x, y in turn, [ids] their pointer ids, in that order. */
+    oneway void touches(long downTime, long eventTime, int action, in float[] xy, in int[] ids) = 18;
 
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
