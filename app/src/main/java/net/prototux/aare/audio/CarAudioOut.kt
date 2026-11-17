@@ -4,6 +4,7 @@ import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
+import net.prototux.aare.DiagLog
 import net.prototux.aare.aap.channels.AudioChannel
 import kotlin.math.abs
 
@@ -14,8 +15,8 @@ import kotlin.math.abs
  * The car's stream is opened when sound starts and closed after a few seconds of silence, so the
  * head unit can go back to its own sources, like the official app does. [Focus] asks the car for
  * the right audio focus around it: full focus for media, a transient ducking one for guidance.
- * The stream starts once the car grants focus; the sound captured meanwhile (up to [MAX_QUEUED]
- * chunks) is kept and sent first, so a navigation prompt doesn't lose its first words.
+ * The stream starts once the car grants focus; the sound captured meanwhile (up to [MAX_QUEUED_MS]
+ * of it) is kept and sent first, so a navigation prompt doesn't lose its first words.
  */
 class CarAudioOut(
     private val source: PcmSource,
@@ -32,7 +33,14 @@ class CarAudioOut(
 
     @Volatile private var running = false
     private var thread: Thread? = null
-    private val baseBacklog = if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) MAX_QUEUED else LIVE_BACKLOG
+    /** Length of one message's audio, in ms (Android Auto's chunk size, see [chunkBytes]). */
+    private val chunkMs: Double = channel.config?.let { 1000.0 * chunkBytes(it.samplingRate, it.numberOfChannels) / (2 * it.numberOfChannels) / it.samplingRate } ?: 20.0
+    /** How many chunks hold [ms] of audio (at least one). */
+    private fun chunksFor(ms: Int) = maxOf(1, Math.ceil(ms / chunkMs).toInt())
+    private val queueLimit = chunksFor(MAX_QUEUED_MS)
+    private val primeChunks = chunksFor(PRIME_MS)
+    private val underflowBacklog = chunksFor(UNDERFLOW_BACKLOG_MS)
+    private val baseBacklog = if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) queueLimit else chunksFor(LIVE_BACKLOG_MS)
     /** Until when (elapsedRealtime) to keep the larger backlog after the car reported an underflow. */
     @Volatile private var underflowUntil = 0L
     /** Whether we're actually feeding the car sound right now (read from [onUnderflow], written by the capture thread). */
@@ -44,7 +52,7 @@ class CarAudioOut(
      * after an underflow, bigger, so a slow patch of acks doesn't turn into more gaps.
      */
     private val maxBacklog: Int
-        get() = if (SystemClock.elapsedRealtime() < underflowUntil) maxOf(baseBacklog, UNDERFLOW_BACKLOG) else baseBacklog
+        get() = if (SystemClock.elapsedRealtime() < underflowUntil) maxOf(baseBacklog, underflowBacklog) else baseBacklog
 
     /** The car ran out of sound on this stream: trim less for [UNDERFLOW_HOLD_MS]. */
     fun onUnderflow() {
@@ -55,7 +63,8 @@ class CarAudioOut(
         // Some head units report one at every stream end: log only the first of a burst.
         val quiet = now < underflowUntil
         underflowUntil = now + UNDERFLOW_HOLD_MS
-        if (!quiet) Log.i(TAG,"car audio underflow on ${channel.streamType} (${channel.underflows} so far), keeping up to $UNDERFLOW_BACKLOG chunks")
+        if (!quiet) DiagLog.add("car audio ($label): the car ran out of sound ${(now - startedAtMs) / 1000.0} s into the stream")
+        if (!quiet) Log.i(TAG,"car audio underflow on ${channel.streamType} (${channel.underflows} so far), keeping up to $underflowBacklog chunks")
     }
 
     fun start() {
@@ -74,20 +83,25 @@ class CarAudioOut(
             if (wanted) onFailed()
             return
         }
-        // ~20 ms chunks: small enough for low latency, big enough to keep the message rate sane.
-        val chunk = rate / 50 * channels * 2
+        // Android Auto's chunk size (see [chunkBytes]): head units may be tuned to exactly that.
+        val chunk = chunkBytes(rate, channels)
         val buf = ByteArray(10 + chunk)
         var lastSound = 0L
         playing = false
         var frames = 0L
+        // Timestamps on the video's clock (the encoder stamps System.nanoTime), as Android Auto does,
+        // rather than starting at 0 µs.
+        val clockStartUs = System.nanoTime() / 1_000
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
         // The source ended by itself (its service or the audio server died), not by stop(): the
         // next capture method takes over, rather than the car going silent for the rest of the drive.
         var died = false
+        // Build up a lead before feeding the car (again): see PRIME_MS.
+        var priming = true
         fun queue(ts: Long) {
             queued.addLast(buf.copyOf() to ts)
-            while (queued.size > MAX_QUEUED) queued.removeFirst()
+            while (queued.size > queueLimit) queued.removeFirst()
         }
         try {
             while (running) {
@@ -99,14 +113,17 @@ class CarAudioOut(
                     got += n
                 }
                 if (got < chunk) continue
+                noteAckMode()
                 val now = SystemClock.elapsedRealtime()
                 if (!isSilent(buf, 10, chunk)) lastSound = now
-                val ts = frames * 1_000_000L / rate
+                val ts = clockStartUs + frames * 1_000_000L / rate
                 frames += chunk / (2 * channels)
                 if (!playing && lastSound == now) {
                     focus.request(true)
                     playing = true
                 } else if (playing && now - lastSound > SILENCE_MS) {
+                    noteDropped()
+                    noteStream(now)
                     channel.stopPlayback()
                     focus.request(false)
                     playing = false
@@ -119,13 +136,30 @@ class CarAudioOut(
                     if (!focus.granted) { queue(ts); continue }
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
+                    startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
                     // not a raised one left over from the last stream's underflow.
                     while (queued.size > baseBacklog) queued.removeFirst()
+                    priming = true
                 } else if (!focus.granted) {
-                    // Focus lost mid-stream: drop, stale sound later would be worse.
+                    // Focus lost mid-stream (the Ford answers a nav prompt's request with LOSS):
+                    // close the stream rather than leave it open and empty. The Ford keeps mixing
+                    // a starved media stream under the prompt, and the prompt crackles. When focus
+                    // returns, the branch above opens a new stream with a fresh lead.
+                    focusDropped += 1 + queued.size
+                    noteStream(now)
+                    channel.stopPlayback()
+                    stoppedAtMs = now
                     queued.clear()
+                    continue
+                }
+                if (priming) {
+                    queue(ts)
+                    if (queued.size < primeChunks) continue
+                    priming = false
+                    if (queued.size > maxQueued) maxQueued = queued.size
+                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
                     continue
                 }
                 if (queued.isEmpty() && channel.hasRoom) {
@@ -135,6 +169,7 @@ class CarAudioOut(
                 }
                 // Catching up: send the backlog in order, as fast as the car's ack window allows.
                 queue(ts)
+                if (queued.size > maxQueued) maxQueued = queued.size
                 while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
                 // through sendPcm so dropped chunks still count towards ack-less detection.
@@ -143,12 +178,45 @@ class CarAudioOut(
         } catch (e: Exception) {
             Log.w(TAG, "audio capture stopped", e)
         } finally {
-            if (playing) { runCatching { channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
+            if (playing) { runCatching { noteStream(SystemClock.elapsedRealtime()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
             playing = false
             queued.clear()
             source.release()
             if (died) onFailed()
         }
+    }
+
+    @Volatile private var startedAtMs = 0L
+    private var maxQueued = 0
+    private var focusDropped = 0
+    private var underflowsAtStart = 0
+
+    /** One connection-log line per stream: how the car kept up with it. */
+    private fun noteStream(now: Long) {
+        if (!channel.started) return
+        DiagLog.add("car audio ($label): stream ${(now - startedAtMs) / 1000.0} s, sent ${channel.streamSent}, " +
+            "${channel.streamAcks} acks, window ${channel.maxUnacked}, longest ack wait ${channel.maxAckGapMs} ms, " +
+            "backlog max $maxQueued, car underflows ${channel.underflows - underflowsAtStart}" +
+            if (focusDropped > 0) ", $focusDropped chunks muted (no focus)" else "")
+    }
+
+    private var lastAckless = false
+    private var droppedLogged = 0L
+    private val label get() = channel.streamType.name.removePrefix("AUDIO_STREAM_").lowercase()
+
+    /** Connection-log line when the stream stops or resumes waiting for the car's acks. */
+    private fun noteAckMode() {
+        val now = channel.ackless
+        if (now == lastAckless) return
+        lastAckless = now
+        DiagLog.add("car audio ($label): " + if (now) "no acks from the car, sending unpaced" else "acks back, paced by the car again")
+    }
+
+    /** Connection-log line with the chunks dropped (car's window full) during the stream that just ended. */
+    private fun noteDropped() {
+        val d = channel.droppedChunks - droppedLogged
+        droppedLogged = channel.droppedChunks
+        if (d > 0) DiagLog.add("car audio ($label): $d chunks dropped (car's window full)")
     }
 
     fun stop() {
@@ -160,15 +228,31 @@ class CarAudioOut(
     companion object {
         private const val TAG = "AareAudioOut"
         private const val SILENCE_MS = 3_000L
-        /** About 1 s of 20 ms chunks kept while waiting for the car's focus grant. */
-        private const val MAX_QUEUED = 50
-        /** Backlog kept once media plays (~240 ms). */
-        private const val LIVE_BACKLOG = 12
-        /** Backlog after an underflow (~500 ms): more latency, fewer gaps. Bounded by [MAX_QUEUED]. */
-        private const val UNDERFLOW_BACKLOG = 25
+        /** Sound kept while waiting for the car's focus grant. */
+        private const val MAX_QUEUED_MS = 1_000
+        /** Backlog kept once media plays. */
+        private const val LIVE_BACKLOG_MS = 240
+        /**
+         * Sound sent ahead in one burst whenever we start (or resume) feeding the car.
+         * The capture delivers unevenly (gaps of 50-130 ms where 20 ms was due), and a head unit
+         * that doesn't pace us (the Ford's window is 4096) plays what it gets at once: with nothing
+         * ahead, every late chunk is a gap, heard as crackle. Before, the only lead was whatever
+         * piled up waiting for focus: ~240 ms for music at its start, next to nothing for prompts
+         * (the Ford answers at once) or for music after one.
+         */
+        private const val PRIME_MS = 200
+        /** Backlog after an underflow: more latency, fewer gaps. Bounded by [MAX_QUEUED_MS]. */
+        private const val UNDERFLOW_BACKLOG_MS = 500
         private const val UNDERFLOW_HOLD_MS = 30_000L
         /** A head unit's end-of-stream underflow lands within this long of us stopping: not a real gap. */
         private const val IGNORE_UNDERFLOW_AFTER_STOP_MS = 1_000L
+
+        /**
+         * Bytes per audio message, as Android Auto sends them: 2048 samples at 44.1 or 48 kHz, 1024
+         * otherwise (gearhead's CarAudioConfiguration sizing, via #163). AARE sent 20 ms chunks
+         * (3840 bytes at 48 kHz stereo, 640 for 16 kHz prompts).
+         */
+        fun chunkBytes(rate: Int, channels: Int): Int = (if (rate == 44_100 || rate == 48_000) 2048 else 1024) * channels * 2
 
         /** Digital silence or noise floor (captures deliver zeros when nothing plays). */
         fun isSilent(b: ByteArray, off: Int, len: Int): Boolean {

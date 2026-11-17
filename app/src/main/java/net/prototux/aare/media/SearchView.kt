@@ -96,8 +96,8 @@ private fun Key(
     val bg = if (primary && enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (primary && enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Box(
-        modifier.fillMaxHeight().clip(RoundedCornerShape(16.dp)).background(bg)
-            .carFocusHighlight(RoundedCornerShape(16.dp)).clickable(enabled = enabled, onClick = onClick),
+        modifier.fillMaxHeight().clip(MaterialTheme.shapes.small).background(bg)
+            .carFocusHighlight(MaterialTheme.shapes.small).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

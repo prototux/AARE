@@ -85,8 +85,8 @@ private fun TabChip(tab: Tab, selected: Boolean, onClick: () -> Unit) {
     val bg = if (selected) scheme.secondaryContainer else Color.Transparent
     val fg = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
     Row(
-        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(bg)
-            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick)
+        Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(bg)
+            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick)
             .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

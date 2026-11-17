@@ -5,7 +5,8 @@
     <string name="mirror_locked_placeholder">Ecranul telefonului este întrerupt cât timp telefonul este blocat. Deblochează telefonul pentru a-l afișa.</string>
     <string name="mirror_driving_no_accessibility">Ecranul telefonului este întrerupt în timpul condusului. Pentru a afișa aplicațiile de navigație în timpul condusului, activează AARE în setările de accesibilitate ale telefonului: astfel AARE știe ce aplicație este deschisă.</string>
     <string name="mirror_driving_nav_only">Ecranul telefonului este întrerupt în timpul condusului. Afișează doar aplicațiile de navigație.</string>
-    <string name="mirror_need_car_audio">Activează Audio mașină în AARE pe telefon și alege Ecran întreg când Android întreabă: ecranul telefonului folosește aceeași permisiune.</string>
+    <string name="mirror_need_screen_capture">Ecranul telefonului are nevoie de permisiunea de captură a ecranului din Android. Pe telefon, deschide setările Audio mașină ale AARE, apasă pe Permisiunea de captură a ecranului și alege Ecran întreg.</string>
+    <string name="mirror_capture_failed">Android a refuzat să partajeze ecranul telefonului. Pe telefon, apasă din nou pe Permisiunea de captură a ecranului în setările Audio mașină ale AARE și alege Ecran întreg.</string>
     <string name="mirror_need_accessibility">Pentru a folosi telefonul din mașină, activează AARE în setările de accesibilitate ale telefonului.</string>
 
     <!-- common: shared across screens -->
@@ -52,6 +53,8 @@
     <string name="setup_toggle_wireless_subtitle">Se conectează prin Wi-Fi la mașinile asociate când ajung în raza Bluetooth</string>
     <string name="setup_toggle_resume_music_title">Reiau muzica</string>
     <string name="setup_toggle_resume_music_subtitle">Pornește ultima aplicație muzicală redată când se conectează mașina</string>
+    <string name="setup_bt_address_label">Adresa Bluetooth a telefonului (opțional)</string>
+    <string name="setup_bt_address_hint">Unele unități centrale afișează un ecran negru până află ce telefon este conectat. Îl găsești în Setări &gt; Despre telefon &gt; Stare. Lasă necompletat dacă mașina ta funcționează deja.</string>
     <string name="setup_section_location">Locație</string>
     <string name="setup_toggle_car_gps_title">Folosește GPS-ul mașinii</string>
     <string name="setup_toggle_car_gps_subtitle">Cât timp ești conectat, aplicațiile de pe telefon văd poziția mașinii în loc de cea a telefonului, astfel încât aplicațiile de navigație nu le confundă</string>
@@ -83,13 +86,18 @@
     <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
     <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
     <string name="setup_section_dashboard">Tablou de bord</string>
+    <string name="dash_cards_title">Carduri</string>
+    <string name="dash_cards_hint">Primul card primește cel mai mult spațiu; celelalte umplu restul ecranului. Un card fără nimic de arătat își cedează locul următorului.</string>
+    <string name="dash_card_map">Hartă</string>
+    <string name="dash_card_media">Muzică</string>
+    <string name="dash_card_calendar">Următorul eveniment din calendar</string>
+    <string name="dash_card_notification">Ultima notificare</string>
+    <string name="dash_card_weather">Vremea</string>
     <string name="setup_choice_wallpaper">Fundal</string>
     <string name="setup_wallpaper_none">Niciunul</string>
     <string name="setup_wallpaper_photo">Fotografie</string>
     <string name="setup_toggle_weather_title">Vreme</string>
     <string name="setup_toggle_weather_subtitle">Lângă ceas, de la Open-Meteo (primește o poziție aproximativă, de circa 10 km)</string>
-    <string name="setup_toggle_calendar_title">Următorul eveniment din calendar</string>
-    <string name="setup_toggle_calendar_subtitle">Sub muzică, cu o comandă rapidă pentru a naviga spre locul respectiv</string>
     <string name="setup_section_driving">Condus</string>
     <string name="setup_toggle_passenger_title">Mod pasager</string>
     <string name="setup_toggle_passenger_subtitle">Ignoră starea de condus a mașinii: tastarea, listele lungi și ecranul telefonului rămân disponibile în mișcare, pentru un pasager. Șoferul nu trebuie să folosească ecranul în timpul condusului.</string>
@@ -114,8 +122,24 @@
     <string name="setup_section_connection_log">Jurnal de conectare</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nu este afiliat cu Google. Android Auto este o marcă înregistrată a Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
-    <string name="setup_style_android_auto">Android Auto</string>
-    <string name="setup_style_carplay">CarPlay</string>
+    <string name="setup_choice_theme">Temă</string>
+    <string name="setup_choice_layout">Aspect</string>
+    <string name="setup_layout_taskbar">Bară de activități</string>
+    <string name="setup_layout_dock">Dock</string>
+    <string name="setup_layout_classic">Grilă de aplicații</string>
+    <string name="setup_style_custom">Personalizat</string>
+    <string name="theme_high_contrast">Contrast ridicat</string>
+    <string name="theme_night">Noapte</string>
+    <string name="theme_retro">Retro</string>
+    <string name="setup_choice_accent">Culoare de accent</string>
+    <string name="accent_theme">A temei</string>
+    <string name="accent_phone">A telefonului</string>
+    <string name="accent_amber">Chihlimbar</string>
+    <string name="accent_red">Roșu</string>
+    <string name="accent_green">Verde</string>
+    <string name="accent_cyan">Cyan</string>
+    <string name="accent_blue">Albastru</string>
+    <string name="accent_white">Alb</string>
     <string name="setup_switch_dark_bar">Bară întunecată, chiar și cu culori de zi</string>
     <string name="setup_switch_passenger">Mod pasager: fără restricții de condus (șoferul nu trebuie să folosească ecranul)</string>
     <string name="setup_switch_message_notifications">Notificări de mesaje</string>
@@ -145,6 +169,8 @@
     <string name="huserver_toggle_lanonce_subtitle">Mai sigur: rețeaua trebuie permisă din nou pentru fiecare sesiune. Dezactivează această opțiune pentru unitățile centrale care se reconectează automat, precum openauto sau Headunit Revived.</string>
     <string name="huserver_toggle_mirror_title">Ecranul telefonului pe server</string>
     <string name="huserver_toggle_mirror_subtitle">Oferă și "Ecranul telefonului" oricui se conectează aici. Riscant: va vedea ecranul telefonului și va putea apăsa pe el, deci lasă-l dezactivat dacă nu ai încredere în unitatea centrală.</string>
+    <string name="huserver_toggle_localhost_title">Permite localhost (webaa / paath)</string>
+    <string name="huserver_toggle_localhost_subtitle">Acceptă o conexiune de la o aplicație de tip Android Auto în browser pe acest telefon, pentru mașini fără Android Auto (de ex. Tesla). Orice aplicație de pe telefon s-ar putea conecta, deci lasă-l dezactivat dacă nu folosești una.</string>
 
     <!-- msg: messaging settings -->
     <string name="msg_settings_title">Mesaje</string>
@@ -175,6 +201,10 @@
     <string name="audio_no_method">Nicio metodă nu este încă configurată: alege una mai jos.</string>
     <string name="audio_section_methods">Metode, în ordinea recomandării</string>
     <string name="audio_policy_ready">Pregătit. Muzica și vocea de navigație ajung separat în mașină, telefonul rămâne silențios.</string>
+    <string name="audio_method_policy">Direcționarea audio a sistemului (ca Android Auto)</string>
+    <string name="audio_method_shizuku_policy">Shizuku, muzică și navigație separat (ca Android Auto)</string>
+    <string name="audio_method_shizuku">Shizuku sau root</string>
+    <string name="audio_method_playback_capture">Permisiunea de captură a ecranului</string>
     <string name="audio_policy_not_ready">Ca Android Auto: muzica și vocea de navigație separat, difuzorul telefonului dezactivat. Necesită un telefon cu root: instalează AARE ca aplicație de sistem cu modulul Magisk (vezi README).</string>
     <string name="audio_shizuku_ready">Pregătit. Tot ce redă telefonul ajunge în mașină, inclusiv vocea de navigație; telefonul rămâne silențios.</string>
     <string name="audio_shizuku_needs_android12">Necesită Android 12 sau o versiune mai nouă.</string>
@@ -206,6 +236,14 @@
     <string name="notif_channel_connection">Conexiune mașină</string>
     <string name="notif_action_stop">Stop</string>
     <string name="notif_action_trust">Acceptă</string>
+    <string name="notif_action_download_cert">Descarcă certificatul</string>
+    <string name="notif_cert_download_title">Unitatea centrală a refuzat certificatul AARE</string>
+    <string name="notif_cert_download_message">Această unitate centrală acceptă doar un certificat emis de Google. Descarcă-l din cea mai recentă aplicație Android Auto, apoi reconectează-te.</string>
+    <string name="notif_cert_download_progress">Se descarcă certificatul Android Auto…</string>
+    <string name="notif_cert_download_ready_title">Certificat pregătit</string>
+    <string name="notif_cert_download_ready_message">Certificatul Android Auto a fost adăugat. Reconectează-te la unitatea centrală pentru a-l folosi.</string>
+    <string name="notif_cert_download_reconnecting">Certificatul Android Auto a fost adăugat. Se reconectează la unitatea centrală…</string>
+    <string name="notif_cert_download_failed">Certificatul nu a putut fi descărcat: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Se conectează wireless…</string>
     <string name="notif_status_not_connected">Neconectat</string>
     <string name="notif_keeping_consent_suffix">%1$s · se păstrează acordul de captură a ecranului pentru audio mașină (Stop îl eliberează)</string>
@@ -325,6 +363,8 @@
     <string name="standalone_section_warning">Acestea nu sunt aplicații Android Auto: AARE afișează ecranul normal al telefonului, doar la parcare, și necesită root sau Shizuku. Folosește pe propriul risc.</string>
     <string name="standalone_toggle_title">Lansează aplicații de telefon pe ecranul mașinii</string>
     <string name="standalone_toggle_subtitle">Alege aplicațiile de mai jos. Afișate doar la parcare.</string>
+    <string name="standalone_keep_awake_title">Mod fără repaus pentru aplicațiile independente</string>
+    <string name="standalone_keep_awake_subtitle">Menține ecranul fizic al telefonului activ cât timp o aplicație este deschisă. Pe telefoanele Android 17 afectate, afișajele virtuale se opresc atunci când ecranul telefonului este stins. Consumă mai multă baterie.</string>
     <string name="standalone_need_root">Necesită root sau Shizuku. Configurează unul dintre ele în Audio mașină, apoi revino.</string>
     <string name="standalone_not_native">Nu este o aplicație Android Auto · utilizare la parcare</string>
     <string name="standalone_starting">Se pornește…</string>
@@ -335,6 +375,10 @@
     <string name="browser_url_label">Pagina de pornire</string>
     <string name="browser_hint_parked">Browserul este întrerupt în timpul condusului.</string>
     <string name="browser_paused_driving">Browserul este întrerupt în timpul condusului.</string>
+    <string name="browser_forward">Înainte</string>
+    <string name="browser_reload">Reîncarcă</string>
+    <string name="browser_home">Pagina de pornire</string>
+    <string name="browser_address_hint">Caută sau introdu o adresă web</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Date despre mașină</string>
     <string name="setup_page_car_data_subtitle">Viteză, treaptă de viteză și senzori în timp real din mașină</string>
@@ -385,6 +429,14 @@
     <string name="car_data_accelerometer">Accelerometru</string>
     <string name="car_data_gyroscope">Giroscop</string>
     <string name="car_data_dtc">Coduri de eroare</string>
+    <string name="car_data_app_label">Date mașină</string>
+    <string name="car_data_show_in_car_title">Arată pe ecranul mașinii</string>
+    <string name="car_data_show_in_car_subtitle">Adaugă o aplicație de diagnoză în mașină pentru aceste date live</string>
+    <string name="vehicles_section_title">Suprascrieri per vehicul</string>
+    <string name="vehicles_hint">Corectează densitatea sau marginile zonei vizibile pentru o mașină specifică, fără o compilare nouă. Editează vehicles.json cu un administrator de fișiere, identificând mașina după marcă/model/nume.</string>
+    <string name="vehicles_rule_count">Reguli încărcate: %1$d</string>
+    <string name="vehicles_import">Importă fișier…</string>
+    <string name="vehicles_template">Scrie șablon</string>
     <string name="setup_toggle_force_h264_title">Forțează video H.264</string>
     <string name="setup_toggle_force_h264_subtitle">Implicit, AARE folosește cel mai bun codec pe care mașina și telefonul îl au în comun (H.265…). Activează dacă imaginea din mașină are probleme.</string>
     <string name="common_ok">OK</string>

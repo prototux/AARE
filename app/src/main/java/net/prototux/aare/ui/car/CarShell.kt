@@ -54,6 +54,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,11 +78,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.theme.LocalCarTheme
+import net.prototux.aare.ui.theme.SegmentFont
+import net.prototux.aare.ui.theme.appIconFilter
 
 /**
  * Root of the car screen: a rail on the driver's side and the content area.
@@ -100,9 +105,10 @@ fun CarShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    if (state.carPlayStyle) {
-        CarPlayShell(state, actions, appContent, navMap, overlay, modifier)
-        return
+    when (state.layout) {
+        CarLayout.DOCK -> { DockShell(state, actions, appContent, navMap, overlay, modifier); return }
+        CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
+        CarLayout.TASKBAR -> Unit
     }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
@@ -128,13 +134,15 @@ fun CarShell(
     }
 }
 
+/** The screen's content: the dashboard (or, with [launcherHome], the app grid as the home screen), the app grid or an app. */
 @Composable
-private fun ContentArea(
+internal fun ContentArea(
     state: CarUiState,
     actions: CarActions,
     appContent: @Composable (CarAppEntry, Modifier) -> Unit,
     navMap: @Composable (CarAppEntry, Modifier) -> Unit,
     modifier: Modifier,
+    launcherHome: Boolean = false,
 ) {
     val gutter = LocalCarDimens.current.gutter
     // Give rotary / D-pad head units a starting point: focus lands on the first focusable of each
@@ -155,14 +163,18 @@ private fun ContentArea(
         label = "screen",
     ) { screen ->
         when (screen) {
-            CarScreen.Dashboard -> Box(Modifier.fillMaxSize()) {
+            CarScreen.Dashboard -> if (launcherHome) Launcher(state, actions, Modifier.fillMaxSize()) else Box(Modifier.fillMaxSize()) {
                 Wallpaper(state, Modifier.fillMaxSize())
                 Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
             }
             CarScreen.Launcher -> Launcher(state, actions, Modifier.fillMaxSize())
             is CarScreen.App -> {
                 val app = state.app(screen.appId)
-                if (app != null) appContent(app, Modifier.fillMaxSize()) else Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
+                when {
+                    app != null -> appContent(app, Modifier.fillMaxSize())
+                    launcherHome -> Launcher(state, actions, Modifier.fillMaxSize())
+                    else -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
+                }
             }
         }
     }
@@ -239,7 +251,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                 if (state.driverOnRight) { menu(); mic() } else { mic(); menu() }
             } }
             val status: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Clock(); if (!tightBar) WeatherChip(state.weather); PhoneStatusIcons(); NotificationBell(state) { bell() }
+                Clock(); if (!tightBar) WeatherChip(state.weather.takeIf { state.weatherInBar }); PhoneStatusIcons(); NotificationBell(state) { bell() }
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -258,7 +270,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                 Spacer(Modifier.height(6.dp))
                 PhoneStatusIcons()
                 Spacer(Modifier.height(4.dp))
-                WeatherChip(state.weather)
+                WeatherChip(state.weather.takeIf { state.weatherInBar })
             }
             NotificationBell(state) { bell() }
             // The apps are the only weighted child, so they are measured last and are the part that
@@ -290,7 +302,23 @@ internal fun Clock() {
     val text = android.text.format.DateFormat.format(
         if (android.text.format.DateFormat.is24HourFormat(androidx.compose.ui.platform.LocalContext.current)) "H:mm" else "h:mm", now,
     ).toString()
-    Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+    if (LocalCarTheme.current.segmentClock) SegmentClock(text)
+    else Text(text, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+}
+
+/**
+ * The time on a seven-segment display: the lit digits over the unlit "88:88", as on an old digital
+ * dashboard. 22 sp keeps "88:88" (3.5 em) inside the 96 dp side bar.
+ */
+@Composable
+private fun SegmentClock(time: String) {
+    val style = MaterialTheme.typography.titleMedium.copy(fontFamily = SegmentFont, fontSize = 22.sp, letterSpacing = 0.sp)
+    val lit = MaterialTheme.colorScheme.onSurface
+    Box(contentAlignment = Alignment.CenterEnd) {
+        Text("88:88", style = style.copy(shadow = null), color = lit.copy(alpha = 0.12f), maxLines = 1)
+        // "!" is the font's digit-wide blank: "9:41" becomes "!9:41", over "88:88".
+        Text(time.padStart(5, '!'), style = style, color = lit, maxLines = 1)
+    }
 }
 
 @Composable
@@ -299,7 +327,7 @@ private fun RailButton(icon: ImageVector, label: String, selected: Boolean, onCl
     val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(bg).carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(bg).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(d.iconSize))
@@ -315,15 +343,15 @@ private fun RailApp(app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(d.touchTarget).clip(RoundedCornerShape(24.dp)).background(ring).carFocusHighlight(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
+        Modifier.size(d.touchTarget).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(CircleShape))
+        Image(app.icon.asImageBitmap(), app.label, Modifier.size(48.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
     }
 }
 
 @Composable
-private fun MicButton(listening: Boolean, onClick: () -> Unit) {
+internal fun MicButton(listening: Boolean, onClick: () -> Unit) {
     val d = LocalCarDimens.current
     val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
@@ -345,52 +373,58 @@ internal fun Dashboard(
     modifier: Modifier,
 ) {
     val gutter = LocalCarDimens.current.gutter
+    // The map and the music always have something to show (a "where to?", "nothing playing").
+    val shown: (DashCard) -> Boolean = { card ->
+        when (card) {
+            DashCard.MAP, DashCard.MEDIA -> true
+            DashCard.CALENDAR -> state.nextEvent != null
+            DashCard.NOTIFICATION -> state.history.isNotEmpty()
+            DashCard.WEATHER -> state.weather != null
+        }
+    }
+    // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
+    // navigation app's surface (when it stays in the same row or column).
+    val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> key(card) { DashSlot(card, state, actions, navMap, m, compact) } }
+    // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
+    // first gets the big space.
     BoxWithConstraints(modifier) {
         val narrow = maxWidth < 560.dp
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
-            // portrait screens (720x1280, 1080x1920…): the cards stacked, the map on top
+            // portrait screens (720x1280, 1080x1920…): the cards stacked, the first two sharing the height
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxWidth())
-                MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxWidth())
-                val event = state.nextEvent
-                val latest = state.history.firstOrNull()
-                when {
-                    event != null -> Card(Modifier.fillMaxWidth().height(180.dp)) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
-                    latest != null -> Card(Modifier.fillMaxWidth().height(180.dp), onClick = {
-                        state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
-                    }) { LatestNotification(latest, state.drivingRestricted) }
+                cards.forEachIndexed { i, card ->
+                    slot(card, when (i) {
+                        0 -> Modifier.weight(1.6f).fillMaxWidth()
+                        1 -> Modifier.weight(1f).fillMaxWidth()
+                        else -> Modifier.fillMaxWidth().height(180.dp)
+                    }, false)
                 }
             }
         } else if (narrow) {
-            // small screens: one big card, media as a strip under it
+            // small screens: one big card, the second as a strip under it
+            val cards = dashboardSlots(state.dashboardCards, 2, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1f).fillMaxWidth())
-                MediaCard(state, actions, compact = true, modifier = Modifier.fillMaxWidth().height(112.dp))
+                cards.forEachIndexed { i, card ->
+                    slot(card, if (i == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), i > 0)
+                }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.6f).fillMaxHeight())
-                MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
-                val event = state.nextEvent
-                val latest = state.history.firstOrNull()
-                when {
-                    event != null -> Card(Modifier.weight(0.9f).fillMaxHeight()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
-                    latest != null -> Card(Modifier.weight(0.9f).fillMaxHeight(), onClick = {
-                        state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp)
-                    }) { LatestNotification(latest, state.drivingRestricted) }
+                cards.forEachIndexed { i, card ->
+                    slot(card, Modifier.weight(when (i) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
                 }
             }
         } else {
+            // the big card, and the others stacked beside it, the first of them taller
+            val cards = dashboardSlots(state.dashboardCards, 3, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                NavCard(state, actions, navMap, Modifier.weight(1.65f).fillMaxHeight())
-                val event = state.nextEvent
-                if (event == null) {
-                    MediaCard(state, actions, compact = false, modifier = Modifier.weight(1f).fillMaxHeight())
-                } else {
-                    Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                        MediaCard(state, actions, compact = false, modifier = Modifier.weight(1.3f).fillMaxWidth())
-                        Card(Modifier.weight(1f).fillMaxWidth()) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) }
+                slot(cards.first(), Modifier.weight(1.65f).fillMaxHeight(), false)
+                if (cards.size > 1) Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
+                    cards.drop(1).forEachIndexed { i, card ->
+                        slot(card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
                     }
                 }
             }
@@ -398,13 +432,38 @@ internal fun Dashboard(
     }
 }
 
+/** One dashboard card in its slot ([modifier] sizes it); [compact] for a thin strip. */
+@Composable
+private fun DashSlot(
+    card: DashCard,
+    state: CarUiState,
+    actions: CarActions,
+    navMap: @Composable (CarAppEntry, Modifier) -> Unit,
+    modifier: Modifier,
+    compact: Boolean,
+) {
+    when (card) {
+        DashCard.MAP -> NavCard(state, actions, navMap, modifier)
+        DashCard.MEDIA -> MediaCard(state, actions, compact = compact, modifier = modifier)
+        DashCard.CALENDAR -> state.nextEvent?.let { event -> Card(modifier) { CalendarCard(event, actions::navigateTo, Modifier.fillMaxSize()) } }
+        DashCard.NOTIFICATION -> state.history.firstOrNull()?.let { latest ->
+            Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }) {
+                LatestNotification(latest, state.drivingRestricted)
+            }
+        }
+        DashCard.WEATHER -> state.weather?.let { weather -> Card(modifier) { WeatherCard(weather) } }
+    }
+}
+
 @Composable
 private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val r = LocalCarDimens.current.cardRadius
+    val border = LocalCarTheme.current.cardBorder
     Box(
         modifier
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
+            .let { if (border > 0.dp) it.border(border, MaterialTheme.colorScheme.outline, RoundedCornerShape(r)) else it }
             .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
     ) { content() }
 }
@@ -469,8 +528,8 @@ private fun GuidanceCard(g: PhoneGuidance) {
 @Composable
 private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
     Row(
-        Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(MaterialTheme.colorScheme.secondaryContainer)
-            .carFocusHighlight(RoundedCornerShape(32.dp)).clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
+        Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.secondaryContainer)
+            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(app, 44)
@@ -483,9 +542,9 @@ private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
 fun AppIcon(app: CarAppEntry, sizeDp: Int) {
     Box(contentAlignment = Alignment.BottomEnd) {
         if (app.icon != null) {
-            Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(CircleShape))
+            Image(app.icon.asImageBitmap(), app.label, Modifier.size(sizeDp.dp).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
         } else {
-            Box(Modifier.size(sizeDp.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(sizeDp.dp).clip(LocalCarTheme.current.appIcon).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                 Text(app.label.take(1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
@@ -542,8 +601,16 @@ private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, 
                 content()
                 Spacer(Modifier.height(12.dp))
                 if (np != null && np.durationMs > 0) {
+                    var now by remember { mutableLongStateOf(android.os.SystemClock.elapsedRealtime()) }
+                    LaunchedEffect(np.playing, np.updatedAtMs) {
+                        now = android.os.SystemClock.elapsedRealtime()
+                        while (np.playing) {
+                            delay(500)
+                            now = android.os.SystemClock.elapsedRealtime()
+                        }
+                    }
                     LinearProgressIndicator(
-                        progress = { (np.positionMs.toFloat() / np.durationMs).coerceIn(0f, 1f) },
+                        progress = { mediaProgress(np.positionMs, np.durationMs, np.playing, np.updatedAtMs, now) },
                         modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
                     )
                     Spacer(Modifier.height(12.dp))
@@ -556,7 +623,7 @@ private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, 
 
 @Composable
 private fun Art(np: NowPlaying?, sizeDp: Int) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = MaterialTheme.shapes.small
     if (np?.art != null) {
         Image(np.art.asImageBitmap(), null, Modifier.size(sizeDp.dp).clip(shape), contentScale = ContentScale.Crop)
     } else {
@@ -586,7 +653,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 // ---------------------------------------------------------------- launcher
 
 @Composable
-private fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
+internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(150.dp),
         modifier = modifier,
@@ -597,7 +664,7 @@ private fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier)
         // Already in the user's order (CarRuntime.applyApps).
         items(state.apps, key = { it.id }) { app ->
             Column(
-                Modifier.clip(RoundedCornerShape(24.dp)).clickable { actions.openApp(app) }.padding(12.dp),
+                Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 AppIcon(app, 80)
@@ -618,7 +685,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         actions.dismissNotice(notice)
     }
     Row(
-        modifier.padding(16.dp).fillMaxWidth(0.6f).clip(RoundedCornerShape(28.dp))
+        modifier.padding(16.dp).fillMaxWidth(0.6f).clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -635,7 +702,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         notice.actions.forEach { (label, run) ->
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(RoundedCornerShape(20.dp)).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
+                modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }

@@ -158,9 +158,9 @@ private fun ChipSectionView(chips: List<Chip>) {
             val outline = carColor(style?.outlineColor, Color.Transparent)
             val delegate = chip.onClickDelegate
             Row(
-                Modifier.height(64.dp).clip(RoundedCornerShape(32.dp)).background(bg)
-                    .border(2.dp, outline, RoundedCornerShape(32.dp))
-                    .then(if (delegate != null) Modifier.carFocusHighlight(RoundedCornerShape(32.dp)).clickable { host.click(delegate) } else Modifier)
+                Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(bg)
+                    .border(2.dp, outline, MaterialTheme.shapes.extraLarge)
+                    .then(if (delegate != null) Modifier.carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable { host.click(delegate) } else Modifier)
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -185,7 +185,7 @@ private fun SpotlightView(section: SpotlightSection, items: List<CondensedItem>)
     val scheme = MaterialTheme.colorScheme
     val imageClick = section.imageOnClickDelegate
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(rowBackground()).padding(16.dp),
+        Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(rowBackground()).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         section.image?.let { image ->
@@ -193,12 +193,12 @@ private fun SpotlightView(section: SpotlightSection, items: List<CondensedItem>)
                 image,
                 120.dp,
                 if (imageClick != null) {
-                    Modifier.clip(RoundedCornerShape(18.dp))
-                        .carFocusHighlight(RoundedCornerShape(18.dp)).clickable { host.click(imageClick) }
+                    Modifier.clip(MaterialTheme.shapes.small)
+                        .carFocusHighlight(MaterialTheme.shapes.small).clickable { host.click(imageClick) }
                 } else {
                     Modifier
                 },
-                shape = RoundedCornerShape(18.dp),
+                shape = MaterialTheme.shapes.small,
                 contentScale = ContentScale.Crop,
             )
             Spacer(Modifier.width(20.dp))
@@ -207,7 +207,7 @@ private fun SpotlightView(section: SpotlightSection, items: List<CondensedItem>)
             items.forEach { item ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     item.leadingImage?.let {
-                        CarIconView(it, 40.dp, shape = RoundedCornerShape(10.dp))
+                        CarIconView(it, 40.dp, shape = MaterialTheme.shapes.small)
                         Spacer(Modifier.width(12.dp))
                     }
                     Column {

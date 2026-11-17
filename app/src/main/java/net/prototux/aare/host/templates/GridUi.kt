@@ -115,10 +115,10 @@ internal fun GridItemCell(item: GridItem, circle: Boolean, cell: Dp, modifier: M
     val delegate = item.onClickDelegate
     val large = item.imageType == GridItem.IMAGE_TYPE_LARGE
     val tile = cell - 40.dp
-    val shape: Shape = if (circle) CircleShape else RoundedCornerShape(24.dp)
+    val shape: Shape = if (circle) CircleShape else MaterialTheme.shapes.medium
     Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-            .then(if (delegate != null) Modifier.carFocusHighlight(RoundedCornerShape(24.dp)).clickable { host.click(delegate) } else Modifier)
+        modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
+            .then(if (delegate != null) Modifier.carFocusHighlight(MaterialTheme.shapes.medium).clickable { host.click(delegate) } else Modifier)
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
