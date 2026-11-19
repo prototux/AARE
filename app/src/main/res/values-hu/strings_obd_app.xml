@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Műszerfal</string>
+    <string name="obd_tab_trip">Út</string>
+    <string name="obd_tab_history">Előzmények</string>
+    <string name="obd_tab_settings">Beállítások</string>
+    <string name="obd_simulated_badge">Szimulált adapter</string>
+    <string name="obd_waiting">Várakozás az adapterre…</string>
+    <string name="obd_gear">Fokozat</string>
+    <string name="obd_oil">Olaj</string>
+    <string name="obd_fuel_use">Fogyasztás</string>
+    <string name="obd_pedal">Pedál</string>
+    <string name="obd_peak">csúcs %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Távolság</string>
+    <string name="obd_trip_time">Idő</string>
+    <string name="obd_trip_average">Átlag</string>
+    <string name="obd_trip_now">Most</string>
+    <string name="obd_trip_range">Hatótáv</string>
+    <string name="obd_trip_reset">Út nullázása</string>
+    <string name="obd_trip_note">Az út ez a kapcsolat az autóval; az Előzményekbe kerül, amikor az autó lecsatlakozik, vagy nullázáskor. A fogyasztás becslés, hacsak az autó nem jelenti. Hatótáv = maradék üzemanyag × az út átlaga (tank mérete a Beállításokban).</string>
+    <string name="obd_history_recent">Legutóbbiak</string>
+    <string name="obd_history_empty">Még semmi. Az 1 km-nél hosszabb utak itt maradnak.</string>
+    <string name="obd_history_trip">Út</string>
+    <string name="obd_history_clear">Előzmények törlése</string>
+    <string name="obd_history_clear_confirm">Koppints újra a törléshez</string>
+    <string name="obd_set_engine">Második mérő</string>
+    <string name="obd_set_engine_auto">Automatikus</string>
+    <string name="obd_set_engine_turbo">Turbó (töltőnyomás)</string>
+    <string name="obd_set_engine_na">Szívó (terhelés)</string>
+    <string name="obd_set_rpm_max">Fordulatszámmérő eddig</string>
+    <string name="obd_set_redline">Piros mező / váltófény</string>
+    <string name="obd_set_displacement">Hengerűrtartalom</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Üzemanyag</string>
+    <string name="obd_set_fuel_petrol">Benzin</string>
+    <string name="obd_set_fuel_diesel">Dízel</string>
+    <string name="obd_set_ethanol">Etanol (érzékelő nélkül)</string>
+    <string name="obd_set_gears">Tanult fokozatok: %1$d</string>
+    <string name="obd_set_gears_forget">Elfelejt</string>
+    <string name="obd_coolant_short">Hűtőfolyadék</string>
+    <string name="obd_set_note">Automatikus mérő: motorterhelés, amíg töltőnyomást nem lát. Hengerűrtartalom: a fogyasztáshoz légtömegmérő nélküli autóknál. Etanol: ha az autónak nincs érzékelője (0 tiszta benzin, 27 brazil benzin, 100 etanol).</string>
+    <string name="obd_dash_card">Autó</string>
+    <string name="obd_set_card">Autó kártya (kezdőlap)</string>
+    <string name="obd_set_card_pick">Kiválasztás</string>
+    <string name="obd_set_card_hint">Koppints az értékekre a kívánt sorrendben, legfeljebb %1$d. Az Autó kártyán jelennek meg.</string>
+    <string name="obd_done">Kész</string>
+    <string name="obd_card_gauge">Töltőnyomás / terhelés</string>
+    <string name="obd_card_now">Fogyasztás most</string>
+</resources>

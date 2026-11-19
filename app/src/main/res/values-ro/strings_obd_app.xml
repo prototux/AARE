@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Bord</string>
+    <string name="obd_tab_trip">Călătorie</string>
+    <string name="obd_tab_history">Istoric</string>
+    <string name="obd_tab_settings">Setări</string>
+    <string name="obd_simulated_badge">Adaptor simulat</string>
+    <string name="obd_waiting">Se așteaptă adaptorul…</string>
+    <string name="obd_gear">Treaptă</string>
+    <string name="obd_oil">Ulei</string>
+    <string name="obd_fuel_use">Consum</string>
+    <string name="obd_pedal">Pedală</string>
+    <string name="obd_peak">vârf %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Distanță</string>
+    <string name="obd_trip_time">Timp</string>
+    <string name="obd_trip_average">Medie</string>
+    <string name="obd_trip_now">Acum</string>
+    <string name="obd_trip_range">Autonomie</string>
+    <string name="obd_trip_reset">Resetează</string>
+    <string name="obd_trip_note">Călătoria este această conexiune cu mașina; trece în Istoric când mașina se deconectează sau la resetare. Consumul este estimat, dacă mașina nu îl raportează. Autonomie = combustibil rămas × media călătoriei (capacitatea rezervorului în Setări).</string>
+    <string name="obd_history_recent">Recente</string>
+    <string name="obd_history_empty">Nimic încă. Călătoriile de 1 km sau mai mult sunt păstrate aici.</string>
+    <string name="obd_history_trip">Călătorie</string>
+    <string name="obd_history_clear">Șterge istoricul</string>
+    <string name="obd_history_clear_confirm">Atinge din nou pentru a șterge</string>
+    <string name="obd_set_engine">Al doilea indicator</string>
+    <string name="obd_set_engine_auto">Automat</string>
+    <string name="obd_set_engine_turbo">Turbo (presiune)</string>
+    <string name="obd_set_engine_na">Aspirat (sarcină)</string>
+    <string name="obd_set_rpm_max">Turometru până la</string>
+    <string name="obd_set_redline">Zona roșie / schimbare</string>
+    <string name="obd_set_displacement">Capacitate cilindrică</string>
+    <string name="obd_set_tank">Rezervor</string>
+    <string name="obd_set_fuel">Combustibil</string>
+    <string name="obd_set_fuel_petrol">Benzină</string>
+    <string name="obd_set_fuel_diesel">Motorină</string>
+    <string name="obd_set_ethanol">Etanol (fără senzor)</string>
+    <string name="obd_set_gears">Trepte învățate: %1$d</string>
+    <string name="obd_set_gears_forget">Uită</string>
+    <string name="obd_coolant_short">Lichid răcire</string>
+    <string name="obd_set_note">Indicator automat: sarcina motorului până vede presiune de turbo. Capacitate: pentru consum la mașinile fără debitmetru de aer. Etanol: când mașina nu are senzor (0 benzină pură, 27 benzină braziliană, 100 etanol).</string>
+    <string name="obd_dash_card">Mașină</string>
+    <string name="obd_set_card">Card Mașină (acasă)</string>
+    <string name="obd_set_card_pick">Alege</string>
+    <string name="obd_set_card_hint">Atinge valorile în ordinea dorită, până la %1$d. Apar pe cardul Mașină.</string>
+    <string name="obd_done">Gata</string>
+    <string name="obd_card_gauge">Turbo / sarcină</string>
+    <string name="obd_card_now">Consum acum</string>
+</resources>

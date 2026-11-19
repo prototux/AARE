@@ -328,6 +328,7 @@ class CarSession(
             requestNavFocus()
             drivingMode.start()
             // Opt-in: engine data from an OBD2 adapter for the Car data viewers (held only while connected).
+            if (settings.obdAdapter) net.prototux.aare.obdapp.ObdApp.attach(context)
             if (settings.obdAdapter) net.prototux.aare.obd.ObdReader.start(context, simulated = settings.obdSimulated && BuildConfig.DEBUG, owner = this)
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)

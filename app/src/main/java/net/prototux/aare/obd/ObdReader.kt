@@ -30,6 +30,14 @@ object ObdReader {
     private val _status = MutableStateFlow(Status(State.OFF))
     val status: StateFlow<Status> = _status
 
+    /**
+     * Called on the reader's thread with every round (not only the [SCREEN_MS] ones the screen
+     * gets), and with null when reading stops: for code that measures over time (trip, timers).
+     */
+    fun interface RoundListener { fun onRound(r: ObdReadings?, timeMs: Long, simulated: Boolean) }
+
+    @Volatile var roundListener: RoundListener? = null
+
     private const val TAG = "AareObd"
     private const val ATTEMPTS = 4
     private const val RETRY_MS = 8_000L
@@ -38,6 +46,8 @@ object ObdReader {
     private const val SLOW_RETRY_MS = 60_000L
     /** Never spin without a pause, even when the adapter answers instantly. */
     private const val MIN_ROUND_MS = 50L
+    /** How often the reading rate goes to the log. */
+    private const val RATE_LOG_MS = 60_000L
     /** At most this often to the screen (10 a second). */
     private const val SCREEN_MS = 100L
 
@@ -71,6 +81,7 @@ object ObdReader {
         link = null
         thread?.interrupt()
         thread = null
+        roundListener?.onRound(null, System.currentTimeMillis(), false)
         _readings.value = null
         _status.value = Status(State.OFF)
     }
@@ -108,10 +119,20 @@ object ObdReader {
                 status(State.CONNECTED, x.name, g = g)
                 val poller = ObdPoller(x, supported)
                 var shown = 0L
+                // The reading rate goes to the log once a minute (and a minute after connecting).
+                var rateFrom = System.currentTimeMillis(); var roundsFrom = 0; var questionsFrom = 0L; var rounds = 0
                 while (alive(g)) {
                     val start = System.currentTimeMillis()
                     val r = poller.readRound()
+                    rounds++
+                    if (start - rateFrom >= RATE_LOG_MS) {
+                        val secs = (start - rateFrom) / 1000f
+                        val q = poller.questions - questionsFrom
+                        log("OBD2: %.1f rounds/s (revs, speed, boost), %.0f ms per question".format(java.util.Locale.US, (rounds - roundsFrom) / secs, (start - rateFrom) / q.coerceAtLeast(1L).toFloat()))
+                        rateFrom = start; roundsFrom = rounds; questionsFrom = poller.questions
+                    }
                     val now = System.currentTimeMillis()
+                    if (alive(g)) roundListener?.onRound(r, now, simulated)
                     (MIN_ROUND_MS - (now - start)).takeIf { it > 0 }?.let(::sleep)
                     if (now - shown >= SCREEN_MS && alive(g)) { shown = now; _readings.value = r }
                 }

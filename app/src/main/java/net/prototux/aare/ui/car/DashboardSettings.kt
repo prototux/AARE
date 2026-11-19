@@ -30,12 +30,12 @@ import net.prototux.aare.R
  * the car's is bigger than the phone's.
  */
 @Composable
-internal fun DashboardCardsEditor(order: List<DashCard>, rowHeight: Dp, onChange: (List<DashCard>) -> Unit) {
+internal fun DashboardCardsEditor(order: List<DashCard>, rowHeight: Dp, available: List<DashCard> = DashCard.entries, onChange: (List<DashCard>) -> Unit) {
     Column {
         Text(stringResource(R.string.dash_cards_title), style = MaterialTheme.typography.titleMedium)
         Text(stringResource(R.string.dash_cards_hint), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         // The shown cards in their order, then the hidden ones.
-        (order + DashCard.entries.filter { it !in order }).forEach { card ->
+        (order.filter { it in available } + available.filter { it !in order }).forEach { card ->
             val i = order.indexOf(card)
             val shown = i >= 0
             // The last shown card can't be hidden: an empty dashboard is no use.
@@ -69,4 +69,5 @@ private val DashCard.label: Int
         DashCard.CALENDAR -> R.string.dash_card_calendar
         DashCard.NOTIFICATION -> R.string.dash_card_notification
         DashCard.WEATHER -> R.string.dash_card_weather
+        DashCard.CAR -> R.string.obd_dash_card
     }

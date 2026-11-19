@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Buồng lái</string>
+    <string name="obd_tab_dash">Đồng hồ</string>
+    <string name="obd_tab_trip">Chuyến đi</string>
+    <string name="obd_tab_history">Lịch sử</string>
+    <string name="obd_tab_settings">Cài đặt</string>
+    <string name="obd_simulated_badge">Bộ chuyển đổi giả lập</string>
+    <string name="obd_waiting">Đang chờ bộ chuyển đổi…</string>
+    <string name="obd_gear">Số</string>
+    <string name="obd_oil">Dầu</string>
+    <string name="obd_fuel_use">Tiêu hao</string>
+    <string name="obd_pedal">Bàn đạp</string>
+    <string name="obd_peak">đỉnh %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Quãng đường</string>
+    <string name="obd_trip_time">Thời gian</string>
+    <string name="obd_trip_average">Trung bình</string>
+    <string name="obd_trip_now">Hiện tại</string>
+    <string name="obd_trip_range">Tầm đi</string>
+    <string name="obd_trip_reset">Đặt lại chuyến</string>
+    <string name="obd_trip_note">Chuyến đi là lần kết nối này với xe; nó được lưu vào Lịch sử khi xe ngắt kết nối hoặc khi đặt lại. Mức tiêu hao là ước tính, trừ khi xe báo. Tầm đi = nhiên liệu còn lại × trung bình của chuyến (dung tích bình trong Cài đặt).</string>
+    <string name="obd_history_recent">Gần đây</string>
+    <string name="obd_history_empty">Chưa có gì. Các chuyến từ 1 km trở lên được lưu ở đây.</string>
+    <string name="obd_history_trip">Chuyến đi</string>
+    <string name="obd_history_clear">Xóa lịch sử</string>
+    <string name="obd_history_clear_confirm">Chạm lần nữa để xóa</string>
+    <string name="obd_set_engine">Đồng hồ thứ hai</string>
+    <string name="obd_set_engine_auto">Tự động</string>
+    <string name="obd_set_engine_turbo">Turbo (áp suất)</string>
+    <string name="obd_set_engine_na">Hút khí tự nhiên (tải)</string>
+    <string name="obd_set_rpm_max">Đồng hồ vòng tua đến</string>
+    <string name="obd_set_redline">Vạch đỏ / đèn sang số</string>
+    <string name="obd_set_displacement">Dung tích động cơ</string>
+    <string name="obd_set_tank">Bình</string>
+    <string name="obd_set_fuel">Nhiên liệu</string>
+    <string name="obd_set_fuel_petrol">Xăng</string>
+    <string name="obd_set_fuel_diesel">Dầu diesel</string>
+    <string name="obd_set_ethanol">Ethanol (không cảm biến)</string>
+    <string name="obd_set_gears">Số đã học: %1$d</string>
+    <string name="obd_set_gears_forget">Quên</string>
+    <string name="obd_coolant_short">Nước làm mát</string>
+    <string name="obd_set_note">Đồng hồ tự động: tải động cơ cho đến khi thấy áp suất turbo. Dung tích: để tính tiêu hao cho xe không có cảm biến lưu lượng khí. Ethanol: khi xe không có cảm biến (0 xăng nguyên chất, 27 xăng Brazil, 100 ethanol).</string>
+    <string name="obd_dash_card">Xe</string>
+    <string name="obd_set_card">Thẻ Xe (màn hình chính)</string>
+    <string name="obd_set_card_pick">Chọn</string>
+    <string name="obd_set_card_hint">Chạm vào các giá trị theo thứ tự bạn muốn, tối đa %1$d. Chúng hiện trên thẻ Xe.</string>
+    <string name="obd_done">Xong</string>
+    <string name="obd_card_gauge">Turbo / tải</string>
+    <string name="obd_card_now">Tiêu hao hiện tại</string>
+</resources>

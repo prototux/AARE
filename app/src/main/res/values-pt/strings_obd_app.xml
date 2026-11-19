@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Painel</string>
+    <string name="obd_tab_trip">Viagem</string>
+    <string name="obd_tab_history">Histórico</string>
+    <string name="obd_tab_settings">Ajustes</string>
+    <string name="obd_simulated_badge">Adaptador simulado</string>
+    <string name="obd_waiting">Esperando o adaptador…</string>
+
+    <string name="obd_gear">Marcha</string>
+    <string name="obd_oil">Óleo</string>
+    <string name="obd_fuel_use">Consumo</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">pico %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+
+    <string name="obd_trip_distance">Distância</string>
+    <string name="obd_trip_time">Tempo</string>
+    <string name="obd_trip_average">Média</string>
+    <string name="obd_trip_now">Agora</string>
+    <string name="obd_trip_range">Autonomia</string>
+    <string name="obd_trip_reset">Zerar viagem</string>
+    <string name="obd_trip_note">A viagem é esta conexão com o carro; ela vai para o Histórico quando o carro desconecta ou ao zerar. O consumo é estimado, a não ser que o carro o informe. Autonomia = combustível restante × média da viagem (tamanho do tanque nos Ajustes).</string>
+
+    <string name="obd_history_recent">Recentes</string>
+    <string name="obd_history_empty">Nada ainda. Viagens de 1 km ou mais ficam aqui.</string>
+    <string name="obd_history_trip">Viagem</string>
+    <string name="obd_history_clear">Apagar histórico</string>
+    <string name="obd_history_clear_confirm">Toque de novo para apagar</string>
+
+    <string name="obd_set_engine">Segundo mostrador</string>
+    <string name="obd_set_engine_auto">Automático</string>
+    <string name="obd_set_engine_turbo">Turbo (pressão)</string>
+    <string name="obd_set_engine_na">Aspirado (carga)</string>
+    <string name="obd_set_rpm_max">Conta-giros até</string>
+    <string name="obd_set_redline">Faixa vermelha / troca</string>
+    <string name="obd_set_displacement">Cilindrada</string>
+    <string name="obd_set_tank">Tanque</string>
+    <string name="obd_set_fuel">Combustível</string>
+    <string name="obd_set_fuel_petrol">Gasolina/etanol</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Etanol (sem sensor)</string>
+    <string name="obd_set_gears">Marchas aprendidas: %1$d</string>
+    <string name="obd_set_gears_forget">Esquecer</string>
+    <string name="obd_coolant_short">Água</string>
+    <string name="obd_set_note">Mostrador automático: carga do motor até ver pressão de turbo. Cilindrada: para o consumo em carros sem sensor de fluxo de ar. Etanol: quando o carro não tem sensor (0 gasolina pura, 27 gasolina brasileira, 100 etanol).</string>
+    <string name="obd_dash_card">Carro</string>
+    <string name="obd_set_card">Cartão Carro (painel)</string>
+    <string name="obd_set_card_pick">Escolher</string>
+    <string name="obd_set_card_hint">Toque nos valores na ordem que quiser, até %1$d. Eles aparecem no cartão Carro do painel.</string>
+    <string name="obd_done">Pronto</string>
+    <string name="obd_card_gauge">Turbo / carga</string>
+    <string name="obd_card_now">Consumo agora</string>
+</resources>

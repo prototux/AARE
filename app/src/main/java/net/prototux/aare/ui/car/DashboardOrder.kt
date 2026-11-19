@@ -9,7 +9,10 @@ enum class DashCard(
     MEDIA("media"),
     CALENDAR("calendar"),
     NOTIFICATION("notification"),
-    WEATHER("weather");
+    WEATHER("weather"),
+
+    /** The car from the OBD2 adapter (the Cockpit app): only with that setting on, and while it reads. */
+    CAR("car");
 
     companion object {
         /** The cards of a saved list of ids, in order: unknown ids dropped, each card once. */
