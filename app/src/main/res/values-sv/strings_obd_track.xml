@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Bana</string>
+    <string name="obd_tab_lap">Varv</string>
+    <string name="obd_tab_dyno">Dyno</string>
+    <string name="obd_track_warning">Endast på bana eller avstängt område. Aldrig på allmän väg.</string>
+    <string name="obd_g_title">G-kraft (telefon)</string>
+    <string name="obd_g_accel">Acc. %1$s</string>
+    <string name="obd_g_brake">Broms %1$s</string>
+    <string name="obd_g_lateral">Sidled %1$s</string>
+    <string name="obd_g_reset">Nollställ max</string>
+    <string name="obd_g_hint">Sätt telefonen stadigt i hållaren. Den lär sig var framåt är när du gasar och bromsar.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Tryck för att aktivera</string>
+    <string name="obd_test_stop">Aktiv: stanna bilen</string>
+    <string name="obd_test_below">Aktiv: håll under %1$d km/h</string>
+    <string name="obd_test_above">Aktiv: kör över %1$d km/h</string>
+    <string name="obd_test_ready">Klar: gasa</string>
+    <string name="obd_test_ready_brake">Klar: bromsa</string>
+    <string name="obd_test_running">Mäter…</string>
+    <string name="obd_best">Bäst %1$s</string>
+    <string name="obd_lap_arm">Starta varvtidtagning</string>
+    <string name="obd_lap_disarm">Stopp</string>
+    <string name="obd_lap_waiting">Aktiv: startlinjen hamnar där du börjar köra</string>
+    <string name="obd_lap_last">Senaste</string>
+    <string name="obd_lap_best">Bästa</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Varv</string>
+    <string name="obd_lap_no_gps">Ingen GPS från bilen</string>
+    <string name="obd_dyno_arm">Aktivera</string>
+    <string name="obd_dyno_disarm">Avsluta</string>
+    <string name="obd_dyno_off">Aktivera och gasa fullt på 2:an eller 3:an, från lågt varvtal till nära begränsaren.</string>
+    <string name="obd_dyno_armed">Aktiv: full gas</string>
+    <string name="obd_dyno_peak">%1$.0f hk vid %2$.0f v/min</string>
+    <string name="obd_dyno_note">Effekt vid hjulen, uppskattad från accelerationen och bilens vikt (Inställningar). En grov riktlinje, inte en riktig dyno.</string>
+    <string name="obd_history_records">Rekord</string>
+    <string name="obd_history_lap">Varv</string>
+    <string name="obd_history_dyno">Dyno</string>
+    <string name="obd_set_mass">Vikt med föraren</string>
+</resources>

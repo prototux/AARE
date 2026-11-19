@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Instrument</string>
+    <string name="obd_tab_trip">Resa</string>
+    <string name="obd_tab_history">Historik</string>
+    <string name="obd_tab_settings">Inställningar</string>
+    <string name="obd_simulated_badge">Simulerad adapter</string>
+    <string name="obd_waiting">Väntar på adaptern…</string>
+    <string name="obd_gear">Växel</string>
+    <string name="obd_oil">Olja</string>
+    <string name="obd_fuel_use">Förbrukning</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">topp %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Sträcka</string>
+    <string name="obd_trip_time">Tid</string>
+    <string name="obd_trip_average">Snitt</string>
+    <string name="obd_trip_now">Nu</string>
+    <string name="obd_trip_range">Räckvidd</string>
+    <string name="obd_trip_reset">Nollställ resa</string>
+    <string name="obd_trip_note">Resan är den här anslutningen till bilen; den sparas i Historik när bilen kopplas från eller vid nollställning. Förbrukningen är uppskattad, om inte bilen rapporterar den. Räckvidd = bränsle kvar × resans snitt (tankstorlek i Inställningar).</string>
+    <string name="obd_history_recent">Senaste</string>
+    <string name="obd_history_empty">Inget än. Resor på 1 km eller mer sparas här.</string>
+    <string name="obd_history_trip">Resa</string>
+    <string name="obd_history_clear">Rensa historik</string>
+    <string name="obd_history_clear_confirm">Tryck igen för att rensa</string>
+    <string name="obd_set_engine">Andra mätaren</string>
+    <string name="obd_set_engine_auto">Automatisk</string>
+    <string name="obd_set_engine_turbo">Turbo (laddtryck)</string>
+    <string name="obd_set_engine_na">Sugmotor (last)</string>
+    <string name="obd_set_rpm_max">Varvräknare upp till</string>
+    <string name="obd_set_redline">Rött fält / växlingsljus</string>
+    <string name="obd_set_displacement">Slagvolym</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Bränsle</string>
+    <string name="obd_set_fuel_petrol">Bensin</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Etanol (ingen sensor)</string>
+    <string name="obd_set_gears">Inlärda växlar: %1$d</string>
+    <string name="obd_set_gears_forget">Glöm</string>
+    <string name="obd_coolant_short">Kylvätska</string>
+    <string name="obd_set_note">Automatisk mätare: motorlast tills den ser laddtryck. Slagvolym: för förbrukningen i bilar utan luftmassemätare. Etanol: när bilen saknar sensor (0 ren bensin, 27 brasiliansk bensin, 100 etanol).</string>
+    <string name="obd_dash_card">Bil</string>
+    <string name="obd_set_card">Bilkort (start)</string>
+    <string name="obd_set_card_pick">Välj</string>
+    <string name="obd_set_card_hint">Tryck på värdena i den ordning du vill, upp till %1$d. De visas på bilkortet.</string>
+    <string name="obd_done">Klar</string>
+    <string name="obd_card_gauge">Laddtryck / last</string>
+    <string name="obd_card_now">Förbrukning nu</string>
+</resources>

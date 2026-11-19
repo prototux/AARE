@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Dashboard</string>
+    <string name="obd_tab_trip">Rit</string>
+    <string name="obd_tab_history">Geschiedenis</string>
+    <string name="obd_tab_settings">Instellingen</string>
+    <string name="obd_simulated_badge">Gesimuleerde adapter</string>
+    <string name="obd_waiting">Wachten op de adapter…</string>
+    <string name="obd_gear">Versnelling</string>
+    <string name="obd_oil">Olie</string>
+    <string name="obd_fuel_use">Verbruik</string>
+    <string name="obd_pedal">Pedaal</string>
+    <string name="obd_peak">piek %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Afstand</string>
+    <string name="obd_trip_time">Tijd</string>
+    <string name="obd_trip_average">Gemiddeld</string>
+    <string name="obd_trip_now">Nu</string>
+    <string name="obd_trip_range">Bereik</string>
+    <string name="obd_trip_reset">Rit wissen</string>
+    <string name="obd_trip_note">De rit is deze verbinding met de auto; hij gaat naar Geschiedenis als de auto loskoppelt of bij wissen. Het verbruik is een schatting, tenzij de auto het doorgeeft. Bereik = resterende brandstof × gemiddelde van de rit (tankinhoud in Instellingen).</string>
+    <string name="obd_history_recent">Recent</string>
+    <string name="obd_history_empty">Nog niets. Ritten van 1 km of meer worden hier bewaard.</string>
+    <string name="obd_history_trip">Rit</string>
+    <string name="obd_history_clear">Geschiedenis wissen</string>
+    <string name="obd_history_clear_confirm">Tik nogmaals om te wissen</string>
+    <string name="obd_set_engine">Tweede meter</string>
+    <string name="obd_set_engine_auto">Automatisch</string>
+    <string name="obd_set_engine_turbo">Turbo (druk)</string>
+    <string name="obd_set_engine_na">Atmosferisch (belasting)</string>
+    <string name="obd_set_rpm_max">Toerenteller tot</string>
+    <string name="obd_set_redline">Rode zone / schakellicht</string>
+    <string name="obd_set_displacement">Cilinderinhoud</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Brandstof</string>
+    <string name="obd_set_fuel_petrol">Benzine</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Ethanol (geen sensor)</string>
+    <string name="obd_set_gears">Geleerde versnellingen: %1$d</string>
+    <string name="obd_set_gears_forget">Vergeten</string>
+    <string name="obd_coolant_short">Koelvloeistof</string>
+    <string name="obd_set_note">Automatische meter: motorbelasting tot er turbodruk is. Cilinderinhoud: voor het verbruik bij auto\'s zonder luchtmassameter. Ethanol: als de auto geen sensor heeft (0 pure benzine, 27 Braziliaanse benzine, 100 ethanol).</string>
+    <string name="obd_dash_card">Auto</string>
+    <string name="obd_set_card">Autokaart (start)</string>
+    <string name="obd_set_card_pick">Kiezen</string>
+    <string name="obd_set_card_hint">Tik de waarden aan in de gewenste volgorde, tot %1$d. Ze staan op de Autokaart.</string>
+    <string name="obd_done">Klaar</string>
+    <string name="obd_card_gauge">Turbo / belasting</string>
+    <string name="obd_card_now">Verbruik nu</string>
+</resources>

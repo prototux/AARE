@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Strecke</string>
+    <string name="obd_tab_lap">Runde</string>
+    <string name="obd_tab_dyno">Prüfstand</string>
+    <string name="obd_track_warning">Nur auf der Rennstrecke oder abgesperrtem Gelände. Nie im Straßenverkehr.</string>
+    <string name="obd_g_title">G-Kraft (Telefon)</string>
+    <string name="obd_g_accel">Beschl. %1$s</string>
+    <string name="obd_g_brake">Bremsen %1$s</string>
+    <string name="obd_g_lateral">Quer %1$s</string>
+    <string name="obd_g_reset">Max. zurücksetzen</string>
+    <string name="obd_g_hint">Halte das Telefon fest in der Halterung. Es lernt beim Beschleunigen und Bremsen, wo vorne ist.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Zum Scharfschalten tippen</string>
+    <string name="obd_test_stop">Bereit: Auto anhalten</string>
+    <string name="obd_test_below">Bereit: unter %1$d km/h bleiben</string>
+    <string name="obd_test_above">Bereit: über %1$d km/h fahren</string>
+    <string name="obd_test_ready">Los: Gas geben</string>
+    <string name="obd_test_ready_brake">Los: bremsen</string>
+    <string name="obd_test_running">Messe…</string>
+    <string name="obd_best">Bestwert %1$s</string>
+    <string name="obd_lap_arm">Rundenzeit starten</string>
+    <string name="obd_lap_disarm">Stopp</string>
+    <string name="obd_lap_waiting">Bereit: die Startlinie liegt dort, wo du losfährst</string>
+    <string name="obd_lap_last">Letzte</string>
+    <string name="obd_lap_best">Beste</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Runden</string>
+    <string name="obd_lap_no_gps">Kein GPS vom Auto</string>
+    <string name="obd_dyno_arm">Scharf schalten</string>
+    <string name="obd_dyno_disarm">Beenden</string>
+    <string name="obd_dyno_off">Scharf schalten, dann im 2. oder 3. Gang von niedriger Drehzahl bis kurz vor den Begrenzer Vollgas geben.</string>
+    <string name="obd_dyno_armed">Bereit: Vollgas</string>
+    <string name="obd_dyno_peak">%1$.0f PS bei %2$.0f U/min</string>
+    <string name="obd_dyno_note">Leistung an den Rädern, geschätzt aus der Beschleunigung und dem Gewicht des Autos (Einstellungen). Ein grober Richtwert, kein echter Prüfstand.</string>
+    <string name="obd_history_records">Bestwerte</string>
+    <string name="obd_history_lap">Runde</string>
+    <string name="obd_history_dyno">Prüfstand</string>
+    <string name="obd_set_mass">Gewicht mit Fahrer</string>
+</resources>
