@@ -3,13 +3,19 @@ package net.prototux.aare.obdapp
 import java.io.File
 
 /**
- * Results kept on the phone (obd_history.tsv): the trips, newest last, the latest
+ * Results kept on the phone (obd_history.tsv): trips and track results, newest last, the latest
  * [MAX] only. A line: time, kind, value, second value.
  * Only readings from a real adapter are kept: the pretend adapter's don't become records.
  */
 class ObdHistory(private val file: File) {
-    enum class Kind {
-        TRIP, // value: km, second: km/L (0 = unknown)
+    enum class Kind(val lowerIsBetter: Boolean) {
+        TRIP(false), // value: km, second: km/L (0 = unknown)
+        ZERO_100(true), // s
+        KMH_80_120(true), // s
+        QUARTER_MILE(true), // s, second: km/h at the line
+        BRAKE_100_0(true), // m
+        LAP(true), // s
+        DYNO(false), // hp at the wheels, second: at rpm
     }
 
     data class Entry(val timeMs: Long, val kind: Kind, val value: Float, val second: Float = 0f)
@@ -35,5 +41,9 @@ class ObdHistory(private val file: File) {
 
     companion object {
         const val MAX = 500
+
+        /** The best of each kind (trips have no best). */
+        fun records(entries: List<Entry>): Map<Kind, Entry> = entries.filter { it.kind != Kind.TRIP }.groupBy { it.kind }
+            .mapValues { (k, list) -> if (k.lowerIsBetter) list.minBy { it.value } else list.maxBy { it.value } }
     }
 }

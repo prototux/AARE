@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Bane</string>
+    <string name="obd_tab_lap">Omgang</string>
+    <string name="obd_tab_dyno">Dyno</string>
+    <string name="obd_track_warning">Kun på bane eller lukket område. Aldrig på offentlig vej.</string>
+    <string name="obd_g_title">G-kraft (telefon)</string>
+    <string name="obd_g_accel">Acc. %1$s</string>
+    <string name="obd_g_brake">Brems %1$s</string>
+    <string name="obd_g_lateral">Side %1$s</string>
+    <string name="obd_g_reset">Nulstil maks</string>
+    <string name="obd_g_hint">Sæt telefonen fast i holderen. Den lærer, hvor fremad er, når du speeder op og bremser.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Tryk for at aktivere</string>
+    <string name="obd_test_stop">Aktiv: stop bilen</string>
+    <string name="obd_test_below">Aktiv: hold under %1$d km/t</string>
+    <string name="obd_test_above">Aktiv: kør over %1$d km/t</string>
+    <string name="obd_test_ready">Klar: giv gas</string>
+    <string name="obd_test_ready_brake">Klar: brems</string>
+    <string name="obd_test_running">Måler…</string>
+    <string name="obd_best">Bedste %1$s</string>
+    <string name="obd_lap_arm">Start omgangstid</string>
+    <string name="obd_lap_disarm">Stop</string>
+    <string name="obd_lap_waiting">Aktiv: startlinjen bliver, hvor du begynder at køre</string>
+    <string name="obd_lap_last">Seneste</string>
+    <string name="obd_lap_best">Bedste</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Omgange</string>
+    <string name="obd_lap_no_gps">Ingen GPS fra bilen</string>
+    <string name="obd_dyno_arm">Aktivér</string>
+    <string name="obd_dyno_disarm">Afslut</string>
+    <string name="obd_dyno_off">Aktivér, og giv fuld gas i 2. eller 3. gear fra lave omdrejninger til tæt på begrænseren.</string>
+    <string name="obd_dyno_armed">Aktiv: fuld gas</string>
+    <string name="obd_dyno_peak">%1$.0f hk ved %2$.0f o/min</string>
+    <string name="obd_dyno_note">Effekt ved hjulene, anslået ud fra accelerationen og bilens vægt (Indstillinger). En grov rettesnor, ikke en rigtig dyno.</string>
+    <string name="obd_history_records">Rekorder</string>
+    <string name="obd_history_lap">Omgang</string>
+    <string name="obd_history_dyno">Dyno</string>
+    <string name="obd_set_mass">Vægt med fører</string>
+</resources>

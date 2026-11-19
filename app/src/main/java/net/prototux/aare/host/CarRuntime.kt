@@ -1120,7 +1120,7 @@ class CarRuntime(
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
-                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod)
+                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, location = { carLocation })
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)

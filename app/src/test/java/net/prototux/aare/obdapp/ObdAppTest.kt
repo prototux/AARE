@@ -111,15 +111,20 @@ class ObdAppTest {
         assertEquals(0.9f, t.peak!!, 0f) // held
     }
 
-    @Test fun historyKeepsTrips() {
+    @Test fun historyKeepsRecords() {
         val f = File.createTempFile("obd", ".tsv"); f.delete()
         val h = ObdHistory(f)
-        h.add(ObdHistory.Entry(1, ObdHistory.Kind.TRIP, 5.6f, 6.8f))
-        h.add(ObdHistory.Entry(2, ObdHistory.Kind.TRIP, 12f, 0f))
-        f.appendText("3\tSOMETHING_NEW\t1.0\t0.0\n") // an unknown kind is skipped
+        h.add(ObdHistory.Entry(1, ObdHistory.Kind.ZERO_100, 9.1f))
+        h.add(ObdHistory.Entry(2, ObdHistory.Kind.ZERO_100, 8.7f))
+        h.add(ObdHistory.Entry(3, ObdHistory.Kind.DYNO, 120f, 5500f))
+        h.add(ObdHistory.Entry(4, ObdHistory.Kind.DYNO, 131f, 5800f))
+        h.add(ObdHistory.Entry(5, ObdHistory.Kind.TRIP, 12f, 14f))
         val read = h.read()
-        assertEquals(2, read.size)
-        assertEquals(6.8f, read[0].second, 0f)
+        assertEquals(5, read.size)
+        val best = ObdHistory.records(read)
+        assertEquals(8.7f, best[ObdHistory.Kind.ZERO_100]!!.value, 0f)
+        assertEquals(131f, best[ObdHistory.Kind.DYNO]!!.value, 0f)
+        assertNull(best[ObdHistory.Kind.TRIP])
         h.clear()
         assertEquals(0, h.read().size)
         assertNotNull(h)

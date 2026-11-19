@@ -5,12 +5,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.prototux.aare.obd.ObdReader
 import net.prototux.aare.obd.ObdReadings
+import net.prototux.aare.obdapp.track.Dyno
+import net.prototux.aare.obdapp.track.GForce
+import net.prototux.aare.obdapp.track.LapTimer
+import net.prototux.aare.obdapp.track.SpeedTests
 import java.io.File
 
 /**
  * The OBD2 app's state: it takes every round from [ObdReader] (on the reader's thread) and keeps
- * the trip, the gear and the history. The car screen reads it and calls back in
- * (reset the trip). Everything is opt-in: it's attached only with the OBD2 setting on.
+ * the trip, the gear, the track timers and the history. The car screen reads it and calls back in
+ * (arm a run, reset the trip). Everything is opt-in: it's attached only with the OBD2 setting on.
  *
  * A trip is one car session: it's saved to the history when the session ends (or on "Reset"), and
  * the next session starts a new one.
@@ -45,6 +49,10 @@ object ObdApp {
 
     val trip = Trip()
     private var gears = GearLearner()
+    val tests = SpeedTests()
+    val laps = LapTimer()
+    val dyno = Dyno()
+    val g = GForce()
 
     private var simulated = false
     private var running = false
@@ -63,6 +71,9 @@ object ObdApp {
             settings = s
             history = ObdHistory(File(context.applicationContext.filesDir, "obd_history.tsv"))
             gears = GearLearner(s.gears)
+            tests.all.forEach { t -> t.onResult = { kind, v, second -> record(ObdHistory.Entry(System.currentTimeMillis(), kind, v, second)) } }
+            laps.onLap = { s2 -> record(ObdHistory.Entry(System.currentTimeMillis(), ObdHistory.Kind.LAP, s2)) }
+            dyno.onResult = { hp, rpm -> record(ObdHistory.Entry(System.currentTimeMillis(), ObdHistory.Kind.DYNO, hp, rpm)) }
         }
         ObdReader.roundListener = ObdReader.RoundListener { r, t, sim -> onRound(r, t, sim) }
     }
@@ -75,6 +86,7 @@ object ObdApp {
         if (r == null) { endTrip(s); return }
         if (!running) { running = true; simulated = sim; trip.reset() }
         val car = s.car()
+        dyno.massKg = car.massKg.toFloat()
 
         // AUTO: a manifold clearly above the outside air means a turbo (kept for next time).
         if (s.engine == ObdAppSettings.Engine.AUTO && !s.turboSeen) {
@@ -86,6 +98,9 @@ object ObdApp {
         trip.feed(r, car, gaugeValue, now)
         val gear = gears.feed(r.speed, r.rpm)
         if (now - gearsSavedMs > GEARS_SAVE_MS) { gearsSavedMs = now; s.gears = gears.save() }
+        tests.feed(r.speed, now)
+        dyno.feed(r.speed, r.rpm, now)
+        g.speed(r.speed, now)
 
         if (now - shownMs >= SCREEN_MS) {
             shownMs = now
@@ -106,6 +121,7 @@ object ObdApp {
         s.gears = gears.save()
         trip.average?.let { s.lastAverage = it }
         if (!simulated && trip.km >= MIN_TRIP_KM) record(ObdHistory.Entry(System.currentTimeMillis(), ObdHistory.Kind.TRIP, trip.km, trip.average ?: 0f))
+        tests.disarmAll(); laps.disarm(); if (dyno.armed) dyno.toggle()
         _snapshot.value = _snapshot.value.copy(readings = null)
     }
 
@@ -121,6 +137,18 @@ object ObdApp {
     fun forgetGears() { gears.reset(); settings?.gears = "" }
 
     val learnedGears: Int @Synchronized get() = gears.gears.size
+
+    /** The phone's accelerometer, while the track page is open. */
+    @Synchronized
+    fun accelerometer(x: Float, y: Float, z: Float, ms: Long) = g.sample(x, y, z, ms)
+
+    /** A GPS point (the car's, or the phone's), while the lap page is open. */
+    @Synchronized
+    fun location(lat: Double, lon: Double, ms: Long, kmh: Float) = laps.point(lat, lon, ms, kmh)
+
+    /** Runs a change to the timers from the screen, in step with the reader. */
+    @Synchronized
+    fun <T> edit(block: ObdApp.() -> T): T = block()
 
     private fun record(e: ObdHistory.Entry) {
         // The pretend adapter's numbers don't become records.

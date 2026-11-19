@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">الحلبة</string>
+    <string name="obd_tab_lap">اللفة</string>
+    <string name="obd_tab_dyno">الداينو</string>
+    <string name="obd_track_warning">على الحلبة أو في منطقة مغلقة فقط. لا تستخدمه أبدًا على الطرق العامة.</string>
+    <string name="obd_g_title">قوة G (الهاتف)</string>
+    <string name="obd_g_accel">تسارع %1$s</string>
+    <string name="obd_g_brake">فرملة %1$s</string>
+    <string name="obd_g_lateral">جانبي %1$s</string>
+    <string name="obd_g_reset">تصفير القيم القصوى</string>
+    <string name="obd_g_hint">ثبّت الهاتف جيدًا في حامله. يتعلّم اتجاه الأمام عندما تتسارع وتفرمل.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">اضغط للتجهيز</string>
+    <string name="obd_test_stop">جاهز: أوقف السيارة</string>
+    <string name="obd_test_below">جاهز: ابقَ تحت %1$d كم/س</string>
+    <string name="obd_test_above">جاهز: تجاوز %1$d كم/س</string>
+    <string name="obd_test_ready">جاهز: انطلق</string>
+    <string name="obd_test_ready_brake">جاهز: افرمل</string>
+    <string name="obd_test_running">جارٍ القياس…</string>
+    <string name="obd_best">الأفضل %1$s</string>
+    <string name="obd_lap_arm">بدء توقيت اللفة</string>
+    <string name="obd_lap_disarm">إيقاف</string>
+    <string name="obd_lap_waiting">جاهز: خط البداية حيث تبدأ بالتحرك</string>
+    <string name="obd_lap_last">الأخيرة</string>
+    <string name="obd_lap_best">الأفضل</string>
+    <string name="obd_lap_delta">الفرق</string>
+    <string name="obd_lap_count">اللفات</string>
+    <string name="obd_lap_no_gps">لا يوجد GPS من السيارة</string>
+    <string name="obd_dyno_arm">تجهيز</string>
+    <string name="obd_dyno_disarm">إنهاء</string>
+    <string name="obd_dyno_off">جهّز، ثم اضغط الوقود بالكامل في الناقل الثاني أو الثالث من دوران منخفض حتى قرب الحد الأقصى.</string>
+    <string name="obd_dyno_armed">جاهز: ضغط كامل</string>
+    <string name="obd_dyno_peak">%1$.0f حصان عند %2$.0f د/د</string>
+    <string name="obd_dyno_note">القدرة على العجلات، مقدّرة من التسارع ووزن السيارة (الإعدادات). تقدير تقريبي وليست داينو حقيقيًا.</string>
+    <string name="obd_history_records">الأرقام القياسية</string>
+    <string name="obd_history_lap">لفة</string>
+    <string name="obd_history_dyno">داينو</string>
+    <string name="obd_set_mass">الوزن مع السائق</string>
+</resources>
