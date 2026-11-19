@@ -15,13 +15,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
+import net.prototux.aare.Settings
 import net.prototux.aare.car.CarData
+import net.prototux.aare.obd.ObdReader
+import net.prototux.aare.obd.ObdReadings
 import net.prototux.aare.service.ProjectionService
 
 /**
@@ -33,7 +38,11 @@ import net.prototux.aare.service.ProjectionService
 internal fun CarDataScreen(modifier: Modifier) {
     val car by CarData.state.collectAsState()
     val proj by ProjectionService.state.collectAsState()
-    val rows = carDataLines(car, proj)
+    val obdStatus by ObdReader.status.collectAsState()
+    val obd by ObdReader.readings.collectAsState()
+    val ctx = LocalContext.current
+    val obdOn = remember { Settings(ctx).obdAdapter }
+    val rows = carDataLines(car, proj) + if (obdOn && car.connected) obdDataLines(obdStatus, obd) else emptyList()
     if (rows.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.titleMedium,
@@ -106,3 +115,32 @@ private fun carDataLines(car: CarData.State, proj: ProjectionService.State): Lis
 
 private fun xyz(v: CarData.Vector3): String? =
     listOf(v.x, v.y, v.z).let { if (it.all { c -> c == null }) null else it.joinToString(", ") { c -> c?.let { "%.2f".format(it) } ?: "–" } }
+
+/**
+ * (label, value) for the OBD2 adapter's readings (Settings.obdAdapter), shared by the car screen and
+ * the phone's Car data page: its state first, then what the car answered.
+ */
+@Composable
+internal fun obdDataLines(status: ObdReader.Status, r: ObdReadings?): List<Pair<String, String>> {
+    val rows = ArrayList<Pair<String, String>>()
+    fun add(label: String, value: String?) { if (value != null) rows += label to value }
+    add(stringResource(R.string.obd_section), when (status.state) {
+        ObdReader.State.OFF -> stringResource(R.string.obd_status_off)
+        ObdReader.State.SEARCHING -> stringResource(R.string.obd_status_searching, status.detail)
+        ObdReader.State.CONNECTED -> stringResource(R.string.obd_status_connected, status.adapter)
+        ObdReader.State.NO_CAR -> stringResource(R.string.obd_status_no_car, status.adapter)
+        ObdReader.State.GAVE_UP -> status.detail.ifBlank { stringResource(R.string.obd_status_gave_up) }
+    })
+    if (r == null) return rows
+    add(stringResource(R.string.obd_rpm), r.rpm?.let { "%.0f".format(it) })
+    add(stringResource(R.string.obd_speed), r.speed?.let { "%.0f km/h".format(it) })
+    add(stringResource(R.string.obd_coolant), r.coolant?.let { "%.0f °C".format(it) })
+    add(stringResource(R.string.obd_intake_air), r.intakeAir?.let { "%.0f °C".format(it) })
+    add(stringResource(R.string.obd_outside), r.outside?.let { "%.0f °C".format(it) })
+    add(stringResource(R.string.obd_boost), r.boost?.let { "%+.2f bar".format(it) })
+    add(stringResource(R.string.obd_load), r.load?.let { "%.0f%%".format(it) })
+    add(stringResource(R.string.obd_battery), r.battery?.let { "%.1f V".format(it) })
+    add(stringResource(R.string.obd_fuel), r.fuel?.let { "%.0f%%".format(it) })
+    add(stringResource(R.string.obd_ethanol), r.ethanol?.let { "%.0f%%".format(it) })
+    return rows
+}
