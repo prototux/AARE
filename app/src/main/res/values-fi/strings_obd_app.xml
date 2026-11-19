@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Mittaristo</string>
+    <string name="obd_tab_trip">Matka</string>
+    <string name="obd_tab_history">Historia</string>
+    <string name="obd_tab_settings">Asetukset</string>
+    <string name="obd_simulated_badge">Simuloitu sovitin</string>
+    <string name="obd_waiting">Odotetaan sovitinta…</string>
+    <string name="obd_gear">Vaihde</string>
+    <string name="obd_oil">Öljy</string>
+    <string name="obd_fuel_use">Kulutus</string>
+    <string name="obd_pedal">Poljin</string>
+    <string name="obd_peak">huippu %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Matka</string>
+    <string name="obd_trip_time">Aika</string>
+    <string name="obd_trip_average">Keskiarvo</string>
+    <string name="obd_trip_now">Nyt</string>
+    <string name="obd_trip_range">Toimintamatka</string>
+    <string name="obd_trip_reset">Nollaa matka</string>
+    <string name="obd_trip_note">Matka on tämä yhteys autoon; se tallentuu Historiaan, kun auto katkaisee yhteyden tai nollattaessa. Kulutus on arvio, ellei auto ilmoita sitä. Toimintamatka = jäljellä oleva polttoaine × matkan keskiarvo (tankin koko Asetuksissa).</string>
+    <string name="obd_history_recent">Viimeisimmät</string>
+    <string name="obd_history_empty">Ei vielä mitään. Vähintään 1 km:n matkat tallentuvat tänne.</string>
+    <string name="obd_history_trip">Matka</string>
+    <string name="obd_history_clear">Tyhjennä historia</string>
+    <string name="obd_history_clear_confirm">Napauta uudelleen tyhjentääksesi</string>
+    <string name="obd_set_engine">Toinen mittari</string>
+    <string name="obd_set_engine_auto">Automaattinen</string>
+    <string name="obd_set_engine_turbo">Turbo (ahtopaine)</string>
+    <string name="obd_set_engine_na">Vapaasti hengittävä (kuorma)</string>
+    <string name="obd_set_rpm_max">Kierroslukumittari</string>
+    <string name="obd_set_redline">Punainen alue / vaihtovalo</string>
+    <string name="obd_set_displacement">Iskutilavuus</string>
+    <string name="obd_set_tank">Tankki</string>
+    <string name="obd_set_fuel">Polttoaine</string>
+    <string name="obd_set_fuel_petrol">Bensiini</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Etanoli (ei anturia)</string>
+    <string name="obd_set_gears">Opitut vaihteet: %1$d</string>
+    <string name="obd_set_gears_forget">Unohda</string>
+    <string name="obd_coolant_short">Jäähdytysneste</string>
+    <string name="obd_set_note">Automaattinen mittari: moottorin kuorma, kunnes ahtopainetta näkyy. Iskutilavuus: kulutukseen autoissa ilman ilmamassamittaria. Etanoli: kun autossa ei ole anturia (0 puhdas bensiini, 27 brasilialainen bensiini, 100 etanoli).</string>
+    <string name="obd_dash_card">Auto</string>
+    <string name="obd_set_card">Autokortti (aloitus)</string>
+    <string name="obd_set_card_pick">Valitse</string>
+    <string name="obd_set_card_hint">Napauta arvoja haluamassasi järjestyksessä, enintään %1$d. Ne näkyvät autokortissa.</string>
+    <string name="obd_done">Valmis</string>
+    <string name="obd_card_gauge">Ahtopaine / kuorma</string>
+    <string name="obd_card_now">Kulutus nyt</string>
+</resources>

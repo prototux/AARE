@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Instrumenter</string>
+    <string name="obd_tab_trip">Tur</string>
+    <string name="obd_tab_history">Historikk</string>
+    <string name="obd_tab_settings">Innstillinger</string>
+    <string name="obd_simulated_badge">Simulert adapter</string>
+    <string name="obd_waiting">Venter på adapteren…</string>
+    <string name="obd_gear">Gir</string>
+    <string name="obd_oil">Olje</string>
+    <string name="obd_fuel_use">Forbruk</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">topp %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Distanse</string>
+    <string name="obd_trip_time">Tid</string>
+    <string name="obd_trip_average">Snitt</string>
+    <string name="obd_trip_now">Nå</string>
+    <string name="obd_trip_range">Rekkevidde</string>
+    <string name="obd_trip_reset">Nullstill tur</string>
+    <string name="obd_trip_note">Turen er denne tilkoblingen til bilen; den lagres i Historikk når bilen kobler fra, eller ved nullstilling. Forbruket er et anslag, med mindre bilen oppgir det. Rekkevidde = drivstoff igjen × turens snitt (tankstørrelse i Innstillinger).</string>
+    <string name="obd_history_recent">Siste</string>
+    <string name="obd_history_empty">Ingenting ennå. Turer på 1 km eller mer lagres her.</string>
+    <string name="obd_history_trip">Tur</string>
+    <string name="obd_history_clear">Tøm historikk</string>
+    <string name="obd_history_clear_confirm">Trykk igjen for å tømme</string>
+    <string name="obd_set_engine">Andre måler</string>
+    <string name="obd_set_engine_auto">Automatisk</string>
+    <string name="obd_set_engine_turbo">Turbo (ladetrykk)</string>
+    <string name="obd_set_engine_na">Sugemotor (belastning)</string>
+    <string name="obd_set_rpm_max">Turteller opp til</string>
+    <string name="obd_set_redline">Rødt felt / girlys</string>
+    <string name="obd_set_displacement">Slagvolum</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Drivstoff</string>
+    <string name="obd_set_fuel_petrol">Bensin</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Etanol (ingen sensor)</string>
+    <string name="obd_set_gears">Lærte gir: %1$d</string>
+    <string name="obd_set_gears_forget">Glem</string>
+    <string name="obd_coolant_short">Kjølevæske</string>
+    <string name="obd_set_note">Automatisk måler: motorbelastning til den ser ladetrykk. Slagvolum: for forbruket i biler uten luftmassemåler. Etanol: når bilen ikke har sensor (0 ren bensin, 27 brasiliansk bensin, 100 etanol).</string>
+    <string name="obd_dash_card">Bil</string>
+    <string name="obd_set_card">Bilkort (start)</string>
+    <string name="obd_set_card_pick">Velg</string>
+    <string name="obd_set_card_hint">Trykk på verdiene i rekkefølgen du vil, opptil %1$d. De vises på bilkortet.</string>
+    <string name="obd_done">Ferdig</string>
+    <string name="obd_card_gauge">Ladetrykk / belastning</string>
+    <string name="obd_card_now">Forbruk nå</string>
+</resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Přístroje</string>
+    <string name="obd_tab_trip">Jízda</string>
+    <string name="obd_tab_history">Historie</string>
+    <string name="obd_tab_settings">Nastavení</string>
+    <string name="obd_simulated_badge">Simulovaný adaptér</string>
+    <string name="obd_waiting">Čekám na adaptér…</string>
+    <string name="obd_gear">Stupeň</string>
+    <string name="obd_oil">Olej</string>
+    <string name="obd_fuel_use">Spotřeba</string>
+    <string name="obd_pedal">Pedál</string>
+    <string name="obd_peak">špička %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Vzdálenost</string>
+    <string name="obd_trip_time">Čas</string>
+    <string name="obd_trip_average">Průměr</string>
+    <string name="obd_trip_now">Teď</string>
+    <string name="obd_trip_range">Dojezd</string>
+    <string name="obd_trip_reset">Vynulovat jízdu</string>
+    <string name="obd_trip_note">Jízda je toto připojení k autu; uloží se do Historie, když se auto odpojí, nebo při vynulování. Spotřeba je odhad, pokud ji auto nehlásí. Dojezd = zbývající palivo × průměr jízdy (objem nádrže v Nastavení).</string>
+    <string name="obd_history_recent">Nedávné</string>
+    <string name="obd_history_empty">Zatím nic. Jízdy od 1 km se ukládají sem.</string>
+    <string name="obd_history_trip">Jízda</string>
+    <string name="obd_history_clear">Vymazat historii</string>
+    <string name="obd_history_clear_confirm">Klepněte znovu pro vymazání</string>
+    <string name="obd_set_engine">Druhý budík</string>
+    <string name="obd_set_engine_auto">Automaticky</string>
+    <string name="obd_set_engine_turbo">Turbo (plnicí tlak)</string>
+    <string name="obd_set_engine_na">Atmosférický (zatížení)</string>
+    <string name="obd_set_rpm_max">Otáčkoměr do</string>
+    <string name="obd_set_redline">Červené pole / řazení</string>
+    <string name="obd_set_displacement">Objem motoru</string>
+    <string name="obd_set_tank">Nádrž</string>
+    <string name="obd_set_fuel">Palivo</string>
+    <string name="obd_set_fuel_petrol">Benzín</string>
+    <string name="obd_set_fuel_diesel">Nafta</string>
+    <string name="obd_set_ethanol">Etanol (bez čidla)</string>
+    <string name="obd_set_gears">Naučené stupně: %1$d</string>
+    <string name="obd_set_gears_forget">Zapomenout</string>
+    <string name="obd_coolant_short">Chladivo</string>
+    <string name="obd_set_note">Automatický budík: zatížení motoru, dokud neuvidí plnicí tlak. Objem motoru: pro spotřebu u aut bez měřiče hmotnosti vzduchu. Etanol: když auto nemá čidlo (0 čistý benzín, 27 brazilský benzín, 100 etanol).</string>
+    <string name="obd_dash_card">Auto</string>
+    <string name="obd_set_card">Karta Auto (domů)</string>
+    <string name="obd_set_card_pick">Vybrat</string>
+    <string name="obd_set_card_hint">Klepněte na hodnoty v pořadí, jaké chcete, nejvýše %1$d. Zobrazí se na kartě Auto.</string>
+    <string name="obd_done">Hotovo</string>
+    <string name="obd_card_gauge">Plnicí tlak / zatížení</string>
+    <string name="obd_card_now">Spotřeba teď</string>
+</resources>
