@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car.obd
 
+import android.location.Location
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +46,8 @@ import java.text.DateFormat
 import java.util.Date
 
 private enum class ObdTab(val label: Int) {
-    DASH(R.string.obd_tab_dash), TRIP(R.string.obd_tab_trip), HISTORY(R.string.obd_tab_history), SETTINGS(R.string.obd_tab_settings),
+    DASH(R.string.obd_tab_dash), TRIP(R.string.obd_tab_trip), TRACK(R.string.obd_tab_track), LAP(R.string.obd_tab_lap),
+    DYNO(R.string.obd_tab_dyno), HISTORY(R.string.obd_tab_history), SETTINGS(R.string.obd_tab_settings),
 }
 
 /** The reference app area the sizes are drawn for, in dp. */
@@ -56,9 +58,10 @@ private const val REF_HEIGHT = 600f
  * The OBD2 app on the car screen: everything the adapter gives, in tabs. Only listed with the
  * OBD2 setting on (see CarRuntime), so a car without an adapter never sees it.
  * Every page fits the screen at once, whatever its size or shape: nothing scrolls.
+ * [location] gives the car's GPS, for the lap timer.
  */
 @Composable
-fun ObdAppScreen(modifier: Modifier) {
+fun ObdAppScreen(modifier: Modifier, location: () -> Location?) {
     val ctx = LocalContext.current
     val settings = remember { ObdApp.settings(ctx) }
     var tab by rememberSaveable { mutableStateOf(ObdTab.DASH) }
@@ -85,6 +88,9 @@ fun ObdAppScreen(modifier: Modifier) {
                     } else when (tab) {
                         ObdTab.DASH -> DashTab(snap, settings, wide)
                         ObdTab.TRIP -> TripTab(snap, wide)
+                        ObdTab.TRACK -> TrackTab(wide)
+                        ObdTab.LAP -> LapTab(location, wide)
+                        ObdTab.DYNO -> DynoTab(wide)
                         ObdTab.HISTORY -> HistoryTab(wide)
                         ObdTab.SETTINGS -> SettingsTab(settings, wide)
                     }
@@ -202,8 +208,15 @@ private fun HistoryTab(wide: Boolean) {
         Text(stringResource(R.string.obd_history_empty), fontSize = ssp(18f), color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
+    val records = remember(entries) { ObdHistory.records(entries) }
     val dates = remember { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT) }
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(sdp(8f))) {
+        if (records.isNotEmpty()) {
+            Text(stringResource(R.string.obd_history_records), fontSize = ssp(18f), fontWeight = FontWeight.SemiBold)
+            val cols = if (wide) 4 else 2
+            val tiles = records.values.map { e -> @Composable { m: Modifier -> Stat(kindName(e.kind), valueText(e), m, footer = dates.format(Date(e.timeMs))) } }
+            TileGrid(tiles, cols, Modifier.fillMaxWidth().weight((tiles.size + cols - 1) / cols * 1f))
+        }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.obd_history_recent), fontSize = ssp(18f), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             Chip(stringResource(if (confirm) R.string.obd_history_clear_confirm else R.string.obd_history_clear)) {
@@ -230,11 +243,22 @@ private fun HistoryTab(wide: Boolean) {
 @Composable
 internal fun kindName(k: ObdHistory.Kind) = stringResource(when (k) {
     ObdHistory.Kind.TRIP -> R.string.obd_history_trip
+    ObdHistory.Kind.ZERO_100 -> R.string.obd_test_0_100
+    ObdHistory.Kind.KMH_80_120 -> R.string.obd_test_80_120
+    ObdHistory.Kind.QUARTER_MILE -> R.string.obd_test_quarter
+    ObdHistory.Kind.BRAKE_100_0 -> R.string.obd_test_brake
+    ObdHistory.Kind.LAP -> R.string.obd_history_lap
+    ObdHistory.Kind.DYNO -> R.string.obd_history_dyno
 })
 
 @Composable
 private fun valueText(e: ObdHistory.Entry) = when (e.kind) {
     ObdHistory.Kind.TRIP -> "%.1f km".format(e.value) + if (e.second > 0f) " · %.1f %s".format(e.second, stringResource(R.string.obd_unit_kmpl)) else ""
+    ObdHistory.Kind.BRAKE_100_0 -> "%.1f m".format(e.value)
+    ObdHistory.Kind.QUARTER_MILE -> "%.2f s".format(e.value) + if (e.second > 0f) " · %.0f km/h".format(e.second) else ""
+    ObdHistory.Kind.LAP -> time(e.value)
+    ObdHistory.Kind.DYNO -> "%.0f hp".format(e.value)
+    else -> "%.2f s".format(e.value)
 }
 
 // --- Settings: two columns side by side on a wide screen, all at once ---
@@ -248,6 +272,7 @@ private fun SettingsTab(settings: ObdAppSettings, wide: Boolean) {
     var tank by remember { mutableIntStateOf(settings.tankLiters) }
     var fuel by remember { mutableStateOf(settings.fuel) }
     var ethanol by remember { mutableIntStateOf(settings.ethanolPercent) }
+    var mass by remember { mutableIntStateOf(settings.massKg) }
     var gears by remember { mutableIntStateOf(ObdApp.learnedGears) }
     var picking by remember { mutableStateOf(false) }
     if (picking) { CardPicker(settings, wide) { picking = false }; return }
@@ -265,6 +290,7 @@ private fun SettingsTab(settings: ObdAppSettings, wide: Boolean) {
         { m -> Stepper(stringResource(R.string.obd_set_displacement), cc, "cm³", 100, 600..8000, bigStep = 1000, modifier = m) { cc = it; settings.displacementCc = it } },
         { m -> Stepper(stringResource(R.string.obd_set_ethanol), ethanol, "%", 1, 0..100, bigStep = 10, modifier = m) { ethanol = it; settings.ethanolPercent = it } },
         { m -> Stepper(stringResource(R.string.obd_set_tank), tank, "L", 1, 20..150, bigStep = 10, modifier = m) { tank = it; settings.tankLiters = it } },
+        { m -> Stepper(stringResource(R.string.obd_set_mass), mass, "kg", 10, 500..4000, bigStep = 100, modifier = m) { mass = it; settings.massKg = it } },
         { m ->
             Column(m, verticalArrangement = Arrangement.Center) {
                 Text(stringResource(R.string.obd_set_card), fontSize = ssp(17f), maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -228,6 +228,14 @@ internal fun Note(text: String, modifier: Modifier = Modifier, maxLines: Int = 2
     Text(text, modifier, fontSize = ssp(14f), color = color, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
 }
 
+@Composable
+internal fun Warning(text: String) = Note(text, maxLines = 1, color = ObdRed)
+
 internal const val DASH = "--"
 
 internal fun fmt(v: Float?, pattern: String) = v?.let { pattern.format(it) } ?: DASH
+
+internal fun time(seconds: Float?) = seconds?.let {
+    val m = (it / 60).toInt(); val s = it - m * 60
+    if (m > 0) "%d:%05.2f".format(m, s) else "%.2f".format(s)
+} ?: DASH

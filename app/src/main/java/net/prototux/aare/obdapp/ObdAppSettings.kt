@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 /**
- * The car's details the OBD2 app needs for what the adapter can't tell (fuel use, range),
+ * The car's details the OBD2 app needs for what the adapter can't tell (fuel use, range, power),
  * kept apart from AARE's own settings: the whole app goes away with [net.prototux.aare.Settings.obdAdapter].
  */
 class ObdAppSettings(context: Context) {
@@ -58,6 +58,11 @@ class ObdAppSettings(context: Context) {
             .split(',').mapNotNull { id -> CardValue.entries.firstOrNull { it.id == id } }.distinct()
         set(v) = prefs.edit { putString("card_values", v.distinct().take(CardValue.MAX).joinToString(",") { it.id }) }
 
+    /** The car with the driver, kg: for the dyno. */
+    var massKg: Int
+        get() = prefs.getInt("mass", 1300)
+        set(v) = prefs.edit { putInt("mass", v) }
+
     /** The gear ratios learned while driving (km/h per 1000 rpm), "" = none yet. */
     var gears: String
         get() = prefs.getString("gears", "") ?: ""
@@ -68,7 +73,7 @@ class ObdAppSettings(context: Context) {
         get() = prefs.getFloat("last_average", 0f)
         set(v) = prefs.edit { putFloat("last_average", v) }
 
-    fun car() = CarSpec(displacementCc, fuel, ethanolPercent, tankLiters)
+    fun car() = CarSpec(displacementCc, fuel, ethanolPercent, tankLiters, massKg)
 }
 
 /** A value the dashboard's Car card can show. */
@@ -97,4 +102,5 @@ data class CarSpec(
     val fuel: ObdAppSettings.Fuel = ObdAppSettings.Fuel.PETROL,
     val ethanolPercent: Int = 0,
     val tankLiters: Int = 50,
+    val massKg: Int = 1300,
 )
