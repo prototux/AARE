@@ -97,3 +97,30 @@ val FrostedGlassTheme: CarThemeSpec = run {
         cardBorder = 1.dp,
     )
 }
+
+/** Dark glass: smoky, almost black glass over a deep gradient with a faint tint, dark by day too. */
+val DarkGlassTheme: CarThemeSpec = run {
+    fun white(alpha: Float) = Color.White.copy(alpha = alpha)
+    val night = FrostedGlassTheme.night.copy(
+        primary = Color(0xFFB4C6FF),
+        onPrimary = Color(0xFF0E1A3A),
+        surface = white(0.06f),
+        surfaceVariant = white(0.09f),
+        surfaceContainerLow = white(0.05f),
+        surfaceContainer = white(0.07f),
+        surfaceContainerHigh = white(0.10f),
+        surfaceContainerHighest = white(0.13f),
+        outline = white(0.18f),
+        outlineVariant = white(0.10f),
+    )
+    FrostedGlassTheme.copy(
+        id = "dark_glass",
+        name = "Dark glass",
+        nameRes = R.string.theme_dark_glass,
+        nightBackdrop = listOf(Color(0xFF07080C), Color(0xFF141026), Color(0xFF0A1418)),
+        dayBackdrop = listOf(Color(0xFF07080C), Color(0xFF141026), Color(0xFF0A1418)),
+        night = night,
+        day = night,
+        dayColors = FrostedGlassTheme.nightColors,
+    )
+}
