@@ -192,6 +192,7 @@
     <string name="setup_style_custom">Eigene</string>
     <string name="theme_high_contrast">Hoher Kontrast</string>
     <string name="theme_night">Nacht</string>
+    <string name="theme_frosted_glass">Milchglas</string>
     <string name="theme_retro">Retro</string>
     <string name="setup_choice_accent">Akzentfarbe</string>
     <string name="accent_theme">Vom Design</string>

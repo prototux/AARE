@@ -376,6 +376,7 @@
     <string name="setup_style_custom">Custom</string>
     <string name="theme_high_contrast">High contrast</string>
     <string name="theme_night">Night</string>
+    <string name="theme_frosted_glass">Frosted glass</string>
     <string name="theme_retro">Retro</string>
     <string name="setup_choice_accent">Accent color</string>
     <string name="accent_theme">Theme\'s</string>

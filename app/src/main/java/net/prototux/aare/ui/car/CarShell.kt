@@ -96,6 +96,7 @@ import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
@@ -124,7 +125,7 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.

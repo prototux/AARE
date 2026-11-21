@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarFormat
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -57,7 +58,7 @@ internal fun ClassicShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         Box(Modifier.fillMaxSize().then(modifier)) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {

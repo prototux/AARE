@@ -11,6 +11,9 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
@@ -136,7 +139,21 @@ data class CarThemeSpec(
     val tintIcons: Boolean = false,
     /** The clock on a seven-segment display ([SegmentFont]), its unlit segments faintly behind. */
     val segmentClock: Boolean = false,
+    /**
+     * A gradient behind the whole screen, for themes whose surfaces are translucent (glass); empty:
+     * the background color alone.
+     */
+    val dayBackdrop: List<Color> = emptyList(),
+    val nightBackdrop: List<Color> = emptyList(),
 )
+
+/** The theme's backdrop gradient behind a whole screen, in the colors now applied; none when it has none. */
+@Composable
+fun Modifier.carBackdrop(): Modifier {
+    val theme = LocalCarTheme.current
+    val stops = if (MaterialTheme.colorScheme == theme.night) theme.nightBackdrop else theme.dayBackdrop
+    return if (stops.size < 2) this else background(Brush.linearGradient(stops))
+}
 
 /**
  * DSEG7 Classic, a seven-segment display font (SIL Open Font License 1.1, bundled with its licence

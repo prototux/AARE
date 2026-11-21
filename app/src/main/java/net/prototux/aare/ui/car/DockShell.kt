@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarTheme
 import net.prototux.aare.ui.theme.appIconFilter
@@ -63,7 +64,7 @@ internal fun DockShell(
 ) {
     // A Surface, not a background: it also sets the content colour, which text without its own
     // colour (song titles, events) takes. Without it that text is black, unreadable at night.
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
