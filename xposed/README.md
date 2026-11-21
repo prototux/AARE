@@ -25,7 +25,7 @@ module remains the way to get system audio; see [docs/xposed.md](../docs/xposed.
 
 ## Scope
 
-`src/main/resources/META-INF/xposed/scope.list` lists `android` (for the system hooks) and a few
+`src/main/resources/META-INF/xposed/scope.list` lists `system` (for the system hooks) and a few
 common client apps. **Add your own car apps** to the module's scope in the LSPosed/Vector manager —
 a Car App Library app is only hooked if the module is enabled for it.
 
