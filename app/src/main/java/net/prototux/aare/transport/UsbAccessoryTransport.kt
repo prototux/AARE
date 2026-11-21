@@ -24,9 +24,9 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     // Reads from an accessory must use buffers of at least one USB bulk transfer (16 kB),
     // otherwise the kernel drops the rest of the transfer. FrameReader buffers 64 kB.
     override val input: InputStream = FileInputStream(fd.fileDescriptor)
-    // The accessory fd has no kernel send buffer (unlike a TCP socket), so an unbuffered write
-    // blocks per fragment on the USB bulk endpoint. Buffer so FrameWriter's per-fragment writes
-    // coalesce into one write per message at its flush() — fewer blocking syscalls on the pipe.
+    // The accessory fd has no kernel send buffer (unlike a TCP socket). The buffer joins a frame's
+    // header and body into one write; FrameWriter flushes after every frame, so each frame still
+    // leaves as its own bulk transfer (some head units parse exactly one frame per transfer).
     override val output: OutputStream = BufferedOutputStream(FileOutputStream(fd.fileDescriptor), 64 * 1024)
 
     private val closed = java.util.concurrent.atomic.AtomicBoolean(false)
