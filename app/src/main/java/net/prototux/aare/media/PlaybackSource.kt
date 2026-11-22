@@ -31,6 +31,9 @@ internal data class SourceState(
     val showPause: Boolean = false,
     val canPrevious: Boolean = false,
     val canNext: Boolean = false,
+    /** The app keeps the skip buttons' slots even while they can't be used (see [transportRow]). */
+    val reservePrevious: Boolean = false,
+    val reserveNext: Boolean = false,
     val canSeek: Boolean = false,
     val actions: List<CustomAction> = emptyList(),
     val queue: List<QueueEntry> = emptyList(),
