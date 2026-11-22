@@ -1,0 +1,25 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_UPDATE_HU_UI_CONFIG_REQUEST (phone -> head unit); sent
+// it: theming tokens for the head unit's own UI. Names from its UiStyle classes.
+message UpdateHuUiConfigRequest {
+    optional UiStyle ui_style = 1;
+}
+
+message UiStyle {
+    repeated UiStyleToken light_tokens = 1;
+    repeated UiStyleToken dark_tokens = 2;
+}
+
+message UiStyleToken {
+    optional string name = 1;
+    oneof value {
+        UiStyleColorToken color = 2;
+    }
+}
+
+message UiStyleColorToken {
+    optional uint32 color = 1;
+}

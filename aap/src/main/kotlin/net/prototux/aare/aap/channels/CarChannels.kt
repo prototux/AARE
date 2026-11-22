@@ -1,6 +1,8 @@
 package net.prototux.aare.aap.channels
 
 import aap_protobuf.service.ServiceOuterClass.Service
+import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationDataOuterClass.BluetoothAuthenticationData
+import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationResultOuterClass.BluetoothAuthenticationResult
 import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.bluetooth.message.BluetoothPairingRequestOuterClass.BluetoothPairingRequest
 import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
@@ -19,6 +21,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorRequestOuterClass.SensorRequest
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
+import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.AapMessage
 import net.prototux.aare.aap.BluetoothMsg
 import net.prototux.aare.aap.InputMsg
@@ -40,7 +43,8 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     // The main touch panel: a car with a cluster/second screen lists that one as is_secondary.
     val touchScreen = service.inputSourceService.touchscreenList.firstOrNull { !it.isSecondary }
         ?: service.inputSourceService.touchscreenList.firstOrNull()
-    val touchPad = service.inputSourceService.touchpadList.firstOrNull()
+    @Volatile var touchPad = service.inputSourceService.touchpadList.firstOrNull()
+        private set
     /** The feedback (a click, a haptic pulse) the car can play when asked, from its descriptor. */
     val feedbackEvents: Set<FeedbackEvent> = service.inputSourceService.feedbackEventsSupportedList.toSet()
 
@@ -58,6 +62,13 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
         send(InputMsg.KEY_BINDING_REQUEST, KeyBindingRequest.newBuilder().addAllKeycodes(keycodes).build())
     }
 
+    /** An update only changes the first touchpad's sensitivity. */
+    override fun onServiceUpdate(update: Service) {
+        val pad = touchPad ?: return
+        val updated = update.inputSourceService.touchpadList.firstOrNull() ?: return
+        if (updated.hasSensitivity()) touchPad = pad.toBuilder().setSensitivity(updated.sensitivity).build()
+    }
+
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {
             InputMsg.INPUT_REPORT -> listener.onInput(InputReport.parseFrom(msg.bodyBytes()))
@@ -66,7 +77,13 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     }
 }
 
-/** Car sensors: driving status, night mode, GPS, speed, gear, fuel, odometer, doors, tyres... */
+/**
+ * Car sensors: driving status, night mode, GPS, speed, gear, fuel, odometer, doors, tyres...
+ *
+ * Every sensor the car offers is asked for when the channel opens (car apps, the assistant, the
+ * dashboard and the car data pages read them), driving status first. The requests go out one at
+ * a time (see [SensorRequests]).
+ */
 class SensorChannel(service: Service, private val listener: Listener) : ServiceChannel(service, "sensors") {
     interface Listener {
         fun onSensors(batch: SensorBatch)
@@ -75,26 +92,33 @@ class SensorChannel(service: Service, private val listener: Listener) : ServiceC
     /** Sensors of a type this build doesn't know read back as the default (LOCATION): skip them. */
     val available: List<SensorType> = service.sensorSourceService.sensorsList.filter { it.hasSensorType() }.map { it.sensorType }
 
-    override fun onOpened() {
-        // Everything the car offers (it only advertises what it has), the ones that drive the UI first.
-        for (type in WANTED.filter { it in available } + available.filter { it !in WANTED }.distinct()) {
+    private val requests = SensorRequests(
+        // Driving status and the ones that drive the UI first, then whatever else the car offers.
+        order = (WANTED.filter { it in available } + available.filter { it !in WANTED }).distinct(),
+        periodOf = { type ->
             // min_update_period's unit isn't documented by AAP; assumed milliseconds. High-rate
             // sensors would otherwise flood the channel, so throttle just those.
-            val periodMs = if (type in HIGH_RATE) 500L else 0L
-            send(SensorMsg.REQUEST, SensorRequest.newBuilder().setType(type).setMinUpdatePeriod(periodMs).build())
-        }
-    }
+            if (type in HIGH_RATE) 500L else 0L
+        },
+        send = { type, period -> send(SensorMsg.REQUEST, SensorRequest.newBuilder().setType(type).setMinUpdatePeriod(period).build()) },
+        schedule = { task -> session.schedule(task, SensorRequests.TIMEOUT_MS, TimeUnit.MILLISECONDS) },
+        log = { session.log.i("sensors: $it") },
+    )
+
+    override fun onOpened() = requests.start()
 
     override fun onMessage(msg: AapMessage) {
         when (msg.id) {
             SensorMsg.BATCH -> listener.onSensors(SensorBatch.parseFrom(msg.bodyBytes()))
-            // A refused sensor just stays silent.
-            SensorMsg.RESPONSE, SensorMsg.ERROR -> Unit
+            // A refused sensor just stays silent; either answer lets the next request go.
+            SensorMsg.RESPONSE, SensorMsg.ERROR -> requests.answered()
         }
     }
 
+    override fun onClosed() = requests.stop()
+
     companion object {
-        /** Requested first; every other advertised sensor (RPM, odometer, doors, tyres...) follows. */
+        /** Requested first, driving status before anything; every other one the car offers follows. */
         val WANTED = listOf(
             SensorType.SENSOR_DRIVING_STATUS_DATA,
             SensorType.SENSOR_NIGHT_MODE,
@@ -238,14 +262,22 @@ class WifiProjectionChannel(service: Service) : ServiceChannel(service, "wifi") 
  * Bluetooth: the head unit gives its address; the phone asks it to pair so calls go through the
  * car (HFP). Android hides the phone's own address from normal apps, so [phoneAddress] may be
  * unknown, in which case we just let the user pair the usual way.
+ *
+ * While the car pairs, it sends the passkey or PIN it shows ([Listener.onAuthenticationData]); the
+ * phone checks it against Android's pairing request and answers with [sendAuthenticationResult].
  */
 class BluetoothChannel(service: Service, private val phoneAddress: String?, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
     interface Listener {
         fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {}
+        /** The passkey or PIN the head unit shows for the pairing in progress. Reader thread. */
+        fun onAuthenticationData(authData: String) {}
     }
 
     val carAddress: String = service.bluetoothService.carAddress
     val methods: List<BluetoothPairingMethod> = service.bluetoothService.supportedPairingMethodsList
+
+    /** The car sent authentication data that hasn't been answered yet. */
+    @Volatile private var authDataPending = false
 
     override fun onOpened() {
         // Announce the phone to the car. Some head units withhold the projected screen until they
@@ -255,14 +287,35 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
         phoneAddress?.let { requestPairing(it) }
     }
 
+    /**
+     * Announces the phone again, once the session is running. A VW Play (Visteon MIB Regio) drops
+     * its Bluetooth link to the phone when projection starts, answers the request sent at channel
+     * open with "already paired", and only connects hands-free again (calls through the car) when
+     * the request comes after the session is up. Only for cars whose vehicles.json rule asks for it
+     * (`pairAgainWhenRunning`). Returns whether it was sent: not when the channel isn't open or the
+     * phone's address is unknown.
+     */
+    fun announceAgain(): Boolean {
+        if (!opened) return false
+        val address = phoneAddress ?: return false
+        requestPairing(address)
+        return true
+    }
+
     fun requestPairing(phoneAddress: String) {
-        val method = when {
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
-            methods.isNotEmpty() -> methods.first()
-            else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-        }
-        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(phoneAddress).setPairingMethod(method).build())
+        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(canonicalAddress(phoneAddress)).setPairingMethod(pairingMethod(methods)).build())
+    }
+
+    /**
+     * Tells the car whether its authentication data matched: once per authentication data it sent,
+     * never unasked. Head units before protocol 1.5 don't know this message, and it isn't sent to
+     * them. False when not sent.
+     */
+    fun sendAuthenticationResult(status: MessageStatus): Boolean {
+        if (!authDataPending || !session.headUnitAtLeast(1, 5)) return false
+        authDataPending = false
+        send(BluetoothMsg.AUTHENTICATION_RESULT, BluetoothAuthenticationResult.newBuilder().setStatus(status).build())
+        return true
     }
 
     override fun onMessage(msg: AapMessage) {
@@ -271,6 +324,37 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
                 val r = BluetoothPairingResponse.parseFrom(msg.bodyBytes())
                 listener.onPairingResponse(r.alreadyPaired, r.status.number == 0)
             }
+            BluetoothMsg.AUTHENTICATION_DATA -> {
+                // The pairing method it carries is ignored: Android's
+                // own pairing request says which method is in use.
+                val d = BluetoothAuthenticationData.parseFrom(msg.bodyBytes())
+                if (d.hasAuthData()) {
+                    authDataPending = true
+                    listener.onAuthenticationData(d.authData)
+                }
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * The address as Android writes it (upper case, colons). Head units compare it as text with
+         * the phones they have paired: a VW Play (Visteon MIB Regio) answered a lower-case address
+         * with a plain "accepted", not "already paired", and listed the phone twice, once for
+         * Bluetooth and once for the projection, so calls didn't go through the car (#117).
+         */
+        fun canonicalAddress(address: String): String = address.trim().uppercase(java.util.Locale.ROOT)
+
+        /**
+         * The pairing method to ask for: numeric comparison when the car offers it, else PIN, else
+         * the first method the car lists, else numeric comparison. Head units that pair today keep
+         * getting the method they pair with; "unavailable" is never asked for.
+         */
+        fun pairingMethod(offered: List<BluetoothPairingMethod>): BluetoothPairingMethod = when {
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
+            else -> offered.firstOrNull { it != BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE }
+                ?: BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
         }
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Home" in the car launcher: a house on a round tile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp" android:height="96dp"
+    android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#FF3F7F5F" android:pathData="M24,0a24,24 0 1 1 0,48a24,24 0 1 1 0,-48z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.4"
+        android:strokeLineJoin="round" android:strokeLineCap="round"
+        android:pathData="M13,23L24,13.5L35,23M16.5,20.5V34H31.5V20.5" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M21.5,34V27.5H26.5V34z" />
+</vector>

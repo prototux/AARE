@@ -26,14 +26,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -65,7 +71,8 @@ internal val LocalPanControl = compositionLocalOf<PanControl?> { null }
  * Draws one Action and wires it: BACK pops the app's screen, APP_ICON shows the app icon,
  * PAN toggles the map's pan mode, everything else sends its OnClickDelegate (parked-only aware).
  * [fill] lets a titled action share a row's width; [forcePrimary] draws it filled regardless of
- * FLAG_PRIMARY (the route preview's Navigate button).
+ * FLAG_PRIMARY (the route preview's Navigate button). With [countdownMillis] (the row's
+ * [RowCountdown]) the button fills up over that time, then clicks itself.
  */
 @Composable
 internal fun ActionView(
@@ -74,6 +81,7 @@ internal fun ActionView(
     modifier: Modifier = Modifier,
     fill: Boolean = false,
     forcePrimary: Boolean = false,
+    countdownMillis: Long? = null,
 ) {
     val host = LocalTemplateHost.current
     val pan = LocalPanControl.current
@@ -141,6 +149,12 @@ internal fun ActionView(
         else -> height
     }
     val hasIcon = vec != null || icon != null
+    val fire = onClick
+    val countdown = if (countdownMillis != null && fire != null && action.isEnabled) {
+        actionCountdown(listOf(action.type, label.plain(), countdownMillis), countdownMillis, fire)
+    } else {
+        null
+    }
     val iconSize = if (titled) 30.dp else d.iconSize
     ActionSurface(
         bg = bg,
@@ -151,6 +165,8 @@ internal fun ActionView(
         onClick = onClick,
         modifier = modifier,
         horizontalPadding = if (titled) (if (look == ActionLook.Button) 28.dp else 20.dp) else 0.dp,
+        countdown = countdown,
+        countdownColor = fg.copy(alpha = 0.24f),
     ) {
         if (vec != null) {
             Icon(vec, label.plain().ifEmpty { null }, tint = fg, modifier = Modifier.size(iconSize))
@@ -179,6 +195,8 @@ private fun ActionSurface(
     onClick: (() -> Unit)?,
     modifier: Modifier,
     horizontalPadding: Dp,
+    countdown: (() -> Float)? = null,
+    countdownColor: Color = Color.Unspecified,
     content: @Composable RowScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(percent = 50)
@@ -189,6 +207,7 @@ private fun ActionSurface(
             .widthIn(min = minWidth)
             .clip(shape)
             .background(bg)
+            .then(if (countdown != null) Modifier.drawBehind { drawCountdown(countdown(), countdownColor) } else Modifier)
             .then(if (onClick != null && enabled) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
             .alpha(if (enabled) 1f else 0.38f)
             .padding(horizontal = horizontalPadding),
@@ -197,6 +216,23 @@ private fun ActionSurface(
         content = content,
     )
 }
+
+/** The part of a countdown done so far, filling the button from its start edge. */
+private fun DrawScope.drawCountdown(progress: Float, color: Color) {
+    val w = size.width * progress.coerceIn(0f, 1f)
+    val x = if (layoutDirection == LayoutDirection.Rtl) size.width - w else 0f
+    drawRect(color, topLeft = Offset(x, 0f), size = Size(w, size.height))
+}
+
+/** The countdown of a row of [actions] for the current app ([rowCountdown]). */
+@Composable
+internal fun rememberRowCountdown(actions: List<Action>): RowCountdown? {
+    val timed = LocalTemplateHost.current.timedActionParams
+    return remember(actions, timed) { rowCountdown(actions, timed) }
+}
+
+/** The countdown of the [index]th action of the row, if it's the one counting down. */
+internal fun RowCountdown?.millisFor(index: Int): Long? = this?.takeIf { it.index == index }?.millis
 
 /** An ActionStrip as a row (top end of a screen) or a column (map controls). */
 @Composable
@@ -226,9 +262,10 @@ internal fun FloatingActions(actions: List<Action>, modifier: Modifier = Modifie
 @Composable
 internal fun ActionButtons(actions: List<Action>, modifier: Modifier = Modifier, fill: Boolean = false) {
     if (actions.isEmpty()) return
+    val countdown = rememberRowCountdown(actions)
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-        actions.forEach { a ->
-            ActionView(a, ActionLook.Button, if (fill) Modifier.weight(1f) else Modifier, fill = fill)
+        actions.forEachIndexed { i, a ->
+            ActionView(a, ActionLook.Button, if (fill) Modifier.weight(1f) else Modifier, fill = fill, countdownMillis = countdown.millisFor(i))
         }
     }
 }
