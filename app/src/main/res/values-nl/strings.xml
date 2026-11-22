@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Onder</string>
     <string name="setup_toggle_dark_bar_title">Donkere balk</string>
     <string name="setup_toggle_dark_bar_subtitle">Houd de balk donker, ook bij dagkleuren</string>
+    <string name="setup_choice_text_size">Tekstgrootte</string>
+    <string name="setup_choice_control_size">Grootte van bedieningselementen</string>
+    <string name="setup_choice_size_default">Standaard</string>
+    <string name="setup_choice_size_larger">Groter</string>
+    <string name="setup_choice_size_largest">Grootst</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Kaarten</string>
     <string name="dash_cards_hint">De eerste kaart krijgt de meeste ruimte; de andere vullen de rest van het scherm. Een kaart zonder iets te tonen laat zijn plek aan de volgende.</string>

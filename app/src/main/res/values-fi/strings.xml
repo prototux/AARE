@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Alaosa</string>
     <string name="setup_toggle_dark_bar_title">Tumma palkki</string>
     <string name="setup_toggle_dark_bar_subtitle">Pidä palkki tummana myös vaaleilla väreillä</string>
+    <string name="setup_choice_text_size">Tekstin koko</string>
+    <string name="setup_choice_control_size">Säätimien koko</string>
+    <string name="setup_choice_size_default">Oletus</string>
+    <string name="setup_choice_size_larger">Suurempi</string>
+    <string name="setup_choice_size_largest">Suurin</string>
     <string name="setup_section_dashboard">Kojelauta</string>
     <string name="dash_cards_title">Kortit</string>
     <string name="dash_cards_hint">Ensimmäinen kortti saa eniten tilaa, muut täyttävät loput näytöstä. Kortti, jolla ei ole näytettävää, antaa paikkansa seuraavalle.</string>

@@ -83,6 +83,11 @@
     <string name="setup_choice_bottom">底部</string>
     <string name="setup_toggle_dark_bar_title">深色导航条</string>
     <string name="setup_toggle_dark_bar_subtitle">即使使用日间配色，导航条仍保持深色</string>
+    <string name="setup_choice_text_size">文字大小</string>
+    <string name="setup_choice_control_size">控件大小</string>
+    <string name="setup_choice_size_default">默认</string>
+    <string name="setup_choice_size_larger">较大</string>
+    <string name="setup_choice_size_largest">最大</string>
     <string name="setup_section_dashboard">仪表盘</string>
     <string name="dash_cards_title">卡片</string>
     <string name="dash_cards_hint">第一张卡片占用最多空间，其余卡片填满屏幕剩下的部分。没有内容可显示的卡片会把位置让给下一张。</string>

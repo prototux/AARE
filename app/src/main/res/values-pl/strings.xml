@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Dół</string>
     <string name="setup_toggle_dark_bar_title">Ciemny pasek</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachowaj ciemny pasek nawet z jasnymi kolorami</string>
+    <string name="setup_choice_text_size">Rozmiar tekstu</string>
+    <string name="setup_choice_control_size">Rozmiar elementów sterujących</string>
+    <string name="setup_choice_size_default">Domyślny</string>
+    <string name="setup_choice_size_larger">Większy</string>
+    <string name="setup_choice_size_largest">Największy</string>
     <string name="setup_section_dashboard">Panel</string>
     <string name="dash_cards_title">Karty</string>
     <string name="dash_cards_hint">Pierwsza karta dostaje najwięcej miejsca, pozostałe wypełniają resztę ekranu. Karta, która nie ma nic do pokazania, ustępuje miejsca następnej.</string>

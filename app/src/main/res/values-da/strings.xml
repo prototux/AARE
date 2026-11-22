@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Nederst</string>
     <string name="setup_toggle_dark_bar_title">Mørk bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Hold baren mørk, selv med dagfarver</string>
+    <string name="setup_choice_text_size">Tekststørrelse</string>
+    <string name="setup_choice_control_size">Størrelse på knapper</string>
+    <string name="setup_choice_size_default">Standard</string>
+    <string name="setup_choice_size_larger">Større</string>
+    <string name="setup_choice_size_largest">Størst</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det første kort får mest plads; de andre fylder resten af skærmen. Et kort uden noget at vise giver sin plads til det næste.</string>

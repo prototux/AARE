@@ -85,6 +85,11 @@
     <string name="setup_choice_bottom">Dole</string>
     <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_choice_text_size">Velikost textu</string>
+    <string name="setup_choice_control_size">Velikost ovládacích prvků</string>
+    <string name="setup_choice_size_default">Výchozí</string>
+    <string name="setup_choice_size_larger">Větší</string>
+    <string name="setup_choice_size_largest">Největší</string>
     <string name="setup_section_dashboard">Nástěnka</string>
     <string name="dash_cards_title">Karty</string>
     <string name="dash_cards_hint">První karta dostane nejvíc místa, ostatní vyplní, co obrazovka zbude. Karta, která nemá co ukázat, uvolní místo další.</string>
