@@ -562,3 +562,14 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
+
+## Background location, opt-in (#329)
+
+A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
+foreground service has the location type. Since Android 14 a service started from the background
+(AARE started by the car's USB or Bluetooth) only gets it when the app may use location all the
+time, so AARE declares `ACCESS_BACKGROUND_LOCATION`. Declaring it grants nothing: the user turns it
+on from *Location > Navigation with the phone locked*, which opens AARE's app settings (Android 11
+and later only allow "Allow all the time" there). Without it nothing changes, and the connection
+log says what to turn on when the location type was refused. Tested by a user on a real car with
+the same one-line manifest change (#329).
