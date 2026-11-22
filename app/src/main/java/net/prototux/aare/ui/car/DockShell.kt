@@ -1,8 +1,10 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -94,21 +96,23 @@ internal fun DockShell(
 
 @Composable
 private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) = CarTheme(night = true) {
-    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }
+    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.isNavigation }
     val media = state.app(state.activeMediaAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.MEDIA }
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
         val scheme = MaterialTheme.colorScheme
-        Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) scheme.primary else scheme.secondaryContainer)
-            .clickable { actions.assistant() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
+        val stop = state.voiceButtonIsStop
+        Box(Modifier.size(52.dp).clip(CircleShape).background(when { stop -> scheme.error; state.listening -> scheme.primary; else -> scheme.secondaryContainer })
+            .carClickable(CircleShape) { actions.assistant() }, contentAlignment = Alignment.Center) {
+            if (stop) Icon(Icons.Rounded.Stop, stringResource(R.string.assistant_stop), tint = scheme.onError)
+            else Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
         }
     }
     // The home button: the app grid, or the dashboard when already on it.
     val homeButton: @Composable () -> Unit = {
         val home = state.screen == CarScreen.Launcher
         Box(Modifier.size(52.dp).clip(LocalCarTheme.current.appIcon).background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable { if (home) actions.goHome() else actions.openLauncher() }, contentAlignment = Alignment.Center) {
+            .carClickable(LocalCarTheme.current.appIcon) { if (home) actions.goHome() else actions.openLauncher() }, contentAlignment = Alignment.Center) {
             Icon(if (home) Icons.Rounded.SpaceDashboard else Icons.Rounded.Apps, if (home) "Dashboard" else "Home",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer)
         }
@@ -118,7 +122,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
             Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) { Clock(); PhoneStatusIcons() }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) { if (state.chrome.clock) Clock(); PhoneStatusIcons(state.chrome) }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOfNotNull(nav, media, phone).forEach { app -> DockIcon(app, 60) { actions.openApp(app) } }
@@ -132,8 +136,8 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
         Modifier.fillMaxHeight().width(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Clock()
-        PhoneStatusIcons()
+        if (state.chrome.clock) Clock()
+        PhoneStatusIcons(state.chrome)
         WeatherChip(state.weather.takeIf { state.weatherInBar })
         // Only the apps are weighted: on a short screen they scroll, and voice and home keep their size.
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -162,7 +166,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
         // Two rows in landscape; a portrait screen has room for more.
         val rows = if (maxHeight > maxWidth) (maxHeight / 170.dp).toInt().coerceIn(2, 5) else 2
         val perPage = columns * rows
-        val apps = state.apps
+        val apps = state.launcherApps
         val pages = maxOf(1, (apps.size + perPage - 1) / perPage)
         val pager = rememberPagerState { pages }
         Column(Modifier.fillMaxSize().padding(vertical = 24.dp)) {
@@ -171,7 +175,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
                     apps.drop(page * perPage).take(perPage).chunked(columns).forEach { row ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             row.forEach { app ->
-                                Column(Modifier.width(130.dp).clickable { actions.openApp(app) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(Modifier.width(130.dp).carClickable(MaterialTheme.shapes.medium) { actions.openApp(app) }, horizontalAlignment = Alignment.CenterHorizontally) {
                                     DockIcon(app, 88, null)
                                     Spacer(Modifier.height(8.dp))
                                     Text(app.label, color = scheme.onSurface, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
@@ -198,7 +202,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
 private fun DockIcon(app: CarAppEntry, sizeDp: Int, onClick: (() -> Unit)?) {
     val shape = LocalCarTheme.current.appIcon
     val m = Modifier.size(sizeDp.dp).clip(shape).background(MaterialTheme.colorScheme.secondaryContainer)
-    Box(if (onClick != null) m.clickable(onClick = onClick) else m, contentAlignment = Alignment.Center) {
+    Box(m.carClickable(shape, onClick = onClick), contentAlignment = Alignment.Center) {
         val icon = app.icon
         if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(shape), colorFilter = appIconFilter())
         else Text(app.label.take(1), color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = (sizeDp / 2.5f).sp, fontWeight = FontWeight.SemiBold)
