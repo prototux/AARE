@@ -18,6 +18,16 @@ Most built-in rules are **built-in car fixes**, marked `"optIn": true`: they app
 your file says `"builtInFixes": true`. Without them every car behaves as it did before they were
 shipped. See [Built-in rules](#built-in-rules).
 
+Some quirks also have a switch per car in *Advanced > Car quirks*, for the head unit connected
+last: pixel aspect correction, the video resolution limit, single-channel navigation voice, the
+Wi-Fi start silences, music during navigation prompts (GAIN_TRANSIENT answering a prompt's
+request), pausing it on guidance-only, wireless with this car (Allow, or Block: never wirelessly
+to this car, other cars unchanged), forcing electric, the "Exit to car" entry and the microphone
+SETUP message. Automatic there keeps what the rules below resolve for the car (as if the page
+didn't exist); On/Off force it for that car regardless of any rule. The choices are kept with the
+head unit's identity (by the Bluetooth address it announces), so *Forget* on the car or on its
+certificate clears them too.
+
 ## Format
 
 ```json
