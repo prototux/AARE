@@ -13,7 +13,8 @@ import java.io.OutputStream
 
 /**
  * Wired head units switch the phone to USB accessory mode (AOA) with the strings
- * manufacturer "Android", model "Android Auto", then talk AAP over the bulk endpoints.
+ * manufacturer "Android", model "Android Auto" (see [isAndroidAuto]), then talk AAP over the
+ * bulk endpoints.
  */
 class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Transport {
     private val fd: ParcelFileDescriptor = usb.openAccessory(accessory)
@@ -24,9 +25,9 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     // Reads from an accessory must use buffers of at least one USB bulk transfer (16 kB),
     // otherwise the kernel drops the rest of the transfer. FrameReader buffers 64 kB.
     override val input: InputStream = FileInputStream(fd.fileDescriptor)
-    // The accessory fd has no kernel send buffer (unlike a TCP socket), so an unbuffered write
-    // blocks per fragment on the USB bulk endpoint. Buffer so FrameWriter's per-fragment writes
-    // coalesce into one write per message at its flush() — fewer blocking syscalls on the pipe.
+    // The accessory fd has no kernel send buffer (unlike a TCP socket). The buffer joins a frame's
+    // header and body into one write; FrameWriter flushes after every frame, so each frame still
+    // leaves as its own bulk transfer (some head units parse exactly one frame per transfer).
     override val output: OutputStream = BufferedOutputStream(FileOutputStream(fd.fileDescriptor), 64 * 1024)
 
     private val closed = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -40,7 +41,16 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     }
 
     companion object {
-        fun isAndroidAuto(a: UsbAccessory) =
-            a.manufacturer.equals("Android", true) && (a.model ?: "").startsWith("Android Auto", true)
+        /** Kept in step with res/xml/accessory_filter.xml (UsbAccessoryMatchTest checks it). */
+        internal val MODELS = setOf("Android Auto", "Android Open Automotive Protocol")
+
+        /**
+         * An accessory to project to: matched on the exact model only, so
+         * a head unit with another manufacturer string works too. The plain "Android" model,
+         * which is ignored by default, is not one.
+         */
+        fun isAndroidAuto(a: UsbAccessory) = isAndroidAutoModel(a.model)
+
+        internal fun isAndroidAutoModel(model: String?) = model in MODELS
     }
 }

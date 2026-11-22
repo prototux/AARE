@@ -1,0 +1,9 @@
+syntax="proto2";
+
+package aap_protobuf.service.navigationstatus.message;
+
+// AARE: body of INSTRUMENT_CLUSTER_NAVIGATION_RAW_ROUTE_INFO: the
+// navigation app's route info, serialized as a message of its own that AARE does not model.
+message NavigationRawRouteInfo {
+  optional bytes route_info = 1;
+}
