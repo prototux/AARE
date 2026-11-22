@@ -152,6 +152,8 @@ class HeadUnitSimulator(
     val sensorRequestLog = java.util.concurrent.LinkedBlockingQueue<Pair<SensorType, Long>>()
     val firstVideoFrame = CountDownLatch(1)
     val byeBye = CountDownLatch(1)
+    /** The reason in the phone's bye-bye, once [byeBye] is down. */
+    @Volatile var byeByeReason: ByeByeReason? = null
     val closed = CountDownLatch(1)
     @Volatile var videoStart: Start? = null
     /** Every START the phone sent, by channel, latest last. */
@@ -286,6 +288,7 @@ class HeadUnitSimulator(
                 send(0, ControlMsg.AUDIO_FOCUS_NOTIFICATION, AudioFocusNotification.newBuilder().setFocusState(state).setUnsolicited(false).build())
             }
             ControlMsg.BYEBYE_REQUEST -> {
+                byeByeReason = ByeByeRequest.parseFrom(m.bodyBytes()).reason
                 byeBye.countDown()
                 if (answerByeBye) send(0, ControlMsg.BYEBYE_RESPONSE, aap_protobuf.service.control.message.ByeByeResponseOuterClass.ByeByeResponse.getDefaultInstance())
             }
