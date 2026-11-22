@@ -119,7 +119,7 @@ class AapSession(
     private val identity: PhoneIdentity,
     private val phone: PhoneDescription,
     private val callbacks: Callbacks,
-    private val log: AapLog = AapLog.Stdout,
+    internal val log: AapLog = AapLog.Stdout,
     private val options: SessionOptions = SessionOptions(),
 ) {
     interface Callbacks {
@@ -161,7 +161,7 @@ class AapSession(
         private set
     /** The head unit's UI chrome wishes, once discovery is done. */
     val uiChrome: UiChrome? get() = discovery?.let { UiChrome(it.sessionConfiguration) }
-    var headUnitVersion: Pair<Int, Int>? = null
+    @Volatile var headUnitVersion: Pair<Int, Int>? = null
         private set
 
     private val cryptor = Cryptor(identity.certificate, identity.privateKey, identity.chain,
@@ -507,9 +507,9 @@ class AapSession(
         val major = if (msg.bodyLength >= 2) ((b[o].toInt() and 0xff) shl 8) or (b[o + 1].toInt() and 0xff) else 1
         val minor = if (msg.bodyLength >= 4) ((b[o + 2].toInt() and 0xff) shl 8) or (b[o + 3].toInt() and 0xff) else 0
         headUnitVersion = major to minor
-        // Like the official phone: 1.7 to anything up to 1.7, 6.1 to the newer GAL numbering.
-        // Status is always success; feature gating follows the head unit's own version.
-        val (replyMajor, replyMinor) = if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 1
+        // 1.7 to anything up to 1.7, 6.2 to anything newer (even above
+        // 6.2). Status is always success; feature gating follows the head unit's own version.
+        val (replyMajor, replyMinor) = versionReply(major, minor)
         log.i("head unit protocol $major.$minor, answering $replyMajor.$replyMinor")
         val body = byteArrayOf(
             (replyMajor shr 8).toByte(), replyMajor.toByte(),
@@ -765,6 +765,10 @@ class AapSession(
         private const val DEFERRED_OPEN_MS = 1_000L
 
         private fun now() = System.nanoTime() / 1_000_000
+
+        /** The protocol version the phone answers to a head unit asking for [major].[minor]. */
+        internal fun versionReply(major: Int, minor: Int): Pair<Int, Int> =
+            if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 2
 
         /**
          * The link's last moments, for a failed session's log line: tells a link that died while

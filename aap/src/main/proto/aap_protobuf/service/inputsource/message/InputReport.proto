@@ -10,8 +10,8 @@ package aap_protobuf.service.inputsource.message;
 message InputReport
 {
     optional uint64 timestamp = 1;
-    // AARE: field 2 (disp_channel_id, deprecated) is not in the base schema and nothing read it,
-    // so it is left out as there.
+    // AARE: field 2 (disp_channel_id, deprecated) is not in the base schema and nothing reads it,
+    // so it is left out here.
     reserved 2;
     optional TouchEvent touch_event = 3;
     optional KeyEvent key_event = 4;

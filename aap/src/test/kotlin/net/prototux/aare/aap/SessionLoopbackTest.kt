@@ -197,10 +197,13 @@ open class SessionLoopbackTest {
         assertTrue("expected a relative (rotary) event", rotate.hasRelativeEvent())
         assertEquals(1, rotate.relativeEvent.getData(0).delta)
 
-        // sensors: driving status and night mode were requested and answered
-        assertNotNull(sensors.poll(3, TimeUnit.SECONDS))
-        assertTrue(SensorType.SENSOR_NIGHT_MODE in hu.sensorRequests)
-        assertTrue(SensorType.SENSOR_DRIVING_STATUS_DATA in hu.sensorRequests)
+        // sensors: every one the car offers is requested at setup, driving status first, one at a
+        // time (each after the previous answer), and answered with data
+        for (type in listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_LOCATION)) {
+            assertEquals(type to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
+        }
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.drivingStatusDataCount > 0)
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.nightModeDataCount > 0)
 
         // microphone
         mic!!.openMic()
@@ -223,6 +226,7 @@ open class SessionLoopbackTest {
         // focus away and back: the stream stops, then restarts on a new media session (#109) and
         // frames resume starting with a key frame
         val session0 = hu.videoStart?.sessionId ?: 0
+        assertEquals("the first media session is 0", 0, session0)
         hu.requestFocusNative()
         Thread.sleep(300)
         val during = hu.videoFrames.get()
@@ -231,7 +235,7 @@ open class SessionLoopbackTest {
         hu.requestFocusProjected()
         Thread.sleep(500)
         assertTrue(hu.videoFrames.get() > during)
-        assertTrue("a new media session starts after full native focus", (hu.videoStart?.sessionId ?: 0) > session0)
+        assertEquals("a new media session (the next id) starts after full native focus", session0 + 1, hu.videoStart?.sessionId ?: 0)
 
         // orderly shutdown from the phone
         encoding.set(false)
@@ -274,6 +278,86 @@ open class SessionLoopbackTest {
             "audio should keep reaching the head unit after the stall (got ${hu.audioChunks.get()}, was $delivered)",
             hu.audioChunks.get() > delivered + AudioChannel.SLACK + 2,
         )
+    }
+
+    /**
+     * Acks are checked against the media session only once the head unit has acked with the
+     * running session's id (ids compared modulo 256); before that every ack counts. An ack is for
+     * one message per receive time when the head unit sends those, a count of 0 counts as one,
+     * and a count over 4096 is ignored.
+     */
+    @Test
+    fun audioAcksCountOnlyWhenTheyAreForTheStream() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        hu.ackAudio = false
+        media.startPlayback()
+        val window = 2 + AudioChannel.SLACK // the simulated head unit's window is 2
+        var ts = 0L
+        fun fill() { while (media.hasRoom) assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
+        repeat(window) { assertTrue(media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
+        assertFalse("window full", media.hasRoom)
+        while (hu.sessionIds[hu.mediaAudio] == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        val session = hu.sessionIds[hu.mediaAudio]!!
+        fun roomAfterAWhile(): Boolean { Thread.sleep(200); return media.hasRoom }
+
+        // The head unit hasn't acked with this session yet: any ack counts, as it always did.
+        hu.sendAck(hu.mediaAudio, session + 1, count = 1)
+        assertTrue("before any ack with the session, another id still counts", roomAfterAWhile())
+        fill()
+        hu.sendAck(hu.mediaAudio, session, count = 1)
+        assertTrue(roomAfterAWhile())
+        fill()
+
+        // Now it has: other sessions' acks and oversized counts free nothing.
+        hu.sendAck(hu.mediaAudio, session + 1, count = 3)
+        assertFalse("another session's ack frees nothing", roomAfterAWhile())
+        hu.sendAck(hu.mediaAudio, session, count = 5000)
+        assertFalse("an ack for more than 4096 messages is ignored", roomAfterAWhile())
+        hu.sendAck(hu.mediaAudio, session, count = 0)
+        assertTrue("a count of 0 counts as one", roomAfterAWhile())
+        fill()
+
+        // Three receive times: three messages, whatever the count says. The id may wrap at 256.
+        hu.sendAck(hu.mediaAudio, session + 256, count = 1, receiveTimesNs = listOf(1L, 2L, 3L))
+        assertTrue(roomAfterAWhile())
+        repeat(3) { assertTrue("3 acked, 3 more fit", media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)) }
+        assertFalse(media.hasRoom)
+    }
+
+    /**
+     * Acks the stream ignores (another session's) still show the head unit is there: a run of them
+     * must not count as a stall and switch the stream to ack-less sending.
+     */
+    @Test
+    fun ignoredAcksAreNoStall() {
+        assertTrue(running.await(10, TimeUnit.SECONDS))
+        val media = audio.first { it.streamType.name.endsWith("MEDIA") }
+        val deadline = System.currentTimeMillis() + 5000
+        while (!media.ready && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        hu.ackAudio = false
+        media.startPlayback()
+        media.ackStallMs = 100 // the real 2 s would make this test slow
+        var ts = 0L
+        while (media.hasRoom) media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)
+        while (hu.sessionIds[hu.mediaAudio] == null && System.currentTimeMillis() < deadline) Thread.sleep(20)
+        val session = hu.sessionIds[hu.mediaAudio]!!
+        hu.sendAck(hu.mediaAudio, session, count = 1) // the head unit echoes the session
+        Thread.sleep(100)
+
+        // ~400 ms of chunks, past the stall time, with only another session's acks coming.
+        repeat(40) {
+            hu.sendAck(hu.mediaAudio, session + 1, count = 1)
+            media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L)
+            Thread.sleep(10)
+        }
+        assertFalse("ignored acks still show the head unit is there", media.ackless)
+
+        // With no ack at all, the same run is a stall.
+        repeat(40) { media.sendPcm(ByteArray(10 + 3840), 10, 3840, ts++ * 20_000L); Thread.sleep(10) }
+        assertTrue(media.ackless)
     }
 
     /**
