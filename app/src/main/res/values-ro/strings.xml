@@ -540,4 +540,24 @@
     <string name="carapp_error_stopped">%1$s s-a oprit</string>
     <string name="carapp_error_google_only">%1$s acceptă doar Android Auto de la Google. Trebuie să permită AARE (vezi lista de aplicații de pe telefon).</string>
     <string name="carapp_error_cant_start">%1$s nu a putut porni: %2$s</string>
+    <string name="shizuku_setup_title">Acordă permisiunile AARE cu Shizuku</string>
+    <string name="shizuku_setup_subtitle">O singură apăsare acordă ceea ce încă lipsește, fără fereastra proprie a fiecărei permisiuni: microfon, locație, contacte, istoric apeluri, calendar, apeluri telefonice, dispozitive din apropiere (Bluetooth, Wi-Fi), rețea locală, notificări și acces la notificări</string>
+    <string name="shizuku_setup_working">Se acordă…</string>
+    <string name="shizuku_setup_result_title">Acordat cu Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Totul era deja acordat.</string>
+    <string name="shizuku_setup_not_granted">Neacordat: %1$s</string>
+    <string name="shizuku_setup_notification_access">Acces la notificări</string>
+    <string name="shizuku_setup_helper_failed">Asistentul Shizuku nu a pornit. Verifică dacă Shizuku rulează și permite AARE.</string>
+    <string name="aa_section_title">Android Auto de la Google</string>
+    <string name="aa_state_enabled">Instalat și activat: când se conectează o mașină, Android o poate da Android Auto în loc de AARE, sau poate întreba ce aplicație să folosească.</string>
+    <string name="aa_state_disabled">Dezactivat: Android Auto nu preia mașina. Datele sale sunt păstrate.</string>
+    <string name="aa_action_disable">Oprește Android Auto să preia mașina</string>
+    <string name="aa_action_enable">Activează Android Auto din nou</string>
+    <string name="aa_working">Se procesează…</string>
+    <string name="aa_needs_shizuku">Prin Shizuku (rulează și permite AARE), sau manual în informațiile aplicației Android Auto.</string>
+    <string name="aa_app_info">Informațiile aplicației Android Auto</string>
+    <string name="aa_failed">Nu a funcționat: %1$s</string>
+    <string name="aa_confirm_title">Dezactivezi Android Auto?</string>
+    <string name="aa_confirm_text">AARE dezactivează Android Auto de la Google pentru acest utilizator prin Shizuku (pm disable-user). Se oprește, dispare din lista de aplicații și nu mai răspunde când se conectează o mașină, deci mașina ajunge mereu la AARE.\n\nNimic nu este dezinstalat și datele sale sunt păstrate. Mașinile, aplicațiile sau funcțiile care au nevoie de Android Auto de la Google nu vor funcționa până nu îl activezi din nou cu butonul de aici.</string>
+    <string name="aa_confirm_action">Dezactivează</string>
 </resources>

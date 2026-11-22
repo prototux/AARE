@@ -540,4 +540,24 @@
     <string name="carapp_error_stopped">%1$s остановлен</string>
     <string name="carapp_error_google_only">%1$s принимает только Google Android Auto. Ему нужно разрешить AARE (см. список приложений на телефоне).</string>
     <string name="carapp_error_cant_start">%1$s не удалось запустить: %2$s</string>
+    <string name="shizuku_setup_title">Предоставить разрешения AARE через Shizuku</string>
+    <string name="shizuku_setup_subtitle">Одно нажатие предоставляет всё, что ещё не выдано, без отдельного диалога для каждого разрешения: микрофон, местоположение, контакты, журнал вызовов, календарь, телефонные звонки, устройства рядом (Bluetooth, Wi-Fi), локальная сеть, уведомления и доступ к уведомлениям</string>
+    <string name="shizuku_setup_working">Предоставление…</string>
+    <string name="shizuku_setup_result_title">Предоставлено через Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Всё уже было предоставлено.</string>
+    <string name="shizuku_setup_not_granted">Не предоставлено: %1$s</string>
+    <string name="shizuku_setup_notification_access">Доступ к уведомлениям</string>
+    <string name="shizuku_setup_helper_failed">Вспомогательный модуль Shizuku не запустился. Убедитесь, что Shizuku работает и разрешает AARE.</string>
+    <string name="aa_section_title">Android Auto от Google</string>
+    <string name="aa_state_enabled">Установлено и включено: когда автомобиль подключается, Android может передать его Android Auto вместо AARE или спросить, какое приложение использовать.</string>
+    <string name="aa_state_disabled">Отключено: Android Auto не забирает автомобиль. Его данные сохраняются.</string>
+    <string name="aa_action_disable">Не позволять Android Auto забирать автомобиль</string>
+    <string name="aa_action_enable">Включить Android Auto снова</string>
+    <string name="aa_working">Выполняется…</string>
+    <string name="aa_needs_shizuku">Через Shizuku (работает и разрешает AARE), либо вручную в информации о приложении Android Auto.</string>
+    <string name="aa_app_info">Информация о приложении Android Auto</string>
+    <string name="aa_failed">Не удалось: %1$s</string>
+    <string name="aa_confirm_title">Отключить Android Auto?</string>
+    <string name="aa_confirm_text">AARE отключает Android Auto от Google для этого пользователя через Shizuku (pm disable-user). Приложение перестаёт работать, исчезает из списка приложений и больше не отвечает при подключении автомобиля, так что автомобиль всегда достаётся AARE.\n\nНичего не удаляется, и его данные сохраняются. Автомобили, приложения или функции, которым нужен Android Auto от Google, не будут работать, пока вы не включите его снова этой кнопкой.</string>
+    <string name="aa_confirm_action">Отключить</string>
 </resources>

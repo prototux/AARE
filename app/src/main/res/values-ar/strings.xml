@@ -524,4 +524,24 @@
     <string name="carapp_error_stopped">%1$s توقف</string>
     <string name="carapp_error_google_only">%1$s يقبل فقط Android Auto من Google. يجب أن يسمح لـ AARE (راجع قائمة التطبيقات على الهاتف).</string>
     <string name="carapp_error_cant_start">تعذّر بدء %1$s: %2$s</string>
+    <string name="shizuku_setup_title">منح أذونات AARE عبر Shizuku</string>
+    <string name="shizuku_setup_subtitle">ضغطة واحدة تمنح ما تبقى ناقصًا، دون نافذة كل إذن على حدة: الميكروفون، الموقع، جهات الاتصال، سجل المكالمات، التقويم، المكالمات الهاتفية، الأجهزة القريبة (Bluetooth و Wi-Fi)، الشبكة المحلية، الإشعارات والوصول إلى الإشعارات</string>
+    <string name="shizuku_setup_working">جارٍ المنح…</string>
+    <string name="shizuku_setup_result_title">تم المنح عبر Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">كان كل شيء ممنوحًا بالفعل.</string>
+    <string name="shizuku_setup_not_granted">لم يُمنح: %1$s</string>
+    <string name="shizuku_setup_notification_access">الوصول إلى الإشعارات</string>
+    <string name="shizuku_setup_helper_failed">لم يبدأ مساعد Shizuku. تحقّق من أن Shizuku يعمل ويسمح لـ AARE.</string>
+    <string name="aa_section_title">تطبيق Android Auto من Google</string>
+    <string name="aa_state_enabled">مثبّت ومفعّل: عند اتصال سيارة، قد يعطيها Android لـ Android Auto بدلًا من AARE، أو يسأل عن التطبيق المطلوب استخدامه.</string>
+    <string name="aa_state_disabled">معطّل: لا يأخذ Android Auto السيارة. بياناته محفوظة.</string>
+    <string name="aa_action_disable">منع Android Auto من أخذ السيارة</string>
+    <string name="aa_action_enable">إعادة تفعيل Android Auto</string>
+    <string name="aa_working">جارٍ التنفيذ…</string>
+    <string name="aa_needs_shizuku">عبر Shizuku (قيد التشغيل ومسموح لـ AARE)، أو يدويًا في معلومات تطبيق Android Auto.</string>
+    <string name="aa_app_info">معلومات تطبيق Android Auto</string>
+    <string name="aa_failed">لم ينجح: %1$s</string>
+    <string name="aa_confirm_title">تعطيل Android Auto؟</string>
+    <string name="aa_confirm_text">يعطّل AARE تطبيق Android Auto من Google لهذا المستخدم عبر Shizuku (pm disable-user). يتوقف عن العمل، يختفي من قائمة التطبيقات ولا يستجيب بعد الآن عند اتصال سيارة، لذا تأتي السيارة دائمًا إلى AARE.\n\nلا يُحذف شيء وتبقى بياناته محفوظة. السيارات أو التطبيقات أو الميزات التي تحتاج إلى Android Auto من Google لن تعمل حتى تُعيد تفعيله بالزر هنا.</string>
+    <string name="aa_confirm_action">تعطيل</string>
 </resources>

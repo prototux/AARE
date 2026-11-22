@@ -524,4 +524,24 @@
     <string name="carapp_error_stopped">%1$s 已停止</string>
     <string name="carapp_error_google_only">%1$s 只接受 Google 的 Android Auto。需要允许 AARE（参见手机上的应用列表）。</string>
     <string name="carapp_error_cant_start">%1$s 无法启动：%2$s</string>
+    <string name="shizuku_setup_title">通过 Shizuku 授予 AARE 权限</string>
+    <string name="shizuku_setup_subtitle">一次点按即可授予仍缺失的权限，无需逐个弹窗确认：麦克风、位置、联系人、通话记录、日历、电话通话、附近设备（蓝牙、Wi-Fi）、本地网络、通知以及通知访问权限</string>
+    <string name="shizuku_setup_working">正在授予…</string>
+    <string name="shizuku_setup_result_title">已通过 Shizuku 授予</string>
+    <string name="shizuku_setup_nothing_to_grant">所有权限均已授予。</string>
+    <string name="shizuku_setup_not_granted">未授予：%1$s</string>
+    <string name="shizuku_setup_notification_access">通知访问权限</string>
+    <string name="shizuku_setup_helper_failed">Shizuku 的辅助程序未能启动。请检查 Shizuku 是否在运行并允许 AARE。</string>
+    <string name="aa_section_title">Google 的 Android Auto</string>
+    <string name="aa_state_enabled">已安装并已启用：车辆连接时，Android 可能会把它交给 Android Auto 而不是 AARE，或询问要使用哪个应用。</string>
+    <string name="aa_state_disabled">已停用：Android Auto 不会接管车辆。其数据会被保留。</string>
+    <string name="aa_action_disable">阻止 Android Auto 接管车辆</string>
+    <string name="aa_action_enable">重新启用 Android Auto</string>
+    <string name="aa_working">正在处理…</string>
+    <string name="aa_needs_shizuku">通过 Shizuku（正在运行并允许 AARE），或在 Android Auto 的应用信息中手动操作。</string>
+    <string name="aa_app_info">Android Auto 的应用信息</string>
+    <string name="aa_failed">未能成功：%1$s</string>
+    <string name="aa_confirm_title">停用 Android Auto？</string>
+    <string name="aa_confirm_text">AARE 会通过 Shizuku（pm disable-user）为此用户停用 Google 的 Android Auto。该应用将停止运行，从应用列表中消失，车辆连接时也不再响应，这样车辆会始终交给 AARE。\n\n不会卸载任何内容，其数据会被保留。需要 Google 的 Android Auto 的车辆、应用或功能将无法使用，直到你在此用按钮重新启用它。</string>
+    <string name="aa_confirm_action">停用</string>
 </resources>

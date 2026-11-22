@@ -541,4 +541,24 @@
     <string name="carapp_error_stopped">%1$s is gestopt</string>
     <string name="carapp_error_google_only">%1$s accepteert alleen Google\'s Android Auto. Het moet AARE toestaan (zie de app-lijst op de telefoon).</string>
     <string name="carapp_error_cant_start">%1$s kon niet starten: %2$s</string>
+    <string name="shizuku_setup_title">Verleen AAREs machtigingen met Shizuku</string>
+    <string name="shizuku_setup_subtitle">Één tik verleent wat nog ontbreekt, zonder het eigen dialoogvenster van elke machtiging: microfoon, locatie, contacten, oproepenlijst, agenda, telefoongesprekken, apparaten in de buurt (Bluetooth, Wi-Fi), lokaal netwerk, meldingen en meldingstoegang</string>
+    <string name="shizuku_setup_working">Wordt verleend…</string>
+    <string name="shizuku_setup_result_title">Verleend met Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Alles was al verleend.</string>
+    <string name="shizuku_setup_not_granted">Niet verleend: %1$s</string>
+    <string name="shizuku_setup_notification_access">Meldingstoegang</string>
+    <string name="shizuku_setup_helper_failed">Shizuku\'s helper is niet gestart. Controleer of Shizuku draait en AARE toestaat.</string>
+    <string name="aa_section_title">Googles Android Auto</string>
+    <string name="aa_state_enabled">Geïnstalleerd en ingeschakeld: wanneer een auto verbindt, kan Android deze aan Android Auto geven in plaats van AARE, of vragen welke app te gebruiken.</string>
+    <string name="aa_state_disabled">Uitgeschakeld: Android Auto neemt de auto niet over. De gegevens blijven bewaard.</string>
+    <string name="aa_action_disable">Voorkom dat Android Auto de auto overneemt</string>
+    <string name="aa_action_enable">Android Auto opnieuw inschakelen</string>
+    <string name="aa_working">Bezig…</string>
+    <string name="aa_needs_shizuku">Via Shizuku (draait en staat AARE toe), of handmatig in de app-info van Android Auto.</string>
+    <string name="aa_app_info">App-info van Android Auto</string>
+    <string name="aa_failed">Mislukt: %1$s</string>
+    <string name="aa_confirm_title">Android Auto uitschakelen?</string>
+    <string name="aa_confirm_text">AARE schakelt Googles Android Auto voor deze gebruiker uit via Shizuku (pm disable-user). Het stopt met draaien, verdwijnt uit de app-lijst en reageert niet meer wanneer een auto verbindt, zodat de auto altijd naar AARE gaat.\n\nEr wordt niets verwijderd en de gegevens blijven bewaard. Auto\'s, apps of functies die Googles Android Auto nodig hebben, werken niet totdat u het hier met de knop opnieuw inschakelt.</string>
+    <string name="aa_confirm_action">Uitschakelen</string>
 </resources>
