@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Bereit. Nur Medien: keine Navigationsstimme, manche Apps nehmen nicht teil, und das Telefon spielt weiterhin mit.</string>
     <string name="audio_playback_not_ready">Funktioniert überall, mit Einschränkungen: nur Medien, keine Navigationsstimme. Android fragt nach der Bildschirmaufnahme: Wählen Sie Gesamten Bildschirm (wird auch vom Telefonbildschirm verwendet).</string>
     <string name="audio_notice_setup_hint">Öffnen Sie AARE auf dem Telefon und richten Sie Autoaudio ein, um das Telefon im Auto zu hören</string>
+    <string name="audio_section_car_mic">Mikrofon des Autos</string>
+    <string name="audio_toggle_car_mic_title">Mikrofon des Autos für Telefon-Apps</string>
+    <string name="audio_toggle_car_mic_subtitle">Bei Verbindung mit einem Auto mit Mikrofon hören Spracheingabe, Sprachrekorder und Sprachnachrichten auf dem Telefon das Auto statt des Telefons. Anrufe behalten ihr eigenes Mikrofon. Erfordert Shizuku.</string>
+    <string name="audio_car_mic_ready">Bereit: Ein- oder Ausschalten wirkt sofort, auch während einer Verbindung.</string>
+    <string name="audio_car_mic_needs_android10">Erfordert Android 10 oder neuer.</string>
+    <string name="audio_car_mic_needs_shizuku">Erfordert Shizuku, laufend und für AARE erlaubt (siehe die Shizuku-Methode oben).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Telefonbildschirm</string>

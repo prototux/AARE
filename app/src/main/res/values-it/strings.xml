@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Pronto. Solo contenuti multimediali: nessuna voce di navigazione, alcune app possono escludersi, e il telefono continua a riprodurre audio anche lui.</string>
     <string name="audio_playback_not_ready">Funziona ovunque, con dei limiti: solo contenuti multimediali, nessuna voce di navigazione. Android chiederà di registrare lo schermo: scegli Schermo intero (usato anche dallo schermo del telefono).</string>
     <string name="audio_notice_setup_hint">Apri AARE sul telefono e configura l\'audio auto per sentire il telefono in auto</string>
+    <string name="audio_section_car_mic">Microfono dell\'auto</string>
+    <string name="audio_toggle_car_mic_title">Microfono dell\'auto per le app del telefono</string>
+    <string name="audio_toggle_car_mic_subtitle">Con un\'auto dotata di microfono collegata, la dettatura vocale, i registratori vocali e i messaggi vocali del telefono sentono l\'auto invece del telefono. Le chiamate mantengono il proprio microfono. Richiede Shizuku.</string>
+    <string name="audio_car_mic_ready">Pronto: attivarlo o disattivarlo ha effetto subito, anche durante la connessione.</string>
+    <string name="audio_car_mic_needs_android10">Richiede Android 10 o versioni successive.</string>
+    <string name="audio_car_mic_needs_shizuku">Richiede Shizuku, attivo e consentito per AARE (vedi il metodo Shizuku sopra).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Schermo del telefono</string>

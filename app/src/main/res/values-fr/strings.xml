@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Prêt. Médias uniquement : pas de voix de navigation, certaines applications s\'en excluent, et le téléphone continue aussi de jouer.</string>
     <string name="audio_playback_not_ready">Fonctionne partout, avec des limites : médias uniquement, pas de voix de navigation. Android demande à capturer l\'écran : choisissez Écran entier (aussi utilisé par l\'écran du téléphone).</string>
     <string name="audio_notice_setup_hint">Ouvrez AARE sur le téléphone et configurez l\'audio voiture pour entendre le téléphone dans la voiture</string>
+    <string name="audio_section_car_mic">Micro de la voiture</string>
+    <string name="audio_toggle_car_mic_title">Micro de la voiture pour les apps du téléphone</string>
+    <string name="audio_toggle_car_mic_subtitle">Connecté à une voiture avec micro, la saisie vocale, les enregistreurs vocaux et les messages vocaux du téléphone entendent la voiture au lieu du téléphone. Les appels gardent leur propre micro. Nécessite Shizuku.</string>
+    <string name="audio_car_mic_ready">Prêt : l\'activer ou le désactiver s\'applique tout de suite, même connecté.</string>
+    <string name="audio_car_mic_needs_android10">Nécessite Android 10 ou une version plus récente.</string>
+    <string name="audio_car_mic_needs_shizuku">Nécessite Shizuku, actif et autorisé pour AARE (voir la méthode Shizuku plus haut).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Écran du téléphone</string>

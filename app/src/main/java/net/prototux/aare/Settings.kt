@@ -291,6 +291,15 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putString("phone_bt_address", v) }
 
     /**
+     * The car's microphone for the phone's own apps while connected (audio/CarMicForApps): voice
+     * typing, voice recorders and voice messages hear the car instead of the phone. Needs Shizuku
+     * on Android 10+; calls keep their own microphone. Off: they record from the phone's mic.
+     */
+    var carMicForPhoneApps: Boolean
+        get() = prefs.getBoolean("car_mic_for_phone_apps", false)
+        set(v) = prefs.edit { putBoolean("car_mic_for_phone_apps", v) }
+
+    /**
      * When the car's Bluetooth answers AARE's pairing request and the phone isn't paired with it,
      * pair with that car (and only it) through Shizuku instead of Android's dialog, accepting only
      * the passkey the car sent over Android Auto (PairingCheck, BluetoothAutoPair). Android 12+. Off by default.
@@ -298,7 +307,6 @@ class Settings(context: Context) {
     var autoPairCarBluetooth: Boolean
         get() = prefs.getBoolean("auto_pair_car_bluetooth", false)
         set(v) = prefs.edit { putBoolean("auto_pair_car_bluetooth", v) }
-
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)

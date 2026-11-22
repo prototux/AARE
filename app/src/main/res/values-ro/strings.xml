@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Pregătit. Doar media: fără vocea de navigație, unele aplicații pot renunța, iar telefonul continuă să redea și el.</string>
     <string name="audio_playback_not_ready">Funcționează oriunde, cu limitări: doar media, fără vocea de navigație. Android cere să capturezi ecranul: alege Ecran întreg (folosit și de ecranul telefonului).</string>
     <string name="audio_notice_setup_hint">Deschide AARE pe telefon și configurează audio mașină pentru a auzi telefonul în mașină</string>
+    <string name="audio_section_car_mic">Microfonul mașinii</string>
+    <string name="audio_toggle_car_mic_title">Microfonul mașinii pentru aplicațiile telefonului</string>
+    <string name="audio_toggle_car_mic_subtitle">Cât timp ești conectat la o mașină cu microfon, tastarea vocală, reportofoanele și mesajele vocale de pe telefon aud mașina în loc de telefon. Apelurile își păstrează microfonul. Necesită Shizuku.</string>
+    <string name="audio_car_mic_ready">Pregătit: pornirea sau oprirea se aplică imediat, chiar și în timpul conexiunii.</string>
+    <string name="audio_car_mic_needs_android10">Necesită Android 10 sau o versiune mai nouă.</string>
+    <string name="audio_car_mic_needs_shizuku">Necesită Shizuku, pornit și permis pentru AARE (vezi metoda Shizuku de mai sus).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Ecran telefon</string>

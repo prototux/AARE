@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Gereed. Alleen media: geen navigatiestem, sommige apps doen niet mee, en de telefoon blijft ook afspelen.</string>
     <string name="audio_playback_not_ready">Werkt overal, met beperkingen: alleen media, geen navigatiestem. Android vraagt om het scherm op te nemen: kies Volledig scherm (ook gebruikt door het telefoonscherm).</string>
     <string name="audio_notice_setup_hint">Open AARE op de telefoon en stel Autoaudio in om de telefoon in de auto te horen</string>
+    <string name="audio_section_car_mic">Microfoon van de auto</string>
+    <string name="audio_toggle_car_mic_title">Microfoon van de auto voor telefoon-apps</string>
+    <string name="audio_toggle_car_mic_subtitle">Verbonden met een auto met microfoon horen spraakinvoer, spraakrecorders en spraakberichten op de telefoon de auto in plaats van de telefoon. Gesprekken houden hun eigen microfoon. Vereist Shizuku.</string>
+    <string name="audio_car_mic_ready">Gereed: aan- of uitzetten werkt meteen, ook tijdens een verbinding.</string>
+    <string name="audio_car_mic_needs_android10">Vereist Android 10 of nieuwer.</string>
+    <string name="audio_car_mic_needs_shizuku">Vereist Shizuku, actief en toegestaan voor AARE (zie de Shizuku-methode hierboven).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Telefoonscherm</string>

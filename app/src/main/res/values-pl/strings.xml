@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Gotowe. Tylko multimedia: bez głosu nawigacji, niektóre aplikacje się wyłączają, a telefon też nadal odtwarza.</string>
     <string name="audio_playback_not_ready">Działa wszędzie, z ograniczeniami: tylko multimedia, bez głosu nawigacji. Android pyta o przechwytywanie ekranu: wybierz Cały ekran (używane też przez ekran telefonu).</string>
     <string name="audio_notice_setup_hint">Otwórz AARE na telefonie i skonfiguruj dźwięk w samochodzie, aby słyszeć telefon w samochodzie</string>
+    <string name="audio_section_car_mic">Mikrofon auta</string>
+    <string name="audio_toggle_car_mic_title">Mikrofon auta dla aplikacji w telefonie</string>
+    <string name="audio_toggle_car_mic_subtitle">Po połączeniu z autem z mikrofonem pisanie głosowe, dyktafony i wiadomości głosowe w telefonie słyszą auto zamiast telefonu. Połączenia zachowują własny mikrofon. Wymaga Shizuku.</string>
+    <string name="audio_car_mic_ready">Gotowe: włączenie lub wyłączenie działa od razu, także w trakcie połączenia.</string>
+    <string name="audio_car_mic_needs_android10">Wymaga Androida 10 lub nowszego.</string>
+    <string name="audio_car_mic_needs_shizuku">Wymaga Shizuku, uruchomionego i dozwolonego dla AARE (zobacz metodę Shizuku powyżej).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Ekran telefonu</string>

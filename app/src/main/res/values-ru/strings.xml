@@ -267,6 +267,12 @@
     <string name="audio_playback_ready">Готово. Только медиа: без голоса навигации, некоторые приложения отключаются, а телефон тоже продолжает воспроизведение.</string>
     <string name="audio_playback_not_ready">Работает везде, с ограничениями: только медиа, без голоса навигации. Android спросит о захвате экрана: выберите Весь экран (также используется экраном телефона).</string>
     <string name="audio_notice_setup_hint">Откройте AARE на телефоне и настройте звук в автомобиле, чтобы слышать телефон в автомобиле</string>
+    <string name="audio_section_car_mic">Микрофон машины</string>
+    <string name="audio_toggle_car_mic_title">Микрофон машины для приложений телефона</string>
+    <string name="audio_toggle_car_mic_subtitle">При подключении к машине с микрофоном голосовой ввод, диктофоны и голосовые сообщения на телефоне слышат машину вместо телефона. Звонки используют свой микрофон. Требуется Shizuku.</string>
+    <string name="audio_car_mic_ready">Готово: включение и выключение действуют сразу, даже во время подключения.</string>
+    <string name="audio_car_mic_needs_android10">Требуется Android 10 или новее.</string>
+    <string name="audio_car_mic_needs_shizuku">Требуется Shizuku, запущенный и разрешённый для AARE (см. способ Shizuku выше).</string>
 
     <!-- phone: phone screen feature -->
     <string name="phone_section_title">Экран телефона</string>
