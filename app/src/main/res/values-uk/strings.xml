@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Авто</string>
     <string name="setup_choice_dark">Темний</string>
     <string name="setup_choice_light">Світлий</string>
+    <string name="setup_choice_night_source">Нічний режим за</string>
+    <string name="setup_choice_night_source_car">Автомобілем</string>
+    <string name="setup_choice_night_source_light_sensor">Датчиком освітлення телефона</string>
     <string name="setup_choice_bar">Панель</string>
     <string name="setup_choice_bar_auto">Бік водія</string>
     <string name="setup_choice_status_items">Годинник, сигнал і батарея</string>

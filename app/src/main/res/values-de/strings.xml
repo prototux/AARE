@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Dunkel</string>
     <string name="setup_choice_light">Hell</string>
+    <string name="setup_choice_night_source">Nachtmodus von</string>
+    <string name="setup_choice_night_source_car">Dem Auto</string>
+    <string name="setup_choice_night_source_light_sensor">Dem Lichtsensor des Telefons</string>
     <string name="setup_choice_bar">Leiste</string>
     <string name="setup_choice_bar_auto">Fahrerseite</string>
     <string name="setup_choice_status_items">Uhr, Empfang und Akku</string>

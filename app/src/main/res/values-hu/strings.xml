@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Sötét</string>
     <string name="setup_choice_light">Világos</string>
+    <string name="setup_choice_night_source">Éjszakai mód forrása</string>
+    <string name="setup_choice_night_source_car">Az autó</string>
+    <string name="setup_choice_night_source_light_sensor">A telefon fényérzékelője</string>
     <string name="setup_choice_bar">Sáv</string>
     <string name="setup_choice_bar_auto">Vezető oldala</string>
     <string name="setup_choice_status_items">Óra, térerő és akkumulátor</string>

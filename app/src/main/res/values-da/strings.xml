@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mørk</string>
     <string name="setup_choice_light">Lys</string>
+    <string name="setup_choice_night_source">Nattilstand fra</string>
+    <string name="setup_choice_night_source_car">Bilen</string>
+    <string name="setup_choice_night_source_light_sensor">Telefonens lyssensor</string>
     <string name="setup_choice_bar">Bar</string>
     <string name="setup_choice_bar_auto">Førerside</string>
     <string name="setup_choice_status_items">Ur, signal og batteri</string>

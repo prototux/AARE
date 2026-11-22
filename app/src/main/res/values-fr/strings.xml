@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Sombre</string>
     <string name="setup_choice_light">Clair</string>
+    <string name="setup_choice_night_source">Mode nuit d\'après</string>
+    <string name="setup_choice_night_source_car">La voiture</string>
+    <string name="setup_choice_night_source_light_sensor">Le capteur de lumière du téléphone</string>
     <string name="setup_choice_bar">Barre</string>
     <string name="setup_choice_bar_auto">Côté conducteur</string>
     <string name="setup_choice_status_items">Heure, réseau et batterie</string>

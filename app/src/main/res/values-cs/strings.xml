@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Tmavý</string>
     <string name="setup_choice_light">Světlý</string>
+    <string name="setup_choice_night_source">Noční režim podle</string>
+    <string name="setup_choice_night_source_car">Auta</string>
+    <string name="setup_choice_night_source_light_sensor">Senzoru světla v telefonu</string>
     <string name="setup_choice_bar">Lišta</string>
     <string name="setup_choice_bar_auto">Strana řidiče</string>
     <string name="setup_choice_status_items">Hodiny, signál a baterie</string>
