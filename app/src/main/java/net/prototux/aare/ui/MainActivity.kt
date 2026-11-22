@@ -1119,7 +1119,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
         shizuku -> CaptureMethod.SHIZUKU_POLICY
-        root -> CaptureMethod.SHIZUKU
+        root -> CaptureMethod.ROOT_POLICY
         state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
     }
