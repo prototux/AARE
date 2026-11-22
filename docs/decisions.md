@@ -446,7 +446,6 @@ and lets AARE start its foreground service from the background (no "tap to conne
   works). The network request stays AARE's own (app-only, local-only, never the default network).
   If the command fails, Android asks as before.
 - No automotive companion profile: it needs a permission only Android Auto's role holder gets.
-
 ## Phone assistants on the car screen (no car app)
 
 The voice button's fallback for an assistant without a car app (Google Assistant and most others)
@@ -468,7 +467,6 @@ bar rather than full screen.
   `Assistants.startOnPhone`, same as when the setting is off.
 - It shares `LaunchedAppSurface` with `StandaloneAppScreen`, and installs no Back handler: the
   car's Back closes the bar first.
-
 ## Car microphone for phone apps
 
 Opt-in (`Settings.carMicForPhoneApps`, off by default), Shizuku on Android 10+. The Shizuku helper
@@ -491,7 +489,6 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
-
 ## Car apps' own colours
 
 A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
@@ -545,3 +542,23 @@ can't pass as private and then connect elsewhere.
 Arrival triggers (maintainer's decision): opt-in per action (off by default), and they never send
 by themselves: the car screen always asks for one tap, whatever the action's *Ask first*, because a
 position can be wrong and nobody watches the screen when it fires.
+
+## Automatic Bluetooth pairing for calls (Shizuku, opt-in)
+
+Builds on #229 (maintainer's decision): `BluetoothPairing` and `PairingCheck` handle the car's
+authentication data (BluetoothAuthenticationData) and match it with Android's pairing request,
+for everyone. This option only adds what an app can't do: when the car answers AARE's Android
+Auto pairing request with "not paired" and the user turned it on (Android 12+), AARE starts the
+bond itself (createBond, an app's own BLUETOOTH_CONNECT), and a Shizuku helper
+(`ShellBluetoothService`) answers what `PairingCheck` accepted: setPairingConfirmation for a
+matching numeric comparison (it needs BLUETOOTH_PRIVILEGED, which only the shell has here), or
+setPin when AARE's own setPin was refused. The helper can do nothing else.
+
+- Scope: only the address the head unit announced on its Bluetooth channel, checked again on every
+  broadcast; nothing else is ever bonded or confirmed.
+- A numeric comparison is only confirmed when `PairingCheck` found its passkey equal to the one the
+  car sent, so a different device can't slip in under the car's address; a mismatch is never
+  confirmed. Anything else is left to Android's dialog, which stays up (the pairing broadcast is
+  not aborted) and is the fallback for every failure.
+- On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
+  that is why.

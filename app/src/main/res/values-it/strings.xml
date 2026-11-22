@@ -775,4 +775,7 @@
     <string name="setup_action_associate">Associa</string>
     <string name="setup_toggle_companion_shizuku_title">Approva il Wi-Fi dell\'auto con Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">Per le auto associate, Shizuku risponde alla domanda di Android \"connetti al dispositivo\", così non viene più chiesta. La rete dell\'auto resta quella di AARE, non è mai la connessione internet del telefono. Richiede che Shizuku sia in esecuzione e autorizzi AARE.</string>
+
+    <string name="setup_toggle_auto_pair_title">Associa automaticamente il Bluetooth dell\'auto</string>
+    <string name="setup_toggle_auto_pair_subtitle">Per le chiamate: quando un\'auto con cui il telefono non è associato richiede l\'associazione tramite Android Auto, AARE si associa a quell\'auto tramite Shizuku invece della finestra di dialogo di Android, se il codice corrisponde a quello inviato dall\'auto. Mai con nessun altro dispositivo. Richiede che Shizuku sia in esecuzione e autorizzi AARE.</string>
 </resources>

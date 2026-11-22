@@ -776,4 +776,7 @@
     <string name="setup_action_associate">Társítás</string>
     <string name="setup_toggle_companion_shizuku_title">Az autó Wi-Fi-jének jóváhagyása Shizukuval</string>
     <string name="setup_toggle_companion_shizuku_subtitle">Társított autóknál a Shizuku válaszol az Android \"csatlakozás az eszközhöz\" kérdésére, így az nem jelenik meg újra. Az autó hálózata az AARE sajátja marad, soha nem a telefon internetkapcsolata. Igényli, hogy a Shizuku fusson, és engedélyezze az AARE-t.</string>
+
+    <string name="setup_toggle_auto_pair_title">Az autó Bluetooth-jának automatikus párosítása</string>
+    <string name="setup_toggle_auto_pair_subtitle">Hívásokhoz: amikor egy autó, amellyel a telefon nincs párosítva, párosítást kér Android Autón keresztül, az AARE a Shizukun keresztül párosodik azzal az autóval az Android párbeszédpanelje helyett, ha a kód megegyezik az autó által küldöttel. Soha semmilyen más eszközzel. Igényli, hogy a Shizuku fusson, és engedélyezze az AARE-t.</string>
 </resources>

@@ -758,4 +758,7 @@
     <string name="setup_action_associate">关联</string>
     <string name="setup_toggle_companion_shizuku_title">通过 Shizuku 批准车辆的 Wi-Fi</string>
     <string name="setup_toggle_companion_shizuku_subtitle">对于已关联的车辆，Shizuku 会代为回答 Android 的“连接到设备”询问，因此不会再次询问。车辆的网络始终只属于 AARE，绝不会成为手机的互联网连接。需要 Shizuku 正在运行并允许 AARE。</string>
+
+    <string name="setup_toggle_auto_pair_title">自动配对车辆的蓝牙</string>
+    <string name="setup_toggle_auto_pair_subtitle">用于通话：当手机尚未配对的车辆通过 Android Auto 请求配对时，若配对码与车辆发送的一致，AARE 会通过 Shizuku 与该车辆配对，而不弹出 Android 的配对对话框。绝不会用于其他任何设备。需要 Shizuku 正在运行并允许 AARE。</string>
 </resources>

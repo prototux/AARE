@@ -775,4 +775,7 @@
     <string name="setup_action_associate">Tilknyt</string>
     <string name="setup_toggle_companion_shizuku_title">Godkend bilens Wi-Fi med Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">For tilknyttede biler svarer Shizuku på Androids spørgsmål om at \"oprette forbindelse til enhed\", så du ikke bliver spurgt igen. Bilens netværk forbliver AAREs eget og er aldrig telefonens internetforbindelse. Kræver, at Shizuku kører og tillader AARE.</string>
+
+    <string name="setup_toggle_auto_pair_title">Par bilens Bluetooth automatisk</string>
+    <string name="setup_toggle_auto_pair_subtitle">Til opkald: når en bil, telefonen ikke er parret med, beder om at parre via Android Auto, parrer AARE med den bil via Shizuku i stedet for Androids dialog, hvis koden matcher den, bilen sendte. Aldrig med nogen anden enhed. Kræver, at Shizuku kører og tillader AARE.</string>
 </resources>

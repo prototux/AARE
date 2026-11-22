@@ -774,4 +774,7 @@
     <string name="setup_action_associate">Yhdistä laitepariksi</string>
     <string name="setup_toggle_companion_shizuku_title">Hyväksy auton Wi-Fi Shizukulla</string>
     <string name="setup_toggle_companion_shizuku_subtitle">Laiteparina yhdistetyille autoille Shizuku vastaa Androidin \"yhdistä laitteeseen\" -kysymykseen, jotta sitä ei kysytä uudelleen. Auton verkko pysyy AAREn omana, ei koskaan puhelimen internetyhteytenä. Vaatii, että Shizuku on käynnissä ja sallii AAREn.</string>
+
+    <string name="setup_toggle_auto_pair_title">Yhdistä auton Bluetooth laiteparina automaattisesti</string>
+    <string name="setup_toggle_auto_pair_subtitle">Puheluita varten: kun auto, jonka kanssa puhelinta ei ole liitetty laitepariksi, pyytää laiteparin muodostamista Android Auton kautta, AARE muodostaa laiteparin sen auton kanssa Shizukun kautta Androidin valintaikkunan sijaan, jos koodi vastaa auton lähettämää. Ei koskaan minkään muun laitteen kanssa. Vaatii, että Shizuku on käynnissä ja sallii AAREn.</string>
 </resources>

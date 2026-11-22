@@ -762,4 +762,7 @@
     <string name="setup_action_associate">ربط</string>
     <string name="setup_toggle_companion_shizuku_title">الموافقة على Wi-Fi السيارة عبر Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">بالنسبة للسيارات المرتبطة، يجيب Shizuku على سؤال Android \"الاتصال بالجهاز\"، فلا يُطرح مرة أخرى. تبقى شبكة السيارة خاصة بـ AARE فقط، ولا تكون أبدًا اتصال إنترنت الهاتف. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
+
+    <string name="setup_toggle_auto_pair_title">اقتران Bluetooth السيارة تلقائيًا</string>
+    <string name="setup_toggle_auto_pair_subtitle">للمكالمات: عندما تطلب سيارة غير مقترنة بالهاتف الاقتران عبر Android Auto، يتم الاقتران بتلك السيارة عبر Shizuku بدلًا من نافذة Android، إذا كان الرمز مطابقًا للرمز الذي أرسلته السيارة. لا يحدث ذلك مع أي جهاز آخر أبدًا. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
 </resources>

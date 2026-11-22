@@ -776,4 +776,7 @@
     <string name="setup_action_associate">Přiřadit</string>
     <string name="setup_toggle_companion_shizuku_title">Schvalovat Wi-Fi auta přes Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">U přiřazených aut odpovídá na otázku Androidu „připojit se k zařízení“ Shizuku, takže se už znovu neobjeví. Síť auta zůstává vlastní sítí AARE, nikdy internetovým připojením telefonu. Vyžaduje běžící Shizuku a povolené AARE v něm.</string>
+
+    <string name="setup_toggle_auto_pair_title">Automaticky párovat Bluetooth auta</string>
+    <string name="setup_toggle_auto_pair_subtitle">Pro hovory: když se auto, se kterým telefon není párováno, pokusí párovat přes Android Auto, AARE se s ním spáruje přes Shizuku místo dialogu Androidu, pokud se kód shoduje s tím, který auto odeslalo. Nikdy s žádným jiným zařízením. Vyžaduje běžící Shizuku a povolené AARE v něm.</string>
 </resources>

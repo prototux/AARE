@@ -776,4 +776,7 @@
     <string name="setup_action_associate">Koppelen</string>
     <string name="setup_toggle_companion_shizuku_title">Keur de Wi-Fi van de auto goed met Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">Voor gekoppelde auto\'s beantwoordt Shizuku Androids vraag \"verbinden met apparaat\", zodat deze niet opnieuw wordt gesteld. Het netwerk van de auto blijft AAREs eigen netwerk, nooit de internetverbinding van de telefoon. Vereist dat Shizuku draait en AARE toestaat.</string>
+
+    <string name="setup_toggle_auto_pair_title">Koppel de Bluetooth van de auto automatisch</string>
+    <string name="setup_toggle_auto_pair_subtitle">Voor gesprekken: wanneer een auto waarmee de telefoon niet is gekoppeld om koppeling via Android Auto vraagt, koppelt AARE met die auto via Shizuku in plaats van Androids dialoogvenster, als de code overeenkomt met die de auto verzond. Nooit met een ander apparaat. Vereist dat Shizuku draait en AARE toestaat.</string>
 </resources>

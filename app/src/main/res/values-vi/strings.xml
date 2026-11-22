@@ -774,4 +774,7 @@
     <string name="setup_action_associate">Liên kết</string>
     <string name="setup_toggle_companion_shizuku_title">Chấp thuận Wi-Fi của xe bằng Shizuku</string>
     <string name="setup_toggle_companion_shizuku_subtitle">Với các xe đã liên kết, Shizuku trả lời câu hỏi \"kết nối với thiết bị\" của Android, nên câu hỏi đó không xuất hiện lại. Mạng của xe vẫn luôn là mạng riêng của AARE, không bao giờ là kết nối internet của điện thoại. Cần Shizuku đang chạy và cho phép AARE.</string>
+
+    <string name="setup_toggle_auto_pair_title">Tự động ghép đôi Bluetooth của xe</string>
+    <string name="setup_toggle_auto_pair_subtitle">Đối với các cuộc gọi: khi một xe mà điện thoại chưa ghép đôi yêu cầu ghép đôi qua Android Auto, AARE sẽ ghép đôi với xe đó qua Shizuku thay cho hộp thoại của Android, nếu mã khớp với mã xe đã gửi. Không bao giờ ghép với thiết bị khác. Cần Shizuku đang chạy và cho phép AARE.</string>
 </resources>
