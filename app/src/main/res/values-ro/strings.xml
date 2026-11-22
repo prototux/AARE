@@ -88,6 +88,11 @@
     <string name="setup_choice_night_source_light_sensor">Senzorul de lumină al telefonului</string>
     <string name="setup_choice_bar">Bară</string>
     <string name="setup_choice_bar_auto">Partea șoferului</string>
+    <string name="setup_choice_status_items">Ceas, semnal și baterie</string>
+    <string name="setup_choice_status_items_auto">Ca mașina</string>
+    <string name="setup_choice_status_items_show">Afișează mereu</string>
+    <string name="setup_choice_status_items_hide">Ascunde mereu</string>
+    <string name="setup_hint_status_items">Ca mașina omite ce afișează deja mașina pe ecranul ei.</string>
     <string name="setup_choice_left">Stânga</string>
     <string name="setup_choice_right">Dreapta</string>
     <string name="setup_choice_bottom">Jos</string>

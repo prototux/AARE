@@ -88,6 +88,11 @@
     <string name="setup_choice_night_source_light_sensor">Telefonens lyssensor</string>
     <string name="setup_choice_bar">Stolpe</string>
     <string name="setup_choice_bar_auto">Førerside</string>
+    <string name="setup_choice_status_items">Klokke, signal og batteri</string>
+    <string name="setup_choice_status_items_auto">Følg bilen</string>
+    <string name="setup_choice_status_items_show">Vis alltid</string>
+    <string name="setup_choice_status_items_hide">Skjul alltid</string>
+    <string name="setup_hint_status_items">Følg bilen utelater det bilen allerede viser på skjermen sin.</string>
     <string name="setup_choice_left">Venstre</string>
     <string name="setup_choice_right">Høyre</string>
     <string name="setup_choice_bottom">Nederst</string>

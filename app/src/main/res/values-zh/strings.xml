@@ -86,6 +86,11 @@
     <string name="setup_choice_night_source_light_sensor">手机光线传感器</string>
     <string name="setup_choice_bar">导航条</string>
     <string name="setup_choice_bar_auto">跟随驾驶位一侧</string>
+    <string name="setup_choice_status_items">时钟、信号和电量</string>
+    <string name="setup_choice_status_items_auto">跟随车辆</string>
+    <string name="setup_choice_status_items_show">始终显示</string>
+    <string name="setup_choice_status_items_hide">始终隐藏</string>
+    <string name="setup_hint_status_items">“跟随车辆”会省略车辆屏幕上已显示的内容。</string>
     <string name="setup_choice_left">左</string>
     <string name="setup_choice_right">右</string>
     <string name="setup_choice_bottom">底部</string>

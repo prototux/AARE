@@ -88,6 +88,11 @@
     <string name="setup_choice_night_source_light_sensor">O sensor de luz do telefone</string>
     <string name="setup_choice_bar">Barra</string>
     <string name="setup_choice_bar_auto">Lado do condutor</string>
+    <string name="setup_choice_status_items">Relógio, rede e bateria</string>
+    <string name="setup_choice_status_items_auto">Como o carro</string>
+    <string name="setup_choice_status_items_show">Mostrar sempre</string>
+    <string name="setup_choice_status_items_hide">Ocultar sempre</string>
+    <string name="setup_hint_status_items">Como o carro omite o que o carro já mostra no seu ecrã.</string>
     <string name="setup_choice_left">Esquerda</string>
     <string name="setup_choice_right">Direita</string>
     <string name="setup_choice_bottom">Fundo</string>

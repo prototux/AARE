@@ -122,6 +122,12 @@ class HeadUnitSimulator(
     val discoveryRequest = CountDownLatch(1)
     var phoneRequest: ServiceDiscoveryRequest? = null
     val openedChannels = ConcurrentHashMap.newKeySet<Int>()
+    /** Channel open requests, in the order the phone sent them. */
+    val openOrder = LinkedBlockingQueue<Int>()
+    /** Channels the phone answered with UNEXPECTED_MESSAGE, in order. */
+    val unexpectedReplies = LinkedBlockingQueue<Int>()
+    /** The phone's pings, in order. */
+    val pingRequests = LinkedBlockingQueue<PingRequest>()
     val videoFrames = AtomicInteger()
     val videoBytes = AtomicInteger()
     val codecConfigs = AtomicInteger()
@@ -158,6 +164,10 @@ class HeadUnitSimulator(
     val navStatuses = LinkedBlockingQueue<NavigationStatus.NavigationStatusEnum>()
     /** False plays a head unit that never answers the phone's bye-bye. */
     @Volatile var answerByeBye = true
+    /** False plays a head unit that never answers the phone's pings. */
+    @Volatile var answerPings = true
+    /** The ping interval the head unit asks for in its discovery response. */
+    @Volatile var pingIntervalMs = 1000
     /** AUTH_COMPLETE's status: non-zero plays a head unit that refuses the phone certificate. */
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
@@ -183,9 +193,11 @@ class HeadUnitSimulator(
     fun stop() = transport.close()
 
     private fun handle(m: AapMessage) {
+        if (m.id == ControlMsg.UNEXPECTED_MESSAGE && m.channel != 0) { unexpectedReplies.add(m.channel); return }
         if (m.channel == 0 && !m.control) return control(m)
         if (m.control && m.id == ControlMsg.CHANNEL_OPEN_REQUEST) {
             openedChannels.add(m.channel)
+            openOrder.add(m.channel)
             send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder()
                 .apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build(), control = true)
             return
@@ -240,8 +252,11 @@ class HeadUnitSimulator(
             }
             ControlMsg.PING_REQUEST -> {
                 val req = PingRequest.parseFrom(m.bodyBytes())
-                send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
-                pingsAnswered.incrementAndGet()
+                pingRequests.add(req)
+                if (answerPings) {
+                    send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
+                    pingsAnswered.incrementAndGet()
+                }
             }
             ControlMsg.AUDIO_FOCUS_REQUEST -> {
                 val req = AudioFocusRequest.parseFrom(m.bodyBytes())
@@ -393,7 +408,7 @@ class HeadUnitSimulator(
                 .setHeadUnitMake("AARE").setHeadUnitModel("hu-sim").setHeadUnitSoftwareVersion("1"))
             .setDisplayName("Simulated car")
             .setConnectionConfiguration(ConnectionConfiguration.newBuilder().setPingConfiguration(
-                PingConfiguration.newBuilder().setIntervalMs(1000).setTimeoutMs(3000).setTrackedPingCount(5)))
+                PingConfiguration.newBuilder().setIntervalMs(pingIntervalMs).setTimeoutMs(3000).setTrackedPingCount(5)))
             .addChannels(Service.newBuilder().setId(video).setMediaSinkService(MediaSinkService.newBuilder()
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)
@@ -434,8 +449,10 @@ class HeadUnitSimulator(
         writer.write(channel, control, tlsUp, AapMessage.plaintext(id, body.toByteArray()))
     }
 
-    /** Sends a message with any body, even one that doesn't parse. */
-    fun sendBytes(channel: Int, id: Int, body: ByteArray) = sendRaw(channel, AapMessage.plaintext(id, body))
+    /** Sends [body] as is after the message id: for messages a real head unit would get wrong. */
+    fun sendBytes(channel: Int, id: Int, body: ByteArray, control: Boolean = false) = synchronized(writeLock) {
+        writer.write(channel, control, tlsUp, AapMessage.plaintext(id, body))
+    }
 
     private fun sendRaw(channel: Int, plain: ByteArray) = synchronized(writeLock) {
         writer.write(channel, false, tlsUp, plain)

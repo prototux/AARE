@@ -88,6 +88,11 @@
     <string name="setup_choice_night_source_light_sensor">Cảm biến ánh sáng của điện thoại</string>
     <string name="setup_choice_bar">Thanh</string>
     <string name="setup_choice_bar_auto">Phía người lái</string>
+    <string name="setup_choice_status_items">Đồng hồ, sóng và pin</string>
+    <string name="setup_choice_status_items_auto">Theo xe</string>
+    <string name="setup_choice_status_items_show">Luôn hiện</string>
+    <string name="setup_choice_status_items_hide">Luôn ẩn</string>
+    <string name="setup_hint_status_items">Theo xe bỏ qua những gì xe đã hiển thị trên màn hình của nó.</string>
     <string name="setup_choice_left">Trái</string>
     <string name="setup_choice_right">Phải</string>
     <string name="setup_choice_bottom">Dưới</string>

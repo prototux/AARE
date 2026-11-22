@@ -39,6 +39,7 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
+import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.DashboardInfo
 import net.prototux.aare.car.LightSensorFeed
 import net.prototux.aare.media.MediaHub
@@ -348,6 +349,9 @@ class CarRuntime(
     /** The head unit's driver position. */
     var rightHandDrive = false
         set(v) { field = v; applyScreenSettings() }
+    /** The status items the head unit draws itself: the bar leaves them out unless a setting says otherwise. */
+    var headUnitChrome = CarChrome.NONE
+        set(v) { field = v; applyScreenSettings() }
 
     /** The car's driving signal (parked or not), before the passenger-mode setting. */
     private var carDriving = false
@@ -389,6 +393,7 @@ class CarRuntime(
         ui.dashboardCards = DashCard.parse(settings.dashboardCards)
         ui.dashboardMapBig = settings.dashboardMapBig
         ui.weatherInBar = settings.showWeather
+        ui.chrome = CarChrome.shown(settings.carChrome, headUnitChrome)
         ui.railWidgets = RailWidget.parse(settings.railWidgets)
         ui.railApps = settings.railApps
         ui.compactRail = settings.compactRail
@@ -432,7 +437,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "ignore_driving",
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "car_chrome", "ignore_driving",
             "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail", "rail_widgets" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.

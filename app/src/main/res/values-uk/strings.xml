@@ -88,6 +88,11 @@
     <string name="setup_choice_night_source_light_sensor">Датчиком освітлення телефона</string>
     <string name="setup_choice_bar">Панель</string>
     <string name="setup_choice_bar_auto">Бік водія</string>
+    <string name="setup_choice_status_items">Годинник, сигнал і батарея</string>
+    <string name="setup_choice_status_items_auto">Як в авто</string>
+    <string name="setup_choice_status_items_show">Завжди показувати</string>
+    <string name="setup_choice_status_items_hide">Завжди приховувати</string>
+    <string name="setup_hint_status_items">«Як в авто» не показує те, що авто вже виводить на свій екран.</string>
     <string name="setup_choice_left">Ліворуч</string>
     <string name="setup_choice_right">Праворуч</string>
     <string name="setup_choice_bottom">Знизу</string>

@@ -126,7 +126,7 @@ class CarSession(
         deviceName = deviceName(), label = "Android", instanceId = settings.instanceId,
         smallIcon = icon(32), mediumIcon = icon(64), largeIcon = icon(128),
     ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse,
-        echoHeadUnitVersion = echoHeadUnitVersion))
+        clockNanos = SystemClock::elapsedRealtimeNanos, echoHeadUnitVersion = echoHeadUnitVersion))
 
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null
@@ -243,6 +243,7 @@ class CarSession(
         val inputServices = ArrayList<Service>()
         var mainDisplayId = 0
         val quirks = vehicleOverride
+        session.sensorChannelFirst = quirks?.sensorChannelFirst == true
         for (s in response.channelsList) {
             val kind = AapSession.serviceKind(s)
             if (quirks?.skips(kind) == true) {
@@ -469,6 +470,7 @@ class CarSession(
                 // Not projecting: the next start lays out with it.
                 if (display != null) {
                     showLayout(layout, densityOf(updated, w, h), rightHandDrive)
+                    applyChrome(updated)
                     videoDescription = videoFormat + layout.describe()
                     display?.invalidate() // a frame with the new layout, which the reply waits for
                 }
@@ -501,6 +503,14 @@ class CarSession(
 
     /** Size, frame rate and density of the running projection, for [videoDescription]. */
     private var videoFormat = ""
+
+    /** What the head unit draws itself (clock, signal, battery), so the car UI leaves it out. */
+    private fun applyChrome(config: VideoConfiguration) {
+        // Here, not at discovery: a UI config update can change what the head unit draws.
+        val chrome = CarChrome.drawnByHeadUnit(aap.headUnitAtLeast(4, 3), aap.uiChrome?.bits ?: 0, config.uiConfig.uiElementsList)
+        if (chrome != runtime.headUnitChrome) Log.i(TAG, "the head unit draws its own: $chrome")
+        runtime.headUnitChrome = chrome
+    }
 
     /** Lays the car UI out in the frame: its size and density, and where touches land. */
     private fun showLayout(layout: ProjectionLayout, dpi: Int, rightHandDrive: Boolean) {
@@ -570,6 +580,7 @@ class CarSession(
         encoder = enc
 
         showLayout(layout, dpi, rightHandDrive)
+        applyChrome(config)
         // Assigned before show(), so that a failing show() still has teardownVideo() release the display.
         val pd = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
             val d = LocalDensity.current
@@ -979,16 +990,24 @@ class CarSession(
      * but the next route asks again.
      */
     private var navFocusPending = false
+    /** The car was asked for projected nav focus and hasn't been given it back yet. */
+    private var navFocusProjected = false
 
     /** A hosted app's trip or a phone app's guidance started, changed or ended. */
     private fun guidanceChanged(hosted: Boolean, guiding: Boolean) {
+        val handBack: Boolean
         synchronized(navLock) {
             val was = hostedGuiding || phoneGuiding
             if (hosted) hostedGuiding = guiding else phoneGuiding = guiding
             val now = hostedGuiding || phoneGuiding
             if (now && !was) navFocusPending = true
             else if (!now) navFocusPending = false
+            // When projected navigation stops, give nav focus back to the
+            // car, or its own navigation may stay suppressed after the route.
+            handBack = !now && navFocusProjected
+            if (handBack) navFocusProjected = false
         }
+        if (handBack && aap.state == AapSession.State.RUNNING) aap.requestNavFocus(NavFocusType.NAV_FOCUS_NATIVE)
         requestNavFocus()
     }
 
@@ -996,6 +1015,7 @@ class CarSession(
         synchronized(navLock) {
             if (!navFocusPending || aap.state != AapSession.State.RUNNING) return
             navFocusPending = false
+            navFocusProjected = true
         }
         aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED)
     }
