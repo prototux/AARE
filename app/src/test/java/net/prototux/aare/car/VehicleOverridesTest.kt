@@ -65,6 +65,9 @@ class VehicleOverridesTest {
         assertEquals(setOf("vendor"), o.skipServices)
         assertEquals(setOf("wifi"), o.openServices)
         assertEquals(null, o.dpi)
+        assertEquals(null, o.pairAgainWhenRunning)
+        val again = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"pairAgainWhenRunning":true}}]}""").single().override
+        assertEquals(true, again.pairAgainWhenRunning)
     }
 
     @Test fun aMalformedRuleIsSkipped() =
@@ -75,6 +78,7 @@ class VehicleOverridesTest {
         val rules = VehicleOverrides.parse(java.io.File("src/main/assets/vehicles.json").readText())
         val vwPlay = rules.single { it.matches("Volkswagen", "VW_7_A0_HATCHBACK", "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio") }
         assertEquals(false, vwPlay.override.micSetup)
+        assertEquals(true, vwPlay.override.pairAgainWhenRunning)
     }
 
     /** Android's org.json quotes the whole input after the position: the problem keeps neither. */
