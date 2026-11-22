@@ -366,6 +366,13 @@ class Settings(context: Context) {
     var carDataApp: Boolean
         get() = prefs.getBoolean("car_data_app", false)
         set(v) = prefs.edit { putBoolean("car_data_app", v) }
+    /**
+     * Smart-home actions and tiles for the car screen (`home.HomeJson`'s versioned JSON), without
+     * their secrets: the broker password and header values are in `home.HomeStore`'s own file.
+     */
+    var homeActions: String?
+        get() = prefs.getString(HOME_ACTIONS_KEY, null)
+        set(v) = prefs.edit { putString(HOME_ACTIONS_KEY, v) }
     /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
     var callBarOffsetX: Float
         get() = prefs.getFloat("call_bar_x", 0f)
@@ -534,6 +541,7 @@ class Settings(context: Context) {
 
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
+        const val HOME_ACTIONS_KEY = "home_actions"
         const val RAIL_AUTO = "auto"
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
