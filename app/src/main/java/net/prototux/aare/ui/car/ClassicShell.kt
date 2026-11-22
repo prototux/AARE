@@ -62,9 +62,9 @@ internal fun ClassicShell(
         Box(Modifier.fillMaxSize().then(modifier)) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Clock()
+                    if (state.chrome.clock) Clock()
                     Spacer(Modifier.weight(1f))
-                    PhoneStatusIcons()
+                    PhoneStatusIcons(state.chrome)
                 }
                 ContentArea(state, actions, appContent, navMap, Modifier.weight(1f).fillMaxWidth(), launcherHome = true)
                 BottomBar(state, actions)

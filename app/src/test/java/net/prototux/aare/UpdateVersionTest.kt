@@ -23,3 +23,17 @@ class UpdateVersionTest {
 
     @Test fun majorBumpBeatsEverything() = assertTrue(UpdateChecker.isNewer("2.0.0", "1.9.9"))
 }
+
+class UpdateDueTest {
+    private val hour = 60 * 60 * 1000L
+
+    @Test fun notDueRightAfterACheck() = assertFalse(UpdateChecker.due(nowMs = 10 * hour, lastCheckMs = 9 * hour))
+
+    /** Every 6 hours: a release published in the morning shows the same day. */
+    @Test fun dueSixHoursLater() = assertTrue(UpdateChecker.due(nowMs = 16 * hour, lastCheckMs = 10 * hour))
+
+    @Test fun dueWhenNeverChecked() = assertTrue(UpdateChecker.due(nowMs = 10 * hour, lastCheckMs = 0))
+
+    /** A clock set back would otherwise stop the checks until it caught up. */
+    @Test fun dueWhenTheClockWentBack() = assertTrue(UpdateChecker.due(nowMs = 10 * hour, lastCheckMs = 12 * hour))
+}

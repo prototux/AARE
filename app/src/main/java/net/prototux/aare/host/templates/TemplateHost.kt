@@ -31,6 +31,12 @@ interface TemplateHost {
     /** The app's label, for headers that use Action.APP_ICON. */
     val appLabel: String
 
+    /**
+     * Tint the app's own icons with the text colour, whatever they look like. This is done
+     * for a few apps whose icons only work tinted ([net.prototux.aare.host.AppQuirks.FORCE_ICON_TINT]).
+     */
+    val forceIconTint: Boolean get() = false
+
     /** Max items for a content type (ConstraintManager.CONTENT_LIMIT_TYPE_*). */
     fun contentLimit(type: Int): Int
 
@@ -57,6 +63,9 @@ interface TemplateHost {
 
     fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int)
     fun setStableArea(left: Int, top: Int, right: Int, bottom: Int)
+
+    /** Room (dp) to leave out of those areas along the bottom of the dashboard's map card. */
+    val mapCardBottomInsetDp: Int get() = 0
 
     /** Map gestures in pan mode, forwarded to the app's SurfaceCallback. */
     fun mapScroll(dx: Float, dy: Float)
