@@ -444,6 +444,11 @@
     <string name="car_data_accelerometer">مقياس التسارع</string>
     <string name="car_data_gyroscope">الجيروسكوب</string>
     <string name="car_data_dtc">أكواد الأعطال</string>
+    <string name="car_data_dtc_unknown">غير معروف</string>
+    <string name="car_data_dtc_manufacturer_powertrain">كود خاص بالشركة المصنّعة لمجموعة نقل الحركة</string>
+    <string name="car_data_dtc_manufacturer_chassis">كود خاص بالشركة المصنّعة للهيكل</string>
+    <string name="car_data_dtc_manufacturer_body">كود خاص بالشركة المصنّعة لجسم السيارة</string>
+    <string name="car_data_dtc_manufacturer_network">كود خاص بالشركة المصنّعة للشبكة</string>
     <string name="car_data_app_label">بيانات السيارة</string>
     <string name="car_data_show_in_car_title">إظهار على شاشة السيارة</string>
     <string name="car_data_show_in_car_subtitle">أضف تطبيق تشخيص في السيارة لرؤية هذه البيانات المباشرة</string>

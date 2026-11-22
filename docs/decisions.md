@@ -255,3 +255,30 @@ by a pure parser (`AssistantLinks.parse`, unit-tested) that doubles as the whole
 - The log records the action kind, never the link (destination, phone number).
 - `open`/`play` accept `app`/`action` with `q` as a fallback alias, so the three link patterns in
   the feature request (`?q=`) and the more specific parameter names both work.
+
+## Plain-language diagnostic trouble codes
+
+The car data viewers (phone and car) showed the car's diagnostics sensor raw, as hex bytes. Added
+`DtcCodes`, decoding the two bytes per code (AAP's `DiagnosticsData.dtc` has no documented format
+beyond "bytes") per the standard SAE J2012 / ISO 15031-6 bit layout into the familiar P/C/B/U +
+4-digit codes, and a catalogue AARE ships (`app/src/main/assets/dtc/generic.json`, ~350 entries,
+written from scratch for this PR) for the SAE-generic ones.
+
+- Classification follows SAE J2012's ranges per system: P0, P2 and P34-P39 generic, P1 and
+  P30-P33 manufacturer-specific; for C, B and U, 0 and 3 generic, 1 and 2 manufacturer-specific.
+  (A plain "second character 0/2" rule got B2/C2/U2 and P34-P39 wrong.)
+- The two-bytes-per-code layout is the usual OBD-II one, but AAP doesn't document it: it's a
+  guess. So both viewers keep each code's raw bytes next to it ("P0128 (01 28) — ..."), and a
+  zero pair is taken as padding rather than shown as "P0000".
+- The catalogue is read off the main thread, once, the first time a viewer has codes to show;
+  until then generic codes show without a description.
+- Manufacturer-specific codes show their family ("manufacturer-specific powertrain code") and no
+  description: AARE has no way to know what a given manufacturer assigned to e.g. P1300, and
+  guessing would be worse than saying so.
+- The catalogue is deliberately smaller than "every code ever assigned" (~350, not thousands):
+  common P0 sensor/misfire/emissions/transmission ranges, the best-known P2 codes, the common
+  U0 network-loss codes, and a handful of representative C0/B0 ones, covering what a driver is
+  actually likely to see.
+- Both viewers show one line per decoded code ("P0128 (01 28) — Coolant thermostat below
+  regulating temperature") instead of the previous single hex-byte row. The descriptions AARE
+  writes itself (manufacturer-specific, unknown) are translated; the catalogue's are English.

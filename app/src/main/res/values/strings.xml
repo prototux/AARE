@@ -86,6 +86,11 @@
     <string name="car_data_accelerometer">Accelerometer</string>
     <string name="car_data_gyroscope">Gyroscope</string>
     <string name="car_data_dtc">Trouble codes</string>
+    <string name="car_data_dtc_unknown">Unknown</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Manufacturer-specific powertrain code</string>
+    <string name="car_data_dtc_manufacturer_chassis">Manufacturer-specific chassis code</string>
+    <string name="car_data_dtc_manufacturer_body">Manufacturer-specific body code</string>
+    <string name="car_data_dtc_manufacturer_network">Manufacturer-specific network code</string>
     <string name="car_data_app_label">Car data</string>
     <string name="car_data_show_in_car_title">Show on the car screen</string>
     <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>

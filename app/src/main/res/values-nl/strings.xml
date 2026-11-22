@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Versnellingsmeter</string>
     <string name="car_data_gyroscope">Gyroscoop</string>
     <string name="car_data_dtc">Foutcodes</string>
+    <string name="car_data_dtc_unknown">Onbekend</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Fabrikantspecifieke aandrijflijncode</string>
+    <string name="car_data_dtc_manufacturer_chassis">Fabrikantspecifieke chassiscode</string>
+    <string name="car_data_dtc_manufacturer_body">Fabrikantspecifieke carrosseriecode</string>
+    <string name="car_data_dtc_manufacturer_network">Fabrikantspecifieke netwerkcode</string>
     <string name="car_data_app_label">Autogegevens</string>
     <string name="car_data_show_in_car_title">Weergeven op het autoscherm</string>
     <string name="car_data_show_in_car_subtitle">Voeg een diagnose-app toe in de auto voor deze livegegevens</string>

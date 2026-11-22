@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Accéléromètre</string>
     <string name="car_data_gyroscope">Gyroscope</string>
     <string name="car_data_dtc">Codes défaut</string>
+    <string name="car_data_dtc_unknown">Inconnu</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Code groupe motopropulseur propre au constructeur</string>
+    <string name="car_data_dtc_manufacturer_chassis">Code châssis propre au constructeur</string>
+    <string name="car_data_dtc_manufacturer_body">Code carrosserie propre au constructeur</string>
+    <string name="car_data_dtc_manufacturer_network">Code réseau propre au constructeur</string>
     <string name="car_data_app_label">Données du véhicule</string>
     <string name="car_data_show_in_car_title">Afficher sur l\'écran de la voiture</string>
     <string name="car_data_show_in_car_subtitle">Ajoutez une application de diagnostic dans la voiture pour ces données en direct</string>

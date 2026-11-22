@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Kiihtyvyysanturi</string>
     <string name="car_data_gyroscope">Gyroskooppi</string>
     <string name="car_data_dtc">Vikakoodit</string>
+    <string name="car_data_dtc_unknown">Tuntematon</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Valmistajakohtainen voimansiirron koodi</string>
+    <string name="car_data_dtc_manufacturer_chassis">Valmistajakohtainen alustan koodi</string>
+    <string name="car_data_dtc_manufacturer_body">Valmistajakohtainen korin koodi</string>
+    <string name="car_data_dtc_manufacturer_network">Valmistajakohtainen verkon koodi</string>
     <string name="car_data_app_label">Auton tiedot</string>
     <string name="car_data_show_in_car_title">Näytä auton näytöllä</string>
     <string name="car_data_show_in_car_subtitle">Lisää autoon diagnostiikkasovellus näitä reaaliaikaisia tietoja varten</string>

@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Beschleunigungssensor</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Fehlercodes</string>
+    <string name="car_data_dtc_unknown">Unbekannt</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Herstellerspezifischer Antriebsstrang-Code</string>
+    <string name="car_data_dtc_manufacturer_chassis">Herstellerspezifischer Fahrwerk-Code</string>
+    <string name="car_data_dtc_manufacturer_body">Herstellerspezifischer Karosserie-Code</string>
+    <string name="car_data_dtc_manufacturer_network">Herstellerspezifischer Netzwerk-Code</string>
     <string name="car_data_app_label">Fahrzeugdaten</string>
     <string name="car_data_show_in_car_title">Auf dem Autobildschirm anzeigen</string>
     <string name="car_data_show_in_car_subtitle">Fügen Sie im Auto eine Diagnose-App für diese Live-Daten hinzu</string>

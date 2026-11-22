@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Gyorsulásmérő</string>
     <string name="car_data_gyroscope">Giroszkóp</string>
     <string name="car_data_dtc">Hibakódok</string>
+    <string name="car_data_dtc_unknown">Ismeretlen</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Gyártóspecifikus hajtáslánc-kód</string>
+    <string name="car_data_dtc_manufacturer_chassis">Gyártóspecifikus futómű-kód</string>
+    <string name="car_data_dtc_manufacturer_body">Gyártóspecifikus karosszéria-kód</string>
+    <string name="car_data_dtc_manufacturer_network">Gyártóspecifikus hálózati kód</string>
     <string name="car_data_app_label">Autó adatai</string>
     <string name="car_data_show_in_car_title">Megjelenítés az autó képernyőjén</string>
     <string name="car_data_show_in_car_subtitle">Adj hozzá egy diagnosztikai alkalmazást az autóban ehhez az élő adathoz</string>

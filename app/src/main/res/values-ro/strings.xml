@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Accelerometru</string>
     <string name="car_data_gyroscope">Giroscop</string>
     <string name="car_data_dtc">Coduri de eroare</string>
+    <string name="car_data_dtc_unknown">Necunoscut</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Cod de grup motopropulsor specific producătorului</string>
+    <string name="car_data_dtc_manufacturer_chassis">Cod de șasiu specific producătorului</string>
+    <string name="car_data_dtc_manufacturer_body">Cod de caroserie specific producătorului</string>
+    <string name="car_data_dtc_manufacturer_network">Cod de rețea specific producătorului</string>
     <string name="car_data_app_label">Date mașină</string>
     <string name="car_data_show_in_car_title">Arată pe ecranul mașinii</string>
     <string name="car_data_show_in_car_subtitle">Adaugă o aplicație de diagnoză în mașină pentru aceste date live</string>

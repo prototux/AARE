@@ -444,6 +444,11 @@
     <string name="car_data_accelerometer">加速度计</string>
     <string name="car_data_gyroscope">陀螺仪</string>
     <string name="car_data_dtc">故障码</string>
+    <string name="car_data_dtc_unknown">未知</string>
+    <string name="car_data_dtc_manufacturer_powertrain">制造商专用动力系统代码</string>
+    <string name="car_data_dtc_manufacturer_chassis">制造商专用底盘代码</string>
+    <string name="car_data_dtc_manufacturer_body">制造商专用车身代码</string>
+    <string name="car_data_dtc_manufacturer_network">制造商专用网络代码</string>
     <string name="car_data_app_label">车载数据</string>
     <string name="car_data_show_in_car_title">在车机屏幕上显示</string>
     <string name="car_data_show_in_car_subtitle">在车机中添加一个诊断应用来显示这些实时数据</string>

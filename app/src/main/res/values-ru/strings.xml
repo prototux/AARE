@@ -460,6 +460,11 @@
     <string name="car_data_accelerometer">Акселерометр</string>
     <string name="car_data_gyroscope">Гироскоп</string>
     <string name="car_data_dtc">Коды неисправностей</string>
+    <string name="car_data_dtc_unknown">Неизвестно</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Код силового агрегата, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_chassis">Код шасси, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_body">Код кузова, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_network">Код сети, определённый производителем</string>
     <string name="car_data_app_label">Данные автомобиля</string>
     <string name="car_data_show_in_car_title">Показывать на экране автомобиля</string>
     <string name="car_data_show_in_car_subtitle">Добавьте диагностическое приложение в автомобиле для этих данных в реальном времени</string>
