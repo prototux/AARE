@@ -90,6 +90,11 @@
     <string name="setup_choice_bottom">In basso</string>
     <string name="setup_toggle_dark_bar_title">Barra scura</string>
     <string name="setup_toggle_dark_bar_subtitle">Mantieni la barra scura anche con i colori diurni</string>
+    <string name="setup_choice_text_size">Dimensione del testo</string>
+    <string name="setup_choice_control_size">Dimensione dei comandi</string>
+    <string name="setup_choice_size_default">Predefinita</string>
+    <string name="setup_choice_size_larger">Più grande</string>
+    <string name="setup_choice_size_largest">La più grande</string>
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Schede</string>
     <string name="dash_cards_hint">La prima scheda ha più spazio; le altre riempiono il resto dello schermo. Una scheda senza nulla da mostrare lascia il posto alla successiva.</string>

@@ -90,6 +90,11 @@
     <string name="setup_choice_bottom">Fundo</string>
     <string name="setup_toggle_dark_bar_title">Barra escura</string>
     <string name="setup_toggle_dark_bar_subtitle">Manter a barra escura mesmo com as cores de dia</string>
+    <string name="setup_choice_text_size">Tamanho do texto</string>
+    <string name="setup_choice_control_size">Tamanho dos controlos</string>
+    <string name="setup_choice_size_default">Predefinido</string>
+    <string name="setup_choice_size_larger">Maior</string>
+    <string name="setup_choice_size_largest">O maior</string>
     <string name="setup_section_dashboard">Painel</string>
     <string name="dash_cards_title">Cartões</string>
     <string name="dash_cards_hint">O primeiro cartão tem mais espaço; os outros ocupam o resto do ecrã. Um cartão sem nada para mostrar cede o lugar ao seguinte.</string>

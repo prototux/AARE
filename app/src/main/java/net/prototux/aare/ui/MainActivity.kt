@@ -163,6 +163,7 @@ import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
+import net.prototux.aare.ui.theme.CarTextSize
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
 import java.text.DateFormat
@@ -832,6 +833,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var textSize by remember { mutableStateOf(settings.carTextSize) }
+    var controlSize by remember { mutableStateOf(settings.carControlSize) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
@@ -871,6 +874,17 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 rail = it; settings.railPosition = it
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
+            Spacer(Modifier.height(12.dp))
+            val sizeOptions = listOf(
+                CarTextSize.DEFAULT.id to stringResource(R.string.setup_choice_size_default),
+                CarTextSize.LARGER.id to stringResource(R.string.setup_choice_size_larger),
+                CarTextSize.LARGEST.id to stringResource(R.string.setup_choice_size_largest),
+            )
+            // Text and control size are independent settings (one changes the font scale, the
+            // other CarDimens' touch targets), so a user who needs only one doesn't grow both.
+            Choices(stringResource(R.string.setup_choice_text_size), sizeOptions, textSize) { textSize = it; settings.carTextSize = it }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_control_size), sizeOptions, controlSize) { controlSize = it; settings.carControlSize = it }
         }
         Section(stringResource(R.string.setup_section_dashboard)) {
             Select(stringResource(R.string.setup_choice_wallpaper), listOf("none" to stringResource(R.string.setup_wallpaper_none)) + WALLPAPER_NAMES.map { it to it.replaceFirstChar(Char::uppercase) } +

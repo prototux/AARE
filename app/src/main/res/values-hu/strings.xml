@@ -90,6 +90,11 @@
     <string name="setup_choice_bottom">Alul</string>
     <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
     <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_choice_text_size">Szövegméret</string>
+    <string name="setup_choice_control_size">Vezérlők mérete</string>
+    <string name="setup_choice_size_default">Alapértelmezett</string>
+    <string name="setup_choice_size_larger">Nagyobb</string>
+    <string name="setup_choice_size_largest">Legnagyobb</string>
     <string name="setup_section_dashboard">Műszerfal</string>
     <string name="dash_cards_title">Kártyák</string>
     <string name="dash_cards_hint">Az első kártya kapja a legtöbb helyet, a többi kitölti a képernyő maradékát. Az a kártya, amelynek nincs mit mutatnia, átadja a helyét a következőnek.</string>

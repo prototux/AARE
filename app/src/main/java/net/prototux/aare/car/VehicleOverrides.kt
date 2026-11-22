@@ -22,6 +22,11 @@ data class VehicleOverride(
     val openServices: Set<String>? = null,
     /** Whether to send SETUP on the microphone channel when it opens (AARE's default: yes). */
     val micSetup: Boolean? = null,
+    /**
+     * Run video (head units 6.0 and later) and audio (5.0 and later) in drop overflow mode: the
+     * head unit drops what it can't take instead of pacing the phone with acks. Default: off.
+     */
+    val dropOverflow: Boolean? = null,
     /** Whether to send the Bluetooth pairing request again once the session runs (AARE's default: no). */
     val pairAgainWhenRunning: Boolean? = null,
 ) {
@@ -35,6 +40,7 @@ data class VehicleOverride(
         skipServices = skipServices ?: base.skipServices,
         openServices = openServices ?: base.openServices,
         micSetup = micSetup ?: base.micSetup,
+        dropOverflow = dropOverflow ?: base.dropOverflow,
         pairAgainWhenRunning = pairAgainWhenRunning ?: base.pairAgainWhenRunning,
     )
 
@@ -160,7 +166,8 @@ object VehicleOverrides {
                     dpi = int(a, "dpi"), widthMargin = int(a, "widthMargin"), heightMargin = int(a, "heightMargin"),
                     maxHeight = int(a, "maxHeight"), prefer60fps = bool(a, "prefer60fps"),
                     skipServices = strings(a, "skipServices"), openServices = strings(a, "openServices"),
-                    micSetup = bool(a, "micSetup"), pairAgainWhenRunning = bool(a, "pairAgainWhenRunning"),
+                    micSetup = bool(a, "micSetup"), dropOverflow = bool(a, "dropOverflow"),
+                    pairAgainWhenRunning = bool(a, "pairAgainWhenRunning"),
                 ),
             )
         }
@@ -177,7 +184,8 @@ object VehicleOverrides {
               "match": { "make": "", "model": "", "name": "" },
               "apply": {
                 "dpi": 160, "widthMargin": 0, "heightMargin": 0, "maxHeight": 1080, "prefer60fps": true,
-                "skipServices": [], "openServices": [], "micSetup": true, "pairAgainWhenRunning": false
+                "skipServices": [], "openServices": [], "micSetup": true, "dropOverflow": false,
+                "pairAgainWhenRunning": false
               }
             }
           ]

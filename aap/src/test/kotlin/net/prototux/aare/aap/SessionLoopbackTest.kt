@@ -191,10 +191,13 @@ open class SessionLoopbackTest {
         assertTrue("expected a relative (rotary) event", rotate.hasRelativeEvent())
         assertEquals(1, rotate.relativeEvent.getData(0).delta)
 
-        // sensors: driving status and night mode were requested and answered
-        assertNotNull(sensors.poll(3, TimeUnit.SECONDS))
-        assertTrue(SensorType.SENSOR_NIGHT_MODE in hu.sensorRequests)
-        assertTrue(SensorType.SENSOR_DRIVING_STATUS_DATA in hu.sensorRequests)
+        // sensors: every one the car offers is requested at setup, driving status first, one at a
+        // time (each after the previous answer), and answered with data
+        for (type in listOf(SensorType.SENSOR_DRIVING_STATUS_DATA, SensorType.SENSOR_NIGHT_MODE, SensorType.SENSOR_LOCATION)) {
+            assertEquals(type to 0L, hu.sensorRequestLog.poll(3, TimeUnit.SECONDS))
+        }
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.drivingStatusDataCount > 0)
+        assertTrue(sensors.poll(3, TimeUnit.SECONDS)!!.nightModeDataCount > 0)
 
         // microphone
         mic!!.openMic()
@@ -217,6 +220,7 @@ open class SessionLoopbackTest {
         // focus away and back: the stream stops, then restarts on a new media session (#109) and
         // frames resume starting with a key frame
         val session0 = hu.videoStart?.sessionId ?: 0
+        assertEquals("the first media session is 0", 0, session0)
         hu.requestFocusNative()
         Thread.sleep(300)
         val during = hu.videoFrames.get()
@@ -225,7 +229,7 @@ open class SessionLoopbackTest {
         hu.requestFocusProjected()
         Thread.sleep(500)
         assertTrue(hu.videoFrames.get() > during)
-        assertTrue("a new media session starts after full native focus", (hu.videoStart?.sessionId ?: 0) > session0)
+        assertEquals("a new media session (the next id) starts after full native focus", session0 + 1, hu.videoStart?.sessionId ?: 0)
 
         // orderly shutdown from the phone
         encoding.set(false)
