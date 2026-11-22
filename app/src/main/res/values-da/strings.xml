@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Udseende</string>
     <string name="setup_choice_colors">Farver</string>
-    <string name="setup_choice_colors_auto">Bilens dag/nat</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mørk</string>
     <string name="setup_choice_light">Lys</string>
     <string name="setup_choice_bar">Bar</string>
@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det første kort får mest plads; de andre fylder resten af skærmen. Et kort uden noget at vise giver sin plads til det næste.</string>
+    <string name="dash_map_big_title">Kort over området altid stort</string>
+    <string name="dash_map_big_subtitle">Uanset hvor det står i rækkefølgen, får kortet over området mest plads</string>
     <string name="dash_card_map">Kort over området</string>
     <string name="dash_card_media">Musik</string>
     <string name="dash_card_calendar">Næste kalenderbegivenhed</string>
@@ -118,8 +120,23 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Indstillinger</string>
     <string name="setup_app_entry_notifications">Notifikationer</string>
+    <string name="launcher_search_hint">Søg i apps</string>
     <string name="setup_section_app_order">Rækkefølge i bilen</string>
     <string name="setup_section_connection_log">Forbindelseslog</string>
+    <string name="setup_section_car_buttons">Bilens knapper</string>
+    <string name="setup_car_buttons_hint">Knapper, som AARE har set fra denne bil. Vælg, hvad hver enkelt gør; en knap, der står på “Standard”, beholder sin normale funktion.</string>
+    <string name="setup_car_buttons_empty">Ingen knapper set endnu. Opret forbindelse til en bil, og tryk på en.</string>
+    <string name="setup_car_button_default">Standard</string>
+    <string name="setup_car_action_home">Hjem</string>
+    <string name="setup_car_action_back">Tilbage</string>
+    <string name="setup_car_action_assistant">Stemmeassistent</string>
+    <string name="setup_car_action_play_pause">Afspil/pause</string>
+    <string name="setup_car_action_next">Næste nummer</string>
+    <string name="setup_car_action_previous">Forrige nummer</string>
+    <string name="setup_car_action_open_navigation">Åbn navigationsapp</string>
+    <string name="setup_car_action_open_media">Åbn medieapp</string>
+    <string name="setup_car_action_open_phone">Åbn telefonapp</string>
+    <string name="setup_car_action_nothing">Intet</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemærke tilhørende Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
     <string name="setup_choice_theme">Tema</string>
@@ -437,6 +454,8 @@
     <string name="vehicles_rule_count">%1$d regel(ler) indlæst</string>
     <string name="vehicles_import">Importer fil…</string>
     <string name="vehicles_template">Skriv skabelon</string>
+    <string name="vehicles_malformed_at">vehicles.json har en fejl i linje %1$d, kolonne %2$d (%3$s): dens regler ignoreres.</string>
+    <string name="vehicles_malformed">vehicles.json kan ikke bruges (%1$s): dens regler ignoreres.</string>
     <string name="setup_toggle_force_h264_title">Gennemtving H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard bruger AARE den bedste codec, som bilen og telefonen har til fælles (H.265…). Slå til, hvis bilens billede er forvrænget.</string>
     <!-- common / setup / updates / audio / media / car app errors -->
@@ -446,6 +465,11 @@
     <string name="setup_section_updates">Opdateringer</string>
     <string name="setup_toggle_updates_title">Søg efter opdateringer</string>
     <string name="setup_toggle_updates_subtitle">Advar på hjemmeskærmen, når en nyere udgivelse er tilgængelig på GitHub. Slået fra opretter aldrig forbindelse til internettet.</string>
+    <string name="update_check_now">Tjek nu</string>
+    <string name="update_checking">Tjekker…</string>
+    <string name="update_check_latest">Du har den nyeste version (%1$s).</string>
+    <string name="update_check_available">AARE %1$s er tilgængelig: se startskærmen.</string>
+    <string name="update_check_failed">Kunne ikke nå GitHub. Prøv igen senere.</string>
     <string name="update_available_title">Opdatering tilgængelig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryk for at se udgivelsen.</string>
     <string name="setup_log_save">Gem</string>
