@@ -177,6 +177,9 @@ class CarNotificationListener : NotificationListenerService() {
 
     fun readAloud(c: Conversation) = speak(c.spoken())
 
+    /** Speaks [text] like a message read aloud (a voice reply's read-back). */
+    fun say(text: String) = speak(text)
+
     /** The newest guidance notification still showing, if any. */
     private fun refreshGuidance() {
         _guidance.value = runCatching { activeNotifications }.getOrNull().orEmpty()

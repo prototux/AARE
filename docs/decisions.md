@@ -573,3 +573,20 @@ on from *Location > Navigation with the phone locked*, which opens AARE's app se
 and later only allow "Allow all the time" there). Without it nothing changes, and the connection
 log says what to turn on when the location type was refused. Tested by a user on a real car with
 the same one-line manifest change (#329).
+
+## Reply by voice, opt-in
+
+The messages screen answers with the car keyboard only when parked. *Reply by voice* (off by
+default) adds a button that dictates the answer, while driving too, as Android Auto does:
+
+- Listening uses the phone's own speech recognizer (`SpeechRecognizer`, the one voice typing
+  uses), so AARE handles no microphone for it: with *Car microphone for phone apps* on
+  (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
+  permission (RECORD_AUDIO is already asked for in setup) and no new connection.
+- Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
+  only on *Send*. *Again* dictates anew, *Cancel* or back drops it. Late recognizer callbacks
+  can't change a reply waiting for Send (`VoiceReplyStep`, unit-tested).
+- While driving the dictated text isn't shown, like messages: it is read aloud instead.
+- While listening AARE holds transient exclusive focus with the assistant usage, so the music
+  pauses and the car goes back to it; the read-back ducks it like a message read aloud.
+- It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).

@@ -850,6 +850,7 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
     var aloud by remember { mutableStateOf(settings.readMessagesAloud) }
     var dnd by remember { mutableStateOf(settings.dndWhileDriving) }
     var autoReply by remember { mutableStateOf(settings.autoReply) }
+    var voiceReply by remember { mutableStateOf(settings.voiceReply) }
     var replyText by remember { mutableStateOf(settings.autoReplyText) }
     @Suppress("UNUSED_EXPRESSION") refresh
     val access = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
@@ -877,6 +878,9 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         }
         if (autoReply) OutlinedTextField(replyText, { replyText = it; settings.autoReplyText = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
             label = { Text(stringResource(R.string.msg_autoreply_field_label)) }, singleLine = true)
+        Toggle(stringResource(R.string.msg_toggle_voice_reply_title), stringResource(R.string.msg_toggle_voice_reply_subtitle), voiceReply) {
+            voiceReply = it; settings.voiceReply = it
+        }
     }
     }
 }
