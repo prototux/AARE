@@ -80,7 +80,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Внешний вид</string>
     <string name="setup_choice_colors">Цвета</string>
-    <string name="setup_choice_colors_auto">День/ночь автомобиля</string>
+    <string name="setup_choice_colors_auto">Авто</string>
     <string name="setup_choice_dark">Тёмный</string>
     <string name="setup_choice_light">Светлый</string>
     <string name="setup_choice_bar">Панель</string>
@@ -93,6 +93,8 @@
     <string name="setup_section_dashboard">Панель приборов</string>
     <string name="dash_cards_title">Карточки</string>
     <string name="dash_cards_hint">Первая карточка получает больше всего места, остальные заполняют оставшийся экран. Карточка, которой нечего показать, уступает место следующей.</string>
+    <string name="dash_map_big_title">Карта всегда большая</string>
+    <string name="dash_map_big_subtitle">Где бы карта ни стояла в списке, она получает больше всего места</string>
     <string name="dash_card_map">Карта</string>
     <string name="dash_card_media">Музыка</string>
     <string name="dash_card_calendar">Следующее событие календаря</string>
@@ -123,8 +125,23 @@
     <string name="setup_app_entry_phone">Телефон</string>
     <string name="setup_app_entry_settings">Настройки</string>
     <string name="setup_app_entry_notifications">Уведомления</string>
+    <string name="launcher_search_hint">Поиск приложений</string>
     <string name="setup_section_app_order">Порядок в автомобиле</string>
     <string name="setup_section_connection_log">Журнал соединений</string>
+    <string name="setup_section_car_buttons">Кнопки автомобиля</string>
+    <string name="setup_car_buttons_hint">Кнопки, которые AARE получал от этого автомобиля. Выберите, что делает каждая; кнопка, оставленная на «По умолчанию», работает как обычно.</string>
+    <string name="setup_car_buttons_empty">Кнопки пока не обнаружены. Подключитесь к автомобилю и нажмите любую.</string>
+    <string name="setup_car_button_default">По умолчанию</string>
+    <string name="setup_car_action_home">Главный экран</string>
+    <string name="setup_car_action_back">Назад</string>
+    <string name="setup_car_action_assistant">Голосовой ассистент</string>
+    <string name="setup_car_action_play_pause">Воспроизведение/пауза</string>
+    <string name="setup_car_action_next">Следующий трек</string>
+    <string name="setup_car_action_previous">Предыдущий трек</string>
+    <string name="setup_car_action_open_navigation">Открыть навигатор</string>
+    <string name="setup_car_action_open_media">Открыть медиаприложение</string>
+    <string name="setup_car_action_open_phone">Открыть приложение «Телефон»</string>
+    <string name="setup_car_action_nothing">Ничего</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Не связано с Google. Android Auto является товарным знаком Google LLC.</string>
     <string name="setup_choice_style">Стиль</string>
     <string name="setup_choice_theme">Тема</string>
@@ -242,6 +259,8 @@
     <string name="notif_action_stop">Остановить</string>
     <string name="notif_action_trust">Доверять</string>
     <string name="notif_action_download_cert">Скачать сертификат</string>
+    <string name="notif_action_navigate">Маршрут</string>
+    <string name="notif_action_open">Открыть</string>
     <string name="notif_cert_download_title">Головное устройство отклонило сертификат AARE</string>
     <string name="notif_cert_download_message">Это головное устройство принимает только сертификат, выданный Google. Скачайте его из последней версии приложения Android Auto, затем подключитесь снова.</string>
     <string name="notif_cert_download_progress">Скачивание сертификата Android Auto…</string>
@@ -269,7 +288,10 @@
     <string name="notif_not_calling_text">%1$s попросил набрать код со звёздочкой или #, а не номер телефона</string>
     <string name="notif_calling_title">Звонок %1$s</string>
     <string name="notif_asked_by">Запрошено %1$s</string>
+    <string name="notif_asked_by_link">Запрошено ссылкой в ответе ассистента</string>
     <string name="notif_call_confirm_title">Позвонить %1$s?</string>
+    <string name="notif_navigate_confirm_title">Проложить маршрут до %1$s?</string>
+    <string name="notif_open_confirm_title">Открыть %1$s?</string>
     <string name="notif_no_nav_app">На телефоне нет навигационного приложения</string>
     <string name="notif_cant_open">Не удаётся открыть это из автомобиля</string>
     <string name="notif_navigation_title">Навигация</string>
@@ -310,6 +332,11 @@
     <string name="media_search_app">Поиск в %1$s</string>
     <string name="media_action_search">Поиск</string>
     <string name="media_action_browse">Обзор</string>
+    <string name="media_action_show_video">Показать видео</string>
+    <string name="media_video_close">Назад к плееру</string>
+    <string name="media_video_full_screen">Во весь экран</string>
+    <string name="media_video_exit_full_screen">Выйти из полноэкранного режима</string>
+    <string name="media_video_paused_driving">Видео приостановлено во время движения; звук продолжается.</string>
     <string name="media_now_playing_label">Сейчас играет</string>
     <string name="media_nothing_here">Здесь ничего нет</string>
     <string name="media_couldnt_load_more">Не удалось загрузить ещё</string>
@@ -346,6 +373,11 @@
     <string name="phone_call_in_progress">Звонок в процессе</string>
     <string name="phone_action_hang_up">Завершить</string>
     <string name="phone_keypad_delete">Удалить</string>
+    <string name="voip_mic_title">%1$s не может использовать микрофон</string>
+    <string name="voip_mic_car_text">Собеседник вас не услышит. Разрешите это на телефоне: см. уведомление</string>
+    <string name="voip_mic_notification_text">Звонкам из машины через %1$s нужно разрешение на микрофон. Нажмите, чтобы открыть его настройки</string>
+    <string name="voip_call_failed_title">Не удалось позвонить через %1$s</string>
+    <string name="voip_call_failed_text">Откройте его на телефоне, чтобы позвонить</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Зарядка</string>
     <string name="phone_incoming_call">Входящий звонок</string>
@@ -374,6 +406,8 @@
     <string name="standalone_not_native">Не приложение Android Auto · использование на парковке</string>
     <string name="standalone_starting">Запуск…</string>
     <string name="standalone_paused_driving">Приостановлено во время движения.</string>
+    <string name="standalone_media_video_title">Видео из медиаприложений</string>
+    <string name="standalone_media_video_subtitle">Добавляет «Показать видео» на экран медиа в машине: медиаприложение открывается на экране машины для своего видео. Только на стоянке; во время движения возвращается обложка.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Браузер</string>
     <string name="browser_app_row_subtitle">Веб-браузер на экране автомобиля — для случаев, когда вы припаркованы</string>
@@ -384,6 +418,8 @@
     <string name="browser_reload">Обновить</string>
     <string name="browser_home">Домашняя страница</string>
     <string name="browser_address_hint">Поиск или введите веб-адрес</string>
+    <string name="assistant_links_title">Ссылки от ассистента</string>
+    <string name="assistant_links_subtitle">Ссылки aare:// в ответах выбранного ассистента могут управлять музыкой или предлагать на экране автомобиля проложить маршрут, открыть приложение или позвонить. Ссылки из других приложений и с веб-страниц игнорируются.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Данные автомобиля</string>
     <string name="setup_page_car_data_subtitle">Скорость, передача и датчики автомобиля в реальном времени</string>
@@ -434,6 +470,11 @@
     <string name="car_data_accelerometer">Акселерометр</string>
     <string name="car_data_gyroscope">Гироскоп</string>
     <string name="car_data_dtc">Коды неисправностей</string>
+    <string name="car_data_dtc_unknown">Неизвестно</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Код силового агрегата, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_chassis">Код шасси, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_body">Код кузова, определённый производителем</string>
+    <string name="car_data_dtc_manufacturer_network">Код сети, определённый производителем</string>
     <string name="car_data_app_label">Данные автомобиля</string>
     <string name="car_data_show_in_car_title">Показывать на экране автомобиля</string>
     <string name="car_data_show_in_car_subtitle">Добавьте диагностическое приложение в автомобиле для этих данных в реальном времени</string>
@@ -442,6 +483,8 @@
     <string name="vehicles_rule_count">Загружено правил: %1$d</string>
     <string name="vehicles_import">Импортировать файл…</string>
     <string name="vehicles_template">Записать шаблон</string>
+    <string name="vehicles_malformed_at">В vehicles.json ошибка в строке %1$d, столбце %2$d (%3$s): его правила игнорируются.</string>
+    <string name="vehicles_malformed">vehicles.json нельзя использовать (%1$s): его правила игнорируются.</string>
     <string name="setup_toggle_force_h264_title">Принудительно использовать видео H.264</string>
     <string name="setup_toggle_force_h264_subtitle">По умолчанию AARE использует лучший кодек, поддерживаемый и автомобилем, и телефоном (H.265…). Включите, если изображение в автомобиле искажено.</string>
     <string name="common_ok">OK</string>
@@ -450,6 +493,11 @@
     <string name="setup_section_updates">Обновления</string>
     <string name="setup_toggle_updates_title">Проверять обновления</string>
     <string name="setup_toggle_updates_subtitle">Предупреждать на главном экране о новом релизе на GitHub. Если выключено, подключение к интернету не выполняется.</string>
+    <string name="update_check_now">Проверить сейчас</string>
+    <string name="update_checking">Проверка…</string>
+    <string name="update_check_latest">У вас последняя версия (%1$s).</string>
+    <string name="update_check_available">Доступна AARE %1$s: см. главный экран.</string>
+    <string name="update_check_failed">Не удалось связаться с GitHub. Попробуйте позже.</string>
     <string name="update_available_title">Доступно обновление — %1$s</string>
     <string name="update_available_subtitle">У вас %1$s. Нажмите, чтобы посмотреть релиз.</string>
     <string name="setup_log_save">Сохранить</string>
@@ -497,4 +545,24 @@
     <string name="carapp_error_stopped">%1$s остановлен</string>
     <string name="carapp_error_google_only">%1$s принимает только Google Android Auto. Ему нужно разрешить AARE (см. список приложений на телефоне).</string>
     <string name="carapp_error_cant_start">%1$s не удалось запустить: %2$s</string>
+    <string name="shizuku_setup_title">Предоставить разрешения AARE через Shizuku</string>
+    <string name="shizuku_setup_subtitle">Одно нажатие предоставляет всё, что ещё не выдано, без отдельного диалога для каждого разрешения: микрофон, местоположение, контакты, журнал вызовов, календарь, телефонные звонки, устройства рядом (Bluetooth, Wi-Fi), локальная сеть, уведомления и доступ к уведомлениям</string>
+    <string name="shizuku_setup_working">Предоставление…</string>
+    <string name="shizuku_setup_result_title">Предоставлено через Shizuku</string>
+    <string name="shizuku_setup_nothing_to_grant">Всё уже было предоставлено.</string>
+    <string name="shizuku_setup_not_granted">Не предоставлено: %1$s</string>
+    <string name="shizuku_setup_notification_access">Доступ к уведомлениям</string>
+    <string name="shizuku_setup_helper_failed">Вспомогательный модуль Shizuku не запустился. Убедитесь, что Shizuku работает и разрешает AARE.</string>
+    <string name="aa_section_title">Android Auto от Google</string>
+    <string name="aa_state_enabled">Установлено и включено: когда автомобиль подключается, Android может передать его Android Auto вместо AARE или спросить, какое приложение использовать.</string>
+    <string name="aa_state_disabled">Отключено: Android Auto не забирает автомобиль. Его данные сохраняются.</string>
+    <string name="aa_action_disable">Не позволять Android Auto забирать автомобиль</string>
+    <string name="aa_action_enable">Включить Android Auto снова</string>
+    <string name="aa_working">Выполняется…</string>
+    <string name="aa_needs_shizuku">Через Shizuku (работает и разрешает AARE), либо вручную в информации о приложении Android Auto.</string>
+    <string name="aa_app_info">Информация о приложении Android Auto</string>
+    <string name="aa_failed">Не удалось: %1$s</string>
+    <string name="aa_confirm_title">Отключить Android Auto?</string>
+    <string name="aa_confirm_text">AARE отключает Android Auto от Google для этого пользователя через Shizuku (pm disable-user). Приложение перестаёт работать, исчезает из списка приложений и больше не отвечает при подключении автомобиля, так что автомобиль всегда достаётся AARE.\n\nНичего не удаляется, и его данные сохраняются. Автомобили, приложения или функции, которым нужен Android Auto от Google, не будут работать, пока вы не включите его снова этой кнопкой.</string>
+    <string name="aa_confirm_action">Отключить</string>
 </resources>

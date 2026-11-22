@@ -15,6 +15,7 @@ import android.hardware.usb.UsbAccessory
 import android.hardware.usb.UsbManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -58,6 +59,7 @@ import net.prototux.aare.transport.UsbAccessoryTransport
 import net.prototux.aare.transport.UsbReattach
 import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.transport.wireless.WirelessConnector
+import net.prototux.aare.transport.wireless.WirelessException
 import net.prototux.aare.ui.MainActivity
 
 /**
@@ -241,6 +243,11 @@ class ProjectionService : Service() {
                 } catch (e: Exception) {
                     log("wireless: ${e.message}")
                     val carNotReady = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessBootstrapException && it.whileNegotiating }
+                    // An adapter's quick first try is there to be redialled: at once, and not as one of the retries.
+                    if (carNotReady && e is WirelessException && e.quickTry && session == null) {
+                        log("wireless: redialling the adapter after its quick first try")
+                        continue
+                    }
                     if (carNotReady && retries < WIRELESS_RETRIES && session == null) {
                         retries++
                         val wait = WIRELESS_RETRY_DELAY_MS * retries
@@ -256,6 +263,18 @@ class ProjectionService : Service() {
         }
     }
 
+    /** The frequencies of the Wi-Fi bands this phone supports, for the bootstrap's (logged only) channel check. */
+    private fun phoneWifiFrequencies(): Set<Int>? {
+        val wifi = getSystemService(WifiManager::class.java) ?: return null
+        return runCatching {
+            net.prototux.aare.aap.wireless.WirelessBootstrap.bandFrequencies(
+                band24GHz = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) wifi.is24GHzBandSupported() else true,
+                band5GHz = wifi.is5GHzBandSupported(),
+                band6GHz = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wifi.is6GHzBandSupported(),
+            )
+        }.getOrNull()
+    }
+
     /**
      * The connector for a series of wireless attempts. Pass the phone's stable id as the WPP device
      * serial and phone_info.instance_id: strict head units (#46) want the serial in the version
@@ -265,7 +284,8 @@ class ProjectionService : Service() {
      */
     private fun wirelessConnector(handshake: WirelessHandshake, phoneName: String?) =
         WirelessConnector(this, DiagAapLog, WirelessConnector.Options(bootstrap = WirelessBootstrap.Options(
-            deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = phoneName, handshake = handshake)))
+            deviceSerial = settings.instanceId, instanceId = settings.instanceId, deviceName = phoneName,
+            phoneWifiFrequencies = ::phoneWifiFrequencies, handshake = handshake)))
 
     /**
      * The handshake for a connection to [address] (Wireless compatibility), logged with why when it
@@ -306,7 +326,7 @@ class ProjectionService : Service() {
         main.postDelayed({ if (idle()) stopEverything() }, 3_000)
     }
 
-    private fun openUsb(accessory: UsbAccessory) {
+    private fun openUsb(accessory: UsbAccessory, retryOpen: Boolean = true) {
         // A head unit back after a drop is announced twice (its re-attach, and our wait for it).
         if (session != null && UsbReattach.same(usbAccessory, accessory)) {
             log("USB: already connected to this head unit")
@@ -320,8 +340,18 @@ class ProjectionService : Service() {
             requestUsbPermission(usb, accessory)
             return
         }
-        val transport = runCatching { UsbAccessoryTransport(usb, accessory) }
-            .onFailure { log("USB: ${it.message}") }.getOrNull() ?: return
+        val transport = runCatching { UsbAccessoryTransport(usb, accessory) }.getOrElse { e ->
+            // Opening right after the attach can fail; one more try after 500 ms works.
+            if (retryOpen) {
+                log("USB: ${e.message}; trying again in 500 ms")
+                main.postDelayed({
+                    if (session == null && UsbReattach.same(usbAccessory, accessory)) openUsb(accessory, retryOpen = false)
+                }, 500)
+            } else {
+                log("USB: ${e.message}")
+            }
+            return
+        }
         startSession(transport, wireless = false, peerKey = usbPeerKey(accessory), trustOnFirstUse = false)
     }
 
@@ -790,10 +820,6 @@ class ProjectionService : Service() {
             _state.update { s -> s.copy(pendingTrust = null, lastError = s.lastError.takeIf { s.pendingTrust == null }) }
         }
 
-        /** Accessory strings head units use for Android Auto (res/xml/accessory_filter.xml). */
-        private fun isAndroidAuto(a: UsbAccessory) =
-            a.manufacturer == "Android" && (a.model == "Android Auto" || a.model == "Android Open Automotive Protocol")
-
         /**
          * Opening the app: an Android Auto accessory may already be attached without the USB
          * permission (Samsung). Hand it to the service, which asks for the permission and connects.
@@ -801,7 +827,7 @@ class ProjectionService : Service() {
         fun probeUsb(context: Context) {
             if (_state.value.connected) return
             val usb = context.getSystemService(UsbManager::class.java) ?: return
-            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull(::isAndroidAuto) ?: return
+            val accessory = runCatching { usb.accessoryList }.getOrNull()?.firstOrNull { UsbAccessoryTransport.isAndroidAuto(it) } ?: return
             startUsb(context, accessory)
         }
 

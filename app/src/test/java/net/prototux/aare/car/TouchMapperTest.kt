@@ -92,4 +92,28 @@ class TouchMapperTest {
         assertEquals(1000f, m.mapX(1200), 0.001f)    // beyond the right edge clamps to it
         assertTrue(m.mapX(-20) >= 0f)                // never negative
     }
+
+    /**
+     * #269: the car offers 1080p, its panel is 1920x1080, and a lower resolution was picked (720p).
+     * The panel is larger than the stream's visible area, but it's the car's screen: scale it,
+     * don't take it for visible-area pixels (which put every tap 1.5x off).
+     */
+    @Test
+    fun lowerResolutionStillScalesTheCarsOwnPanel() {
+        val m = TouchMapper(1920, 1080, ProjectionLayout.of(1280, 720, 0, 0, null, null), nativeWidth = 1920, nativeHeight = 1080)
+        assertEquals(1920, m.panelWidth)
+        assertEquals(640f, m.mapX(960), 0.001f)
+        assertEquals(360f, m.mapY(540), 0.001f)
+        assertEquals(1280f, m.mapX(1919), 1f)
+    }
+
+    /** A Mach-E-like unit (touches in its visible pixels) with a lower stream: map from its own visible area. */
+    @Test
+    fun visiblePixelUnitWithALowerStreamMapsFromItsVisibleArea() {
+        val m = TouchMapper(1200, 1244, ProjectionLayout.of(781, 810, 0, 0, null, null), nativeWidth = 1042, nativeHeight = 1080)
+        assertEquals(1042, m.panelWidth)
+        assertEquals(1080, m.panelHeight)
+        assertEquals(390.5f, m.mapX(521), 0.5f)
+        assertEquals(810f, m.mapY(1080), 0.5f)
+    }
 }
