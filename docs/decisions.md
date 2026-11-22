@@ -150,3 +150,23 @@ stands in when nothing is left, and the last card can't be hidden.
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
 
+## Knob/D-pad reachability check (issue #320)
+
+Every car-screen control must be reachable, highlighted and usable by a rotary knob or D-pad, not
+just by touch: on knob-only head units (most Mazdas, older iDrive, Lexus/Mercedes touchpads) a
+control the knob can't reach is unusable. Two had slipped through before this: the dock's tap
+targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; approved by the owner.
+
+- **`Modifier.carClickable(shape, onClick)`** (`ui/car/CarFocus.kt`) pairs the existing
+  `carFocusHighlight` with the click itself, so the knob-friendly way is also the easy way. Car
+  screen clickables (`ui/car`, `media`, `host`) moved over to it.
+- **`CarScreenReachabilityCheckTest`** (`app/src/test/java/net/prototux/aare/ui/car/`) is a plain
+  text scan of those packages' sources for raw `.clickable`/`.toggleable`/`.selectable`/
+  `combinedClickable`, tap/drag gesture detectors, and Material `Slider`/`Switch`/`Checkbox`. No new
+  dependency: no Robolectric, no UI test framework. A justified exception goes in its `allowlist`
+  with a one-line reason (kept short; migrating to `carClickable` is preferred). The phone UI isn't
+  checked.
+- **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
+  (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
+  then those stay allowlisted.
+
