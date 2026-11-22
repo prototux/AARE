@@ -120,6 +120,7 @@
     <string name="setup_app_entry_phone">Телефон</string>
     <string name="setup_app_entry_settings">Налаштування</string>
     <string name="setup_app_entry_notifications">Сповіщення</string>
+    <string name="launcher_search_hint">Пошук застосунків</string>
     <string name="setup_section_app_order">Порядок в автомобілі</string>
     <string name="setup_section_connection_log">Журнал з\'єднань</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Не пов\'язано з Google. Android Auto є торговою маркою Google LLC.</string>

@@ -120,6 +120,7 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Setări</string>
     <string name="setup_app_entry_notifications">Notificări</string>
+    <string name="launcher_search_hint">Caută aplicații</string>
     <string name="setup_section_app_order">Ordinea în mașină</string>
     <string name="setup_section_connection_log">Jurnal de conectare</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nu este afiliat cu Google. Android Auto este o marcă înregistrată a Google LLC.</string>

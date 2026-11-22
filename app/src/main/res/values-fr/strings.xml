@@ -120,6 +120,7 @@
     <string name="setup_app_entry_phone">Téléphone</string>
     <string name="setup_app_entry_settings">Paramètres</string>
     <string name="setup_app_entry_notifications">Notifications</string>
+    <string name="launcher_search_hint">Rechercher une application</string>
     <string name="setup_section_app_order">Ordre dans la voiture</string>
     <string name="setup_section_connection_log">Journal de connexion</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Non affilié à Google. Android Auto est une marque de Google LLC.</string>
