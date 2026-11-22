@@ -106,6 +106,12 @@
     <string name="dash_card_calendar">حدث التقويم التالي</string>
     <string name="dash_card_notification">آخر إشعار</string>
     <string name="dash_card_weather">الطقس</string>
+    <string name="rail_widgets_title">عناصر الشريط/شريط المهام</string>
+    <string name="rail_widgets_hint">عناصر حالة صغيرة على الشريط (أو شريط المهام). تُصفّ بجانب الساعة بهذا الترتيب.</string>
+    <string name="rail_widget_clock">الساعة</string>
+    <string name="rail_widget_temperature">درجة الحرارة الخارجية</string>
+    <string name="rail_widget_battery">بطارية الهاتف</string>
+    <string name="rail_widget_weather">الطقس</string>
     <string name="setup_choice_wallpaper">الخلفية</string>
     <string name="setup_wallpaper_none">بلا</string>
     <string name="setup_wallpaper_photo">صورة</string>

@@ -272,6 +272,8 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize) { actions.assistant() } }
     val bell = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
+    // One poll of the phone's status for the whole rail: its battery widget and network icons share it.
+    val phoneStatus = rememberPhoneStatus()
     if (horizontal) {
         Row(
             Modifier.fillMaxWidth().height(railSize).background(container).padding(horizontal = outerPadding),
@@ -280,8 +282,12 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             val driverEnd: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(appSpacing), verticalAlignment = Alignment.CenterVertically) {
                 if (state.driverOnRight) { menu(); mic() } else { mic(); menu() }
             } }
+            // On a tight bar the weather gives up its spot first; the clock and battery stay.
+            val widgets = if (tightBar) state.railWidgets - RailWidget.WEATHER else state.railWidgets
             val status: @Composable () -> Unit = { Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Clock(); if (!tightBar) WeatherChip(state.weather.takeIf { state.weatherInBar }); PhoneStatusIcons(); NotificationBell(state) { bell() }
+                RailWidgets(widgets, state.weather.takeIf { state.weatherInBar }, phoneStatus, horizontal = true, spacing = 10.dp)
+                NetworkStatusIcons(phoneStatus)
+                NotificationBell(state) { bell() }
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -297,12 +303,12 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Modifier.fillMaxHeight().width(railSize).background(container).padding(vertical = outerPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Clock()
+            // Short on room: only the clock stays, the rest (and the network icons) give up their place.
+            val widgets = if (fit.status) state.railWidgets else state.railWidgets.filter { it == RailWidget.CLOCK }
+            RailWidgets(widgets, state.weather.takeIf { state.weatherInBar }, phoneStatus, horizontal = false, spacing = 6.dp)
             if (fit.status) {
-                Spacer(Modifier.height(6.dp))
-                PhoneStatusIcons()
                 Spacer(Modifier.height(4.dp))
-                WeatherChip(state.weather.takeIf { state.weatherInBar })
+                NetworkStatusIcons(phoneStatus)
             }
             NotificationBell(state) { bell() }
             // The apps are the only weighted child, so they are measured last and are the part that

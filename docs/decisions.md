@@ -386,3 +386,19 @@ nav/media/recent behaviour) would make the setting's effect unpredictable. An em
 chosen, the default) keeps today's dynamic rail untouched. Resolution happens at render time from
 live `CarUiState.apps` (`resolveRailApps`), so an uninstalled app's key is skipped without special
 handling and nothing needs to be recomputed when the app list changes.
+
+## Rail widgets: battery split out of the network icons, which stay unconditional
+
+`PhoneStatusIcons` (wifi/signal + battery, together) stays for the layouts that already show it
+as one unit (the dock, the classic bottom bar). The configurable rail (`Settings.railWidgets`)
+only lists what the feature asked for — clock, outside temperature, phone battery, weather — so
+`NetworkStatusIcons` (wifi/signal) was split out of it and kept as unconditional rail chrome next
+to the chosen widgets, rather than inventing a "network" widget nobody asked to configure or
+folding wifi/signal into the "battery" pick where turning battery off would silently drop them too.
+
+## Outside temperature: the car's sensor is always Celsius, shown with an explicit unit
+
+The fetched weather already carries the right symbol for the phone's locale (°F in the US...), but
+AAP's `Environment` sensor has no locale: converting it would need a units setting nobody asked
+for. The temperature widget shows the car's own reading as "<value>°C" when the car reports one,
+falling back to the weather (with its own unit) only when it doesn't.

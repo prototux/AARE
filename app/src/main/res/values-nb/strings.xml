@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Neste kalenderhendelse</string>
     <string name="dash_card_notification">Siste varsel</string>
     <string name="dash_card_weather">Vær</string>
+    <string name="rail_widgets_title">Moduler på stolpe/oppgavelinje</string>
+    <string name="rail_widgets_hint">Små statuselementer på stolpen (eller oppgavelinjen). De legges ved siden av klokken, i denne rekkefølgen.</string>
+    <string name="rail_widget_clock">Klokke</string>
+    <string name="rail_widget_temperature">Utetemperatur</string>
+    <string name="rail_widget_battery">Telefonens batteri</string>
+    <string name="rail_widget_weather">Vær</string>
     <string name="setup_choice_wallpaper">Bakgrunnsbilde</string>
     <string name="setup_wallpaper_none">Ingen</string>
     <string name="setup_wallpaper_photo">Foto</string>

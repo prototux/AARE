@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Következő naptáresemény</string>
     <string name="dash_card_notification">Legutóbbi értesítés</string>
     <string name="dash_card_weather">Időjárás</string>
+    <string name="rail_widgets_title">Sáv/tálca widgetek</string>
+    <string name="rail_widgets_hint">Kis állapotelemek a sávon (vagy a tálcán). Az óra mellett sorakoznak, ebben a sorrendben.</string>
+    <string name="rail_widget_clock">Óra</string>
+    <string name="rail_widget_temperature">Külső hőmérséklet</string>
+    <string name="rail_widget_battery">Telefon akkumulátora</string>
+    <string name="rail_widget_weather">Időjárás</string>
     <string name="setup_choice_wallpaper">Háttérkép</string>
     <string name="setup_wallpaper_none">Nincs</string>
     <string name="setup_wallpaper_photo">Fénykép</string>

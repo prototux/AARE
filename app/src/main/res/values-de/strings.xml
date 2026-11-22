@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Nächster Kalendertermin</string>
     <string name="dash_card_notification">Letzte Benachrichtigung</string>
     <string name="dash_card_weather">Wetter</string>
+    <string name="rail_widgets_title">Widgets der Leiste/Taskleiste</string>
+    <string name="rail_widgets_hint">Kleine Statusanzeigen auf der Leiste (oder der Taskleiste). Sie reihen sich neben der Uhr in dieser Reihenfolge auf.</string>
+    <string name="rail_widget_clock">Uhr</string>
+    <string name="rail_widget_temperature">Außentemperatur</string>
+    <string name="rail_widget_battery">Akku des Telefons</string>
+    <string name="rail_widget_weather">Wetter</string>
     <string name="setup_choice_wallpaper">Hintergrundbild</string>
     <string name="setup_wallpaper_none">Kein</string>
     <string name="setup_wallpaper_photo">Foto</string>

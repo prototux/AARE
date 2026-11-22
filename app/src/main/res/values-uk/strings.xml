@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Наступна подія календаря</string>
     <string name="dash_card_notification">Останнє сповіщення</string>
     <string name="dash_card_weather">Погода</string>
+    <string name="rail_widgets_title">Віджети панелі/панелі завдань</string>
+    <string name="rail_widgets_hint">Невеликі елементи стану на панелі (або панелі завдань). Вони розташовуються поруч із годинником у цьому порядку.</string>
+    <string name="rail_widget_clock">Годинник</string>
+    <string name="rail_widget_temperature">Температура надворі</string>
+    <string name="rail_widget_battery">Батарея телефона</string>
+    <string name="rail_widget_weather">Погода</string>
     <string name="setup_choice_wallpaper">Шпалери</string>
     <string name="setup_wallpaper_none">Немає</string>
     <string name="setup_wallpaper_photo">Фото</string>

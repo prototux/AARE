@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Sự kiện lịch tiếp theo</string>
     <string name="dash_card_notification">Thông báo mới nhất</string>
     <string name="dash_card_weather">Thời tiết</string>
+    <string name="rail_widgets_title">Tiện ích thanh công cụ/thanh tác vụ</string>
+    <string name="rail_widgets_hint">Các mục trạng thái nhỏ trên thanh công cụ (hoặc thanh tác vụ). Chúng xếp cạnh đồng hồ theo thứ tự này.</string>
+    <string name="rail_widget_clock">Đồng hồ</string>
+    <string name="rail_widget_temperature">Nhiệt độ bên ngoài</string>
+    <string name="rail_widget_battery">Pin điện thoại</string>
+    <string name="rail_widget_weather">Thời tiết</string>
     <string name="setup_choice_wallpaper">Hình nền</string>
     <string name="setup_wallpaper_none">Không có</string>
     <string name="setup_wallpaper_photo">Ảnh</string>

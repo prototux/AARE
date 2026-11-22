@@ -114,6 +114,8 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail's status widgets, in order (a setting). */
+    var railWidgets by mutableStateOf(RailWidget.DEFAULT)
     /** The rail's chosen apps, in order (a setting; empty = the rail's built-in set). */
     var railApps by mutableStateOf<List<String>>(emptyList())
     /** A narrower rail: smaller icons, tighter spacing (a setting). */

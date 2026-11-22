@@ -161,6 +161,8 @@ import net.prototux.aare.setup.ShizukuSetupClient
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.RailWidget
+import net.prototux.aare.ui.car.RailWidgetsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.car.movedBy
@@ -836,6 +838,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
@@ -885,6 +888,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 rail = it; settings.railPosition = it
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
+            Spacer(Modifier.height(12.dp))
+            RailWidgetsEditor(railWidgets, 48.dp) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
             Spacer(Modifier.height(12.dp))
             val sizeOptions = listOf(
                 CarTextSize.DEFAULT.id to stringResource(R.string.setup_choice_size_default),

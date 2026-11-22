@@ -106,6 +106,12 @@
     <string name="dash_card_calendar">下一个日历活动</string>
     <string name="dash_card_notification">最新通知</string>
     <string name="dash_card_weather">天气</string>
+    <string name="rail_widgets_title">状态栏/任务栏小组件</string>
+    <string name="rail_widgets_hint">状态栏（或任务栏）上的小型状态项，按此顺序排列在时钟旁。</string>
+    <string name="rail_widget_clock">时钟</string>
+    <string name="rail_widget_temperature">车外温度</string>
+    <string name="rail_widget_battery">手机电量</string>
+    <string name="rail_widget_weather">天气</string>
     <string name="setup_choice_wallpaper">壁纸</string>
     <string name="setup_wallpaper_none">无</string>
     <string name="setup_wallpaper_photo">照片</string>

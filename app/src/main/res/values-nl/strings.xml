@@ -108,6 +108,12 @@
     <string name="dash_card_calendar">Volgende agenda-afspraak</string>
     <string name="dash_card_notification">Laatste melding</string>
     <string name="dash_card_weather">Weer</string>
+    <string name="rail_widgets_title">Widgets op balk/taakbalk</string>
+    <string name="rail_widgets_hint">Kleine statusitems op de balk (of de taakbalk). Ze staan naast de klok, in deze volgorde.</string>
+    <string name="rail_widget_clock">Klok</string>
+    <string name="rail_widget_temperature">Buitentemperatuur</string>
+    <string name="rail_widget_battery">Batterij van de telefoon</string>
+    <string name="rail_widget_weather">Weer</string>
     <string name="setup_choice_wallpaper">Achtergrond</string>
     <string name="setup_wallpaper_none">Geen</string>
     <string name="setup_wallpaper_photo">Foto</string>
