@@ -276,7 +276,7 @@ class LoopbackTest {
                     override fun onVideoStart(index: Int, config: VideoConfiguration) {}
                     override fun onVideoFocus(projected: Boolean) {}
                     override fun onKeyFrameNeeded() {}
-                    override fun onUiConfig(config: UiConfig) { uiConfigs += config }
+                    override fun onUiConfig(config: UiConfig, applied: () -> Unit) { uiConfigs += config; applied() }
                 })
                 s.hasMediaSinkService() && s.mediaSinkService.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM -> null
                 s.hasMediaSinkService() -> AudioChannel(s)
