@@ -93,6 +93,9 @@ For example, a rule for every Ford head unit by Harman older than protocol 1.4:
 | `exitToCar` | true/false | The app list's "Exit to car" entry (default: true). |
 | `exitLabel` | text | What that entry is called: `"name"` (the car's display name, else its make), `"make"`, or `"default"` (the generic label). Default: the generic label, or `"name"` with the built-in car fixes on for the car. |
 | `builtInFixes` | true/false | In your file: apply the built-in car fixes to this car (`true`), or not even with the setting on (`false`). Default: the *Built-in car fixes* setting. |
+| `dropOverflow` | true/false | Stream video (head units 6.0 and later) and audio (5.0 and later) in drop overflow mode: the head unit drops what it can't take instead of pacing the phone with acks (default: false). Try it on a car whose picture or sound stalls because it stops acking. |
+| `pairAgainWhenRunning` | true/false | Send the Bluetooth pairing request again once the session runs, for a car that drops the phone's hands-free link when projection starts (default: false). |
+| `sensorChannelFirst` | true/false | Open the sensor channel first and the other channels once the car has answered it, or after 1 s (default: false, all at once). |
 
 Services are named as the connection log writes them after `services:`: `video`, `mic`,
 `input`, `sensors`, `bluetooth`, `navstatus`, `playback`, `phonestatus`, `mediabrowser`,

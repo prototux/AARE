@@ -1,0 +1,14 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_CRITICAL_UI_NOTIFICATION (phone -> head unit).
+message CriticalUiNotification {
+    optional CriticalUiFocus focus = 1;
+}
+
+enum CriticalUiFocus {
+    CRITICAL_UI_FOCUS_UNKNOWN = 0;
+    CRITICAL_UI_FOCUS_PROJECTED = 1;
+    CRITICAL_UI_FOCUS_NATIVE = 2;
+}
