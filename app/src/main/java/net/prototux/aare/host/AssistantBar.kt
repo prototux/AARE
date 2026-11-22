@@ -108,9 +108,11 @@ internal fun AssistantBar(
                 }
                 // Stop: big and red, the one control of an assistant driven by the voice button
                 // (it stops the assistant, not only the bar: see CarRuntime.stopAssistant).
-                Box(Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error)
-                    .carClickable(CircleShape, onClick = onStop), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Close, stringResource(R.string.common_close), Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onError)
+                // The red circle is 64 dp; the tap area keeps the car screen's full touch target.
+                Box(Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onStop), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.Close, stringResource(R.string.assistant_stop), Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onError)
+                    }
                 }
             }
             if (busy && !listening) {

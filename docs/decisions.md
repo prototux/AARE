@@ -673,3 +673,9 @@ the official phone behaves; off, every press asks the assistant again): the assi
 closes and its app loses the car's microphone (told through its stop-recording callback), and an
 assistant app open full screen stops listening. An assistant that only runs on the phone can't be
 stopped from the car, so a press still opens it.
+
+Stopping the assistant bar (its big red stop button, the back key, or the voice button again) sends
+back to the assistant first, while its app is still started (hiding the bar stops it): Lapin takes
+back as "stop" and ends listening, thinking or speaking. The car's microphone is then taken back
+too, for an app that doesn't. The bar closing by itself after an answer doesn't send back, so a
+reply still being spoken isn't cut.
