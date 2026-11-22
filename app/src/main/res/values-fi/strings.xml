@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Ulkoasu</string>
     <string name="setup_choice_colors">Värit</string>
-    <string name="setup_choice_colors_auto">Auton päivä/yö</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Tumma</string>
     <string name="setup_choice_light">Vaalea</string>
     <string name="setup_choice_bar">Palkki</string>
@@ -93,6 +93,8 @@
     <string name="setup_section_dashboard">Kojelauta</string>
     <string name="dash_cards_title">Kortit</string>
     <string name="dash_cards_hint">Ensimmäinen kortti saa eniten tilaa, muut täyttävät loput näytöstä. Kortti, jolla ei ole näytettävää, antaa paikkansa seuraavalle.</string>
+    <string name="dash_map_big_title">Kartta aina suurena</string>
+    <string name="dash_map_big_subtitle">Missä kohdassa järjestystä kartta onkin, se saa eniten tilaa</string>
     <string name="dash_card_map">Kartta</string>
     <string name="dash_card_media">Musiikki</string>
     <string name="dash_card_calendar">Seuraava kalenteritapahtuma</string>
@@ -123,8 +125,23 @@
     <string name="setup_app_entry_phone">Puhelin</string>
     <string name="setup_app_entry_settings">Asetukset</string>
     <string name="setup_app_entry_notifications">Ilmoitukset</string>
+    <string name="launcher_search_hint">Hae sovelluksia</string>
     <string name="setup_section_app_order">Järjestys autossa</string>
     <string name="setup_section_connection_log">Yhteysloki</string>
+    <string name="setup_section_car_buttons">Auton painikkeet</string>
+    <string name="setup_car_buttons_hint">Painikkeet, jotka AARE on nähnyt tästä autosta. Valitse, mitä kukin tekee; ”Oletus”-asetukseen jätetty painike toimii tavalliseen tapaan.</string>
+    <string name="setup_car_buttons_empty">Painikkeita ei ole vielä nähty. Yhdistä autoon ja paina jotakin.</string>
+    <string name="setup_car_button_default">Oletus</string>
+    <string name="setup_car_action_home">Koti</string>
+    <string name="setup_car_action_back">Takaisin</string>
+    <string name="setup_car_action_assistant">Ääniavustaja</string>
+    <string name="setup_car_action_play_pause">Toista/keskeytä</string>
+    <string name="setup_car_action_next">Seuraava kappale</string>
+    <string name="setup_car_action_previous">Edellinen kappale</string>
+    <string name="setup_car_action_open_navigation">Avaa navigointisovellus</string>
+    <string name="setup_car_action_open_media">Avaa mediasovellus</string>
+    <string name="setup_car_action_open_phone">Avaa puhelinsovellus</string>
+    <string name="setup_car_action_nothing">Ei mitään</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ei liity Googleen. Android Auto on Google LLC:n tavaramerkki.</string>
     <string name="setup_choice_style">Tyyli</string>
     <string name="setup_choice_theme">Teema</string>
@@ -242,6 +259,8 @@
     <string name="notif_action_stop">Pysäytä</string>
     <string name="notif_action_trust">Luota</string>
     <string name="notif_action_download_cert">Lataa varmenne</string>
+    <string name="notif_action_navigate">Navigoi</string>
+    <string name="notif_action_open">Avaa</string>
     <string name="notif_cert_download_title">Soittolaite hylkäsi AARE:n varmenteen</string>
     <string name="notif_cert_download_message">Tämä soittolaite hyväksyy vain Googlen varmenteen. Lataa se uusimmasta Android Auto -sovelluksesta ja yhdistä sitten uudelleen.</string>
     <string name="notif_cert_download_progress">Ladataan Android Auton varmennetta…</string>
@@ -269,7 +288,10 @@
     <string name="notif_not_calling_text">%1$s pyysi valitsemaan koodin, jossa on * tai #, ei puhelinnumeroa</string>
     <string name="notif_calling_title">Soitetaan %1$s</string>
     <string name="notif_asked_by">Pyytäjä: %1$s</string>
+    <string name="notif_asked_by_link">Pyytäjä: linkki avustajan vastauksessa</string>
     <string name="notif_call_confirm_title">Soitetaanko %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigoidaanko kohteeseen %1$s?</string>
+    <string name="notif_open_confirm_title">Avataanko %1$s?</string>
     <string name="notif_no_nav_app">Puhelimessa ei ole navigointisovellusta</string>
     <string name="notif_cant_open">Tätä ei voi avata autosta</string>
     <string name="notif_navigation_title">Navigointi</string>
@@ -310,6 +332,11 @@
     <string name="media_search_app">Hae %1$s</string>
     <string name="media_action_search">Hae</string>
     <string name="media_action_browse">Selaa</string>
+    <string name="media_action_show_video">Näytä video</string>
+    <string name="media_video_close">Takaisin soittimeen</string>
+    <string name="media_video_full_screen">Koko näyttö</string>
+    <string name="media_video_exit_full_screen">Poistu koko näytöstä</string>
+    <string name="media_video_paused_driving">Video keskeytetty ajon ajaksi; ääni jatkuu.</string>
     <string name="media_now_playing_label">Nyt soi</string>
     <string name="media_nothing_here">Ei mitään tässä</string>
     <string name="media_couldnt_load_more">Lisää ei voitu latata</string>
@@ -346,6 +373,11 @@
     <string name="phone_call_in_progress">Puhelu käynnissä</string>
     <string name="phone_action_hang_up">Katkaise</string>
     <string name="phone_keypad_delete">Poista</string>
+    <string name="voip_mic_title">%1$s ei voi käyttää mikrofonia</string>
+    <string name="voip_mic_car_text">Toinen osapuoli ei kuule sinua. Salli se puhelimessa: katso ilmoitus</string>
+    <string name="voip_mic_notification_text">Puhelut autosta sovelluksella %1$s tarvitsevat sen mikrofonioikeuden. Avaa sen asetukset napauttamalla</string>
+    <string name="voip_call_failed_title">Soitto sovelluksella %1$s epäonnistui</string>
+    <string name="voip_call_failed_text">Soita avaamalla se puhelimessa</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Latautuu</string>
     <string name="phone_incoming_call">Saapuva puhelu</string>
@@ -374,6 +406,8 @@
     <string name="standalone_not_native">Ei Android Auto -sovellus · käyttö pysäköitynä</string>
     <string name="standalone_starting">Käynnistyy…</string>
     <string name="standalone_paused_driving">Keskeytetty ajon ajaksi.</string>
+    <string name="standalone_media_video_title">Video mediasovelluksista</string>
+    <string name="standalone_media_video_subtitle">Lisää \"Näytä video\" auton medianäyttöön: mediasovellus avautuu auton näytölle videotaan varten. Vain pysäköitynä; kansikuva palaa, kun ajat.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Selain</string>
     <string name="browser_app_row_subtitle">Verkkoselain auton näytöllä, kun olet pysäköitynä</string>
@@ -384,6 +418,8 @@
     <string name="browser_reload">Päivitä</string>
     <string name="browser_home">Aloitussivu</string>
     <string name="browser_address_hint">Hae tai kirjoita verkko-osoite</string>
+    <string name="assistant_links_title">Linkit avustajalta</string>
+    <string name="assistant_links_subtitle">Anna valitun avustajan vastauksissa olevien aare://-linkkien ohjata musiikkia tai tarjota auton näytöllä navigointia, sovelluksen avaamista tai soittoa. Muiden sovellusten ja verkkosivujen linkit ohitetaan.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auton tiedot</string>
     <string name="setup_page_car_data_subtitle">Nopeus, vaihde ja anturit suoraan autosta</string>
@@ -434,6 +470,11 @@
     <string name="car_data_accelerometer">Kiihtyvyysanturi</string>
     <string name="car_data_gyroscope">Gyroskooppi</string>
     <string name="car_data_dtc">Vikakoodit</string>
+    <string name="car_data_dtc_unknown">Tuntematon</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Valmistajakohtainen voimansiirron koodi</string>
+    <string name="car_data_dtc_manufacturer_chassis">Valmistajakohtainen alustan koodi</string>
+    <string name="car_data_dtc_manufacturer_body">Valmistajakohtainen korin koodi</string>
+    <string name="car_data_dtc_manufacturer_network">Valmistajakohtainen verkon koodi</string>
     <string name="car_data_app_label">Auton tiedot</string>
     <string name="car_data_show_in_car_title">Näytä auton näytöllä</string>
     <string name="car_data_show_in_car_subtitle">Lisää autoon diagnostiikkasovellus näitä reaaliaikaisia tietoja varten</string>
@@ -442,6 +483,8 @@
     <string name="vehicles_rule_count">Ladattuja sääntöjä: %1$d</string>
     <string name="vehicles_import">Tuo tiedosto…</string>
     <string name="vehicles_template">Kirjoita malli</string>
+    <string name="vehicles_malformed_at">vehicles.json-tiedostossa on virhe rivillä %1$d, sarakkeessa %2$d (%3$s): sen säännöt ohitetaan.</string>
+    <string name="vehicles_malformed">vehicles.json-tiedostoa ei voi käyttää (%1$s): sen säännöt ohitetaan.</string>
     <string name="setup_toggle_force_h264_title">Pakota H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">AARE käyttää oletusarvoisesti parasta koodekkia, jonka auto ja puhelin jakavat (H.265…). Ota käyttöön, jos auton kuva on häiriöinen.</string>
     <string name="common_ok">OK</string>
@@ -450,6 +493,11 @@
     <string name="setup_section_updates">Päivitykset</string>
     <string name="setup_toggle_updates_title">Tarkista päivitykset</string>
     <string name="setup_toggle_updates_subtitle">Varoita etusivulla, kun GitHubissa on uudempi julkaisu. Pois päältä ei koskaan muodosta yhteyttä internetiin.</string>
+    <string name="update_check_now">Tarkista nyt</string>
+    <string name="update_checking">Tarkistetaan…</string>
+    <string name="update_check_latest">Sinulla on uusin versio (%1$s).</string>
+    <string name="update_check_available">AARE %1$s on saatavilla: katso aloitusnäyttö.</string>
+    <string name="update_check_failed">GitHubiin ei saatu yhteyttä. Yritä myöhemmin uudelleen.</string>
     <string name="update_available_title">Päivitys saatavilla — %1$s</string>
     <string name="update_available_subtitle">Käytössäsi on %1$s. Napauta nähdäksesi julkaisun.</string>
     <string name="setup_log_save">Tallenna</string>
@@ -497,4 +545,24 @@
     <string name="carapp_error_stopped">%1$s pysähtyi</string>
     <string name="carapp_error_google_only">%1$s hyväksyy vain Googlen Android Auton. Sen täytyy sallia AARE (katso sovellusluettelo puhelimesta).</string>
     <string name="carapp_error_cant_start">%1$s ei voinut käynnistyä: %2$s</string>
+    <string name="shizuku_setup_title">Myönnä AAREn käyttöoikeudet Shizukulla</string>
+    <string name="shizuku_setup_subtitle">Yksi napautus myöntää sen, mikä puuttuu vielä, ilman kunkin käyttöoikeuden omaa valintaikkunaa: mikrofoni, sijainti, yhteystiedot, puhelulokit, kalenteri, puhelut, lähellä olevat laitteet (Bluetooth, Wi-Fi), paikallinen verkko, ilmoitukset ja ilmoitusten käyttöoikeus</string>
+    <string name="shizuku_setup_working">Myönnetään…</string>
+    <string name="shizuku_setup_result_title">Myönnetty Shizukulla</string>
+    <string name="shizuku_setup_nothing_to_grant">Kaikki oli jo myönnetty.</string>
+    <string name="shizuku_setup_not_granted">Ei myönnetty: %1$s</string>
+    <string name="shizuku_setup_notification_access">Ilmoitusten käyttöoikeus</string>
+    <string name="shizuku_setup_helper_failed">Shizukun apuohjelma ei käynnistynyt. Tarkista, että Shizuku on käynnissä ja sallii AAREn.</string>
+    <string name="aa_section_title">Googlen Android Auto</string>
+    <string name="aa_state_enabled">Asennettu ja käytössä: kun auto yhdistetään, Android voi antaa sen Android Autolle AAREn sijaan tai kysyä, mitä sovellusta käytetään.</string>
+    <string name="aa_state_disabled">Pois käytöstä: Android Auto ei ota autoa. Sen tiedot säilyvät.</string>
+    <string name="aa_action_disable">Estä Android Autoa ottamasta autoa</string>
+    <string name="aa_action_enable">Ota Android Auto käyttöön uudelleen</string>
+    <string name="aa_working">Käsitellään…</string>
+    <string name="aa_needs_shizuku">Shizukun kautta (käynnissä ja sallii AAREn), tai käsin Android Auton sovellustiedoissa.</string>
+    <string name="aa_app_info">Android Auton sovellustiedot</string>
+    <string name="aa_failed">Ei onnistunut: %1$s</string>
+    <string name="aa_confirm_title">Poistetaanko Android Auto käytöstä?</string>
+    <string name="aa_confirm_text">AARE poistaa Googlen Android Auton käytöstä tälle käyttäjälle Shizukun kautta (pm disable-user). Se lakkaa toimimasta, katoaa sovellusluettelosta eikä vastaa enää, kun auto yhdistetään, niin auto tulee aina AARElle.\n\nMitään ei poisteta, ja sen tiedot säilyvät. Autot, sovellukset tai ominaisuudet, jotka tarvitsevat Googlen Android Autoa, eivät toimi, ennen kuin otat sen käyttöön uudelleen tästä painikkeesta.</string>
+    <string name="aa_confirm_action">Poista käytöstä</string>
 </resources>
