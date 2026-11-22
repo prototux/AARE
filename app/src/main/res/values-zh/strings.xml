@@ -123,6 +123,8 @@
     <string name="setup_hint_map_inset">将导航应用在仪表盘地图底部绘制的内容上移。例如，当前车速被应用的标志遮挡时（HERE WeGo 中经常出现）</string>
     <string name="setup_toggle_weather_title">天气</string>
     <string name="setup_toggle_weather_subtitle">显示在时钟旁，数据来自 Open-Meteo（仅获取大致位置，精度约 10 公里）</string>
+    <string name="setup_choice_agenda_count">显示的日历活动数</string>
+    <string name="setup_agenda_count_hint">多于一个时显示为日程，每项附带日期和时间。</string>
     <string name="setup_section_driving">驾驶</string>
     <string name="setup_toggle_passenger_title">乘客模式</string>
     <string name="setup_toggle_passenger_subtitle">忽略车辆的行驶状态：行驶中仍可输入文字、浏览长列表并使用手机屏幕镜像，供乘客使用。驾驶员行驶中不得操作屏幕。</string>
@@ -395,6 +397,8 @@
     <string name="phone_action_answer">接听</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">今天</string>
+    <string name="dash_agenda_tomorrow">明天</string>
+    <string name="dash_event_navigate">导航</string>
     <string name="dash_latest_label">最新</string>
     <string name="cluster_arrival_time">预计到达 %1$s</string>
 

@@ -125,6 +125,8 @@
     <string name="setup_hint_map_inset">Ridică ceea ce aplicația de navigație desenează în partea de jos a hărții din tabloul de bord. De exemplu, când viteza curentă a mașinii este acoperită de logoul aplicației (se întâmplă des în HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Vreme</string>
     <string name="setup_toggle_weather_subtitle">Lângă ceas, de la Open-Meteo (primește o poziție aproximativă, de circa 10 km)</string>
+    <string name="setup_choice_agenda_count">Evenimente din calendar afișate</string>
+    <string name="setup_agenda_count_hint">Mai mult de unul devine o agendă, fiecare cu ziua și ora lui.</string>
     <string name="setup_section_driving">Condus</string>
     <string name="setup_toggle_passenger_title">Mod pasager</string>
     <string name="setup_toggle_passenger_subtitle">Ignoră starea de condus a mașinii: tastarea, listele lungi și ecranul telefonului rămân disponibile în mișcare, pentru un pasager. Șoferul nu trebuie să folosească ecranul în timpul condusului.</string>
@@ -409,6 +411,8 @@
     <string name="phone_action_answer">Răspunde</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Astăzi</string>
+    <string name="dash_agenda_tomorrow">Mâine</string>
+    <string name="dash_event_navigate">Navighează</string>
     <string name="dash_latest_label">Cel mai recent</string>
     <string name="cluster_arrival_time">Sosire %1$s</string>
 

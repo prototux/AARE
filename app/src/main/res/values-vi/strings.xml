@@ -125,6 +125,8 @@
     <string name="setup_hint_map_inset">Nâng những gì ứng dụng điều hướng vẽ ở phần dưới của bản đồ trên bảng điều khiển lên cao hơn. Ví dụ, khi tốc độ hiện tại của xe bị logo của ứng dụng che khuất (thường xảy ra với HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Thời tiết</string>
     <string name="setup_toggle_weather_subtitle">Bên cạnh đồng hồ, từ Open-Meteo (lấy vị trí gần đúng, khoảng 10 km)</string>
+    <string name="setup_choice_agenda_count">Số sự kiện lịch hiển thị</string>
+    <string name="setup_agenda_count_hint">Nhiều hơn một sẽ thành lịch trình, mỗi sự kiện kèm ngày và giờ.</string>
     <string name="setup_section_driving">Lái xe</string>
     <string name="setup_toggle_passenger_title">Chế độ hành khách</string>
     <string name="setup_toggle_passenger_subtitle">Bỏ qua trạng thái lái xe của ô tô: nhập văn bản, danh sách dài và màn hình điện thoại vẫn khả dụng khi xe đang di chuyển, dành cho hành khách. Người lái không được dùng màn hình khi đang lái xe.</string>
@@ -409,6 +411,8 @@
     <string name="phone_action_answer">Trả lời</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Hôm nay</string>
+    <string name="dash_agenda_tomorrow">Ngày mai</string>
+    <string name="dash_event_navigate">Dẫn đường</string>
     <string name="dash_latest_label">Mới nhất</string>
     <string name="cluster_arrival_time">Đến %1$s</string>
 

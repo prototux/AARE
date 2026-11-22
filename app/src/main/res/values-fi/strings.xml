@@ -125,6 +125,8 @@
     <string name="setup_hint_map_inset">Nostaa ylemmäs sen, mitä navigointisovellus piirtää kartan alaosaan kojelaudassa. Esimerkiksi kun auton nykyinen nopeus jää sovelluksen logon alle (käy usein HERE WeGossa)</string>
     <string name="setup_toggle_weather_title">Sää</string>
     <string name="setup_toggle_weather_subtitle">Kellon vierellä, Open-Meteolta (hakee arvioidun sijainnin, noin 10 km)</string>
+    <string name="setup_choice_agenda_count">Näytettävät kalenteritapahtumat</string>
+    <string name="setup_agenda_count_hint">Useampi kuin yksi muuttuu esityslistaksi, jokainen päivineen ja kellonaikoineen.</string>
     <string name="setup_section_driving">Ajaminen</string>
     <string name="setup_toggle_passenger_title">Matkustajatila</string>
     <string name="setup_toggle_passenger_subtitle">Ohita auton ajotila: kirjoittaminen, pitkät luettelot ja puhelimen näyttö pysyvät käytettävissä liikkeessä, matkustajaa varten. Kuljettaja ei saa käyttää näyttöä ajaessaan.</string>
@@ -409,6 +411,8 @@
     <string name="phone_action_answer">Vastaa</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Tänään</string>
+    <string name="dash_agenda_tomorrow">Huomenna</string>
+    <string name="dash_event_navigate">Navigoi</string>
     <string name="dash_latest_label">Viimeisin</string>
     <string name="cluster_arrival_time">Saapuminen %1$s</string>
 

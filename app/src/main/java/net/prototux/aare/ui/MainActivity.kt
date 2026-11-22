@@ -845,6 +845,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
+    var agendaCount by remember { mutableStateOf(settings.calendarAgendaCount) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
     var mapInset by remember { mutableStateOf(settings.mapCardBottomInset) }
     val scope = rememberCoroutineScope()
@@ -926,6 +927,11 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
                 mapBig = it; settings.dashboardMapBig = it
             }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
+                agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
+            }
+            Text(stringResource(R.string.setup_agenda_count_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {

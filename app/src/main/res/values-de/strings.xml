@@ -125,6 +125,8 @@
     <string name="setup_hint_map_inset">Schiebt nach oben, was die Navigations-App unten auf der Karte im Dashboard zeichnet. Zum Beispiel, wenn die aktuelle Geschwindigkeit des Autos vom Logo der App verdeckt wird (kommt bei HERE WeGo häufig vor)</string>
     <string name="setup_toggle_weather_title">Wetter</string>
     <string name="setup_toggle_weather_subtitle">Neben der Uhr, von Open-Meteo (es erhält eine ungefähre Position von etwa 10 km)</string>
+    <string name="setup_choice_agenda_count">Angezeigte Kalendertermine</string>
+    <string name="setup_agenda_count_hint">Mehr als einer wird zu einer Terminübersicht, jeder mit Tag und Uhrzeit.</string>
     <string name="setup_section_driving">Fahren</string>
     <string name="setup_toggle_passenger_title">Beifahrermodus</string>
     <string name="setup_toggle_passenger_subtitle">Ignoriert den Fahrstatus des Autos: Tippen, lange Listen und der Telefonbildschirm bleiben während der Fahrt für einen Beifahrer verfügbar. Der Fahrer darf den Bildschirm während der Fahrt nicht benutzen.</string>
@@ -409,6 +411,8 @@
     <string name="phone_action_answer">Annehmen</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Heute</string>
+    <string name="dash_agenda_tomorrow">Morgen</string>
+    <string name="dash_event_navigate">Navigieren</string>
     <string name="dash_latest_label">Neueste</string>
     <string name="cluster_arrival_time">Ankunft %1$s</string>
 

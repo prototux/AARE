@@ -125,6 +125,8 @@
     <string name="setup_hint_map_inset">Sobe o que a aplicação de navegação desenha na parte de baixo do mapa no painel. Por exemplo, quando a velocidade atual do carro fica tapada pelo logótipo da aplicação (acontece muitas vezes com o HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Meteorologia</string>
     <string name="setup_toggle_weather_subtitle">Junto ao relógio, fornecida pelo Open-Meteo (obtém uma posição aproximada, cerca de 10 km)</string>
+    <string name="setup_choice_agenda_count">Eventos do calendário mostrados</string>
+    <string name="setup_agenda_count_hint">Mais do que um torna-se uma agenda, cada um com o seu dia e hora.</string>
     <string name="setup_section_driving">Condução</string>
     <string name="setup_toggle_passenger_title">Modo passageiro</string>
     <string name="setup_toggle_passenger_subtitle">Ignorar o estado de condução do carro: a escrita, as listas longas e o ecrã do telemóvel continuam disponíveis em movimento, para um passageiro. O condutor não deve utilizar o ecrã durante a condução.</string>
@@ -409,6 +411,8 @@
     <string name="phone_action_answer">Atender</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Hoje</string>
+    <string name="dash_agenda_tomorrow">Amanhã</string>
+    <string name="dash_event_navigate">Navegar</string>
     <string name="dash_latest_label">Mais recente</string>
     <string name="cluster_arrival_time">Chegada %1$s</string>
 

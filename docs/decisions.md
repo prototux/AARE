@@ -402,3 +402,14 @@ The fetched weather already carries the right symbol for the phone's locale (°F
 AAP's `Environment` sensor has no locale: converting it would need a units setting nobody asked
 for. The temperature widget shows the car's own reading as "<value>°C" when the car reports one,
 falling back to the weather (with its own unit) only when it doesn't.
+
+## Calendar agenda: a day-only widening of the query window, gated on the count
+
+`DashboardInfo.nextEvents(context, limit)` only widens its ContentResolver window (12 hours to a
+week) when `limit > 1`. At the default (1), the window and the single returned event are exactly
+what `nextEvent` returned before, so turning the setting on is the only way to see anything new —
+nothing shifts for someone who never opens the new setting. The day label itself
+(`labelAgenda`, in `car/DashboardInfo.kt`) takes a clock and zone instead of reading the real one,
+so it's a plain JVM-testable function; `CalendarAgendaCard` calls it with the real clock and zone
+and still renders a single event exactly as `CalendarCard` always has, so the on-screen look at the
+default setting is unchanged, not just the data behind it.
