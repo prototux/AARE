@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Meldinger</string>
     <string name="setup_app_kind_messaging">Meldinger fra sine varsler</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Innebygd i AARE. Skjult forsvinner den bare fra app-rutenettet: anrop og bjellen virker fortsatt.</string>
     <string name="setup_section_unsupported_apps">Android Auto-apper AARE ikke kan vise</string>
     <string name="setup_hint_allowlist">Apper bygget med nyere versjoner av Googles bilbibliotek godtar bare verter på sin tillatelsesliste; se README.</string>
     <string name="setup_app_entry_phone">Telefon</string>

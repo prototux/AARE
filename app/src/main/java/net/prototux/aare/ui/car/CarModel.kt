@@ -76,7 +76,16 @@ data class CarGeometry(
 class CarUiState {
     var night by mutableStateOf(true)
     var screen by mutableStateOf<CarScreen>(CarScreen.Dashboard)
+    /**
+     * Every app the car can open, in the user's order: also the built-ins hidden from the app grid,
+     * since the bell, the call card, the rail's phone button and the steering-wheel keys open them
+     * from here. The grids show [launcherApps].
+     */
     val apps = mutableStateListOf<CarAppEntry>()
+    /** Ids of built-in apps (CarRuntime.HIDEABLE_BUILTIN_IDS) the user hid from the app grid only. */
+    var launcherHidden by mutableStateOf<Set<String>>(emptySet())
+    /** What the app grid and launcher list show: [apps] without the ones in [launcherHidden]. */
+    val launcherApps: List<CarAppEntry> get() = apps.withoutLauncherHidden(launcherHidden)
     var nowPlaying by mutableStateOf<NowPlaying?>(null)
     /** The navigation app whose map is shown on the dashboard. */
     var activeNavAppId by mutableStateOf<String?>(null)
@@ -142,6 +151,10 @@ class CarUiState {
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }
+
+/** These apps without the [hidden] ones, for the app grid: everything else still reaches them. */
+internal fun List<CarAppEntry>.withoutLauncherHidden(hidden: Set<String>): List<CarAppEntry> =
+    if (hidden.isEmpty()) this else filter { it.id !in hidden }
 
 /** A phone call, ringing or on, for the car's call card. */
 @Stable

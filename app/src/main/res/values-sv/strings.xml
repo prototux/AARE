@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Meddelanden</string>
     <string name="setup_app_kind_messaging">Meddelanden från dess aviseringar</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Inbyggd i AARE. Dold försvinner den bara från apprutnätet: samtal och klockan fungerar fortfarande.</string>
     <string name="setup_section_unsupported_apps">Android Auto-appar AARE inte kan visa</string>
     <string name="setup_hint_allowlist">Appar byggda med senare versioner av Googles bilbibliotek accepterar bara värdar på sin tillåtelselista; se README.</string>
     <string name="setup_app_entry_phone">Telefon</string>

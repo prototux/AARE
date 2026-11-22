@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Nachrichten</string>
     <string name="setup_app_kind_messaging">Nachrichten aus ihren Benachrichtigungen</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">In AARE eingebaut. Ausgeblendet verschwindet sie nur aus dem App-Raster: Anrufe und die Glocke funktionieren weiter.</string>
     <string name="setup_section_unsupported_apps">Android Auto-Apps, die AARE nicht anzeigen kann</string>
     <string name="setup_hint_allowlist">Apps, die mit aktuellen Versionen von Googles Auto-Bibliothek erstellt wurden, akzeptieren nur Hosts in ihrer Zulassungsliste; siehe die README.</string>
     <string name="setup_app_entry_phone">Telefon</string>

@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Berichten</string>
     <string name="setup_app_kind_messaging">Berichten uit hun meldingen</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Ingebouwd in AARE. Verborgen verdwijnt hij alleen uit het app-raster: bellen en de bel blijven werken.</string>
     <string name="setup_section_unsupported_apps">Android Auto-apps die AARE niet kan tonen</string>
     <string name="setup_hint_allowlist">Apps die zijn gebouwd met recente versies van Google\'s auto-bibliotheek accepteren alleen hosts op hun toestaanlijst; zie de README.</string>
     <string name="setup_app_entry_phone">Telefoon</string>

@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Wiadomości</string>
     <string name="setup_app_kind_messaging">Wiadomości z jej powiadomień</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Wbudowana w AARE. Ukryta znika tylko z siatki aplikacji: połączenia i dzwonek nadal działają.</string>
     <string name="setup_section_unsupported_apps">Aplikacje Android Auto, których AARE nie może wyświetlić</string>
     <string name="setup_hint_allowlist">Aplikacje zbudowane na nowszych wersjach biblioteki samochodowej Google akceptują tylko hosty z listy dozwolonych; zobacz README.</string>
     <string name="setup_app_entry_phone">Telefon</string>

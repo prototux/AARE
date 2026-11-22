@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Viestit</string>
     <string name="setup_app_kind_messaging">Viestit sen ilmoituksista</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Sisäänrakennettu AAREen. Piilotettuna se poistuu vain sovellusruudukosta: puhelut ja kello toimivat yhä.</string>
     <string name="setup_section_unsupported_apps">Android Auto -sovellukset, joita AARE ei voi näyttää</string>
     <string name="setup_hint_allowlist">Googlen auto-kirjaston uusimmilla versioilla rakennetut sovellukset hyväksyvät vain sallittujen isäntien luettelossa olevia; katso README.</string>
     <string name="setup_app_entry_phone">Puhelin</string>

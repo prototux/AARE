@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Tin nhắn</string>
     <string name="setup_app_kind_messaging">Tin nhắn từ thông báo của ứng dụng</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Tích hợp sẵn trong AARE. Khi ẩn, nó chỉ rời khỏi lưới ứng dụng: cuộc gọi và chuông vẫn hoạt động.</string>
     <string name="setup_section_unsupported_apps">Ứng dụng Android Auto mà AARE không thể hiển thị</string>
     <string name="setup_hint_allowlist">Các ứng dụng được xây dựng với phiên bản mới của thư viện xe hơi của Google chỉ chấp nhận các host trong danh sách cho phép của họ; xem README.</string>
     <string name="setup_app_entry_phone">Điện thoại</string>

@@ -145,6 +145,7 @@
     <string name="setup_app_group_messaging">المراسلة</string>
     <string name="setup_app_kind_messaging">رسائل من إشعاراته</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">مدمج في AARE. عند إخفائه يختفي من شبكة التطبيقات فقط: تبقى المكالمات والجرس تعمل.</string>
     <string name="setup_section_unsupported_apps">تطبيقات Android Auto التي لا يمكن لـ AARE عرضها</string>
     <string name="setup_hint_allowlist">التطبيقات المبنية بإصدارات حديثة من مكتبة السيارات الخاصة بـ Google لا تقبل إلا المضيفين في قائمتها المسموحة؛ راجع ملف README.</string>
     <string name="setup_app_entry_phone">الهاتف</string>

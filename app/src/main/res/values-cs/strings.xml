@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Zprávy</string>
     <string name="setup_app_kind_messaging">Zprávy z jejích oznámení</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Součást AARE. Skrytá zmizí jen z mřížky aplikací: hovory a zvonek dál fungují.</string>
     <string name="setup_section_unsupported_apps">Aplikace Android Auto, které AARE nemůže zobrazit</string>
     <string name="setup_hint_allowlist">Aplikace vytvořené s novějšími verzemi knihovny Google pro auta akceptují jen hostitele na seznamu povolených; viz README.</string>
     <string name="setup_app_entry_phone">Telefon</string>

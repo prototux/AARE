@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Beskeder</string>
     <string name="setup_app_kind_messaging">Beskeder fra deres notifikationer</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Indbygget i AARE. Skjult forsvinder den kun fra app-gitteret: opkald og klokken virker stadig.</string>
     <string name="setup_section_unsupported_apps">Android Auto-apps AARE ikke kan vise</string>
     <string name="setup_hint_allowlist">Apps bygget med nyere versioner af Googles bilbibliotek accepterer kun hosts på deres tilladelsesliste; se README.</string>
     <string name="setup_app_entry_phone">Telefon</string>
