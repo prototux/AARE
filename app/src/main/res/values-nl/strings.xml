@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Geen standaardassistent ingesteld op de telefoon</string>
     <string name="assistant_has_car_app_subtitle">Op het autoscherm, met de microfoon van de auto</string>
     <string name="assistant_opens_on_phone">Opent op de telefoon</string>
+    <string name="assistant_opens_on_car_screen">Opent op het autoscherm tijdens parkeren, op de telefoon tijdens het rijden</string>
     <string name="assistant_hint">De spraakknop op het stuur en de microfoon van de balk openen deze assistent. Assistenten met een auto-app, zoals Lapin, werken het best.</string>
+    <string name="assistant_car_screen_toggle_title">Assistenten zonder auto-app openen op het autoscherm</string>
+    <string name="assistant_car_screen_toggle_subtitle">Tijdens parkeren toont dit de spraakinterface van de assistent op het autoscherm in plaats van op de telefoon. Tijdens het rijden opent hij op de telefoon, tenzij de passagiersmodus aan staat. Vereist root of Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Autoverbinding</string>

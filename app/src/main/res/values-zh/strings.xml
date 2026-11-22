@@ -276,7 +276,10 @@
     <string name="assistant_no_default">手机上未设置默认语音助手</string>
     <string name="assistant_has_car_app_subtitle">在车机屏幕上显示，使用车辆麦克风</string>
     <string name="assistant_opens_on_phone">在手机上打开</string>
+    <string name="assistant_opens_on_car_screen">停车时在车机屏幕上打开，行驶时在手机上打开</string>
     <string name="assistant_hint">方向盘语音按钮和状态栏麦克风图标都会打开此助手。带有车载应用的助手（如 Lapin）效果最佳。</string>
+    <string name="assistant_car_screen_toggle_title">在车机屏幕上打开没有车机应用的助手</string>
+    <string name="assistant_car_screen_toggle_subtitle">停车时，在车机屏幕上而不是手机上显示助手的语音界面。行驶时在手机上打开，除非已开启乘客模式。需要 root 或 Shizuku。</string>
 
     <string name="notif_channel_connection">车辆连接</string>
     <string name="notif_action_stop">停止</string>

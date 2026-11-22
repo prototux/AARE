@@ -276,7 +276,10 @@
     <string name="assistant_no_default">لا يوجد مساعد صوتي افتراضي مضبوط على الهاتف</string>
     <string name="assistant_has_car_app_subtitle">على شاشة السيارة، باستخدام ميكروفون السيارة</string>
     <string name="assistant_opens_on_phone">يفتح على الهاتف</string>
+    <string name="assistant_opens_on_car_screen">يفتح على شاشة السيارة أثناء التوقف، وعلى الهاتف أثناء القيادة</string>
     <string name="assistant_hint">يفتح زر الصوت على المقود وميكروفون الشريط هذا المساعد. تعمل المساعدات التي لها تطبيق سيارة، مثل Lapin، بأفضل شكل.</string>
+    <string name="assistant_car_screen_toggle_title">افتح المساعدين الذين ليس لديهم تطبيق سيارة على شاشة السيارة</string>
+    <string name="assistant_car_screen_toggle_subtitle">أثناء التوقف، يعرض واجهة المساعد الصوتية على شاشة السيارة بدلًا من الهاتف. أثناء القيادة يفتح على الهاتف، إلا إذا كان وضع الراكب مفعّلًا. يحتاج إلى root أو Shizuku.</string>
 
     <string name="notif_channel_connection">اتصال السيارة</string>
     <string name="notif_action_stop">إيقاف</string>

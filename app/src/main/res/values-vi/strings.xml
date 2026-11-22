@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Chưa đặt trợ lý mặc định trên điện thoại</string>
     <string name="assistant_has_car_app_subtitle">Trên màn hình xe, dùng micro của xe</string>
     <string name="assistant_opens_on_phone">Mở trên điện thoại</string>
+    <string name="assistant_opens_on_car_screen">Mở trên màn hình xe khi đã đỗ xe, trên điện thoại khi đang lái xe</string>
     <string name="assistant_hint">Nút giọng nói trên vô lăng và micro trên thanh công cụ sẽ mở trợ lý này. Các trợ lý có ứng dụng dành cho xe, như Lapin, hoạt động tốt nhất.</string>
+    <string name="assistant_car_screen_toggle_title">Mở trợ lý không có ứng dụng xe trên màn hình xe</string>
+    <string name="assistant_car_screen_toggle_subtitle">Khi đã đỗ xe, hiển thị giao diện giọng nói của trợ lý trên màn hình xe thay vì trên điện thoại. Khi đang lái xe, trợ lý mở trên điện thoại, trừ khi chế độ hành khách đang bật. Cần root hoặc Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Kết nối xe</string>
