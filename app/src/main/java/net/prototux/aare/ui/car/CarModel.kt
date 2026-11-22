@@ -1,6 +1,7 @@
 package net.prototux.aare.ui.car
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -16,7 +17,7 @@ import net.prototux.aare.ui.theme.AareTheme
  * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
  * it hands the screen back to the car's own.
  */
-enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
+enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, HOME, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
 
 /** One launchable app on the car screen. */
 @Stable
@@ -146,6 +147,8 @@ class CarUiState {
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** Smart-home buttons and values (the phone's "Home actions"), for the Home card and app. */
+    var home by mutableStateOf(HomeUi())
     /** Font-scale multiplier for the car screen's text (a setting). Independent of [controlScale]. */
     var textScale by mutableStateOf(1f)
     /** Multiplier for [net.prototux.aare.ui.theme.CarDimens] (touch targets, icons…) (a setting). */
@@ -153,6 +156,20 @@ class CarUiState {
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }
+
+/** The smart-home buttons and values the car shows. */
+@Immutable
+data class HomeUi(val buttons: List<HomeButton> = emptyList(), val tiles: List<HomeTileUi> = emptyList()) {
+    val isEmpty: Boolean get() = buttons.isEmpty() && tiles.isEmpty()
+}
+
+/** One action's button: [confirm] asks first; [running] while it is being sent. */
+@Immutable
+data class HomeButton(val id: String, val label: String, val confirm: Boolean, val onCard: Boolean, val running: Boolean)
+
+/** One value: [value] null while unknown; [failed] when the last update didn't work. */
+@Immutable
+data class HomeTileUi(val id: String, val label: String, val value: String?, val unit: String, val failed: Boolean)
 
 /** These apps without the [hidden] ones, for the app grid: everything else still reaches them. */
 internal fun List<CarAppEntry>.withoutLauncherHidden(hidden: Set<String>): List<CarAppEntry> =
@@ -176,4 +193,6 @@ interface CarActions {
     fun endCall()
     /** Navigate to a place (an address or a name) in the car's navigation app. */
     fun navigateTo(place: String)
+    /** Send a home action (its confirmation, if it has one, was already asked). */
+    fun runHomeAction(id: String)
 }

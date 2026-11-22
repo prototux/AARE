@@ -489,6 +489,59 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
+## Car apps' own colours
+
+A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
+else on its application, else its application theme) with `carColorPrimary`/`carColorPrimaryDark`
+and `carColorSecondary`/`carColorSecondaryDark`. CarColor.PRIMARY and SECONDARY in that app's
+templates take those colours (day or night variant), for every app and API level. Everything else
+on the car screen, and a pair the app doesn't set, keeps the car theme and its accent: the app's
+colours only reach what the app itself asked to be coloured. The theme *style* an app can report
+from Car App Library 1.9 (`getAppTheme`) only changes progress-bar end caps, which the library
+version AARE builds against can't express, so it isn't asked.
+
+## Car app action countdowns
+
+In a row of actions (Pane, Message, SignIn and map pane buttons, a list row's actions) the default
+action (`Action.FLAG_DEFAULT`) counts down 10 s, its button filling up, and then clicks itself.
+In a row without one, a few listed apps (`TemplateQuirks`: Waze, Uber Driver, the library samples)
+can give an action their own countdown with a title variant "TimedActionParams|duration:N"
+(seconds, held to 3-60 s so an app can't make a button click itself before the driver can read it,
+or wait forever); only the first such action of a row counts down, and those variants are never shown as
+text, for any app. The countdown is time-based, not an animation, so phones with animations off
+don't click the action at once; a template refresh with the same action keeps counting.
+Alerts keep their own timeout, not their default action's countdown.
+
+## Car app screens: refresh or new screen
+
+A new template from a car app is a refresh of the screen on show (keeping what's typed, pan mode
+and the scroll position) when the screen stack has the same depth and screens and the top
+template has the same class. For the apps in `TemplateQuirks.mapHeaderStartsScreen` (Waze from
+versionCode 1030423, the library samples), a MapTemplate whose header title changed (or whose
+header came or went) is a new screen too. Other content checks (a pane's header, its loading
+state, the rows) aren't made.
+
+## Home actions: one shared connection, secrets apart, plain http only at home
+
+Smart-home actions and tiles (`docs/home-actions.md`) run through one process-wide `HomeHub`, shared
+by the car session and the on-phone preview: two connections with the same MQTT client id would
+knock each other off the broker. Arrival triggers run only for a car session. The MQTT client is
+AARE's own (MQTT 3.1.1 without QoS 2 or wills): a few hundred tested lines instead of a new
+dependency. The broker password and every header value go to a private preferences file of their
+own (`home_secrets`), not the main settings, so a settings export can't carry them whichever way it
+is built; header values all count as secrets because that is where tokens go.
+
+Plain `http://` (maintainer's decision): https stays the default, and http is allowed only to the
+home network (localhost, `*.local`, RFC 1918, 169.254/16, loopback, `fc00::/7`), only when the HTTP
+server's *Allow plain http on my home network* is on, with a warning. Public http stays refused.
+Opening cleartext in the network security config was rejected: it can't be limited to address
+ranges and would apply to the whole app (the browser too). Plain http goes instead through AARE's
+own small HTTP/1.1 client (`PlainHttp`), to the very address that passed the check, so a name
+can't pass as private and then connect elsewhere.
+
+Arrival triggers (maintainer's decision): opt-in per action (off by default), and they never send
+by themselves: the car screen always asks for one tap, whatever the action's *Ask first*, because a
+position can be wrong and nobody watches the screen when it fires.
 
 ## Automatic Bluetooth pairing for calls (Shizuku, opt-in)
 

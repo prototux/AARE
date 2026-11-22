@@ -69,4 +69,5 @@ private val DashCard.label: Int
         DashCard.CALENDAR -> R.string.dash_card_calendar
         DashCard.NOTIFICATION -> R.string.dash_card_notification
         DashCard.WEATHER -> R.string.dash_card_weather
+        DashCard.HOME -> R.string.dash_card_home
     }
