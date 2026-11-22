@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Appel en cours</string>
     <string name="phone_action_hang_up">Raccrocher</string>
     <string name="phone_keypad_delete">Supprimer</string>
+    <string name="voip_mic_title">%1$s ne peut pas utiliser le micro</string>
+    <string name="voip_mic_car_text">Votre correspondant ne vous entendra pas. Autorisez-le sur le téléphone : voir la notification</string>
+    <string name="voip_mic_notification_text">Les appels depuis la voiture via %1$s ont besoin de son autorisation micro. Appuyez pour ouvrir ses paramètres</string>
+    <string name="voip_call_failed_title">Impossible d\'appeler via %1$s</string>
+    <string name="voip_call_failed_text">Ouvrez-la sur le téléphone pour appeler</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">En charge</string>
     <string name="phone_incoming_call">Appel entrant</string>

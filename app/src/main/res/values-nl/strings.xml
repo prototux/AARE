@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Oproep actief</string>
     <string name="phone_action_hang_up">Oproep beëindigen</string>
     <string name="phone_keypad_delete">Verwijderen</string>
+    <string name="voip_mic_title">%1$s kan de microfoon niet gebruiken</string>
+    <string name="voip_mic_car_text">De ander hoort je niet. Sta het toe op de telefoon: zie de melding</string>
+    <string name="voip_mic_notification_text">Gesprekken vanuit de auto via %1$s hebben de microfoonmachtiging nodig. Tik om de instellingen te openen</string>
+    <string name="voip_call_failed_title">Bellen via %1$s is niet gelukt</string>
+    <string name="voip_call_failed_text">Open hem op de telefoon om te bellen</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Opladen</string>
     <string name="phone_incoming_call">Inkomende oproep</string>

@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Đang trong cuộc gọi</string>
     <string name="phone_action_hang_up">Kết thúc gọi</string>
     <string name="phone_keypad_delete">Xóa</string>
+    <string name="voip_mic_title">%1$s không thể dùng micrô</string>
+    <string name="voip_mic_car_text">Bên kia sẽ không nghe thấy bạn. Hãy cho phép trên điện thoại: xem thông báo</string>
+    <string name="voip_mic_notification_text">Cuộc gọi từ xe qua %1$s cần quyền micrô của ứng dụng. Nhấn để mở cài đặt</string>
+    <string name="voip_call_failed_title">Không thể gọi qua %1$s</string>
+    <string name="voip_call_failed_text">Hãy mở ứng dụng trên điện thoại để gọi</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Đang sạc</string>
     <string name="phone_incoming_call">Cuộc gọi đến</string>

@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Folyamatban lévő hívás</string>
     <string name="phone_action_hang_up">Hívás befejezése</string>
     <string name="phone_keypad_delete">Törlés</string>
+    <string name="voip_mic_title">A(z) %1$s nem használhatja a mikrofont</string>
+    <string name="voip_mic_car_text">A másik fél nem fog hallani. Engedélyezd a telefonon: lásd az értesítést</string>
+    <string name="voip_mic_notification_text">Az autóból a(z) %1$s alkalmazáson át indított hívásokhoz mikrofonengedély kell. Koppints a beállításai megnyitásához</string>
+    <string name="voip_call_failed_title">Nem sikerült hívni ezen keresztül: %1$s</string>
+    <string name="voip_call_failed_text">A híváshoz nyisd meg a telefonon</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Töltés</string>
     <string name="phone_incoming_call">Bejövő hívás</string>

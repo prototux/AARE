@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Puhelu käynnissä</string>
     <string name="phone_action_hang_up">Katkaise</string>
     <string name="phone_keypad_delete">Poista</string>
+    <string name="voip_mic_title">%1$s ei voi käyttää mikrofonia</string>
+    <string name="voip_mic_car_text">Toinen osapuoli ei kuule sinua. Salli se puhelimessa: katso ilmoitus</string>
+    <string name="voip_mic_notification_text">Puhelut autosta sovelluksella %1$s tarvitsevat sen mikrofonioikeuden. Avaa sen asetukset napauttamalla</string>
+    <string name="voip_call_failed_title">Soitto sovelluksella %1$s epäonnistui</string>
+    <string name="voip_call_failed_text">Soita avaamalla se puhelimessa</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Latautuu</string>
     <string name="phone_incoming_call">Saapuva puhelu</string>

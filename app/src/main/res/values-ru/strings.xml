@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Звонок в процессе</string>
     <string name="phone_action_hang_up">Завершить</string>
     <string name="phone_keypad_delete">Удалить</string>
+    <string name="voip_mic_title">%1$s не может использовать микрофон</string>
+    <string name="voip_mic_car_text">Собеседник вас не услышит. Разрешите это на телефоне: см. уведомление</string>
+    <string name="voip_mic_notification_text">Звонкам из машины через %1$s нужно разрешение на микрофон. Нажмите, чтобы открыть его настройки</string>
+    <string name="voip_call_failed_title">Не удалось позвонить через %1$s</string>
+    <string name="voip_call_failed_text">Откройте его на телефоне, чтобы позвонить</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Зарядка</string>
     <string name="phone_incoming_call">Входящий звонок</string>

@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Samtale i gang</string>
     <string name="phone_action_hang_up">Legg på</string>
     <string name="phone_keypad_delete">Slett</string>
+    <string name="voip_mic_title">%1$s kan ikke bruke mikrofonen</string>
+    <string name="voip_mic_car_text">Den andre parten hører deg ikke. Tillat det på telefonen: se varselet</string>
+    <string name="voip_mic_notification_text">Samtaler fra bilen via %1$s trenger mikrofontillatelsen dens. Trykk for å åpne innstillingene</string>
+    <string name="voip_call_failed_title">Kunne ikke ringe via %1$s</string>
+    <string name="voip_call_failed_text">Åpne den på telefonen for å ringe</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Lader</string>
     <string name="phone_incoming_call">Innkommende samtale</string>

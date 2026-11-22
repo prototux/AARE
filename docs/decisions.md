@@ -155,7 +155,6 @@ stands in when nothing is left, and the last card can't be hidden.
   Its side in the landscape layout follows the order too (first only when the map is first), so a
   card that comes and goes before it doesn't move it.
 
-
 ## Wireless bootstrap and USB: compatibility first
 
 Rule: nothing may break a head unit that works today, so every change to the WPP exchange either
@@ -282,3 +281,18 @@ written from scratch for this PR) for the SAE-generic ones.
 - Both viewers show one line per decoded code ("P0128 (01 28) — Coolant thermostat below
   regulating temperature") instead of the previous single hex-byte row. The descriptions AARE
   writes itself (manufacturer-specific, unknown) are translated; the catalogue's are English.
+
+## Calls through messaging apps from the car's contacts
+
+The car's contact list also offers a call through a messaging app (`VoipCalls.CALL_MIME_TYPES`:
+WhatsApp and WhatsApp Business, by their `vnd.com.whatsapp.voip.call` and
+`vnd.com.whatsapp.w4b.voip.call` contact rows) when that app has a self-managed phone
+account (it hands its calls to Android's telephony; Android 11+). The entry shows the app's name and
+icon with the phone number of the app's own copy of the contact; a tap opens that contact row in
+the app (`ACTION_VIEW` on the data row, typed with its MIME type), which starts the call. If the app
+hasn't the microphone permission, the car screen says so and a phone notification opens its
+settings; the call still starts. Google-only calling apps aren't listed. Not done: VoIP calls
+don't show in the car's in-call card (it follows the telephony call state). Android drops the app's
+call screen without an error when the phone is locked, or (Android 10+) when AARE has no activity
+in front and may not draw over other apps; `VoipCalls.place` checks for those first and reports the
+call as failed, so the car says to call from the phone rather than show a call that never starts.

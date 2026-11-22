@@ -354,6 +354,11 @@
     <string name="phone_call_in_progress">通话进行中</string>
     <string name="phone_action_hang_up">挂断</string>
     <string name="phone_keypad_delete">删除</string>
+    <string name="voip_mic_title">%1$s 无法使用麦克风</string>
+    <string name="voip_mic_car_text">对方将听不到你的声音。请在手机上允许：查看通知</string>
+    <string name="voip_mic_notification_text">从车机通过 %1$s 拨打电话需要其麦克风权限。点按以打开其设置</string>
+    <string name="voip_call_failed_title">无法通过 %1$s 拨打电话</string>
+    <string name="voip_call_failed_text">请在手机上打开该应用拨打</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">正在充电</string>
     <string name="phone_incoming_call">来电</string>

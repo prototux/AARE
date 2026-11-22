@@ -368,6 +368,11 @@
     <string name="phone_call_in_progress">Apel în curs</string>
     <string name="phone_action_hang_up">Închide</string>
     <string name="phone_keypad_delete">Șterge</string>
+    <string name="voip_mic_title">%1$s nu poate folosi microfonul</string>
+    <string name="voip_mic_car_text">Celălalt nu te va auzi. Permite pe telefon: vezi notificarea</string>
+    <string name="voip_mic_notification_text">Apelurile din mașină prin %1$s au nevoie de permisiunea pentru microfon. Atinge pentru a-i deschide setările</string>
+    <string name="voip_call_failed_title">Nu s-a putut apela prin %1$s</string>
+    <string name="voip_call_failed_text">Deschide-o pe telefon pentru a suna</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Se încarcă</string>
     <string name="phone_incoming_call">Apel primit</string>
