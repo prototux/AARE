@@ -600,4 +600,12 @@
     <string name="aa_confirm_title">Tắt Android Auto?</string>
     <string name="aa_confirm_text">AARE tắt Android Auto của Google cho người dùng này qua Shizuku (pm disable-user). Nó dừng chạy, biến mất khỏi danh sách ứng dụng và không còn phản hồi khi xe kết nối, vì vậy xe luôn đến với AARE.\n\nKhông có gì bị gỡ cài đặt và dữ liệu của nó vẫn được giữ lại. Các xe, ứng dụng hoặc tính năng cần Android Auto của Google sẽ không hoạt động cho đến khi bạn bật lại bằng nút ở đây.</string>
     <string name="aa_confirm_action">Tắt</string>
+
+    <string name="setup_section_companion">Không dây một lần nhấn</string>
+    <string name="setup_companion_hint">Liên kết một xe mà bạn đã từng kết nối không dây: Android sẽ khởi động AARE khi Bluetooth của xe đó kết nối, ngay cả khi điện thoại đang ở trong túi. Android sẽ hỏi bạn xác nhận một lần cho mỗi xe.</string>
+    <string name="setup_companion_empty">Kết nối không dây với một xe một lần, rồi trở lại đây để liên kết nó.</string>
+    <string name="setup_companion_failed">Android không liên kết được xe: %1$s</string>
+    <string name="setup_action_associate">Liên kết</string>
+    <string name="setup_toggle_companion_shizuku_title">Chấp thuận Wi-Fi của xe bằng Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Với các xe đã liên kết, Shizuku trả lời câu hỏi \"kết nối với thiết bị\" của Android, nên câu hỏi đó không xuất hiện lại. Mạng của xe vẫn luôn là mạng riêng của AARE, không bao giờ là kết nối internet của điện thoại. Cần Shizuku đang chạy và cho phép AARE.</string>
 </resources>

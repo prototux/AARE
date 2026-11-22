@@ -601,4 +601,12 @@
     <string name="aa_confirm_title">Android Auto uitschakelen?</string>
     <string name="aa_confirm_text">AARE schakelt Googles Android Auto voor deze gebruiker uit via Shizuku (pm disable-user). Het stopt met draaien, verdwijnt uit de app-lijst en reageert niet meer wanneer een auto verbindt, zodat de auto altijd naar AARE gaat.\n\nEr wordt niets verwijderd en de gegevens blijven bewaard. Auto\'s, apps of functies die Googles Android Auto nodig hebben, werken niet totdat u het hier met de knop opnieuw inschakelt.</string>
     <string name="aa_confirm_action">Uitschakelen</string>
+
+    <string name="setup_section_companion">Draadloos met één tik</string>
+    <string name="setup_companion_hint">Koppel een auto waarmee u al draadloos verbinding hebt gemaakt: Android start dan AARE zodra de Bluetooth van die auto verbindt, ook met de telefoon in een broekzak. Android vraagt u eenmaal per auto om te bevestigen.</string>
+    <string name="setup_companion_empty">Maak eenmaal draadloos verbinding met een auto en kom dan hier terug om deze te koppelen.</string>
+    <string name="setup_companion_failed">Android heeft de auto niet gekoppeld: %1$s</string>
+    <string name="setup_action_associate">Koppelen</string>
+    <string name="setup_toggle_companion_shizuku_title">Keur de Wi-Fi van de auto goed met Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Voor gekoppelde auto\'s beantwoordt Shizuku Androids vraag \"verbinden met apparaat\", zodat deze niet opnieuw wordt gesteld. Het netwerk van de auto blijft AAREs eigen netwerk, nooit de internetverbinding van de telefoon. Vereist dat Shizuku draait en AARE toestaat.</string>
 </resources>

@@ -600,4 +600,12 @@
     <string name="aa_confirm_title">Poistetaanko Android Auto käytöstä?</string>
     <string name="aa_confirm_text">AARE poistaa Googlen Android Auton käytöstä tälle käyttäjälle Shizukun kautta (pm disable-user). Se lakkaa toimimasta, katoaa sovellusluettelosta eikä vastaa enää, kun auto yhdistetään, niin auto tulee aina AARElle.\n\nMitään ei poisteta, ja sen tiedot säilyvät. Autot, sovellukset tai ominaisuudet, jotka tarvitsevat Googlen Android Autoa, eivät toimi, ennen kuin otat sen käyttöön uudelleen tästä painikkeesta.</string>
     <string name="aa_confirm_action">Poista käytöstä</string>
+
+    <string name="setup_section_companion">Langaton yhdellä napautuksella</string>
+    <string name="setup_companion_hint">Yhdistä laitepariksi auto, johon olet jo yhdistänyt langattomasti: Android käynnistää tämän jälkeen AAREn, kun kyseisen auton Bluetooth yhdistää, vaikka puhelin olisi taskussa. Android pyytää vahvistuksen kerran per auto.</string>
+    <string name="setup_companion_empty">Yhdistä autoon langattomasti kerran, ja palaa sitten tähän yhdistääksesi sen laitepariksi.</string>
+    <string name="setup_companion_failed">Android ei yhdistänyt autoa laitepariksi: %1$s</string>
+    <string name="setup_action_associate">Yhdistä laitepariksi</string>
+    <string name="setup_toggle_companion_shizuku_title">Hyväksy auton Wi-Fi Shizukulla</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Laiteparina yhdistetyille autoille Shizuku vastaa Androidin \"yhdistä laitteeseen\" -kysymykseen, jotta sitä ei kysytä uudelleen. Auton verkko pysyy AAREn omana, ei koskaan puhelimen internetyhteytenä. Vaatii, että Shizuku on käynnissä ja sallii AAREn.</string>
 </resources>

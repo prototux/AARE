@@ -600,4 +600,12 @@
     <string name="aa_confirm_title">Désactiver Android Auto ?</string>
     <string name="aa_confirm_text">AARE désactive l\'Android Auto de Google pour cet utilisateur via Shizuku (pm disable-user). Il s\'arrête, disparaît de la liste des applications et ne répond plus quand une voiture se connecte, si bien que la voiture va toujours à AARE.\n\nRien n\'est désinstallé et ses données sont conservées. Les voitures, applications ou fonctionnalités qui ont besoin de l\'Android Auto de Google ne fonctionneront pas jusqu\'à ce que vous le réactiviez avec le bouton ici.</string>
     <string name="aa_confirm_action">Désactiver</string>
+
+    <string name="setup_section_companion">Sans fil en un appui</string>
+    <string name="setup_companion_hint">Associez une voiture à laquelle vous vous êtes déjà connecté sans fil : Android lance alors AARE dès que le Bluetooth de cette voiture se connecte, même avec le téléphone dans une poche. Android vous demande de confirmer une fois par voiture.</string>
+    <string name="setup_companion_empty">Connectez-vous une fois sans fil à une voiture, puis revenez ici pour l\'associer.</string>
+    <string name="setup_companion_failed">Android n\'a pas associé la voiture : %1$s</string>
+    <string name="setup_action_associate">Associer</string>
+    <string name="setup_toggle_companion_shizuku_title">Approuver le Wi-Fi de la voiture avec Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Pour les voitures associées, Shizuku répond à la question d\'Android \"se connecter à l\'appareil\", afin qu\'elle ne soit plus posée. Le réseau de la voiture reste celui d\'AARE, jamais la connexion internet du téléphone. Nécessite que Shizuku soit actif et autorise AARE.</string>
 </resources>

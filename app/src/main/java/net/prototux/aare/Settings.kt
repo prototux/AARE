@@ -54,6 +54,15 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
     /**
+     * For cars associated as companion devices (CarCompanion): have Shizuku approve the car's Wi-Fi
+     * network request, so Android's "connect to device" dialog doesn't come back (WifiApproval).
+     * The network stays AARE's own app-only one. Off by default.
+     */
+    var companionWifiShizuku: Boolean
+        get() = prefs.getBoolean("companion_wifi_shizuku", false)
+        set(v) = prefs.edit { putBoolean("companion_wifi_shizuku", v) }
+
+    /**
      * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO] (the
      * standard order, or the one that last worked with that car), [HandshakeChoice.BUILT_IN] (what
      * AARE always did) or [HandshakeChoice.ADAPTER]. The adapter order is never guessed.

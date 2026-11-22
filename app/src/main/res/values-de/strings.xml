@@ -600,4 +600,12 @@
     <string name="aa_confirm_title">Android Auto deaktivieren?</string>
     <string name="aa_confirm_text">AARE deaktiviert Googles Android Auto für diesen Benutzer über Shizuku (pm disable-user). Es läuft dann nicht mehr, verschwindet aus der App-Liste und reagiert nicht mehr, wenn sich ein Auto verbindet, sodass das Auto immer zu AARE kommt.\n\nEs wird nichts deinstalliert, und seine Daten bleiben erhalten. Autos, Apps oder Funktionen, die Googles Android Auto benötigen, funktionieren erst wieder, wenn Sie es hier mit der Schaltfläche erneut aktivieren.</string>
     <string name="aa_confirm_action">Deaktivieren</string>
+
+    <string name="setup_section_companion">Kabellos mit einem Tippen</string>
+    <string name="setup_companion_hint">Verknüpfen Sie ein Auto, mit dem Sie sich bereits kabellos verbunden haben: Android startet dann AARE, sobald sich das Bluetooth dieses Autos verbindet, selbst wenn das Telefon in der Tasche ist. Android bittet Sie einmal pro Auto um Bestätigung.</string>
+    <string name="setup_companion_empty">Verbinden Sie sich einmal kabellos mit einem Auto und kommen Sie dann hierher zurück, um es zu verknüpfen.</string>
+    <string name="setup_companion_failed">Android konnte das Auto nicht verknüpfen: %1$s</string>
+    <string name="setup_action_associate">Verknüpfen</string>
+    <string name="setup_toggle_companion_shizuku_title">Das Wi-Fi des Autos mit Shizuku bestätigen</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Bei verknüpften Autos beantwortet Shizuku Androids Frage \"Mit Gerät verbinden\", sodass sie nicht erneut gestellt wird. Das Netzwerk des Autos bleibt AAREs eigenes, nie die Internetverbindung des Telefons. Erfordert laufendes Shizuku mit erlaubtem AARE.</string>
 </resources>

@@ -584,4 +584,12 @@
     <string name="aa_confirm_title">停用 Android Auto？</string>
     <string name="aa_confirm_text">AARE 会通过 Shizuku（pm disable-user）为此用户停用 Google 的 Android Auto。该应用将停止运行，从应用列表中消失，车辆连接时也不再响应，这样车辆会始终交给 AARE。\n\n不会卸载任何内容，其数据会被保留。需要 Google 的 Android Auto 的车辆、应用或功能将无法使用，直到你在此用按钮重新启用它。</string>
     <string name="aa_confirm_action">停用</string>
+
+    <string name="setup_section_companion">一键无线连接</string>
+    <string name="setup_companion_hint">关联一辆你已经无线连接过的车辆：此后当该车辆的蓝牙连接时，Android 会启动 AARE，即使手机放在口袋里也一样。Android 会针对每辆车请求一次确认。</string>
+    <string name="setup_companion_empty">先无线连接一次车辆，然后回到此处将其关联。</string>
+    <string name="setup_companion_failed">Android 未能关联该车辆：%1$s</string>
+    <string name="setup_action_associate">关联</string>
+    <string name="setup_toggle_companion_shizuku_title">通过 Shizuku 批准车辆的 Wi-Fi</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">对于已关联的车辆，Shizuku 会代为回答 Android 的“连接到设备”询问，因此不会再次询问。车辆的网络始终只属于 AARE，绝不会成为手机的互联网连接。需要 Shizuku 正在运行并允许 AARE。</string>
 </resources>

@@ -600,4 +600,12 @@
     <string name="aa_confirm_title">Вимкнути Android Auto?</string>
     <string name="aa_confirm_text">AARE вимикає Android Auto від Google для цього користувача через Shizuku (pm disable-user). Застосунок перестає працювати, зникає зі списку застосунків і більше не відповідає, коли підключається автомобіль, тож автомобіль завжди дістається AARE.\n\nНічого не видаляється, і його дані зберігаються. Автомобілі, застосунки чи функції, яким потрібен Android Auto від Google, не працюватимуть, доки ви знову не увімкнете його цією кнопкою.</string>
     <string name="aa_confirm_action">Вимкнути</string>
+
+    <string name="setup_section_companion">Бездротово одним дотиком</string>
+    <string name="setup_companion_hint">Прив\'яжіть автомобіль, до якого ви вже підключалися бездротово: після цього Android запускає AARE, коли підключається Bluetooth цього автомобіля, навіть якщо телефон у кишені. Android просить підтвердження один раз для кожного автомобіля.</string>
+    <string name="setup_companion_empty">Підключіться до автомобіля бездротово один раз, а потім поверніться сюди, щоб прив\'язати його.</string>
+    <string name="setup_companion_failed">Android не прив\'язав автомобіль: %1$s</string>
+    <string name="setup_action_associate">Прив\'язати</string>
+    <string name="setup_toggle_companion_shizuku_title">Підтверджувати Wi-Fi автомобіля через Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">Для прив\'язаних автомобілів Shizuku відповідає на запитання Android \"підключитися до пристрою\", тож воно більше не з\'являється. Мережа автомобіля залишається власною мережею AARE і ніколи не стає інтернет-з\'єднанням телефону. Потребує, щоб Shizuku працював і дозволяв AARE.</string>
 </resources>

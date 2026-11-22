@@ -601,4 +601,12 @@
     <string name="aa_confirm_title">Deaktivér Android Auto?</string>
     <string name="aa_confirm_text">AARE deaktiverer Googles Android Auto for denne bruger via Shizuku (pm disable-user). Den stopper med at køre, forsvinder fra applisten og svarer ikke længere, når en bil tilsluttes, så bilen går altid til AARE.\n\nIntet afinstalleres, og dets data bevares. Biler, apps eller funktioner, der kræver Googles Android Auto, virker ikke, før du aktiverer den igen med knappen her.</string>
     <string name="aa_confirm_action">Deaktivér</string>
+
+    <string name="setup_section_companion">Trådløst med et tryk</string>
+    <string name="setup_companion_hint">Tilknyt en bil, du allerede har forbundet trådløst til: Android starter derefter AARE, når den bils Bluetooth forbinder, selv med telefonen i lommen. Android beder dig bekræfte én gang pr. bil.</string>
+    <string name="setup_companion_empty">Opret forbindelse til en bil trådløst én gang, og kom så tilbage her for at tilknytte den.</string>
+    <string name="setup_companion_failed">Android kunne ikke tilknytte bilen: %1$s</string>
+    <string name="setup_action_associate">Tilknyt</string>
+    <string name="setup_toggle_companion_shizuku_title">Godkend bilens Wi-Fi med Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">For tilknyttede biler svarer Shizuku på Androids spørgsmål om at \"oprette forbindelse til enhed\", så du ikke bliver spurgt igen. Bilens netværk forbliver AAREs eget og er aldrig telefonens internetforbindelse. Kræver, at Shizuku kører og tillader AARE.</string>
 </resources>

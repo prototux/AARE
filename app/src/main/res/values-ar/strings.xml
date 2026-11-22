@@ -584,4 +584,12 @@
     <string name="aa_confirm_title">تعطيل Android Auto؟</string>
     <string name="aa_confirm_text">يعطّل AARE تطبيق Android Auto من Google لهذا المستخدم عبر Shizuku (pm disable-user). يتوقف عن العمل، يختفي من قائمة التطبيقات ولا يستجيب بعد الآن عند اتصال سيارة، لذا تأتي السيارة دائمًا إلى AARE.\n\nلا يُحذف شيء وتبقى بياناته محفوظة. السيارات أو التطبيقات أو الميزات التي تحتاج إلى Android Auto من Google لن تعمل حتى تُعيد تفعيله بالزر هنا.</string>
     <string name="aa_confirm_action">تعطيل</string>
+
+    <string name="setup_section_companion">الاتصال اللاسلكي بضغطة واحدة</string>
+    <string name="setup_companion_hint">اربط سيارة اتصلت بها لاسلكيًا من قبل: يشغّل Android عندها AARE عند اتصال Bluetooth لتلك السيارة، حتى لو كان الهاتف في الجيب. يطلب منك Android التأكيد مرة واحدة لكل سيارة.</string>
+    <string name="setup_companion_empty">اتصل بسيارة لاسلكيًا مرة واحدة، ثم عد إلى هنا لربطها.</string>
+    <string name="setup_companion_failed">لم يربط Android السيارة: %1$s</string>
+    <string name="setup_action_associate">ربط</string>
+    <string name="setup_toggle_companion_shizuku_title">الموافقة على Wi-Fi السيارة عبر Shizuku</string>
+    <string name="setup_toggle_companion_shizuku_subtitle">بالنسبة للسيارات المرتبطة، يجيب Shizuku على سؤال Android \"الاتصال بالجهاز\"، فلا يُطرح مرة أخرى. تبقى شبكة السيارة خاصة بـ AARE فقط، ولا تكون أبدًا اتصال إنترنت الهاتف. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
 </resources>
