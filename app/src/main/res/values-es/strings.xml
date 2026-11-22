@@ -147,6 +147,7 @@
     <string name="setup_app_group_messaging">Mensajería</string>
     <string name="setup_app_kind_messaging">Mensajes desde sus notificaciones</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Integrada en AARE. Oculta, solo sale de la cuadrícula de apps: las llamadas y la campana siguen funcionando.</string>
     <string name="setup_section_unsupported_apps">Apps de Android Auto que AARE no puede mostrar</string>
     <string name="setup_hint_allowlist">Las apps creadas con versiones recientes de la biblioteca de coche de Google solo aceptan hosts de su lista de permitidos; consulta el README.</string>
     <string name="setup_app_entry_phone">Teléfono</string>
@@ -301,6 +302,7 @@
     <string name="notif_cert_download_failed">No se pudo descargar el certificado: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Conectando de forma inalámbrica…</string>
     <string name="notif_status_not_connected">No conectado</string>
+    <string name="notif_status_reconnecting">Se perdió la conexión con el coche, volviendo a conectar (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · manteniendo el consentimiento de captura de pantalla para el audio del coche (Detener lo libera)</string>
     <string name="notif_cert_changed_title">El certificado de la unidad central cambió</string>
     <string name="notif_new_head_unit_title">Nueva unidad central</string>

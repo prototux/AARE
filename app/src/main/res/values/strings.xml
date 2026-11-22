@@ -271,6 +271,7 @@
     <string name="setup_app_group_messaging">Messaging</string>
     <string name="setup_app_kind_messaging">Messages from its notifications</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">Built into AARE. Hidden, it only leaves the app grid: calls and the bell still work.</string>
     <string name="setup_section_unsupported_apps">Android Auto apps AARE can\'t show</string>
     <string name="setup_hint_allowlist">Apps built with recent versions of Google\'s car library only accept hosts in their allow-list; see the README.</string>
     <string name="setup_app_entry_phone">Phone</string>
@@ -471,6 +472,7 @@
     <string name="notif_cert_download_failed">Couldn\'t download the certificate: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Connecting wirelessly…</string>
     <string name="notif_status_not_connected">Not connected</string>
+    <string name="notif_status_reconnecting">Connection to the car lost, reconnecting (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · keeping the screen-capture consent for car audio (Stop releases it)</string>
     <string name="notif_cert_changed_title">Head unit certificate changed</string>
     <string name="notif_new_head_unit_title">New head unit</string>

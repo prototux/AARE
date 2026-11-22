@@ -145,6 +145,7 @@
     <string name="setup_app_group_messaging">消息</string>
     <string name="setup_app_kind_messaging">来自其通知的消息</string>
     <string name="setup_app_group_aare">AARE</string>
+    <string name="setup_app_builtin_subtitle">AARE 内置。隐藏后仅从应用网格中移除：通话和通知铃铛仍可使用。</string>
     <string name="setup_section_unsupported_apps">AARE 无法显示的 Android Auto 应用</string>
     <string name="setup_hint_allowlist">使用较新版本 Google 车载库构建的应用，仅接受其允许列表中的宿主；详见 README。</string>
     <string name="setup_app_entry_phone">电话</string>
@@ -292,6 +293,7 @@
     <string name="notif_cert_download_failed">无法下载证书：%1$s</string>
     <string name="notif_status_connecting_wirelessly">正在无线连接…</string>
     <string name="notif_status_not_connected">未连接</string>
+    <string name="notif_status_reconnecting">与车辆的连接已断开，正在重新连接（%1$d/%2$d）…</string>
     <string name="notif_keeping_consent_suffix">%1$s · 保留车载音频的屏幕录制授权（点击“停止”可释放）</string>
     <string name="notif_cert_changed_title">车机证书已更改</string>
     <string name="notif_new_head_unit_title">新车机</string>

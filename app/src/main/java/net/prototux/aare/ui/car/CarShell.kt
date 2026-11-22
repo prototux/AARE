@@ -719,7 +719,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
     // The keyboard is parked-only, like every other car keyboard (SearchTemplateView): driving
     // starting mid-search hides it, but the typed filter stays so results don't jump as it closes.
     LaunchedEffect(state.drivingRestricted) { if (state.drivingRestricted) keyboardWanted = false }
-    val apps = filterLauncherApps(state.apps, query)
+    val apps = filterLauncherApps(state.launcherApps, query)
     Column(modifier) {
         CarTextField(
             value = query,
