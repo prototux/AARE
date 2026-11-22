@@ -27,8 +27,9 @@ import kotlin.system.exitProcess
  * "remote submix": everything the phone plays, navigation voice included. While it is recorded
  * the phone itself goes quiet, as it does with Android Auto. This is how scrcpy captures audio.
  *
- * Android 12+ only (the recording must be attributed to the shell, which needs AudioRecord's
- * setContext).
+ * Capture is Android 12+ only (the recording must be attributed to the shell, which needs
+ * AudioRecord's setContext). The car's mic for the phone's apps (startMicInjection) records
+ * nothing and needs Android 10.
  */
 class ShellAudioService : IShellAudio.Stub {
     private val context: Context?
@@ -117,6 +118,40 @@ class ShellAudioService : IShellAudio.Stub {
 
     override fun stopPolicy(key: Int) = asShell { synchronized(policies) { stopPolicyLocked(key) } }
 
+    /** The car's microphone for the phone's other apps (see [ShellMicInjector]). */
+    private var mic: ShellMicInjector? = null
+    private val micLock = Any()
+
+    override fun startMicInjection(pcm: ParcelFileDescriptor, sampleRate: Int, channels: Int, listener: IShellMicListener): Boolean {
+        // Read before clearing: the caller is AARE, whose own recordings aren't taken over.
+        val caller = Binder.getCallingUid()
+        return asShell { synchronized(micLock) {
+            stopMicLocked()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { pcm.close(); return@synchronized false }
+            try {
+                val ctx = ShellContext(context ?: systemContext())
+                mic = ShellMicInjector.open(ctx, shellAudioManager(ctx), policyLooper, pcm, sampleRate, channels,
+                    excludedUids = setOf(caller, Process.myUid()), listener = listener)
+                true
+            } catch (e: Throwable) {
+                Log.w(TAG, "car mic injection as the shell failed", e)
+                runCatching { pcm.close() }
+                false
+            }
+        } }
+    }
+
+    override fun setMicInjecting(on: Boolean) = asShell {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) synchronized(micLock) { mic?.setInjecting(on) }
+    }
+
+    override fun stopMicInjection() = asShell { synchronized(micLock) { stopMicLocked() } }
+
+    private fun stopMicLocked() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mic?.close()
+        mic = null
+    }
+
     /**
      * Runs [block] as this process (the shell), not as the AARE call that brought us here: the
      * audio policy checks MODIFY_AUDIO_ROUTING with checkCallingOrSelfPermission, which would
@@ -195,6 +230,7 @@ class ShellAudioService : IShellAudio.Stub {
     override fun destroy() {
         stop()
         synchronized(policies) { policies.keys.toList().forEach(::stopPolicyLocked) }
+        synchronized(micLock) { stopMicLocked() }
         exitProcess(0)
     }
 
@@ -207,19 +243,20 @@ class ShellAudioService : IShellAudio.Stub {
         return at.getMethod("getSystemContext").invoke(thread) as Context
     }
 
-    /** A context that says "the shell", so the recording is attributed to the uid running it. */
-    private class ShellContext(base: Context) : ContextWrapper(base) {
-        override fun getPackageName() = SHELL_PACKAGE
-        override fun getOpPackageName() = SHELL_PACKAGE
-        override fun getApplicationContext(): Context = this
-        @RequiresApi(Build.VERSION_CODES.S) // only used from Android 12, see start()
-        override fun getAttributionSource(): AttributionSource =
-            AttributionSource.Builder(Process.myUid()).setPackageName(SHELL_PACKAGE).build()
-    }
-
     private companion object {
         const val TAG = "AareShellAudio"
-        const val SHELL_PACKAGE = "com.android.shell"
         const val SHELL_UID = 2000
     }
+}
+
+private const val SHELL_PACKAGE = "com.android.shell"
+
+/** A context that says "the shell", so what the helper records or plays is attributed to the uid running it. */
+internal class ShellContext(base: Context) : ContextWrapper(base) {
+    override fun getPackageName() = SHELL_PACKAGE
+    override fun getOpPackageName() = SHELL_PACKAGE
+    override fun getApplicationContext(): Context = this
+    @RequiresApi(Build.VERSION_CODES.S) // the framework asks for it from Android 12 only
+    override fun getAttributionSource(): AttributionSource =
+        AttributionSource.Builder(Process.myUid()).setPackageName(SHELL_PACKAGE).build()
 }

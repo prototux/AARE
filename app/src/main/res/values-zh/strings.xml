@@ -261,6 +261,12 @@
     <string name="audio_playback_ready">已就绪。仅支持媒体音频：没有导航语音，部分应用可能不支持，且手机本身也会继续播放。</string>
     <string name="audio_playback_not_ready">适用于所有设备，但有限制：仅支持媒体音频，没有导航语音。Android 会请求屏幕录制权限：请选择“整个屏幕”（手机屏幕镜像也会使用此权限）。</string>
     <string name="audio_notice_setup_hint">在手机上打开 AARE 并设置车载音频，以便在车机中听到手机声音</string>
+    <string name="audio_section_car_mic">车机麦克风</string>
+    <string name="audio_toggle_car_mic_title">手机应用使用车机麦克风</string>
+    <string name="audio_toggle_car_mic_subtitle">连接到带麦克风的车辆时，手机上的语音输入、录音应用和语音消息会改用车机麦克风而不是手机麦克风。通话仍使用各自的麦克风。需要 Shizuku。</string>
+    <string name="audio_car_mic_ready">已就绪：开启或关闭立即生效，连接期间也是如此。</string>
+    <string name="audio_car_mic_needs_android10">需要 Android 10 或更高版本。</string>
+    <string name="audio_car_mic_needs_shizuku">需要运行 Shizuku 并允许 AARE 使用（见上方的 Shizuku 方式）。</string>
 
     <string name="phone_section_title">手机屏幕</string>
     <string name="phone_toggle_enable_title">车内手机屏幕镜像</string>

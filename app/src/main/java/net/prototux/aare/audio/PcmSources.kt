@@ -57,7 +57,10 @@ object CaptureMethods {
         context.checkSelfPermission("android.permission.MODIFY_AUDIO_ROUTING") == PackageManager.PERMISSION_GRANTED
 
     /** Shizuku is running and AARE may use it (Android 12+, where the shell can attribute the recording). */
-    fun shizukuAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && runCatching {
+    fun shizukuAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && shizukuReady()
+
+    /** Shizuku is running and AARE may use it, whatever the Android version (each use checks its own). */
+    fun shizukuReady(): Boolean = runCatching {
         Shizuku.pingBinder() && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false)
 
@@ -94,7 +97,7 @@ object CaptureMethods {
     }
 }
 
-private fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()
+internal fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()
     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
     .setSampleRate(rate)
     .setChannelMask(
@@ -250,7 +253,7 @@ internal object ShellAudio {
 
     /** The helper, bound if needed; null if Shizuku can't start it. Pair with [release]. */
     fun acquire(context: Context): IShellAudio? {
-        if (!CaptureMethods.shizukuAvailable()) return null
+        if (!CaptureMethods.shizukuReady()) return null
         val b = synchronized(lock) {
             if (users++ == 0) {
                 val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, ShellAudioService::class.java.name))
