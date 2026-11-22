@@ -10,7 +10,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +44,7 @@ import net.prototux.aare.R
 import net.prototux.aare.media.Pill
 import net.prototux.aare.ui.car.AppIcon
 import net.prototux.aare.ui.car.CarAppEntry
+import net.prototux.aare.ui.car.carClickable
 import net.prototux.aare.ui.theme.LocalCarDimens
 
 /**
@@ -88,7 +88,7 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
         Column(
             Modifier.widthIn(max = 960.dp).fillMaxWidth().clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                .clickable(onClick = onExpand).padding(horizontal = 20.dp, vertical = 16.dp),
+                .carClickable(MaterialTheme.shapes.large, onClick = onExpand).padding(horizontal = 20.dp, vertical = 16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ListeningIcon(entry, listening)
@@ -103,7 +103,7 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
                         Text(stringResource(R.string.assistant_listening), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Box(Modifier.size(d.touchTarget).clip(CircleShape).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onClose), contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Close, stringResource(R.string.common_close), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

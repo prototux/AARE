@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -140,7 +141,7 @@ internal fun RailWidgetsEditor(order: List<RailWidget>, rowHeight: Dp, onChange:
             val shown = i >= 0
             Row(Modifier.fillMaxWidth().heightIn(min = rowHeight), verticalAlignment = Alignment.CenterVertically) {
                 Row(
-                    Modifier.weight(1f).heightIn(min = rowHeight).clickable { onChange(order.withWidget(widget, !shown)) },
+                    Modifier.weight(1f).heightIn(min = rowHeight).carClickable(RectangleShape) { onChange(order.withWidget(widget, !shown)) },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(checked = shown, onCheckedChange = null)

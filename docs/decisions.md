@@ -644,3 +644,23 @@ Dragging the divider moves an overlay handle only; the real pane weights (and so
 Scoped to the taskbar layout and screens ≥900 dp wide (the brief's number); the dock and classic layouts keep their current one-app behaviour.
 
 An app is never in both panes (`openInPanes`): opening one that is already beside the main app (from the rail, or the phone during a call) moves the focus to its pane instead of opening it a second time in the main pane; any other app takes the main pane and the one beside it stays.
+
+## Knob/D-pad reachability check (issue #320)
+
+Every car-screen control must be reachable, highlighted and usable by a rotary knob or D-pad, not
+just by touch: on knob-only head units (most Mazdas, older iDrive, Lexus/Mercedes touchpads) a
+control the knob can't reach is unusable. Two had slipped through before this: the dock's tap
+targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; approved by the owner.
+
+- **`Modifier.carClickable(shape, onClick)`** (`ui/car/CarFocus.kt`) pairs the existing
+  `carFocusHighlight` with the click itself, so the knob-friendly way is also the easy way. Car
+  screen clickables (`ui/car`, `media`, `host`) moved over to it.
+- **`CarScreenReachabilityCheckTest`** (`app/src/test/java/net/prototux/aare/ui/car/`) is a plain
+  text scan of those packages' sources for raw `.clickable`/`.toggleable`/`.selectable`/
+  `combinedClickable`, tap/drag gesture detectors, and Material `Slider`/`Switch`/`Checkbox`. No new
+  dependency: no Robolectric, no UI test framework. A justified exception goes in its `allowlist`
+  with a one-line reason (kept short; migrating to `carClickable` is preferred). The phone UI isn't
+  checked.
+- **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
+  (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
+  then those stay allowlisted.

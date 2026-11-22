@@ -7,8 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -459,7 +457,7 @@ private fun RailButton(
     val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(bg).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(bg).carClickable(MaterialTheme.shapes.medium, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(iconSize))
@@ -480,8 +478,8 @@ private fun RailApp(
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium)
-            .combinedClickable(onLongClickLabel = stringResource(R.string.car_split_open_beside), onLongClick = onLongClick, onClick = onClick),
+        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(ring).carClickable(MaterialTheme.shapes.medium,
+            onLongClick = onLongClick, onLongClickLabel = stringResource(R.string.car_split_open_beside), onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(app.icon.asImageBitmap(), app.label, Modifier.size(logoSize).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
@@ -497,7 +495,7 @@ internal fun MicButton(
     val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     Box(
-        Modifier.size(size).clip(CircleShape).background(bg).carFocusHighlight(CircleShape).clickable(onClick = onClick),
+        Modifier.size(size).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
@@ -613,7 +611,7 @@ private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Co
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .let { if (border > 0.dp) it.border(border, MaterialTheme.colorScheme.outline, RoundedCornerShape(r)) else it }
-            .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
+            .carClickable(RoundedCornerShape(r), onClick = onClick),
     ) { content() }
 }
 
@@ -699,7 +697,7 @@ private fun GuidanceCard(g: PhoneGuidance) {
 private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
     Row(
         Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.secondaryContainer)
-            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
+            .carClickable(MaterialTheme.shapes.extraLarge, onClick = onClick).padding(start = 10.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(app, 44)
@@ -815,7 +813,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
     val d = LocalCarDimens.current
     val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = fg, modifier = Modifier.size(d.iconSize))
     }
 }
@@ -869,7 +867,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
             // Already in the user's order (CarRuntime.applyApps).
             items(apps, key = { it.id }) { app ->
                 Column(
-                    Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                    Modifier.clip(MaterialTheme.shapes.medium).carClickable(MaterialTheme.shapes.medium) { actions.openApp(app) }.padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     AppIcon(app, 80)
@@ -908,7 +906,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         notice.actions.forEach { (label, run) ->
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
+                modifier = Modifier.clip(MaterialTheme.shapes.medium).carClickable(MaterialTheme.shapes.medium) { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }

@@ -17,7 +17,6 @@ import androidx.car.app.model.SpotlightSection
 import androidx.car.app.serialization.Bundleable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -48,8 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.suspendCancellableCoroutine
-import net.prototux.aare.ui.car.carFocusHighlight
 import kotlin.coroutines.resume
+import net.prototux.aare.ui.car.carClickable
 import androidx.annotation.OptIn as AndroidXOptIn
 
 /**
@@ -160,7 +159,7 @@ private fun ChipSectionView(chips: List<Chip>) {
             Row(
                 Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(bg)
                     .border(2.dp, outline, MaterialTheme.shapes.extraLarge)
-                    .then(if (delegate != null) Modifier.carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable { host.click(delegate) } else Modifier)
+                    .carClickable(MaterialTheme.shapes.extraLarge, onClick = delegate?.let { d -> { host.click(d) } })
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -194,7 +193,7 @@ private fun SpotlightView(section: SpotlightSection, items: List<CondensedItem>)
                 120.dp,
                 if (imageClick != null) {
                     Modifier.clip(MaterialTheme.shapes.small)
-                        .carFocusHighlight(MaterialTheme.shapes.small).clickable { host.click(imageClick) }
+                        .carClickable(MaterialTheme.shapes.small) { host.click(imageClick) }
                 } else {
                     Modifier
                 },
