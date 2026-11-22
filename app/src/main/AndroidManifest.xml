@@ -30,6 +30,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Opt-in, granted only by the user in the app's settings ("Allow all the time"): lets the
+         location foreground type through when AARE was started in the background (#329). -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Lists AARE under Developer options > Select mock location app: the car's GPS as the
          phone's location while connected (car/PhoneLocationFeed). -->
