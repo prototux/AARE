@@ -7,5 +7,7 @@ import "aap_protobuf/service/control/message/WirelessTcpConfiguration.proto";
 
 message ConnectionConfiguration {
   optional PingConfiguration ping_configuration = 1;
+  // AARE-only: ConnectionConfiguration has field 1 only there. Kept, as this
+  // message also comes in AARE's ServiceDiscoveryResponse field 16, which AARE reads.
   optional WirelessTcpConfiguration wireless_tcp_configuration = 2;
 }

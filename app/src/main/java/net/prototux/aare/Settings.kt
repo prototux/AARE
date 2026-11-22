@@ -3,7 +3,10 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.aap.wireless.WirelessHandshake
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import java.util.UUID
+import net.prototux.aare.car.CarKeyMapCodec
 
 /** User settings, in one SharedPreferences file. */
 class Settings(context: Context) {
@@ -49,6 +52,39 @@ class Settings(context: Context) {
     var wireless: Boolean
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
+
+    /**
+     * For cars associated as companion devices (CarCompanion): have Shizuku approve the car's Wi-Fi
+     * network request, so Android's "connect to device" dialog doesn't come back (WifiApproval).
+     * The network stays AARE's own app-only one. Off by default.
+     */
+    var companionWifiShizuku: Boolean
+        get() = prefs.getBoolean("companion_wifi_shizuku", false)
+        set(v) = prefs.edit { putBoolean("companion_wifi_shizuku", v) }
+
+    /**
+     * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO] (the
+     * standard order, or the one that last worked with that car), [HandshakeChoice.BUILT_IN] (what
+     * AARE always did) or [HandshakeChoice.ADAPTER]. The adapter order is never guessed.
+     */
+    var wirelessCompatibility: String
+        get() = prefs.getString("wireless_compatibility", null) ?: HandshakeChoice.AUTO
+        set(v) = prefs.edit { putString("wireless_compatibility", v) }
+
+    /**
+     * The handshake that last reached service discovery, per head unit Bluetooth address (for Auto).
+     * TODO: move into KnownHeadUnits once #233 is merged.
+     */
+    val wirelessHandshakes: Map<String, WirelessHandshake>
+        get() = HandshakeChoice.parse(wirelessHandshakeEntries)
+
+    fun rememberWirelessHandshake(address: String, handshake: WirelessHandshake) {
+        val entries = HandshakeChoice.remember(wirelessHandshakeEntries, address, handshake)
+        prefs.edit { putString("wireless_handshakes", entries.joinToString("\n")) }
+    }
+
+    private val wirelessHandshakeEntries: List<String>
+        get() = prefs.getString("wireless_handshakes", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
 
     /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
     var checkUpdates: Boolean
@@ -98,6 +134,16 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("constant_bitrate_video", v) }
 
     /**
+     * Apply the fixes AARE ships for specific head units (the built-in vehicles.json rules marked
+     * `optIn`: no wireless, video size, mixed navigation voice, EV fuel type, pixel aspect, "Exit to
+     * car" naming). Off: every car behaves as it did before they were shipped, unless the user's
+     * own vehicles.json turns them on for it.
+     */
+    var builtInCarFixes: Boolean
+        get() = prefs.getBoolean("builtin_car_fixes", false)
+        set(v) = prefs.edit { putBoolean("builtin_car_fixes", v) }
+
+    /**
      * Put calls on the phone's loudspeaker and microphone while connected to a car (CallSpeaker),
      * for setups whose hands-free microphone doesn't work. Off: calls go where Android routes them.
      */
@@ -126,6 +172,16 @@ class Settings(context: Context) {
 
     private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
 
+    /** The car screen's text size, an id from `CarTextSize`: default, larger or largest. */
+    var carTextSize: String
+        get() = prefs.getString("car_text_size", null) ?: "default"
+        set(v) = prefs.edit { putString("car_text_size", v) }
+
+    /** The car screen's control (touch target) size, an id from `CarControlSize`. Independent of [carTextSize]. */
+    var carControlSize: String
+        get() = prefs.getString("car_control_size", null) ?: "default"
+        set(v) = prefs.edit { putString("car_control_size", v) }
+
     /**
      * The accent colour, an id from `CarAccents`: the theme's own ("theme"), the phone's ("phone",
      * Android 12 and later) or a colour. On a single-colour theme it colours everything.
@@ -142,11 +198,33 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("ignore_driving", false)
         set(v) = prefs.edit { putBoolean("ignore_driving", v) }
 
+    /**
+     * Room (dp) kept free along the bottom of the dashboard's map card, in the visible area given
+     * to the navigation app: lifts what the app draws there itself (HERE WeGo's speed, over its
+     * logo). 0 gives the app the whole card.
+     */
+    var mapCardBottomInset: Int
+        get() = prefs.getInt("map_card_bottom_inset", 0)
+        set(v) = prefs.edit { putInt("map_card_bottom_inset", v) }
+
     /** The weather next to the clock (from Open-Meteo, with an approximate position). */
     var showWeather: Boolean
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
 
+    /** How many upcoming events the calendar card shows (1: today's behaviour, up to 5). */
+    var calendarAgendaCount: Int
+        get() = prefs.getInt("calendar_agenda_count", 1).coerceIn(1, 5)
+        set(v) = prefs.edit { putInt("calendar_agenda_count", v.coerceIn(1, 5)) }
+
+
+    /**
+     * The clock, phone signal and battery in the car screen's bar: [CHROME_AUTO] leaves out those
+     * the car shows itself, [CHROME_SHOW] / [CHROME_HIDE] always show or hide all three.
+     */
+    var carChrome: String
+        get() = prefs.getString("car_chrome", CHROME_AUTO) ?: CHROME_AUTO
+        set(v) = prefs.edit { putString("car_chrome", v) }
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
     var wallpaper: String
@@ -157,6 +235,14 @@ class Settings(context: Context) {
     var darkBar: Boolean
         get() = prefs.getBoolean("dark_bar", false)
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
+
+    /**
+     * Act on `aare://` links from the chosen assistant (AssistantLinkActivity). Off by default: the
+     * driver chooses to let the assistant's replies drive the car screen.
+     */
+    var assistantLinks: Boolean
+        get() = prefs.getBoolean("assistant_links", false)
+        set(v) = prefs.edit { putBoolean("assistant_links", v) }
 
     /**
      * The dashboard's cards in order, ids from `DashCard`. Before it was configurable, two switches
@@ -170,10 +256,24 @@ class Settings(context: Context) {
         }
         set(v) = prefs.edit { putString("dashboard_cards", v.joinToString(",")) }
 
+    /** The map keeps the big space on the dashboard wherever it is in the order. */
+    var dashboardMapBig: Boolean
+        get() = prefs.getBoolean("dashboard_map_big", false)
+        set(v) = prefs.edit { putBoolean("dashboard_map_big", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO
         set(v) = prefs.edit { putString("car_theme", v) }
+
+    /**
+     * Where [THEME_AUTO] takes night mode from: the car's own day/night signal ([NIGHT_SOURCE_CAR],
+     * the default) or the phone's ambient light sensor ([NIGHT_SOURCE_LIGHT_SENSOR], with
+     * hysteresis — see `LightNightDecider`). Has no effect with [THEME_DARK] or [THEME_LIGHT].
+     */
+    var nightSource: String
+        get() = prefs.getString("night_source", NIGHT_SOURCE_CAR) ?: NIGHT_SOURCE_CAR
+        set(v) = prefs.edit { putString("night_source", v) }
 
     /** Stream phone audio to the car (needs the screen-capture consent for audio). */
     var carAudio: Boolean
@@ -190,6 +290,15 @@ class Settings(context: Context) {
         get() = prefs.getString("phone_bt_address", "") ?: ""
         set(v) = prefs.edit { putString("phone_bt_address", v) }
 
+    /**
+     * The car's microphone for the phone's own apps while connected (audio/CarMicForApps): voice
+     * typing, voice recorders and voice messages hear the car instead of the phone. Needs Shizuku
+     * on Android 10+; calls keep their own microphone. Off: they record from the phone's mic.
+     */
+    var carMicForPhoneApps: Boolean
+        get() = prefs.getBoolean("car_mic_for_phone_apps", false)
+        set(v) = prefs.edit { putBoolean("car_mic_for_phone_apps", v) }
+
     /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
     var rootAudio: Boolean
         get() = prefs.getBoolean("root_audio", false)
@@ -202,6 +311,16 @@ class Settings(context: Context) {
     var assistantPackage: String?
         get() = prefs.getString("assistant_pkg", null)
         set(v) = prefs.edit { if (v == null) remove("assistant_pkg") else putString("assistant_pkg", v) }
+
+    /**
+     * For an assistant without a car app: show its voice UI on the car screen (through the same
+     * launcher as standalone apps) instead of opening it on the phone, while parked or in passenger
+     * mode. Off by default (today's behaviour); needs root or Shizuku, checked separately
+     * ([net.prototux.aare.launch.AppLauncher.available]).
+     */
+    var assistantOnCarScreen: Boolean
+        get() = prefs.getBoolean("assistant_on_car_screen", false)
+        set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
 
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
@@ -221,6 +340,14 @@ class Settings(context: Context) {
     var standaloneKeepScreenAwake: Boolean
         get() = prefs.getBoolean("standalone_keep_screen_awake", false)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
+
+    /**
+     * Offer "Show video" on the car's media screen: the media app itself is launched on the car screen
+     * (as [standaloneApps] are, so it needs them on and root or Shizuku), parked only.
+     */
+    var mediaVideo: Boolean
+        get() = prefs.getBoolean("media_video", false)
+        set(v) = prefs.edit { putBoolean("media_video", v) }
 
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
     var standaloneAppPackages: Set<String>
@@ -300,8 +427,10 @@ class Settings(context: Context) {
         prefs.edit { putStringSet("known_cars", cars.map { (n, t) -> "$n\t$t" }.toSet()) }
     }
 
+    /** Also forgets who its head unit said it was (KnownHeadUnits). */
     fun forgetCar(name: String) {
         prefs.edit { putStringSet("known_cars", (knownCars - name).map { (n, t) -> "$n\t$t" }.toSet()) }
+        KnownHeadUnits(appContext).forgetCar(name)
     }
 
     /** Last navigation and media apps used, restored on the next connection. */
@@ -312,10 +441,29 @@ class Settings(context: Context) {
         get() = prefs.getString("last_media", null)
         set(v) = prefs.edit { putString("last_media", v) }
 
+    /**
+     * The rail's status widgets, in order: ids from `RailWidget` (ui.car). Default: today's rail
+     * (the clock, the phone's battery, the weather); kept as raw ids here, not the enum, so this
+     * file doesn't depend on the UI layer.
+     */
+    var railWidgets: List<String>
+        get() = prefs.getString("rail_widgets", null)?.split(',')?.filter { it.isNotBlank() } ?: listOf("clock", "battery", "weather")
+        set(v) = prefs.edit { putString("rail_widgets", v.joinToString(",")) }
+
     /** The car launcher's order: app keys (package names, or the built-in apps' ids), first first. */
     var appOrder: List<String>
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
+
+    /** The rail's chosen apps, in order (keys as [appOrder]'s). Empty: the rail's built-in set. */
+    var railApps: List<String>
+        get() = prefs.getString("rail_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("rail_apps", v.joinToString("\n")) }
+
+    /** A narrower rail, with smaller icons and tighter spacing. */
+    var compactRail: Boolean
+        get() = prefs.getBoolean("compact_rail", false)
+        set(v) = prefs.edit { putBoolean("compact_rail", v) }
 
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
@@ -326,6 +474,29 @@ class Settings(context: Context) {
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("hidden_apps", v) }
+
+    /**
+     * Keys AARE has seen from a car, code to a readable name (`KeyEvent.keyCodeToString`), for
+     * the "Car buttons" chooser. Recorded as they arrive (`rememberCarKey`); never removed, so a
+     * button pressed once on an earlier car still has a row (harmless if that car is gone).
+     */
+    var carKeysSeen: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_keys_seen", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_keys_seen", CarKeyMapCodec.encode(v)) }
+
+    fun rememberCarKey(code: Int, name: String) {
+        val seen = carKeysSeen
+        if (seen[code] == name) return
+        carKeysSeen = seen + (code to name)
+    }
+
+    /**
+     * User-chosen remaps: a car key code to a `CarKeyAction` id. A key with no entry here keeps
+     * its normal behaviour (`CarSession.onKey`).
+     */
+    var carKeyMap: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_key_map", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_key_map", CarKeyMapCodec.encode(v)) }
 
     /** Stable random id sent to head units so they recognise this phone. */
     val instanceId: String
@@ -356,6 +527,11 @@ class Settings(context: Context) {
         get() = prefs.getInt("cert_index", 0)
         set(v) = prefs.edit { putInt("cert_index", v) }
 
+    /** The head unit connected last, by its KnownHeadUnits key: the one the "Car quirks" page is for. */
+    var lastHeadUnit: String?
+        get() = prefs.getString("last_head_unit", null)
+        set(v) = prefs.edit { putString("last_head_unit", v) }
+
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val RAIL_AUTO = "auto"
@@ -365,6 +541,11 @@ class Settings(context: Context) {
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
+        const val CHROME_AUTO = "auto"
+        const val CHROME_SHOW = "show"
+        const val CHROME_HIDE = "hide"
+        const val NIGHT_SOURCE_CAR = "car"
+        const val NIGHT_SOURCE_LIGHT_SENSOR = "light_sensor"
         const val WALLPAPER_CUSTOM = "custom"
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"
