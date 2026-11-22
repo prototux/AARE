@@ -54,6 +54,15 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("wireless", v) }
 
     /**
+     * For cars associated as companion devices (CarCompanion): have Shizuku approve the car's Wi-Fi
+     * network request, so Android's "connect to device" dialog doesn't come back (WifiApproval).
+     * The network stays AARE's own app-only one. Off by default.
+     */
+    var companionWifiShizuku: Boolean
+        get() = prefs.getBoolean("companion_wifi_shizuku", false)
+        set(v) = prefs.edit { putBoolean("companion_wifi_shizuku", v) }
+
+    /**
      * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO] (the
      * standard order, or the one that last worked with that car), [HandshakeChoice.BUILT_IN] (what
      * AARE always did) or [HandshakeChoice.ADAPTER]. The adapter order is never guessed.
@@ -123,6 +132,16 @@ class Settings(context: Context) {
     var constantBitrateVideo: Boolean
         get() = prefs.getBoolean("constant_bitrate_video", false)
         set(v) = prefs.edit { putBoolean("constant_bitrate_video", v) }
+
+    /**
+     * Apply the fixes AARE ships for specific head units (the built-in vehicles.json rules marked
+     * `optIn`: no wireless, video size, mixed navigation voice, EV fuel type, pixel aspect, "Exit to
+     * car" naming). Off: every car behaves as it did before they were shipped, unless the user's
+     * own vehicles.json turns them on for it.
+     */
+    var builtInCarFixes: Boolean
+        get() = prefs.getBoolean("builtin_car_fixes", false)
+        set(v) = prefs.edit { putBoolean("builtin_car_fixes", v) }
 
     /**
      * Put calls on the phone's loudspeaker and microphone while connected to a car (CallSpeaker),
@@ -399,8 +418,10 @@ class Settings(context: Context) {
         prefs.edit { putStringSet("known_cars", cars.map { (n, t) -> "$n\t$t" }.toSet()) }
     }
 
+    /** Also forgets who its head unit said it was (KnownHeadUnits). */
     fun forgetCar(name: String) {
         prefs.edit { putStringSet("known_cars", (knownCars - name).map { (n, t) -> "$n\t$t" }.toSet()) }
+        KnownHeadUnits(appContext).forgetCar(name)
     }
 
     /** Last navigation and media apps used, restored on the next connection. */
@@ -496,6 +517,11 @@ class Settings(context: Context) {
     var certificateIndex: Int
         get() = prefs.getInt("cert_index", 0)
         set(v) = prefs.edit { putInt("cert_index", v) }
+
+    /** The head unit connected last, by its KnownHeadUnits key: the one the "Car quirks" page is for. */
+    var lastHeadUnit: String?
+        get() = prefs.getString("last_head_unit", null)
+        set(v) = prefs.edit { putString("last_head_unit", v) }
 
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
