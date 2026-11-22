@@ -50,10 +50,10 @@ internal fun DashboardCardsEditor(order: List<DashCard>, rowHeight: Dp, onChange
                     Text(stringResource(card.label), style = MaterialTheme.typography.bodyLarge)
                 }
                 if (shown) {
-                    IconButton(onClick = { onChange(order.moved(i, -1)) }, enabled = i > 0, modifier = Modifier.size(rowHeight)) {
+                    IconButton(onClick = { onChange(order.movedBy(i, -1)) }, enabled = i > 0, modifier = Modifier.size(rowHeight)) {
                         Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up))
                     }
-                    IconButton(onClick = { onChange(order.moved(i, 1)) }, enabled = i < order.lastIndex, modifier = Modifier.size(rowHeight)) {
+                    IconButton(onClick = { onChange(order.movedBy(i, 1)) }, enabled = i < order.lastIndex, modifier = Modifier.size(rowHeight)) {
                         Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down))
                     }
                 }

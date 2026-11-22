@@ -12,6 +12,7 @@ import net.prototux.aare.aap.PinStore
  */
 class PinnedHeadUnits(context: Context) : PinStore {
     private val prefs = context.applicationContext.getSharedPreferences("head_unit_pins", Context.MODE_PRIVATE)
+    private val knownHeadUnits = KnownHeadUnits(context)
 
     override fun get(peerKey: String): Set<String> = prefs.getStringSet(peerKey, null).orEmpty()
 
@@ -24,7 +25,11 @@ class PinnedHeadUnits(context: Context) : PinStore {
     val all: Map<String, Set<String>>
         get() = prefs.all.mapNotNull { (k, v) -> (v as? Set<*>)?.let { k to it.filterIsInstance<String>().toSet() } }.toMap()
 
-    fun forget(peerKey: String) = prefs.edit(commit = true) { remove(peerKey) }
+    /** Also forgets who the head unit said it was (KnownHeadUnits), when [peerKey] is its Bluetooth address. */
+    fun forget(peerKey: String) {
+        prefs.edit(commit = true) { remove(peerKey) }
+        knownHeadUnits.forget(peerKey)
+    }
 
     /** Calls [onChange] whenever the trusted set changes; returns the unsubscribe call. */
     fun listen(onChange: () -> Unit): () -> Unit {
