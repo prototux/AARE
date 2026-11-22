@@ -547,9 +547,13 @@ class ProjectionService : Service() {
         goForeground(mediaProjection = true)
         val mpm = getSystemService(MediaProjectionManager::class.java)
         projection?.stop()
-        projection = runCatching { mpm.getMediaProjection(code, data) }.onFailure { log("audio capture: ${it.message}") }.getOrNull()
-        projection?.registerCallback(object : MediaProjection.Callback() {
+        val granted = runCatching { mpm.getMediaProjection(code, data) }.onFailure { log("audio capture: ${it.message}") }.getOrNull()
+        projection = granted
+        granted?.registerCallback(object : MediaProjection.Callback() {
             override fun onStop() {
+                // The consent given again stops the one before, and its stop arrives after the new one is in
+                // place: only this consent's own end counts, or the new one would be dropped with it.
+                if (projection !== granted) return
                 projection = null
                 net.prototux.aare.mirror.PhoneMirror.release()
                 _state.update { it.copy(audioCapture = false) }
