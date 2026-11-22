@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Đang kết nối</string>
     <string name="setup_toggle_wireless_title">Không dây</string>
     <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Tương thích không dây</string>
+    <string name="setup_choice_wireless_compat_auto">Tự động</string>
+    <string name="setup_choice_wireless_compat_builtin">Tích hợp</string>
+    <string name="setup_choice_wireless_compat_adapter">Bộ chuyển đổi</string>
+    <string name="setup_hint_wireless_compat">Đầu đĩa tích hợp và bộ chuyển đổi không dây gắn thêm (cắm vào cổng USB của xe) cần điện thoại trả lời theo thứ tự khác nhau. Tự động dùng thứ tự chuẩn, hoặc thứ tự bộ chuyển đổi cho xe lần trước đã kết nối theo cách đó. Chọn Bộ chuyển đổi nếu bộ chuyển đổi không dây của bạn không kết nối được; Tích hợp đưa mọi xe về thứ tự chuẩn.</string>
     <string name="setup_toggle_resume_music_title">Tiếp tục nhạc</string>
     <string name="setup_toggle_resume_music_subtitle">Bật lại ứng dụng nhạc vừa phát khi xe kết nối</string>
     <string name="setup_bt_address_label">Địa chỉ Bluetooth điện thoại (không bắt buộc)</string>

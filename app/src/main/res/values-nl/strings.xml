@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Verbinden</string>
     <string name="setup_toggle_wireless_title">Draadloos</string>
     <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
+    <string name="setup_choice_wireless_compat">Draadloze compatibiliteit</string>
+    <string name="setup_choice_wireless_compat_auto">Automatisch</string>
+    <string name="setup_choice_wireless_compat_builtin">Ingebouwd</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">Ingebouwde head units en losse draadloze adapters (in de USB-poort van de auto) verwachten dat de telefoon in een andere volgorde antwoordt. Automatisch gebruikt de standaardvolgorde, of de adaptervolgorde voor een auto die de vorige keer zo verbonden was. Kies Adapter als uw draadloze adapter geen verbinding maakt; Ingebouwd zet alle auto\'s terug op de standaardvolgorde.</string>
     <string name="setup_toggle_resume_music_title">Muziek hervatten</string>
     <string name="setup_toggle_resume_music_subtitle">Start de laatst gebruikte muziekapp wanneer de auto verbinding maakt</string>
     <string name="setup_bt_address_label">Bluetooth-adres van de telefoon (optioneel)</string>

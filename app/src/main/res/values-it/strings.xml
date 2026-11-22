@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Connessione</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Connettiti via Wi-Fi alle auto associate quando entrano nel raggio Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Compatibilità wireless</string>
+    <string name="setup_choice_wireless_compat_auto">Automatica</string>
+    <string name="setup_choice_wireless_compat_builtin">Integrata</string>
+    <string name="setup_choice_wireless_compat_adapter">Adattatore</string>
+    <string name="setup_hint_wireless_compat">Le head unit integrate e gli adattatori wireless aftermarket (collegati all\'USB dell\'auto) si aspettano che il telefono risponda in ordini diversi. Automatica usa l\'ordine standard, o quello dell\'adattatore per un\'auto che l\'ultima volta si è connessa così. Scegli Adattatore se il tuo adattatore wireless non si connette; Integrata torna all\'ordine standard per tutte le auto.</string>
     <string name="setup_toggle_resume_music_title">Riprendi la musica</string>
     <string name="setup_toggle_resume_music_subtitle">Avvia l\'ultima app musicale usata quando l\'auto si connette</string>
     <string name="setup_bt_address_label">Indirizzo Bluetooth del telefono (opzionale)</string>

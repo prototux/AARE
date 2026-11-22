@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Conexión</string>
     <string name="setup_toggle_wireless_title">Inalámbrica</string>
     <string name="setup_toggle_wireless_subtitle">Conectar con coches emparejados por Wi-Fi cuando entren en el alcance de Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Compatibilidad inalámbrica</string>
+    <string name="setup_choice_wireless_compat_auto">Automático</string>
+    <string name="setup_choice_wireless_compat_builtin">Integrada</string>
+    <string name="setup_choice_wireless_compat_adapter">Adaptador</string>
+    <string name="setup_hint_wireless_compat">Las unidades centrales integradas y los adaptadores inalámbricos de terceros (conectados al USB del coche) esperan que el teléfono responda en órdenes distintos. Automático usa el orden estándar, o el del adaptador para un coche que se conectó con él la última vez. Elige Adaptador si tu adaptador inalámbrico no se conecta; Integrada vuelve al orden estándar para todos los coches.</string>
     <string name="setup_toggle_resume_music_title">Reanudar música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar la última app de música al conectar el coche</string>
     <string name="setup_bt_address_label">Dirección Bluetooth del teléfono (opcional)</string>

@@ -55,6 +55,12 @@ class SessionOptions(
     val peerKey: String? = null,
     /** Trust the first certificate of a head unit with nothing trusted yet (Bluetooth-bonded ones). */
     val trustOnFirstUse: Boolean = false,
+    /**
+     * Answer the version request with the head unit's own version instead of AapSession.versionReply. Some
+     * aftermarket wireless adapters relay the phone's answer to the car and stall unless it
+     * matches what they asked for.
+     */
+    val echoHeadUnitVersion: Boolean = false,
 ) {
     init {
         require(pins == null || peerKey != null) { "peerKey is required with pins" }
@@ -402,8 +408,9 @@ class AapSession(
         val minor = if (msg.bodyLength >= 4) ((b[o + 2].toInt() and 0xff) shl 8) or (b[o + 3].toInt() and 0xff) else 0
         headUnitVersion = major to minor
         // 1.7 to anything up to 1.7, 6.2 to anything newer (even above
-        // 6.2). Status is always success; feature gating follows the head unit's own version.
-        val (replyMajor, replyMinor) = versionReply(major, minor)
+        // 6.2), or the head unit's own with echoHeadUnitVersion. Status is always success; feature
+        // gating follows the head unit's own version.
+        val (replyMajor, replyMinor) = versionAnswer(major, minor, options.echoHeadUnitVersion)
         log.i("head unit protocol $major.$minor, answering $replyMajor.$replyMinor")
         val body = byteArrayOf(
             (replyMajor shr 8).toByte(), replyMajor.toByte(),
@@ -593,6 +600,13 @@ class AapSession(
         /** The protocol version the phone answers to a head unit asking for [major].[minor]. */
         internal fun versionReply(major: Int, minor: Int): Pair<Int, Int> =
             if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 2
+
+        /**
+         * The version we answer the head unit's [major].[minor] with: [versionReply], or the head
+         * unit's own with [echo] (SessionOptions.echoHeadUnitVersion, opt-in for wireless adapters).
+         */
+        internal fun versionAnswer(major: Int, minor: Int, echo: Boolean): Pair<Int, Int> =
+            if (echo) major to minor else versionReply(major, minor)
 
         /**
          * The link's last moments, for a failed session's log line: tells a link that died while

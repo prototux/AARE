@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Connexion</string>
     <string name="setup_toggle_wireless_title">Sans fil</string>
     <string name="setup_toggle_wireless_subtitle">Se connecter aux voitures associées en Wi-Fi lorsqu\'elles entrent dans la portée Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Compatibilité sans fil</string>
+    <string name="setup_choice_wireless_compat_auto">Automatique</string>
+    <string name="setup_choice_wireless_compat_builtin">Intégré</string>
+    <string name="setup_choice_wireless_compat_adapter">Adaptateur</string>
+    <string name="setup_hint_wireless_compat">Les autoradios intégrés et les adaptateurs sans fil du commerce (branchés sur l\'USB de la voiture) attendent que le téléphone réponde dans des ordres différents. Automatique utilise l\'ordre standard, ou celui de l\'adaptateur pour une voiture qui s\'est connectée ainsi la dernière fois. Choisissez Adaptateur si votre adaptateur sans fil ne se connecte pas ; Intégré revient à l\'ordre standard pour toutes les voitures.</string>
     <string name="setup_toggle_resume_music_title">Reprendre la musique</string>
     <string name="setup_toggle_resume_music_subtitle">Relancer la dernière application de musique à la connexion de la voiture</string>
     <string name="setup_bt_address_label">Adresse Bluetooth du téléphone (facultatif)</string>

@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Kapcsolódás</string>
     <string name="setup_toggle_wireless_title">Vezeték nélküli</string>
     <string name="setup_toggle_wireless_subtitle">Kapcsolódás a párosított autókhoz Wi-Fi-n keresztül, amint Bluetooth-hatótávolságba kerülnek</string>
+    <string name="setup_choice_wireless_compat">Vezeték nélküli kompatibilitás</string>
+    <string name="setup_choice_wireless_compat_auto">Automatikus</string>
+    <string name="setup_choice_wireless_compat_builtin">Beépített</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">A beépített fejegységek és az utólagos vezeték nélküli adapterek (az autó USB-csatlakozójába dugva) eltérő sorrendben várják a telefon válaszait. Az Automatikus a szabványos sorrendet használja, vagy az adapteres sorrendet annál az autónál, amely legutóbb azzal csatlakozott. Válaszd az Adapter lehetőséget, ha a vezeték nélküli adaptered nem csatlakozik; a Beépített minden autónál visszaáll a szabványos sorrendre.</string>
     <string name="setup_toggle_resume_music_title">Zene folytatása</string>
     <string name="setup_toggle_resume_music_subtitle">Az utoljára játszott zenealkalmazás elindítása, amikor az autó csatlakozik</string>
     <string name="setup_bt_address_label">Telefon Bluetooth-címe (opcionális)</string>

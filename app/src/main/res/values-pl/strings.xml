@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Łączenie</string>
     <string name="setup_toggle_wireless_title">Bezprzewodowo</string>
     <string name="setup_toggle_wireless_subtitle">Łącz się ze sparowanymi samochodami przez Wi-Fi, gdy znajdą się w zasięgu Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Zgodność bezprzewodowa</string>
+    <string name="setup_choice_wireless_compat_auto">Automatycznie</string>
+    <string name="setup_choice_wireless_compat_builtin">Wbudowana</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">Wbudowane jednostki centralne i dodatkowe adaptery bezprzewodowe (podłączone do USB samochodu) oczekują odpowiedzi telefonu w innej kolejności. Automatycznie używa standardowej kolejności albo kolejności adaptera dla samochodu, który ostatnio połączył się w ten sposób. Wybierz Adapter, jeśli Twój adapter bezprzewodowy się nie łączy; Wbudowana przywraca standardową kolejność dla wszystkich samochodów.</string>
     <string name="setup_toggle_resume_music_title">Wznów muzykę</string>
     <string name="setup_toggle_resume_music_subtitle">Uruchom ostatnią odtwarzaną aplikację muzyczną po połączeniu z samochodem</string>
     <string name="setup_bt_address_label">Adres Bluetooth telefonu (opcjonalnie)</string>

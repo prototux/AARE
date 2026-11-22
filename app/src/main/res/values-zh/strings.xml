@@ -49,6 +49,11 @@
     <string name="setup_section_connecting">连接</string>
     <string name="setup_toggle_wireless_title">无线连接</string>
     <string name="setup_toggle_wireless_subtitle">已配对车辆进入蓝牙范围时，通过 Wi-Fi 自动连接</string>
+    <string name="setup_choice_wireless_compat">无线兼容性</string>
+    <string name="setup_choice_wireless_compat_auto">自动</string>
+    <string name="setup_choice_wireless_compat_builtin">原车</string>
+    <string name="setup_choice_wireless_compat_adapter">适配器</string>
+    <string name="setup_hint_wireless_compat">原车车机和后装无线适配器（插在车辆 USB 口上）要求手机按不同顺序应答。自动使用标准顺序，或对上次以适配器顺序连接的车辆使用适配器顺序。如果无线适配器无法连接，请选择“适配器”；“原车”会让所有车辆恢复标准顺序。</string>
     <string name="setup_toggle_resume_music_title">恢复音乐播放</string>
     <string name="setup_toggle_resume_music_subtitle">车机连接时自动播放上次使用的音乐应用</string>
     <string name="setup_bt_address_label">手机蓝牙地址（可选）</string>

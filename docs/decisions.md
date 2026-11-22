@@ -318,7 +318,6 @@ runs the commands as the shell. See `setup/ShizukuSetup.kt`.
   The state shown comes from PackageManager, not from the command's output.
 - Mock location (an app op) and Do Not Disturb access are not granted: the setup card doesn't ask
   for them either.
-
 ## Car text size and control size
 
 Two independent settings scale the car screen: text size (a font-scale multiplier on
@@ -333,7 +332,6 @@ and icon size; corner radii are a theme's shape choice, not a control size, so t
 - Text size instead overrides `LocalDensity` once at `Root`'s top: Compose's `MaterialTheme`/
   `CarTheme` never touch `LocalDensity`, so that override already survives nested calls without
   the same trick.
-
 ## Night mode from the phone's light sensor
 
 A setting lets "Car's day/night" take its reading from the phone's own ambient light sensor
@@ -353,3 +351,28 @@ hand briefly covering the sensor would flicker the car screen's whole colour sch
   the screen light without waiting for a change. The light sensor only reports changes, so a timer
   ends the stability window when no further event comes. The sensor only runs while the colours
   follow day/night and the source is the light sensor.
+
+## Wireless handshake for aftermarket adapters
+
+The Bluetooth bootstrap has two answer orders (`WirelessHandshake`): AARE's own (serial and
+phone_info in the version response, pings throughout), which strict built-in head units need, and
+the official phone's exact order, which some aftermarket adapters need (status-only answers, the
+start request acknowledged before the credentials are asked for, no phone pings). Adapters also get
+the head unit's own version back in the AAP version exchange. "Wireless compatibility" picks one.
+
+- The adapter order is opt-in: only the Adapter choice turns it on. Auto (the default) is the
+  standard order, exactly the old behaviour, except for a car that last reached service discovery
+  with the adapter order (remembered per Bluetooth address, 32 at most), which only happens after
+  the driver chose Adapter: a driver with both kinds of car sets Adapter once, connects the adapter
+  car, and goes back to Auto. Built-in forces the standard order even for such a car.
+- Rejected: guessing the order from the Bluetooth name, and trying the other order after a failed
+  attempt. A name is chosen by whoever sells the box (or renames it), and a built-in head unit that
+  is slow to start would get an order it refuses; a wrong guess costs a connection the driver
+  cannot explain. The adapter names #232 uses for its short first-message timeout are the only
+  adapter-name list.
+- One `WirelessConnector` serves a whole series of attempts (the "car not ready yet" retries), as
+  before: it carries state from one attempt to the next (#232's redial that asks a waiting head
+  unit to start, an adapter's one quick first try), and the handshake doesn't change within a series.
+- No error text goes to the head unit: a failed WifiConnectionStatus carries the status only (the
+  text is for the driver, and ours is a log line).
+- The per-car memory moves to `KnownHeadUnits` (#233) once that is merged.

@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Připojování</string>
     <string name="setup_toggle_wireless_title">Bezdrátově</string>
     <string name="setup_toggle_wireless_subtitle">Připojit se k párovaným autům přes Wi-Fi, jakmile se dostanou do dosahu Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Bezdrátová kompatibilita</string>
+    <string name="setup_choice_wireless_compat_auto">Automaticky</string>
+    <string name="setup_choice_wireless_compat_builtin">Vestavěná</string>
+    <string name="setup_choice_wireless_compat_adapter">Adaptér</string>
+    <string name="setup_hint_wireless_compat">Vestavěné hlavní jednotky a dodatečné bezdrátové adaptéry (zapojené do USB auta) očekávají odpovědi telefonu v různém pořadí. Automaticky používá standardní pořadí, nebo pořadí adaptéru pro auto, které se s ním naposledy připojilo. Zvolte Adaptér, pokud se váš bezdrátový adaptér nepřipojí; Vestavěná vrátí standardní pořadí pro všechna auta.</string>
     <string name="setup_toggle_resume_music_title">Obnovit hudbu</string>
     <string name="setup_toggle_resume_music_subtitle">Spustit poslední přehrávanou hudební aplikaci při připojení auta</string>
     <string name="setup_bt_address_label">Bluetooth adresa telefonu (nepovinné)</string>

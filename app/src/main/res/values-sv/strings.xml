@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Ansluter</string>
     <string name="setup_toggle_wireless_title">Trådlöst</string>
     <string name="setup_toggle_wireless_subtitle">Ansluter till ihopkopplade bilar via Wi-Fi när de kommer inom Bluetooth-räckhåll</string>
+    <string name="setup_choice_wireless_compat">Trådlös kompatibilitet</string>
+    <string name="setup_choice_wireless_compat_auto">Automatiskt</string>
+    <string name="setup_choice_wireless_compat_builtin">Inbyggd</string>
+    <string name="setup_choice_wireless_compat_adapter">Adapter</string>
+    <string name="setup_hint_wireless_compat">Inbyggda head units och eftermonterade trådlösa adaptrar (i bilens USB) förväntar sig att telefonen svarar i olika ordning. Automatiskt använder standardordningen, eller adapterordningen för en bil som senast anslöt med den. Välj Adapter om din trådlösa adapter inte ansluter; Inbyggd går tillbaka till standardordningen för alla bilar.</string>
     <string name="setup_toggle_resume_music_title">Återuppta musik</string>
     <string name="setup_toggle_resume_music_subtitle">Startar den senast spelade musikappen när bilen ansluter</string>
     <string name="setup_bt_address_label">Telefonens Bluetooth-adress (valfritt)</string>
