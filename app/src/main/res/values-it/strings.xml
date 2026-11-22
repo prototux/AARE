@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Notifiche</string>
     <string name="launcher_search_hint">Cerca app</string>
     <string name="setup_section_app_order">Ordine in auto</string>
+    <string name="setup_section_car_rail">Barra dell\'auto</string>
+    <string name="setup_car_rail_hint">Scegli quali app stanno sulla barra (o sulla barra delle applicazioni) e in quale ordine. Se non scegli nulla, la barra mantiene il suo set integrato (navigazione, musica, app recenti, telefono).</string>
+    <string name="setup_toggle_compact_rail_title">Barra compatta</string>
+    <string name="setup_toggle_compact_rail_subtitle">Una barra più stretta, con icone più piccole e spaziature ridotte</string>
     <string name="setup_section_connection_log">Log delle connessioni</string>
     <string name="setup_section_car_buttons">Pulsanti dell\'auto</string>
     <string name="setup_car_buttons_hint">Tasti che AARE ha ricevuto da questa auto. Scegli cosa fa ciascuno; un tasto lasciato su «Predefinito» mantiene il suo comportamento normale.</string>

@@ -60,8 +60,12 @@ internal fun List<DashCard>.withCard(card: DashCard, shown: Boolean): List<DashC
     else -> this - card
 }
 
-/** This order with the card at [index] moved [by] places (clamped to the list). */
-internal fun List<DashCard>.moved(index: Int, by: Int): List<DashCard> {
+/**
+ * This list with the item at [index] moved [by] places (clamped to the list); out of range, the
+ * list unchanged. Generic on purpose: every user-ordered list (the dashboard's cards, the rail's
+ * apps, and any order added later) moves its items with this one helper.
+ */
+internal fun <T> List<T>.movedBy(index: Int, by: Int): List<T> {
     if (index !in indices) return this
     val list = toMutableList()
     list.add((index + by).coerceIn(0, lastIndex), list.removeAt(index))

@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Уведомления</string>
     <string name="launcher_search_hint">Поиск приложений</string>
     <string name="setup_section_app_order">Порядок в автомобиле</string>
+    <string name="setup_section_car_rail">Панель в автомобиле</string>
+    <string name="setup_car_rail_hint">Выберите, какие приложения будут на панели (или панели задач) и в каком порядке. Ничего не выбрано: панель сохраняет встроенный набор (навигация, музыка, недавние приложения, телефон).</string>
+    <string name="setup_toggle_compact_rail_title">Компактная панель</string>
+    <string name="setup_toggle_compact_rail_subtitle">Более узкая панель с меньшими значками и плотными отступами</string>
     <string name="setup_section_connection_log">Журнал соединений</string>
     <string name="setup_section_car_buttons">Кнопки автомобиля</string>
     <string name="setup_car_buttons_hint">Кнопки, которые AARE получал от этого автомобиля. Выберите, что делает каждая; кнопка, оставленная на «По умолчанию», работает как обычно.</string>

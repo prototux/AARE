@@ -376,3 +376,13 @@ the head unit's own version back in the AAP version exchange. "Wireless compatib
 - No error text goes to the head unit: a failed WifiConnectionStatus carries the status only (the
   text is for the driver, and ours is a log line).
 - The per-car memory moves to `KnownHeadUnits` (#233) once that is merged.
+
+## Rail apps: a flat chosen list replaces the dynamic slots, not alongside them
+
+When the user picks apps for the rail on the phone (`Settings.railApps`), the rail shows exactly
+that list, in that order, clickable to open each app directly — it stops binding the nav/media
+slots to whatever is "active" and showing recents. Mixing both (the user's picks plus the dynamic
+nav/media/recent behaviour) would make the setting's effect unpredictable. An empty list (nothing
+chosen, the default) keeps today's dynamic rail untouched. Resolution happens at render time from
+live `CarUiState.apps` (`resolveRailApps`), so an uninstalled app's key is skipped without special
+handling and nothing needs to be recomputed when the app list changes.

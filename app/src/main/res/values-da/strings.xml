@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Notifikationer</string>
     <string name="launcher_search_hint">Søg i apps</string>
     <string name="setup_section_app_order">Rækkefølge i bilen</string>
+    <string name="setup_section_car_rail">Bilens bar</string>
+    <string name="setup_car_rail_hint">Vælg hvilke apps der sidder på baren (eller proceslinjen) og i hvilken rækkefølge. Intet valgt: baren beholder sit indbyggede sæt (navigation, musik, seneste apps, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakt bar</string>
+    <string name="setup_toggle_compact_rail_subtitle">En smallere bar med mindre ikoner og tættere afstand</string>
     <string name="setup_section_connection_log">Forbindelseslog</string>
     <string name="setup_section_car_buttons">Bilens knapper</string>
     <string name="setup_car_buttons_hint">Knapper, som AARE har set fra denne bil. Vælg, hvad hver enkelt gør; en knap, der står på “Standard”, beholder sin normale funktion.</string>

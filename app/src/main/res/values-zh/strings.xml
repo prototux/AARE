@@ -133,6 +133,10 @@
     <string name="setup_app_entry_notifications">通知</string>
     <string name="launcher_search_hint">搜索应用</string>
     <string name="setup_section_app_order">车机中的排列顺序</string>
+    <string name="setup_section_car_rail">车机状态栏</string>
+    <string name="setup_car_rail_hint">选择状态栏（或任务栏）上显示哪些应用及其顺序。未选择时，状态栏保留内置组合（导航、音乐、最近使用的应用、电话）。</string>
+    <string name="setup_toggle_compact_rail_title">紧凑状态栏</string>
+    <string name="setup_toggle_compact_rail_subtitle">更窄的状态栏，图标更小、间距更紧凑</string>
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_section_car_buttons">车辆按键</string>
     <string name="setup_car_buttons_hint">AARE 从这辆车收到过的按键。为每个按键选择功能；保留为“默认”的按键维持其原有功能。</string>
