@@ -1,6 +1,8 @@
 package net.prototux.aare.notify
 
 import android.speech.SpeechRecognizer
+import net.prototux.aare.notify.VoiceReplyStep.Answer
+import net.prototux.aare.notify.VoiceReplyStep.Companion.answerOf
 import net.prototux.aare.notify.VoiceReplyStep.Companion.failure
 import net.prototux.aare.notify.VoiceReplyStep.Companion.partial
 import net.prototux.aare.notify.VoiceReplyStep.Companion.result
@@ -48,5 +50,35 @@ class VoiceReplyStepTest {
         assertEquals(VoiceDictation.Failure.NotHeard, VoiceDictation.failureOf(SpeechRecognizer.ERROR_SPEECH_TIMEOUT))
         assertEquals(VoiceDictation.Failure.Unavailable, VoiceDictation.failureOf(SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS))
         assertEquals(VoiceDictation.Failure.Unavailable, VoiceDictation.failureOf(SpeechRecognizer.ERROR_CLIENT))
+    }
+
+    private val italianYes = listOf("sì", "si", "invia", "invialo", "ok")
+    private val italianNo = listOf("no", "annulla", "non")
+
+    @Test
+    fun aSpokenYesSends() {
+        assertEquals(Answer.Yes, answerOf("Yes", emptyList(), emptyList()))
+        assertEquals(Answer.Yes, answerOf("ok send it", emptyList(), emptyList()))
+        assertEquals(Answer.Yes, answerOf("Sì, invialo", italianYes, italianNo))
+        // English always counts, whatever the language.
+        assertEquals(Answer.Yes, answerOf("okay", italianYes, italianNo))
+    }
+
+    @Test
+    fun aNoAnywhereWinsSoItNeverSendsByMistake() {
+        assertEquals(Answer.No, answerOf("no", emptyList(), emptyList()))
+        assertEquals(Answer.No, answerOf("No, don't send it", emptyList(), emptyList()))
+        assertEquals(Answer.No, answerOf("Don\u2019t send it", emptyList(), emptyList()))
+        assertEquals(Answer.No, answerOf("non inviarlo", italianYes, italianNo))
+        assertEquals(Answer.No, answerOf("annulla", italianYes, italianNo))
+    }
+
+    @Test
+    fun anythingElseLeavesItToTheButtons() {
+        assertEquals(Answer.Unclear, answerOf("", emptyList(), emptyList()))
+        assertEquals(Answer.Unclear, answerOf("what was that", emptyList(), emptyList()))
+        // Whole words only: "sending" or "yesterday" aren't a yes, "know" isn't a no.
+        assertEquals(Answer.Unclear, answerOf("yesterday I know", emptyList(), emptyList()))
+        assertEquals(Answer.Unclear, answerOf("sending", emptyList(), emptyList()))
     }
 }

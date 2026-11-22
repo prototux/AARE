@@ -675,8 +675,13 @@ default) adds a button that dictates the answer, while driving too, as Android A
   (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
   permission (RECORD_AUDIO is already asked for in setup) and no new connection.
 - Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
-  only on *Send*. *Again* dictates anew, *Cancel* or back drops it. Late recognizer callbacks
-  can't change a reply waiting for Send (`VoiceReplyStep`, unit-tested).
+  only on a spoken "yes" or *Send*. The answer is listened for once the read-back is over (so it
+  doesn't hear itself); a "no" anywhere cancels and wins over a "yes", so "no, don't send it"
+  never sends; anything else, or silence, leaves it to the buttons. The words are strings
+  (`msg_voice_reply_yes_words` / `_no_words`, comma-separated) so each language gets its own,
+  and the English ones always count. *Again* dictates anew, *Cancel* or back drops it. Late
+  recognizer callbacks can't change a reply waiting for its answer, and a reply is sent once
+  (`VoiceReplyStep`, unit-tested).
 - While driving the dictated text isn't shown, like messages: it is read aloud instead.
 - While listening AARE holds transient exclusive focus with the assistant usage, so the music
   pauses and the car goes back to it; the read-back ducks it like a message read aloud.

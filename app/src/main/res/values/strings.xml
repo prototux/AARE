@@ -678,9 +678,12 @@
     <string name="msg_voice_reply_not_heard">Didn\'t catch that</string>
     <string name="msg_voice_reply_unavailable">Speech recognition isn\'t available on this phone</string>
     <string name="msg_voice_reply_send">Send</string>
+    <!-- Comma-separated words that answer the read-back aloud; English ones always count too. -->
+    <string name="msg_voice_reply_yes_words">yes,yeah,send,send it,ok,okay,sure</string>
+    <string name="msg_voice_reply_no_words">no,cancel,don\'t,stop</string>
     <string name="msg_voice_reply_again">Again</string>
     <string name="msg_toggle_voice_reply_title">Reply by voice</string>
-    <string name="msg_toggle_voice_reply_subtitle">Dictate a reply from the car screen, also while driving. It\'s read back and sent only when you tap Send. With Car microphone for phone apps on, the car\'s microphone listens</string>
+    <string name="msg_toggle_voice_reply_subtitle">Dictate a reply from the car screen, also while driving. It\'s read back and sent only when you say yes or tap Send. With Car microphone for phone apps on, the car\'s microphone listens</string>
     <string name="msg_reply_hint">Message to %1$s</string>
     <string name="msg_message_count_one">1 message</string>
     <string name="msg_message_count_many">%1$d messages</string>

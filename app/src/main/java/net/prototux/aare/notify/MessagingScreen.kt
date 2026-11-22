@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -227,28 +228,64 @@ private fun ReplyView(c: Conversation, onSent: (Boolean) -> Unit, onCancel: () -
 }
 
 /**
- * A dictated reply: listens, then reads back what it heard and waits for Send. While driving the
- * text isn't shown (like messages): it is only read aloud.
+ * A dictated reply: listens, then reads back what it heard ("…, send it to Anna?") and listens
+ * for the answer: a spoken "yes" sends, a "no" cancels, anything else leaves it to the buttons.
+ * Send works throughout. While driving the text isn't shown (like messages): it is only read aloud.
  */
 @Composable
 private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) -> Unit, onCancel: () -> Unit) {
     val context = LocalContext.current
+    val sent by rememberUpdatedState(onSent)
+    val cancelled by rememberUpdatedState(onCancel)
     var step by remember(c.key) { mutableStateOf<VoiceReplyStep>(VoiceReplyStep.Listening()) }
-    val dictation = remember(c.key) {
-        VoiceDictation(context,
-            onPartial = { step = VoiceReplyStep.partial(step, it) },
-            onResult = { text ->
-                step = VoiceReplyStep.result(step, text)
-                (step as? VoiceReplyStep.Confirm)?.let {
-                    CarNotificationListener.instance?.say(context.getString(R.string.msg_voice_reply_read_back, it.text, c.title))
-                }
-            },
-            onFailure = { step = VoiceReplyStep.failure(step, it) })
+    // Sent or cancelled: a late spoken answer or a second tap must not send again.
+    var finished by remember(c.key) { mutableStateOf(false) }
+    val yesWords = remember { context.getString(R.string.msg_voice_reply_yes_words).split(',') }
+    val noWords = remember { context.getString(R.string.msg_voice_reply_no_words).split(',') }
+
+    fun send(text: String) {
+        if (finished) return
+        finished = true
+        sent(CarNotificationListener.instance?.reply(c, text) == true)
     }
+
+    fun cancel() {
+        if (finished) return
+        finished = true
+        cancelled()
+    }
+
+    val dictation = remember(c.key) { arrayOfNulls<VoiceDictation>(1) }
+    fun readBack(confirm: VoiceReplyStep.Confirm) {
+        val listener = CarNotificationListener.instance ?: return
+        // The answer is listened for once the read-back is over, so it doesn't hear itself.
+        listener.say(context.getString(R.string.msg_voice_reply_read_back, confirm.text, c.title)) {
+            if (!finished && step == confirm) dictation[0]?.start()
+        }
+    }
+    if (dictation[0] == null) dictation[0] = VoiceDictation(context,
+        onPartial = { step = VoiceReplyStep.partial(step, it) },
+        onResult = { text ->
+            when (val s = step) {
+                is VoiceReplyStep.Listening -> {
+                    step = VoiceReplyStep.result(s, text)
+                    (step as? VoiceReplyStep.Confirm)?.let(::readBack)
+                }
+                is VoiceReplyStep.Confirm -> when (VoiceReplyStep.answerOf(text, yesWords, noWords)) {
+                    VoiceReplyStep.Answer.Yes -> send(s.text)
+                    VoiceReplyStep.Answer.No -> cancel()
+                    VoiceReplyStep.Answer.Unclear -> Unit
+                }
+                else -> Unit
+            }
+        },
+        // While confirming, silence or a failure just leaves the buttons.
+        onFailure = { step = VoiceReplyStep.failure(step, it) })
+
     // Listening starts on every new Listening step (the first one and each retry).
     val listening = step is VoiceReplyStep.Listening
-    LaunchedEffect(listening) { if (listening) dictation.start() }
-    DisposableEffect(c.key) { onDispose { dictation.cancel() } }
+    LaunchedEffect(listening) { if (listening) dictation[0]?.start() }
+    DisposableEffect(c.key) { onDispose { dictation[0]?.cancel() } }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -266,10 +303,10 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             val s = step
             if (s is VoiceReplyStep.Confirm) Pill(stringResource(R.string.msg_voice_reply_send), selected = true, icon = Icons.AutoMirrored.Rounded.Send,
-                onClick = { onSent(CarNotificationListener.instance?.reply(c, s.text) == true) })
+                onClick = { send(s.text) })
             if (s is VoiceReplyStep.Confirm || s == VoiceReplyStep.NotHeard) Pill(stringResource(R.string.msg_voice_reply_again), selected = false,
                 icon = Icons.Rounded.Refresh, onClick = { step = VoiceReplyStep.retry(step) })
-            Pill(stringResource(R.string.common_cancel), selected = false, icon = Icons.Rounded.Close, onClick = onCancel)
+            Pill(stringResource(R.string.common_cancel), selected = false, icon = Icons.Rounded.Close, onClick = ::cancel)
         }
     }
 }
