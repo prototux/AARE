@@ -20,6 +20,13 @@ class SideRailFitTest {
     fun shortRailDropsStatusThenSettings() {
         assertEquals(SideRailFit(recentSlots = 0, status = false, settings = true), sideRailFit(600.dp))
         assertEquals(SideRailFit(recentSlots = 0, status = false, settings = false), sideRailFit(508.dp))
-        assertEquals(SideRailFit(recentSlots = 0, status = false, settings = false), sideRailFit(300.dp))
+        assertEquals(SideRailFit(recentSlots = 0, status = false, settings = false, phone = false), sideRailFit(300.dp))
+    }
+
+    /** #269: an 800x480 unit leaves 448 dp; navigation, media and Phone need 476, so Phone goes. */
+    @Test
+    fun phoneLeavesOnA480dpScreen() {
+        assertEquals(SideRailFit(recentSlots = 0, status = false, settings = false, phone = false), sideRailFit(448.dp))
+        assertEquals(true, sideRailFit(476.dp).phone)
     }
 }

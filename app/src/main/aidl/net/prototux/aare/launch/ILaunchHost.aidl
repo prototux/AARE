@@ -26,6 +26,19 @@ interface ILaunchHost {
     /** Tear the display down and stop feeding the app. */
     void stop() = 5;
 
+    /**
+     * Open [uri] (an ACTION_VIEW, geo: only) in [packageName] on the display [start] created, e.g. a
+     * destination for a navigation app. False without a display or for any other URI.
+     */
+    boolean view(String uri, String packageName) = 6;
+
+    /**
+     * Like [start], but opens [packageName]'s voice UI (ACTION_VOICE_COMMAND, else ACTION_ASSIST),
+     * or its main activity if it has neither: for an assistant on the car screen. Returns the
+     * display id, or -1 (and no display) if nothing could be opened.
+     */
+    int startAssistant(in Surface surface, int width, int height, int dpi, String packageName) = 7;
+
     /** Turns the phone's location on or off, as the shell may. False if it can't. */
     boolean setLocationEnabled(boolean on) = 15;
 

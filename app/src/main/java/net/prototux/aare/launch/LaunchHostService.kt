@@ -8,7 +8,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
+import android.net.Uri
 import android.os.Build
+import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import android.view.InputEvent
@@ -66,6 +68,21 @@ class LaunchHostService : ILaunchHost.Stub {
         return displayId
     }
 
+    override fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, packageName: String): Int {
+        stop()
+        val ctx = injectedContext ?: systemContext() ?: return -1
+        val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
+        display = vd
+        displayId = vd.display.displayId
+        if (!launchAssistant(ctx, packageName, displayId)) {
+            // Unlike start(), no empty display: the caller opens the assistant on the phone instead.
+            Log.w(TAG, "created display $displayId but could not open $packageName's assistant on it")
+            stop()
+            return -1
+        }
+        return displayId
+    }
+
     override fun resize(surface: Surface, width: Int, height: Int, dpi: Int) {
         val vd = display ?: return
         runCatching { vd.resize(width, height, dpi) }
@@ -86,6 +103,40 @@ class LaunchHostService : ILaunchHost.Stub {
         inject(ev)
     }
 
+    override fun view(uri: String, packageName: String): Boolean {
+        val id = displayId
+        if (id < 0 || !launcherMayView(uri)) return false
+        val ctx = injectedContext ?: systemContext() ?: return false
+        return runCatching {
+            // No CLEAR_TASK, unlike launch(): the app keeps its task and gets the place as a new intent.
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).setPackage(packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ctx.startActivity(intent, ActivityOptions.makeBasic().setLaunchDisplayId(id).toBundle())
+            true
+        }.onFailure { Log.w(TAG, "view on display $id failed: ${it.message}") }.getOrDefault(false)
+    }
+
+    /**
+     * Before display [id] goes, hands the phone's focus to the display next in line, as a touch
+     * there would: another app hosted in the car, else the phone's own screen. A display removed
+     * while focused leaves Android 17's launcher on it, and Recents does nothing until a reboot; in
+     * the car no touch moves the focus first. Nothing happens when another display already leads.
+     */
+    private fun focusPhone(id: Int) = runCatching {
+        val atm = Class.forName("android.app.ActivityTaskManager").getMethod("getService").invoke(null)
+        // Root tasks from top to bottom, across displays.
+        val tasks = atm.javaClass.getMethod("getAllRootTaskInfos").invoke(atm) as List<*>
+        val next = nextFocus(tasks.mapNotNull { t -> t?.let { it.javaClass.getField("displayId").getInt(it) } }, id)
+        // The task manager's call where it has one, else the window manager's (gone in Android 17).
+        runCatching { atm.javaClass.getMethod("focusTopTask", Int::class.javaPrimitiveType).invoke(atm, next) }.getOrElse { first ->
+            Log.i(TAG, "focusTopTask: ${(first.cause ?: first).message}")
+            val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "window") as IBinder
+            val wm = Class.forName("android.view.IWindowManager\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)
+            wm.javaClass.getMethod("moveDisplayToTopIfAllowed", Int::class.javaPrimitiveType).invoke(wm, next)
+        }
+        Log.i(TAG, "focus on display $next before display $id goes")
+    }.onFailure { Log.w(TAG, "focus hand-back failed: ${(it.cause ?: it).message}") }
+
     override fun stop() {
         screenOffReceiver?.let { receiver ->
             receiverContext?.let { context -> runCatching { context.unregisterReceiver(receiver) } }
@@ -94,7 +145,7 @@ class LaunchHostService : ILaunchHost.Stub {
         receiverContext = null
         displayWakeLock?.let { lock -> runCatching { if (lock.isHeld) lock.release() } }
         displayWakeLock = null
-        display?.let { runCatching { it.release() } }
+        display?.let { focusPhone(displayId); runCatching { it.release() } }
         display = null
         displayId = -1
     }
@@ -197,6 +248,24 @@ class LaunchHostService : ILaunchHost.Stub {
         true
     }.onFailure { Log.w(TAG, "startActivity($pkg) failed: ${it.message}") }.getOrDefault(false)
 
+    /**
+     * Open [pkg]'s voice UI onto [onDisplay] (what the voice button asks of an assistant, as
+     * Assistants.startOnPhone does on the phone), or its main activity if it has none.
+     */
+    @SuppressLint("QueryPermissionsNeeded")
+    private fun launchAssistant(ctx: Context, pkg: String, onDisplay: Int): Boolean {
+        val opts = ActivityOptions.makeBasic().setLaunchDisplayId(onDisplay).toBundle()
+        for (action in listOf(Intent.ACTION_VOICE_COMMAND, Intent.ACTION_ASSIST)) {
+            val intent = Intent(action).setPackage(pkg)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            if (ctx.packageManager.resolveActivity(intent, 0) == null) continue
+            val opened = runCatching { ctx.startActivity(intent, opts) }
+                .onFailure { Log.w(TAG, "startActivity($action, $pkg) failed: ${it.message}") }.isSuccess
+            if (opened) return true
+        }
+        return launch(ctx, pkg, onDisplay)
+    }
+
     /** Inject one event into the launched app's display via InputManager's hidden injectInputEvent. */
     private fun inject(event: InputEvent) {
         runCatching {
@@ -234,6 +303,7 @@ class LaunchHostService : ILaunchHost.Stub {
                 "Landroid/app/ActivityThread;", "Landroid/hardware/input/InputManager;",
                 "Landroid/hardware/display/DisplayManager;", "Landroid/os/PowerManager;",
                 "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
+                "Landroid/os/ServiceManager;", "Landroid/view/IWindowManager", "Landroid/app/ActivityTaskManager", "Landroid/app/IActivityTaskManager", "Landroid/app/TaskInfo;",
             )
         }
     }
@@ -255,3 +325,6 @@ class LaunchHostService : ILaunchHost.Stub {
         const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
     }
 }
+
+/** The display to focus before display [gone] goes: the top one of [displays] (top to bottom, repeats allowed) other than it, else the phone's. */
+internal fun nextFocus(displays: List<Int>, gone: Int): Int = displays.firstOrNull { it != gone } ?: android.view.Display.DEFAULT_DISPLAY

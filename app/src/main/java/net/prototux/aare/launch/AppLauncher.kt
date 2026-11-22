@@ -93,11 +93,20 @@ class AppLauncher(private val context: Context, key: String = "launch") {
         runCatching { host?.start(surface, width, height, dpi, pkg, keepDisplayAwake) ?: -1 }
             .onFailure { Log.w(TAG, "start", it) }.getOrDefault(-1)
 
+    /** Like [start], but opens [pkg]'s voice UI (see [ILaunchHost.startAssistant]). */
+    fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String): Int =
+        runCatching { host?.startAssistant(surface, width, height, dpi, pkg) ?: -1 }
+            .onFailure { Log.w(TAG, "startAssistant", it) }.getOrDefault(-1)
+
     fun resize(surface: Surface, width: Int, height: Int, dpi: Int) { runCatching { host?.resize(surface, width, height, dpi) } }
     fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {
         runCatching { host?.touch(downTime, eventTime, action, x, y, pointerId) }
     }
     fun key(eventTime: Long, action: Int, keyCode: Int) { runCatching { host?.key(eventTime, action, keyCode) } }
+
+    /** Open [uri] in [pkg] on the launched app's display (see [ILaunchHost.view]). False if it couldn't. */
+    fun view(uri: String, pkg: String): Boolean =
+        runCatching { host?.view(uri, pkg) == true }.onFailure { Log.w(TAG, "view", it) }.getOrDefault(false)
 
     fun release() {
         runCatching { host?.stop() }

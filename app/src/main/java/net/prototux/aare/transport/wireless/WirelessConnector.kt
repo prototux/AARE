@@ -35,8 +35,11 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-/** Wireless connection setup failed; [message] says at which step. */
-class WirelessException(message: String, cause: Throwable? = null) : IOException(message, cause)
+/**
+ * Wireless connection setup failed; [message] says at which step. [quickTry]: it was an adapter's
+ * quick first try (see [WirelessBootstrap.isDongle]), which is meant to be redialled at once.
+ */
+class WirelessException(message: String, cause: Throwable? = null, val quickTry: Boolean = false) : IOException(message, cause)
 
 /** Runtime permissions the user has not granted (yet). Request [missing] and try again. */
 class WirelessPermissionException(val missing: List<String>) :
@@ -61,6 +64,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /** Pin the BSSID the head unit sent: lets Android skip the approval dialog next time. */
         val matchBssid: Boolean = true,
         val bootstrap: WirelessBootstrap.Options = WirelessBootstrap.Options(),
+        /**
+         * Runs right before the Wi-Fi network request (Android 10+), e.g. to have it approved without
+         * Android's dialog; the handle it returns is closed once the request is answered.
+         */
+        val preApproveWifi: ((WifiCredentials) -> AutoCloseable?)? = null,
     )
 
     private val context = context.applicationContext
@@ -132,6 +140,16 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     fun missingPermissions(): List<String> = requiredPermissions().filter { !granted(it) }
 
+    /** A wireless adapter got its one quick first try (see [WirelessBootstrap.isDongle]); for this connector's attempts. */
+    private val dongleQuickTryUsed = AtomicBoolean(false)
+
+    /**
+     * Head units (Bluetooth addresses) that answered our version response, then sent no
+     * WifiStartRequest before the message timeout: they wait for the phone to ask, so this
+     * connector's redials to them send one (see [WirelessBootstrap.Options.phoneStartDelayMs]).
+     */
+    private val waitingForPhone: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
     // ---- one connection attempt ----
 
     private inner class Attempt(private val device: BluetoothDevice) {
@@ -141,6 +159,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         @Volatile private var network: HeadUnitNetwork? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
+        /** This attempt is an adapter's quick first try (see [bootstrapOptions]). */
+        private var quickTry = false
 
         fun run(): Transport {
             requirePermissions(requiredPermissions())
@@ -153,7 +173,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             }
             try {
                 val socket = openRfcomm(adapter)
-                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
+                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid, options.preApproveWifi).also { network = it }
                 val (ip, port) = bootstrap(socket, net)
                 val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
                 val tcpSocket = connectTcp(headUnitNetwork, ip, port)
@@ -172,6 +192,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 // checkNotAborted() and the field write), and every such path ends here.
                 releaseAll()
                 if (wasAborted && e !is WirelessException) throw WirelessException("cancelled", e)
+                if (quickTry && !wasAborted) throw WirelessException(e.message ?: "wireless quick first try failed", e, quickTry = true)
                 throw e
             }
         }
@@ -230,7 +251,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 override fun onReady(ip: String, port: Int) {
                     ready.complete(ip to port)
                 }
-            }, log, options.bootstrap)
+            }, log, bootstrapOptions())
             bootstrap = b
             thread(name = "aa-wireless-rfcomm", isDaemon = true) {
                 try {
@@ -243,10 +264,13 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 if (!ready.isDone) ready.completeExceptionally(WirelessException("bootstrap ended without result"))
             }
             return try {
-                // The bootstrap bounds itself (message timeouts + join timeout); this is a backstop.
-                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs, TimeUnit.MILLISECONDS)
+                // The bootstrap bounds itself (message timeouts, our own start requests, join timeout); this is a backstop.
+                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs + options.bootstrap.phoneStartRetryLimitMs, TimeUnit.MILLISECONDS)
             } catch (e: ExecutionException) {
                 val cause = e.cause ?: e
+                if (cause is net.prototux.aare.aap.wireless.WirelessBootstrapException && cause.noStartRequest && waitingForPhone.add(device.address)) {
+                    log.i("wireless: the head unit waited for the phone to ask it to start; the next attempt will ask")
+                }
                 throw if (cause is IOException) cause else WirelessException(cause.message ?: "wireless bootstrap failed", cause)
             } catch (e: TimeoutException) {
                 throw WirelessException("wireless bootstrap took too long", e)
@@ -282,6 +306,26 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
         private fun checkNotAborted() {
             if (aborted.get()) throw WirelessException("cancelled")
+        }
+
+        /**
+         * The bootstrap options for this attempt. A wireless adapter gets only a short wait for its
+         * first message on the first attempt: a quick redial helps one that missed the connection;
+         * later attempts get the normal timeout. A head unit that waited for the phone last time
+         * ([waitingForPhone]) is asked to start.
+         */
+        private fun bootstrapOptions(): WirelessBootstrap.Options {
+            var result = options.bootstrap
+            val name = runCatching { device.name }.getOrNull()
+            if (WirelessBootstrap.isDongle(name) && dongleQuickTryUsed.compareAndSet(false, true)) {
+                log.i("wireless: \"$name\" is a wireless adapter: ${WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS} ms for its first message")
+                result = result.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
+                quickTry = true
+            }
+            if (device.address in waitingForPhone && result.phoneStartDelayMs <= 0) {
+                result = result.copy(phoneStartDelayMs = WirelessBootstrap.PHONE_START_DELAY_MS)
+            }
+            return result
         }
     }
 

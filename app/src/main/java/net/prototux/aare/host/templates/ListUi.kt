@@ -11,7 +11,6 @@ import androidx.car.app.model.PlaceMarker
 import androidx.car.app.model.Row
 import androidx.car.app.model.Toggle
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,8 +59,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /** ListTemplate: a single list or titled sections, with header, action strip and floating actions. */
 @Composable
@@ -280,7 +279,7 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
     val enabled = row.isEnabled
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().heightIn(min = d.touchTarget).clip(shape).background(rowBackground())
-            .then(if (onClick != null && enabled) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
+            .carClickable(shape, enabled = enabled, onClick = onClick)
             .alpha(if (enabled) 1f else 0.38f)
             .padding(start = if (radio != null) 8.dp else 20.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -319,8 +318,9 @@ internal fun RowItem(row: Row, shape: Shape, radio: Boolean? = null, onSelect: (
                 )
             }
         }
-        row.actions.forEach { action ->
-            ActionView(action, ActionLook.Header)
+        val countdown = rememberRowCountdown(row.actions)
+        row.actions.forEachIndexed { i, action ->
+            ActionView(action, ActionLook.Header, countdownMillis = countdown.millisFor(i))
         }
         if (row.numericDecoration != Row.NO_DECORATION && row.numericDecoration >= 0) {
             Box(
@@ -364,7 +364,7 @@ private fun ConversationRow(c: ConversationItem, shape: Shape) {
     } }
     androidx.compose.foundation.layout.Row(
         Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(shape).background(rowBackground())
-            .then(if (onClick != null) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
+            .carClickable(shape, onClick = onClick)
             .padding(start = 20.dp, end = 12.dp, top = 10.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

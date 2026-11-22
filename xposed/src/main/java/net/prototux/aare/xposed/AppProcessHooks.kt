@@ -28,21 +28,24 @@ object AppProcessHooks {
 
     fun install(xposed: XposedInterface, param: PackageLoadedParam) {
         val cl = param.defaultClassLoader
-        hookHostValidator(xposed, cl)
-        if (param.packageName == MAPS_PACKAGE) hookCaptureVideoOutput(xposed, cl)
+        xposed.report(param.packageName, "HostValidator.isValidHost", hookHostValidator(xposed, cl))
+        if (param.packageName == MAPS_PACKAGE) {
+            xposed.report(param.packageName, "CAPTURE_VIDEO_OUTPUT check", hookCaptureVideoOutput(xposed, cl))
+        }
     }
 
     /**
      * `HostValidator.isValidHost(HostInfo)` → true when the host is AARE, so a Car App Library app
      * accepts AARE despite its non-Google signing certificate. (Waze's rejection is exactly this.)
      */
-    private fun hookHostValidator(xposed: XposedInterface, cl: ClassLoader) {
-        val hostValidator = runCatching { cl.loadClass("androidx.car.app.HostValidator") }.getOrNull() ?: return
-        val hostInfo = runCatching { cl.loadClass("androidx.car.app.HostInfo") }.getOrNull() ?: return
-        val method = runCatching { hostValidator.getDeclaredMethod("isValidHost", hostInfo) }.getOrNull() ?: return
+    private fun hookHostValidator(xposed: XposedInterface, cl: ClassLoader): Boolean {
+        val hostValidator = runCatching { cl.loadClass("androidx.car.app.validation.HostValidator") }.getOrNull() ?: return false
+        val hostInfo = runCatching { cl.loadClass("androidx.car.app.HostInfo") }.getOrNull() ?: return false
+        val method = runCatching { hostValidator.getDeclaredMethod("isValidHost", hostInfo) }.getOrNull() ?: return false
         xposed.hook(method).intercept { chain ->
             if (hostPackage(chain.getArg(0)) == ModuleMain.AARE_PACKAGE) true else chain.proceed()
         }
+        return true
     }
 
     /**
@@ -51,13 +54,13 @@ object AppProcessHooks {
      * only for AARE's uid lets AARE host Maps' projected activity, and leaves every other caller and
      * every other permission untouched.
      */
-    private fun hookCaptureVideoOutput(xposed: XposedInterface, cl: ClassLoader) {
-        val contextImpl = runCatching { cl.loadClass("android.app.ContextImpl") }.getOrNull() ?: return
+    private fun hookCaptureVideoOutput(xposed: XposedInterface, cl: ClassLoader): Boolean {
+        val contextImpl = runCatching { cl.loadClass("android.app.ContextImpl") }.getOrNull() ?: return false
         val method = runCatching {
             contextImpl.getDeclaredMethod("checkCallingPermission", String::class.java)
-        }.getOrNull() ?: return
+        }.getOrNull() ?: return false
         val uid = aareUid
-        if (uid < 0) return
+        if (uid < 0) return false
         xposed.hook(method).intercept { chain ->
             if (chain.getArg(0) == CAPTURE_VIDEO_OUTPUT && Binder.getCallingUid() == uid) {
                 PERMISSION_GRANTED
@@ -65,6 +68,7 @@ object AppProcessHooks {
                 chain.proceed()
             }
         }
+        return true
     }
 
     /** The package name a `HostInfo` holds, read from its backing field (its getter is what we hook). */
