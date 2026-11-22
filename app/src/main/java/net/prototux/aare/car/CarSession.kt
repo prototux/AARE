@@ -18,6 +18,7 @@ import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.ServiceOuterClass.Service
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import android.location.Location
@@ -184,6 +185,7 @@ class CarSession(
             navBridge?.updatePhone(g)
         }
         runtime.start()
+        settings.registerListener(carKeyPrefsListener)
         listener.onStatus(this, context.getString(R.string.notif_status_connecting_to, transport.name))
     }
 
@@ -630,13 +632,38 @@ class CarSession(
     /** HOME goes to the dashboard; held, it hands the screen back to the car. */
     private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
 
+    /**
+     * `Settings.carKeyMap` and the codes of `Settings.carKeysSeen`, kept here: [onKey] runs on
+     * every press and every release, and decoding both string sets each time is waste. Refreshed
+     * when the "Car buttons" chooser changes them (main thread only).
+     */
+    private var carKeyMap: Map<Int, String> = settings.carKeyMap
+    private var carKeysSeen: Set<Int> = settings.carKeysSeen.keys
+    private val carKeyPrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        when (key) {
+            "car_key_map" -> main.post { carKeyMap = settings.carKeyMap }
+            "car_keys_seen" -> main.post { carKeysSeen = settings.carKeysSeen.keys }
+        }
+    }
+
     private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+        // For the "Car buttons" chooser: every key the car has ever sent, by a readable name.
+        if (code !in carKeysSeen) {
+            carKeysSeen = carKeysSeen + code
+            settings.rememberCarKey(code, KeyEvent.keyCodeToString(code))
+        }
         // Some head units send a media key while they set up, before AARE has a car screen (a
         // play as the session starts): acting on it would start the music the driver didn't ask
         // for, and over whatever the car was playing. The driver's own presses come once the
         // screen is up.
         if (display == null && code in MEDIA_KEYS) {
             if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
+            return
+        }
+        // A user remap wins over the key's normal behaviour below (never over the guard above:
+        // that's about not acting before there's a screen at all, remapped or not).
+        resolveCarKeyAction(carKeyMap, code)?.let { action ->
+            if (!down) performCarKeyAction(action)
             return
         }
         when (code) {
@@ -657,6 +684,22 @@ class CarSession(
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
             else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+        }
+    }
+
+    /** A remapped key's action (see [resolveCarKeyAction]), the same ones the keys above reach by default. */
+    private fun performCarKeyAction(action: CarKeyAction) {
+        when (action) {
+            CarKeyAction.HOME -> runtime.actions.goHome()
+            CarKeyAction.BACK -> back()
+            CarKeyAction.ASSISTANT -> runtime.assistant()
+            CarKeyAction.PLAY_PAUSE -> media.playPause()
+            CarKeyAction.NEXT -> media.next()
+            CarKeyAction.PREVIOUS -> media.previous()
+            CarKeyAction.OPEN_NAVIGATION -> runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_MEDIA -> runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_PHONE -> runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
+            CarKeyAction.NOTHING -> Unit
         }
     }
 
@@ -975,6 +1018,7 @@ class CarSession(
 
     private fun teardown() {
         closed = true
+        settings.unregisterListener(carKeyPrefsListener)
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)

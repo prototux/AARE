@@ -184,3 +184,20 @@ only adds a fallback or only applies after a failure.
   would come after hours, the watchdog notices a dead link much sooner.
 - USB accessories are matched by model only ("Android Auto", "Android Open Automotive Protocol"):
   some head units send another manufacturer. A failed openAccessory is retried once after 500 ms.
+
+## Steering-wheel key remapper
+
+A user remap is checked once, in `CarSession.onKey`, before the big `when (code)` that gives each
+key its default behaviour; a match returns early (on both the down and up event, not just up) so
+a remapped key never also falls through to its old behaviour. The remap only fires on key-up, like
+most of the keys it can replace.
+
+- Keys are recorded (code to `KeyEvent.keyCodeToString`) as they arrive, regardless of whether
+  they're mapped, so the phone's chooser can show every button this car has — including AARE's own
+  synthetic codes for dedicated car buttons (telephone, radio, media, navigation, turn-card),
+  which aren't real `KeyEvent` constants and so get a less friendly name from
+  `keyCodeToString`, but are still choosable.
+- The mapping and the seen-keys list share one encoding (`CarKeyMapCodec`): a `SharedPreferences`
+  string set of "code\tvalue" entries, decoded defensively (a malformed entry is dropped, not a
+  crash) since it's as easy for a future version to add a new field here as for a hand-edited
+  preferences file to break one.
