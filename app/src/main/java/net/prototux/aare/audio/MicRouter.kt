@@ -13,6 +13,9 @@ import net.prototux.aare.host.MicHandle
  * Gives car apps a microphone: the car's own (through the AAP microphone channel) when the head
  * unit has one, the phone's otherwise. Apps always get 16 kHz mono 16-bit PCM, the format the
  * Car App Library promises.
+ *
+ * The car's mic can also feed the phone's own apps ([CarMicForApps], through [openForPhoneApps]):
+ * both share it, so it opens with the first of them and closes with the last.
  */
 class MicRouter(
     private val carMic: () -> MicrophoneChannel?,
@@ -27,6 +30,9 @@ class MicRouter(
     @Volatile private var phoneRunning = false
     private var carRate = 16_000
     private var carChannels = 1
+    /** The phone's apps hear the car's mic: its PCM as the car sends it, and the car's answer. */
+    private class Tap(val sink: (ByteArray, Int, Int) -> Unit, val onAnswer: (Boolean) -> Unit)
+    @Volatile private var tap: Tap? = null
 
     // Synchronized: the car answers on the reader thread while clients open and close on main.
     @Synchronized
@@ -39,7 +45,8 @@ class MicRouter(
         if (mic != null && mic.opened) {
             mic.config?.let { carRate = it.samplingRate; carChannels = it.numberOfChannels }
             carRequested = true
-            mic.openMic()
+            // Already asked for (or open) for the phone's apps: its answer or its data comes anyway.
+            if (tap == null) mic.openMic()
         } else {
             carRequested = false
             startPhoneMic(c)
@@ -53,13 +60,39 @@ class MicRouter(
         if (client !== c) return
         client = null
         // Even before the car answered: otherwise its mic stays open once the answer comes.
-        if (carRequested) { carRequested = false; carMic()?.closeMic() }
+        if (carRequested) { carRequested = false; if (tap == null) carMic()?.closeMic() }
         stopPhoneMic()
         voiceSession(false)
     }
 
+    /**
+     * Opens the car's mic for the phone's apps: [sink] gets its PCM as the car sends it (reader
+     * thread, must not block), [onAnswer] whether the car opened it. False if the car has no mic.
+     */
+    @Synchronized
+    fun openForPhoneApps(sink: (ByteArray, Int, Int) -> Unit, onAnswer: (Boolean) -> Unit): Boolean {
+        val mic = carMic()?.takeIf { it.opened } ?: return false
+        val was = tap
+        tap = Tap(sink, onAnswer)
+        when {
+            was != null -> Unit
+            !carRequested -> mic.openMic()
+            // A car app has it open already: no new request, so no new answer either.
+            mic.open -> onAnswer(true)
+        }
+        return true
+    }
+
+    @Synchronized
+    fun closeForPhoneApps() {
+        if (tap == null) return
+        tap = null
+        if (!carRequested) carMic()?.closeMic()
+    }
+
     /** PCM from the car (reader thread). */
     fun onCarMic(data: ByteArray, offset: Int, length: Int) {
+        tap?.sink?.invoke(data, offset, length)
         val c = client ?: return
         if (carRate == 16_000 && carChannels == 1) {
             c.sink(data, offset, length)
@@ -72,6 +105,7 @@ class MicRouter(
     /** The car answered our request (reader thread); if it refused, the phone's mic takes over. */
     @Synchronized
     fun onCarMicOpened(ok: Boolean) {
+        tap?.let { t -> if (!ok) tap = null; t.onAnswer(ok) }
         val c = client
         if (ok || !carRequested || c == null) return
         Log.i(TAG, "car microphone refused, using the phone's")
@@ -83,6 +117,7 @@ class MicRouter(
     @Synchronized
     fun shutdown() {
         carRequested = false
+        tap = null
         client?.let { it.onStopped(); client = null }
         stopPhoneMic()
     }

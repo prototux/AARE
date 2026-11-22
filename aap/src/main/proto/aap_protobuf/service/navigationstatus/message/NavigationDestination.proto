@@ -4,4 +4,12 @@ package aap_protobuf.service.navigationstatus.message;
 
 message NavigationDestination {
   optional string address = 1;
+  // AARE: For a charging stop; names from the ChargingStationDetails message.
+  optional ChargingStationDetails charging_station_details = 2;
+}
+
+message ChargingStationDetails {
+  optional int32 min_departure_energy_wh = 1;
+  optional int32 max_rated_power_watts = 2;
+  optional int32 estimated_charging_time_seconds = 3;
 }

@@ -83,3 +83,20 @@ fun paneAt(x: Dp, totalWidth: Dp, ratio: Float): CarPane {
     val dividerStart = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value) * ratio.coerceIn(0f, 1f)
     return if (x.value < dividerStart + SPLIT_DIVIDER_WIDTH.value / 2f) CarPane.PRIMARY else CarPane.SECONDARY
 }
+
+/** The apps in the two panes and which one has focus; [secondary] null for a single pane. */
+data class SplitPanes(val primary: String, val secondary: String?, val focused: CarPane)
+
+/**
+ * Where the panes end up when [appId] is opened (from the rail, the launcher, a call…) while
+ * [primary] is the main app (null: no app on screen) and [secondary] is beside it. An app is
+ * never in both panes: one already beside the main app keeps its pane and takes the focus there,
+ * instead of opening a second copy in the main pane. Any other app takes the main pane, and the
+ * one beside it stays.
+ */
+fun openInPanes(appId: String, primary: String?, secondary: String?): SplitPanes = when {
+    secondary == null -> SplitPanes(appId, null, CarPane.PRIMARY)
+    appId == secondary && primary != null -> SplitPanes(primary, secondary, CarPane.SECONDARY)
+    appId == secondary -> SplitPanes(appId, null, CarPane.PRIMARY)
+    else -> SplitPanes(appId, secondary, CarPane.PRIMARY)
+}

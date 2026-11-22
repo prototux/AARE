@@ -147,6 +147,7 @@ class CarScreenMockups {
         override fun closeSplit() = Unit
         override fun commitSplitRatio(raw: Float) = Unit
         override fun focusPane(pane: CarPane) = Unit
+        override fun runHomeAction(id: String) = Unit
     }
 }
 

@@ -101,4 +101,19 @@ class CarSplitTest {
         assertEquals(CarPane.SECONDARY, paneAt(961.dp, total, 0.5f))
         assertEquals(CarPane.SECONDARY, paneAt(1800.dp, total, 0.5f))
     }
+
+    @Test
+    fun anAppAlreadyBesideTheMainOneTakesTheFocusInsteadOfOpeningTwice() {
+        // The phone beside navigation, then a call (or the rail) opens the phone: still one phone pane.
+        assertEquals(SplitPanes("maps", "phone", CarPane.SECONDARY), openInPanes("phone", "maps", "phone"))
+        // The main app itself: it keeps its pane and the focus comes back to it.
+        assertEquals(SplitPanes("maps", "phone", CarPane.PRIMARY), openInPanes("maps", "maps", "phone"))
+        // Any other app takes the main pane; the one beside it stays.
+        assertEquals(SplitPanes("music", "phone", CarPane.PRIMARY), openInPanes("music", "maps", "phone"))
+        // No split: the app just takes the screen.
+        assertEquals(SplitPanes("phone", null, CarPane.PRIMARY), openInPanes("phone", "maps", null))
+        assertEquals(SplitPanes("phone", null, CarPane.PRIMARY), openInPanes("phone", null, null))
+        // A stale pane beside no main app: the app gets the one pane, never both.
+        assertEquals(SplitPanes("phone", null, CarPane.PRIMARY), openInPanes("phone", null, "phone"))
+    }
 }
