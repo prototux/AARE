@@ -58,7 +58,7 @@ import net.prototux.aare.ui.theme.LocalCarDimens
 @Composable
 internal fun AssistantBar(
     entry: CarAppEntry, conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier,
-    onClose: () -> Unit, onStop: () -> Unit, onExpand: () -> Unit,
+    onClose: () -> Unit, onStop: () -> Unit, onExpand: () -> Unit, bigStop: Boolean = true,
 ) {
     DisposableEffect(conn) {
         runtime.acquireVisible(conn)
@@ -106,12 +106,16 @@ internal fun AssistantBar(
                         Text(stringResource(R.string.assistant_listening), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                // Stop: big and red, the one control of an assistant driven by the voice button
-                // (it stops the assistant, not only the bar: see CarRuntime.stopAssistant).
+                // Stop: it stops the assistant, not only the bar (see CarRuntime.stopAssistant). Big and
+                // red unless the voice button itself is the stop button (Settings.assistantStopStyle).
                 // The red circle is 64 dp; the tap area keeps the car screen's full touch target.
                 Box(Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onStop), contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Close, stringResource(R.string.assistant_stop), Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onError)
+                    if (bigStop) {
+                        Box(Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.Close, stringResource(R.string.assistant_stop), Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onError)
+                        }
+                    } else {
+                        Icon(Icons.Rounded.Close, stringResource(R.string.assistant_stop), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

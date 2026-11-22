@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -354,7 +355,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), false, touch, iconSize) { actions.openLauncher() }
         else RailButton(Icons.Rounded.Home, stringResource(R.string.dash_menu_home), false, touch, iconSize) { actions.goHome() }
     }
-    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize) { actions.assistant() } }
+    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize, stop = state.voiceButtonIsStop) { actions.assistant() } }
     val bell = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     // One poll of the phone's status for the whole rail: its battery widget and network icons share it.
@@ -490,15 +491,19 @@ private fun RailApp(
 internal fun MicButton(
     listening: Boolean,
     size: Dp = LocalCarDimens.current.touchTarget, iconSize: Dp = LocalCarDimens.current.iconSize,
+    /** The assistant is on and this button stops it (Settings.assistantStopStyle): red, with a stop icon. */
+    stop: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-    val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val scheme = MaterialTheme.colorScheme
+    val bg = when { stop -> scheme.error; listening -> scheme.primary; else -> scheme.surfaceContainerHigh }
+    val fg = when { stop -> scheme.onError; listening -> scheme.onPrimary; else -> scheme.primary }
     Box(
         Modifier.size(size).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
+        if (stop) Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.assistant_stop), tint = fg, modifier = Modifier.size(iconSize))
+        else Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
     }
 }
 
