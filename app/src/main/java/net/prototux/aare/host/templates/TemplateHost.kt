@@ -31,6 +31,12 @@ interface TemplateHost {
     /** The app's label, for headers that use Action.APP_ICON. */
     val appLabel: String
 
+    /**
+     * Tint the app's own icons with the text colour, whatever they look like. This is done
+     * for a few apps whose icons only work tinted ([net.prototux.aare.host.AppQuirks.FORCE_ICON_TINT]).
+     */
+    val forceIconTint: Boolean get() = false
+
     /** Max items for a content type (ConstraintManager.CONTENT_LIMIT_TYPE_*). */
     fun contentLimit(type: Int): Int
 
@@ -47,6 +53,15 @@ interface TemplateHost {
     fun showParkedOnlyMessage()
 
     /**
+     * The app's own colours from its car theme: what CarColor.PRIMARY and SECONDARY mean in its
+     * templates. Outside them, and for a pair the app doesn't set, the car theme's accent stays.
+     */
+    val appColors: AppThemeColors get() = AppThemeColors.NONE
+
+    /** The app may give its actions their own countdowns, not only its default action (see [rowCountdown]). */
+    val timedActionParams: Boolean get() = false
+
+    /**
      * The navigation app's map surface, for NavigationTemplate, MapWithContentTemplate,
      * PlaceListMapTemplate, RoutePreviewNavigationTemplate and MapTemplate. The renderer lays its
      * cards over it and reports the unobstructed area with [setVisibleArea]/[setStableArea]
@@ -57,6 +72,9 @@ interface TemplateHost {
 
     fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int)
     fun setStableArea(left: Int, top: Int, right: Int, bottom: Int)
+
+    /** Room (dp) to leave out of those areas along the bottom of the dashboard's map card. */
+    val mapCardBottomInsetDp: Int get() = 0
 
     /** Map gestures in pan mode, forwarded to the app's SurfaceCallback. */
     fun mapScroll(dx: Float, dy: Float)

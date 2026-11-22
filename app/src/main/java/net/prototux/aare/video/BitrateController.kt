@@ -19,7 +19,9 @@ import net.prototux.aare.aap.channels.VideoChannel
  * backlog does overflow, the channel already drops it and asks for one.
  *
  * Make one per stream (the encoder restarts with each configuration). It does nothing while the
- * projection is hidden, and nothing at all on head units that never ack (no signal to go by).
+ * projection is hidden, and nothing at all on head units that stopped acking (no signal to go by).
+ * A drop overflow stream (head units 6.0 and later) has no acks to go by either, but its socket
+ * still backs up when the link is full, so it is watched by the send latency alone.
  * Called on the encoder's thread, from its output callback.
  */
 class BitrateController(
@@ -70,7 +72,7 @@ class BitrateController(
 
     /** Call after each frame handed to [ch]. */
     fun onFrame(ch: VideoChannel) = onFrame(
-        SystemClock.elapsedRealtime(), active = ch.focused && !ch.ackless,
+        SystemClock.elapsedRealtime(), active = ch.focused && (!ch.ackless || ch.dropsOverflow),
         pending = ch.pendingFrames, congestionDrops = ch.congestionDrops,
         ackLatencyMs = ch.ackLatencyMs, sendLatencyMs = ch.sendLatencyMs,
     )

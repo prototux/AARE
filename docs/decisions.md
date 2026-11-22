@@ -149,8 +149,324 @@ stands in when nothing is left, and the last card can't be hidden.
   list. The calendar is read only when its card is shown; the weather when it is next to the clock
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
+- *Map always big* (off by default) is the one exception to the first card getting the big space:
+  with it on, the map keeps the big space wherever it is in the order and the other cards fill the
+  rest in order, so the music can come first with a big map, as with the old "music first" switch.
+  Its side in the landscape layout follows the order too (first only when the map is first), so a
+  card that comes and goes before it doesn't move it.
 
+## Wireless bootstrap and USB: compatibility first
 
+Rule: nothing may break a head unit that works today, so every change to the WPP exchange either
+only adds a fallback or only applies after a failure.
+
+- Version response: always SUCCESS, echoing the head unit's version (1.0 when it sends none). A
+  stricter answer (refusing WPP 2, 3 and 7+, or below 4.5 head units whose Wi-Fi channels the phone
+  can't use) is only logged. The channel check takes every frequency of the Wi-Fi bands the phone
+  supports: apps can't read the channels it may use where it is.
+- Our own WifiStartRequest is never sent on a first attempt. Only after an attempt where the head
+  unit answered the version exchange and then sent no WifiStartRequest before the message timeout,
+  the connector's redials to that head unit ask it to start (5 s after the version exchange, again
+  every 2 s for up to 50 s while it answers "not yet" or "already started").
+- WifiInfoRequest is repeated every 3 s; the usual message timeout still decides when to give up.
+- SSID and passphrase lose one pair of surrounding quotes below WPP 4.5; if joining that way fails,
+  the join is tried once more with them as sent.
+- First message after the RFCOMM connect: 12 s, 3.7 s on the first attempt with a wireless adapter
+  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly: at once,
+  without the 10 s wait and without using up one of the two retries for a car that isn't ready.
+- RFCOMM frames over 1024 bytes are logged, not refused.
+- Bad endpoint: reported as WifiConnectionStatus(INVALID_HOST); port 0 is accepted below WPP 4.5 (it
+  fails at the TCP connect), a port outside 0-65535 is refused. WifiConnectionStatus carries an
+  error text only for PHONE_WIFI_DISABLED, written for the driver.
+- The wireless AAP socket keeps its big buffers and gets no read timeout: the ping watchdog allows
+  20 s of silence for head units that go off channel to scan. TCP keepalive is off: its first probe
+  would come after hours, the watchdog notices a dead link much sooner.
+- USB accessories are matched by model only ("Android Auto", "Android Open Automotive Protocol"):
+  some head units send another manufacturer. A failed openAccessory is retried once after 500 ms.
+
+## Steering-wheel key remapper
+
+A user remap is checked once, in `CarSession.onKey`, before the big `when (code)` that gives each
+key its default behaviour; a match returns early (on both the down and up event, not just up) so
+a remapped key never also falls through to its old behaviour. The remap only fires on key-up, like
+most of the keys it can replace.
+
+- Keys are recorded (code to `KeyEvent.keyCodeToString`) as they arrive, regardless of whether
+  they're mapped, so the phone's chooser can show every button this car has — including AARE's own
+  synthetic codes for dedicated car buttons (telephone, radio, media, navigation, turn-card),
+  which aren't real `KeyEvent` constants and so get a less friendly name from
+  `keyCodeToString`, but are still choosable.
+- The mapping and the seen-keys list share one encoding (`CarKeyMapCodec`): a `SharedPreferences`
+  string set of "code\tvalue" entries, decoded defensively (a malformed entry is dropped, not a
+  crash) since it's as easy for a future version to add a new field here as for a hand-edited
+  preferences file to break one.
+
+## Duck the music under AARE's own speech, don't pause it
+
+`CarNotificationListener.speak()` (messages read aloud) tagged its TextToSpeech output
+`USAGE_MEDIA`. Two consequences: on the phone itself, nothing asked for audio focus at all,
+and for car audio (`CarSession`'s audio-policy/Shizuku capture), `USAGE_MEDIA` is one of
+`CaptureMethods.MEDIA_USAGES`, so AARE's own speech shared the "media" channel, whose `Focus`
+asks the car for plain `AUDIO_FOCUS_GAIN` (full, pausing other car sound) rather than the
+"guidance" channel's `AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK` already used for phone navigation
+voice.
+
+- Retagged it `USAGE_ASSISTANT` (one of `CaptureMethods.GUIDANCE_USAGES`): when the car exposes a
+  guidance channel, AARE's own speech now rides the channel that already asks to duck, not pause.
+- Added an actual phone-side `AudioFocusRequest` (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`) around the
+  TTS calls, tracked with an utterance-progress listener so it is requested once per burst of
+  speech and abandoned once every queued utterance has finished (or failed) — not just on every
+  individual `speak()` call, since `QUEUE_ADD` can queue several in a row.
+- `TextToSpeech.speak()` refuses an utterance (no listener callback ever follows) while the engine
+  is still starting, or after it failed: messages asked for during start-up wait for the engine,
+  and a refused or dropped utterance counts as done at once, so the focus (and the ducking) can't
+  outlive the speech. The count and focus are behind one lock: the listener runs on TTS's thread.
+- AARE has no listening (speech-to-text) of its own to apply the "exclusive transient focus while
+  listening" half of the request to: `CarRuntime.openMicrophone` only relays the car's microphone
+  to a connected car app (an assistant such as Lapin), which requests its own focus if it wants to.
+
+## Video from media apps: the app itself, parked only
+
+"Show video" on the car's media screen launches the media app on the car screen with the
+standalone-app launcher (root or Shizuku), instead of a video path of AARE's own: media sessions
+carry no video, and the app's own player already handles its streams and DRM. It is opt-in, under
+the standalone apps' switch. The app's screen sits above AARE's controls, or fills the app area
+(not the rail). When driving starts, the app stays on its display for its sound, under the cover
+art. Parking again hands the display a new surface rather than relaunching the app, because a
+relaunch would end the video.
+
+## `aare://` links for assistants without a code path into AARE
+
+`CarControlProvider` lets an assistant running on the car screen call car tools directly, but an
+assistant that only answers in a notification or a chat link had no way to act on the car. Added
+`AssistantLinkActivity`, an exported activity for `aare://navigate|play|open|call` links, backed
+by a pure parser (`AssistantLinks.parse`, unit-tested) that doubles as the whole allowlist.
+
+- `java.net.URI` + manual query decoding instead of `android.net.Uri`: this module's unit tests
+  don't pull in Robolectric, and the Android stub jar's `Uri` returns nulls without it.
+- Only the chosen assistant may open a link (review fix): no `BROWSABLE`, so no web page can
+  start it (AARE's browser included), and the caller Android reports (`getCallingPackage()`, else
+  the system-filled referrer, never `EXTRA_REFERRER`) must be the package `Assistants.authorized`
+  returns, the same app `CarControlProvider` accepts. Rejected: trusting the allowlist alone with
+  any caller allowed, which let any app or page start navigation on the car screen.
+- `navigate`, `open` and `call` wait for the driver to confirm on the car screen; only `play` runs
+  straight away. A link also needs an already-running car session.
+- The log records the action kind, never the link (destination, phone number).
+- `open`/`play` accept `app`/`action` with `q` as a fallback alias, so the three link patterns in
+  the feature request (`?q=`) and the more specific parameter names both work.
+
+## Plain-language diagnostic trouble codes
+
+The car data viewers (phone and car) showed the car's diagnostics sensor raw, as hex bytes. Added
+`DtcCodes`, decoding the two bytes per code (AAP's `DiagnosticsData.dtc` has no documented format
+beyond "bytes") per the standard SAE J2012 / ISO 15031-6 bit layout into the familiar P/C/B/U +
+4-digit codes, and a catalogue AARE ships (`app/src/main/assets/dtc/generic.json`, ~350 entries,
+written from scratch for this PR) for the SAE-generic ones.
+
+- Classification follows SAE J2012's ranges per system: P0, P2 and P34-P39 generic, P1 and
+  P30-P33 manufacturer-specific; for C, B and U, 0 and 3 generic, 1 and 2 manufacturer-specific.
+  (A plain "second character 0/2" rule got B2/C2/U2 and P34-P39 wrong.)
+- The two-bytes-per-code layout is the usual OBD-II one, but AAP doesn't document it: it's a
+  guess. So both viewers keep each code's raw bytes next to it ("P0128 (01 28) — ..."), and a
+  zero pair is taken as padding rather than shown as "P0000".
+- The catalogue is read off the main thread, once, the first time a viewer has codes to show;
+  until then generic codes show without a description.
+- Manufacturer-specific codes show their family ("manufacturer-specific powertrain code") and no
+  description: AARE has no way to know what a given manufacturer assigned to e.g. P1300, and
+  guessing would be worse than saying so.
+- The catalogue is deliberately smaller than "every code ever assigned" (~350, not thousands):
+  common P0 sensor/misfire/emissions/transmission ranges, the best-known P2 codes, the common
+  U0 network-loss codes, and a handful of representative C0/B0 ones, covering what a driver is
+  actually likely to see.
+- Both viewers show one line per decoded code ("P0128 (01 28) — Coolant thermostat below
+  regulating temperature") instead of the previous single hex-byte row. The descriptions AARE
+  writes itself (manufacturer-specific, unknown) are translated; the catalogue's are English.
+
+## Calls through messaging apps from the car's contacts
+
+The car's contact list also offers a call through a messaging app (`VoipCalls.CALL_MIME_TYPES`:
+WhatsApp and WhatsApp Business, by their `vnd.com.whatsapp.voip.call` and
+`vnd.com.whatsapp.w4b.voip.call` contact rows) when that app has a self-managed phone
+account (it hands its calls to Android's telephony; Android 11+). The entry shows the app's name and
+icon with the phone number of the app's own copy of the contact; a tap opens that contact row in
+the app (`ACTION_VIEW` on the data row, typed with its MIME type), which starts the call. If the app
+hasn't the microphone permission, the car screen says so and a phone notification opens its
+settings; the call still starts. Google-only calling apps aren't listed. Not done: VoIP calls
+don't show in the car's in-call card (it follows the telephony call state). Android drops the app's
+call screen without an error when the phone is locked, or (Android 10+) when AARE has no activity
+in front and may not draw over other apps; `VoipCalls.place` checks for those first and reports the
+call as failed, so the car says to call from the phone rather than show a call that never starts.
+
+## Setup through Shizuku
+
+When Shizuku runs and allows AARE, the "Finish setting up" card offers "Grant AARE's permissions
+with Shizuku", and the Connection page offers to stop Google's Android Auto taking the car. A small
+Shizuku user service (`setup/ShellSetupService`, process suffix `setup`, removed after each task)
+runs the commands as the shell. See `setup/ShizukuSetup.kt`.
+
+- No call takes a command line: the service only builds the commands in `ShizukuSetup`, for AARE's
+  own package and the caller's Android user (`uid / 100000`, the user AARE runs as). It runs
+  `pm grant` only for a permission the setup asks for on that release, `cmd notification
+  allow_listener` only for AARE's listener, and `pm disable-user` / `pm enable` only for Android
+  Auto. Each command and its result go to the connection log.
+- The one-tap grant skips each permission's own dialog, so its button says beforehand what it
+  grants (microphone, location, contacts, call log, calendar, phone calls, nearby devices, local
+  network, notifications and notification access): nothing sensitive is granted without the user
+  having read it on the button they tap.
+- Android Auto: opt-in, behind a confirmation dialog, `pm disable-user` only. It is never
+  uninstalled and its data is never cleared, and "Enable Android Auto again" (`pm enable`) undoes it.
+  The state shown comes from PackageManager, not from the command's output.
+- Mock location (an app op) and Do Not Disturb access are not granted: the setup card doesn't ask
+  for them either.
+## Car text size and control size
+
+Two independent settings scale the car screen: text size (a font-scale multiplier on
+`LocalDensity`) and control size (a multiplier on `CarDimens`' touch targets, rail width, gutter
+and icon size; corner radii are a theme's shape choice, not a control size, so they're untouched).
+
+- `CarTheme()` always resets `LocalCarDimens` to `theme.dimens` (themes are data, swapped whole),
+  and the dark-bar rail calls `CarTheme()` a second time for night colours. Scaling `theme.dimens`
+  directly inside `CarTheme()` from a new ambient `LocalCarControlScale` (set once in
+  `CarRuntime.Root`) survives that nested call; overriding `LocalCarDimens` from outside `CarTheme`
+  (as the dashboard-cards editor's `touchTarget` parameter does) would not.
+- Text size instead overrides `LocalDensity` once at `Root`'s top: Compose's `MaterialTheme`/
+  `CarTheme` never touch `LocalDensity`, so that override already survives nested calls without
+  the same trick.
+## Night mode from the phone's light sensor
+
+A setting lets "Car's day/night" take its reading from the phone's own ambient light sensor
+instead of the car's signal. The decision is hysteresis, not a single threshold: separate
+night/day lux thresholds with a dead zone between them, and a new reading only takes effect once
+it has held for a few seconds (LightNightDecider). Without this, a streetlight passing by or a
+hand briefly covering the sensor would flicker the car screen's whole colour scheme.
+
+- No sunset/time-of-day option: AARE has no sunset calculation anywhere (checked DashboardInfo's
+  weather code), and adding one for this alone would be a new, unrelated feature.
+- The setting only shows under "Car's day/night": a fixed Dark/Light theme has no night mode to
+  source, so showing it there would imply it does something it doesn't.
+- The sensor is started and stopped with the setting (and always released when the car session
+  ends), not left registered when unused: a light sensor is cheap, but there's no reason to keep
+  listening when nothing reads the result.
+- The decider starts with no state and reports its first stable reading, so a bright start turns
+  the screen light without waiting for a change. The light sensor only reports changes, so a timer
+  ends the stability window when no further event comes. The sensor only runs while the colours
+  follow day/night and the source is the light sensor.
+
+## Wireless handshake for aftermarket adapters
+
+The Bluetooth bootstrap has two answer orders (`WirelessHandshake`): AARE's own (serial and
+phone_info in the version response, pings throughout), which strict built-in head units need, and
+the official phone's exact order, which some aftermarket adapters need (status-only answers, the
+start request acknowledged before the credentials are asked for, no phone pings). Adapters also get
+the head unit's own version back in the AAP version exchange. "Wireless compatibility" picks one.
+
+- The adapter order is opt-in: only the Adapter choice turns it on. Auto (the default) is the
+  standard order, exactly the old behaviour, except for a car that last reached service discovery
+  with the adapter order (remembered per Bluetooth address, 32 at most), which only happens after
+  the driver chose Adapter: a driver with both kinds of car sets Adapter once, connects the adapter
+  car, and goes back to Auto. Built-in forces the standard order even for such a car.
+- Rejected: guessing the order from the Bluetooth name, and trying the other order after a failed
+  attempt. A name is chosen by whoever sells the box (or renames it), and a built-in head unit that
+  is slow to start would get an order it refuses; a wrong guess costs a connection the driver
+  cannot explain. The adapter names #232 uses for its short first-message timeout are the only
+  adapter-name list.
+- One `WirelessConnector` serves a whole series of attempts (the "car not ready yet" retries), as
+  before: it carries state from one attempt to the next (#232's redial that asks a waiting head
+  unit to start, an adapter's one quick first try), and the handshake doesn't change within a series.
+- No error text goes to the head unit: a failed WifiConnectionStatus carries the status only (the
+  text is for the driver, and ours is a log line).
+- The per-car memory moves to `KnownHeadUnits` (#233) once that is merged.
+## Rail apps: a flat chosen list replaces the dynamic slots, not alongside them
+
+When the user picks apps for the rail on the phone (`Settings.railApps`), the rail shows exactly
+that list, in that order, clickable to open each app directly — it stops binding the nav/media
+slots to whatever is "active" and showing recents. Mixing both (the user's picks plus the dynamic
+nav/media/recent behaviour) would make the setting's effect unpredictable. An empty list (nothing
+chosen, the default) keeps today's dynamic rail untouched. Resolution happens at render time from
+live `CarUiState.apps` (`resolveRailApps`), so an uninstalled app's key is skipped without special
+handling and nothing needs to be recomputed when the app list changes.
+## Rail widgets: battery split out of the network icons, which stay unconditional
+
+`PhoneStatusIcons` (wifi/signal + battery, together) stays for the layouts that already show it
+as one unit (the dock, the classic bottom bar). The configurable rail (`Settings.railWidgets`)
+only lists what the feature asked for — clock, outside temperature, phone battery, weather — so
+`NetworkStatusIcons` (wifi/signal) was split out of it and kept as unconditional rail chrome next
+to the chosen widgets, rather than inventing a "network" widget nobody asked to configure or
+folding wifi/signal into the "battery" pick where turning battery off would silently drop them too.
+
+## Outside temperature: the car's sensor is always Celsius, shown with an explicit unit
+
+The fetched weather already carries the right symbol for the phone's locale (°F in the US...), but
+AAP's `Environment` sensor has no locale: converting it would need a units setting nobody asked
+for. The temperature widget shows the car's own reading as "<value>°C" when the car reports one,
+falling back to the weather (with its own unit) only when it doesn't.
+
+## Calendar agenda: a day-only widening of the query window, gated on the count
+
+`DashboardInfo.nextEvents(context, limit)` only widens its ContentResolver window (12 hours to a
+week) when `limit > 1`. At the default (1), the window and the single returned event are exactly
+what `nextEvent` returned before, so turning the setting on is the only way to see anything new —
+nothing shifts for someone who never opens the new setting. The day label itself
+(`labelAgenda`, in `car/DashboardInfo.kt`) takes a clock and zone instead of reading the real one,
+so it's a plain JVM-testable function; `CalendarAgendaCard` calls it with the real clock and zone
+and still renders a single event exactly as `CalendarCard` always has, so the on-screen look at the
+default setting is unchanged, not just the data behind it.
+
+## Reconnecting a wireless link that dropped
+
+A wireless session that reached the car screen and then failed without a bye-bye from either side
+is reconnected by itself: 5 single attempts, after 3, 6, 9, 12 and 15 s (`WirelessReconnect`),
+apart from the initial connect's "car not ready yet" retries. A Disconnect, the car's bye-bye and
+the phone's Stop all say goodbye first, so they are never reconnected.
+
+- Ignition off drops the link without a bye-bye too; it is told apart by the car's Bluetooth
+  disconnecting (ACL_DISCONNECTED) up to 20 s before the drop or any time after it. Further back
+  doesn't count: some adapters hang up their Bluetooth link right after the bootstrap.
+- A reconnected session that drops again within a minute continues the same budget, so a link
+  that keeps failing is not reconnected forever.
+
+## One-tap wireless: companion device association
+
+On Android 13+ the user can associate a car already used wirelessly (its Bluetooth address is a
+trusted head unit's key) as a companion device (`CarCompanion`). Android then binds
+`CarPresenceService` when that car's Bluetooth connects, which starts the wireless connection,
+and lets AARE start its foreground service from the background (no "tap to connect" notification).
+
+- The association is with the car's Bluetooth address. Android approves a WifiNetworkSpecifier
+  request by itself only when an association matches the access point's MAC (the BSSID), which
+  head units rarely share with their Bluetooth address (`WifiApproval.Way.COMPANION` handles the
+  ones that do).
+- Otherwise, opt-in and only for associated cars, a Shizuku helper (`ShellWifiService`) runs the
+  Wi-Fi service's shell command `cmd wifi network-requests-set-user-approved <pkg> yes` right
+  before the request, and `no` once it is answered. That approval is per app, not per request: while
+  it is on, every network request AARE makes is approved, and it would stay on if AARE were killed
+  before `no`. So `no` runs in a finally (also after a failed `yes`), and a note written before
+  `yes` (`shell_wifi` preferences) makes the projection service take a leftover approval back when
+  it next starts (`ShellWifi.recover`, never while a join holds one; the note stays until `no`
+  works). The network request stays AARE's own (app-only, local-only, never the default network).
+  If the command fails, Android asks as before.
+- No automotive companion profile: it needs a permission only Android Auto's role holder gets.
+## Phone assistants on the car screen (no car app)
+
+The voice button's fallback for an assistant without a car app (Google Assistant and most others)
+opened it on the phone (`Assistants.startOnPhone`). An opt-in setting
+(`Settings.assistantOnCarScreen`) instead shows it on the car screen through the same virtual-
+display launcher as standalone apps (`AppLauncher`), in a bar positioned like the car-app assistant
+bar rather than full screen.
+
+- Off by default (today's behaviour kept); only offered when the launcher is available (root or
+  Shizuku), same gate as standalone apps.
+- It opens the assistant's voice UI (`ILaunchHost.startAssistant`: `ACTION_VOICE_COMMAND`, else
+  `ACTION_ASSIST`, as `Assistants.startOnPhone` does), and the app's main activity only if it has
+  neither, not `getLaunchIntentForPackage`'s home screen.
+- Parked only, like other launched phone apps: it is an ordinary phone app mirrored with injected
+  touches, not a car template. While driving (`ui.drivingRestricted`, so passenger mode lifts it)
+  the voice button opens the assistant on the phone, as with the setting off, and a bar left open
+  is closed when driving starts.
+- On a launch failure (no root/Shizuku binder, nothing to open) it falls back to
+  `Assistants.startOnPhone`, same as when the setting is off.
+- It shares `LaunchedAppSurface` with `StandaloneAppScreen`, and installs no Back handler: the
+  car's Back closes the bar first.
 ## Car microphone for phone apps
 
 Opt-in (`Settings.carMicForPhoneApps`, off by default), Shizuku on Android 10+. The Shizuku helper
@@ -173,3 +489,178 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
+## Car apps' own colours
+
+A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
+else on its application, else its application theme) with `carColorPrimary`/`carColorPrimaryDark`
+and `carColorSecondary`/`carColorSecondaryDark`. CarColor.PRIMARY and SECONDARY in that app's
+templates take those colours (day or night variant), for every app and API level. Everything else
+on the car screen, and a pair the app doesn't set, keeps the car theme and its accent: the app's
+colours only reach what the app itself asked to be coloured. The theme *style* an app can report
+from Car App Library 1.9 (`getAppTheme`) only changes progress-bar end caps, which the library
+version AARE builds against can't express, so it isn't asked.
+
+## Car app action countdowns
+
+In a row of actions (Pane, Message, SignIn and map pane buttons, a list row's actions) the default
+action (`Action.FLAG_DEFAULT`) counts down 10 s, its button filling up, and then clicks itself.
+In a row without one, a few listed apps (`TemplateQuirks`: Waze, Uber Driver, the library samples)
+can give an action their own countdown with a title variant "TimedActionParams|duration:N"
+(seconds, held to 3-60 s so an app can't make a button click itself before the driver can read it,
+or wait forever); only the first such action of a row counts down, and those variants are never shown as
+text, for any app. The countdown is time-based, not an animation, so phones with animations off
+don't click the action at once; a template refresh with the same action keeps counting.
+Alerts keep their own timeout, not their default action's countdown.
+
+## Car app screens: refresh or new screen
+
+A new template from a car app is a refresh of the screen on show (keeping what's typed, pan mode
+and the scroll position) when the screen stack has the same depth and screens and the top
+template has the same class. For the apps in `TemplateQuirks.mapHeaderStartsScreen` (Waze from
+versionCode 1030423, the library samples), a MapTemplate whose header title changed (or whose
+header came or went) is a new screen too. Other content checks (a pane's header, its loading
+state, the rows) aren't made.
+
+## Home actions: one shared connection, secrets apart, plain http only at home
+
+Smart-home actions and tiles (`docs/home-actions.md`) run through one process-wide `HomeHub`, shared
+by the car session and the on-phone preview: two connections with the same MQTT client id would
+knock each other off the broker. Arrival triggers run only for a car session. The MQTT client is
+AARE's own (MQTT 3.1.1 without QoS 2 or wills): a few hundred tested lines instead of a new
+dependency. The broker password and every header value go to a private preferences file of their
+own (`home_secrets`), not the main settings, so a settings export can't carry them whichever way it
+is built; header values all count as secrets because that is where tokens go.
+
+Plain `http://` (maintainer's decision): https stays the default, and http is allowed only to the
+home network (localhost, `*.local`, RFC 1918, 169.254/16, loopback, `fc00::/7`), only when the HTTP
+server's *Allow plain http on my home network* is on, with a warning. Public http stays refused.
+Opening cleartext in the network security config was rejected: it can't be limited to address
+ranges and would apply to the whole app (the browser too). Plain http goes instead through AARE's
+own small HTTP/1.1 client (`PlainHttp`), to the very address that passed the check, so a name
+can't pass as private and then connect elsewhere.
+
+Arrival triggers (maintainer's decision): opt-in per action (off by default), and they never send
+by themselves: the car screen always asks for one tap, whatever the action's *Ask first*, because a
+position can be wrong and nobody watches the screen when it fires.
+
+## Automatic Bluetooth pairing for calls (Shizuku, opt-in)
+
+Builds on #229 (maintainer's decision): `BluetoothPairing` and `PairingCheck` handle the car's
+authentication data (BluetoothAuthenticationData) and match it with Android's pairing request,
+for everyone. This option only adds what an app can't do: when the car answers AARE's Android
+Auto pairing request with "not paired" and the user turned it on (Android 12+), AARE starts the
+bond itself (createBond, an app's own BLUETOOTH_CONNECT), and a Shizuku helper
+(`ShellBluetoothService`) answers what `PairingCheck` accepted: setPairingConfirmation for a
+matching numeric comparison (it needs BLUETOOTH_PRIVILEGED, which only the shell has here), or
+setPin when AARE's own setPin was refused. The helper can do nothing else.
+
+- Scope: only the address the head unit announced on its Bluetooth channel, checked again on every
+  broadcast; nothing else is ever bonded or confirmed.
+- A numeric comparison is only confirmed when `PairingCheck` found its passkey equal to the one the
+  car sent, so a different device can't slip in under the car's address; a mismatch is never
+  confirmed. Anything else is left to Android's dialog, which stays up (the pairing broadcast is
+  not aborted) and is the fallback for every failure.
+- On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
+  that is why.
+## Background location, opt-in (#329)
+
+A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
+foreground service has the location type. Since Android 14 a service started from the background
+(AARE started by the car's USB or Bluetooth) only gets it when the app may use location all the
+time, so AARE declares `ACCESS_BACKGROUND_LOCATION`. Declaring it grants nothing: the user turns it
+on from *Location > Navigation with the phone locked*, which opens AARE's app settings (Android 11
+and later only allow "Allow all the time" there). Without it nothing changes, and the connection
+log says what to turn on when the location type was refused. Tested by a user on a real car with
+the same one-line manifest change (#329).
+## Launched apps while driving: a rule per app
+
+Each launched phone app has a driving rule, stored by package (`launch/DrivingRules.kt`): parked
+only (the default, for every app), audio only, or navigation. "Navigation" is offered only to
+navigation apps (the phone screen's `KNOWN_NAVIGATION`, or an app whose category is maps): it shows
+the app while driving and makes it the car's navigation app. There is no "allowed" rule for other
+apps: a passenger who wants one while driving uses passenger mode (ignore driving), which lifts
+every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
+the app's media session as well as hiding its screen (before, the card said "paused" while the
+sound went on), which is what tells it apart from "audio only". `StandalonePlaybackGuard` pauses
+it when driving starts and again each time it starts playing until driving ends (an autoplayed
+next track or video), whether or not its screen is open; not for a package that is also a hosted
+media app, whose sound is allowed while driving.
+
+## Phone navigation apps launched on the car screen
+
+(From #244.) A launched phone app (root/Shizuku launcher) counts as the car's navigation app when
+its driving rule is "navigation", which only navigation apps are offered (above). It then takes
+the rail's navigation slot, receives "navigate to" as an `ACTION_VIEW` of the same `geo:` URI hosted
+apps get (through the launcher's `view`, which only accepts `geo:`, as the helper starts activities
+with shell or root rights), and stays on screen while driving, like the phone screen's navigation
+apps. The dashboard's map card doesn't show its map: the launcher has one display per app, owned
+by the full-screen view, and moving it between the card and full screen would restart the app and
+its route at each switch. The card offers to open it, and shows its directions once it posts them.
+No Home/Work shortcuts: AARE has none for hosted navigation apps either.
+## Settings export and import
+
+Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each setting that may move
+between phones, with the `SharedPreferences` type Settings.kt reads it with. A setting added later
+stays out until someone adds it there on purpose.
+
+- An import file is not trusted. An entry with an unknown key, a blocked key or another type than
+  the allow-list's is skipped (and counted in the "imported" message), never written: an Int where
+  Settings calls `getBoolean` would throw `ClassCastException` on every launch, a crash loop the
+  user can only leave by clearing the app's data.
+- `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
+  head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
+  exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
+  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  be switched on by hand on the phone itself. A test checks the two lists never overlap.
+- A file carrying a blocked key (hand-edited, or from a version that exported one) leaves it
+  unchanged on import, in particular `hu_server_localhost`, `standalone_apps` and
+  `cert_auto_update`; the import message names those keys in one line ("not imported, for
+  safety"), apart from the unknown/invalid count, and `Settings.restore` refuses them a second time.
+- Device-specific state (instance id, update and certificate caches, the phone's Bluetooth MAC,
+  connection history, already-asked permissions) and anything secret (home-automation servers,
+  MQTT hosts and users, tokens, passwords) are simply not allowed. Trusted head-unit certificates
+  live in a separate preferences file (`PinnedHeadUnits`) and are never read here.
+- A "custom" wallpaper is left out on import: the photo itself isn't in the file.
+- Each value is tagged with its type rather than stored as a bare JSON value: the exported text has
+  no int/long/float distinction of its own, so an untagged `180` wouldn't say which
+  `SharedPreferences.Editor.put*` call it came from.
+- The file is read and parsed off the main thread, and refused past 1 MB (a real export is a few
+  KB). Failures show a fixed message and log only the exception's kind: a JSON error's message
+  quotes the file. After an import the settings screen is rebuilt (`key` on a generation counter),
+  so no card keeps showing, and on its next tap writing back, a value from before the import.
+
+## Split screen: which app can take the second pane
+
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+
+Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
+
+Dragging the divider moves an overlay handle only; the real pane weights (and so a hosted app's map surface size) update once, on release, per the project's rule against resizing a surface on every drag frame.
+
+`screenBack` (a single field for "the screen with its own back stack") became a map keyed by app id (`registerScreenBack`/`unregisterScreenBack`), since split screen can now put two such screens on screen together (e.g. the browser beside messaging) where before only one app was ever visible at a time.
+
+Scoped to the taskbar layout and screens ≥900 dp wide (the brief's number); the dock and classic layouts keep their current one-app behaviour.
+
+An app is never in both panes (`openInPanes`): opening one that is already beside the main app (from the rail, or the phone during a call) moves the focus to its pane instead of opening it a second time in the main pane; any other app takes the main pane and the one beside it stays.
+
+## Knob/D-pad reachability check (issue #320)
+
+Every car-screen control must be reachable, highlighted and usable by a rotary knob or D-pad, not
+just by touch: on knob-only head units (most Mazdas, older iDrive, Lexus/Mercedes touchpads) a
+control the knob can't reach is unusable. Two had slipped through before this: the dock's tap
+targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; approved by the owner.
+
+- **`Modifier.carClickable(shape, onClick)`** (`ui/car/CarFocus.kt`) pairs the existing
+  `carFocusHighlight` with the click itself, so the knob-friendly way is also the easy way. Car
+  screen clickables (`ui/car`, `media`, `host`) moved over to it.
+- **`CarScreenReachabilityCheckTest`** (`app/src/test/java/net/prototux/aare/ui/car/`) is a plain
+  text scan of those packages' sources for raw `.clickable`/`.toggleable`/`.selectable`/
+  `combinedClickable`, tap/drag gesture detectors, and Material `Slider`/`Switch`/`Checkbox`. No new
+  dependency: no Robolectric, no UI test framework. A justified exception goes in its `allowlist`
+  with a one-line reason (kept short; migrating to `carClickable` is preferred). The phone UI isn't
+  checked.
+- **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
+  (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
+  then those stay allowlisted.

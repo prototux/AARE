@@ -97,8 +97,8 @@ internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                 else -> false
             }
         }
-        runtime.screenBack = back
-        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
+        runtime.registerScreenBack(CarRuntime.BROWSER_ID, back)
+        onDispose { runtime.unregisterScreenBack(CarRuntime.BROWSER_ID, back) }
     }
 
     Box(modifier.background(Color.Black)) {

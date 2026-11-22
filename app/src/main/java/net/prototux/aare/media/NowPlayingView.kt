@@ -3,7 +3,6 @@ package net.prototux.aare.media
 import android.os.SystemClock
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -60,8 +59,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /**
  * Now playing: big art, title/artist/album, progress (seekable when the app allows it), transport
@@ -136,7 +135,8 @@ private fun Details(state: SourceState, info: PlaybackInfo, source: PlaybackSour
 
 /**
  * The transport row across the full width: previous / play-pause / next in the middle, the app's
- * own buttons split on both sides, the queue at the end. Extra buttons are dropped when narrow.
+ * own buttons split on both sides (and in an unusable skip button's place, see [transportRow]),
+ * the queue at the end. Extra buttons are dropped when narrow.
  */
 @Composable
 private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: SourceState, setView: (MediaView) -> Unit) {
@@ -144,17 +144,18 @@ private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: Source
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val hasQueue = state.queue.isNotEmpty()
         val slots = ((maxWidth - PLAY_SIZE - touch * 2) / touch).toInt() - (if (hasQueue) 1 else 0)
-        val actions = state.actions.take(slots.coerceAtLeast(0))
-        val left = actions.take((actions.size + 1) / 2)
+        val row = transportRow(state.actions, slots, state.canPrevious, state.canNext, state.reservePrevious, state.reserveNext)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-            left.forEach { ActionButton(hub, it) }
-            CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
+            row.left.forEach { ActionButton(hub, it) }
+            row.previous?.let { ActionButton(hub, it) }
+                ?: CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
             CircleButton(
                 if (state.showPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (state.showPause) R.string.media_action_pause else R.string.media_action_play),
                 onClick = source::playPause, filled = true, size = PLAY_SIZE,
             )
-            CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
-            actions.drop(left.size).forEach { ActionButton(hub, it) }
+            row.next?.let { ActionButton(hub, it) }
+                ?: CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
+            row.right.forEach { ActionButton(hub, it) }
             if (hasQueue) CircleButton(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.media_queue_title), onClick = { setView(MediaView.QUEUE) })
         }
     }
@@ -210,7 +211,7 @@ private fun ActionButton(hub: DefaultMediaHub, action: CustomAction) {
     val d = LocalCarDimens.current
     val icon = rememberIcon(hub.art, action.icon, 96)
     Box(
-        Modifier.size(d.touchTarget).clip(CircleShape).carFocusHighlight(CircleShape).clickable { action.run() },
+        Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape) { action.run() },
         contentAlignment = Alignment.Center,
     ) {
         if (icon != null) {
@@ -235,8 +236,7 @@ internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> U
             val bg = if (entry.current) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
             Row(
                 Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium).background(bg)
-                    .carFocusHighlight(MaterialTheme.shapes.medium)
-                    .clickable { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
+                    .carClickable(MaterialTheme.shapes.medium) { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
