@@ -6,6 +6,8 @@ import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationResultOuter
 import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.bluetooth.message.BluetoothPairingRequestOuterClass.BluetoothPairingRequest
 import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
+import aap_protobuf.service.inputsource.message.InputFeedbackOuterClass.InputFeedback
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.media.sink.message.KeyBindingRequestOuterClass.KeyBindingRequest
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClass.MediaPlaybackMetadata
@@ -43,6 +45,17 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
         ?: service.inputSourceService.touchscreenList.firstOrNull()
     @Volatile var touchPad = service.inputSourceService.touchpadList.firstOrNull()
         private set
+    /** The feedback (a click, a haptic pulse) the car can play when asked, from its descriptor. */
+    val feedbackEvents: Set<FeedbackEvent> = service.inputSourceService.feedbackEventsSupportedList.toSet()
+
+    /**
+     * Asks the car to play [event] (any thread). Only for an event the car listed: it
+     * sends none of the others.
+     */
+    fun sendFeedback(event: FeedbackEvent) {
+        if (!opened || event !in feedbackEvents) return
+        send(InputMsg.INPUT_FEEDBACK, InputFeedback.newBuilder().setEvent(event).build())
+    }
 
     override fun onOpened() {
         // Bind every key the car has: we decide later what each one does.

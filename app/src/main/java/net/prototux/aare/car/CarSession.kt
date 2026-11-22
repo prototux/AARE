@@ -6,7 +6,9 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
+import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
@@ -29,7 +31,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.ViewConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -371,6 +375,7 @@ class CarSession(
         mainInput?.let { s ->
             InputChannel(s, inputListener).also { ch ->
                 ch.touchScreen?.let { touchSize = it.width to it.height }
+                setUpInput(ch)
                 channels += ch
                 DiagLog.add("input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
@@ -753,6 +758,48 @@ class CarSession(
 
     @Volatile private var touchSize: Pair<Int, Int>? = null
 
+    /** The car's input channel, for input feedback. */
+    @Volatile private var input: InputChannel? = null
+    /** Focus navigation by the car's touchpad, when the car says its touchpad is for that. */
+    @Volatile private var touchpad: TouchpadNavigator? = null
+
+    /** Keeps the car's input channel and sets up its touchpad, if it has one. */
+    private fun setUpInput(ch: InputChannel) {
+        input = ch
+        val pad = ch.touchPad ?: return
+        // A touchpad is used only to move the focus, and only one the car marks for
+        // UI navigation; another pad's events go to apps that read touchpads, which AARE has none of.
+        val line = if (pad.uiNavigation) {
+            val thresholds = TouchpadThresholds.of(pad)
+            touchpad = TouchpadNavigator(thresholds) { code -> display?.moveFocus(code) == true }
+            "focus navigation, step ${thresholds.move}/${thresholds.multiMove}"
+        } else "not for UI navigation: ignored"
+        val physical = if (pad.physicalWidth != 0 && pad.physicalHeight != 0) " (${pad.physicalWidth}x${pad.physicalHeight} mm)" else ""
+        Log.i(TAG, "input: touchpad ${pad.width}x${pad.height}$physical sensitivity ${pad.sensitivity}: $line")
+        DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
+    }
+
+    /** A touchpad report (reader thread). */
+    private fun onTouchpad(ev: TouchEvent) {
+        val nav = touchpad ?: return
+        // Drop a report without pointers or naming a pointer it doesn't carry.
+        if (ev.pointerDataCount == 0 || ev.actionIndex >= ev.pointerDataCount) return
+        val p = ev.getPointerData(0)
+        val action = ev.action.number
+        main.post {
+            if (closed || display == null) return@post
+            // The car can click or buzz on each step.
+            if (nav.onEvent(action, p.x.toFloat(), p.y.toFloat())) input?.sendFeedback(FeedbackEvent.FEEDBACK_FOCUS_CHANGE)
+        }
+    }
+
+    /** The car's keys, with metastate and long presses injected on the main thread. */
+    private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
+        override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
+        override fun cancel(task: Runnable) = main.removeCallbacks(task)
+        override fun uptimeMillis() = SystemClock.uptimeMillis()
+    }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
+
     private val inputListener = object : InputChannel.Listener {
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
@@ -761,8 +808,8 @@ class CarSession(
             }
             if (report.hasKeyEvent()) {
                 for (k in report.keyEvent.keysList) {
-                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} long=${k.longpress}")
-                    main.post { onKey(k.keycode, k.down, k.longpress) }
+                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} meta=${k.metastate} long=${k.longpress}")
+                    main.post { if (!closed) keys.onKey(k.keycode, k.down, k.metastate, k.longpress) }
                 }
             }
             if (report.hasRelativeEvent()) {
@@ -781,6 +828,7 @@ class CarSession(
                     }
                 }
             }
+            if (report.hasTouchpadEvent()) onTouchpad(report.touchpadEvent)
         }
     }
 
@@ -801,7 +849,10 @@ class CarSession(
         }
     }
 
-    private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+    private fun onKey(key: CarKey) {
+        val code = key.code
+        val down = key.down
+        val longPress = key.longPress
         // For the "Car buttons" chooser: every key the car has ever sent, by a readable name.
         if (code !in carKeysSeen) {
             carKeysSeen = carKeysSeen + code
@@ -826,7 +877,7 @@ class CarSession(
             return
         }
         when (code) {
-            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
@@ -842,8 +893,19 @@ class CarSession(
             KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
-            else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+            else -> dispatchCarKey(key)
         }
+    }
+
+    /** A key for the car screen itself: the D-pad, Enter, letters... */
+    private fun dispatchCarKey(key: CarKey) {
+        val d = display ?: return
+        val flags = if (key.down && key.longPress) KeyEvent.FLAG_LONG_PRESS else 0
+        d.dispatchKey(KeyEvent(key.downTime, SystemClock.uptimeMillis(),
+            if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
+            key.repeat, key.metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags))
+        // With a touchpad for navigation, the car is asked for its select feedback.
+        if (key.code == KeyEvent.KEYCODE_DPAD_CENTER && !key.down && touchpad != null) input?.sendFeedback(FeedbackEvent.FEEDBACK_SELECT)
     }
 
     /** A remapped key's action (see [resolveCarKeyAction]), the same ones the keys above reach by default. */
@@ -1230,6 +1292,7 @@ class CarSession(
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         main.removeCallbacks(videoFocusCheck)
+        keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
