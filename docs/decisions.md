@@ -685,3 +685,35 @@ back to the assistant first, while its app is still started (hiding the bar stop
 back as "stop" and ends listening, thinking or speaking. The car's microphone is then taken back
 too, for an app that doesn't. The bar closing by itself after an answer doesn't send back, so a
 reply still being spoken isn't cut.
+
+## Root car audio: music and navigation voice apart, through one su helper
+
+With root alone (the normal APK, no Magisk module, no Shizuku app), car audio used to be the
+phone's whole output, navigation voice mixed into the music. Now the root helper registers the
+same audio policy as the Shizuku path, so music and navigation voice go to their own car channels.
+
+- **Where the policy is registered:** in the su helper (`SuAudioMain mux`), which first drops from
+  root to the shell uid (`dropRootToShell`), then calls `ShellAudioService.openPolicy`: the very
+  code the Shizuku process runs (`startPolicy` now wraps it). Root itself would pass the
+  MODIFY_AUDIO_ROUTING check, but the policy's recorder is a remote-submix one, which needs
+  CAPTURE_AUDIO_OUTPUT on the recording uid: root doesn't hold it, the shell does.
+- **One helper, one stdout, framed** (`SuAudioWire`): music and navigation voice start at
+  different times, each with its own rate and channels (the guidance channel is often 16 kHz
+  mono), and either can stop and start again. So the helper takes commands on stdin
+  (`policy <id> <rate> <channels> <usages>`, `stop <id>`) and sends frames on stdout
+  (`[id: 1 byte][length: 4 bytes, big-endian][payload]`; id 0 is control text: `started`,
+  `failed <reason>`, `ended`). Rejected: one su process per channel (no framing, but two root
+  grants, toasts and app_process instances per connection, and the two would need their own
+  coordination for the fallback); two named pipes or unix sockets (paths or SELinux labels to get
+  right between an app and a root process, for nothing a framed pipe can't do).
+- **No stream holds up the other:** AARE's reader thread puts each stream's PCM in its own ring
+  (`PcmRing`, one second), which drops its oldest sound, in whole sample frames, rather than block.
+- **No orphan root process:** end of stdin (AARE closed it, or died) stops every stream and ends the
+  helper; so does any failed write to AARE, as before. AARE closes the helper's stdin first when
+  the last stream stops, since killing the su process alone may not reach the helper.
+- **Fallback:** a refused policy comes back as `failed <reason>`, written to the connection log
+  ("root audio routing refused (…)"); the method is then marked failed for the session and AARE
+  uses today's whole-output capture through su (`SuSource`, unchanged), as the Shizuku policy
+  path falls back to Shizuku's whole output.
+- **Shizuku and the privileged install don't change:** the new method (`ROOT_POLICY`) comes after
+  both, and only when Shizuku isn't running.
