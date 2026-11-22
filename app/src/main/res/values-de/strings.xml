@@ -117,6 +117,12 @@
     <string name="setup_choice_wallpaper">Hintergrundbild</string>
     <string name="setup_wallpaper_none">Kein</string>
     <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_choice_map_inset">Abstand unter der Karte</string>
+    <string name="setup_map_inset_none">Kein</string>
+    <string name="setup_map_inset_small">Klein</string>
+    <string name="setup_map_inset_medium">Mittel</string>
+    <string name="setup_map_inset_large">Groß</string>
+    <string name="setup_hint_map_inset">Schiebt nach oben, was die Navigations-App unten auf der Karte im Dashboard zeichnet. Zum Beispiel, wenn die aktuelle Geschwindigkeit des Autos vom Logo der App verdeckt wird (kommt bei HERE WeGo häufig vor)</string>
     <string name="setup_toggle_weather_title">Wetter</string>
     <string name="setup_toggle_weather_subtitle">Neben der Uhr, von Open-Meteo (es erhält eine ungefähre Position von etwa 10 km)</string>
     <string name="setup_section_driving">Fahren</string>

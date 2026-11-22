@@ -846,6 +846,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
+    var mapInset by remember { mutableStateOf(settings.mapCardBottomInset) }
     val scope = rememberCoroutineScope()
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) scope.launch {
@@ -914,6 +915,13 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_map_inset), listOf("0" to stringResource(R.string.setup_map_inset_none), "24" to stringResource(R.string.setup_map_inset_small),
+                "40" to stringResource(R.string.setup_map_inset_medium), "56" to stringResource(R.string.setup_map_inset_large)), mapInset.toString()) {
+                mapInset = it.toInt(); settings.mapCardBottomInset = mapInset
+            }
+            Text(stringResource(R.string.setup_hint_map_inset),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
                 mapBig = it; settings.dashboardMapBig = it

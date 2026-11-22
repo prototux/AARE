@@ -117,6 +117,12 @@
     <string name="setup_choice_wallpaper">Háttérkép</string>
     <string name="setup_wallpaper_none">Nincs</string>
     <string name="setup_wallpaper_photo">Fénykép</string>
+    <string name="setup_choice_map_inset">Margó a térkép alatt</string>
+    <string name="setup_map_inset_none">Nincs</string>
+    <string name="setup_map_inset_small">Kicsi</string>
+    <string name="setup_map_inset_medium">Közepes</string>
+    <string name="setup_map_inset_large">Nagy</string>
+    <string name="setup_hint_map_inset">Feljebb tolja, amit a navigációs alkalmazás a térkép aljára rajzol a műszerfalon. Például ha az autó aktuális sebességét eltakarja az alkalmazás logója (gyakran előfordul a HERE WeGo esetében)</string>
     <string name="setup_toggle_weather_title">Időjárás</string>
     <string name="setup_toggle_weather_subtitle">Az óra mellett, az Open-Meteo-tól (hozzávetőleges, kb. 10 km pontosságú pozíciót kap)</string>
     <string name="setup_section_driving">Vezetés</string>

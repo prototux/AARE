@@ -115,6 +115,12 @@
     <string name="setup_choice_wallpaper">壁纸</string>
     <string name="setup_wallpaper_none">无</string>
     <string name="setup_wallpaper_photo">照片</string>
+    <string name="setup_choice_map_inset">地图卡片下方留白</string>
+    <string name="setup_map_inset_none">无</string>
+    <string name="setup_map_inset_small">小</string>
+    <string name="setup_map_inset_medium">中</string>
+    <string name="setup_map_inset_large">大</string>
+    <string name="setup_hint_map_inset">将导航应用在仪表盘地图底部绘制的内容上移。例如，当前车速被应用的标志遮挡时（HERE WeGo 中经常出现）</string>
     <string name="setup_toggle_weather_title">天气</string>
     <string name="setup_toggle_weather_subtitle">显示在时钟旁，数据来自 Open-Meteo（仅获取大致位置，精度约 10 公里）</string>
     <string name="setup_section_driving">驾驶</string>

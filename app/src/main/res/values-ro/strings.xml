@@ -117,6 +117,12 @@
     <string name="setup_choice_wallpaper">Fundal</string>
     <string name="setup_wallpaper_none">Niciunul</string>
     <string name="setup_wallpaper_photo">Fotografie</string>
+    <string name="setup_choice_map_inset">Margine sub hartă</string>
+    <string name="setup_map_inset_none">Niciuna</string>
+    <string name="setup_map_inset_small">Mică</string>
+    <string name="setup_map_inset_medium">Medie</string>
+    <string name="setup_map_inset_large">Mare</string>
+    <string name="setup_hint_map_inset">Ridică ceea ce aplicația de navigație desenează în partea de jos a hărții din tabloul de bord. De exemplu, când viteza curentă a mașinii este acoperită de logoul aplicației (se întâmplă des în HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Vreme</string>
     <string name="setup_toggle_weather_subtitle">Lângă ceas, de la Open-Meteo (primește o poziție aproximativă, de circa 10 km)</string>
     <string name="setup_section_driving">Condus</string>

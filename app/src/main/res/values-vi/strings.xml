@@ -117,6 +117,12 @@
     <string name="setup_choice_wallpaper">Hình nền</string>
     <string name="setup_wallpaper_none">Không có</string>
     <string name="setup_wallpaper_photo">Ảnh</string>
+    <string name="setup_choice_map_inset">Lề dưới bản đồ</string>
+    <string name="setup_map_inset_none">Không có</string>
+    <string name="setup_map_inset_small">Nhỏ</string>
+    <string name="setup_map_inset_medium">Vừa</string>
+    <string name="setup_map_inset_large">Lớn</string>
+    <string name="setup_hint_map_inset">Nâng những gì ứng dụng điều hướng vẽ ở phần dưới của bản đồ trên bảng điều khiển lên cao hơn. Ví dụ, khi tốc độ hiện tại của xe bị logo của ứng dụng che khuất (thường xảy ra với HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Thời tiết</string>
     <string name="setup_toggle_weather_subtitle">Bên cạnh đồng hồ, từ Open-Meteo (lấy vị trí gần đúng, khoảng 10 km)</string>
     <string name="setup_section_driving">Lái xe</string>

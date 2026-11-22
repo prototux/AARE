@@ -189,8 +189,9 @@ The **bar** is laid out like Android Auto's: on a side next to the driver, or al
 The **dashboard** shows the map (or directions from Google Maps or Waze), what's playing, the next
 calendar event, the latest notification and the weather, over a wallpaper if you pick one. Show,
 hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room, or the
-map wherever it is with *Map always big*. On very wide screens (1920x720 and up) the cards sit
-side by side. The weather comes from
+map wherever it is with *Map always big*. If a navigation app draws something of its own over its
+logo at the bottom of the map card (HERE WeGo's speed), *Margin under the map card* there lifts it.
+On very wide screens (1920x720 and up) the cards sit side by side. The weather comes from
 [Open-Meteo](https://open-meteo.com/) (no account, no Google), asked for an approximate position
 (about 10 km); you can turn it off.
 
