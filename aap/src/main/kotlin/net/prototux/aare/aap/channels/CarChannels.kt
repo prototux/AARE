@@ -1,6 +1,8 @@
 package net.prototux.aare.aap.channels
 
 import aap_protobuf.service.ServiceOuterClass.Service
+import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationDataOuterClass.BluetoothAuthenticationData
+import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationResultOuterClass.BluetoothAuthenticationResult
 import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.bluetooth.message.BluetoothPairingRequestOuterClass.BluetoothPairingRequest
 import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
@@ -17,6 +19,7 @@ import aap_protobuf.service.navigationstatus.message.NavigationStatusOuterClass.
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.sensorsource.message.SensorRequestOuterClass.SensorRequest
 import aap_protobuf.service.sensorsource.message.SensorTypeOuterClass.SensorType
+import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
 import net.prototux.aare.aap.AapMessage
 import net.prototux.aare.aap.BluetoothMsg
 import net.prototux.aare.aap.InputMsg
@@ -246,14 +249,22 @@ class WifiProjectionChannel(service: Service) : ServiceChannel(service, "wifi") 
  * Bluetooth: the head unit gives its address; the phone asks it to pair so calls go through the
  * car (HFP). Android hides the phone's own address from normal apps, so [phoneAddress] may be
  * unknown, in which case we just let the user pair the usual way.
+ *
+ * While the car pairs, it sends the passkey or PIN it shows ([Listener.onAuthenticationData]); the
+ * phone checks it against Android's pairing request and answers with [sendAuthenticationResult].
  */
 class BluetoothChannel(service: Service, private val phoneAddress: String?, private val listener: Listener) : ServiceChannel(service, "bluetooth") {
     interface Listener {
         fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {}
+        /** The passkey or PIN the head unit shows for the pairing in progress. Reader thread. */
+        fun onAuthenticationData(authData: String) {}
     }
 
     val carAddress: String = service.bluetoothService.carAddress
     val methods: List<BluetoothPairingMethod> = service.bluetoothService.supportedPairingMethodsList
+
+    /** The car sent authentication data that hasn't been answered yet. */
+    @Volatile private var authDataPending = false
 
     override fun onOpened() {
         // Announce the phone to the car. Some head units withhold the projected screen until they
@@ -279,13 +290,37 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
     }
 
     fun requestPairing(phoneAddress: String) {
-        val method = when {
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
-            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
-            methods.isNotEmpty() -> methods.first()
-            else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
+        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(canonicalAddress(phoneAddress)).setPairingMethod(pairingMethod(methods)).build())
+    }
+
+    /**
+     * Tells the car whether its authentication data matched: once per authentication data it sent,
+     * never unasked. Head units before protocol 1.5 don't know this message, and it isn't sent to
+     * them. False when not sent.
+     */
+    fun sendAuthenticationResult(status: MessageStatus): Boolean {
+        if (!authDataPending || !session.headUnitAtLeast(1, 5)) return false
+        authDataPending = false
+        send(BluetoothMsg.AUTHENTICATION_RESULT, BluetoothAuthenticationResult.newBuilder().setStatus(status).build())
+        return true
+    }
+
+    override fun onMessage(msg: AapMessage) {
+        when (msg.id) {
+            BluetoothMsg.PAIRING_RESPONSE -> {
+                val r = BluetoothPairingResponse.parseFrom(msg.bodyBytes())
+                listener.onPairingResponse(r.alreadyPaired, r.status.number == 0)
+            }
+            BluetoothMsg.AUTHENTICATION_DATA -> {
+                // The pairing method it carries is ignored: Android's
+                // own pairing request says which method is in use.
+                val d = BluetoothAuthenticationData.parseFrom(msg.bodyBytes())
+                if (d.hasAuthData()) {
+                    authDataPending = true
+                    listener.onAuthenticationData(d.authData)
+                }
+            }
         }
-        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(canonicalAddress(phoneAddress)).setPairingMethod(method).build())
     }
 
     companion object {
@@ -296,14 +331,17 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
          * Bluetooth and once for the projection, so calls didn't go through the car (#117).
          */
         fun canonicalAddress(address: String): String = address.trim().uppercase(java.util.Locale.ROOT)
-    }
 
-    override fun onMessage(msg: AapMessage) {
-        when (msg.id) {
-            BluetoothMsg.PAIRING_RESPONSE -> {
-                val r = BluetoothPairingResponse.parseFrom(msg.bodyBytes())
-                listener.onPairingResponse(r.alreadyPaired, r.status.number == 0)
-            }
+        /**
+         * The pairing method to ask for: numeric comparison when the car offers it, else PIN, else
+         * the first method the car lists, else numeric comparison. Head units that pair today keep
+         * getting the method they pair with; "unavailable" is never asked for.
+         */
+        fun pairingMethod(offered: List<BluetoothPairingMethod>): BluetoothPairingMethod = when {
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
+            BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
+            else -> offered.firstOrNull { it != BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE }
+                ?: BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
         }
     }
 }
