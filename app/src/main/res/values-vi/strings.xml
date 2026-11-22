@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Đầu đĩa tích hợp và bộ chuyển đổi không dây gắn thêm (cắm vào cổng USB của xe) cần điện thoại trả lời theo thứ tự khác nhau. Tự động dùng thứ tự chuẩn, hoặc thứ tự bộ chuyển đổi cho xe lần trước đã kết nối theo cách đó. Chọn Bộ chuyển đổi nếu bộ chuyển đổi không dây của bạn không kết nối được; Tích hợp đưa mọi xe về thứ tự chuẩn.</string>
     <string name="setup_toggle_resume_music_title">Tiếp tục nhạc</string>
     <string name="setup_toggle_resume_music_subtitle">Bật lại ứng dụng nhạc vừa phát khi xe kết nối</string>
+    <string name="setup_toggle_calls_speaker_title">Gọi điện qua loa ngoài của điện thoại</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Khi kết nối với xe, cuộc gọi sẽ dùng loa ngoài và micrô của điện thoại thay cho hệ thống rảnh tay của xe. Dành cho bộ chuyển đổi không dây hoặc đầu đĩa có micrô không hoạt động. Có hiệu lực từ lần kết nối tiếp theo.</string>
     <string name="setup_bt_address_label">Địa chỉ Bluetooth điện thoại (không bắt buộc)</string>
     <string name="setup_bt_address_hint">Một số đầu đĩa hiển thị màn hình đen cho đến khi biết điện thoại nào đang kết nối. Bạn có thể tìm thấy nó trong Cài đặt &gt; Giới thiệu về điện thoại &gt; Trạng thái. Để trống nếu xe của bạn đã hoạt động tốt.</string>
     <string name="setup_section_location">Vị trí</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Khi đang kết nối, các ứng dụng trên điện thoại sẽ thấy vị trí của xe thay vì vị trí của điện thoại, để ứng dụng điều hướng không lẫn hai vị trí này</string>
     <string name="setup_check_mock_location_title">Cho phép AARE đặt vị trí</string>
     <string name="setup_check_mock_location_subtitle">Tùy chọn nhà phát triển &gt; Chọn ứng dụng vị trí giả &gt; AARE</string>
+    <string name="setup_check_background_location_title">Điều hướng khi điện thoại bị khóa</string>
+    <string name="setup_check_background_location_subtitle">Không bắt buộc. Khi AARE tự khởi động (Bluetooth của xe), các ứng dụng điều hướng vẫn giữ được vị trí khi điện thoại bị khóa. Quyền &gt; Vị trí &gt; Luôn cho phép</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Ưu tiên 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Mượt hơn khi xe hỗ trợ</string>
@@ -210,6 +214,11 @@
     <string name="cert_action_remove">Xóa</string>
     <string name="cert_action_import">Nhập chứng chỉ…</string>
     <string name="cert_action_download">Tải chứng chỉ xuống</string>
+    <string name="cert_auto_update_title">Tự động cập nhật chứng chỉ đã tải xuống</string>
+    <string name="cert_auto_update_subtitle">Một lần mỗi ngày, không bao giờ trong lúc đang kết nối, AARE sẽ hỏi kho đó xem có chứng chỉ mới hơn không và sử dụng nó. Dù thế nào, AARE cũng sẽ cảnh báo hai tuần trước khi chứng chỉ của Google hết hạn.</string>
+    <string name="cert_expiring_banner_title">Chứng chỉ của Google hết hạn vào %1$s</string>
+    <string name="cert_expired_banner_title">Chứng chỉ của Google đã hết hạn vào %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Những xe chỉ chấp nhận chứng chỉ đó sẽ từ chối AARE. Nhấn để tải xuống chứng chỉ mới hơn.</string>
     <string name="cert_action_downloading">Đang tải xuống…</string>
     <string name="cert_download_unavailable">Kho chứng chỉ không còn tồn tại (đã bị xóa hoặc gỡ bỏ): %1$s. Thay vào đó, hãy trích xuất chứng chỉ từ ứng dụng Android Auto (xem README).</string>
     <string name="cert_download_network">Không tải được chứng chỉ: %1$s. Hãy kiểm tra kết nối rồi thử lại.</string>
@@ -306,6 +315,12 @@
     <string name="notif_action_download_cert">Tải chứng chỉ xuống</string>
     <string name="notif_action_navigate">Điều hướng</string>
     <string name="notif_action_open">Mở</string>
+    <string name="notif_cert_updated_title">Chứng chỉ đã được cập nhật</string>
+    <string name="notif_cert_updated_message">AARE đã tải xuống chứng chỉ Android Auto mới hơn, có hiệu lực đến %1$s.</string>
+    <string name="notif_cert_expiring_title">Chứng chỉ sắp hết hạn</string>
+    <string name="notif_cert_expiring_text">%1$s hết hạn vào %2$s. Sau thời điểm đó, những xe chỉ chấp nhận chứng chỉ của Google sẽ từ chối AARE: hãy tải xuống chứng chỉ mới hơn.</string>
+    <string name="notif_cert_expired_title">Chứng chỉ đã hết hạn</string>
+    <string name="notif_cert_expired_text">%1$s đã hết hạn vào %2$s. Hiện tại, những xe chỉ chấp nhận chứng chỉ của Google sẽ từ chối AARE: hãy tải xuống chứng chỉ mới hơn.</string>
     <string name="notif_cert_download_title">Đầu đĩa đã từ chối chứng chỉ của AARE</string>
     <string name="notif_cert_download_message">Đầu đĩa này chỉ chấp nhận chứng chỉ do Google cấp. Hãy tải chứng chỉ đó từ ứng dụng Android Auto mới nhất, rồi kết nối lại.</string>
     <string name="notif_cert_download_progress">Đang tải chứng chỉ của Android Auto…</string>
@@ -324,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, rồi kết nối lại.</string>
     <string name="notif_cert_changed_message">chứng chỉ đầu đĩa đã thay đổi: chỉ nhấn Tin tưởng trong thông báo hoặc trong AARE nếu phần mềm của nó đã được cập nhật, rồi kết nối lại</string>
     <string name="notif_cert_untrusted_message">chứng chỉ đầu đĩa chưa được tin tưởng: nhấn Tin tưởng trong thông báo hoặc trong AARE, rồi kết nối lại</string>
+    <string name="notif_cert_dates_title">Kiểm tra ngày và giờ của xe</string>
+    <string name="notif_cert_not_yet_valid_message">đầu đĩa báo rằng chứng chỉ của AARE chưa có hiệu lực: có thể đồng hồ của nó đang chạy chậm. Hãy đặt lại ngày và giờ của xe, rồi kết nối lại</string>
+    <string name="notif_cert_expired_message">đầu đĩa báo rằng chứng chỉ của AARE đã hết hạn: nếu chưa, có thể đồng hồ của xe đang chạy nhanh. Hãy đặt lại ngày và giờ của xe, hoặc lấy chứng chỉ mới hơn trong mục Nâng cao, rồi kết nối lại</string>
     <string name="notif_car_nearby_title">Xe ở gần</string>
     <string name="notif_car_nearby_text">Nhấn để kết nối không dây</string>
     <string name="notif_status_connecting_to">Đang kết nối đến %1$s</string>
@@ -478,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dữ liệu xe</string>
     <string name="setup_page_car_data_subtitle">Tốc độ, số và cảm biến trực tiếp từ xe</string>
+    <string name="setup_page_about_title">Giới thiệu</string>
+    <string name="setup_page_about_subtitle">AARE là gì, các liên kết của dự án và những ai đã giúp xây dựng nó</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Kết nối với xe để xem dữ liệu của xe.</string>
@@ -533,6 +553,24 @@
     <string name="car_data_app_label">Dữ liệu xe hơi</string>
     <string name="car_data_show_in_car_title">Hiện trên màn hình xe</string>
     <string name="car_data_show_in_car_subtitle">Thêm ứng dụng chẩn đoán trên xe cho dữ liệu trực tiếp này</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">AARE là gì</string>
+    <string name="about_text">AARE là một bản triển khai lại mã nguồn mở của phía điện thoại trong Android Auto: nó giao tiếp trực tiếp với đầu đĩa của xe bằng giao thức chiếu Android Auto, tự vẽ màn hình xe, và chạy các ứng dụng điều hướng, phương tiện và tin nhắn mà không cần Dịch vụ Google Play.</string>
+    <string name="about_section_links_title">Dự án</string>
+    <string name="about_link_repository">Kho mã nguồn</string>
+    <string name="about_link_issues">Vấn đề</string>
+    <string name="about_link_discussions">Thảo luận</string>
+    <string name="about_section_thanks_title">Lời cảm ơn</string>
+    <string name="about_thanks_security_review">Đánh giá an ninh</string>
+    <string name="about_thanks_code_and_docs">Mã nguồn và tài liệu</string>
+    <string name="about_thanks_head_unit_reports">Báo cáo về đầu đĩa</string>
+    <string name="about_thanks_reports">Báo cáo và ý tưởng</string>
+    <string name="about_thanks_tips">Mẹo</string>
+    <string name="about_section_oss_title">Thành phần mã nguồn mở</string>
+    <string name="about_oss_libraries_title">Thư viện</string>
+    <string name="about_oss_protocol_title">Định nghĩa giao thức</string>
+
     <string name="vehicles_section_title">Ghi đè theo từng xe</string>
     <string name="vehicles_hint">Chỉnh mật độ màn hình hoặc lề vùng hiển thị cho một xe cụ thể, không cần bản dựng mới. Sửa vehicles.json bằng trình quản lý file, khớp xe theo hãng/dòng xe/tên.</string>
     <string name="vehicles_rule_count">Đã tải %1$d quy tắc</string>
@@ -575,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json có lỗi ở dòng %1$d, cột %2$d (%3$s): các quy tắc trong đó bị bỏ qua.</string>
     <string name="vehicles_malformed">Không thể dùng vehicles.json (%1$s): các quy tắc trong đó bị bỏ qua.</string>
     <string name="setup_toggle_force_h264_title">Buộc dùng video H.264</string>
+    <string name="setup_toggle_constant_bitrate_title">Video tốc độ bit không đổi</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Giữ cho mỗi khung hình có kích thước gần như bằng nhau. Hãy bật nếu xe ngắt kết nối khi toàn bộ hình ảnh thay đổi, như khi hiển thị màn hình điện thoại hoặc video. Hình ảnh nhiều chi tiết sẽ mượt hơn một chút. Có hiệu lực từ lần kết nối tiếp theo.</string>
     <string name="setup_toggle_force_h264_subtitle">Theo mặc định, AARE sử dụng codec tốt nhất mà xe và điện thoại đều hỗ trợ (H.265…). Bật tùy chọn này nếu hình ảnh trên xe bị lỗi.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Thử lại</string>
@@ -601,6 +641,7 @@
     <string name="setup_backup_import_confirm_action">Thay thế</string>
     <string name="setup_backup_import_done">Đã nhập cài đặt.</string>
     <string name="setup_backup_import_done_skipped">Đã nhập cài đặt. Bỏ qua vì không xác định, bị chặn hoặc không hợp lệ: %1$d</string>
+    <string name="setup_backup_import_blocked">Không được nhập, để đảm bảo an toàn (hãy bật các mục này thủ công trên điện thoại này): %1$s</string>
     <string name="setup_backup_import_failed">Không thể nhập tệp này: đây không phải tệp cài đặt AARE hoặc tệp quá lớn.</string>
     <string name="setup_backup_export_failed">Không thể lưu tệp cài đặt.</string>
     <string name="setup_nothing_to_open">Điện thoại này không có ứng dụng nào để mở nội dung này</string>
@@ -641,6 +682,7 @@
     <string name="tpl_password_hint">Mật khẩu</string>
     <string name="carapp_error_start">Không thể khởi động %1$s</string>
     <string name="carapp_error_refused">%1$s đã từ chối kết nối</string>
+    <string name="carapp_error_no_answer">%1$s không phản hồi. Có thể nó chỉ chấp nhận Android Auto của Google (xem danh sách ứng dụng trên điện thoại).</string>
     <string name="carapp_error_api_level">%1$s cần API xe cấp %2$d; thiết bị này hỗ trợ %3$d</string>
     <string name="carapp_error_stopped">%1$s đã dừng</string>
     <string name="carapp_error_google_only">%1$s chỉ chấp nhận Android Auto của Google. Cần cho phép AARE (xem danh sách ứng dụng trên điện thoại).</string>

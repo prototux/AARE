@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Inbyggda head units och eftermonterade trådlösa adaptrar (i bilens USB) förväntar sig att telefonen svarar i olika ordning. Automatiskt använder standardordningen, eller adapterordningen för en bil som senast anslöt med den. Välj Adapter om din trådlösa adapter inte ansluter; Inbyggd går tillbaka till standardordningen för alla bilar.</string>
     <string name="setup_toggle_resume_music_title">Återuppta musik</string>
     <string name="setup_toggle_resume_music_subtitle">Startar den senast spelade musikappen när bilen ansluter</string>
+    <string name="setup_toggle_calls_speaker_title">Samtal via telefonens högtalare</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Vid anslutning till en bil använder samtal telefonens högtalare och mikrofon istället för bilens handsfree-system. För trådlösa adaptrar eller head units vars mikrofon inte fungerar. Börjar gälla från nästa anslutning.</string>
     <string name="setup_bt_address_label">Telefonens Bluetooth-adress (valfritt)</string>
     <string name="setup_bt_address_hint">Vissa head units visar en svart skärm tills de vet vilken telefon som är ansluten. Du hittar den under Inställningar &gt; Om telefonen &gt; Status. Lämna tomt om din bil redan fungerar.</string>
     <string name="setup_section_location">Plats</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Medan ansluten ser appar på telefonen bilens position istället för telefonens egen, så att navigeringsappar inte blandar ihop de två</string>
     <string name="setup_check_mock_location_title">Tillåt AARE att ställa in platsen</string>
     <string name="setup_check_mock_location_subtitle">Utvecklaralternativ &gt; Välj app för falsk plats &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigering med låst telefon</string>
+    <string name="setup_check_background_location_subtitle">Valfritt. När AARE startar av sig själv (bilens Bluetooth) behåller navigeringsappar positionen med telefonen låst. Behörigheter &gt; Plats &gt; Tillåt alltid</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Föredra 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Smidigare när bilen stöder det</string>
@@ -210,6 +214,11 @@
     <string name="cert_action_remove">Ta bort</string>
     <string name="cert_action_import">Importera certifikat…</string>
     <string name="cert_action_download">Ladda ner certifikat</string>
+    <string name="cert_auto_update_title">Uppdatera det nedladdade certifikatet automatiskt</string>
+    <string name="cert_auto_update_subtitle">En gång om dagen, aldrig medan anslutningen pågår, frågar AARE samma arkiv efter ett nyare certifikat och använder det. Oavsett varnar AARE två veckor innan Googles certifikat går ut.</string>
+    <string name="cert_expiring_banner_title">Googles certifikat går ut den %1$s</string>
+    <string name="cert_expired_banner_title">Googles certifikat gick ut den %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Bilar som bara godtar det kommer att avvisa AARE. Tryck för att ladda ner ett nyare.</string>
     <string name="cert_action_downloading">Laddar ner…</string>
     <string name="cert_download_unavailable">Certifikatarkivet finns inte längre (raderat eller borttaget): %1$s. Extrahera i stället certifikatet från Android Auto-appen (se README).</string>
     <string name="cert_download_network">Det gick inte att ladda ner certifikatet: %1$s. Kontrollera anslutningen och försök igen.</string>
@@ -306,6 +315,12 @@
     <string name="notif_action_download_cert">Ladda ner certifikat</string>
     <string name="notif_action_navigate">Navigera</string>
     <string name="notif_action_open">Öppna</string>
+    <string name="notif_cert_updated_title">Certifikat uppdaterat</string>
+    <string name="notif_cert_updated_message">AARE laddade ner ett nyare Android Auto-certifikat, giltigt till %1$s.</string>
+    <string name="notif_cert_expiring_title">Certifikatet går snart ut</string>
+    <string name="notif_cert_expiring_text">%1$s går ut den %2$s. Bilar som bara godtar Googles certifikat kommer att avvisa AARE efter det: ladda ner ett nyare.</string>
+    <string name="notif_cert_expired_title">Certifikatet har gått ut</string>
+    <string name="notif_cert_expired_text">%1$s gick ut den %2$s. Bilar som bara godtar Googles certifikat avvisar nu AARE: ladda ner ett nyare.</string>
     <string name="notif_cert_download_title">Head unit avvisade AAREs certifikat</string>
     <string name="notif_cert_download_message">Den här head unit-enheten accepterar bara Googles certifikat. Ladda ner det från den senaste Android Auto-appen och anslut igen.</string>
     <string name="notif_cert_download_progress">Laddar ner Android Autos certifikat…</string>
@@ -324,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, anslut sedan igen.</string>
     <string name="notif_cert_changed_message">head units certifikat ändrat: tryck på Lita på i aviseringen eller i AARE bara om dess programvara har uppdaterats, anslut sedan igen</string>
     <string name="notif_cert_untrusted_message">head units certifikat inte betrott än: tryck på Lita på i aviseringen eller i AARE, anslut sedan igen</string>
+    <string name="notif_cert_dates_title">Kontrollera bilens datum och tid</string>
+    <string name="notif_cert_not_yet_valid_message">head unit-enheten säger att AAREs certifikat inte är giltigt än: dess klocka går troligen fel bakåt. Ställ in bilens datum och tid, anslut sedan igen</string>
+    <string name="notif_cert_expired_message">head unit-enheten säger att AAREs certifikat har gått ut: om det inte har det, går bilens klocka fort. Ställ in bilens datum och tid, eller hämta ett nyare certifikat under Avancerat, anslut sedan igen</string>
     <string name="notif_car_nearby_title">Bil i närheten</string>
     <string name="notif_car_nearby_text">Tryck för att ansluta trådlöst</string>
     <string name="notif_status_connecting_to">Ansluter till %1$s</string>
@@ -478,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighet, växel och sensorer direkt från bilen</string>
+    <string name="setup_page_about_title">Om</string>
+    <string name="setup_page_about_subtitle">Vad AARE är, projektlänkarna och vem som hjälpte till att bygga det</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Anslut till en bil för att se dess data.</string>
@@ -533,6 +553,24 @@
     <string name="car_data_app_label">Bildata</string>
     <string name="car_data_show_in_car_title">Visa på bilens skärm</string>
     <string name="car_data_show_in_car_subtitle">Lägg till en diagnosapp i bilen för den här livedatan</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">Vad AARE är</string>
+    <string name="about_text">AARE är en öppen källkod-återimplementering av telefonsidan av Android Auto: den talar Android Autos projektionsprotokoll direkt med bilens head unit, ritar själv bilskärmen och kör navigations-, media- och meddelandeappar utan att behöva Google Play-tjänster.</string>
+    <string name="about_section_links_title">Projekt</string>
+    <string name="about_link_repository">Kodarkiv</string>
+    <string name="about_link_issues">Problem</string>
+    <string name="about_link_discussions">Diskussioner</string>
+    <string name="about_section_thanks_title">Tack</string>
+    <string name="about_thanks_security_review">Säkerhetsgranskning</string>
+    <string name="about_thanks_code_and_docs">Kod och dokumentation</string>
+    <string name="about_thanks_head_unit_reports">Rapporter om head units</string>
+    <string name="about_thanks_reports">Rapporter och idéer</string>
+    <string name="about_thanks_tips">Tips</string>
+    <string name="about_section_oss_title">Komponenter med öppen källkod</string>
+    <string name="about_oss_libraries_title">Bibliotek</string>
+    <string name="about_oss_protocol_title">Protokolldefinitioner</string>
+
     <string name="vehicles_section_title">Åsidosättningar per fordon</string>
     <string name="vehicles_hint">Justera densiteten eller marginalerna för det synliga området för en specifik bil, utan en ny build. Redigera vehicles.json med en filhanterare och matcha bilen efter märke/modell/namn.</string>
     <string name="vehicles_rule_count">Inlästa regler: %1$d</string>
@@ -575,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json har ett fel på rad %1$d, kolumn %2$d (%3$s): dess regler ignoreras.</string>
     <string name="vehicles_malformed">vehicles.json kan inte användas (%1$s): dess regler ignoreras.</string>
     <string name="setup_toggle_force_h264_title">Tvinga H.264-video</string>
+    <string name="setup_toggle_constant_bitrate_title">Video med konstant bitrate</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Håller varje bildruta ungefär samma storlek. Slå på om bilen bryter anslutningen när hela bilden ändras, som med telefonskärmen eller en video. Livliga bilder blir lite mjukare. Börjar gälla från nästa anslutning.</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard använder AARE den bästa kodeken som bilen och telefonen har gemensamt (H.265…). Slå på om bilens bild är förvrängd.</string>
     <!-- i18n/new-strings: added 2026-11-09 -->
     <string name="common_ok">OK</string>
@@ -602,6 +642,7 @@
     <string name="setup_backup_import_confirm_action">Ersätt</string>
     <string name="setup_backup_import_done">Inställningarna har importerats.</string>
     <string name="setup_backup_import_done_skipped">Inställningarna har importerats. Utelämnade som okända, blockerade eller ogiltiga: %1$d</string>
+    <string name="setup_backup_import_blocked">Inte importerade, av säkerhetsskäl (slå på dessa manuellt på den här telefonen): %1$s</string>
     <string name="setup_backup_import_failed">Filen kan inte importeras: den är ingen AARE-inställningsfil, eller den är för stor.</string>
     <string name="setup_backup_export_failed">Det gick inte att spara inställningsfilen.</string>
     <string name="setup_nothing_to_open">Den här telefonen har ingen app som kan öppna detta</string>
@@ -642,6 +683,7 @@
     <string name="tpl_password_hint">Lösenord</string>
     <string name="carapp_error_start">Kunde inte starta %1$s</string>
     <string name="carapp_error_refused">%1$s avvisade anslutningen</string>
+    <string name="carapp_error_no_answer">%1$s svarade inte. Den accepterar eventuellt endast Googles Android Auto (se applistan på telefonen).</string>
     <string name="carapp_error_api_level">%1$s kräver bil-API-nivå %2$d; denna värd stöder %3$d</string>
     <string name="carapp_error_stopped">%1$s stoppades</string>
     <string name="carapp_error_google_only">%1$s accepterar endast Googles Android Auto. Den måste tillåta AARE (se applistan på telefonen).</string>
