@@ -48,6 +48,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
+    var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     LazyColumn(
         modifier.background(MaterialTheme.colorScheme.background),
@@ -80,6 +81,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
         item {
             DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }
+        item { SwitchRow(stringResource(R.string.dash_map_big_title), mapBig) { mapBig = it; settings.dashboardMapBig = it } }
         item { SwitchRow(stringResource(R.string.setup_switch_passenger), passenger) { passenger = it; settings.ignoreDriving = it } }
         item { SwitchRow(stringResource(R.string.setup_switch_message_notifications), banners) { banners = it; settings.messageBanners = it } }
         item { SwitchRow(stringResource(R.string.msg_toggle_read_aloud_title), aloud) { aloud = it; settings.readMessagesAloud = it } }

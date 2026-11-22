@@ -1,5 +1,9 @@
 package net.prototux.aare.xposed
 
+import android.app.Application
+import android.app.Instrumentation
+import android.util.Log
+import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.PackageLoadedParam
 import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
@@ -23,8 +27,18 @@ class ModuleMain : XposedModule() {
         if (!param.isFirstPackage) return
         // Don't hook AARE's own process: it already knows it is the host.
         if (param.packageName == AARE_PACKAGE) return
-        AppProcessHooks.install(this, param)
-        MediaHooks.install(this, param)
+        // The app hooks find AARE through the app's Context (ActivityThread.currentApplication()),
+        // which doesn't exist yet at package load. Install them just before Application.onCreate.
+        val onCreate = Instrumentation::class.java.getMethod("callApplicationOnCreate", Application::class.java)
+        var installed = false
+        hook(onCreate).intercept { chain ->
+            if (!installed) {
+                installed = true
+                AppProcessHooks.install(this, param)
+                MediaHooks.install(this, param)
+            }
+            chain.proceed()
+        }
     }
 
     override fun onSystemServerStarting(param: SystemServerStartingParam) {
@@ -35,3 +49,7 @@ class ModuleMain : XposedModule() {
         const val AARE_PACKAGE = "net.prototux.aare"
     }
 }
+
+/** One line per hook in the Xposed manager's log, so a test report shows which hooks took where. */
+internal fun XposedInterface.report(process: String, hook: String, installed: Boolean) =
+    log(Log.INFO, "AARE", "$process: $hook ${if (installed) "installed" else "skipped"}")
