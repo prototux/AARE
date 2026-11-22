@@ -259,6 +259,10 @@
     <string name="setup_app_entry_notifications">Notifications</string>
     <string name="launcher_search_hint">Search apps</string>
     <string name="setup_section_app_order">Order in the car</string>
+    <string name="setup_section_car_rail">Car rail</string>
+    <string name="setup_car_rail_hint">Choose which apps sit on the rail (or the taskbar) and in which order. Nothing chosen: the rail keeps its built-in set (navigation, music, recent apps, phone).</string>
+    <string name="setup_toggle_compact_rail_title">Compact rail</string>
+    <string name="setup_toggle_compact_rail_subtitle">A narrower rail, with smaller icons and tighter spacing</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_section_car_buttons">Car buttons</string>
     <string name="setup_car_buttons_hint">Keys AARE has seen from this car. Choose what each one does; a key left at \"Default\" keeps its normal behaviour.</string>

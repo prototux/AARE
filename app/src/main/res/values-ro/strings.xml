@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Notificări</string>
     <string name="launcher_search_hint">Caută aplicații</string>
     <string name="setup_section_app_order">Ordinea în mașină</string>
+    <string name="setup_section_car_rail">Bara mașinii</string>
+    <string name="setup_car_rail_hint">Alege ce aplicații stau pe bară (sau pe bara de activități) și în ce ordine. Dacă nu alegi nimic, bara își păstrează setul integrat (navigare, muzică, aplicații recente, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Bară compactă</string>
+    <string name="setup_toggle_compact_rail_subtitle">O bară mai îngustă, cu pictograme mai mici și spațiere mai strânsă</string>
     <string name="setup_section_connection_log">Jurnal de conectare</string>
     <string name="setup_section_car_buttons">Butoanele mașinii</string>
     <string name="setup_car_buttons_hint">Butoanele pe care AARE le-a primit de la această mașină. Alegeți ce face fiecare; un buton lăsat pe „Implicit” își păstrează comportamentul obișnuit.</string>

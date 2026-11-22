@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Ilmoitukset</string>
     <string name="launcher_search_hint">Hae sovelluksia</string>
     <string name="setup_section_app_order">Järjestys autossa</string>
+    <string name="setup_section_car_rail">Auton lista</string>
+    <string name="setup_car_rail_hint">Valitse, mitkä sovellukset ovat listassa (tai tehtäväpalkissa) ja missä järjestyksessä. Jos mitään ei valita, lista pitää sisäänrakennetun valikoimansa (navigointi, musiikki, viimeisimmät sovellukset, puhelin).</string>
+    <string name="setup_toggle_compact_rail_title">Tiivis lista</string>
+    <string name="setup_toggle_compact_rail_subtitle">Kapeampi lista, pienemmät kuvakkeet ja tiiviimmät välit</string>
     <string name="setup_section_connection_log">Yhteysloki</string>
     <string name="setup_section_car_buttons">Auton painikkeet</string>
     <string name="setup_car_buttons_hint">Painikkeet, jotka AARE on nähnyt tästä autosta. Valitse, mitä kukin tekee; ”Oletus”-asetukseen jätetty painike toimii tavalliseen tapaan.</string>

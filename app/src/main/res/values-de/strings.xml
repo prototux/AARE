@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Benachrichtigungen</string>
     <string name="launcher_search_hint">Apps suchen</string>
     <string name="setup_section_app_order">Reihenfolge im Auto</string>
+    <string name="setup_section_car_rail">Leiste im Auto</string>
+    <string name="setup_car_rail_hint">Wähle, welche Apps auf der Leiste (oder der Taskleiste) sitzen und in welcher Reihenfolge. Nichts gewählt: Die Leiste behält ihre eingebaute Auswahl (Navigation, Musik, zuletzt genutzte Apps, Telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakte Leiste</string>
+    <string name="setup_toggle_compact_rail_subtitle">Eine schmalere Leiste mit kleineren Symbolen und engeren Abständen</string>
     <string name="setup_section_connection_log">Verbindungsprotokoll</string>
     <string name="setup_section_car_buttons">Tasten im Auto</string>
     <string name="setup_car_buttons_hint">Tasten, die AARE von diesem Auto empfangen hat. Wählen Sie, was jede tut; eine Taste auf „Standard“ behält ihr normales Verhalten.</string>

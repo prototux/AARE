@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Varsler</string>
     <string name="launcher_search_hint">Søk i apper</string>
     <string name="setup_section_app_order">Rekkefølge i bilen</string>
+    <string name="setup_section_car_rail">Bilens stolpe</string>
+    <string name="setup_car_rail_hint">Velg hvilke apper som står på stolpen (eller oppgavelinjen) og i hvilken rekkefølge. Ingenting valgt: stolpen beholder det innebygde utvalget (navigasjon, musikk, nylige apper, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompakt stolpe</string>
+    <string name="setup_toggle_compact_rail_subtitle">En smalere stolpe, med mindre ikoner og tettere avstand</string>
     <string name="setup_section_connection_log">Tilkoblingslogg</string>
     <string name="setup_section_car_buttons">Bilens knapper</string>
     <string name="setup_car_buttons_hint">Knapper AARE har sett fra denne bilen. Velg hva hver av dem gjør; en knapp som står på «Standard», beholder sin vanlige funksjon.</string>

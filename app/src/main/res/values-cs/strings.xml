@@ -135,6 +135,10 @@
     <string name="setup_app_entry_notifications">Oznámení</string>
     <string name="launcher_search_hint">Hledat aplikace</string>
     <string name="setup_section_app_order">Pořadí v autě</string>
+    <string name="setup_section_car_rail">Lišta v autě</string>
+    <string name="setup_car_rail_hint">Vyberte, které aplikace budou na liště (nebo hlavním panelu) a v jakém pořadí. Když nic nevyberete, lišta si ponechá vestavěnou sadu (navigace, hudba, nedávné aplikace, telefon).</string>
+    <string name="setup_toggle_compact_rail_title">Kompaktní lišta</string>
+    <string name="setup_toggle_compact_rail_subtitle">Užší lišta s menšími ikonami a těsnějšími mezerami</string>
     <string name="setup_section_connection_log">Protokol připojení</string>
     <string name="setup_section_car_buttons">Tlačítka v autě</string>
     <string name="setup_car_buttons_hint">Tlačítka, která AARE z tohoto auta zaznamenal. Vyberte, co má každé dělat; tlačítko ponechané na „Výchozí“ se chová jako obvykle.</string>
