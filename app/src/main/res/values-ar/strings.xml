@@ -572,6 +572,17 @@
     <string name="setup_log_save">حفظ</string>
     <string name="setup_toggle_verbose_log_title">سجل مفصّل للبروتوكول</string>
     <string name="setup_toggle_verbose_log_subtitle">يسجّل التتبع الكامل لبروتوكول وحدة التحكم في هذا السجل، لإرفاقه بتقرير عن خلل. يسجّل كمية كبيرة من البيانات؛ اتركه معطّلاً في غير هذه الحالة.</string>
+    <string name="setup_section_backup">نسخ احتياطي للإعدادات</string>
+    <string name="setup_backup_hint">احفظ إعداداتك في ملف، أو حمّل ملفًا محفوظًا. لا تُضمَّن وحدات التحكم الموثوقة والشهادات والحالة الخاصة بالهاتف، ولا الخيارات التي تفتح AARE على الشبكة أو تتخطى فحص أمان (خادم وحدة التحكم، وضع الراكب، صوت root…): اضبطها يدويًا على كل هاتف.</string>
+    <string name="setup_backup_export">تصدير…</string>
+    <string name="setup_backup_import">استيراد…</string>
+    <string name="setup_backup_import_confirm_title">استبدال إعداداتك؟</string>
+    <string name="setup_backup_import_confirm_text">سيؤدي هذا إلى استبدال إعداداتك الحالية بإعدادات الملف المختار. لا يمكن التراجع عن ذلك.</string>
+    <string name="setup_backup_import_confirm_action">استبدال</string>
+    <string name="setup_backup_import_done">تم استيراد الإعدادات.</string>
+    <string name="setup_backup_import_done_skipped">تم استيراد الإعدادات. المُستبعَد (غير معروف أو محظور أو غير صالح): %1$d</string>
+    <string name="setup_backup_import_failed">لا يمكن استيراد هذا الملف: ليس ملف إعدادات AARE، أو حجمه كبير جدًا.</string>
+    <string name="setup_backup_export_failed">تعذّر حفظ ملف الإعدادات.</string>
     <string name="setup_nothing_to_open">لا يوجد تطبيق على هذا الهاتف يمكنه فتح هذا</string>
     <string name="setup_wallpaper_failed">تعذّر استخدام هذه الصورة كخلفية</string>
     <string name="msg_autoreply_default">أنا أقود السيارة الآن، سأرد لاحقًا.</string>

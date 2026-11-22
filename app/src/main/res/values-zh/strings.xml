@@ -572,6 +572,17 @@
     <string name="setup_log_save">保存</string>
     <string name="setup_toggle_verbose_log_title">详细协议日志</string>
     <string name="setup_toggle_verbose_log_subtitle">在此日志中记录完整的车机协议跟踪，用于附加到错误报告。会产生大量日志；平时请保持关闭。</string>
+    <string name="setup_section_backup">设置备份</string>
+    <string name="setup_backup_hint">将设置保存到文件，或从文件载入。已信任的车机、证书、本机专属状态，以及会让 AARE 对网络开放或跳过安全检查的选项（车机服务器、乘客模式、root 音频…）不包含在内：请在每部手机上手动设置。</string>
+    <string name="setup_backup_export">导出…</string>
+    <string name="setup_backup_import">导入…</string>
+    <string name="setup_backup_import_confirm_title">替换你的设置？</string>
+    <string name="setup_backup_import_confirm_text">这会用所选文件中的设置覆盖当前设置，且无法撤销。</string>
+    <string name="setup_backup_import_confirm_action">替换</string>
+    <string name="setup_backup_import_done">设置已导入。</string>
+    <string name="setup_backup_import_done_skipped">设置已导入。因未知、被阻止或无效而跳过：%1$d</string>
+    <string name="setup_backup_import_failed">无法导入此文件：它不是 AARE 设置文件，或文件过大。</string>
+    <string name="setup_backup_export_failed">无法保存设置文件。</string>
     <string name="setup_nothing_to_open">此手机没有可打开此内容的应用</string>
     <string name="setup_wallpaper_failed">无法将这张照片设为壁纸</string>
     <string name="msg_autoreply_default">我正在开车，稍后回复。</string>

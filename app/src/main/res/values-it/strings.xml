@@ -588,6 +588,17 @@
     <string name="setup_log_save">Salva</string>
     <string name="setup_toggle_verbose_log_title">Log dettagliato del protocollo</string>
     <string name="setup_toggle_verbose_log_subtitle">Registra in questo log la traccia completa del protocollo dell\'head unit, da allegare a una segnalazione di bug. Registra molti dati; lascialo disattivato altrimenti.</string>
+    <string name="setup_section_backup">Backup delle impostazioni</string>
+    <string name="setup_backup_hint">Salva le impostazioni in un file o ricaricane uno. Head unit autorizzate, certificati, stato proprio del telefono e opzioni che aprono AARE alla rete o saltano un controllo di sicurezza (server head unit, modalità passeggero, audio root…) restano fuori: impostali a mano su ogni telefono.</string>
+    <string name="setup_backup_export">Esporta…</string>
+    <string name="setup_backup_import">Importa…</string>
+    <string name="setup_backup_import_confirm_title">Sostituire le impostazioni?</string>
+    <string name="setup_backup_import_confirm_text">Le impostazioni attuali verranno sovrascritte con quelle del file scelto. L\'operazione non si può annullare.</string>
+    <string name="setup_backup_import_confirm_action">Sostituisci</string>
+    <string name="setup_backup_import_done">Impostazioni importate.</string>
+    <string name="setup_backup_import_done_skipped">Impostazioni importate. Escluse perché sconosciute, bloccate o non valide: %1$d</string>
+    <string name="setup_backup_import_failed">Impossibile importare questo file: non è un file di impostazioni di AARE, oppure è troppo grande.</string>
+    <string name="setup_backup_export_failed">Impossibile salvare il file delle impostazioni.</string>
     <string name="setup_nothing_to_open">Questo telefono non ha un\'app in grado di aprirlo</string>
     <string name="setup_wallpaper_failed">Impossibile usare questa foto come sfondo</string>
     <string name="msg_autoreply_default">Sto guidando, risponderò più tardi.</string>
