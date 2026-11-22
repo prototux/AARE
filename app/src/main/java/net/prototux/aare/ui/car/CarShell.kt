@@ -199,19 +199,23 @@ private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, ar
 }
 
 /** What a side rail has room for besides the clock, bell, menu and mic, from [sideRailFit]. */
-internal data class SideRailFit(val recentSlots: Int, val status: Boolean, val settings: Boolean)
+internal data class SideRailFit(val recentSlots: Int, val status: Boolean, val settings: Boolean, val phone: Boolean = true)
 
 /**
  * Fits the side rail to its [height] inside the padding. Everything takes about 614 dp (clock and
  * bell 72, phone status and weather 54, the four apps 328, menu and mic 160), so on shorter screens
- * the phone status and weather go first, then Settings (the launcher has it); below that the apps
- * scroll. Dropping items rather than shrinking them keeps every button a full touch target.
+ * the phone status and weather go first, then Settings (the launcher has it), then Phone on 480 dp
+ * screens (#269: it was cut off; calls still show their card, and the launcher and the steering
+ * wheel's call button open it). Dropping items rather than shrinking them keeps every button a full
+ * touch target.
  */
 internal fun sideRailFit(height: Dp) = SideRailFit(
     // A recent app only on tall screens: what an 800 dp screen leaves inside the padding.
     recentSlots = if (height >= 768.dp) 1 else 0,
     status = height >= 614.dp,
     settings = height >= 560.dp,
+    // Clock and bell 72, navigation, media and Phone 244, menu and mic 160.
+    phone = height >= 476.dp,
 )
 
 @Composable
@@ -229,11 +233,11 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     // weather there, the launcher has them all. Landscape bars keep everything.
     val tightBar = horizontal && area.height > area.width && area.width < 800.dp
     val tighterBar = tightBar && area.width < 640.dp
-    val apps: @Composable (Int, Boolean) -> Unit = { recentSlots, withSettings ->
+    val apps: @Composable (Int, Boolean, Boolean) -> Unit = { recentSlots, withSettings, withPhone ->
         RailApp(nav, Icons.Rounded.Map, on(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
         RailApp(media, Icons.Rounded.MusicNote, on(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
         recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app)) { actions.openApp(app) } }
-        phone?.let { RailApp(it, Icons.Rounded.Call, on(it)) { actions.openApp(it) } }
+        phone?.takeIf { withPhone }?.let { RailApp(it, Icons.Rounded.Call, on(it)) { actions.openApp(it) } }
         settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it)) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
@@ -256,7 +260,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { apps(if (tightBar) 0 else 2, !tighterBar) }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { apps(if (tightBar) 0 else 2, !tighterBar, true) }
             }
             if (state.driverOnRight) driverEnd() else status()
         }
@@ -281,7 +285,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                     Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                ) { apps(fit.recentSlots, fit.settings) }
+                ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }
             menu()
             Spacer(Modifier.height(8.dp))

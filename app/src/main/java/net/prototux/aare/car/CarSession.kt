@@ -405,9 +405,11 @@ class CarSession(
     }
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
-        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int {
+            offeredVideo = configs
+            return chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
                 vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
+        }
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -467,6 +469,8 @@ class CarSession(
 
     /** The configuration the projection runs with (main thread), for UI config updates. */
     private var videoConfig: VideoConfiguration? = null
+    /** Every resolution the car offered: touch maps against its largest, not the one chosen (#269). */
+    @Volatile private var offeredVideo: List<VideoConfiguration> = emptyList()
 
     private fun startProjection(config: VideoConfiguration, rightHandDrive: Boolean) {
         teardownVideo()
@@ -548,7 +552,9 @@ class CarSession(
         // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
         // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout)
+        val native = offeredVideo.map(::visibleSize).maxByOrNull { it.first.toLong() * it.second }
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout,
+            native?.first ?: layout.visibleWidth, native?.second ?: layout.visibleHeight)
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
