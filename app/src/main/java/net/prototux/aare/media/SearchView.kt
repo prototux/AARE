@@ -1,7 +1,6 @@
 package net.prototux.aare.media
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,8 +29,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 
+import net.prototux.aare.ui.car.carClickable
 /**
  * Search entry. The car screen is a virtual display where the phone's IME does not appear, so
  * we draw our own keyboard; like Android Auto, it is locked while driving.
@@ -97,7 +96,7 @@ private fun Key(
     val fg = if (primary && enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Box(
         modifier.fillMaxHeight().clip(MaterialTheme.shapes.small).background(bg)
-            .carFocusHighlight(MaterialTheme.shapes.small).clickable(enabled = enabled, onClick = onClick),
+            .carClickable(MaterialTheme.shapes.small, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

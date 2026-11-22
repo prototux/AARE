@@ -3,7 +3,6 @@ package net.prototux.aare.host.templates
 import androidx.car.app.model.Tab
 import androidx.car.app.model.TabTemplate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,8 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /**
  * TabTemplate: app icon and tabs in the header, the active tab's template below. Selecting a tab
@@ -86,7 +85,7 @@ private fun TabChip(tab: Tab, selected: Boolean, onClick: () -> Unit) {
     val fg = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
     Row(
         Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(bg)
-            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick)
+            .carClickable(MaterialTheme.shapes.extraLarge, onClick = onClick)
             .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

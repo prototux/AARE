@@ -8,7 +8,6 @@ import android.provider.ContactsContract
 import android.telephony.TelephonyManager
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -134,7 +133,7 @@ private fun InCallCard(onHangUp: () -> Unit) {
         Icon(Icons.Rounded.Call, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.width(14.dp))
         Text(stringResource(R.string.phone_call_in_progress), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.weight(1f))
-        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(LocalCarColors.current.decline).clickable(onClick = onHangUp),
+        Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).background(LocalCarColors.current.decline).carClickable(CircleShape, onClick = onHangUp),
             contentAlignment = Alignment.Center) {
             Icon(Icons.Rounded.CallEnd, stringResource(R.string.phone_action_hang_up), tint = LocalCarColors.current.onCall)
         }
@@ -150,7 +149,7 @@ private fun CalleeList(list: List<Callee>?, empty: String, onCall: (Callee) -> U
             items(list) { c ->
                 Row(
                     Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium)
-                        .clickable { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
+                        .carClickable(MaterialTheme.shapes.medium) { onCall(c) }.padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     val icon = when (c.type) {
@@ -185,11 +184,11 @@ private fun Keypad(onCall: (String) -> Unit) {
             Text(number.ifEmpty { " " }, style = MaterialTheme.typography.displaySmall, maxLines = 1)
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).clickable { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
+                Box(Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape).carClickable(CircleShape) { number = number.dropLast(1) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.AutoMirrored.Rounded.Backspace, stringResource(R.string.phone_keypad_delete))
                 }
                 Box(Modifier.size(LocalCarDimens.current.touchTarget + 8.dp).clip(CircleShape).background(LocalCarColors.current.accept)
-                    .clickable(enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
+                    .carClickable(CircleShape, enabled = number.isNotEmpty()) { onCall(number) }, contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Call, stringResource(R.string.common_call), tint = LocalCarColors.current.onCall)
                 }
             }
@@ -199,7 +198,7 @@ private fun Keypad(onCall: (String) -> Unit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { k ->
                         Box(Modifier.weight(1f).height(64.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .clickable { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
+                            .carClickable(MaterialTheme.shapes.small) { if (number.length < 20) number += k }, contentAlignment = Alignment.Center) {
                             Text(k, style = MaterialTheme.typography.headlineSmall)
                         }
                     }

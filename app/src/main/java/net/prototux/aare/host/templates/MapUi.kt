@@ -17,7 +17,6 @@ import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.navigation.model.PanModeDelegate
 import androidx.car.app.navigation.model.PlaceListNavigationTemplate
 import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -67,8 +66,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -424,8 +423,7 @@ private fun MapListCard(
             {
                 Box(
                     Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape)
-                        .carFocusHighlight(CircleShape)
-                        .clickable { safeCall("onContentRefreshRequested") { d.sendContentRefreshRequested(host.done) } },
+                        .carClickable(CircleShape) { safeCall("onContentRefreshRequested") { d.sendContentRefreshRequested(host.done) } },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Rounded.Refresh, "Refresh", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(32.dp))

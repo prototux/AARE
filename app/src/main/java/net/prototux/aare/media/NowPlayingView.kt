@@ -3,7 +3,6 @@ package net.prototux.aare.media
 import android.os.SystemClock
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -60,8 +59,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /**
  * Now playing: big art, title/artist/album, progress (seekable when the app allows it), transport
@@ -210,7 +209,7 @@ private fun ActionButton(hub: DefaultMediaHub, action: CustomAction) {
     val d = LocalCarDimens.current
     val icon = rememberIcon(hub.art, action.icon, 96)
     Box(
-        Modifier.size(d.touchTarget).clip(CircleShape).carFocusHighlight(CircleShape).clickable { action.run() },
+        Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape) { action.run() },
         contentAlignment = Alignment.Center,
     ) {
         if (icon != null) {
@@ -235,8 +234,7 @@ internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> U
             val bg = if (entry.current) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
             Row(
                 Modifier.fillMaxWidth().heightIn(min = LocalCarDimens.current.touchTarget).clip(MaterialTheme.shapes.medium).background(bg)
-                    .carFocusHighlight(MaterialTheme.shapes.medium)
-                    .clickable { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
+                    .carClickable(MaterialTheme.shapes.medium) { source.skipTo(entry); done() }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
