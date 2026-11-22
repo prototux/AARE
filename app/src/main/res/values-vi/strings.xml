@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Giao diện</string>
     <string name="setup_choice_colors">Màu sắc</string>
-    <string name="setup_choice_colors_auto">Ngày/đêm theo xe</string>
+    <string name="setup_choice_colors_auto">Tự động</string>
     <string name="setup_choice_dark">Tối</string>
     <string name="setup_choice_light">Sáng</string>
     <string name="setup_choice_bar">Thanh</string>

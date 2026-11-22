@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Uiterlijk</string>
     <string name="setup_choice_colors">Kleuren</string>
-    <string name="setup_choice_colors_auto">Dag/nacht van de auto</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Donker</string>
     <string name="setup_choice_light">Licht</string>
     <string name="setup_choice_bar">Balk</string>
