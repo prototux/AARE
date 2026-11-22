@@ -35,7 +35,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
     /** A cluster encoder that keeps failing goes dark instead of restarting forever. */
     private val restarts = RestartLimiter(CarSession.MAX_RESTARTS, CarSession.RESTART_WINDOW_MS)
 
-    fun open(service: aap_protobuf.service.ServiceOuterClass.Service): VideoChannel = VideoChannel(service, this).also { channel = it }
+    fun open(service: aap_protobuf.service.ServiceOuterClass.Service, allowDropOverflow: Boolean = false): VideoChannel =
+        VideoChannel(service, this, allowDropOverflow = allowDropOverflow).also { channel = it }
 
     // The cluster usually offers one configuration: take the smallest, it's a small screen. It stays
     // on H.264 (universally decoded, and bandwidth is a non-issue on a tiny screen); only the main

@@ -118,6 +118,12 @@ class FrameReader(input: InputStream, private val cryptor: () -> Cryptor?) {
  * Splits messages into frames, encrypting each chunk when needed, and writes them.
  * Fragments of one message are written back to back: some head units can't reassemble
  * interleaved fragments, so we never interleave on output.
+ *
+ * Each frame is flushed on its own, so that over USB every frame is exactly one bulk transfer,
+ * as with the official phone. Head units such as Hyundai/Kia (Mobis) parse one AAP frame per
+ * transfer: when a fragmented message's frames were coalesced into one write, the kernel split it
+ * into 16 KiB transfers regardless of frame boundaries, and the head unit stopped reading and
+ * reset USB on the first message over [Frame.MAX_PAYLOAD] bytes (usually the first real video frame).
  */
 class FrameWriter(output: OutputStream, private val cryptor: () -> Cryptor?) {
     private val output = output
@@ -169,8 +175,8 @@ class FrameWriter(output: OutputStream, private val cryptor: () -> Cryptor?) {
                 output.write(frame, 0, p)
                 output.write(body, bodyOff, bodyLen)
             }
+            output.flush() // one frame per write, see the class comment
             offset += chunk
         } while (offset < length)
-        output.flush()
     }
 }
