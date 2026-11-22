@@ -18,6 +18,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -200,6 +202,14 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
 
     @Composable
     override fun MapSurface(modifier: Modifier) {
+        // A new surface for a new size (a pane resized, or back to full screen): an app given its
+        // old surface at another size may crash or keep drawing at the old one. Each surface has
+        // its own owner, so the old one going away can't take the new one with it.
+        BoxWithConstraints(modifier) { key(constraints.maxWidth, constraints.maxHeight) { SizedMapSurface(Modifier.fillMaxSize()) } }
+    }
+
+    @Composable
+    private fun SizedMapSurface(modifier: Modifier) {
         val owner = remember { Any() }
         val dpi = runtime.densityDpi
         AndroidView(

@@ -631,9 +631,9 @@ stays out until someone adds it there on purpose.
 
 ## Split screen: which app can take the second pane
 
-`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), and an app is never in both panes, so two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) run side by side without sharing anything.
 
-So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) puts built-in screens and hosted car apps in the second pane (`canOpenBeside`). The phone mirror and a launched phone app stay full screen only. A car app in the second pane gets Back like any other; when it finishes, the other pane's app is left alone on screen (`leftAlone`). The primary pane is unrestricted (today's one-app slot).
 
 Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
 

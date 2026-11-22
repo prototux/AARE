@@ -16,7 +16,7 @@ class CarSplitTest {
     }
 
     @Test
-    fun onlyNonHostedScreensCanTakeTheSecondPane() {
+    fun builtInScreensAndCarAppsCanTakeTheSecondPane() {
         assertTrue(canOpenBeside(CarAppKind.MEDIA))
         assertTrue(canOpenBeside(CarAppKind.PHONE))
         assertTrue(canOpenBeside(CarAppKind.MESSAGING))
@@ -24,10 +24,10 @@ class CarSplitTest {
         assertTrue(canOpenBeside(CarAppKind.CAR_DATA))
         assertTrue(canOpenBeside(CarAppKind.SETTINGS))
         assertTrue(canOpenBeside(CarAppKind.NOTIFICATIONS))
-        // Hosted Car App Library apps keep CarAppConnection's one-surface-owner-at-a-time rule.
-        assertFalse(canOpenBeside(CarAppKind.NAVIGATION))
-        assertFalse(canOpenBeside(CarAppKind.TEMPLATED))
-        assertFalse(canOpenBeside(CarAppKind.ASSISTANT))
+        // Hosted Car App Library apps: each its own connection and surface.
+        assertTrue(canOpenBeside(CarAppKind.NAVIGATION))
+        assertTrue(canOpenBeside(CarAppKind.TEMPLATED))
+        assertTrue(canOpenBeside(CarAppKind.ASSISTANT))
         // Device-wide, single-instance resources, not doubled up for a first version.
         assertFalse(canOpenBeside(CarAppKind.PHONE_SCREEN))
         assertFalse(canOpenBeside(CarAppKind.STANDALONE))
@@ -100,6 +100,23 @@ class CarSplitTest {
         assertEquals(CarPane.PRIMARY, paneAt(959.dp, total, 0.5f))
         assertEquals(CarPane.SECONDARY, paneAt(961.dp, total, 0.5f))
         assertEquals(CarPane.SECONDARY, paneAt(1800.dp, total, 0.5f))
+    }
+
+    @Test
+    fun aCarAppsOwnButtonsAreNotCovered() {
+        assertTrue(hasCloseButton(CarAppKind.MEDIA))
+        assertTrue(hasCloseButton(CarAppKind.SETTINGS))
+        assertFalse(hasCloseButton(CarAppKind.NAVIGATION))
+        assertFalse(hasCloseButton(CarAppKind.TEMPLATED))
+        assertFalse(hasCloseButton(CarAppKind.ASSISTANT))
+    }
+
+    @Test
+    fun theOtherPanesAppIsLeftAloneWhenOneFinishes() {
+        assertEquals("phone", leftAlone("maps", "maps", "phone"))
+        assertEquals("maps", leftAlone("phone", "maps", "phone"))
+        assertEquals(null, leftAlone("maps", "maps", null))
+        assertEquals(null, leftAlone("music", "maps", "phone"))
     }
 
     @Test

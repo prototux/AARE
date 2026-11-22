@@ -76,6 +76,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -199,10 +201,8 @@ internal fun ContentArea(
 // ---------------------------------------------------------------- split screen
 
 /**
- * [primary] and [secondary] side by side with a draggable divider. Only a built-in or non-hosted
- * app ([canOpenBeside]) ever reaches here as [secondary]: a Car App Library connection owns one
- * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
- * so a navigation or templated app stays full screen only.
+ * [primary] and [secondary] side by side with a draggable divider, [secondary] one of the kinds
+ * [canOpenBeside] allows there. The pane touched last, or holding the knob's focus, gets Back.
  *
  * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
  * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
@@ -232,15 +232,17 @@ private fun SplitPane(
         Row(Modifier.fillMaxSize()) {
             Box(
                 Modifier.weight(restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) },
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) }
+                    .onTouched { actions.focusPane(CarPane.PRIMARY) },
             ) { appContent(primary, Modifier.fillMaxSize()) }
             Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
             Box(
                 Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) },
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) }
+                    .onTouched { actions.focusPane(CarPane.SECONDARY) },
             ) {
                 appContent(secondary, Modifier.fillMaxSize())
-                Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                if (hasCloseButton(secondary.kind)) Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                     RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
                 }
             }
@@ -264,6 +266,13 @@ private fun SplitPane(
         ) {
             Box(Modifier.width(3.dp).fillMaxHeight(0.4f).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.outlineVariant))
         }
+    }
+}
+
+/** Calls [onTouch] for every finger put down here, before the content gets it and without taking it. */
+private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) if (awaitPointerEvent(PointerEventPass.Initial).changes.any { it.changedToDown() }) onTouch()
     }
 }
 
