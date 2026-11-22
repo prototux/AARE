@@ -36,8 +36,9 @@ a Car App Library app is only hooked if the module is enabled for it.
 ```
 
 Install the APK, enable it in your Xposed manager, tick the scope, and reboot (or restart the
-scoped apps). The module compiles against `io.github.libxposed:api` with `compileOnly`; the
-framework provides the API at runtime, so it is never bundled.
+scoped apps). Each hook writes one line to the manager's log (tag `AARE`) saying whether it
+installed, and in which process. The module compiles against `io.github.libxposed:api` with
+`compileOnly`; the framework provides the API at runtime, so it is never bundled.
 
 > **Status:** new and not yet verified on a device. The system_server hooks target framework
 > internals whose names change between Android versions; each is best-effort and skips a target it
