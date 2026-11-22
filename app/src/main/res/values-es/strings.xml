@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Inferior</string>
     <string name="setup_toggle_dark_bar_title">Barra oscura</string>
     <string name="setup_toggle_dark_bar_subtitle">Mantener la barra oscura incluso con colores de día</string>
+    <string name="setup_toggle_split_screen_title">Pantalla dividida</string>
+    <string name="setup_toggle_split_screen_subtitle">Mantén pulsada una app en la barra del coche para abrirla junto a la actual (diseño de barra de tareas, solo pantallas anchas)</string>
+    <string name="car_split_close">Cerrar pantalla dividida</string>
+    <string name="car_split_open_beside">Abrir junto a la app actual</string>
     <string name="setup_choice_text_size">Tamaño del texto</string>
     <string name="setup_choice_control_size">Tamaño de los controles</string>
     <string name="setup_choice_size_default">Predeterminado</string>

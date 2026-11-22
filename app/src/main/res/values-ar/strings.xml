@@ -96,6 +96,10 @@
     <string name="setup_choice_bottom">أسفل</string>
     <string name="setup_toggle_dark_bar_title">شريط داكن</string>
     <string name="setup_toggle_dark_bar_subtitle">إبقاء الشريط داكنًا حتى مع ألوان النهار</string>
+    <string name="setup_toggle_split_screen_title">تقسيم الشاشة</string>
+    <string name="setup_toggle_split_screen_subtitle">اضغط مطولًا على تطبيق في شريط السيارة لفتحه بجانب التطبيق الحالي (تخطيط شريط المهام، الشاشات العريضة فقط)</string>
+    <string name="car_split_close">إغلاق تقسيم الشاشة</string>
+    <string name="car_split_open_beside">فتح بجانب التطبيق الحالي</string>
     <string name="setup_choice_text_size">حجم النص</string>
     <string name="setup_choice_control_size">حجم عناصر التحكم</string>
     <string name="setup_choice_size_default">افتراضي</string>

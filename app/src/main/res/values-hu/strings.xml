@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Alul</string>
     <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
     <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_toggle_split_screen_title">Osztott képernyő</string>
+    <string name="setup_toggle_split_screen_subtitle">Nyomj hosszan egy alkalmazást az autó sávjában, hogy a jelenlegi mellett nyíljon meg (tálca elrendezés, csak széles képernyőn)</string>
+    <string name="car_split_close">Osztott képernyő bezárása</string>
+    <string name="car_split_open_beside">Megnyitás a jelenlegi alkalmazás mellett</string>
     <string name="setup_choice_text_size">Szövegméret</string>
     <string name="setup_choice_control_size">Vezérlők mérete</string>
     <string name="setup_choice_size_default">Alapértelmezett</string>

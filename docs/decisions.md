@@ -562,7 +562,6 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
-
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
@@ -598,7 +597,6 @@ apps. The dashboard's map card doesn't show its map: the launcher has one displa
 by the full-screen view, and moving it between the card and full screen would restart the app and
 its route at each switch. The card offers to open it, and shows its directions once it posts them.
 No Home/Work shortcuts: AARE has none for hosted navigation apps either.
-
 ## Settings export and import
 
 Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each setting that may move
@@ -630,3 +628,19 @@ stays out until someone adds it there on purpose.
   KB). Failures show a fixed message and log only the exception's kind: a JSON error's message
   quotes the file. After an import the settings screen is rebuilt (`key` on a generation counter),
   so no card keeps showing, and on its next tap writing back, a value from before the import.
+
+## Split screen: which app can take the second pane
+
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+
+Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
+
+Dragging the divider moves an overlay handle only; the real pane weights (and so a hosted app's map surface size) update once, on release, per the project's rule against resizing a surface on every drag frame.
+
+`screenBack` (a single field for "the screen with its own back stack") became a map keyed by app id (`registerScreenBack`/`unregisterScreenBack`), since split screen can now put two such screens on screen together (e.g. the browser beside messaging) where before only one app was ever visible at a time.
+
+Scoped to the taskbar layout and screens ≥900 dp wide (the brief's number); the dock and classic layouts keep their current one-app behaviour.
+
+An app is never in both panes (`openInPanes`): opening one that is already beside the main app (from the rail, or the phone during a call) moves the focus to its pane instead of opening it a second time in the main pane; any other app takes the main pane and the one beside it stays.

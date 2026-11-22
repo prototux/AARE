@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Снизу</string>
     <string name="setup_toggle_dark_bar_title">Тёмная панель</string>
     <string name="setup_toggle_dark_bar_subtitle">Оставлять панель тёмной даже со светлыми цветами</string>
+    <string name="setup_toggle_split_screen_title">Разделённый экран</string>
+    <string name="setup_toggle_split_screen_subtitle">Долгое нажатие на приложение в панели машины открывает его рядом с текущим (макет «Панель задач», только широкие экраны)</string>
+    <string name="car_split_close">Закрыть разделённый экран</string>
+    <string name="car_split_open_beside">Открыть рядом с текущим приложением</string>
     <string name="setup_choice_text_size">Размер текста</string>
     <string name="setup_choice_control_size">Размер элементов управления</string>
     <string name="setup_choice_size_default">По умолчанию</string>

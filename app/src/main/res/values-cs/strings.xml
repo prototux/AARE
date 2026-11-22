@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Dole</string>
     <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_toggle_split_screen_title">Rozdělená obrazovka</string>
+    <string name="setup_toggle_split_screen_subtitle">Dlouhým stisknutím aplikace na liště auta ji otevřete vedle aktuální (rozvržení Hlavní panel, jen široké obrazovky)</string>
+    <string name="car_split_close">Zavřít rozdělenou obrazovku</string>
+    <string name="car_split_open_beside">Otevřít vedle aktuální aplikace</string>
     <string name="setup_choice_text_size">Velikost textu</string>
     <string name="setup_choice_control_size">Velikost ovládacích prvků</string>
     <string name="setup_choice_size_default">Výchozí</string>

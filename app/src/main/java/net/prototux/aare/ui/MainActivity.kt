@@ -914,6 +914,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var chrome by remember { mutableStateOf(settings.carChrome) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var splitScreen by remember { mutableStateOf(settings.splitScreen) }
     var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
@@ -971,6 +972,9 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Text(stringResource(R.string.setup_hint_status_items), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
+            Toggle(stringResource(R.string.setup_toggle_split_screen_title), stringResource(R.string.setup_toggle_split_screen_subtitle), splitScreen) {
+                splitScreen = it; settings.splitScreen = it
+            }
             Spacer(Modifier.height(12.dp))
             RailWidgetsEditor(railWidgets, 48.dp) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
             Spacer(Modifier.height(12.dp))

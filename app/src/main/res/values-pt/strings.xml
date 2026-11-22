@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Fundo</string>
     <string name="setup_toggle_dark_bar_title">Barra escura</string>
     <string name="setup_toggle_dark_bar_subtitle">Manter a barra escura mesmo com as cores de dia</string>
+    <string name="setup_toggle_split_screen_title">Ecrã dividido</string>
+    <string name="setup_toggle_split_screen_subtitle">Toque longo numa app na barra do carro para a abrir ao lado da atual (esquema de barra de tarefas, só ecrãs largos)</string>
+    <string name="car_split_close">Fechar ecrã dividido</string>
+    <string name="car_split_open_beside">Abrir ao lado da app atual</string>
     <string name="setup_choice_text_size">Tamanho do texto</string>
     <string name="setup_choice_control_size">Tamanho dos controlos</string>
     <string name="setup_choice_size_default">Predefinido</string>

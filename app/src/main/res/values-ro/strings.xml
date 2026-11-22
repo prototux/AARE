@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Jos</string>
     <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
     <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
+    <string name="setup_toggle_split_screen_title">Ecran împărțit</string>
+    <string name="setup_toggle_split_screen_subtitle">Apasă lung o aplicație din bara mașinii pentru a o deschide lângă cea curentă (aspect bară de activități, doar ecrane late)</string>
+    <string name="car_split_close">Închide ecranul împărțit</string>
+    <string name="car_split_open_beside">Deschide lângă aplicația curentă</string>
     <string name="setup_choice_text_size">Dimensiunea textului</string>
     <string name="setup_choice_control_size">Dimensiunea comenzilor</string>
     <string name="setup_choice_size_default">Implicită</string>

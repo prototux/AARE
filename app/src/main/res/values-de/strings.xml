@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Unten</string>
     <string name="setup_toggle_dark_bar_title">Dunkle Leiste</string>
     <string name="setup_toggle_dark_bar_subtitle">Leiste auch bei Tagfarben dunkel halten</string>
+    <string name="setup_toggle_split_screen_title">Geteilter Bildschirm</string>
+    <string name="setup_toggle_split_screen_subtitle">Eine App in der Leiste des Autos lange drücken, um sie neben der aktuellen zu öffnen (Taskleisten-Layout, nur breite Bildschirme)</string>
+    <string name="car_split_close">Geteilten Bildschirm schließen</string>
+    <string name="car_split_open_beside">Neben der aktuellen App öffnen</string>
     <string name="setup_choice_text_size">Textgröße</string>
     <string name="setup_choice_control_size">Größe der Bedienelemente</string>
     <string name="setup_choice_size_default">Standard</string>

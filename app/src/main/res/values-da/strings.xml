@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Nederst</string>
     <string name="setup_toggle_dark_bar_title">Mørk bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Hold baren mørk, selv med dagfarver</string>
+    <string name="setup_toggle_split_screen_title">Delt skærm</string>
+    <string name="setup_toggle_split_screen_subtitle">Tryk længe på en app i bilens bar for at åbne den ved siden af den aktuelle (proceslinjelayout, kun brede skærme)</string>
+    <string name="car_split_close">Luk delt skærm</string>
+    <string name="car_split_open_beside">Åbn ved siden af den aktuelle app</string>
     <string name="setup_choice_text_size">Tekststørrelse</string>
     <string name="setup_choice_control_size">Størrelse på knapper</string>
     <string name="setup_choice_size_default">Standard</string>

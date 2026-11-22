@@ -96,6 +96,10 @@
     <string name="setup_choice_bottom">底部</string>
     <string name="setup_toggle_dark_bar_title">深色导航条</string>
     <string name="setup_toggle_dark_bar_subtitle">即使使用日间配色，导航条仍保持深色</string>
+    <string name="setup_toggle_split_screen_title">分屏</string>
+    <string name="setup_toggle_split_screen_subtitle">在车机导航条上长按应用，即可在当前应用旁打开（任务栏布局，仅限宽屏）</string>
+    <string name="car_split_close">关闭分屏</string>
+    <string name="car_split_open_beside">在当前应用旁打开</string>
     <string name="setup_choice_text_size">文字大小</string>
     <string name="setup_choice_control_size">控件大小</string>
     <string name="setup_choice_size_default">默认</string>

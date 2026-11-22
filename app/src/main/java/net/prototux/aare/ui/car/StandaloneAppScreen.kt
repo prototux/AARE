@@ -85,9 +85,10 @@ internal fun StandaloneAppScreen(
                 launcher.connected
             }
         }
-        runtime.screenBack = back
+        val id = CarRuntime.standaloneId(packageName)
+        runtime.registerScreenBack(id, back)
         onDispose {
-            if (runtime.screenBack === back) runtime.screenBack = null
+            runtime.unregisterScreenBack(id, back)
             // A place that never made it (no launcher) mustn't come back on the next, unrelated open.
             runtime.standaloneViews.remove(packageName)
             launcher.release()
