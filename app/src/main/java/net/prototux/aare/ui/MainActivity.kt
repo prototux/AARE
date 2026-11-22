@@ -129,6 +129,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.prototux.aare.DiagLog
+import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
@@ -139,6 +140,8 @@ import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.car.CarKeyAction
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
+import net.prototux.aare.car.QuirkChoice
+import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
@@ -282,6 +285,7 @@ private fun Home() {
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
+                            item { CarQuirksCard(settings) }
                             item { LogCard() }
                             item { CarButtonsCard(settings) }
                         }
@@ -1712,6 +1716,8 @@ private fun xyz(v: CarData.Vector3): String? =
 @Composable
 private fun VehicleOverridesCard() {
     val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    var carFixes by remember { mutableStateOf(settings.builtInCarFixes) }
     val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
     var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
     var problem by remember { mutableStateOf(net.prototux.aare.car.VehicleOverrides.problem(ctx)) }
@@ -1725,6 +1731,10 @@ private fun VehicleOverridesCard() {
     }
     Section(stringResource(R.string.vehicles_section_title)) {
         Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.vehicles_builtin_fixes_title), stringResource(R.string.vehicles_builtin_fixes_subtitle), carFixes) {
+            carFixes = it; settings.builtInCarFixes = it
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
         problem?.let { p ->
@@ -1746,6 +1756,90 @@ private fun VehicleOverridesCard() {
                 Toast.makeText(ctx, file.absolutePath, Toast.LENGTH_LONG).show()
             }) { Text(stringResource(R.string.vehicles_template)) }
         }
+    }
+}
+
+/** One vehicles.json quirk, with its choice for one car (see VehicleOverrides.effective). */
+@Composable
+private fun QuirkRow(title: String, subtitle: String, value: QuirkChoice, onLabel: String, offLabel: String, onSelect: (QuirkChoice) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        val options = listOf(QuirkChoice.AUTOMATIC to stringResource(R.string.quirks_automatic), QuirkChoice.ON to onLabel, QuirkChoice.OFF to offLabel)
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+            options.forEachIndexed { i, (v, label) ->
+                SegmentedButton(selected = v == value, onClick = { onSelect(v) }, shape = SegmentedButtonDefaults.itemShape(i, options.size)) {
+                    Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * "Car quirks": every vehicles.json quirk that has a clear on/off meaning, overridable for one car,
+ * the head unit connected last (kept with it in KnownHeadUnits, so Forget clears it). Automatic
+ * keeps what the built-in car fixes and the user's vehicles.json say for it; On/Off force it.
+ */
+@Composable
+private fun CarQuirksCard(settings: Settings) {
+    val ctx = LocalContext.current
+    val known = remember { KnownHeadUnits(ctx) }
+    val car = remember { settings.lastHeadUnit?.takeIf { known.carName(it) != null } }
+    Section(stringResource(R.string.quirks_section_title)) {
+        Text(stringResource(R.string.quirks_subtitle), style = MaterialTheme.typography.bodyMedium)
+        Spacer(Modifier.height(4.dp))
+        Text(stringResource(R.string.quirks_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        if (car == null) {
+            Text(stringResource(R.string.quirks_no_car), style = MaterialTheme.typography.bodyMedium)
+        } else {
+            CarQuirkRows(car, known)
+        }
+    }
+}
+
+@Composable
+private fun CarQuirkRows(car: String, known: KnownHeadUnits) {
+    var q by remember(car) { mutableStateOf(known.quirks(car)) }
+    fun set(next: QuirkSettings) { q = next; known.setQuirks(car, next) }
+    val on = stringResource(R.string.quirks_on)
+    val off = stringResource(R.string.quirks_off)
+    Text(stringResource(R.string.quirks_for_car, known.carName(car).orEmpty().ifBlank { car }), style = MaterialTheme.typography.titleSmall)
+    QuirkRow(stringResource(R.string.quirks_pixel_aspect_title), stringResource(R.string.quirks_pixel_aspect_subtitle), q.pixelAspect, on, off) {
+        set(q.copy(pixelAspect = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_video_resolutions_title), stringResource(R.string.quirks_video_resolutions_subtitle), q.videoResolutions, on, off) {
+        set(q.copy(videoResolutions = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_single_channel_capture_title), stringResource(R.string.quirks_single_channel_capture_subtitle), q.singleChannelCapture, on, off) {
+        set(q.copy(singleChannelCapture = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wifi_media_silence_title), stringResource(R.string.quirks_wifi_media_silence_subtitle), q.wifiMediaStartSilence, on, off) {
+        set(q.copy(wifiMediaStartSilence = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wifi_guidance_silence_title), stringResource(R.string.quirks_wifi_guidance_silence_subtitle), q.wifiGuidanceStartSilence, on, off) {
+        set(q.copy(wifiGuidanceStartSilence = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_media_on_gain_transient_title), stringResource(R.string.quirks_media_on_gain_transient_subtitle), q.mediaOnGainTransient, on, off) {
+        set(q.copy(mediaOnGainTransient = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_pause_on_guidance_only_title), stringResource(R.string.quirks_pause_on_guidance_only_subtitle), q.pauseOnGuidanceOnly, on, off) {
+        set(q.copy(pauseOnGuidanceOnly = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_wireless_title), stringResource(R.string.quirks_wireless_subtitle), q.wireless,
+        stringResource(R.string.quirks_wireless_allow), stringResource(R.string.quirks_wireless_block)) {
+        set(q.copy(wireless = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_force_electric_title), stringResource(R.string.quirks_force_electric_subtitle), q.forceElectric, on, off) {
+        set(q.copy(forceElectric = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_exit_to_car_title), stringResource(R.string.quirks_exit_to_car_subtitle), q.exitToCar, on, off) {
+        set(q.copy(exitToCar = it))
+    }
+    QuirkRow(stringResource(R.string.quirks_mic_setup_title), stringResource(R.string.quirks_mic_setup_subtitle), q.micSetup, on, off) {
+        set(q.copy(micSetup = it))
     }
 }
 
