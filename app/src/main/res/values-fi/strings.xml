@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">Yhdistäminen</string>
     <string name="setup_toggle_wireless_title">Langaton</string>
     <string name="setup_toggle_wireless_subtitle">Yhdistä laiteparina oleviin autoihin Wi-Fin kautta, kun ne tulevat Bluetooth-kantaman sisään</string>
+    <string name="setup_choice_wireless_compat">Langaton yhteensopivuus</string>
+    <string name="setup_choice_wireless_compat_auto">Automaattinen</string>
+    <string name="setup_choice_wireless_compat_builtin">Sisäänrakennettu</string>
+    <string name="setup_choice_wireless_compat_adapter">Sovitin</string>
+    <string name="setup_hint_wireless_compat">Sisäänrakennetut soittolaitteet ja jälkiasennetut langattomat sovittimet (kytketty auton USB-liitäntään) odottavat puhelimen vastaavan eri järjestyksessä. Automaattinen käyttää vakiojärjestystä tai sovitinjärjestystä autolle, joka viimeksi yhdisti sillä. Valitse Sovitin, jos langaton sovittimesi ei yhdistä; Sisäänrakennettu palauttaa vakiojärjestyksen kaikille autoille.</string>
     <string name="setup_toggle_resume_music_title">Jatka musiikkia</string>
     <string name="setup_toggle_resume_music_subtitle">Käynnistä viimeksi soitettu musiikkisovellus, kun auto yhdistetään</string>
     <string name="setup_bt_address_label">Puhelimen Bluetooth-osoite (valinnainen)</string>

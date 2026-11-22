@@ -51,6 +51,11 @@
     <string name="setup_section_connecting">A ligar</string>
     <string name="setup_toggle_wireless_title">Sem fios</string>
     <string name="setup_toggle_wireless_subtitle">Ligar a carros emparelhados por Wi-Fi quando entram no alcance do Bluetooth</string>
+    <string name="setup_choice_wireless_compat">Compatibilidade sem fios</string>
+    <string name="setup_choice_wireless_compat_auto">Automático</string>
+    <string name="setup_choice_wireless_compat_builtin">Integrada</string>
+    <string name="setup_choice_wireless_compat_adapter">Adaptador</string>
+    <string name="setup_hint_wireless_compat">As unidades principais integradas e os adaptadores sem fios de terceiros (ligados à USB do carro) esperam que o telemóvel responda por ordens diferentes. Automático usa a ordem padrão, ou a do adaptador para um carro que se ligou assim da última vez. Escolha Adaptador se o seu adaptador sem fios não ligar; Integrada volta à ordem padrão para todos os carros.</string>
     <string name="setup_toggle_resume_music_title">Retomar a música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar a última aplicação de música quando o carro se ligar</string>
     <string name="setup_bt_address_label">Endereço Bluetooth do telemóvel (opcional)</string>

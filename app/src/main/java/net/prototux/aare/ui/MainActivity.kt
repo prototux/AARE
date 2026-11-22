@@ -154,6 +154,7 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.setup.SetupPermissions
 import net.prototux.aare.setup.ShizukuSetup
 import net.prototux.aare.setup.ShizukuSetupClient
@@ -556,6 +557,7 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 @Composable
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
+    var wirelessCompat by remember { mutableStateOf(settings.wirelessCompatibility) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     // What "Check now" found, shown next to it; [checking] while it asks.
     var updateStatus by remember { mutableStateOf<String?>(null) }
@@ -580,6 +582,15 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
+            if (wireless) {
+                Choices(stringResource(R.string.setup_choice_wireless_compat), listOf(
+                    HandshakeChoice.AUTO to stringResource(R.string.setup_choice_wireless_compat_auto),
+                    HandshakeChoice.BUILT_IN to stringResource(R.string.setup_choice_wireless_compat_builtin),
+                    HandshakeChoice.ADAPTER to stringResource(R.string.setup_choice_wireless_compat_adapter),
+                ), wirelessCompat) { wirelessCompat = it; settings.wirelessCompatibility = it }
+                Text(stringResource(R.string.setup_hint_wireless_compat), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+            }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
