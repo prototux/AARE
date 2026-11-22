@@ -518,6 +518,9 @@
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_links_title">Links from the assistant</string>
+    <string name="assistant_stop">Stop the assistant</string>
+    <string name="assistant_voice_button_stops_title">Voice button stops the assistant</string>
+    <string name="assistant_voice_button_stops_subtitle">Pressing the voice button again while the assistant is showing closes it and stops listening, like Back. Off: every press asks the assistant again.</string>
     <string name="assistant_links_subtitle">Let aare:// links in the chosen assistant\'s replies control the music, or offer to navigate, open an app or call on the car screen. Links from other apps and from web pages are ignored.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>

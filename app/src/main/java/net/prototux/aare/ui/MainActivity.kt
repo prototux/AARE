@@ -1596,6 +1596,11 @@ private fun AssistantCard(settings: Settings) {
                 onCarScreen,
             ) { onCarScreen = it; settings.assistantOnCarScreen = it }
         }
+        var stops by remember { mutableStateOf(settings.voiceButtonStops) }
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.assistant_voice_button_stops_title), stringResource(R.string.assistant_voice_button_stops_subtitle), stops) {
+            stops = it; settings.voiceButtonStops = it
+        }
         var links by remember { mutableStateOf(settings.assistantLinks) }
         Spacer(Modifier.height(8.dp))
         Toggle(stringResource(R.string.assistant_links_title), stringResource(R.string.assistant_links_subtitle), links) {

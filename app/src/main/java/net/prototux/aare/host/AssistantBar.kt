@@ -52,11 +52,14 @@ import net.prototux.aare.ui.theme.LocalCarDimens
  * with the listening state, what was heard and the answer, instead of the app full screen.
  *
  * It shows the assistant's own car screen when that is a MessageTemplate (Lapin's is: a title,
- * the text, and Talk/Stop/Yes/No buttons); anything richer opens the app full screen. It closes
+ * the text, and Yes/No buttons); anything richer opens the app full screen. It closes
  * by itself once the assistant has finished and stays quiet for a while.
  */
 @Composable
-internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier, onClose: () -> Unit, onExpand: () -> Unit) {
+internal fun AssistantBar(
+    entry: CarAppEntry, conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier,
+    onClose: () -> Unit, onStop: () -> Unit, onExpand: () -> Unit,
+) {
     DisposableEffect(conn) {
         runtime.acquireVisible(conn)
         onDispose { runtime.releaseVisible(conn) }
@@ -103,8 +106,13 @@ internal fun AssistantBar(entry: CarAppEntry, conn: CarAppConnection, runtime: C
                         Text(stringResource(R.string.assistant_listening), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                Box(Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onClose), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Close, stringResource(R.string.common_close), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Stop: big and red, the one control of an assistant driven by the voice button
+                // (it stops the assistant, not only the bar: see CarRuntime.stopAssistant).
+                // The red circle is 64 dp; the tap area keeps the car screen's full touch target.
+                Box(Modifier.size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onStop), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.error), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.Close, stringResource(R.string.assistant_stop), Modifier.size(36.dp), tint = MaterialTheme.colorScheme.onError)
+                    }
                 }
             }
             if (busy && !listening) {

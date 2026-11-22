@@ -978,6 +978,12 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
+        // A second press while the assistant is showing stops it, like Back (unless the user turned that
+        // off): the assistant opened on the car screen closes, the assistant bar closes and its app
+        // loses the car's microphone.
+        val stops = settings.voiceButtonStops
+        if (stops && ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
+        if (stops && ui.assistantAppId != null) { stopAssistant(); return }
         val pkg = assistantPackage()
         if (pkg == null) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_choose_text))
@@ -985,6 +991,11 @@ class CarRuntime(
         }
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
+        // The assistant's own app open full screen and listening: the press stops the listening.
+        if (stops && entry != null && conn != null && conn.listening && (ui.screen as? CarScreen.App)?.appId == entry.id) {
+            conn.stopMicrophone()
+            return
+        }
         if (entry != null && conn != null) {
             // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen. Set before
             // the intent goes out: the app may open the microphone before the bar is drawn (see openMicrophone).
@@ -1031,10 +1042,23 @@ class CarRuntime(
         if (screenBacks[appId] === handler) screenBacks.remove(appId)
     }
 
+    /**
+     * The driver closed the assistant bar (its stop button, the back key, or the voice button again): the assistant gets
+     * back, which Lapin takes as "stop" (it stops listening or speaking), then the bar closes.
+     * Back goes first, while the app is still started: hiding the bar stops it.
+     */
+    fun stopAssistant() {
+        val conn = ui.assistantAppId?.let { connections[it] }
+        if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back()
+        // An app that doesn't take back as "stop" still loses the car's microphone.
+        conn?.stopMicrophone()
+        ui.assistantAppId = null
+    }
+
     /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
-        if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
+        if (ui.assistantAppId != null) { stopAssistant(); return }
         val secondaryId = ui.secondaryAppId
         if (secondaryId != null && ui.focusedPane == CarPane.SECONDARY) {
             // The secondary pane has no screen stack of the dashboard's own (it's not a CarScreen):
@@ -1111,6 +1135,7 @@ class CarRuntime(
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
+                                onStop = ::stopAssistant,
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
