@@ -659,6 +659,9 @@ class WirelessBootstrapTest {
         // an adapter that dislikes the answer hangs up before sending its credentials
         hu.send(WppMessageId.START_REQUEST, startRequest())
         assertEquals(WppMessageId.START_RESPONSE, hu.read().id)
+        // Read the info request first: hanging up while the phone is still sending it fails that
+        // send instead, which says nothing about this test's case.
+        assertEquals(WppMessageId.INFO_REQUEST, hu.read().id)
         hu.hangUp()
         awaitEnd()
         assertTrue((failure as WirelessBootstrapException).whileNegotiating)

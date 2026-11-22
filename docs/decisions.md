@@ -376,7 +376,6 @@ the head unit's own version back in the AAP version exchange. "Wireless compatib
 - No error text goes to the head unit: a failed WifiConnectionStatus carries the status only (the
   text is for the driver, and ours is a log line).
 - The per-car memory moves to `KnownHeadUnits` (#233) once that is merged.
-
 ## Rail apps: a flat chosen list replaces the dynamic slots, not alongside them
 
 When the user picks apps for the rail on the phone (`Settings.railApps`), the rail shows exactly
@@ -386,7 +385,6 @@ nav/media/recent behaviour) would make the setting's effect unpredictable. An em
 chosen, the default) keeps today's dynamic rail untouched. Resolution happens at render time from
 live `CarUiState.apps` (`resolveRailApps`), so an uninstalled app's key is skipped without special
 handling and nothing needs to be recomputed when the app list changes.
-
 ## Rail widgets: battery split out of the network icons, which stay unconditional
 
 `PhoneStatusIcons` (wifi/signal + battery, together) stays for the layouts that already show it
@@ -413,6 +411,19 @@ nothing shifts for someone who never opens the new setting. The day label itself
 so it's a plain JVM-testable function; `CalendarAgendaCard` calls it with the real clock and zone
 and still renders a single event exactly as `CalendarCard` always has, so the on-screen look at the
 default setting is unchanged, not just the data behind it.
+
+## Reconnecting a wireless link that dropped
+
+A wireless session that reached the car screen and then failed without a bye-bye from either side
+is reconnected by itself: 5 single attempts, after 3, 6, 9, 12 and 15 s (`WirelessReconnect`),
+apart from the initial connect's "car not ready yet" retries. A Disconnect, the car's bye-bye and
+the phone's Stop all say goodbye first, so they are never reconnected.
+
+- Ignition off drops the link without a bye-bye too; it is told apart by the car's Bluetooth
+  disconnecting (ACL_DISCONNECTED) up to 20 s before the drop or any time after it. Further back
+  doesn't count: some adapters hang up their Bluetooth link right after the bootstrap.
+- A reconnected session that drops again within a minute continues the same budget, so a link
+  that keeps failing is not reconnected forever.
 
 ## Phone assistants on the car screen (no car app)
 

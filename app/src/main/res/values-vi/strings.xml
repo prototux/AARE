@@ -305,6 +305,7 @@
     <string name="notif_cert_download_failed">Không thể tải chứng chỉ: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Đang kết nối không dây…</string>
     <string name="notif_status_not_connected">Chưa kết nối</string>
+    <string name="notif_status_reconnecting">Mất kết nối với xe, đang kết nối lại (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · đang giữ quyền ghi màn hình cho âm thanh xe hơi (nhấn Dừng để giải phóng)</string>
     <string name="notif_cert_changed_title">Chứng chỉ đầu đĩa đã thay đổi</string>
     <string name="notif_new_head_unit_title">Đầu đĩa mới</string>

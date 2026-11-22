@@ -305,6 +305,7 @@
     <string name="notif_cert_download_failed">Det gick inte att ladda ner certifikatet: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Ansluter trådlöst…</string>
     <string name="notif_status_not_connected">Inte ansluten</string>
+    <string name="notif_status_reconnecting">Anslutningen till bilen bröts, ansluter igen (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · behåller medgivandet för skärminspelning för billjud (Stopp släpper det)</string>
     <string name="notif_cert_changed_title">Head units certifikat ändrat</string>
     <string name="notif_new_head_unit_title">Ny head unit</string>

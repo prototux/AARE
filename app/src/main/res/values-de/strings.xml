@@ -305,6 +305,7 @@
     <string name="notif_cert_download_failed">Das Zertifikat konnte nicht heruntergeladen werden: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Kabellose Verbindung wird aufgebaut…</string>
     <string name="notif_status_not_connected">Nicht verbunden</string>
+    <string name="notif_status_reconnecting">Verbindung zum Auto verloren, Verbindung wird erneut aufgebaut (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · Zustimmung zur Bildschirmaufnahme für Autoaudio wird beibehalten (Stopp gibt sie frei)</string>
     <string name="notif_cert_changed_title">Zertifikat der Head Unit geändert</string>
     <string name="notif_new_head_unit_title">Neue Head Unit</string>
