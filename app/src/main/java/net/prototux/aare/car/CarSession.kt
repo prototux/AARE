@@ -688,6 +688,10 @@ class CarSession(
             if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
             return
         }
+        // The car's buttons, in the connection log: which ones reach the phone at all (the voice
+        // button on some cars only on a long press, or not during projection). Not the rotary
+        // knob's steps or the touchpad's moves, which come by the dozen.
+        if (!down && logsCarKey(code)) DiagLog.add("car key ${KeyEvent.keyCodeToString(code)}${if (longPress) ", held" else ""}")
         // A user remap wins over the key's normal behaviour below (never over the guard above:
         // that's about not acting before there's a screen at all, remapped or not).
         resolveCarKeyAction(carKeyMap, code)?.let { action ->
@@ -1226,3 +1230,13 @@ class CarSession(
 }
 
 private fun androidx.compose.ui.graphics.ImageBitmap.asAndroidBitmapCompat(): Bitmap = asAndroidBitmap()
+
+/** The rotary knob and touchpad keys, left out of the connection log. */
+private val NAV_KEYS = setOf(
+    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_NAVIGATE_NEXT,
+    KeyEvent.KEYCODE_NAVIGATE_PREVIOUS, KeyEvent.KEYCODE_NAVIGATE_IN, KeyEvent.KEYCODE_NAVIGATE_OUT,
+)
+
+/** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
+internal fun logsCarKey(code: Int) = code !in NAV_KEYS
