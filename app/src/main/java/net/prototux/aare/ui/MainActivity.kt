@@ -44,6 +44,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -77,6 +79,11 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -110,6 +117,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -122,9 +130,11 @@ import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
+import net.prototux.aare.BuildConfig
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.car.CarKeyAction
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.cert.CertificateDownload
@@ -144,6 +154,7 @@ import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
@@ -154,6 +165,13 @@ import kotlin.math.roundToInt
 
 /** The phone side: what's connected, what's set up, and the settings. */
 class MainActivity : ComponentActivity() {
+    // Each time the app comes to the front, not only when it starts: a release published while
+    // AARE stayed in memory shows the next time it's opened (UpdateChecker limits how often it asks).
+    override fun onResume() {
+        super.onResume()
+        UpdateChecker.refresh(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -200,7 +218,7 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
-    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); UpdateChecker.refresh(ctx); CertificateUpdates.refresh(ctx) }
+    LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycle) {
@@ -253,6 +271,7 @@ private fun Home() {
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { LogCard() }
+                            item { CarButtonsCard(settings) }
                         }
                         Page.ABOUT -> item { AboutScreen() }
                     }
@@ -497,6 +516,9 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
+    // What "Check now" found, shown next to it; [checking] while it asks.
+    var updateStatus by remember { mutableStateOf<String?>(null) }
+    val checking = stringResource(R.string.update_checking)
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
@@ -529,7 +551,23 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         }
         Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
-                checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx)
+                checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx, force = it)
+                updateStatus = null
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(enabled = checkUpdates && updateStatus != checking, onClick = {
+                    updateStatus = checking
+                    UpdateChecker.checkNow(ctx) { r ->
+                        updateStatus = when {
+                            r.version == null -> ctx.getString(R.string.update_check_failed)
+                            r.newer -> ctx.getString(R.string.update_check_available, r.version)
+                            else -> ctx.getString(R.string.update_check_latest, BuildConfig.VERSION_NAME)
+                        }
+                    }
+                }) { Text(stringResource(R.string.update_check_now)) }
+                updateStatus?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         Section(stringResource(R.string.setup_section_location)) {
@@ -691,6 +729,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
+    var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
@@ -717,19 +756,20 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) },
                 onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
                 onAccent = { accent = it; settings.carAccent = it },
+                select = { title, options, selected, onSelect -> Select(title, options, selected, onSelect) },
             )
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
                 theme = it; settings.carTheme = it
             }
             Spacer(Modifier.height(12.dp))
-            Choices(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
+            Select(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
                 rail = it; settings.railPosition = it
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
         }
         Section(stringResource(R.string.setup_section_dashboard)) {
-            Choices(stringResource(R.string.setup_choice_wallpaper), listOf("none" to stringResource(R.string.setup_wallpaper_none)) + WALLPAPER_NAMES.map { it to it.replaceFirstChar(Char::uppercase) } +
+            Select(stringResource(R.string.setup_choice_wallpaper), listOf("none" to stringResource(R.string.setup_wallpaper_none)) + WALLPAPER_NAMES.map { it to it.replaceFirstChar(Char::uppercase) } +
                 listOf(Settings.WALLPAPER_CUSTOM to stringResource(R.string.setup_wallpaper_photo)), wallpaper) { choice ->
                 if (choice == Settings.WALLPAPER_CUSTOM) photoPicker.launch("image/*")
                 else { wallpaper = choice; settings.wallpaper = choice }
@@ -740,6 +780,10 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(8.dp))
+            Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
+                mapBig = it; settings.dashboardMapBig = it
+            }
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {
@@ -896,15 +940,46 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
 
 private const val SHIZUKU_REQUEST = 42
 
+/** A labelled drop-down of mutually exclusive options, for lists too long for a row of [Choices]. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Select(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Text(title, style = MaterialTheme.typography.bodyLarge)
+    Spacer(Modifier.height(6.dp))
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        OutlinedTextField(
+            value = options.firstOrNull { it.first == selected }?.second.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (value, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = { expanded = false; onSelect(value) },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
+        }
+    }
+}
+
 /** A labelled row of mutually exclusive options. */
 @Composable
 private fun Choices(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
     Text(title, style = MaterialTheme.typography.bodyLarge)
     Spacer(Modifier.height(6.dp))
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+    // One height for the row, so a label that wraps doesn't leave its segment taller than the rest.
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         options.forEachIndexed { i, (value, label) ->
-            SegmentedButton(selected = value == selected, onClick = { onSelect(value) }, shape = SegmentedButtonDefaults.itemShape(i, options.size)) {
-                Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium)
+            // No check mark: the filled segment already shows the choice, and the mark took the
+            // room a longer word needs ("Fahrerseite", "Barre des tâches"). Those wrap, not cut.
+            SegmentedButton(selected = value == selected, onClick = { onSelect(value) }, shape = SegmentedButtonDefaults.itemShape(i, options.size), modifier = Modifier.fillMaxHeight(), icon = {}) {
+                Text(label, maxLines = 2, textAlign = TextAlign.Center, style = MaterialTheme.typography.labelMedium)
             }
         }
     }
@@ -1046,6 +1121,7 @@ private fun AppGroup(title: String) {
 private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Context) {
     var enabled by remember { mutableStateOf(settings.standaloneApps) }
     var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
+    var mediaVideo by remember { mutableStateOf(settings.mediaVideo) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
@@ -1065,6 +1141,9 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                 keepAwake,
             ) {
                 keepAwake = it; settings.standaloneKeepScreenAwake = it
+            }
+            Toggle(stringResource(R.string.standalone_media_video_title), stringResource(R.string.standalone_media_video_subtitle), mediaVideo) {
+                mediaVideo = it; settings.mediaVideo = it
             }
             val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
                 value = withContext(Dispatchers.IO) { launchableApps(ctx) }
@@ -1157,6 +1236,10 @@ private fun AssistantCard(settings: Settings) {
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.assistant_hint),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        var links by remember { mutableStateOf(settings.assistantLinks) }
+        Toggle(stringResource(R.string.assistant_links_title), stringResource(R.string.assistant_links_subtitle), links) {
+            links = it; settings.assistantLinks = it
+        }
     }
 }
 
@@ -1365,7 +1448,7 @@ private fun CarDataCard() {
         DataRow(stringResource(R.string.car_data_toll), yesNo(car.tollCardPresent?.value))
         DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
         DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
-        DataRow(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }?.joinToString(" ") { "%02x".format(it) })
+        DataRow(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
     }
 }
 
@@ -1377,17 +1460,26 @@ private fun VehicleOverridesCard() {
     val ctx = LocalContext.current
     val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
     var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
+    var problem by remember { mutableStateOf(net.prototux.aare.car.VehicleOverrides.problem(ctx)) }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         runCatching {
             ctx.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
         }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
         count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+        problem = net.prototux.aare.car.VehicleOverrides.problem(ctx)
     }
     Section(stringResource(R.string.vehicles_section_title)) {
         Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
+        problem?.let { p ->
+            Text(
+                if (p.line != null && p.column != null) stringResource(R.string.vehicles_malformed_at, p.line, p.column, p.reason)
+                else stringResource(R.string.vehicles_malformed, p.reason),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error,
+            )
+        }
         Text(file.absolutePath, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
         Row {
@@ -1396,6 +1488,7 @@ private fun VehicleOverridesCard() {
                 runCatching { file.parentFile?.mkdirs(); file.writeText(net.prototux.aare.car.VehicleOverrides.template()) }
                     .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
                 count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+                problem = net.prototux.aare.car.VehicleOverrides.problem(ctx)
                 Toast.makeText(ctx, file.absolutePath, Toast.LENGTH_LONG).show()
             }) { Text(stringResource(R.string.vehicles_template)) }
         }
@@ -1440,6 +1533,30 @@ private fun LogCard() {
     }
 }
 
+private const val CAR_BUTTON_DEFAULT = "default"
+
+/** Lets the user remap a key the car has sent (CarSession.onKey) to one of AARE's own actions. */
+@Composable
+private fun CarButtonsCard(settings: Settings) {
+    val seen = remember { settings.carKeysSeen }
+    var map by remember { mutableStateOf(settings.carKeyMap) }
+    val options = listOf(CAR_BUTTON_DEFAULT to stringResource(R.string.setup_car_button_default)) +
+        CarKeyAction.entries.map { it.id to stringResource(it.labelRes) }
+    Section(stringResource(R.string.setup_section_car_buttons)) {
+        Text(stringResource(R.string.setup_car_buttons_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (seen.isEmpty()) {
+            Text(stringResource(R.string.setup_car_buttons_empty), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+        }
+        seen.toList().sortedBy { (_, name) -> name }.forEach { (code, name) ->
+            Spacer(Modifier.height(12.dp))
+            Choices(name, options, map[code] ?: CAR_BUTTON_DEFAULT) { choice ->
+                map = if (choice == CAR_BUTTON_DEFAULT) map - code else map + (code to choice)
+                settings.carKeyMap = map
+            }
+        }
+    }
+}
+
 @Composable
 private fun LicenceLine() {
     Column(Modifier.fillMaxWidth().padding(8.dp)) {
@@ -1451,6 +1568,7 @@ private fun LicenceLine() {
 }
 
 /** The About page: what AARE is, links to the project, and everyone who helped build it. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AboutScreen() {
     val ctx = LocalContext.current
@@ -1459,7 +1577,7 @@ private fun AboutScreen() {
     }
     Spacer(Modifier.height(16.dp))
     Section(stringResource(R.string.about_section_links_title)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Pill(stringResource(R.string.about_link_repository), Icons.Rounded.Code) {
                 ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(AboutLinks.REPOSITORY)))
             }

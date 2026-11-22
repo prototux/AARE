@@ -91,8 +91,10 @@ class HeadUnitSimulator(
      * does, even the ones aasdk's definitions call required.
      */
     omitZeroFields: Boolean = false,
-    /** The protocol minor version the head unit announces (1.x). */
+    /** The protocol minor version the head unit announces. */
     private val protocolMinor: Int = 6,
+    /** The protocol major version the head unit announces. */
+    private val protocolMajor: Int = 1,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -123,6 +125,8 @@ class HeadUnitSimulator(
     val byeBye = CountDownLatch(1)
     val closed = CountDownLatch(1)
     @Volatile var videoStart: Start? = null
+    /** Each media channel's session, from its latest START: its acks carry it, as a head unit's do. */
+    val sessionIds = ConcurrentHashMap<Int, Int>()
     @Volatile var error: Throwable? = null
     /** Video focus the phone reported, in order. */
     val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
@@ -138,11 +142,15 @@ class HeadUnitSimulator(
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
     @Volatile var hangUpInHandshake = false
+    /** The body of the phone's version response (major, minor, status: 16 bits each). */
+    @Volatile var versionResponse: ByteArray? = null
+    val versionAnswered = CountDownLatch(1)
 
     fun start() {
         Thread({
             try {
-                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, 1, 0, protocolMinor.toByte()))
+                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(
+                    (protocolMajor shr 8).toByte(), protocolMajor.toByte(), (protocolMinor shr 8).toByte(), protocolMinor.toByte()))
                 while (true) handle(reader.read())
             } catch (e: Throwable) {
                 if (byeBye.count > 0L) error = e
@@ -190,6 +198,8 @@ class HeadUnitSimulator(
     private fun control(m: AapMessage) {
         when (m.id) {
             ControlMsg.VERSION_RESPONSE -> {
+                versionResponse = m.bodyBytes()
+                versionAnswered.countDown()
                 cryptor.beginHandshake()
                 sendPlain(0, ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
@@ -233,7 +243,11 @@ class HeadUnitSimulator(
         when (m.id) {
             MediaMsg.SETUP -> send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
                 .setMaxUnacked(maxUnacked).addConfigurationIndices(0).build())
-            MediaMsg.START -> if (m.channel == video) videoStart = Start.parseFrom(m.bodyBytes())
+            MediaMsg.START -> {
+                val start = Start.parseFrom(m.bodyBytes())
+                sessionIds[m.channel] = start.sessionId
+                if (m.channel == video) videoStart = start
+            }
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 focusRequests.incrementAndGet()
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
@@ -255,7 +269,7 @@ class HeadUnitSimulator(
                 } else {
                     audioChunks.incrementAndGet()
                 }
-                val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
+                val session = sessionIds[m.channel] ?: 0
                 if (m.channel == video || ackAudio)
                     send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
@@ -322,6 +336,11 @@ class HeadUnitSimulator(
     /** Asks the phone for a video focus mode, as some head units do. */
     fun requestFocus(mode: VideoFocusMode) = send(video, MediaMsg.VIDEO_FOCUS_REQUEST,
         VideoFocusRequestNotification.newBuilder().setMode(mode).build())
+
+    /** Sends an ack of the head unit's own making on a media channel. */
+    fun sendAck(channel: Int, sessionId: Int, count: Int? = null, receiveTimesNs: List<Long> = emptyList()) =
+        send(channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessionId).apply { count?.let { setAck(it) } }
+            .addAllReceiveTimestampNs(receiveTimesNs).build())
 
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 

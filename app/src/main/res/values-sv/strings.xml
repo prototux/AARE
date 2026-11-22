@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Utseende</string>
     <string name="setup_choice_colors">Färger</string>
-    <string name="setup_choice_colors_auto">Bilens dag/natt</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mörkt</string>
     <string name="setup_choice_light">Ljust</string>
     <string name="setup_choice_bar">Fält</string>
@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Instrumentpanel</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det första kortet får mest plats; de andra fyller resten av skärmen. Ett kort utan något att visa lämnar sin plats till nästa.</string>
+    <string name="dash_map_big_title">Kartan alltid stor</string>
+    <string name="dash_map_big_subtitle">Var den än står i ordningen får kartan mest plats</string>
     <string name="dash_card_map">Karta</string>
     <string name="dash_card_media">Musik</string>
     <string name="dash_card_calendar">Nästa kalenderhändelse</string>
@@ -118,8 +120,23 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Inställningar</string>
     <string name="setup_app_entry_notifications">Aviseringar</string>
+    <string name="launcher_search_hint">Sök appar</string>
     <string name="setup_section_app_order">Ordning i bilen</string>
     <string name="setup_section_connection_log">Anslutningslogg</string>
+    <string name="setup_section_car_buttons">Bilens knappar</string>
+    <string name="setup_car_buttons_hint">Knappar som AARE har sett från den här bilen. Välj vad var och en gör; en knapp som står på ”Standard” behåller sin vanliga funktion.</string>
+    <string name="setup_car_buttons_empty">Inga knappar sedda än. Anslut till en bil och tryck på en.</string>
+    <string name="setup_car_button_default">Standard</string>
+    <string name="setup_car_action_home">Hem</string>
+    <string name="setup_car_action_back">Tillbaka</string>
+    <string name="setup_car_action_assistant">Röstassistent</string>
+    <string name="setup_car_action_play_pause">Spela/pausa</string>
+    <string name="setup_car_action_next">Nästa spår</string>
+    <string name="setup_car_action_previous">Föregående spår</string>
+    <string name="setup_car_action_open_navigation">Öppna navigeringsappen</string>
+    <string name="setup_car_action_open_media">Öppna mediaappen</string>
+    <string name="setup_car_action_open_phone">Öppna telefonappen</string>
+    <string name="setup_car_action_nothing">Ingenting</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Inte anknuten till Google. Android Auto är ett varumärke som tillhör Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
     <string name="setup_choice_theme">Tema</string>
@@ -237,6 +254,8 @@
     <string name="notif_action_stop">Stopp</string>
     <string name="notif_action_trust">Lita på</string>
     <string name="notif_action_download_cert">Ladda ner certifikat</string>
+    <string name="notif_action_navigate">Navigera</string>
+    <string name="notif_action_open">Öppna</string>
     <string name="notif_cert_download_title">Head unit avvisade AAREs certifikat</string>
     <string name="notif_cert_download_message">Den här head unit-enheten accepterar bara Googles certifikat. Ladda ner det från den senaste Android Auto-appen och anslut igen.</string>
     <string name="notif_cert_download_progress">Laddar ner Android Autos certifikat…</string>
@@ -264,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s bad om att ringa en kod med * eller #, inte ett telefonnummer</string>
     <string name="notif_calling_title">Ringer %1$s</string>
     <string name="notif_asked_by">Begärt av %1$s</string>
+    <string name="notif_asked_by_link">Begärt av en länk i assistentens svar</string>
     <string name="notif_call_confirm_title">Ring %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigera till %1$s?</string>
+    <string name="notif_open_confirm_title">Öppna %1$s?</string>
     <string name="notif_no_nav_app">Ingen navigeringsapp på telefonen</string>
     <string name="notif_cant_open">Kan inte öppna det från bilen</string>
     <string name="notif_navigation_title">Navigering</string>
@@ -305,6 +327,11 @@
     <string name="media_search_app">Sök i %1$s</string>
     <string name="media_action_search">Sök</string>
     <string name="media_action_browse">Bläddra</string>
+    <string name="media_action_show_video">Visa video</string>
+    <string name="media_video_close">Tillbaka till spelaren</string>
+    <string name="media_video_full_screen">Helskärm</string>
+    <string name="media_video_exit_full_screen">Avsluta helskärm</string>
+    <string name="media_video_paused_driving">Video pausad under körning; ljudet fortsätter.</string>
     <string name="media_now_playing_label">Spelas nu</string>
     <string name="media_nothing_here">Inget här</string>
     <string name="media_couldnt_load_more">Kunde inte ladda mer</string>
@@ -374,6 +401,8 @@
     <string name="standalone_not_native">Inte en Android Auto-app · användning vid parkering</string>
     <string name="standalone_starting">Startar…</string>
     <string name="standalone_paused_driving">Pausad under körning.</string>
+    <string name="standalone_media_video_title">Video från medieappar</string>
+    <string name="standalone_media_video_subtitle">Lägger till \"Visa video\" på bilens medieskärm: medieappen öppnas på bilskärmen för sin video. Bara parkerad; skivomslaget kommer tillbaka när du kör.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Webbläsare</string>
     <string name="browser_app_row_subtitle">En webbläsare på bilens skärm, för när du är parkerad</string>
@@ -384,6 +413,8 @@
     <string name="browser_reload">Uppdatera</string>
     <string name="browser_home">Startsida</string>
     <string name="browser_address_hint">Sök eller skriv en webbadress</string>
+    <string name="assistant_links_title">Länkar från assistenten</string>
+    <string name="assistant_links_subtitle">Låt aare://-länkar i den valda assistentens svar styra musiken, eller erbjuda att navigera, öppna en app eller ringa på bilens skärm. Länkar från andra appar och från webbsidor ignoreras.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighet, växel och sensorer direkt från bilen</string>
@@ -434,6 +465,11 @@
     <string name="car_data_accelerometer">Accelerometer</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Felkoder</string>
+    <string name="car_data_dtc_unknown">Okänd</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Tillverkarspecifik drivlinekod</string>
+    <string name="car_data_dtc_manufacturer_chassis">Tillverkarspecifik chassikod</string>
+    <string name="car_data_dtc_manufacturer_body">Tillverkarspecifik karosserikod</string>
+    <string name="car_data_dtc_manufacturer_network">Tillverkarspecifik nätverkskod</string>
     <string name="car_data_app_label">Bildata</string>
     <string name="car_data_show_in_car_title">Visa på bilens skärm</string>
     <string name="car_data_show_in_car_subtitle">Lägg till en diagnosapp i bilen för den här livedatan</string>
@@ -442,6 +478,8 @@
     <string name="vehicles_rule_count">Inlästa regler: %1$d</string>
     <string name="vehicles_import">Importera fil…</string>
     <string name="vehicles_template">Skriv mall</string>
+    <string name="vehicles_malformed_at">vehicles.json har ett fel på rad %1$d, kolumn %2$d (%3$s): dess regler ignoreras.</string>
+    <string name="vehicles_malformed">vehicles.json kan inte användas (%1$s): dess regler ignoreras.</string>
     <string name="setup_toggle_force_h264_title">Tvinga H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard använder AARE den bästa kodeken som bilen och telefonen har gemensamt (H.265…). Slå på om bilens bild är förvrängd.</string>
     <!-- i18n/new-strings: added 2026-11-09 -->
@@ -451,6 +489,11 @@
     <string name="setup_section_updates">Uppdateringar</string>
     <string name="setup_toggle_updates_title">Sök efter uppdateringar</string>
     <string name="setup_toggle_updates_subtitle">Varna på hemskärmen när en nyare version finns på GitHub. Av ansluter aldrig till internet.</string>
+    <string name="update_check_now">Kontrollera nu</string>
+    <string name="update_checking">Kontrollerar…</string>
+    <string name="update_check_latest">Du har den senaste versionen (%1$s).</string>
+    <string name="update_check_available">AARE %1$s finns: se startskärmen.</string>
+    <string name="update_check_failed">Kunde inte nå GitHub. Försök igen senare.</string>
     <string name="update_available_title">Uppdatering tillgänglig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryck för att visa versionen.</string>
     <string name="setup_log_save">Spara</string>

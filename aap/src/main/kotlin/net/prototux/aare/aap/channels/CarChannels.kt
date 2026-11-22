@@ -242,6 +242,21 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
         phoneAddress?.let { requestPairing(it) }
     }
 
+    /**
+     * Announces the phone again, once the session is running. A VW Play (Visteon MIB Regio) drops
+     * its Bluetooth link to the phone when projection starts, answers the request sent at channel
+     * open with "already paired", and only connects hands-free again (calls through the car) when
+     * the request comes after the session is up. Only for cars whose vehicles.json rule asks for it
+     * (`pairAgainWhenRunning`). Returns whether it was sent: not when the channel isn't open or the
+     * phone's address is unknown.
+     */
+    fun announceAgain(): Boolean {
+        if (!opened) return false
+        val address = phoneAddress ?: return false
+        requestPairing(address)
+        return true
+    }
+
     fun requestPairing(phoneAddress: String) {
         val method = when {
             BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in methods -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
@@ -249,7 +264,17 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
             methods.isNotEmpty() -> methods.first()
             else -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
         }
-        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(phoneAddress).setPairingMethod(method).build())
+        send(BluetoothMsg.PAIRING_REQUEST, BluetoothPairingRequest.newBuilder().setPhoneAddress(canonicalAddress(phoneAddress)).setPairingMethod(method).build())
+    }
+
+    companion object {
+        /**
+         * The address as Android writes it (upper case, colons). Head units compare it as text with
+         * the phones they have paired: a VW Play (Visteon MIB Regio) answered a lower-case address
+         * with a plain "accepted", not "already paired", and listed the phone twice, once for
+         * Bluetooth and once for the projection, so calls didn't go through the car (#117).
+         */
+        fun canonicalAddress(address: String): String = address.trim().uppercase(java.util.Locale.ROOT)
     }
 
     override fun onMessage(msg: AapMessage) {

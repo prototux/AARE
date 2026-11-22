@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Megjelenés</string>
     <string name="setup_choice_colors">Színek</string>
-    <string name="setup_choice_colors_auto">Autó nappal/éjszaka módja</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Sötét</string>
     <string name="setup_choice_light">Világos</string>
     <string name="setup_choice_bar">Sáv</string>
@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Műszerfal</string>
     <string name="dash_cards_title">Kártyák</string>
     <string name="dash_cards_hint">Az első kártya kapja a legtöbb helyet, a többi kitölti a képernyő maradékát. Az a kártya, amelynek nincs mit mutatnia, átadja a helyét a következőnek.</string>
+    <string name="dash_map_big_title">A térkép mindig nagy</string>
+    <string name="dash_map_big_subtitle">Bárhol van is a sorrendben, a térkép kapja a legtöbb helyet</string>
     <string name="dash_card_map">Térkép</string>
     <string name="dash_card_media">Zene</string>
     <string name="dash_card_calendar">Következő naptáresemény</string>
@@ -118,8 +120,23 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Beállítások</string>
     <string name="setup_app_entry_notifications">Értesítések</string>
+    <string name="launcher_search_hint">Alkalmazások keresése</string>
     <string name="setup_section_app_order">Sorrend az autóban</string>
     <string name="setup_section_connection_log">Kapcsolati napló</string>
+    <string name="setup_section_car_buttons">Autó gombjai</string>
+    <string name="setup_car_buttons_hint">Az AARE által ebből az autóból észlelt gombok. Válassza ki, mit csináljon mindegyik; az „Alapértelmezett” beállításon hagyott gomb a szokásos módon működik.</string>
+    <string name="setup_car_buttons_empty">Még nincs észlelt gomb. Csatlakozzon egy autóhoz, és nyomjon meg egyet.</string>
+    <string name="setup_car_button_default">Alapértelmezett</string>
+    <string name="setup_car_action_home">Kezdőlap</string>
+    <string name="setup_car_action_back">Vissza</string>
+    <string name="setup_car_action_assistant">Hangalapú asszisztens</string>
+    <string name="setup_car_action_play_pause">Lejátszás/szünet</string>
+    <string name="setup_car_action_next">Következő szám</string>
+    <string name="setup_car_action_previous">Előző szám</string>
+    <string name="setup_car_action_open_navigation">Navigációs alkalmazás megnyitása</string>
+    <string name="setup_car_action_open_media">Médiaalkalmazás megnyitása</string>
+    <string name="setup_car_action_open_phone">Telefonalkalmazás megnyitása</string>
+    <string name="setup_car_action_nothing">Semmi</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nem áll kapcsolatban a Google-lel. Az Android Auto a Google LLC védjegye.</string>
     <string name="setup_choice_style">Stílus</string>
     <string name="setup_choice_theme">Téma</string>
@@ -237,6 +254,8 @@
     <string name="notif_action_stop">Leállítás</string>
     <string name="notif_action_trust">Megbízom</string>
     <string name="notif_action_download_cert">Tanúsítvány letöltése</string>
+    <string name="notif_action_navigate">Navigáció</string>
+    <string name="notif_action_open">Megnyitás</string>
     <string name="notif_cert_download_title">A fejegység elutasította az AARE tanúsítványát</string>
     <string name="notif_cert_download_message">Ez a fejegység csak a Google tanúsítványát fogadja el. Töltsd le a legújabb Android Auto alkalmazásból, majd csatlakozz újra.</string>
     <string name="notif_cert_download_progress">Az Android Auto tanúsítványának letöltése…</string>
@@ -264,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s csillagot vagy kettőskeresztet tartalmazó kódot kért hívni, nem telefonszámot</string>
     <string name="notif_calling_title">Hívás: %1$s</string>
     <string name="notif_asked_by">Kérte: %1$s</string>
+    <string name="notif_asked_by_link">Kérte: egy hivatkozás az asszisztens válaszában</string>
     <string name="notif_call_confirm_title">Hívás indítása: %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigáció ide: %1$s?</string>
+    <string name="notif_open_confirm_title">Megnyitás: %1$s?</string>
     <string name="notif_no_nav_app">Nincs navigációs alkalmazás a telefonon</string>
     <string name="notif_cant_open">Ez nem nyitható meg az autóból</string>
     <string name="notif_navigation_title">Navigáció</string>
@@ -305,6 +327,11 @@
     <string name="media_search_app">%1$s keresése</string>
     <string name="media_action_search">Keresés</string>
     <string name="media_action_browse">Böngészés</string>
+    <string name="media_action_show_video">Videó megjelenítése</string>
+    <string name="media_video_close">Vissza a lejátszóhoz</string>
+    <string name="media_video_full_screen">Teljes képernyő</string>
+    <string name="media_video_exit_full_screen">Kilépés a teljes képernyőből</string>
+    <string name="media_video_paused_driving">A videó vezetés közben szünetel; a hang szól tovább.</string>
     <string name="media_now_playing_label">Most szól</string>
     <string name="media_nothing_here">Itt nincs semmi</string>
     <string name="media_couldnt_load_more">Nem lehetett többet betölteni</string>
@@ -374,6 +401,8 @@
     <string name="standalone_not_native">Nem Android Auto alkalmazás · használat álló autóban</string>
     <string name="standalone_starting">Indítás…</string>
     <string name="standalone_paused_driving">Vezetés közben szüneteltetve.</string>
+    <string name="standalone_media_video_title">Videó médiaalkalmazásokból</string>
+    <string name="standalone_media_video_subtitle">Hozzáadja a(z) „Videó megjelenítése” gombot az autó médiaképernyőjéhez: a médiaalkalmazás az autó képernyőjén nyílik meg a videójához. Csak parkoláskor; vezetés közben visszatér a borítókép.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Böngésző</string>
     <string name="browser_app_row_subtitle">Webböngésző az autó képernyőjén, amikor parkolsz</string>
@@ -384,6 +413,8 @@
     <string name="browser_reload">Újratöltés</string>
     <string name="browser_home">Kezdőlap</string>
     <string name="browser_address_hint">Keresés vagy webcím beírása</string>
+    <string name="assistant_links_title">Hivatkozások az asszisztenstől</string>
+    <string name="assistant_links_subtitle">A kiválasztott asszisztens válaszaiban lévő aare:// hivatkozások vezérelhetik a zenét, vagy az autó képernyőjén felajánlhatják a navigációt, egy alkalmazás megnyitását vagy egy hívást. A más alkalmazásokból és weboldalakról érkező hivatkozások figyelmen kívül maradnak.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Autó adatai</string>
     <string name="setup_page_car_data_subtitle">Élő sebesség, sebességfokozat és érzékelők az autóból</string>
@@ -434,6 +465,11 @@
     <string name="car_data_accelerometer">Gyorsulásmérő</string>
     <string name="car_data_gyroscope">Giroszkóp</string>
     <string name="car_data_dtc">Hibakódok</string>
+    <string name="car_data_dtc_unknown">Ismeretlen</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Gyártóspecifikus hajtáslánc-kód</string>
+    <string name="car_data_dtc_manufacturer_chassis">Gyártóspecifikus futómű-kód</string>
+    <string name="car_data_dtc_manufacturer_body">Gyártóspecifikus karosszéria-kód</string>
+    <string name="car_data_dtc_manufacturer_network">Gyártóspecifikus hálózati kód</string>
     <string name="car_data_app_label">Autó adatai</string>
     <string name="car_data_show_in_car_title">Megjelenítés az autó képernyőjén</string>
     <string name="car_data_show_in_car_subtitle">Adj hozzá egy diagnosztikai alkalmazást az autóban ehhez az élő adathoz</string>
@@ -442,6 +478,8 @@
     <string name="vehicles_rule_count">%1$d szabály betöltve</string>
     <string name="vehicles_import">Fájl importálása…</string>
     <string name="vehicles_template">Sablon írása</string>
+    <string name="vehicles_malformed_at">A vehicles.json hibás a(z) %1$d. sor %2$d. oszlopában (%3$s): a szabályai figyelmen kívül maradnak.</string>
+    <string name="vehicles_malformed">A vehicles.json nem használható (%1$s): a szabályai figyelmen kívül maradnak.</string>
     <string name="setup_toggle_force_h264_title">H.264 videó kényszerítése</string>
     <string name="setup_toggle_force_h264_subtitle">Alapértelmezés szerint az AARE a legjobb, az autó és a telefon által is támogatott kodeket használja (H.265…). Kapcsolja be, ha az autó képe akadozik.</string>
     <!-- newly translated strings -->
@@ -451,6 +489,11 @@
     <string name="setup_section_updates">Frissítések</string>
     <string name="setup_toggle_updates_title">Frissítések keresése</string>
     <string name="setup_toggle_updates_subtitle">Figyelmeztetés a kezdőképernyőn, ha újabb kiadás érhető el a GitHubon. Kikapcsolva soha nem csatlakozik az internethez.</string>
+    <string name="update_check_now">Ellenőrzés most</string>
+    <string name="update_checking">Ellenőrzés…</string>
+    <string name="update_check_latest">A legújabb verzió van telepítve (%1$s).</string>
+    <string name="update_check_available">Elérhető az AARE %1$s: lásd a kezdőképernyőt.</string>
+    <string name="update_check_failed">A GitHub nem érhető el. Próbáld újra később.</string>
     <string name="update_available_title">Elérhető frissítés — %1$s</string>
     <string name="update_available_subtitle">A jelenlegi verziód: %1$s. Koppints a kiadás megtekintéséhez.</string>
     <string name="setup_log_save">Mentés</string>
