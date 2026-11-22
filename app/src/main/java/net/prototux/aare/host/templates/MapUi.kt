@@ -63,6 +63,7 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -189,21 +190,27 @@ private fun CompactMapScaffold(modifier: Modifier, overlay: (@Composable BoxWith
             }
         }
     }
-    ReportAreas(registry, remember { mutableStateOf(false) })
+    // Some apps put their own widgets at the bottom of the visible area, over what they draw at
+    // the bottom of the surface (HERE WeGo's speed over its logo): an optional margin lifts them.
+    val inset = with(LocalDensity.current) { LocalTemplateHost.current.mapCardBottomInsetDp.dp.toPx() }
+    ReportAreas(registry, remember { mutableStateOf(false) }, inset)
 }
 
 /** Sends visible/stable area changes (map-surface px) to the app, deduplicated. */
 @Composable
-private fun ReportAreas(registry: ObstructionRegistry, panState: androidx.compose.runtime.State<Boolean>) {
+private fun ReportAreas(registry: ObstructionRegistry, panState: androidx.compose.runtime.State<Boolean>, bottomInsetPx: Float = 0f) {
     val host = LocalTemplateHost.current
-    LaunchedEffect(registry, host) {
+    LaunchedEffect(registry, host, bottomInsetPx) {
         var lastVisible: List<Int>? = null
         var lastStable: List<Int>? = null
         snapshotFlow { Triple(registry.map, registry.rects.values.toList(), panState.value) }
             .distinctUntilChanged()
             .collect { (map, rects, pan) ->
                 if (map.width <= 0f || map.height <= 0f) return@collect
-                val free = MapGeometry.unobstructed(map.toBox(), rects.map { it.toBox() })
+                val whole = MapGeometry.unobstructed(map.toBox(), rects.map { it.toBox() })
+                // never more than a quarter of the free height, so a small card keeps a usable area
+                val inset = bottomInsetPx.coerceIn(0f, maxOf(0f, whole.height / 4f))
+                val free = MapGeometry.Box(whole.left, whole.top, whole.right, whole.bottom - inset)
                 val area = listOf(
                     (free.left - map.left).roundToInt(), (free.top - map.top).roundToInt(),
                     (free.right - map.left).roundToInt(), (free.bottom - map.top).roundToInt(),

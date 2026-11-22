@@ -15,13 +15,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.car.CarData
+import net.prototux.aare.car.DtcCodes
 import net.prototux.aare.service.ProjectionService
 
 /**
@@ -100,8 +103,24 @@ private fun carDataLines(car: CarData.State, proj: ProjectionService.State): Lis
     add(stringResource(R.string.car_data_toll), yesNo(car.tollCardPresent?.value))
     add(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
     add(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
-    add(stringResource(R.string.car_data_dtc), car.diagnostics?.value?.takeIf { it.isNotEmpty() }?.joinToString(" ") { "%02x".format(it) })
+    add(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
     return rows
+}
+
+/**
+ * The car's trouble codes for a car data viewer, one line each with its raw bytes, or null when
+ * it reports none. The code catalogue is read off the main thread the first time codes show up;
+ * until it's in, generic codes show without their description.
+ */
+@Composable
+internal fun dtcText(bytes: ByteArray?): String? {
+    val context = LocalContext.current
+    val hasCodes = bytes != null && DtcCodes.decode(bytes).isNotEmpty()
+    val catalogue by produceState(DtcCodes.Catalogue.loaded, hasCodes) {
+        if (hasCodes) value = DtcCodes.Catalogue.load(context)
+    }
+    if (bytes == null || !hasCodes) return null
+    return DtcCodes.describeAll(context, bytes, catalogue).joinToString("\n")
 }
 
 private fun xyz(v: CarData.Vector3): String? =

@@ -56,8 +56,8 @@ Services, no account.
 ## Will it work in my car?
 
 > [!NOTE]
-> **AARE has been tried in 30 cars so far** ([the list](#tested-on-real-head-units)): 14 work, 10
-> work with known issues and a few refuse it. Most factory head units only accept Android Auto's
+> **AARE has been tried in 46 cars so far** ([the list](#tested-on-real-head-units)): 22 work, 14
+> work with issues and a few don't work yet. Most factory head units only accept Android Auto's
 > own certificate: AARE downloads it with one tap ([AA key extraction](#aa-key-extraction)).
 > Every car is a bit different, so try it **parked** first, and please
 > [report your car](https://github.com/prototux/AARE/issues/new/choose), whether it works or not.
@@ -188,8 +188,10 @@ The **bar** is laid out like Android Auto's: on a side next to the driver, or al
 
 The **dashboard** shows the map (or directions from Google Maps or Waze), what's playing, the next
 calendar event, the latest notification and the weather, over a wallpaper if you pick one. Show,
-hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room. On very
-wide screens (1920x720 and up) the cards sit side by side. The weather comes from
+hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room, or the
+map wherever it is with *Map always big*. If a navigation app draws something of its own over its
+logo at the bottom of the map card (HERE WeGo's speed), *Margin under the map card* there lifts it.
+On very wide screens (1920x720 and up) the cards sit side by side. The weather comes from
 [Open-Meteo](https://open-meteo.com/) (no account, no Google), asked for an approximate position
 (about 10 km); you can turn it off.
 
@@ -421,14 +423,14 @@ certificate ([one tap](#aa-key-extraction)).
 | Continental NAC Wave 4.4 (HW2019), the factory unit of a 2019 Citroën C5 Aircross | Fairphone (Gen 6) | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)**, as well as Android Auto ([#81](https://github.com/prototux/AARE/issues/81)). |
 | Volkswagen VW3166 LGE ICAS3 (smaller screen), the factory unit of a 2021 VW ID.4 | Fairphone 4, /e/OS, Shizuku, no Google services | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#68](https://github.com/prototux/AARE/issues/68)); the 1.2.0 margin fix ([#61](https://github.com/prototux/AARE/pull/61)) corrected the earlier zoomed-in layout. |
 | Panasonic T1 (8614002A81), the factory unit of a 2023 Toyota Corolla Touring Sports | Samsung Galaxy A7 (2018), Android 10 | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#79](https://github.com/prototux/AARE/issues/79)); Vela maps and Symfonium audio work. Known issue: navigation lost location once the phone locked ([#87](https://github.com/prototux/AARE/issues/87), fixed in [#94](https://github.com/prototux/AARE/pull/94)). |
-| Easylink Bosch RM RNAIVI, integrated in a 2023 Renault Zoe | Fairphone FP5, /e/OS, microG, rooted | Wireless | 1.2.0 | **Partly works after [AA key extraction](#aa-key-extraction)** ([#76](https://github.com/prototux/AARE/issues/76)): the car-audio player works, but the head unit doesn't display the AARE screen, so nothing else does. |
+| Easylink Bosch RM RNAIVI, integrated in a 2023 Renault Zoe | Fairphone FP5, /e/OS, microG, rooted | Wireless | 1.2.0 | **Doesn't work** ([#76](https://github.com/prototux/AARE/issues/76)): it connects over wireless with the extracted certificate, but the head unit never displays the AARE screen ([#96](https://github.com/prototux/AARE/issues/96)). The audio player that seemed to work was the phone's own Bluetooth link, not AARE. |
 | Factory unit of a 2022 Chevrolet Bolt EUV | Pixel 8 Pro | USB and wireless | 1.2.0 | **Works with issues** ([#80](https://github.com/prototux/AARE/issues/80)): connects with the AA certificate, but touches land up and to the left of where they're tapped, and apps that require Google's build (Maps, Spotify, YouTube) refuse to run. |
 | Honda HFT (8A500-3A0-GD2), the factory unit of a 2025 Honda CR-V | Huawei P30, EMUI 12 (Android 10) | USB and wireless | 1.2.0 | **Works with issues** ([#70](https://github.com/prototux/AARE/issues/70)): over USB the car doesn't recognise the phone (no AA icon); over wireless it connects but the projected screen is black. |
 | Mitsubishi Electric unit of a 2020 Mercedes C-Class | Pixel 10, Android 17, GrapheneOS, no Google services, no Shizuku | USB | 1.2.0 | **Works with issues** ([#69](https://github.com/prototux/AARE/issues/69)): connects and the car shows the Android Auto icon, but the projected screen is black. |
 | Audi 326 (G35S) ALPINE MIB2+, the factory unit of a 2019 Audi Q3 | Samsung Galaxy S24 Ultra, Android 17 | USB | 1.2.0 | **Rejected** ([#86](https://github.com/prototux/AARE/issues/86)): shows the AARE screen for ~3 seconds, then returns to the car UI — "no version request from head unit". |
 | Ford SYNC 4.0, the factory unit of a 2026 Ford Mustang Mach-E (portrait screen) | Pixel 9 Pro, GrapheneOS, no Google services, not rooted, Shizuku | USB and wireless | 1.2.0 + [#103](https://github.com/prototux/AARE/pull/103)–[#106](https://github.com/prototux/AARE/pull/106) | **Works after [AA key extraction](#aa-key-extraction) with those fixes** ([#74](https://github.com/prototux/AARE/issues/74)): video, touch, audio and apps. On 1.2.0 it doesn't connect (USB "read failed", wireless "Bluetooth bootstrap link failed"). The unit leaves out every protocol field that is 0 (#103), offers two media and two guidance channels (#104), and declares a 1200x1244 touch panel but reports touches in pixels of the 1042x1080 area it shows (#105). Wireless only starts once the car has been on Bluetooth for a few seconds (#106). |
 | Factory unit of a 2021 Fiat 500e | Samsung Galaxy A50, Android 11, not rooted | USB | 1.2.0 | **Works with issues after [AA key extraction](#aa-key-extraction)** ([#108](https://github.com/prototux/AARE/issues/108)): car audio through the screen-capture permission didn't play, and with the bar on the right the Home button was missing (both on 1.2.0). |
-| MSIL (Suzuki) factory unit of a 2019 Maruti Suzuki Baleno | Motorola Edge 60 Pro | USB | 1.3.0 | **Rejected** with AARE's own certificates ([#127](https://github.com/prototux/AARE/issues/127)): status -3, then "no version request from head unit". Not tried with [AA key extraction](#aa-key-extraction) yet. |
+| MSIL (Suzuki) factory unit of a 2019 Maruti Suzuki Baleno | Motorola Edge 60 Pro | USB | 1.3.0, then 1.4.0 and 1.5.0 | **Doesn't work** ([#127](https://github.com/prototux/AARE/issues/127), [#100](https://github.com/prototux/AARE/issues/100)): AARE's own certificates are rejected (status -3); after [AA key extraction](#aa-key-extraction) it connects, all channels open and audio plays, but tapping Android Auto on the head unit does nothing — no projected screen ever appears. On later versions the session also drops with "read failed" (EIO) and loops back into the same state. |
 | Factory unit of a 2019 Suzuki Swift Sport | Poco F5, Android 17, LineageOS, not rooted, no Google services | USB | 1.3.0 | **Rejected** with AARE's own certificates ([#140](https://github.com/prototux/AARE/issues/140)), as the Baleno above. Not tried with [AA key extraction](#aa-key-extraction) yet. |
 | Bosch RCC (8"), the factory unit of a 2023 Opel Combo-e | Xiaomi 14 Ultra (Chinese model), no Google services, Shizuku | USB | 1.3.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#128](https://github.com/prototux/AARE/issues/128)), car audio through Shizuku included. |
 | Continental NAC Wave 4.3 (Carline 6, 7"), the factory unit of a 2023 Opel Corsa F | Huawei P20 Pro, Android 10, EMUI 12 | USB | 1.3.0 | **Works with issues** ([#134](https://github.com/prototux/AARE/issues/134)), with AARE's own certificate: audio plays, but the projected screen stays black ([#96](https://github.com/prototux/AARE/issues/96)), and the session drops with "read failed" after about 2.5 minutes ([#182](https://github.com/prototux/AARE/issues/182)). |
@@ -439,14 +441,35 @@ certificate ([one tap](#aa-key-extraction)).
 | Hyundai/Mobis factory unit (LX2PE) of a 2023 Hyundai Palisade | Pixel 10 Pro XL | USB | 1.4.0 | **Works with issues after [AA key extraction](#aa-key-extraction)** ([#178](https://github.com/prototux/AARE/issues/178)): CoMaps runs, but the screen freezes with 10 to 30 s of lag and sessions end with "read failed" ([#182](https://github.com/prototux/AARE/issues/182)). Amazon Music refuses AARE (see [Car apps that only trust Google](#car-apps-that-only-trust-google)). |
 | Audi 516 (G35) MIB2+, the factory MMI of a 2019 Audi e-tron | Pixel 7 Pro, Android 17, not rooted, Shizuku | USB | 1.4.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#151](https://github.com/prototux/AARE/issues/151)); AARE's own certificates are rejected (status -3). It also hit the crash at the end of a USB session ([#152](https://github.com/prototux/AARE/issues/152), fixed in [#170](https://github.com/prototux/AARE/pull/170)). |
 | Factory GM unit (myChevrolet) of a 2025 Chevrolet Trax | Samsung Galaxy S26 Ultra, Android 17, One UI 9, Shizuku | USB and wireless | 1.4.0 | **Works with issues after [AA key extraction](#aa-key-extraction)** ([#159](https://github.com/prototux/AARE/issues/159)): AARE's own certificates are rejected ("different dates and/or times"). The phone screen doesn't start with Shizuku car audio ([#181](https://github.com/prototux/AARE/pull/181)), and one USB cable dropped the session within seconds ([#182](https://github.com/prototux/AARE/issues/182)). |
+| Factory unit of a 2023 Hyundai Elantra SEL | Pixel 9, Android 17, GrapheneOS, no Google services | USB | 1.4.0, fixed in 1.6.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#269](https://github.com/prototux/AARE/issues/269)): AARE's own certificates are rejected. Screen-capture audio always goes to the car's Bluetooth link instead of playing, since the car can't do Bluetooth and Android Auto at once — not a bug. Maps lagged badly at full resolution, and lowering it to fix that broke touch mapping; both the touch scaling and a clipped third app on narrow screens are fixed by [#283](https://github.com/prototux/AARE/pull/283) (1.6.0). |
+| Factory unit of a BYD Song Pro | Samsung Galaxy S25 Ultra, One UI 8, not rooted | Wireless | 1.4.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#294](https://github.com/prototux/AARE/issues/294)): the first BYD report so far; a full session with video over the car's own Wi-Fi AP. Waze refuses to run, as expected without root (see [Car apps that only trust Google](#car-apps-that-only-trust-google)). |
 | Ford SYNC 3 (3.4.23188), the factory unit of a 2018 Ford EcoSport | Pixel 9, GrapheneOS, no Google services, AARE Magisk module | USB and wireless (AAWireless TWO+) | 1.4.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#161](https://github.com/prototux/AARE/issues/161)). Wireless needs AARE excluded from the VPN (see [VPN](#vpn)). |
 | VW Play (Visteon MIB Regio, 10.1", protocol 1.5), the factory unit of a 2023 VW Polo GTS (Brazil) | Pixel 7 Pro, Android 17, not rooted, Shizuku | USB | 1.2.0, then main | **Works with [#162](https://github.com/prototux/AARE/pull/162) and [#163](https://github.com/prototux/AARE/pull/163)** ([#166](https://github.com/prototux/AARE/issues/166)), with AARE's own certificate: without them the projected screen stays black. [#171](https://github.com/prototux/AARE/pull/171) stopped it refusing navigation messages. |
+| Continental NAC Wave 4.3 (Carline 14, 8"), the factory unit of a 2022 Citroën ë-Berlingo | Samsung Galaxy Xcover4 (SM-G390F), Android 9, not rooted | USB | 1.5.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#231](https://github.com/prototux/AARE/issues/231)): OsmAnd, the dashboard and the calendar card all project fine; it took a second plug-in attempt to get a session going. Audio, calls and the car's wireless weren't tested. |
+| Kia BD Mobis D-Audio, the factory unit of a 2020 Kia Cerato | Pixel 6 Pro, GrapheneOS, Android 17, Shizuku, no Google services | USB | 1.5.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#290](https://github.com/prototux/AARE/issues/290)): calls work over the car's hands-free link; the car has no wireless Android Auto. If a different certificate is tried before the extracted one, the head unit says "Phone is not responding" and refuses every attempt until unplugged and replugged — picking the AA certificate first avoids it. |
+| Hyundai/Mobis NX4E (standard_m_6, AAP protocol 4.1), the factory unit of a 2025 Hyundai Tucson | Huawei P30, Android 10 (EMUI), not rooted | USB and wireless | 1.5.0 | **Works with issues** ([#315](https://github.com/prototux/AARE/issues/315)): over USB, every session reset with "read failed" (EIO) within 0.5–16 s, because the head unit expects one AAP frame per USB transfer — fixed by [#342](https://github.com/prototux/AARE/pull/342) (1.6.0). Over wireless, Bluetooth pairing and Wi-Fi credentials come through, but the network request times out before the phone joins the car's Wi-Fi ([#347](https://github.com/prototux/AARE/issues/347)). |
+| Mitsubishi head unit (39101-TGG-A31), the factory unit of a 2020 Honda Civic | Pixel 9 Pro, Android 16, iodéOS, Shizuku, microG | USB | 1.5.0 | **Works with issues** ([#321](https://github.com/prototux/AARE/issues/321)): the certificate is trusted, but the car needs Bluetooth even over USB and shows the phone as "No device name" instead of its real name, so pairing never fully completes; setting the phone's Bluetooth address under *Connecting* didn't help ([#348](https://github.com/prototux/AARE/issues/348)). |
+| Panasonic CMU3B, the factory unit of a 2022 Mazda 3 | Pixel 7, GrapheneOS, Android 17, no Google services | USB | 1.5.0 | **Works**, with AARE's own certificate, no [AA key extraction](#aa-key-extraction) needed ([#322](https://github.com/prototux/AARE/issues/322)): calls and notifications work, and the car plays the phone's Bluetooth audio, so no car-audio setup was needed. Known issue: the car occasionally says Android Auto can't connect, fixed most of the time by replugging. Waze and Spotify browsing stay unavailable without root, as expected. |
+| Hyundai TLFL Mobis D-Audio, the factory unit of a 2019 Hyundai Tucson | Samsung Galaxy S9+, Android 10, not rooted | USB | 1.5.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#323](https://github.com/prototux/AARE/issues/323)): known quirk, the bar turns invisible (but stays clickable) when the CoMaps navigation card is opened, in both the taskbar and dock layouts; the density also looks slightly off, with settings panels showing oversized. |
+| Bosch CM RNAIVI (firmware 283C38822E), the factory unit of a 2024 Mitsubishi Outlander PHEV | Samsung Galaxy S23 Ultra | USB | 1.5.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#325](https://github.com/prototux/AARE/issues/325)): rejected with status -3 until the certificate was downloaded. Car audio played through the screen-capture permission; Shizuku car audio didn't work on this unit. |
+| Opel Carline 1 Continental NAC, the factory unit of a 2018 Opel CrosslandX | Honor 10, Android 10, not rooted | USB | 1.5.0 | **Doesn't work** ([#326](https://github.com/prototux/AARE/issues/326)): all channels open and car audio starts, but the car just shows "Android Auto loading" with nothing happening, then the session drops with "read failed" (EIO), as on other NAC units ([#96](https://github.com/prototux/AARE/issues/96), [#182](https://github.com/prototux/AARE/issues/182)). |
+| Factory unit of a 2017 Mercedes E220 (W213) | OnePlus 15 | USB | 1.5.0 | **Doesn't work** ([#330](https://github.com/prototux/AARE/issues/330)): every attempt fails before a session is established, with "read failed" (EIO) or "encrypted frame before TLS is up", in a loop ([#182](https://github.com/prototux/AARE/issues/182)). |
+| Toppower EH32, the factory unit of a 2024 MG MG4 | Unihertz Titan, Android 13, rooted, Shizuku | USB | 1.5.0 | **Works with issues** ([#334](https://github.com/prototux/AARE/issues/334)): connects and car audio plays through Shizuku, but the text and icons on the car screen come out garbled and unreadable; the session also drops with "read failed" (EIO) after about a minute and a half, as in [#182](https://github.com/prototux/AARE/issues/182). The garbled rendering is tracked in [#349](https://github.com/prototux/AARE/issues/349). |
+| Opel myOpel (Multimedia Navi Pro 8"), the factory unit of a 2020 Opel Astra K | Fairphone 5, Shizuku | USB | 1.5.0 | **Doesn't work** ([#336](https://github.com/prototux/AARE/issues/336)): all 10 channels open, but the car stays stuck on "Connect a phone with Android Auto" (Google's Android Auto only shows that screen briefly); the session drops with "read failed" (EIO) after about a minute. Used as the test case for the open fix in [#162](https://github.com/prototux/AARE/pull/162). |
+| Factory unit of a 2026 Renault Clio VI | Xiaomi 17, Shizuku | USB | 1.5.0 | **Doesn't work** ([#337](https://github.com/prototux/AARE/issues/337)): even after [AA key extraction](#aa-key-extraction), the car loops between "continue setup on the phone" and Android's app chooser, with repeated "read failed" (EIO) resets ([#182](https://github.com/prototux/AARE/issues/182)), until it stops answering. |
+| Panasonic CMU3B, the factory unit of a 2019+ Mazda 3 Hatchback | Pixel 9 Pro, GrapheneOS, Android 17, no Google services | USB and wireless | 1.5.0 | **Works**, with AARE's own certificate ([#338](https://github.com/prototux/AARE/issues/338)): Organic Maps and Tempus both run fine, the car's Bluetooth carries navigation and music audio, and the command knob (the unit is non-touch) controls AARE. |
+| Factory unit of a 2026 Mercedes GLC Coupe (11.9" portrait, 1624x1728) | Huawei P30 Pro | USB | 1.5.0 | **Works with issues** ([#343](https://github.com/prototux/AARE/issues/343)): the touch grid is shifted, so every icon right of the leftmost column — including the taskbar — needs tapping two spots further right than shown; none of AARE's resolution options fix it. Tracked with the touch-calibration work in [#97](https://github.com/prototux/AARE/issues/97) ([#172](https://github.com/prototux/AARE/pull/172)). |
 
 **Open-source head units:** openauto/Crankshaft, Open Headunit (formerly Headunit Revived), LIVI
 and aa-proxy-rs accept AARE's own certificate. A user reports AARE working well with Open
 Headunit, except Waze (see [Car apps that only trust Google](#car-apps-that-only-trust-google))
 and Google Assistant, which didn't work for them
-([discussion](https://github.com/prototux/AARE/discussions/47)).
+([discussion](https://github.com/prototux/AARE/discussions/47)). On a tablet running Open
+Headunit 4.0.0 over wireless (Bluetooth + Wi-Fi, no dongle), AARE connects and projects well too
+([#318](https://github.com/prototux/AARE/issues/318)): the sidebar can turn black in full-screen
+map mode until double-tapped ([#316](https://github.com/prototux/AARE/issues/316)), Waze only
+showed up on an older build (5.9.5.4, not 5.27), and VRadio only connects when started from the
+phone first.
 
 If you try AARE on another head unit, please
 [open an issue](https://github.com/prototux/AARE/issues/new/choose) or a pull request to add it
@@ -572,6 +595,16 @@ The window also gives you:
   that use the phone's location (CoMaps) follow it.
 - **Headless mode:** `--headless DIR --script "tap:640,360@10 key:4@12"` runs without a window
   and saves screenshots, for automated tests.
+- **Test options**, to try AARE's error and logging paths without a car: `--name`, `--make`,
+  `--model`, `--year`, `--hu-make`, `--hu-model`, `--hu-sw` and `--vehicle-id` set what the head
+  unit says about itself; `--fault`, `--refuse-channel`, `--ignore-channel`, `--no-audio-ack`,
+  `--video-ack-delay`, `--mic-status`, `--no-audio-focus`, `--no-video-focus` and `--ping-ms` make
+  it misbehave; `--aac-sink` (listed only), `--unknown-service`, `--video-codec` (the offer only:
+  the window still decodes H.264 only) and `--wifi-projection` (with a fake password for phones
+  that ask for the car's Wi-Fi credentials) change what it offers; and `--script` also takes
+  protocol events (`bye`, `longkey:3`, `audiofocus:loss`, `garbage:7`...).
+  `headunit/build/install/aare-headunit/bin/aare-headunit --help` lists them all. While unused,
+  they change nothing.
 
 AARE's head unit works with AARE (or other open-source phone implementations), not with Google's
 Android Auto app: Android Auto only accepts head units whose certificate is issued by Google, and
@@ -625,6 +658,14 @@ answers that assistant, and only while a car (or the preview) is connected.
 | `car_display` | dark, light or the car's day/night colors |
 
 Lapin adds them to its own device tools when it runs on AARE.
+
+An assistant with no code path into AARE — one that answers in a notification, or whose reply
+contains a link rather than calling a tool directly — can still trigger `car_navigate`,
+`car_media`, `car_open` and a confirmed phone call through an `aare://` link in that reply. See
+[docs/assistant-links.md](docs/assistant-links.md) for the link format and what AARE checks
+before acting on one. Off by default: *Links from the assistant* in the voice assistant settings.
+Only the chosen assistant can open such a link (not other apps, not web pages), and navigating,
+opening an app or calling waits for the driver to confirm on the car screen.
 
 ### Car apps that only trust Google
 
@@ -724,8 +765,12 @@ navigation location while the phone is locked, the reverse-camera video restart,
 Shizuku, the Ford SYNC 2.5 audio crackle and the home screen's map card),
 [@l0rdg3x](https://github.com/l0rdg3x) (head units on Google's receiver library, audio focus,
 pausing and resuming the music with the car, and the home screen's music card),
-[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8) and
-[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units).
+[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8),
+[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units)
+and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0: the
+certificate kept and the Trust button that stays after a dropped link, car apps' permission
+prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
+app icons that stay visible on light themes.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),
@@ -741,7 +786,16 @@ Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@spasticmonkey55-glitch](https://github.com/spasticmonkey55-glitch),
 [@gitzone83](https://github.com/gitzone83), [@djshag01](https://github.com/djshag01),
 [@mirchisait](https://github.com/mirchisait), [@filipeniquini](https://github.com/filipeniquini),
-[@MattMaaaan](https://github.com/MattMaaaan) and [@cfercl](https://github.com/cfercl)
+[@MattMaaaan](https://github.com/MattMaaaan), [@cfercl](https://github.com/cfercl),
+[@6600024d](https://github.com/6600024d), [@rtdtwo](https://github.com/rtdtwo),
+[@AlexDalas](https://github.com/AlexDalas), [@Murilesco](https://github.com/Murilesco),
+[@PCCV](https://github.com/PCCV), [@cadecomposer](https://github.com/cadecomposer),
+[@Gh61](https://github.com/Gh61), [@PuffinDro](https://github.com/PuffinDro),
+[@Mcheimech](https://github.com/Mcheimech), [@Pouch11](https://github.com/Pouch11),
+[@taage](https://github.com/taage), [@cinaeco](https://github.com/cinaeco),
+[@carelinus](https://github.com/carelinus), [@jackburton79](https://github.com/jackburton79),
+[@Captainyamez](https://github.com/Captainyamez), [@ThomasHawaii](https://github.com/ThomasHawaii)
+and [@Lenrock67](https://github.com/Lenrock67)
 — see [Tested on real head units](#tested-on-real-head-units) for the cars. Reports and ideas that
 led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops acknowledging audio,
 #82), [@henkv1](https://github.com/henkv1) (connections from the phone itself, #131),
