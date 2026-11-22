@@ -3,6 +3,7 @@ package net.prototux.aare.aap
 import net.prototux.aare.aap.cert.SelfSignedCertificate
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -77,5 +78,56 @@ class FrameIoTest {
         assertTrue(msg.encrypted)
         assertEquals(0x8001, msg.id)
         assertArrayEquals(body, msg.bodyBytes())
+    }
+
+    @Test
+    fun encryptedMessageBeforeTlsIsSkipped() {
+        val out = ByteArrayOutputStream()
+        // ch 3 ENCRYPTED|FIRST|LAST with junk, then ch 3 fragmented: ENCRYPTED|FIRST, plain LAST,
+        // then a plain message that must come through.
+        out.write(byteArrayOf(3, 0x0b, 0, 3, 1, 2, 3))
+        out.write(byteArrayOf(3, 0x09, 0, 2, 0, 0, 0, 4, 9, 9))
+        out.write(byteArrayOf(3, 0x02, 0, 2, 7, 7))
+        out.write(byteArrayOf(3, 0x03, 0, 3, 0, 5, 1))
+        val msg = FrameReader(ByteArrayInputStream(out.toByteArray())) { null }.read()
+        assertEquals(3, msg.channel)
+        assertEquals(5, msg.id)
+        assertArrayEquals(byteArrayOf(1), msg.bodyBytes())
+    }
+
+    @Test
+    fun continuationWithoutFirstFrameIsAFramingError() {
+        val reader = FrameReader(ByteArrayInputStream(byteArrayOf(0, 0x02, 0, 2, 0, 1))) { null }
+        assertThrows(FramingException::class.java) { reader.read() }
+    }
+
+    /** Records the size of each flushed write, as one USB bulk transfer each. */
+    private class TransferRecorder : java.io.OutputStream() {
+        val transfers = ArrayList<Int>()
+        private var pending = 0
+        override fun write(b: Int) { pending++ }
+        override fun write(b: ByteArray, off: Int, len: Int) { pending += len }
+        override fun flush() { if (pending > 0) transfers.add(pending); pending = 0 }
+    }
+
+    @Test
+    fun everyEncryptedFrameIsItsOwnTransferWithinTheOfficialSize() {
+        val phoneCert = SelfSignedCertificate.generate("phone")
+        val huCert = SelfSignedCertificate.generate("head unit")
+        val phone = Cryptor(phoneCert.certificate, phoneCert.keyPair.private)
+        val hu = Cryptor(huCert.certificate, huCert.keyPair.private, client = true)
+        phone.beginHandshake(); hu.beginHandshake()
+        var toPhone = hu.handshake(ByteArray(0))
+        while (!(phone.handshakeDone && hu.handshakeDone)) toPhone = hu.handshake(phone.handshake(toPhone))
+
+        // A large video frame: several fragments.
+        val body = Random(3).nextBytes(42_850)
+        val rec = TransferRecorder()
+        FrameWriter(rec) { phone }.write(1, false, true, AapMessage.plaintext(0x0000, body))
+        val frames = (body.size + 2 + Frame.MAX_PAYLOAD - 1) / Frame.MAX_PAYLOAD
+        assertEquals("one transfer per frame", frames, rec.transfers.size)
+        for (t in rec.transfers) assertTrue("frame of $t bytes > ${Frame.MAX_FRAME}", t <= Frame.MAX_FRAME)
+        // The full-size first fragment lands exactly on the official limit.
+        assertEquals(Frame.MAX_FRAME, rec.transfers.first())
     }
 }

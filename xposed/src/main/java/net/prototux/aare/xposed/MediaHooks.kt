@@ -46,16 +46,20 @@ object MediaHooks {
 
     /** Installs the media hooks if [param]'s app exposes a media browse/session service; else no-op. */
     fun install(xposed: XposedInterface, param: PackageLoadedParam) {
+        val pkg = param.packageName
         val uid = aareUid
-        if (uid < 0) return
-        val legacy = services(param.packageName, "android.media.browse.MediaBrowserService")
-        val anyMedia = MEDIA_SERVICE_ACTIONS.any { services(param.packageName, it).isNotEmpty() }
+        if (uid < 0) {
+            xposed.report(pkg, "media hooks (AARE not found)", false)
+            return
+        }
+        val legacy = services(pkg, "android.media.browse.MediaBrowserService")
+        val anyMedia = MEDIA_SERVICE_ACTIONS.any { services(pkg, it).isNotEmpty() }
         if (!anyMedia) return
         val cl = param.defaultClassLoader
-        legacy.forEach { className -> hookOnGetRoot(xposed, cl, className, uid) }
-        hookMedia3Controller(xposed, cl)
-        hookUidToPackage(xposed, cl, uid)
-        hookCallerAllowlist(xposed, cl, param.packageName)
+        legacy.forEach { className -> xposed.report(pkg, "$className.onGetRoot", hookOnGetRoot(xposed, cl, className, uid)) }
+        xposed.report(pkg, "media3 ControllerInfo.getPackageName", hookMedia3Controller(xposed, cl))
+        xposed.report(pkg, "uid-to-package mapping", hookUidToPackage(xposed, cl, uid))
+        xposed.report(pkg, "media caller allowlist", hookCallerAllowlist(xposed, cl, pkg))
     }
 
     /**
@@ -64,21 +68,22 @@ object MediaHooks {
      * package in `onConnect` accepts AARE. (A validator that also checks the signature still relies
      * on the uid→package mapping below, and so on Android Auto being installed for its certificate.)
      */
-    private fun hookMedia3Controller(xposed: XposedInterface, cl: ClassLoader) {
-        val cls = runCatching { cl.loadClass("androidx.media3.session.MediaSession\$ControllerInfo") }.getOrNull() ?: return
-        val method = runCatching { cls.getMethod("getPackageName") }.getOrNull() ?: return
+    private fun hookMedia3Controller(xposed: XposedInterface, cl: ClassLoader): Boolean {
+        val cls = runCatching { cl.loadClass("androidx.media3.session.MediaSession\$ControllerInfo") }.getOrNull() ?: return false
+        val method = runCatching { cls.getMethod("getPackageName") }.getOrNull() ?: return false
         xposed.hook(method).intercept { chain ->
             val pkg = chain.proceed()
             if (pkg == ModuleMain.AARE_PACKAGE) GEARHEAD else pkg
         }
+        return true
     }
 
     /** `onGetRoot(String package, int uid, Bundle)` → called with Android Auto's package for AARE's uid. */
-    private fun hookOnGetRoot(xposed: XposedInterface, cl: ClassLoader, className: String, uid: Int) {
-        val cls = runCatching { cl.loadClass(className) }.getOrNull() ?: return
+    private fun hookOnGetRoot(xposed: XposedInterface, cl: ClassLoader, className: String, uid: Int): Boolean {
+        val cls = runCatching { cl.loadClass(className) }.getOrNull() ?: return false
         val method = runCatching {
             cls.getMethod("onGetRoot", String::class.java, Int::class.javaPrimitiveType, Bundle::class.java)
-        }.getOrNull() ?: return
+        }.getOrNull() ?: return false
         xposed.hook(method).intercept { chain ->
             if (chain.getArg(1) == uid) {
                 val args = chain.args.toTypedArray()
@@ -88,21 +93,23 @@ object MediaHooks {
                 chain.proceed()
             }
         }
+        return true
     }
 
     /** Map AARE's uid to Android Auto's package for the app's uid→package lookups. */
-    private fun hookUidToPackage(xposed: XposedInterface, cl: ClassLoader, uid: Int) {
-        val pm = runCatching { cl.loadClass("android.app.ApplicationPackageManager") }.getOrNull() ?: return
-        runCatching { pm.getMethod("getPackagesForUid", Int::class.javaPrimitiveType) }.getOrNull()?.let { m ->
+    private fun hookUidToPackage(xposed: XposedInterface, cl: ClassLoader, uid: Int): Boolean {
+        val pm = runCatching { cl.loadClass("android.app.ApplicationPackageManager") }.getOrNull() ?: return false
+        val packagesForUid = runCatching { pm.getMethod("getPackagesForUid", Int::class.javaPrimitiveType) }.getOrNull()?.let { m ->
             xposed.hook(m).intercept { chain ->
                 if (chain.getArg(0) == uid) arrayOf(GEARHEAD) else chain.proceed()
             }
         }
-        runCatching { pm.getMethod("getNameForUid", Int::class.javaPrimitiveType) }.getOrNull()?.let { m ->
+        val nameForUid = runCatching { pm.getMethod("getNameForUid", Int::class.javaPrimitiveType) }.getOrNull()?.let { m ->
             xposed.hook(m).intercept { chain ->
                 if (chain.getArg(0) == uid) GEARHEAD else chain.proceed()
             }
         }
+        return packagesForUid != null && nameForUid != null
     }
 
     // ---- caller allowlist injection (no Android Auto required) ----
@@ -120,14 +127,14 @@ object MediaHooks {
      * Defensive: only this resource is touched, and any failure returns the original parser
      * unchanged, so a bug makes the injection a no-op rather than breaking the app's media.
      */
-    private fun hookCallerAllowlist(xposed: XposedInterface, cl: ClassLoader, packageName: String) {
+    private fun hookCallerAllowlist(xposed: XposedInterface, cl: ClassLoader, packageName: String): Boolean {
         val ids = allowlistResIds(packageName)
-        if (ids.isEmpty()) return
+        if (ids.isEmpty()) return false
         val hashes = aareCertHashes
-        if (hashes.isEmpty()) return
+        if (hashes.isEmpty()) return false
         val getXml = runCatching {
             cl.loadClass("android.content.res.Resources").getMethod("getXml", Int::class.javaPrimitiveType)
-        }.getOrNull() ?: return
+        }.getOrNull() ?: return false
         xposed.hook(getXml).intercept { chain ->
             val original = chain.proceed()
             if (chain.getArg(0) in ids && original is XmlResourceParser) {
@@ -136,6 +143,7 @@ object MediaHooks {
                 original
             }
         }
+        return true
     }
 
     /** The app's allowlist xml resource ids (`allowed_media_browser_callers` and `_v2`), if present. */

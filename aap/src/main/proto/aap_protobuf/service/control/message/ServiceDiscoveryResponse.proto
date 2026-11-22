@@ -23,6 +23,9 @@ message ServiceDiscoveryResponse
     optional int32 session_configuration = 13;
     optional string display_name = 14;
     optional bool probe_for_support = 15;
+    // AARE-only: not in the protocol's ServiceDiscoveryResponse (it sends ping settings to
+    // the head unit in VersionResponseOptions instead). Kept because AapSession reads the head
+    // unit's ping settings from it.
     optional ConnectionConfiguration connection_configuration = 16;
     optional HeadUnitInfo headunit_info = 17;
 }

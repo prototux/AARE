@@ -48,18 +48,34 @@ import java.util.concurrent.atomic.AtomicBoolean
  * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
  */
 @Composable
-internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageName: String, modifier: Modifier) {
+internal fun StandaloneAppScreen(
+    runtime: CarRuntime,
+    driving: Boolean,
+    packageName: String,
+    modifier: Modifier,
+    /** Handles the car's Back instead of the launched app (true if handled), e.g. to close a media app's video. */
+    onBack: (() -> Boolean)? = null,
+    /**
+     * After a drive, hand the app (still running on its display) the new surface instead of
+     * relaunching it: for a media app's video, where a relaunch would end playback. Other launched
+     * apps keep the relaunch they always had on parking again.
+     */
+    resumeAfterDrive: Boolean = false,
+) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
     var started by remember(packageName) { mutableStateOf(false) }
 
+    val backOverride by rememberUpdatedState(onBack)
     DisposableEffect(packageName) {
-        // Hardware / head-unit Back goes to the launched app.
+        // Hardware / head-unit Back goes to the launched app, unless the caller takes it.
         val back: () -> Boolean = {
-            val t = android.os.SystemClock.uptimeMillis()
-            launcher.key(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)
-            launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
-            launcher.connected
+            backOverride?.invoke() ?: run {
+                val t = android.os.SystemClock.uptimeMillis()
+                launcher.key(t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)
+                launcher.key(t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK)
+                launcher.connected
+            }
         }
         runtime.screenBack = back
         onDispose {
@@ -72,7 +88,10 @@ internal fun StandaloneAppScreen(runtime: CarRuntime, driving: Boolean, packageN
         if (!driving) {
             LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
                 start = { surface, w, h -> launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
-                onStarted = { started = it })
+                onStarted = { started = it },
+                // Back from a drive: the app kept running on its display, so it gets the new
+                // surface rather than a restart (start() relaunches it, which would end a video).
+                resumeInstead = { started && resumeAfterDrive })
             // A quiet reminder that this isn't an Android Auto app.
             Text(
                 stringResource(R.string.standalone_not_native),
@@ -107,6 +126,8 @@ internal fun LaunchedAppSurface(
     /** Creates the display into the surface (width, height) and launches the app: its id, or -1. */
     start: (Surface, Int, Int) -> Int,
     onStarted: (Boolean) -> Unit,
+    /** True to hand a new surface to the app already running on its display instead of starting it again. */
+    resumeInstead: () -> Boolean = { false },
 ) {
     val shown = remember(launcher) { AtomicBoolean(true) }
     DisposableEffect(shown) {
@@ -116,12 +137,17 @@ internal fun LaunchedAppSurface(
     val latestStart by rememberUpdatedState(start)
     val latestOnStarted by rememberUpdatedState(onStarted)
     val latestDpi by rememberUpdatedState(dpi)
+    val latestResumeInstead by rememberUpdatedState(resumeInstead)
     androidx.compose.ui.viewinterop.AndroidView(
         factory = { ctx ->
             TextureView(ctx).apply {
                 surfaceTextureListener = object : TextureView.SurfaceTextureListener {
                     override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
                         val surface = Surface(st)
+                        if (latestResumeInstead()) {
+                            launcher.resize(surface, w, h, latestDpi)
+                            return
+                        }
                         Thread {
                             val id = if (shown.get() && launcher.connect() && shown.get()) latestStart(surface, w, h) else -1
                             if (!shown.get()) {
