@@ -6,7 +6,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,8 +45,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /** Layout of the on-screen keyboard, from InputSignInMethod.KEYBOARD_* or search. */
 internal enum class KeyboardMode { Text, Email, Number, Phone }
@@ -171,7 +170,7 @@ private fun fnIcon(kind: FnKind, submit: ImageVector): ImageVector = when (kind)
 private fun KeyCap(modifier: Modifier, bg: Color, onClick: () -> Unit, content: @Composable () -> Unit) {
     Box(
         modifier.clip(MaterialTheme.shapes.small).background(bg)
-            .carFocusHighlight(MaterialTheme.shapes.small).clickable(onClick = onClick),
+            .carClickable(MaterialTheme.shapes.small, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -214,7 +213,7 @@ internal fun CarTextField(
     Row(
         modifier.height(d.touchTarget - 4.dp).clip(RoundedCornerShape(percent = 50)).background(border)
             .padding(2.dp).clip(RoundedCornerShape(percent = 50)).background(scheme.surfaceContainerHigh)
-            .carFocusHighlight(RoundedCornerShape(percent = 50)).clickable(onClick = onFocus).padding(start = 22.dp, end = 8.dp),
+            .carClickable(RoundedCornerShape(percent = 50), onClick = onFocus).padding(start = 22.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leadingIcon != null) {
@@ -244,7 +243,7 @@ internal fun CarTextField(
         if (value.isNotEmpty()) {
             Box(
                 Modifier.size(56.dp).clip(RoundedCornerShape(percent = 50))
-                    .carFocusHighlight(CircleShape).clickable(onClick = onClear),
+                    .carClickable(CircleShape, onClick = onClear),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.common_clear), tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))

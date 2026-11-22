@@ -62,10 +62,9 @@ internal fun MirrorScreen(runtime: CarRuntime, driving: Boolean, modifier: Modif
 
     DisposableEffect(Unit) {
         val back: () -> Boolean = { MirrorTouchService.instance?.back() == true }
-        runtime.screenBack = back
-        // The next screen installs its own handler before this one fades out: leave that one alone.
+        runtime.registerScreenBack(CarRuntime.PHONE_SCREEN_ID, back)
         onDispose {
-            if (runtime.screenBack === back) runtime.screenBack = null
+            runtime.unregisterScreenBack(CarRuntime.PHONE_SCREEN_ID, back)
             PhoneMirror.detach()
         }
     }
