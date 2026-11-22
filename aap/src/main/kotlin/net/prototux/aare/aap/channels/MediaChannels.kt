@@ -51,6 +51,16 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
      */
     private val sessionCounter = AtomicInteger(0)
     @Volatile protected var mediaSession = 0
+    /** The session before the current one (the one last stopped), -1 before any. */
+    @Volatile private var previousSession = -1
+    /**
+     * The head unit has acked with the running session's id. Until it has, acks aren't checked
+     * against the session at all: a head unit that sends another id (or none) keeps being paced
+     * by every ack it sends.
+     */
+    @Volatile private var sessionEchoed = false
+    /** [sessionEchoed] for the session last stopped, for its late acks. */
+    @Volatile private var previousEchoed = false
     protected val unacked = AtomicInteger(0)
     /**
      * Some head units don't ack (newer protocol versions), and some ack for a while then go quiet
@@ -97,15 +107,20 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
                 // Acks on a drop overflow stream pace nothing: they are ignored.
                 if (dropsOverflow) return
                 val ack = Ack.parseFrom(msg.bodyBytes())
+                val now = System.nanoTime()
+                if (!ackCounts(ack)) {
+                    // Still the head unit acking: a run of ignored acks is no stall.
+                    lastAckNs = now
+                    return
+                }
                 sinceAck.set(0)
                 ackSeen = true
-                val now = System.nanoTime()
                 if (unacked.get() > 0) maxAckGapMs = maxOf(maxAckGapMs, (now - lastAckNs) / 1_000_000)
                 streamAcks++
                 lastAckNs = now
                 // Acks are back: let the car pace us again (its window is its flow control).
                 if (ackless) { ackless = false; unacked.set(0) }
-                val n = if (ack.hasAck()) ack.ack else 1
+                val n = ackedCount(ack)
                 // Never go negative: some head units ack frames sent before a restart.
                 unacked.updateAndGet { maxOf(0, it - n) }
                 onAcked()
@@ -113,6 +128,42 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
             MediaMsg.MEDIA_STATS -> onMediaStats(msg)
             else -> onOtherMessage(msg)
         }
+    }
+
+    /**
+     * Whether an ack is for this stream's window. Once the head unit has acked with the running
+     * session's id, only that session's acks count (ids compared modulo 256, as the head unit may
+     * keep only a byte), and while stopped only the late acks of the session just stopped (compared
+     * the same way); before that, every ack counts. An ack for more than [MAX_ACKED] messages is
+     * logged and ignored. An ignored ack still shows the link is alive (see [noteAttempt]).
+     */
+    private fun ackCounts(ack: Ack): Boolean {
+        val id = ack.sessionId
+        if (started && id % 256 == mediaSession % 256) sessionEchoed = true
+        if (if (started) sessionEchoed else previousEchoed) {
+            val forUs = id % 256 == (if (started) mediaSession else previousSession) % 256
+            if (!forUs) {
+                // The previous session's late acks are expected right after a restart: not worth a line.
+                if (!started || id % 256 != previousSession % 256) session.log.d("$name: ack for session $id ignored (current $mediaSession, started=$started)")
+                return false
+            }
+        }
+        val n = ackedCount(ack)
+        if (n > MAX_ACKED) {
+            session.log.w("$name: ack for $n messages ignored (at most $MAX_ACKED)")
+            return false
+        }
+        return true
+    }
+
+    /**
+     * How many messages an ack is for: one receive time each when the head unit sends them,
+     * otherwise its count. An ack without either, or with a count of 0, is taken for one.
+     */
+    private fun ackedCount(ack: Ack): Int = when {
+        ack.receiveTimestampNsCount > 0 -> ack.receiveTimestampNsCount
+        ack.hasAck() && ack.ack > 0 -> ack.ack
+        else -> 1
     }
 
     /**
@@ -163,6 +214,7 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     /** Starts a media session with the given configuration index. */
     protected fun startStream(configIndex: Int) {
         mediaSession = sessionCounter.get()
+        sessionEchoed = false
         unacked.set(0)
         sinceAck.set(0)
         lastAckNs = System.nanoTime()
@@ -179,6 +231,8 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     protected fun stopStream() {
         if (!started) return
         started = false
+        previousSession = mediaSession
+        previousEchoed = sessionEchoed
         sessionCounter.incrementAndGet()
         send(MediaMsg.STOP, Stop.getDefaultInstance(), dataPriority)
     }
@@ -242,6 +296,9 @@ abstract class MediaSinkChannel(service: Service, name: String, private val code
     }
 
     companion object {
+        /** The most messages one ack may be for. */
+        const val MAX_ACKED = 4096
+
         /** START field 3 for a stream the head unit paces by dropping, not by holding acks back. */
         const val ACK_MODE_DROP_OVERFLOW = 2
         const val DROP_OVERFLOW_MIN_UNACKED = 24
@@ -566,9 +623,12 @@ class AudioChannel(
         underflows++
         listener?.onUnderflow(this)
     }
-    /** The configuration the head unit picked in its Config (the index START announces), else the first. */
+    /** The configuration this stream plays, the one its START announces (see [chooseConfig]). */
     val config: AudioConfiguration?
-        get() = service.mediaSinkService.audioConfigsList.let { it.getOrNull(configIndices.firstOrNull() ?: 0) ?: it.firstOrNull() }
+        get() = service.mediaSinkService.audioConfigsList.getOrNull(configIndex)
+
+    private val configIndex: Int
+        get() = chooseConfig(streamType, service.mediaSinkService.audioConfigsList, configIndices, session.headUnitAtLeast(1, 6))
     @Volatile var droppedChunks = 0L
         private set
 
@@ -578,7 +638,7 @@ class AudioChannel(
 
     /** Opens a playback session on the head unit (call when sound starts). */
     fun startPlayback() {
-        if (ready && !started) startStream(configIndices.firstOrNull() ?: 0)
+        if (ready && !started) startStream(configIndex)
     }
 
     /** Closes the session (call after a short silence, so the head unit can restore its own audio). */
@@ -601,6 +661,24 @@ class AudioChannel(
     companion object {
         /** Head units ack audio in bursts; allow a little beyond the window before dropping. */
         const val SLACK = 4
+
+        /**
+         * The audio configuration played on a stream: the head unit's preferred one when its
+         * Config names one in the list. Otherwise by format from the list: 48 kHz stereo for
+         * media; for the others 48 kHz mono on head units 1.6 and later, falling back to 16 kHz
+         * mono (16 kHz mono before 1.6); the first when none of these is listed. Returns an index
+         * into [configs].
+         */
+        internal fun chooseConfig(type: AudioStreamType, configs: List<AudioConfiguration>, preferred: List<Int>, headUnitAtLeast16: Boolean): Int {
+            preferred.firstOrNull()?.takeIf { it in configs.indices }?.let { return it }
+            fun find(rate: Int, stereo: Boolean) = configs.indexOfFirst { it.samplingRate == rate && (it.numberOfChannels == 2) == stereo }
+            val wanted = when {
+                type == AudioStreamType.AUDIO_STREAM_MEDIA -> find(48_000, stereo = true)
+                headUnitAtLeast16 -> find(48_000, stereo = false).takeIf { it >= 0 } ?: find(16_000, stereo = false)
+                else -> find(16_000, stereo = false)
+            }
+            return wanted.takeIf { it >= 0 } ?: 0
+        }
     }
 }
 

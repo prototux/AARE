@@ -43,6 +43,7 @@ of each file is used.
 | `openServices` | list | Services the car lists that AARE doesn't use, opened anyway; AARE sends nothing on them and ignores what the car sends. |
 | `micSetup` | true/false | Send SETUP on the microphone channel when it opens (default: true). |
 | `dropOverflow` | true/false | Stream video (head units 6.0 and later) and audio (5.0 and later) in drop overflow mode: the head unit drops what it can't take instead of pacing the phone with acks (default: false). Try it on a car whose picture or sound stalls because it stops acking. |
+| `pairAgainWhenRunning` | true/false | Send the Bluetooth pairing request again once the session runs, for a car that drops the phone's hands-free link when projection starts (default: false). |
 
 Services are named as the connection log writes them after `services:`: `video`, `mic`,
 `input`, `sensors`, `bluetooth`, `navstatus`, `playback`, `phonestatus`, `mediabrowser`,

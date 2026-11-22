@@ -13,7 +13,8 @@ import java.io.OutputStream
 
 /**
  * Wired head units switch the phone to USB accessory mode (AOA) with the strings
- * manufacturer "Android", model "Android Auto", then talk AAP over the bulk endpoints.
+ * manufacturer "Android", model "Android Auto" (see [isAndroidAuto]), then talk AAP over the
+ * bulk endpoints.
  */
 class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Transport {
     private val fd: ParcelFileDescriptor = usb.openAccessory(accessory)
@@ -40,7 +41,16 @@ class UsbAccessoryTransport(usb: UsbManager, val accessory: UsbAccessory) : Tran
     }
 
     companion object {
-        fun isAndroidAuto(a: UsbAccessory) =
-            a.manufacturer.equals("Android", true) && (a.model ?: "").startsWith("Android Auto", true)
+        /** Kept in step with res/xml/accessory_filter.xml (UsbAccessoryMatchTest checks it). */
+        internal val MODELS = setOf("Android Auto", "Android Open Automotive Protocol")
+
+        /**
+         * An accessory to project to: matched on the exact model only, so
+         * a head unit with another manufacturer string works too. The plain "Android" model,
+         * which is ignored by default, is not one.
+         */
+        fun isAndroidAuto(a: UsbAccessory) = isAndroidAutoModel(a.model)
+
+        internal fun isAndroidAutoModel(model: String?) = model in MODELS
     }
 }

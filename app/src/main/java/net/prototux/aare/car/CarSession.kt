@@ -258,15 +258,17 @@ class CarSession(
                     when {
                         // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
                         sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
-                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
-                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
-                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
-                        // becomes the primary instead. Codecs default to PCM, so cars that don't
-                        // advertise one are unaffected.
-                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
-                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
-                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
-                        else -> AudioChannel(s, audioListener, allowDropOverflow = quirks?.dropOverflow == true).also { audio += it; channels += it }
+                        // An AAC sink is left closed only when a PCM one plays the stream (AudioSinks).
+                        AudioSinks.skip(s, response.channelsList) ->
+                            DiagLog.add("not using ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "it asks for ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, the PCM one plays it")
+                        else -> {
+                            if (sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM) {
+                                DiagLog.add("${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id} asks for " +
+                                    "${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")} and is the only one: sending it PCM")
+                            }
+                            AudioChannel(s, audioListener, allowDropOverflow = quirks?.dropOverflow == true).also { audio += it; channels += it }
+                        }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
@@ -280,7 +282,7 @@ class CarSession(
                     override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
                         DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
                     }
-                })
+                }).also { bluetooth = it }
             }
         }
         // The input service for the projected (main) display: match its display id, require a real
@@ -319,6 +321,8 @@ class CarSession(
     }
 
     override fun onRunning(session: AapSession) {
+        if (vehicleOverride?.pairAgainWhenRunning == true && bluetooth?.announceAgain() == true)
+            DiagLog.add("car bluetooth: announcing the phone again, session running (vehicles.json)")
         main.post {
             if (closed) return@post
             listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
@@ -402,9 +406,11 @@ class CarSession(
     }
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
-        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int {
+            offeredVideo = configs
+            return chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
                 vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
+        }
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -465,6 +471,9 @@ class CarSession(
 
     /** The configuration the projection runs with (main thread), for UI config updates. */
     private var videoConfig: VideoConfiguration? = null
+    /** Every resolution the car offered: touch maps against its largest, not the one chosen (#269). */
+    @Volatile private var offeredVideo: List<VideoConfiguration> = emptyList()
+
     /** Where the UI goes in the frame (main thread). Compose state: a UI config update re-lays it out in place. */
     private val projectionLayout = mutableStateOf<ProjectionLayout?>(null)
 
@@ -495,7 +504,9 @@ class CarSession(
         // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
         // the source resolution, including 0x0, visible-pixel and under-declared panels.
         val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout)
+        val native = offeredVideo.map(::visibleSize).maxByOrNull { it.first.toLong() * it.second }
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout,
+            native?.first ?: layout.visibleWidth, native?.second ?: layout.visibleHeight)
     }
 
     private fun startProjection(config: VideoConfiguration, rightHandDrive: Boolean) {
@@ -957,16 +968,14 @@ class CarSession(
                 // Not just the title: the art (often loaded after the rest), the artist or the
                 // duration can come in a later update of the same track. The art compares by
                 // content: a platform session hands out a new Bitmap on every update, and the
-                // JPEG must be made once per cover, not on every play, pause or seek.
+                // PNG must be made once per cover, not on every play, pause or seek (it's slower
+                // to encode than JPEG, which is no longer accepted here).
                 val track = listOf(p.title, p.artist, p.album, p.durationMs)
                 if (track != lastTrack || !sameArt(lastArt, p.art)) {
                     lastTrack = track
                     lastArt = p.art
                     val meta = fillMediaMetadata(MediaPlaybackMetadata.newBuilder(), p)
-                    p.art?.let { art ->
-                        val small = Bitmap.createScaledBitmap(art, 256, 256 * art.height / maxOf(1, art.width), true)
-                        meta.setAlbumArt(ByteString.copyFrom(ByteArrayOutputStream().also { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()))
-                    }
+                    p.art?.let { art -> meta.setAlbumArt(ByteString.copyFrom(CarImage.toCarPng(art))) }
                     ch.metadata(meta.build())
                 }
                 ch.status(MediaPlaybackStatus.newBuilder()
@@ -1010,6 +1019,9 @@ class CarSession(
         val m = Build.MODEL
         return if (m.startsWith(Build.MANUFACTURER, ignoreCase = true)) m else "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} $m"
     }
+
+    /** The car's Bluetooth service, to announce the phone again once the session runs (vehicles.json `pairAgainWhenRunning`). */
+    private var bluetooth: BluetoothChannel? = null
 
     /**
      * The phone's own Bluetooth MAC for the car's pairing handshake, or null if unknown. Prefer the

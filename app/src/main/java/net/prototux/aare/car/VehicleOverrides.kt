@@ -27,6 +27,8 @@ data class VehicleOverride(
      * head unit drops what it can't take instead of pacing the phone with acks. Default: off.
      */
     val dropOverflow: Boolean? = null,
+    /** Whether to send the Bluetooth pairing request again once the session runs (AARE's default: no). */
+    val pairAgainWhenRunning: Boolean? = null,
 ) {
     /** These overrides, with [base]'s for every field left unset: a user rule over a built-in one. */
     fun over(base: VehicleOverride?): VehicleOverride = if (base == null) this else VehicleOverride(
@@ -39,6 +41,7 @@ data class VehicleOverride(
         openServices = openServices ?: base.openServices,
         micSetup = micSetup ?: base.micSetup,
         dropOverflow = dropOverflow ?: base.dropOverflow,
+        pairAgainWhenRunning = pairAgainWhenRunning ?: base.pairAgainWhenRunning,
     )
 
     fun skips(kind: String): Boolean = skipServices.orEmpty().any { matchesKind(it, kind) }
@@ -55,6 +58,11 @@ data class VehicleOverride(
             pattern.equals(kind, ignoreCase = true) ||
                 (':' !in pattern && kind.startsWith("$pattern:", ignoreCase = true))
     }
+}
+
+/** Where and why a vehicles.json doesn't parse, without any of its text: it may name the user's cars. */
+data class JsonProblem(val line: Int?, val column: Int?, val reason: String) {
+    override fun toString(): String = if (line != null && column != null) "line $line, column $column: $reason" else reason
 }
 
 /** A rule: match a head unit by identity substrings, then apply [override]. */
@@ -101,10 +109,42 @@ object VehicleOverrides {
     }
 
     private fun rules(text: String?, what: String): List<VehicleRule> =
-        text?.let { runCatching { parse(it) }.onFailure { e -> Log.w(TAG, "$what: ${e.message}") }.getOrNull() }.orEmpty()
+        text?.let { runCatching { parse(it) }.onFailure { e -> Log.w(TAG, "$what: ${problem(e, it)}") }.getOrNull() }.orEmpty()
 
     fun ruleCount(context: Context): Int =
         runCatching { file(context).takeIf { it.exists() }?.readText()?.let { parse(it).size } }.getOrNull() ?: 0
+
+    /** What keeps the user's vehicles.json from being used, or null if there is none or it parses. */
+    fun problem(context: Context): JsonProblem? =
+        runCatching { file(context).takeIf { it.exists() }?.readText() }.getOrNull()?.let(::problem)
+
+    internal fun problem(text: String): JsonProblem? = runCatching { parse(text) }.exceptionOrNull()?.let { problem(it, text) }
+
+    // org.json's messages quote the input. Android's (AOSP libcore) ends every syntax error with
+    // " at character <index> of <the whole input>", and says a top level that isn't an object is
+    // "Value <the whole value> of type … cannot be converted to JSONObject"; three of its reasons also
+    // quote a name or an escape. The JVM's (JSON-java, unit tests) ends them with
+    // " at <index> [character <column> line <line>]".
+    private val aospAt = Regex(""" at character (\d+) of """)
+    private val jvmAt = Regex("""(.*) at \d+ \[character (\d+) line (\d+)]""", RegexOption.DOT_MATCHES_ALL)
+    private val quotingReasons = listOf("Expected ':'", "Names must be strings", "Invalid escape sequence")
+
+    internal fun problem(e: Throwable, text: String): JsonProblem {
+        val message = e.message.orEmpty()
+        if (message.startsWith("Value ") && message.endsWith(" cannot be converted to JSONObject")) {
+            return JsonProblem(null, null, "not a JSON object")
+        }
+        aospAt.find(message)?.let { m ->
+            val at = (m.groupValues[1].toIntOrNull() ?: text.length).coerceAtMost(text.length)
+            val before = text.substring(0, at)
+            val reason = message.substring(0, m.range.first).let { r -> quotingReasons.firstOrNull(r::startsWith) ?: r }
+            return JsonProblem(before.count { it == '\n' } + 1, at - before.lastIndexOf('\n'), reason)
+        }
+        jvmAt.matchEntire(message)?.let { m ->
+            return JsonProblem(m.groupValues[3].toIntOrNull(), m.groupValues[2].toIntOrNull(), m.groupValues[1])
+        }
+        return JsonProblem(null, null, "not valid JSON")
+    }
 
     /** Parses the `rules` array. Lenient: unknown keys ignored, a malformed rule skipped. */
     fun parse(json: String): List<VehicleRule> {
@@ -127,6 +167,7 @@ object VehicleOverrides {
                     maxHeight = int(a, "maxHeight"), prefer60fps = bool(a, "prefer60fps"),
                     skipServices = strings(a, "skipServices"), openServices = strings(a, "openServices"),
                     micSetup = bool(a, "micSetup"), dropOverflow = bool(a, "dropOverflow"),
+                    pairAgainWhenRunning = bool(a, "pairAgainWhenRunning"),
                 ),
             )
         }
@@ -143,7 +184,8 @@ object VehicleOverrides {
               "match": { "make": "", "model": "", "name": "" },
               "apply": {
                 "dpi": 160, "widthMargin": 0, "heightMargin": 0, "maxHeight": 1080, "prefer60fps": true,
-                "skipServices": [], "openServices": [], "micSetup": true, "dropOverflow": false
+                "skipServices": [], "openServices": [], "micSetup": true, "dropOverflow": false,
+                "pairAgainWhenRunning": false
               }
             }
           ]

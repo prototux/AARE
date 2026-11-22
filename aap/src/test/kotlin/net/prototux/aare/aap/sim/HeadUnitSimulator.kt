@@ -145,6 +145,8 @@ class HeadUnitSimulator(
     val uiConfigReplies = LinkedBlockingQueue<UiConfig>()
     /** Video frames received when each UI config reply arrived. */
     val framesAtUiConfigReply = LinkedBlockingQueue<Int>()
+    /** Each media channel's session, from its latest START: its acks carry it, as a head unit's do. */
+    val sessionIds = ConcurrentHashMap<Int, Int>()
     @Volatile var error: Throwable? = null
     /** Video focus the phone reported, in order. */
     val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
@@ -160,11 +162,15 @@ class HeadUnitSimulator(
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
     @Volatile var hangUpInHandshake = false
+    /** The body of the phone's version response (major, minor, status: 16 bits each). */
+    @Volatile var versionResponse: ByteArray? = null
+    val versionAnswered = CountDownLatch(1)
 
     fun start() {
         Thread({
             try {
-                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, protocolMajor.toByte(), 0, protocolMinor.toByte()))
+                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(
+                    (protocolMajor shr 8).toByte(), protocolMajor.toByte(), (protocolMinor shr 8).toByte(), protocolMinor.toByte()))
                 while (true) handle(reader.read())
             } catch (e: Throwable) {
                 if (byeBye.count > 0L) error = e
@@ -213,6 +219,8 @@ class HeadUnitSimulator(
     private fun control(m: AapMessage) {
         when (m.id) {
             ControlMsg.VERSION_RESPONSE -> {
+                versionResponse = m.bodyBytes()
+                versionAnswered.countDown()
                 cryptor.beginHandshake()
                 sendPlain(0, ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
@@ -262,6 +270,7 @@ class HeadUnitSimulator(
             MediaMsg.START -> {
                 val start = Start.parseFrom(m.bodyBytes())
                 starts.computeIfAbsent(m.channel) { LinkedBlockingQueue() }.add(start)
+                sessionIds[m.channel] = start.sessionId
                 if (m.channel == video) videoStart = start
             }
             MediaMsg.UPDATE_UI_CONFIG_REPLY -> {
@@ -289,7 +298,7 @@ class HeadUnitSimulator(
                 } else {
                     audioChunks.incrementAndGet()
                 }
-                val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
+                val session = sessionIds[m.channel] ?: 0
                 if (if (m.channel == video) ackVideo else ackAudio)
                     send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
@@ -362,6 +371,11 @@ class HeadUnitSimulator(
 
     /** Reports playback statistics on a media channel, as head units 6.0 and later do. */
     fun sendMediaStats(channel: Int, stats: MediaStats) = send(channel, MediaMsg.MEDIA_STATS, stats)
+
+    /** Sends an ack of the head unit's own making on a media channel. */
+    fun sendAck(channel: Int, sessionId: Int, count: Int? = null, receiveTimesNs: List<Long> = emptyList()) =
+        send(channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessionId).apply { count?.let { setAck(it) } }
+            .addAllReceiveTimestampNs(receiveTimesNs).build())
 
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 
