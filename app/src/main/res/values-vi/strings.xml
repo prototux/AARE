@@ -83,6 +83,9 @@
     <string name="setup_choice_colors_auto">Tự động</string>
     <string name="setup_choice_dark">Tối</string>
     <string name="setup_choice_light">Sáng</string>
+    <string name="setup_choice_night_source">Chế độ ban đêm theo</string>
+    <string name="setup_choice_night_source_car">Xe</string>
+    <string name="setup_choice_night_source_light_sensor">Cảm biến ánh sáng của điện thoại</string>
     <string name="setup_choice_bar">Thanh</string>
     <string name="setup_choice_bar_auto">Phía người lái</string>
     <string name="setup_choice_left">Trái</string>

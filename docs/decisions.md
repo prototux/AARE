@@ -332,6 +332,25 @@ and icon size; corner radii are a theme's shape choice, not a control size, so t
 - Text size instead overrides `LocalDensity` once at `Root`'s top: Compose's `MaterialTheme`/
   `CarTheme` never touch `LocalDensity`, so that override already survives nested calls without
   the same trick.
+## Night mode from the phone's light sensor
+
+A setting lets "Car's day/night" take its reading from the phone's own ambient light sensor
+instead of the car's signal. The decision is hysteresis, not a single threshold: separate
+night/day lux thresholds with a dead zone between them, and a new reading only takes effect once
+it has held for a few seconds (LightNightDecider). Without this, a streetlight passing by or a
+hand briefly covering the sensor would flicker the car screen's whole colour scheme.
+
+- No sunset/time-of-day option: AARE has no sunset calculation anywhere (checked DashboardInfo's
+  weather code), and adding one for this alone would be a new, unrelated feature.
+- The setting only shows under "Car's day/night": a fixed Dark/Light theme has no night mode to
+  source, so showing it there would imply it does something it doesn't.
+- The sensor is started and stopped with the setting (and always released when the car session
+  ends), not left registered when unused: a light sensor is cheap, but there's no reason to keep
+  listening when nothing reads the result.
+- The decider starts with no state and reports its first stable reading, so a bright start turns
+  the screen light without waiting for a change. The light sensor only reports changes, so a timer
+  ends the stability window when no further event comes. The sensor only runs while the colours
+  follow day/night and the source is the light sensor.
 
 ## Wireless handshake for aftermarket adapters
 

@@ -83,6 +83,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Tumma</string>
     <string name="setup_choice_light">Vaalea</string>
+    <string name="setup_choice_night_source">Yötila lähteestä</string>
+    <string name="setup_choice_night_source_car">Auto</string>
+    <string name="setup_choice_night_source_light_sensor">Puhelimen valoanturi</string>
     <string name="setup_choice_bar">Palkki</string>
     <string name="setup_choice_bar_auto">Kuljettajan puoli</string>
     <string name="setup_choice_left">Vasen</string>
