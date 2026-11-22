@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.UUID
+import net.prototux.aare.car.CarKeyMapCodec
 
 /** User settings, in one SharedPreferences file. */
 class Settings(context: Context) {
@@ -178,6 +179,11 @@ class Settings(context: Context) {
         }
         set(v) = prefs.edit { putString("dashboard_cards", v.joinToString(",")) }
 
+    /** The map keeps the big space on the dashboard wherever it is in the order. */
+    var dashboardMapBig: Boolean
+        get() = prefs.getBoolean("dashboard_map_big", false)
+        set(v) = prefs.edit { putBoolean("dashboard_map_big", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO
@@ -229,6 +235,14 @@ class Settings(context: Context) {
     var standaloneKeepScreenAwake: Boolean
         get() = prefs.getBoolean("standalone_keep_screen_awake", false)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
+
+    /**
+     * Offer "Show video" on the car's media screen: the media app itself is launched on the car screen
+     * (as [standaloneApps] are, so it needs them on and root or Shizuku), parked only.
+     */
+    var mediaVideo: Boolean
+        get() = prefs.getBoolean("media_video", false)
+        set(v) = prefs.edit { putBoolean("media_video", v) }
 
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
     var standaloneAppPackages: Set<String>
@@ -334,6 +348,29 @@ class Settings(context: Context) {
     var hiddenApps: Set<String>
         get() = prefs.getStringSet("hidden_apps", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("hidden_apps", v) }
+
+    /**
+     * Keys AARE has seen from a car, code to a readable name (`KeyEvent.keyCodeToString`), for
+     * the "Car buttons" chooser. Recorded as they arrive (`rememberCarKey`); never removed, so a
+     * button pressed once on an earlier car still has a row (harmless if that car is gone).
+     */
+    var carKeysSeen: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_keys_seen", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_keys_seen", CarKeyMapCodec.encode(v)) }
+
+    fun rememberCarKey(code: Int, name: String) {
+        val seen = carKeysSeen
+        if (seen[code] == name) return
+        carKeysSeen = seen + (code to name)
+    }
+
+    /**
+     * User-chosen remaps: a car key code to a `CarKeyAction` id. A key with no entry here keeps
+     * its normal behaviour (`CarSession.onKey`).
+     */
+    var carKeyMap: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_key_map", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_key_map", CarKeyMapCodec.encode(v)) }
 
     /** Stable random id sent to head units so they recognise this phone. */
     val instanceId: String

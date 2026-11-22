@@ -57,7 +57,7 @@ Services, no account.
 
 > [!NOTE]
 > **AARE has been tried in 30 cars so far** ([the list](#tested-on-real-head-units)): 14 work, 10
-> work with known issues and a few refuse it. Most factory head units only accept Android Auto's
+> work with known issues and a few don't work yet. Most factory head units only accept Android Auto's
 > own certificate: AARE downloads it with one tap ([AA key extraction](#aa-key-extraction)).
 > Every car is a bit different, so try it **parked** first, and please
 > [report your car](https://github.com/prototux/AARE/issues/new/choose), whether it works or not.
@@ -188,8 +188,9 @@ The **bar** is laid out like Android Auto's: on a side next to the driver, or al
 
 The **dashboard** shows the map (or directions from Google Maps or Waze), what's playing, the next
 calendar event, the latest notification and the weather, over a wallpaper if you pick one. Show,
-hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room. On very
-wide screens (1920x720 and up) the cards sit side by side. The weather comes from
+hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room, or the
+map wherever it is with *Map always big*. On very wide screens (1920x720 and up) the cards sit
+side by side. The weather comes from
 [Open-Meteo](https://open-meteo.com/) (no account, no Google), asked for an approximate position
 (about 10 km); you can turn it off.
 
@@ -421,7 +422,7 @@ certificate ([one tap](#aa-key-extraction)).
 | Continental NAC Wave 4.4 (HW2019), the factory unit of a 2019 Citroën C5 Aircross | Fairphone (Gen 6) | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)**, as well as Android Auto ([#81](https://github.com/prototux/AARE/issues/81)). |
 | Volkswagen VW3166 LGE ICAS3 (smaller screen), the factory unit of a 2021 VW ID.4 | Fairphone 4, /e/OS, Shizuku, no Google services | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#68](https://github.com/prototux/AARE/issues/68)); the 1.2.0 margin fix ([#61](https://github.com/prototux/AARE/pull/61)) corrected the earlier zoomed-in layout. |
 | Panasonic T1 (8614002A81), the factory unit of a 2023 Toyota Corolla Touring Sports | Samsung Galaxy A7 (2018), Android 10 | USB | 1.2.0 | **Works after [AA key extraction](#aa-key-extraction)** ([#79](https://github.com/prototux/AARE/issues/79)); Vela maps and Symfonium audio work. Known issue: navigation lost location once the phone locked ([#87](https://github.com/prototux/AARE/issues/87), fixed in [#94](https://github.com/prototux/AARE/pull/94)). |
-| Easylink Bosch RM RNAIVI, integrated in a 2023 Renault Zoe | Fairphone FP5, /e/OS, microG, rooted | Wireless | 1.2.0 | **Partly works after [AA key extraction](#aa-key-extraction)** ([#76](https://github.com/prototux/AARE/issues/76)): the car-audio player works, but the head unit doesn't display the AARE screen, so nothing else does. |
+| Easylink Bosch RM RNAIVI, integrated in a 2023 Renault Zoe | Fairphone FP5, /e/OS, microG, rooted | Wireless | 1.2.0 | **Doesn't work** ([#76](https://github.com/prototux/AARE/issues/76)): it connects over wireless with the extracted certificate, but the head unit never displays the AARE screen ([#96](https://github.com/prototux/AARE/issues/96)). The audio player that seemed to work was the phone's own Bluetooth link, not AARE. |
 | Factory unit of a 2022 Chevrolet Bolt EUV | Pixel 8 Pro | USB and wireless | 1.2.0 | **Works with issues** ([#80](https://github.com/prototux/AARE/issues/80)): connects with the AA certificate, but touches land up and to the left of where they're tapped, and apps that require Google's build (Maps, Spotify, YouTube) refuse to run. |
 | Honda HFT (8A500-3A0-GD2), the factory unit of a 2025 Honda CR-V | Huawei P30, EMUI 12 (Android 10) | USB and wireless | 1.2.0 | **Works with issues** ([#70](https://github.com/prototux/AARE/issues/70)): over USB the car doesn't recognise the phone (no AA icon); over wireless it connects but the projected screen is black. |
 | Mitsubishi Electric unit of a 2020 Mercedes C-Class | Pixel 10, Android 17, GrapheneOS, no Google services, no Shizuku | USB | 1.2.0 | **Works with issues** ([#69](https://github.com/prototux/AARE/issues/69)): connects and the car shows the Android Auto icon, but the projected screen is black. |
@@ -572,6 +573,16 @@ The window also gives you:
   that use the phone's location (CoMaps) follow it.
 - **Headless mode:** `--headless DIR --script "tap:640,360@10 key:4@12"` runs without a window
   and saves screenshots, for automated tests.
+- **Test options**, to try AARE's error and logging paths without a car: `--name`, `--make`,
+  `--model`, `--year`, `--hu-make`, `--hu-model`, `--hu-sw` and `--vehicle-id` set what the head
+  unit says about itself; `--fault`, `--refuse-channel`, `--ignore-channel`, `--no-audio-ack`,
+  `--video-ack-delay`, `--mic-status`, `--no-audio-focus`, `--no-video-focus` and `--ping-ms` make
+  it misbehave; `--aac-sink` (listed only), `--unknown-service`, `--video-codec` (the offer only:
+  the window still decodes H.264 only) and `--wifi-projection` (with a fake password for phones
+  that ask for the car's Wi-Fi credentials) change what it offers; and `--script` also takes
+  protocol events (`bye`, `longkey:3`, `audiofocus:loss`, `garbage:7`...).
+  `headunit/build/install/aare-headunit/bin/aare-headunit --help` lists them all. While unused,
+  they change nothing.
 
 AARE's head unit works with AARE (or other open-source phone implementations), not with Google's
 Android Auto app: Android Auto only accepts head units whose certificate is issued by Google, and
@@ -732,8 +743,12 @@ navigation location while the phone is locked, the reverse-camera video restart,
 Shizuku, the Ford SYNC 2.5 audio crackle and the home screen's map card),
 [@l0rdg3x](https://github.com/l0rdg3x) (head units on Google's receiver library, audio focus,
 pausing and resuming the music with the car, and the home screen's music card),
-[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8) and
-[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units).
+[@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8),
+[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units)
+and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0: the
+certificate kept and the Trust button that stays after a dropped link, car apps' permission
+prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
+app icons that stay visible on light themes.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),

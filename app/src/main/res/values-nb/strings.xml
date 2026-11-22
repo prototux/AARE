@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Utseende</string>
     <string name="setup_choice_colors">Farger</string>
-    <string name="setup_choice_colors_auto">Bilens dag/natt</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mørk</string>
     <string name="setup_choice_light">Lys</string>
     <string name="setup_choice_bar">Stolpe</string>
@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashbord</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det første kortet får mest plass; de andre fyller resten av skjermen. Et kort uten noe å vise gir plassen sin til det neste.</string>
+    <string name="dash_map_big_title">Kartet alltid stort</string>
+    <string name="dash_map_big_subtitle">Uansett hvor det står i rekkefølgen, får kartet mest plass</string>
     <string name="dash_card_map">Kart</string>
     <string name="dash_card_media">Musikk</string>
     <string name="dash_card_calendar">Neste kalenderhendelse</string>
@@ -118,8 +120,23 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Innstillinger</string>
     <string name="setup_app_entry_notifications">Varsler</string>
+    <string name="launcher_search_hint">Søk i apper</string>
     <string name="setup_section_app_order">Rekkefølge i bilen</string>
     <string name="setup_section_connection_log">Tilkoblingslogg</string>
+    <string name="setup_section_car_buttons">Bilens knapper</string>
+    <string name="setup_car_buttons_hint">Knapper AARE har sett fra denne bilen. Velg hva hver av dem gjør; en knapp som står på «Standard», beholder sin vanlige funksjon.</string>
+    <string name="setup_car_buttons_empty">Ingen knapper sett ennå. Koble til en bil og trykk på en.</string>
+    <string name="setup_car_button_default">Standard</string>
+    <string name="setup_car_action_home">Hjem</string>
+    <string name="setup_car_action_back">Tilbake</string>
+    <string name="setup_car_action_assistant">Taleassistent</string>
+    <string name="setup_car_action_play_pause">Spill/pause</string>
+    <string name="setup_car_action_next">Neste spor</string>
+    <string name="setup_car_action_previous">Forrige spor</string>
+    <string name="setup_car_action_open_navigation">Åpne navigasjonsapp</string>
+    <string name="setup_car_action_open_media">Åpne medieapp</string>
+    <string name="setup_car_action_open_phone">Åpne telefonapp</string>
+    <string name="setup_car_action_nothing">Ingenting</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Ikke tilknyttet Google. Android Auto er et varemerke som tilhører Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
     <string name="setup_choice_theme">Tema</string>
@@ -310,6 +327,11 @@
     <string name="media_search_app">Søk i %1$s</string>
     <string name="media_action_search">Søk</string>
     <string name="media_action_browse">Bla gjennom</string>
+    <string name="media_action_show_video">Vis video</string>
+    <string name="media_video_close">Tilbake til spilleren</string>
+    <string name="media_video_full_screen">Fullskjerm</string>
+    <string name="media_video_exit_full_screen">Avslutt fullskjerm</string>
+    <string name="media_video_paused_driving">Video satt på pause under kjøring; lyden fortsetter.</string>
     <string name="media_now_playing_label">Spiller nå</string>
     <string name="media_nothing_here">Ingenting her</string>
     <string name="media_couldnt_load_more">Kunne ikke laste mer</string>
@@ -374,6 +396,8 @@
     <string name="standalone_not_native">Ikke en Android Auto-app · bruk ved parkering</string>
     <string name="standalone_starting">Starter…</string>
     <string name="standalone_paused_driving">Satt på pause under kjøring.</string>
+    <string name="standalone_media_video_title">Video fra mediaapper</string>
+    <string name="standalone_media_video_subtitle">Legger til \"Vis video\" på bilens mediaskjerm: mediaappen åpnes på bilskjermen for videoen sin. Bare parkert; albumomslaget kommer tilbake når du kjører.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Nettleser</string>
     <string name="browser_app_row_subtitle">En nettleser på bilskjermen, for når du er parkert</string>
@@ -444,6 +468,8 @@
     <string name="vehicles_rule_count">%1$d regel(regler) lastet inn</string>
     <string name="vehicles_import">Importer fil…</string>
     <string name="vehicles_template">Skriv mal</string>
+    <string name="vehicles_malformed_at">vehicles.json har en feil på linje %1$d, kolonne %2$d (%3$s): reglene i den ignoreres.</string>
+    <string name="vehicles_malformed">vehicles.json kan ikke brukes (%1$s): reglene i den ignoreres.</string>
     <string name="setup_toggle_force_h264_title">Tving frem H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard bruker AARE den beste kodeken som bilen og telefonen har felles (H.265…). Slå på hvis bildet i bilen er forstyrret.</string>
     <string name="common_ok">OK</string>
@@ -452,6 +478,11 @@
     <string name="setup_section_updates">Oppdateringer</string>
     <string name="setup_toggle_updates_title">Se etter oppdateringer</string>
     <string name="setup_toggle_updates_subtitle">Varsle på hjemskjermen når en nyere utgivelse finnes på GitHub. Av kobler aldri til internett.</string>
+    <string name="update_check_now">Sjekk nå</string>
+    <string name="update_checking">Sjekker…</string>
+    <string name="update_check_latest">Du har nyeste versjon (%1$s).</string>
+    <string name="update_check_available">AARE %1$s er tilgjengelig: se startskjermen.</string>
+    <string name="update_check_failed">Fikk ikke kontakt med GitHub. Prøv igjen senere.</string>
     <string name="update_available_title">Oppdatering tilgjengelig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Trykk for å se utgivelsen.</string>
     <string name="setup_log_save">Lagre</string>

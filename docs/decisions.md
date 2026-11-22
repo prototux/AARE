@@ -149,7 +149,92 @@ stands in when nothing is left, and the last card can't be hidden.
   list. The calendar is read only when its card is shown; the weather when it is next to the clock
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
+- *Map always big* (off by default) is the one exception to the first card getting the big space:
+  with it on, the map keeps the big space wherever it is in the order and the other cards fill the
+  rest in order, so the music can come first with a big map, as with the old "music first" switch.
+  Its side in the landscape layout follows the order too (first only when the map is first), so a
+  card that comes and goes before it doesn't move it.
 
+
+## Wireless bootstrap and USB: compatibility first
+
+Rule: nothing may break a head unit that works today, so every change to the WPP exchange either
+only adds a fallback or only applies after a failure.
+
+- Version response: always SUCCESS, echoing the head unit's version (1.0 when it sends none). A
+  stricter answer (refusing WPP 2, 3 and 7+, or below 4.5 head units whose Wi-Fi channels the phone
+  can't use) is only logged. The channel check takes every frequency of the Wi-Fi bands the phone
+  supports: apps can't read the channels it may use where it is.
+- Our own WifiStartRequest is never sent on a first attempt. Only after an attempt where the head
+  unit answered the version exchange and then sent no WifiStartRequest before the message timeout,
+  the connector's redials to that head unit ask it to start (5 s after the version exchange, again
+  every 2 s for up to 50 s while it answers "not yet" or "already started").
+- WifiInfoRequest is repeated every 3 s; the usual message timeout still decides when to give up.
+- SSID and passphrase lose one pair of surrounding quotes below WPP 4.5; if joining that way fails,
+  the join is tried once more with them as sent.
+- First message after the RFCOMM connect: 12 s, 3.7 s on the first attempt with a wireless adapter
+  (Bluetooth name containing "Intercooler" or "AndroidAuto-"), so it is redialled quickly: at once,
+  without the 10 s wait and without using up one of the two retries for a car that isn't ready.
+- RFCOMM frames over 1024 bytes are logged, not refused.
+- Bad endpoint: reported as WifiConnectionStatus(INVALID_HOST); port 0 is accepted below WPP 4.5 (it
+  fails at the TCP connect), a port outside 0-65535 is refused. WifiConnectionStatus carries an
+  error text only for PHONE_WIFI_DISABLED, written for the driver.
+- The wireless AAP socket keeps its big buffers and gets no read timeout: the ping watchdog allows
+  20 s of silence for head units that go off channel to scan. TCP keepalive is off: its first probe
+  would come after hours, the watchdog notices a dead link much sooner.
+- USB accessories are matched by model only ("Android Auto", "Android Open Automotive Protocol"):
+  some head units send another manufacturer. A failed openAccessory is retried once after 500 ms.
+
+## Steering-wheel key remapper
+
+A user remap is checked once, in `CarSession.onKey`, before the big `when (code)` that gives each
+key its default behaviour; a match returns early (on both the down and up event, not just up) so
+a remapped key never also falls through to its old behaviour. The remap only fires on key-up, like
+most of the keys it can replace.
+
+- Keys are recorded (code to `KeyEvent.keyCodeToString`) as they arrive, regardless of whether
+  they're mapped, so the phone's chooser can show every button this car has — including AARE's own
+  synthetic codes for dedicated car buttons (telephone, radio, media, navigation, turn-card),
+  which aren't real `KeyEvent` constants and so get a less friendly name from
+  `keyCodeToString`, but are still choosable.
+- The mapping and the seen-keys list share one encoding (`CarKeyMapCodec`): a `SharedPreferences`
+  string set of "code\tvalue" entries, decoded defensively (a malformed entry is dropped, not a
+  crash) since it's as easy for a future version to add a new field here as for a hand-edited
+  preferences file to break one.
+
+## Duck the music under AARE's own speech, don't pause it
+
+`CarNotificationListener.speak()` (messages read aloud) tagged its TextToSpeech output
+`USAGE_MEDIA`. Two consequences: on the phone itself, nothing asked for audio focus at all,
+and for car audio (`CarSession`'s audio-policy/Shizuku capture), `USAGE_MEDIA` is one of
+`CaptureMethods.MEDIA_USAGES`, so AARE's own speech shared the "media" channel, whose `Focus`
+asks the car for plain `AUDIO_FOCUS_GAIN` (full, pausing other car sound) rather than the
+"guidance" channel's `AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK` already used for phone navigation
+voice.
+
+- Retagged it `USAGE_ASSISTANT` (one of `CaptureMethods.GUIDANCE_USAGES`): when the car exposes a
+  guidance channel, AARE's own speech now rides the channel that already asks to duck, not pause.
+- Added an actual phone-side `AudioFocusRequest` (`AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK`) around the
+  TTS calls, tracked with an utterance-progress listener so it is requested once per burst of
+  speech and abandoned once every queued utterance has finished (or failed) — not just on every
+  individual `speak()` call, since `QUEUE_ADD` can queue several in a row.
+- `TextToSpeech.speak()` refuses an utterance (no listener callback ever follows) while the engine
+  is still starting, or after it failed: messages asked for during start-up wait for the engine,
+  and a refused or dropped utterance counts as done at once, so the focus (and the ducking) can't
+  outlive the speech. The count and focus are behind one lock: the listener runs on TTS's thread.
+- AARE has no listening (speech-to-text) of its own to apply the "exclusive transient focus while
+  listening" half of the request to: `CarRuntime.openMicrophone` only relays the car's microphone
+  to a connected car app (an assistant such as Lapin), which requests its own focus if it wants to.
+
+## Video from media apps: the app itself, parked only
+
+"Show video" on the car's media screen launches the media app on the car screen with the
+standalone-app launcher (root or Shizuku), instead of a video path of AARE's own: media sessions
+carry no video, and the app's own player already handles its streams and DRM. It is opt-in, under
+the standalone apps' switch. The app's screen sits above AARE's controls, or fills the app area
+(not the rail). When driving starts, the app stays on its display for its sound, under the cover
+art. Parking again hands the display a new surface rather than relaunching the app, because a
+relaunch would end the video.
 
 ## `aare://` links for assistants without a code path into AARE
 
