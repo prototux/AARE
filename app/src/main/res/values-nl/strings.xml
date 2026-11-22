@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Onder</string>
     <string name="setup_toggle_dark_bar_title">Donkere balk</string>
     <string name="setup_toggle_dark_bar_subtitle">Houd de balk donker, ook bij dagkleuren</string>
+    <string name="setup_toggle_split_screen_title">Gesplitst scherm</string>
+    <string name="setup_toggle_split_screen_subtitle">Houd een app in de balk van de auto ingedrukt om hem naast de huidige te openen (taakbalkindeling, alleen brede schermen)</string>
+    <string name="car_split_close">Gesplitst scherm sluiten</string>
+    <string name="car_split_open_beside">Openen naast de huidige app</string>
     <string name="setup_choice_text_size">Tekstgrootte</string>
     <string name="setup_choice_control_size">Grootte van bedieningselementen</string>
     <string name="setup_choice_size_default">Standaard</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Waarheen?</string>
     <string name="nav_dashboard_install_hint">Installeer een navigatie-app die Android Auto ondersteunt op de telefoon</string>
     <string name="nav_dashboard_choose_app">Kies uw kaarten-app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is een telefoon-app: de kaart opent op volledig scherm.</string>
     <string name="nav_guidance_on_phone">%1$s, op de telefoon</string>
     <string name="nav_next_step_then">Dan</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps op het autoscherm (geavanceerd)</string>
-    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
+    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, standaard alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
     <string name="standalone_toggle_title">Telefoonapps starten op het autoscherm</string>
-    <string name="standalone_toggle_subtitle">Kies de apps hieronder. Alleen getoond tijdens parkeren.</string>
+    <string name="standalone_toggle_subtitle">Kies de apps hieronder, en per app wat die tijdens het rijden mag.</string>
     <string name="standalone_keep_awake_title">Wakker blijven voor zelfstandige apps</string>
     <string name="standalone_keep_awake_subtitle">Houdt het fysieke telefoonscherm wakker terwijl een app open is. Op getroffen Android 17-telefoons stoppen virtuele schermen wanneer het telefoonscherm uit is. Gebruikt meer batterij.</string>
     <string name="standalone_need_root">Vereist root of Shizuku. Stel er een in op de pagina Autoaudio en kom dan terug.</string>
     <string name="standalone_not_native">Geen Android Auto-app · gebruik tijdens parkeren</string>
     <string name="standalone_starting">Starten…</string>
     <string name="standalone_paused_driving">Gepauzeerd tijdens het rijden.</string>
+    <string name="standalone_audio_only_driving">Scherm verborgen tijdens het rijden. Het geluid gaat door.</string>
+    <string name="standalone_rule_title">Tijdens het rijden</string>
+    <string name="standalone_rule_parked">Alleen geparkeerd</string>
+    <string name="standalone_rule_audio">Alleen audio</string>
+    <string name="standalone_rule_navigation">Navigatie</string>
+    <string name="standalone_rule_navigation_note">Getoond tijdens het rijden en gebruikt als navigatie-app van de auto: neemt de plaats van de kaart in en opent de bestemmingen die u vraagt.</string>
     <string name="standalone_media_video_title">Video uit media-apps</string>
     <string name="standalone_media_video_subtitle">Voegt \"Video tonen\" toe aan het mediascherm van de auto: de media-app opent op het autoscherm voor zijn video. Alleen geparkeerd; de hoes komt terug zodra je rijdt.</string>
     <!-- browser: the in-car WebView browser -->
@@ -582,6 +593,17 @@
     <string name="setup_log_save">Opslaan</string>
     <string name="setup_toggle_verbose_log_title">Uitgebreid protocollogboek</string>
     <string name="setup_toggle_verbose_log_subtitle">Legt het volledige head-unit-protocolverloop vast in dit logboek, om bij een bugrapport te voegen. Logt veel; laat dit anders uit.</string>
+    <string name="setup_section_backup">Back-up van instellingen</string>
+    <string name="setup_backup_hint">Sla je instellingen op in een bestand, of laad er een terug. Vertrouwde head units, certificaten, telefoongebonden gegevens en opties die AARE openstellen voor het netwerk of een veiligheidscontrole overslaan (head-unit-server, passagiersmodus, audio via root…) blijven buiten: stel die op elke telefoon met de hand in.</string>
+    <string name="setup_backup_export">Exporteren…</string>
+    <string name="setup_backup_import">Importeren…</string>
+    <string name="setup_backup_import_confirm_title">Instellingen vervangen?</string>
+    <string name="setup_backup_import_confirm_text">Je huidige instellingen worden overschreven door die uit het gekozen bestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="setup_backup_import_confirm_action">Vervangen</string>
+    <string name="setup_backup_import_done">Instellingen geïmporteerd.</string>
+    <string name="setup_backup_import_done_skipped">Instellingen geïmporteerd. Overgeslagen als onbekend, geblokkeerd of ongeldig: %1$d</string>
+    <string name="setup_backup_import_failed">Dit bestand kan niet worden geïmporteerd: het is geen AARE-instellingenbestand, of het is te groot.</string>
+    <string name="setup_backup_export_failed">Kan het instellingenbestand niet opslaan.</string>
     <string name="setup_nothing_to_open">Deze telefoon heeft geen app die dit kan openen</string>
     <string name="setup_wallpaper_failed">Kon deze foto niet als achtergrond gebruiken</string>
     <string name="msg_autoreply_default">Ik rijd nu, ik antwoord later.</string>

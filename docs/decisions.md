@@ -562,7 +562,6 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
-
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
@@ -573,6 +572,98 @@ on from *Location > Navigation with the phone locked*, which opens AARE's app se
 and later only allow "Allow all the time" there). Without it nothing changes, and the connection
 log says what to turn on when the location type was refused. Tested by a user on a real car with
 the same one-line manifest change (#329).
+## Launched apps while driving: a rule per app
+
+Each launched phone app has a driving rule, stored by package (`launch/DrivingRules.kt`): parked
+only (the default, for every app), audio only, or navigation. "Navigation" is offered only to
+navigation apps (the phone screen's `KNOWN_NAVIGATION`, or an app whose category is maps): it shows
+the app while driving and makes it the car's navigation app. There is no "allowed" rule for other
+apps: a passenger who wants one while driving uses passenger mode (ignore driving), which lifts
+every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
+the app's media session as well as hiding its screen (before, the card said "paused" while the
+sound went on), which is what tells it apart from "audio only". `StandalonePlaybackGuard` pauses
+it when driving starts and again each time it starts playing until driving ends (an autoplayed
+next track or video), whether or not its screen is open; not for a package that is also a hosted
+media app, whose sound is allowed while driving.
+
+## Phone navigation apps launched on the car screen
+
+(From #244.) A launched phone app (root/Shizuku launcher) counts as the car's navigation app when
+its driving rule is "navigation", which only navigation apps are offered (above). It then takes
+the rail's navigation slot, receives "navigate to" as an `ACTION_VIEW` of the same `geo:` URI hosted
+apps get (through the launcher's `view`, which only accepts `geo:`, as the helper starts activities
+with shell or root rights), and stays on screen while driving, like the phone screen's navigation
+apps. The dashboard's map card doesn't show its map: the launcher has one display per app, owned
+by the full-screen view, and moving it between the card and full screen would restart the app and
+its route at each switch. The card offers to open it, and shows its directions once it posts them.
+No Home/Work shortcuts: AARE has none for hosted navigation apps either.
+## Settings export and import
+
+Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each setting that may move
+between phones, with the `SharedPreferences` type Settings.kt reads it with. A setting added later
+stays out until someone adds it there on purpose.
+
+- An import file is not trusted. An entry with an unknown key, a blocked key or another type than
+  the allow-list's is skipped (and counted in the "imported" message), never written: an Int where
+  Settings calls `getBoolean` would throw `ClassCastException` on every launch, a crash loop the
+  user can only leave by clearing the app's data.
+- `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
+  head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
+  exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
+  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  be switched on by hand on the phone itself. A test checks the two lists never overlap.
+- A file carrying a blocked key (hand-edited, or from a version that exported one) leaves it
+  unchanged on import, in particular `hu_server_localhost`, `standalone_apps` and
+  `cert_auto_update`; the import message names those keys in one line ("not imported, for
+  safety"), apart from the unknown/invalid count, and `Settings.restore` refuses them a second time.
+- Device-specific state (instance id, update and certificate caches, the phone's Bluetooth MAC,
+  connection history, already-asked permissions) and anything secret (home-automation servers,
+  MQTT hosts and users, tokens, passwords) are simply not allowed. Trusted head-unit certificates
+  live in a separate preferences file (`PinnedHeadUnits`) and are never read here.
+- A "custom" wallpaper is left out on import: the photo itself isn't in the file.
+- Each value is tagged with its type rather than stored as a bare JSON value: the exported text has
+  no int/long/float distinction of its own, so an untagged `180` wouldn't say which
+  `SharedPreferences.Editor.put*` call it came from.
+- The file is read and parsed off the main thread, and refused past 1 MB (a real export is a few
+  KB). Failures show a fixed message and log only the exception's kind: a JSON error's message
+  quotes the file. After an import the settings screen is rebuilt (`key` on a generation counter),
+  so no card keeps showing, and on its next tap writing back, a value from before the import.
+
+## Split screen: which app can take the second pane
+
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+
+Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
+
+Dragging the divider moves an overlay handle only; the real pane weights (and so a hosted app's map surface size) update once, on release, per the project's rule against resizing a surface on every drag frame.
+
+`screenBack` (a single field for "the screen with its own back stack") became a map keyed by app id (`registerScreenBack`/`unregisterScreenBack`), since split screen can now put two such screens on screen together (e.g. the browser beside messaging) where before only one app was ever visible at a time.
+
+Scoped to the taskbar layout and screens ≥900 dp wide (the brief's number); the dock and classic layouts keep their current one-app behaviour.
+
+An app is never in both panes (`openInPanes`): opening one that is already beside the main app (from the rail, or the phone during a call) moves the focus to its pane instead of opening it a second time in the main pane; any other app takes the main pane and the one beside it stays.
+
+## Knob/D-pad reachability check (issue #320)
+
+Every car-screen control must be reachable, highlighted and usable by a rotary knob or D-pad, not
+just by touch: on knob-only head units (most Mazdas, older iDrive, Lexus/Mercedes touchpads) a
+control the knob can't reach is unusable. Two had slipped through before this: the dock's tap
+targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; approved by the owner.
+
+- **`Modifier.carClickable(shape, onClick)`** (`ui/car/CarFocus.kt`) pairs the existing
+  `carFocusHighlight` with the click itself, so the knob-friendly way is also the easy way. Car
+  screen clickables (`ui/car`, `media`, `host`) moved over to it.
+- **`CarScreenReachabilityCheckTest`** (`app/src/test/java/net/prototux/aare/ui/car/`) is a plain
+  text scan of those packages' sources for raw `.clickable`/`.toggleable`/`.selectable`/
+  `combinedClickable`, tap/drag gesture detectors, and Material `Slider`/`Switch`/`Checkbox`. No new
+  dependency: no Robolectric, no UI test framework. A justified exception goes in its `allowlist`
+  with a one-line reason (kept short; migrating to `carClickable` is preferred). The phone UI isn't
+  checked.
+- **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
+  (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
+  then those stay allowlisted.
 
 ## Reply by voice, opt-in
 

@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Dół</string>
     <string name="setup_toggle_dark_bar_title">Ciemny pasek</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachowaj ciemny pasek nawet z jasnymi kolorami</string>
+    <string name="setup_toggle_split_screen_title">Podzielony ekran</string>
+    <string name="setup_toggle_split_screen_subtitle">Przytrzymaj aplikację na pasku auta, aby otworzyć ją obok bieżącej (układ paska zadań, tylko szerokie ekrany)</string>
+    <string name="car_split_close">Zamknij podzielony ekran</string>
+    <string name="car_split_open_beside">Otwórz obok bieżącej aplikacji</string>
     <string name="setup_choice_text_size">Rozmiar tekstu</string>
     <string name="setup_choice_control_size">Rozmiar elementów sterujących</string>
     <string name="setup_choice_size_default">Domyślny</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Dokąd?</string>
     <string name="nav_dashboard_install_hint">Zainstaluj na telefonie aplikację nawigacyjną wspierającą Android Auto</string>
     <string name="nav_dashboard_choose_app">Wybierz aplikację mapową</string>
+    <string name="nav_dashboard_standalone_hint">%1$s to aplikacja telefonu: jej mapa otwiera się na pełnym ekranie.</string>
     <string name="nav_guidance_on_phone">%1$s, na telefonie</string>
     <string name="nav_next_step_then">Potem</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplikacje na ekranie samochodu (zaawansowane)</string>
-    <string name="standalone_section_warning">To nie są aplikacje Android Auto: AARE wyświetla ich zwykły ekran telefonu, tylko po zaparkowaniu, i wymaga roota lub Shizuku. Używasz na własne ryzyko.</string>
+    <string name="standalone_section_warning">To nie są aplikacje Android Auto: AARE wyświetla ich zwykły ekran telefonu, domyślnie tylko po zaparkowaniu, i wymaga roota lub Shizuku. Używasz na własne ryzyko.</string>
     <string name="standalone_toggle_title">Uruchamianie aplikacji telefonu na ekranie samochodu</string>
-    <string name="standalone_toggle_subtitle">Wybierz aplikacje poniżej. Widoczne tylko po zaparkowaniu.</string>
+    <string name="standalone_toggle_subtitle">Wybierz aplikacje poniżej, a dla każdej, co może robić podczas jazdy.</string>
     <string name="standalone_keep_awake_title">Tryb bez usypiania dla samodzielnych aplikacji</string>
     <string name="standalone_keep_awake_subtitle">Utrzymuje fizyczny ekran telefonu aktywnym, gdy aplikacja jest otwarta. Na dotkniętych telefonach z Androidem 17 wirtualne wyświetlacze zatrzymują się, gdy ekran telefonu jest wyłączony. Zużywa więcej baterii.</string>
     <string name="standalone_need_root">Wymaga roota lub Shizuku. Skonfiguruj jedno z nich na stronie Dźwięk w samochodzie, a potem wróć.</string>
     <string name="standalone_not_native">Nie jest aplikacją Android Auto · użycie po zaparkowaniu</string>
     <string name="standalone_starting">Uruchamianie…</string>
     <string name="standalone_paused_driving">Wstrzymane podczas jazdy.</string>
+    <string name="standalone_audio_only_driving">Ekran ukryty podczas jazdy. Dźwięk gra dalej.</string>
+    <string name="standalone_rule_title">Podczas jazdy</string>
+    <string name="standalone_rule_parked">Tylko po zaparkowaniu</string>
+    <string name="standalone_rule_audio">Tylko dźwięk</string>
+    <string name="standalone_rule_navigation">Nawigacja</string>
+    <string name="standalone_rule_navigation_note">Widoczna podczas jazdy i używana jako aplikacja nawigacyjna samochodu: zajmuje miejsce mapy i otwiera cele, o które poprosisz.</string>
     <string name="standalone_media_video_title">Wideo z aplikacji multimedialnych</string>
     <string name="standalone_media_video_subtitle">Dodaje „Pokaż wideo” do ekranu multimediów w aucie: aplikacja multimedialna otwiera się na ekranie auta, by pokazać swoje wideo. Tylko na postoju; podczas jazdy wraca okładka.</string>
     <!-- browser: the in-car WebView browser -->
@@ -582,6 +593,17 @@
     <string name="setup_log_save">Zapisz</string>
     <string name="setup_toggle_verbose_log_title">Szczegółowy dziennik protokołu</string>
     <string name="setup_toggle_verbose_log_subtitle">Zapisuj w tym dzienniku pełny zapis protokołu jednostki centralnej, by dołączyć go do zgłoszenia błędu. Zapisuje dużo danych; w innym wypadku pozostaw wyłączone.</string>
+    <string name="setup_section_backup">Kopia zapasowa ustawień</string>
+    <string name="setup_backup_hint">Zapisz ustawienia do pliku lub wczytaj je z powrotem. Zaufane jednostki centralne, certyfikaty, stan przypisany do telefonu oraz opcje, które otwierają AARE na sieć lub pomijają kontrolę bezpieczeństwa (serwer jednostki centralnej, tryb pasażera, dźwięk przez root…), są pomijane: ustaw je ręcznie na każdym telefonie.</string>
+    <string name="setup_backup_export">Eksportuj…</string>
+    <string name="setup_backup_import">Importuj…</string>
+    <string name="setup_backup_import_confirm_title">Zastąpić ustawienia?</string>
+    <string name="setup_backup_import_confirm_text">Bieżące ustawienia zostaną zastąpione ustawieniami z wybranego pliku. Tej operacji nie można cofnąć.</string>
+    <string name="setup_backup_import_confirm_action">Zastąp</string>
+    <string name="setup_backup_import_done">Zaimportowano ustawienia.</string>
+    <string name="setup_backup_import_done_skipped">Zaimportowano ustawienia. Pominięte jako nieznane, zablokowane lub nieprawidłowe: %1$d</string>
+    <string name="setup_backup_import_failed">Nie można zaimportować tego pliku: to nie jest plik ustawień AARE lub jest za duży.</string>
+    <string name="setup_backup_export_failed">Nie udało się zapisać pliku ustawień.</string>
     <string name="setup_nothing_to_open">Ten telefon nie ma aplikacji, która mogłaby to otworzyć</string>
     <string name="setup_wallpaper_failed">Nie udało się użyć tego zdjęcia jako tapety</string>
     <string name="msg_autoreply_default">Właśnie prowadzę, odpowiem później.</string>

@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Unten</string>
     <string name="setup_toggle_dark_bar_title">Dunkle Leiste</string>
     <string name="setup_toggle_dark_bar_subtitle">Leiste auch bei Tagfarben dunkel halten</string>
+    <string name="setup_toggle_split_screen_title">Geteilter Bildschirm</string>
+    <string name="setup_toggle_split_screen_subtitle">Eine App in der Leiste des Autos lange drücken, um sie neben der aktuellen zu öffnen (Taskleisten-Layout, nur breite Bildschirme)</string>
+    <string name="car_split_close">Geteilten Bildschirm schließen</string>
+    <string name="car_split_open_beside">Neben der aktuellen App öffnen</string>
     <string name="setup_choice_text_size">Textgröße</string>
     <string name="setup_choice_control_size">Größe der Bedienelemente</string>
     <string name="setup_choice_size_default">Standard</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Wohin?</string>
     <string name="nav_dashboard_install_hint">Installieren Sie eine Navigations-App, die Android Auto auf dem Telefon unterstützt</string>
     <string name="nav_dashboard_choose_app">Wählen Sie Ihre Karten-App</string>
+    <string name="nav_dashboard_standalone_hint">%1$s ist eine Telefon-App: Ihre Karte öffnet sich im Vollbild.</string>
     <string name="nav_guidance_on_phone">%1$s, auf dem Telefon</string>
     <string name="nav_next_step_then">Danach</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps auf dem Autobildschirm (erweitert)</string>
-    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
+    <string name="standalone_section_warning">Das sind keine Android Auto-Apps: AARE zeigt deren normalen Telefonbildschirm, standardmäßig nur während das Auto geparkt ist, und benötigt root oder Shizuku. Nutzung auf eigene Gefahr.</string>
     <string name="standalone_toggle_title">Telefon-Apps auf dem Autobildschirm starten</string>
-    <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus. Nur beim Parken angezeigt.</string>
+    <string name="standalone_toggle_subtitle">Wählen Sie unten die Apps aus und für jede, was sie während der Fahrt darf.</string>
     <string name="standalone_keep_awake_title">Kein-Schlaf-Modus für eigenständige Apps</string>
     <string name="standalone_keep_awake_subtitle">Hält den physischen Telefonbildschirm wach, solange eine App geöffnet ist. Auf betroffenen Android-17-Telefonen stoppen virtuelle Displays, wenn der Telefonbildschirm aus ist. Verbraucht mehr Akku.</string>
     <string name="standalone_need_root">Benötigt root oder Shizuku. Richten Sie eins davon auf der Seite Autoaudio ein und kommen Sie dann zurück.</string>
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
     <string name="standalone_paused_driving">Während der Fahrt pausiert.</string>
+    <string name="standalone_audio_only_driving">Bildschirm während der Fahrt ausgeblendet. Der Ton läuft weiter.</string>
+    <string name="standalone_rule_title">Während der Fahrt</string>
+    <string name="standalone_rule_parked">Nur beim Parken</string>
+    <string name="standalone_rule_audio">Nur Audio</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Wird während der Fahrt angezeigt und als Navigations-App des Autos verwendet: Sie belegt den Kartenplatz und öffnet die Ziele, nach denen Sie fragen.</string>
     <string name="standalone_media_video_title">Video aus Medien-Apps</string>
     <string name="standalone_media_video_subtitle">Fügt „Video anzeigen“ zum Medienbildschirm im Auto hinzu: Die Medien-App öffnet sich für ihr Video auf dem Autobildschirm. Nur beim Parken; beim Fahren kommt das Cover zurück.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Speichern</string>
     <string name="setup_toggle_verbose_log_title">Ausführliches Head-Unit-Protokoll</string>
     <string name="setup_toggle_verbose_log_subtitle">Zeichnet den vollständigen Head-Unit-Protokollverlauf in diesem Log auf, zum Anhängen an einen Fehlerbericht. Erzeugt viele Daten; sonst ausgeschaltet lassen.</string>
+    <string name="setup_section_backup">Einstellungen sichern</string>
+    <string name="setup_backup_hint">Einstellungen in eine Datei speichern oder daraus wiederherstellen. Vertraute Head Units, Zertifikate, telefonspezifische Daten und Optionen, die AARE fürs Netzwerk öffnen oder eine Sicherheitsprüfung aufheben (Head-Unit-Server, Beifahrermodus, Root-Audio…), bleiben außen vor: Diese auf jedem Telefon von Hand einstellen.</string>
+    <string name="setup_backup_export">Exportieren…</string>
+    <string name="setup_backup_import">Importieren…</string>
+    <string name="setup_backup_import_confirm_title">Einstellungen ersetzen?</string>
+    <string name="setup_backup_import_confirm_text">Ihre aktuellen Einstellungen werden durch die aus der gewählten Datei überschrieben. Das lässt sich nicht rückgängig machen.</string>
+    <string name="setup_backup_import_confirm_action">Ersetzen</string>
+    <string name="setup_backup_import_done">Einstellungen importiert.</string>
+    <string name="setup_backup_import_done_skipped">Einstellungen importiert. Ausgelassen (unbekannt, gesperrt oder ungültig): %1$d</string>
+    <string name="setup_backup_import_failed">Diese Datei lässt sich nicht importieren: Sie ist keine AARE-Einstellungsdatei oder zu groß.</string>
+    <string name="setup_backup_export_failed">Die Einstellungsdatei konnte nicht gespeichert werden.</string>
     <string name="setup_nothing_to_open">Dieses Telefon hat keine App, die dies öffnen kann</string>
     <string name="setup_wallpaper_failed">Dieses Foto konnte nicht als Hintergrundbild verwendet werden</string>
     <string name="msg_autoreply_default">Ich fahre gerade und antworte später.</string>

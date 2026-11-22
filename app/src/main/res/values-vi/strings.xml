@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Dưới</string>
     <string name="setup_toggle_dark_bar_title">Thanh tối</string>
     <string name="setup_toggle_dark_bar_subtitle">Giữ thanh màu tối ngay cả khi dùng màu ban ngày</string>
+    <string name="setup_toggle_split_screen_title">Chia đôi màn hình</string>
+    <string name="setup_toggle_split_screen_subtitle">Nhấn giữ một ứng dụng trên thanh của xe để mở bên cạnh ứng dụng hiện tại (bố cục thanh tác vụ, chỉ màn hình rộng)</string>
+    <string name="car_split_close">Đóng chia đôi màn hình</string>
+    <string name="car_split_open_beside">Mở bên cạnh ứng dụng hiện tại</string>
     <string name="setup_choice_text_size">Cỡ chữ</string>
     <string name="setup_choice_control_size">Cỡ nút điều khiển</string>
     <string name="setup_choice_size_default">Mặc định</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Đi đâu?</string>
     <string name="nav_dashboard_install_hint">Cài một ứng dụng điều hướng hỗ trợ Android Auto trên điện thoại</string>
     <string name="nav_dashboard_choose_app">Chọn ứng dụng bản đồ của bạn</string>
+    <string name="nav_dashboard_standalone_hint">%1$s là ứng dụng điện thoại: bản đồ của nó mở toàn màn hình.</string>
     <string name="nav_guidance_on_phone">%1$s, trên điện thoại</string>
     <string name="nav_next_step_then">Tiếp theo</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Ứng dụng trên màn hình xe (nâng cao)</string>
-    <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
+    <string name="standalone_section_warning">Đây không phải là ứng dụng Android Auto: AARE hiển thị màn hình điện thoại bình thường của chúng, mặc định chỉ khi đã đỗ xe, và cần root hoặc Shizuku. Sử dụng với rủi ro của riêng bạn.</string>
     <string name="standalone_toggle_title">Khởi chạy ứng dụng điện thoại trên màn hình xe</string>
-    <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới. Chỉ hiển thị khi đã đỗ xe.</string>
+    <string name="standalone_toggle_subtitle">Chọn ứng dụng bên dưới, và với mỗi ứng dụng, những gì nó được làm khi đang lái xe.</string>
     <string name="standalone_keep_awake_title">Chế độ không ngủ cho ứng dụng độc lập</string>
     <string name="standalone_keep_awake_subtitle">Giữ màn hình vật lý của điện thoại luôn sáng khi có ứng dụng đang mở. Trên các điện thoại Android 17 bị ảnh hưởng, màn hình ảo sẽ dừng khi màn hình điện thoại tắt. Tiêu tốn nhiều pin hơn.</string>
     <string name="standalone_need_root">Cần root hoặc Shizuku. Thiết lập một trong hai ở Âm thanh xe hơi, rồi quay lại.</string>
     <string name="standalone_not_native">Không phải ứng dụng Android Auto · dùng khi đã đỗ xe</string>
     <string name="standalone_starting">Đang khởi động…</string>
     <string name="standalone_paused_driving">Tạm dừng khi đang lái xe.</string>
+    <string name="standalone_audio_only_driving">Màn hình bị ẩn khi đang lái xe. Âm thanh vẫn tiếp tục.</string>
+    <string name="standalone_rule_title">Khi đang lái xe</string>
+    <string name="standalone_rule_parked">Chỉ khi đã đỗ xe</string>
+    <string name="standalone_rule_audio">Chỉ âm thanh</string>
+    <string name="standalone_rule_navigation">Dẫn đường</string>
+    <string name="standalone_rule_navigation_note">Hiển thị khi đang lái xe và được dùng làm ứng dụng dẫn đường của xe: nó chiếm vị trí bản đồ và mở các điểm đến bạn yêu cầu.</string>
     <string name="standalone_media_video_title">Video từ ứng dụng đa phương tiện</string>
     <string name="standalone_media_video_subtitle">Thêm \"Hiện video\" vào màn hình đa phương tiện của xe: ứng dụng đa phương tiện mở trên màn hình xe để phát video. Chỉ khi đỗ xe; ảnh bìa sẽ trở lại khi bạn lái.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Lưu</string>
     <string name="setup_toggle_verbose_log_title">Nhật ký giao thức chi tiết</string>
     <string name="setup_toggle_verbose_log_subtitle">Ghi lại toàn bộ dấu vết giao thức của màn hình xe vào nhật ký này, để đính kèm vào báo cáo lỗi. Ghi rất nhiều; nếu không cần thì nên để tắt.</string>
+    <string name="setup_section_backup">Sao lưu cài đặt</string>
+    <string name="setup_backup_hint">Lưu cài đặt vào tệp hoặc tải lại từ tệp. Đầu đĩa được tin tưởng, chứng chỉ, trạng thái riêng của điện thoại và các tùy chọn mở AARE ra mạng hoặc bỏ qua bước kiểm tra an toàn (máy chủ đầu đĩa, chế độ hành khách, âm thanh qua root…) không được đưa vào: hãy đặt chúng thủ công trên từng điện thoại.</string>
+    <string name="setup_backup_export">Xuất…</string>
+    <string name="setup_backup_import">Nhập…</string>
+    <string name="setup_backup_import_confirm_title">Thay thế cài đặt?</string>
+    <string name="setup_backup_import_confirm_text">Thao tác này ghi đè cài đặt hiện tại bằng cài đặt trong tệp đã chọn. Không thể hoàn tác.</string>
+    <string name="setup_backup_import_confirm_action">Thay thế</string>
+    <string name="setup_backup_import_done">Đã nhập cài đặt.</string>
+    <string name="setup_backup_import_done_skipped">Đã nhập cài đặt. Bỏ qua vì không xác định, bị chặn hoặc không hợp lệ: %1$d</string>
+    <string name="setup_backup_import_failed">Không thể nhập tệp này: đây không phải tệp cài đặt AARE hoặc tệp quá lớn.</string>
+    <string name="setup_backup_export_failed">Không thể lưu tệp cài đặt.</string>
     <string name="setup_nothing_to_open">Điện thoại này không có ứng dụng nào để mở nội dung này</string>
     <string name="setup_wallpaper_failed">Không thể dùng ảnh này làm hình nền</string>
     <string name="msg_autoreply_default">Tôi đang lái xe, tôi sẽ trả lời sau.</string>

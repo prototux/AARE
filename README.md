@@ -736,6 +736,10 @@ connection (`adb logcat | grep -i aare`).
 
 Before sending a pull request, run `./build.sh :aap:test` and build the app.
 
+Every car-screen control must be reachable, highlighted and usable by a knob or D-pad, not just by
+touch (`Modifier.carClickable` in `ui/car/CarFocus.kt`); a gesture (drag, swipe) needs a key path
+too, or stays touch-only with a reason in `CarScreenReachabilityCheckTest`'s allowlist.
+
 ## Thanks
 
 To [@dustfeather](https://github.com/dustfeather), for a security review of AARE and the fixes

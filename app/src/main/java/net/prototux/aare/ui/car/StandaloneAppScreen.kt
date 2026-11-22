@@ -13,9 +13,11 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +39,8 @@ import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.media.Placeholder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -44,8 +48,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * [TextureView] gives its surface to the privileged [AppLauncher], which puts a virtual display
  * there, launches [packageName] on it, and receives the car's touches we forward.
  *
- * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving. The
- * privileged core is device-tested; here it just wires the surface, touches and lifecycle.
+ * Not an Android Auto app, so — like the phone-screen mirror — it is paused while driving unless
+ * its driving rule says otherwise: the caller decides, through [driving] (false for a navigation
+ * app) and [audioOnly]. The privileged core is device-tested; here it just wires the surface,
+ * touches, places to open and lifecycle.
  */
 @Composable
 internal fun StandaloneAppScreen(
@@ -53,12 +59,14 @@ internal fun StandaloneAppScreen(
     driving: Boolean,
     packageName: String,
     modifier: Modifier,
+    /** While [driving], the app keeps playing under the card ("audio only"), rather than being paused. */
+    audioOnly: Boolean = false,
     /** Handles the car's Back instead of the launched app (true if handled), e.g. to close a media app's video. */
     onBack: (() -> Boolean)? = null,
     /**
      * After a drive, hand the app (still running on its display) the new surface instead of
      * relaunching it: for a media app's video, where a relaunch would end playback. Other launched
-     * apps keep the relaunch they always had on parking again.
+     * apps keep the relaunch they always had on parking again ("audio only" ones resume too, see below).
      */
     resumeAfterDrive: Boolean = false,
 ) {
@@ -77,11 +85,22 @@ internal fun StandaloneAppScreen(
                 launcher.connected
             }
         }
-        runtime.screenBack = back
+        val id = CarRuntime.standaloneId(packageName)
+        runtime.registerScreenBack(id, back)
         onDispose {
-            if (runtime.screenBack === back) runtime.screenBack = null
+            runtime.unregisterScreenBack(id, back)
+            // A place that never made it (no launcher) mustn't come back on the next, unrelated open.
+            runtime.standaloneViews.remove(packageName)
             launcher.release()
         }
+    }
+
+    // A destination for a navigation app ("navigate to"), opened on its display once that is up.
+    val pendingView = runtime.standaloneViews[packageName]
+    LaunchedEffect(started, pendingView) {
+        if (!started || pendingView == null) return@LaunchedEffect
+        runtime.standaloneViews.remove(packageName)
+        withContext(Dispatchers.IO) { launcher.view(pendingView, packageName) }
     }
 
     Box(modifier.background(Color.Black)) {
@@ -90,8 +109,9 @@ internal fun StandaloneAppScreen(
                 start = { surface, w, h -> launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
                 onStarted = { started = it },
                 // Back from a drive: the app kept running on its display, so it gets the new
-                // surface rather than a restart (start() relaunches it, which would end a video).
-                resumeInstead = { started && resumeAfterDrive })
+                // surface rather than a restart (start() relaunches it, which would end a video, or
+                // the audio an "audio only" app kept playing through the drive).
+                resumeInstead = { started && (resumeAfterDrive || audioOnly) })
             // A quiet reminder that this isn't an Android Auto app.
             Text(
                 stringResource(R.string.standalone_not_native),
@@ -102,7 +122,8 @@ internal fun StandaloneAppScreen(
             )
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
         } else {
-            Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
+            if (audioOnly) Placeholder(stringResource(R.string.standalone_audio_only_driving), loading = false, icon = Icons.Rounded.Headphones)
+            else Placeholder(stringResource(R.string.standalone_paused_driving), loading = false, icon = Icons.Rounded.PauseCircle)
         }
     }
 }

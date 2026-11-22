@@ -1,6 +1,5 @@
 package net.prototux.aare.ui.car
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,9 +42,12 @@ internal fun DashboardCardsEditor(order: List<DashCard>, rowHeight: Dp, onChange
             val canToggle = !(shown && order.size == 1)
             Row(Modifier.fillMaxWidth().heightIn(min = rowHeight), verticalAlignment = Alignment.CenterVertically) {
                 Row(
-                    Modifier.weight(1f).heightIn(min = rowHeight).clickable(enabled = canToggle) { onChange(order.withCard(card, !shown)) },
+                    Modifier.weight(1f).heightIn(min = rowHeight)
+                        .carClickable(RectangleShape, enabled = canToggle) { onChange(order.withCard(card, !shown)) },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // Decorative only (onCheckedChange = null): the row above carries the click and
+                    // the knob focus highlight, see the allowlist in CarScreenReachabilityCheckTest.
                     Checkbox(checked = shown, onCheckedChange = null, enabled = canToggle)
                     Spacer(Modifier.width(12.dp))
                     Text(stringResource(card.label), style = MaterialTheme.typography.bodyLarge)

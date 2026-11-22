@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Dole</string>
     <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_toggle_split_screen_title">Rozdělená obrazovka</string>
+    <string name="setup_toggle_split_screen_subtitle">Dlouhým stisknutím aplikace na liště auta ji otevřete vedle aktuální (rozvržení Hlavní panel, jen široké obrazovky)</string>
+    <string name="car_split_close">Zavřít rozdělenou obrazovku</string>
+    <string name="car_split_open_beside">Otevřít vedle aktuální aplikace</string>
     <string name="setup_choice_text_size">Velikost textu</string>
     <string name="setup_choice_control_size">Velikost ovládacích prvků</string>
     <string name="setup_choice_size_default">Výchozí</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Kam?</string>
     <string name="nav_dashboard_install_hint">Nainstalujte do telefonu navigační aplikaci podporující Android Auto</string>
     <string name="nav_dashboard_choose_app">Vyberte si mapovou aplikaci</string>
+    <string name="nav_dashboard_standalone_hint">%1$s je aplikace telefonu: její mapa se otevře na celou obrazovku.</string>
     <string name="nav_guidance_on_phone">%1$s, na telefonu</string>
     <string name="nav_next_step_then">Pak</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplikace na obrazovce auta (pokročilé)</string>
-    <string name="standalone_section_warning">Toto nejsou aplikace Android Auto: AARE zobrazuje jejich běžnou obrazovku telefonu, jen při zaparkování, a vyžaduje root nebo Shizuku. Používáte na vlastní riziko.</string>
+    <string name="standalone_section_warning">Toto nejsou aplikace Android Auto: AARE zobrazuje jejich běžnou obrazovku telefonu, ve výchozím nastavení jen při zaparkování, a vyžaduje root nebo Shizuku. Používáte na vlastní riziko.</string>
     <string name="standalone_toggle_title">Spouštět aplikace telefonu na obrazovce auta</string>
-    <string name="standalone_toggle_subtitle">Vyberte aplikace níže. Zobrazeno jen při zaparkování.</string>
+    <string name="standalone_toggle_subtitle">Vyberte aplikace níže a u každé, co smí dělat během jízdy.</string>
     <string name="standalone_keep_awake_title">Režim bez spánku pro samostatné aplikace</string>
     <string name="standalone_keep_awake_subtitle">Udržuje fyzickou obrazovku telefonu probuzenou, když je aplikace otevřená. Na postižených telefonech s Androidem 17 se virtuální obrazovky zastaví, když je obrazovka telefonu vypnutá. Spotřebovává více baterie.</string>
     <string name="standalone_need_root">Vyžaduje root nebo Shizuku. Nastavte jedno z nich na stránce Zvuk v autě a pak se vraťte.</string>
     <string name="standalone_not_native">Není aplikací Android Auto · použití při zaparkování</string>
     <string name="standalone_starting">Spouští se…</string>
     <string name="standalone_paused_driving">Pozastaveno během jízdy.</string>
+    <string name="standalone_audio_only_driving">Obrazovka je během jízdy skrytá. Zvuk hraje dál.</string>
+    <string name="standalone_rule_title">Během jízdy</string>
+    <string name="standalone_rule_parked">Jen při zaparkování</string>
+    <string name="standalone_rule_audio">Jen zvuk</string>
+    <string name="standalone_rule_navigation">Navigace</string>
+    <string name="standalone_rule_navigation_note">Zobrazeno během jízdy a použito jako navigační aplikace auta: zabere místo mapy a otevírá cíle, o které požádáte.</string>
     <string name="standalone_media_video_title">Video z aplikací médií</string>
     <string name="standalone_media_video_subtitle">Přidá „Zobrazit video“ na obrazovku médií v autě: aplikace médií se otevře na obrazovce auta kvůli svému videu. Jen při parkování; při jízdě se vrátí obal alba.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Uložit</string>
     <string name="setup_toggle_verbose_log_title">Podrobný protokol komunikace</string>
     <string name="setup_toggle_verbose_log_subtitle">Zaznamenat do tohoto protokolu úplný průběh komunikace s hlavní jednotkou, pro přiložení k hlášení chyby. Zaznamenává se hodně; jinak ho nechte vypnutý.</string>
+    <string name="setup_section_backup">Záloha nastavení</string>
+    <string name="setup_backup_hint">Uložte nastavení do souboru nebo je z něj načtěte zpět. Důvěryhodné hlavní jednotky, certifikáty, stav vázaný na telefon a volby, které otevírají AARE do sítě nebo obcházejí bezpečnostní kontrolu (server hlavní jednotky, režim spolujezdce, zvuk přes root…), se nepřenášejí: nastavte je ručně na každém telefonu.</string>
+    <string name="setup_backup_export">Exportovat…</string>
+    <string name="setup_backup_import">Importovat…</string>
+    <string name="setup_backup_import_confirm_title">Nahradit nastavení?</string>
+    <string name="setup_backup_import_confirm_text">Tímto přepíšete současné nastavení nastavením z vybraného souboru. Nelze to vrátit zpět.</string>
+    <string name="setup_backup_import_confirm_action">Nahradit</string>
+    <string name="setup_backup_import_done">Nastavení importováno.</string>
+    <string name="setup_backup_import_done_skipped">Nastavení importováno. Vynecháno (neznámé, blokované nebo neplatné): %1$d</string>
+    <string name="setup_backup_import_failed">Tento soubor nelze importovat: není to soubor nastavení AARE, nebo je příliš velký.</string>
+    <string name="setup_backup_export_failed">Soubor s nastavením se nepodařilo uložit.</string>
     <string name="setup_nothing_to_open">Tento telefon nemá aplikaci, která by to mohla otevřít</string>
     <string name="setup_wallpaper_failed">Tuto fotku se nepodařilo použít jako tapetu</string>
     <string name="msg_autoreply_default">Právě řídím, odpovím později.</string>

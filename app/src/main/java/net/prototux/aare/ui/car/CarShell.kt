@@ -7,8 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -74,7 +75,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -82,6 +85,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -179,12 +183,85 @@ internal fun ContentArea(
             CarScreen.Launcher -> Launcher(state, actions, Modifier.fillMaxSize())
             is CarScreen.App -> {
                 val app = state.app(screen.appId)
+                val secondary = app?.let { state.app(state.secondaryAppId) }
                 when {
+                    app != null && secondary != null -> SplitPane(app, secondary, state, actions, appContent, Modifier.fillMaxSize())
                     app != null -> appContent(app, Modifier.fillMaxSize())
                     launcherHome -> Launcher(state, actions, Modifier.fillMaxSize())
                     else -> Dashboard(state, actions, navMap, Modifier.fillMaxSize().padding(gutter))
                 }
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- split screen
+
+/**
+ * [primary] and [secondary] side by side with a draggable divider. Only a built-in or non-hosted
+ * app ([canOpenBeside]) ever reaches here as [secondary]: a Car App Library connection owns one
+ * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
+ * so a navigation or templated app stays full screen only.
+ *
+ * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
+ * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
+ * every drag frame, which would otherwise tear it down and rebuild it dozens of times a second).
+ */
+@Composable
+private fun SplitPane(
+    primary: CarAppEntry,
+    secondary: CarAppEntry,
+    state: CarUiState,
+    actions: CarActions,
+    appContent: @Composable (CarAppEntry, Modifier) -> Unit,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(modifier) {
+        // Too narrow for two usable panes (a rotation, a smaller mirrored display): show the
+        // primary alone. The secondary stays remembered and returns once there's room again.
+        if (!splitScreenFits(maxWidth)) { appContent(primary, Modifier.fillMaxSize()); return@BoxWithConstraints }
+        val density = LocalDensity.current
+        val totalWidth = maxWidth
+        val restRatio = state.splitRatio
+        // Where the finger has dragged the divider to (0..1), unclamped: the handle drawn on screen
+        // stops at the minimum pane width, but releasing it near an edge must still close that pane
+        // on any screen width, so the release is judged on the finger, not the clamped handle.
+        var dragRatio by remember(totalWidth) { mutableStateOf<Float?>(null) }
+        val handleRatio = dragRatio?.let { clampDragRatio(totalWidth, it) } ?: restRatio
+        Row(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.weight(restRatio).fillMaxHeight().focusGroup()
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) },
+            ) { appContent(primary, Modifier.fillMaxSize()) }
+            Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
+            Box(
+                Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) },
+            ) {
+                appContent(secondary, Modifier.fillMaxSize())
+                Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                    RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
+                }
+            }
+        }
+        Box(
+            Modifier
+                .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
+                .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                .pointerInput(totalWidth) {
+                    detectDragGestures(
+                        onDragStart = { dragRatio = restRatio },
+                        onDrag = { _, drag ->
+                            val usablePx = with(density) { (totalWidth - SPLIT_DIVIDER_WIDTH).toPx() }
+                            dragRatio = ((dragRatio ?: restRatio) + drag.x / usablePx).coerceIn(0f, 1f)
+                        },
+                        onDragEnd = { dragRatio?.let(actions::commitSplitRatio); dragRatio = null },
+                        onDragCancel = { dragRatio = null },
+                    )
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.width(3.dp).fillMaxHeight(0.4f).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.outlineVariant))
         }
     }
 }
@@ -233,7 +310,15 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val media = state.app(state.activeMediaAppId)
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val settings = state.apps.firstOrNull { it.kind == CarAppKind.SETTINGS }
-    fun on(app: CarAppEntry?) = app != null && state.screen == CarScreen.App(app.id)
+    fun on(app: CarAppEntry?) = app != null && (state.screen == CarScreen.App(app.id) || state.secondaryAppId == app.id)
+    // Long-press a rail app to put it in the second pane beside whatever is already open, when
+    // split screen is on and the app is one [canOpenBeside] allows there. The rail (not the
+    // launcher) because it's the one place reachable without leaving the app that's already open.
+    fun beside(app: CarAppEntry?): (() -> Unit)? {
+        val primaryId = (state.screen as? CarScreen.App)?.appId
+        if (app == null || primaryId == null || app.id == primaryId || !state.splitScreenSetting || !canOpenBeside(app.kind)) return null
+        return { actions.openBeside(app) }
+    }
     // Like Android Auto's taskbar: the apps used last, besides the fixed ones (one on a side rail, for height).
     val fixed = setOfNotNull(nav?.id, media?.id, phone?.id, settings?.id)
     val recent = state.recentAppIds.filter { it !in fixed }.mapNotNull(state::app)
@@ -257,13 +342,13 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val selfPackage = LocalContext.current.packageName
     val chosen = resolveRailApps(state.railApps, state.apps, selfPackage)
     val apps: @Composable (Int, Boolean, Boolean) -> Unit = if (chosen.isNotEmpty()) { _, _, _ ->
-        chosen.forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize) { actions.openApp(app) } }
+        chosen.forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize, onLongClick = beside(app)) { actions.openApp(app) } }
     } else { recentSlots, withSettings, withPhone ->
-        RailApp(nav, Icons.Rounded.Map, on(nav), touch, iconSize, logoSize) { nav?.let(actions::openApp) ?: actions.openLauncher() }
-        RailApp(media, Icons.Rounded.MusicNote, on(media), touch, iconSize, logoSize) { media?.let(actions::openApp) ?: actions.openLauncher() }
-        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize) { actions.openApp(app) } }
-        phone?.takeIf { withPhone }?.let { RailApp(it, Icons.Rounded.Call, on(it), touch, iconSize, logoSize) { actions.openApp(it) } }
-        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it), touch, iconSize, logoSize) { actions.openApp(it) } }
+        RailApp(nav, Icons.Rounded.Map, on(nav), touch, iconSize, logoSize, onLongClick = beside(nav)) { nav?.let(actions::openApp) ?: actions.openLauncher() }
+        RailApp(media, Icons.Rounded.MusicNote, on(media), touch, iconSize, logoSize, onLongClick = beside(media)) { media?.let(actions::openApp) ?: actions.openLauncher() }
+        recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize, onLongClick = beside(app)) { actions.openApp(app) } }
+        phone?.takeIf { withPhone }?.let { RailApp(it, Icons.Rounded.Call, on(it), touch, iconSize, logoSize, onLongClick = beside(it)) { actions.openApp(it) } }
+        settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it), touch, iconSize, logoSize, onLongClick = beside(it)) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), false, touch, iconSize) { actions.openLauncher() }
@@ -372,7 +457,7 @@ private fun RailButton(
     val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
-        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(bg).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(bg).carClickable(MaterialTheme.shapes.medium, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(iconSize))
@@ -383,15 +468,18 @@ private fun RailButton(
 private fun RailApp(
     app: CarAppEntry?, fallback: ImageVector, selected: Boolean,
     size: Dp = LocalCarDimens.current.touchTarget, iconSize: Dp = LocalCarDimens.current.iconSize, logoSize: Dp = 48.dp,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     if (app?.icon == null) {
+        // No custom icon to show "open beside" on; a rare fallback (an app without one at all).
         RailButton(fallback, app?.label ?: "", selected, size, iconSize, onClick)
         return
     }
     val ring = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent
     Box(
-        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(ring).carFocusHighlight(MaterialTheme.shapes.medium).clickable(onClick = onClick),
+        Modifier.size(size).clip(MaterialTheme.shapes.medium).background(ring).carClickable(MaterialTheme.shapes.medium,
+            onLongClick = onLongClick, onLongClickLabel = stringResource(R.string.car_split_open_beside), onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(app.icon.asImageBitmap(), app.label, Modifier.size(logoSize).clip(LocalCarTheme.current.appIcon), colorFilter = appIconFilter())
@@ -407,7 +495,7 @@ internal fun MicButton(
     val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     Box(
-        Modifier.size(size).clip(CircleShape).background(bg).carFocusHighlight(CircleShape).clickable(onClick = onClick),
+        Modifier.size(size).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
@@ -523,7 +611,7 @@ private fun Card(modifier: Modifier, onClick: (() -> Unit)? = null, content: @Co
             .clip(RoundedCornerShape(r))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .let { if (border > 0.dp) it.border(border, MaterialTheme.colorScheme.outline, RoundedCornerShape(r)) else it }
-            .let { if (onClick != null) it.carFocusHighlight(RoundedCornerShape(r)).clickable(onClick = onClick) else it },
+            .carClickable(RoundedCornerShape(r), onClick = onClick),
     ) { content() }
 }
 
@@ -534,10 +622,12 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
     Card(modifier) {
         if (guidance != null) {
             GuidanceCard(guidance)
+        } else if (nav != null && nav.kind == CarAppKind.STANDALONE) {
+            StandaloneNavCard(nav, actions)
         } else if (nav != null) {
             navMap(nav, Modifier.fillMaxSize())
         } else {
-            val navApps = state.apps.filter { it.kind == CarAppKind.NAVIGATION }
+            val navApps = state.apps.filter { it.isNavigation }
             Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
                 Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(16.dp))
@@ -554,6 +644,25 @@ private fun NavCard(state: CarUiState, actions: CarActions, navMap: @Composable 
                 }
             }
         }
+    }
+}
+
+/**
+ * A phone navigation app launched on the car screen has one virtual display, owned by its full-screen
+ * view: a second one on the dashboard would restart the app (and its route) on every switch. The
+ * card offers to open it instead; its directions show here once it posts them (see [GuidanceCard]).
+ */
+@Composable
+private fun StandaloneNavCard(nav: CarAppEntry, actions: CarActions) {
+    Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
+        Icon(Icons.Rounded.Map, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.nav_dashboard_where_to), style = MaterialTheme.typography.headlineSmall)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.nav_dashboard_standalone_hint, nav.label), style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(20.dp))
+        AppChip(nav) { actions.openApp(nav) }
     }
 }
 
@@ -588,7 +697,7 @@ private fun GuidanceCard(g: PhoneGuidance) {
 private fun AppChip(app: CarAppEntry, onClick: () -> Unit) {
     Row(
         Modifier.height(64.dp).clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.secondaryContainer)
-            .carFocusHighlight(MaterialTheme.shapes.extraLarge).clickable(onClick = onClick).padding(start = 10.dp, end = 20.dp),
+            .carClickable(MaterialTheme.shapes.extraLarge, onClick = onClick).padding(start = 10.dp, end = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(app, 44)
@@ -704,7 +813,7 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
     val d = LocalCarDimens.current
     val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(d.touchTarget).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = fg, modifier = Modifier.size(d.iconSize))
     }
 }
@@ -758,7 +867,7 @@ internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier
             // Already in the user's order (CarRuntime.applyApps).
             items(apps, key = { it.id }) { app ->
                 Column(
-                    Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                    Modifier.clip(MaterialTheme.shapes.medium).carClickable(MaterialTheme.shapes.medium) { actions.openApp(app) }.padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     AppIcon(app, 80)
@@ -797,7 +906,7 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
         }
         notice.actions.forEach { (label, run) ->
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { run(); actions.dismissNotice(notice) }.padding(16.dp))
+                modifier = Modifier.clip(MaterialTheme.shapes.medium).carClickable(MaterialTheme.shapes.medium) { run(); actions.dismissNotice(notice) }.padding(16.dp))
         }
         RoundIcon(Icons.Rounded.Close, stringResource(R.string.common_dismiss), filled = false) { actions.dismissNotice(notice) }
     }

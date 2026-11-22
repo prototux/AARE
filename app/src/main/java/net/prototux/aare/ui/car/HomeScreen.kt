@@ -65,7 +65,7 @@ internal fun HomeCard(home: HomeUi, actions: CarActions, compact: Boolean, onOpe
         val shown = buttons.take(if (compact) (if (maxWidth >= 480.dp) 4 else 2) else rows * perRow)
         Column(Modifier.fillMaxSize().padding(if (compact) 12.dp else 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (showHeader) {
-                Row(Modifier.clip(MaterialTheme.shapes.medium).clickable(onClick = onOpen).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.clip(MaterialTheme.shapes.medium).carClickable(MaterialTheme.shapes.medium, onClick = onOpen).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Home, null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(10.dp))
                     Text(stringResource(R.string.home_app_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -138,7 +138,7 @@ private fun HomeActionButton(b: HomeButton, modifier: Modifier, onClick: () -> U
     Box(
         modifier.heightIn(min = LocalCarDimens.current.touchTarget).clip(shape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .carFocusHighlight(shape).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
+            .carClickable(shape, onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (b.running) CircularProgressIndicator(Modifier.size(28.dp), color = MaterialTheme.colorScheme.onPrimaryContainer, strokeWidth = 3.dp)
@@ -176,12 +176,12 @@ private fun ConfirmOverlay(confirming: androidx.compose.runtime.MutableState<Hom
                 val shape = MaterialTheme.shapes.large
                 Box(
                     Modifier.heightIn(min = target).width(target * 2).clip(shape).background(MaterialTheme.colorScheme.surfaceContainer)
-                        .carFocusHighlight(shape).clickable { confirming.value = null },
+                        .carClickable(shape) { confirming.value = null },
                     contentAlignment = Alignment.Center,
                 ) { Text(stringResource(R.string.common_cancel), style = MaterialTheme.typography.titleMedium) }
                 Box(
                     Modifier.heightIn(min = target).width(target * 2).clip(shape).background(MaterialTheme.colorScheme.primary)
-                        .carFocusHighlight(shape).clickable {
+                        .carClickable(shape) {
                             // One send per confirmation, however fast the second tap.
                             if (!done) { done = true; actions.runHomeAction(button.id) }
                             confirming.value = null

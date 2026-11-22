@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">In basso</string>
     <string name="setup_toggle_dark_bar_title">Barra scura</string>
     <string name="setup_toggle_dark_bar_subtitle">Mantieni la barra scura anche con i colori diurni</string>
+    <string name="setup_toggle_split_screen_title">Schermo diviso</string>
+    <string name="setup_toggle_split_screen_subtitle">Tieni premuta un\'app nella barra dell\'auto per aprirla accanto a quella attuale (layout barra delle applicazioni, solo schermi larghi)</string>
+    <string name="car_split_close">Chiudi schermo diviso</string>
+    <string name="car_split_open_beside">Apri accanto all\'app attuale</string>
     <string name="setup_choice_text_size">Dimensione del testo</string>
     <string name="setup_choice_control_size">Dimensione dei comandi</string>
     <string name="setup_choice_size_default">Predefinita</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Dove vuoi andare?</string>
     <string name="nav_dashboard_install_hint">Installa sul telefono un\'app di navigazione che supporti Android Auto</string>
     <string name="nav_dashboard_choose_app">Scegli la tua app di mappe</string>
+    <string name="nav_dashboard_standalone_hint">%1$s è un\'app del telefono: la sua mappa si apre a schermo intero.</string>
     <string name="nav_guidance_on_phone">%1$s, sul telefono</string>
     <string name="nav_next_step_then">Poi</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">App sullo schermo dell\'auto (avanzate)</string>
-    <string name="standalone_section_warning">Queste non sono app Android Auto: AARE mostra la loro normale schermata del telefono, solo da parcheggiati, e richiede root o Shizuku. Usale a tuo rischio.</string>
+    <string name="standalone_section_warning">Queste non sono app Android Auto: AARE mostra la loro normale schermata del telefono, per impostazione predefinita solo da parcheggiati, e richiede root o Shizuku. Usale a tuo rischio.</string>
     <string name="standalone_toggle_title">Avvia app del telefono sullo schermo dell\'auto</string>
-    <string name="standalone_toggle_subtitle">Scegli le app qui sotto. Mostrate solo da parcheggiati.</string>
+    <string name="standalone_toggle_subtitle">Scegli le app qui sotto e, per ciascuna, cosa può fare durante la guida.</string>
     <string name="standalone_keep_awake_title">Modalità no-sleep per le app standalone</string>
     <string name="standalone_keep_awake_subtitle">Mantiene attivo lo schermo fisico del telefono mentre un\'app è aperta. Sui telefoni Android 17 interessati, gli schermi virtuali si interrompono quando lo schermo del telefono è spento. Consuma più batteria.</string>
     <string name="standalone_need_root">Richiede root o Shizuku. Configuralo in Audio auto, poi torna qui.</string>
     <string name="standalone_not_native">Non è un\'app Android Auto · uso da parcheggiati</string>
     <string name="standalone_starting">Avvio…</string>
     <string name="standalone_paused_driving">In pausa durante la guida.</string>
+    <string name="standalone_audio_only_driving">Schermo nascosto durante la guida. L\'audio continua.</string>
+    <string name="standalone_rule_title">Durante la guida</string>
+    <string name="standalone_rule_parked">Solo da parcheggiati</string>
+    <string name="standalone_rule_audio">Solo audio</string>
+    <string name="standalone_rule_navigation">Navigazione</string>
+    <string name="standalone_rule_navigation_note">Mostrata durante la guida e usata come app di navigazione dell\'auto: prende il posto della mappa e apre le destinazioni che chiedi.</string>
     <string name="standalone_media_video_title">Video dalle app multimediali</string>
     <string name="standalone_media_video_subtitle">Aggiunge \"Mostra video\" alla schermata multimediale dell\'auto: l\'app multimediale si apre sullo schermo dell\'auto per il suo video. Solo da fermi; la copertina torna quando guidi.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Salva</string>
     <string name="setup_toggle_verbose_log_title">Log dettagliato del protocollo</string>
     <string name="setup_toggle_verbose_log_subtitle">Registra in questo log la traccia completa del protocollo dell\'head unit, da allegare a una segnalazione di bug. Registra molti dati; lascialo disattivato altrimenti.</string>
+    <string name="setup_section_backup">Backup delle impostazioni</string>
+    <string name="setup_backup_hint">Salva le impostazioni in un file o ricaricane uno. Head unit autorizzate, certificati, stato proprio del telefono e opzioni che aprono AARE alla rete o saltano un controllo di sicurezza (server head unit, modalità passeggero, audio root…) restano fuori: impostali a mano su ogni telefono.</string>
+    <string name="setup_backup_export">Esporta…</string>
+    <string name="setup_backup_import">Importa…</string>
+    <string name="setup_backup_import_confirm_title">Sostituire le impostazioni?</string>
+    <string name="setup_backup_import_confirm_text">Le impostazioni attuali verranno sovrascritte con quelle del file scelto. L\'operazione non si può annullare.</string>
+    <string name="setup_backup_import_confirm_action">Sostituisci</string>
+    <string name="setup_backup_import_done">Impostazioni importate.</string>
+    <string name="setup_backup_import_done_skipped">Impostazioni importate. Escluse perché sconosciute, bloccate o non valide: %1$d</string>
+    <string name="setup_backup_import_failed">Impossibile importare questo file: non è un file di impostazioni di AARE, oppure è troppo grande.</string>
+    <string name="setup_backup_export_failed">Impossibile salvare il file delle impostazioni.</string>
     <string name="setup_nothing_to_open">Questo telefono non ha un\'app in grado di aprirlo</string>
     <string name="setup_wallpaper_failed">Impossibile usare questa foto come sfondo</string>
     <string name="msg_autoreply_default">Sto guidando, risponderò più tardi.</string>

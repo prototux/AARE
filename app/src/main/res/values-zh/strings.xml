@@ -96,6 +96,10 @@
     <string name="setup_choice_bottom">底部</string>
     <string name="setup_toggle_dark_bar_title">深色导航条</string>
     <string name="setup_toggle_dark_bar_subtitle">即使使用日间配色，导航条仍保持深色</string>
+    <string name="setup_toggle_split_screen_title">分屏</string>
+    <string name="setup_toggle_split_screen_subtitle">在车机导航条上长按应用，即可在当前应用旁打开（任务栏布局，仅限宽屏）</string>
+    <string name="car_split_close">关闭分屏</string>
+    <string name="car_split_open_beside">在当前应用旁打开</string>
     <string name="setup_choice_text_size">文字大小</string>
     <string name="setup_choice_control_size">控件大小</string>
     <string name="setup_choice_size_default">默认</string>
@@ -348,6 +352,7 @@
     <string name="nav_dashboard_where_to">去哪儿？</string>
     <string name="nav_dashboard_install_hint">在手机上安装一个支持 Android Auto 的导航应用</string>
     <string name="nav_dashboard_choose_app">选择你的地图应用</string>
+    <string name="nav_dashboard_standalone_hint">%1$s 是手机应用：其地图以全屏打开。</string>
     <string name="nav_guidance_on_phone">%1$s，在手机上</string>
     <string name="nav_next_step_then">然后</string>
 
@@ -425,15 +430,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">车载屏幕上的应用（高级）</string>
-    <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
+    <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，默认仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
     <string name="standalone_toggle_title">在车载屏幕上启动手机应用</string>
-    <string name="standalone_toggle_subtitle">在下方选择应用。仅在停车时显示。</string>
+    <string name="standalone_toggle_subtitle">在下方选择应用，并为每个应用选择行驶时允许做什么。</string>
     <string name="standalone_keep_awake_title">独立应用的常亮模式</string>
     <string name="standalone_keep_awake_subtitle">应用打开时，使手机的物理屏幕保持常亮。在受影响的 Android 17 手机上，手机屏幕关闭时虚拟显示会停止。会消耗更多电量。</string>
     <string name="standalone_need_root">需要 root 或 Shizuku。请在车载音频设置中配置其中之一，然后返回。</string>
     <string name="standalone_not_native">不是 Android Auto 应用 · 仅限停车时使用</string>
     <string name="standalone_starting">正在启动…</string>
     <string name="standalone_paused_driving">行驶时已暂停。</string>
+    <string name="standalone_audio_only_driving">行驶时隐藏屏幕，声音继续播放。</string>
+    <string name="standalone_rule_title">行驶时</string>
+    <string name="standalone_rule_parked">仅限停车时</string>
+    <string name="standalone_rule_audio">仅音频</string>
+    <string name="standalone_rule_navigation">导航</string>
+    <string name="standalone_rule_navigation_note">行驶时显示，并用作车辆的导航应用：占用地图位置，并打开你请求的目的地。</string>
     <string name="standalone_media_video_title">媒体应用的视频</string>
     <string name="standalone_media_video_subtitle">在车机媒体界面添加“显示视频”：媒体应用会在车机屏幕上打开以播放视频。仅限停车时；行驶时恢复显示封面。</string>
     <!-- browser: the in-car WebView browser -->
@@ -565,6 +576,17 @@
     <string name="setup_log_save">保存</string>
     <string name="setup_toggle_verbose_log_title">详细协议日志</string>
     <string name="setup_toggle_verbose_log_subtitle">在此日志中记录完整的车机协议跟踪，用于附加到错误报告。会产生大量日志；平时请保持关闭。</string>
+    <string name="setup_section_backup">设置备份</string>
+    <string name="setup_backup_hint">将设置保存到文件，或从文件载入。已信任的车机、证书、本机专属状态，以及会让 AARE 对网络开放或跳过安全检查的选项（车机服务器、乘客模式、root 音频…）不包含在内：请在每部手机上手动设置。</string>
+    <string name="setup_backup_export">导出…</string>
+    <string name="setup_backup_import">导入…</string>
+    <string name="setup_backup_import_confirm_title">替换你的设置？</string>
+    <string name="setup_backup_import_confirm_text">这会用所选文件中的设置覆盖当前设置，且无法撤销。</string>
+    <string name="setup_backup_import_confirm_action">替换</string>
+    <string name="setup_backup_import_done">设置已导入。</string>
+    <string name="setup_backup_import_done_skipped">设置已导入。因未知、被阻止或无效而跳过：%1$d</string>
+    <string name="setup_backup_import_failed">无法导入此文件：它不是 AARE 设置文件，或文件过大。</string>
+    <string name="setup_backup_export_failed">无法保存设置文件。</string>
     <string name="setup_nothing_to_open">此手机没有可打开此内容的应用</string>
     <string name="setup_wallpaper_failed">无法将这张照片设为壁纸</string>
     <string name="msg_autoreply_default">我正在开车，稍后回复。</string>

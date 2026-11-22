@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Fundo</string>
     <string name="setup_toggle_dark_bar_title">Barra escura</string>
     <string name="setup_toggle_dark_bar_subtitle">Manter a barra escura mesmo com as cores de dia</string>
+    <string name="setup_toggle_split_screen_title">Ecrã dividido</string>
+    <string name="setup_toggle_split_screen_subtitle">Toque longo numa app na barra do carro para a abrir ao lado da atual (esquema de barra de tarefas, só ecrãs largos)</string>
+    <string name="car_split_close">Fechar ecrã dividido</string>
+    <string name="car_split_open_beside">Abrir ao lado da app atual</string>
     <string name="setup_choice_text_size">Tamanho do texto</string>
     <string name="setup_choice_control_size">Tamanho dos controlos</string>
     <string name="setup_choice_size_default">Predefinido</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Para onde?</string>
     <string name="nav_dashboard_install_hint">Instale no telemóvel uma aplicação de navegação compatível com o Android Auto</string>
     <string name="nav_dashboard_choose_app">Escolha a sua aplicação de mapas</string>
+    <string name="nav_dashboard_standalone_hint">%1$s é uma app do telemóvel: o seu mapa abre em ecrã inteiro.</string>
     <string name="nav_guidance_on_phone">%1$s, no telemóvel</string>
     <string name="nav_next_step_then">Depois</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps no ecrã do carro (avançado)</string>
-    <string name="standalone_section_warning">Estas não são apps do Android Auto: a AARE mostra o ecrã normal do telemóvel, apenas quando estacionado, e precisa de root ou Shizuku. Utilize por sua conta e risco.</string>
+    <string name="standalone_section_warning">Estas não são apps do Android Auto: a AARE mostra o ecrã normal do telemóvel, por predefinição apenas quando estacionado, e precisa de root ou Shizuku. Utilize por sua conta e risco.</string>
     <string name="standalone_toggle_title">Iniciar apps do telemóvel no ecrã do carro</string>
-    <string name="standalone_toggle_subtitle">Escolha as apps abaixo. Mostradas apenas quando estacionado.</string>
+    <string name="standalone_toggle_subtitle">Escolha as apps abaixo e, para cada uma, o que pode fazer durante a condução.</string>
     <string name="standalone_keep_awake_title">Modo sem suspensão para aplicações autónomas</string>
     <string name="standalone_keep_awake_subtitle">Mantém o ecrã físico do telemóvel ativo enquanto uma aplicação está aberta. Nos telemóveis Android 17 afetados, os ecrãs virtuais param quando o ecrã do telemóvel está desligado. Consome mais bateria.</string>
     <string name="standalone_need_root">Precisa de root ou Shizuku. Configure um deles em Áudio do carro e depois volte.</string>
     <string name="standalone_not_native">Não é uma app do Android Auto · uso quando estacionado</string>
     <string name="standalone_starting">A iniciar…</string>
     <string name="standalone_paused_driving">Em pausa durante a condução.</string>
+    <string name="standalone_audio_only_driving">Ecrã oculto durante a condução. O som continua.</string>
+    <string name="standalone_rule_title">Durante a condução</string>
+    <string name="standalone_rule_parked">Apenas estacionado</string>
+    <string name="standalone_rule_audio">Apenas áudio</string>
+    <string name="standalone_rule_navigation">Navegação</string>
+    <string name="standalone_rule_navigation_note">Mostrada durante a condução e usada como a app de navegação do carro: ocupa o lugar do mapa e abre os destinos que pedir.</string>
     <string name="standalone_media_video_title">Vídeo de apps multimédia</string>
     <string name="standalone_media_video_subtitle">Adiciona \"Mostrar vídeo\" ao ecrã multimédia do carro: a app multimédia abre no ecrã do carro para o seu vídeo. Só estacionado; a capa volta quando conduz.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Guardar</string>
     <string name="setup_toggle_verbose_log_title">Registo detalhado do protocolo</string>
     <string name="setup_toggle_verbose_log_subtitle">Grava o registo completo do protocolo da unidade principal neste registo, para anexar a um relatório de erro. Regista muita informação; mantenha desligado nos outros casos.</string>
+    <string name="setup_section_backup">Cópia de segurança das definições</string>
+    <string name="setup_backup_hint">Guarde as definições num ficheiro ou volte a carregá-las. As unidades principais de confiança, os certificados, o estado próprio do telemóvel e as opções que abrem a AARE à rede ou dispensam uma verificação de segurança (servidor da unidade principal, modo passageiro, áudio por root…) ficam de fora: defina-as à mão em cada telemóvel.</string>
+    <string name="setup_backup_export">Exportar…</string>
+    <string name="setup_backup_import">Importar…</string>
+    <string name="setup_backup_import_confirm_title">Substituir as definições?</string>
+    <string name="setup_backup_import_confirm_text">As definições atuais serão substituídas pelas do ficheiro escolhido. Não é possível anular.</string>
+    <string name="setup_backup_import_confirm_action">Substituir</string>
+    <string name="setup_backup_import_done">Definições importadas.</string>
+    <string name="setup_backup_import_done_skipped">Definições importadas. Ignoradas por serem desconhecidas, bloqueadas ou inválidas: %1$d</string>
+    <string name="setup_backup_import_failed">Não é possível importar este ficheiro: não é um ficheiro de definições da AARE, ou é demasiado grande.</string>
+    <string name="setup_backup_export_failed">Não foi possível guardar o ficheiro de definições.</string>
     <string name="setup_nothing_to_open">Este telemóvel não tem nenhuma aplicação que possa abrir isto</string>
     <string name="setup_wallpaper_failed">Não foi possível utilizar esta fotografia como fundo</string>
     <string name="msg_autoreply_default">Estou a conduzir agora, responderei mais tarde.</string>

@@ -105,6 +105,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -134,6 +135,7 @@ import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
+import net.prototux.aare.SettingsBackup
 import net.prototux.aare.BuildConfig
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
@@ -158,6 +160,9 @@ import net.prototux.aare.host.UnsupportedCarApp
 import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.launch.StandaloneDrivingRule
+import net.prototux.aare.launch.effectiveDrivingRule
+import net.prototux.aare.launch.isNavigationApp
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.home.HomeStore
@@ -237,6 +242,9 @@ private fun Home() {
     val state by ProjectionService.state.collectAsState()
     var refresh by remember { mutableIntStateOf(0) }
     var page by rememberSaveable { mutableStateOf<Page?>(null) }
+    // Bumped after a settings import: every card below is rebuilt and re-reads Settings, instead of
+    // showing (and, on the next tap, writing back) the values it remembered from before.
+    var settingsGeneration by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { ProjectionService.startIdleIfEnabled(ctx); ProjectionService.probeUsb(ctx); ProjectionService.probeWireless(ctx); CertificateUpdates.refresh(ctx) }
     // Re-check permissions and capture methods whenever the user comes back to the app.
     val lifecycle = androidx.compose.ui.platform.LocalLifecycleOwner.current
@@ -247,7 +255,7 @@ private fun Home() {
     }
     BackHandler(enabled = page != null) { page = null }
 
-    AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
+    key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
             LazyColumn(
                 Modifier.fillMaxSize().systemBarsPadding(),
@@ -292,6 +300,7 @@ private fun Home() {
                             item { VehicleOverridesCard() }
                             item { CarQuirksCard(settings) }
                             item { LogCard() }
+                            item { SettingsBackupCard(settings) { settingsGeneration++ } }
                             item { CarButtonsCard(settings) }
                         }
                         Page.ABOUT -> item { AboutScreen() }
@@ -299,7 +308,7 @@ private fun Home() {
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable
@@ -909,6 +918,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var chrome by remember { mutableStateOf(settings.carChrome) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var splitScreen by remember { mutableStateOf(settings.splitScreen) }
     var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
@@ -966,6 +976,9 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Text(stringResource(R.string.setup_hint_status_items), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
+            Toggle(stringResource(R.string.setup_toggle_split_screen_title), stringResource(R.string.setup_toggle_split_screen_subtitle), splitScreen) {
+                splitScreen = it; settings.splitScreen = it
+            }
             Spacer(Modifier.height(12.dp))
             RailWidgetsEditor(railWidgets, 48.dp) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
             Spacer(Modifier.height(12.dp))
@@ -1419,6 +1432,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var mediaVideo by remember { mutableStateOf(settings.mediaVideo) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    var rules by remember { mutableStateOf(settings.standaloneDrivingRules) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
         Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -1441,7 +1455,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
             Toggle(stringResource(R.string.standalone_media_video_title), stringResource(R.string.standalone_media_video_subtitle), mediaVideo) {
                 mediaVideo = it; settings.mediaVideo = it
             }
-            val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
+            val apps by produceState<List<LaunchableApp>?>(null) {
                 value = withContext(Dispatchers.IO) { launchableApps(ctx) }
             }
             val list = apps
@@ -1449,10 +1463,16 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                 Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
             } else {
                 Spacer(Modifier.height(8.dp))
-                list.forEach { (pkg, label, icon) ->
+                list.forEach { (pkg, label, icon, navigation) ->
                     AppRow(icon, label, pkg, pkg in allowed) { on ->
                         allowed = if (on) allowed + pkg else allowed - pkg
                         settings.standaloneAppPackages = allowed
+                    }
+                    if (pkg in allowed) {
+                        DrivingRuleChoice(rules[pkg], navigation) { rule ->
+                            rules = rules + (pkg to rule)
+                            settings.standaloneDrivingRules = rules
+                        }
                     }
                 }
             }
@@ -1460,8 +1480,37 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     }
 }
 
+/**
+ * What a launched app may do while driving. "Navigation" is offered to navigation apps only: any
+ * other app a passenger wants to use while driving is what passenger mode is for.
+ */
+@Composable
+private fun DrivingRuleChoice(rule: StandaloneDrivingRule?, navigation: Boolean, onSelect: (StandaloneDrivingRule) -> Unit) {
+    val current = effectiveDrivingRule(rule, navigation)
+    Column(Modifier.padding(start = 52.dp, bottom = 12.dp)) {
+        Choices(
+            stringResource(R.string.standalone_rule_title),
+            StandaloneDrivingRule.offered(navigation).map { r ->
+                r.key to stringResource(when (r) {
+                    StandaloneDrivingRule.PARKED_ONLY -> R.string.standalone_rule_parked
+                    StandaloneDrivingRule.AUDIO_ONLY -> R.string.standalone_rule_audio
+                    StandaloneDrivingRule.NAVIGATION -> R.string.standalone_rule_navigation
+                })
+            },
+            current.key,
+        ) { key -> StandaloneDrivingRule.byKey(key)?.let(onSelect) }
+        if (current == StandaloneDrivingRule.NAVIGATION) {
+            Text(stringResource(R.string.standalone_rule_navigation_note),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        }
+    }
+}
+
+/** A launchable app for the standalone allow-list; [navigation]: it may be given the navigation rule. */
+private data class LaunchableApp(val pkg: String, val label: String, val icon: android.graphics.Bitmap?, val navigation: Boolean)
+
 /** Every app with a launcher icon, except AARE itself, for the standalone allow-list. */
-private fun launchableApps(ctx: android.content.Context): List<Triple<String, String, android.graphics.Bitmap?>> {
+private fun launchableApps(ctx: android.content.Context): List<LaunchableApp> {
     val pm = ctx.packageManager
     val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
     return pm.queryIntentActivities(intent, 0)
@@ -1471,8 +1520,8 @@ private fun launchableApps(ctx: android.content.Context): List<Triple<String, St
         .mapNotNull { pkg ->
             val info = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull() ?: return@mapNotNull null
             val icon = runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull()
-            Triple(pkg, pm.getApplicationLabel(info).toString(), icon)
-        }.sortedBy { it.second.lowercase() }
+            LaunchableApp(pkg, pm.getApplicationLabel(info).toString(), icon, isNavigationApp(pkg, info.category))
+        }.sortedBy { it.label.lowercase() }
 }
 
 @Composable
@@ -1932,6 +1981,76 @@ private fun LogCard() {
                 TextButton(onClick = { DiagLog.clear() }) { Text(stringResource(R.string.common_clear)) }
             }
         }
+    }
+}
+
+/**
+ * Exports the settings SettingsBackup allows to a JSON file the user picks (SAF), and imports one
+ * back, with a confirmation before overwriting. What's left out and why is documented on
+ * SettingsBackup itself. The file is read and parsed off the main thread, with a size limit;
+ * [onImported] then has every card re-read the new values.
+ */
+@Composable
+private fun SettingsBackupCard(settings: Settings, onImported: () -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var pendingImport by remember { mutableStateOf<Uri?>(null) }
+    val export = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val json = SettingsBackup.export(settings.all).toString(2)
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching { ctx.contentResolver.openOutputStream(uri)!!.use { it.write(json.toByteArray()) } }
+                    .onFailure { DiagLog.add("settings export failed: ${it.javaClass.simpleName}") }.isSuccess
+            }
+            if (!ok) Toast.makeText(ctx, R.string.setup_backup_export_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) pendingImport = uri
+    }
+    Section(stringResource(R.string.setup_section_backup)) {
+        Text(stringResource(R.string.setup_backup_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Row {
+            TextButton(onClick = { export.launch("aare-settings.json") }) { Text(stringResource(R.string.setup_backup_export)) }
+            TextButton(onClick = { import.launch(arrayOf("application/json", "text/plain", "*/*")) }) { Text(stringResource(R.string.setup_backup_import)) }
+        }
+    }
+    pendingImport?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingImport = null },
+            title = { Text(stringResource(R.string.setup_backup_import_confirm_title)) },
+            text = { Text(stringResource(R.string.setup_backup_import_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImport = null
+                    scope.launch {
+                        val imported = withContext(Dispatchers.IO) {
+                            // On failure, log only the kind: a JSON error's message quotes the whole file.
+                            runCatching {
+                                val bytes = ctx.contentResolver.openInputStream(uri)!!.use { SettingsBackup.readLimited(it) }
+                                SettingsBackup.import(org.json.JSONObject(bytes.toString(Charsets.UTF_8)))
+                            }.onFailure { DiagLog.add("settings import failed: ${it.javaClass.simpleName}") }.getOrNull()
+                        }
+                        if (imported == null) {
+                            Toast.makeText(ctx, R.string.setup_backup_import_failed, Toast.LENGTH_LONG).show()
+                            return@launch
+                        }
+                        settings.restore(imported.values)
+                        if (imported.skipped.isNotEmpty()) DiagLog.add("settings import skipped ${imported.skipped.size}: ${imported.skipped.joinToString(limit = 10)}")
+                        if (imported.blocked.isNotEmpty()) DiagLog.add("settings import left blocked keys unchanged: ${imported.blocked.joinToString()}")
+                        val done = (if (imported.skipped.isEmpty()) ctx.getString(R.string.setup_backup_import_done)
+                        else ctx.getString(R.string.setup_backup_import_done_skipped, imported.skipped.size)) +
+                            (if (imported.blocked.isEmpty()) ""
+                            else "\n" + ctx.getString(R.string.setup_backup_import_blocked, imported.blocked.joinToString()))
+                        Toast.makeText(ctx, done, Toast.LENGTH_LONG).show()
+                        onImported()
+                    }
+                }) { Text(stringResource(R.string.setup_backup_import_confirm_action)) }
+            },
+            dismissButton = { TextButton(onClick = { pendingImport = null }) { Text(stringResource(R.string.common_cancel)) } },
+        )
     }
 }
 

@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Знизу</string>
     <string name="setup_toggle_dark_bar_title">Темна панель</string>
     <string name="setup_toggle_dark_bar_subtitle">Залишати панель темною навіть зі світлими кольорами</string>
+    <string name="setup_toggle_split_screen_title">Розділений екран</string>
+    <string name="setup_toggle_split_screen_subtitle">Довге натискання на застосунок у панелі авто відкриває його поруч із поточним (макет «Панель завдань», лише широкі екрани)</string>
+    <string name="car_split_close">Закрити розділений екран</string>
+    <string name="car_split_open_beside">Відкрити поруч із поточним застосунком</string>
     <string name="setup_choice_text_size">Розмір тексту</string>
     <string name="setup_choice_control_size">Розмір елементів керування</string>
     <string name="setup_choice_size_default">Типовий</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Куди?</string>
     <string name="nav_dashboard_install_hint">Установіть на телефон навігаційний застосунок, що підтримує Android Auto</string>
     <string name="nav_dashboard_choose_app">Виберіть картографічний застосунок</string>
+    <string name="nav_dashboard_standalone_hint">%1$s — застосунок телефона: його мапа відкривається на весь екран.</string>
     <string name="nav_guidance_on_phone">%1$s, на телефоні</string>
     <string name="nav_next_step_then">Потім</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Застосунки на екрані автомобіля (розширені)</string>
-    <string name="standalone_section_warning">Це не застосунки Android Auto: AARE показує їхній звичайний екран телефону, лише під час паркування, і потребує root або Shizuku. Використовуйте на власний ризик.</string>
+    <string name="standalone_section_warning">Це не застосунки Android Auto: AARE показує їхній звичайний екран телефону, типово лише під час паркування, і потребує root або Shizuku. Використовуйте на власний ризик.</string>
     <string name="standalone_toggle_title">Запуск застосунків телефону на екрані автомобіля</string>
-    <string name="standalone_toggle_subtitle">Виберіть застосунки нижче. Відображаються лише під час паркування.</string>
+    <string name="standalone_toggle_subtitle">Виберіть застосунки нижче і для кожного — що йому можна під час керування.</string>
     <string name="standalone_keep_awake_title">Режим без вимкнення екрана для автономних застосунків</string>
     <string name="standalone_keep_awake_subtitle">Не дає фізичному екрану телефону вимикатися, поки застосунок відкрито. На вразливих телефонах з Android 17 віртуальні дисплеї зупиняються, коли екран телефону вимкнено. Витрачає більше заряду батареї.</string>
     <string name="standalone_need_root">Потрібен root або Shizuku. Налаштуйте одне з них на сторінці Звук в автомобілі, а потім поверніться.</string>
     <string name="standalone_not_native">Не застосунок Android Auto · використання під час паркування</string>
     <string name="standalone_starting">Запуск…</string>
     <string name="standalone_paused_driving">Призупинено під час керування.</string>
+    <string name="standalone_audio_only_driving">Екран приховано під час керування. Звук триває.</string>
+    <string name="standalone_rule_title">Під час керування</string>
+    <string name="standalone_rule_parked">Лише під час паркування</string>
+    <string name="standalone_rule_audio">Лише звук</string>
+    <string name="standalone_rule_navigation">Навігація</string>
+    <string name="standalone_rule_navigation_note">Відображається під час керування і використовується як навігаційний застосунок авто: займає місце мапи й відкриває пункти призначення, які ви просите.</string>
     <string name="standalone_media_video_title">Відео з медіазастосунків</string>
     <string name="standalone_media_video_subtitle">Додає «Показати відео» на екран медіа в авто: медіазастосунок відкривається на екрані авто для свого відео. Лише на стоянці; під час руху повертається обкладинка.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Зберегти</string>
     <string name="setup_toggle_verbose_log_title">Детальний журнал протоколу</string>
     <string name="setup_toggle_verbose_log_subtitle">Записувати повний слід протоколу головного пристрою в цей журнал, щоб додати до звіту про помилку. Записує багато даних; в інших випадках залишайте вимкненим.</string>
+    <string name="setup_section_backup">Резервна копія налаштувань</string>
+    <string name="setup_backup_hint">Збережіть налаштування у файл або завантажте їх назад. Довірені головні пристрої, сертифікати, дані, прив\'язані до телефону, і параметри, які відкривають AARE для мережі або вимикають перевірку безпеки (сервер головного пристрою, режим пасажира, звук через root…), не переносяться: задайте їх вручну на кожному телефоні.</string>
+    <string name="setup_backup_export">Експорт…</string>
+    <string name="setup_backup_import">Імпорт…</string>
+    <string name="setup_backup_import_confirm_title">Замінити налаштування?</string>
+    <string name="setup_backup_import_confirm_text">Поточні налаштування буде перезаписано налаштуваннями з вибраного файлу. Це не можна скасувати.</string>
+    <string name="setup_backup_import_confirm_action">Замінити</string>
+    <string name="setup_backup_import_done">Налаштування імпортовано.</string>
+    <string name="setup_backup_import_done_skipped">Налаштування імпортовано. Пропущено (невідомі, заборонені або неправильні): %1$d</string>
+    <string name="setup_backup_import_failed">Цей файл не можна імпортувати: це не файл налаштувань AARE або він завеликий.</string>
+    <string name="setup_backup_export_failed">Не вдалося зберегти файл налаштувань.</string>
     <string name="setup_nothing_to_open">На цьому телефоні немає застосунку, який може це відкрити</string>
     <string name="setup_wallpaper_failed">Не вдалося використати це фото як шпалери</string>
     <string name="msg_autoreply_default">Я зараз за кермом, відповім пізніше.</string>

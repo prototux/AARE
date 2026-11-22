@@ -2,7 +2,6 @@ package net.prototux.aare.ui.car
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -94,13 +93,13 @@ internal fun DockShell(
 
 @Composable
 private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) = CarTheme(night = true) {
-    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }
+    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.isNavigation }
     val media = state.app(state.activeMediaAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.MEDIA }
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
         val scheme = MaterialTheme.colorScheme
         Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) scheme.primary else scheme.secondaryContainer)
-            .clickable { actions.assistant() }, contentAlignment = Alignment.Center) {
+            .carClickable(CircleShape) { actions.assistant() }, contentAlignment = Alignment.Center) {
             Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
         }
     }
@@ -108,7 +107,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     val homeButton: @Composable () -> Unit = {
         val home = state.screen == CarScreen.Launcher
         Box(Modifier.size(52.dp).clip(LocalCarTheme.current.appIcon).background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable { if (home) actions.goHome() else actions.openLauncher() }, contentAlignment = Alignment.Center) {
+            .carClickable(LocalCarTheme.current.appIcon) { if (home) actions.goHome() else actions.openLauncher() }, contentAlignment = Alignment.Center) {
             Icon(if (home) Icons.Rounded.SpaceDashboard else Icons.Rounded.Apps, if (home) "Dashboard" else "Home",
                 tint = MaterialTheme.colorScheme.onSecondaryContainer)
         }
@@ -171,7 +170,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
                     apps.drop(page * perPage).take(perPage).chunked(columns).forEach { row ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             row.forEach { app ->
-                                Column(Modifier.width(130.dp).clickable { actions.openApp(app) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(Modifier.width(130.dp).carClickable(MaterialTheme.shapes.medium) { actions.openApp(app) }, horizontalAlignment = Alignment.CenterHorizontally) {
                                     DockIcon(app, 88, null)
                                     Spacer(Modifier.height(8.dp))
                                     Text(app.label, color = scheme.onSurface, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
@@ -198,7 +197,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
 private fun DockIcon(app: CarAppEntry, sizeDp: Int, onClick: (() -> Unit)?) {
     val shape = LocalCarTheme.current.appIcon
     val m = Modifier.size(sizeDp.dp).clip(shape).background(MaterialTheme.colorScheme.secondaryContainer)
-    Box(if (onClick != null) m.clickable(onClick = onClick) else m, contentAlignment = Alignment.Center) {
+    Box(m.carClickable(shape, onClick = onClick), contentAlignment = Alignment.Center) {
         val icon = app.icon
         if (icon != null) Image(icon.asImageBitmap(), app.label, Modifier.size((sizeDp * 0.82f).dp).clip(shape), colorFilter = appIconFilter())
         else Text(app.label.take(1), color = MaterialTheme.colorScheme.onSecondaryContainer, fontSize = (sizeDp / 2.5f).sp, fontWeight = FontWeight.SemiBold)

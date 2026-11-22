@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Alul</string>
     <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
     <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_toggle_split_screen_title">Osztott képernyő</string>
+    <string name="setup_toggle_split_screen_subtitle">Nyomj hosszan egy alkalmazást az autó sávjában, hogy a jelenlegi mellett nyíljon meg (tálca elrendezés, csak széles képernyőn)</string>
+    <string name="car_split_close">Osztott képernyő bezárása</string>
+    <string name="car_split_open_beside">Megnyitás a jelenlegi alkalmazás mellett</string>
     <string name="setup_choice_text_size">Szövegméret</string>
     <string name="setup_choice_control_size">Vezérlők mérete</string>
     <string name="setup_choice_size_default">Alapértelmezett</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Hová?</string>
     <string name="nav_dashboard_install_hint">Telepíts a telefonra egy Android Autót támogató navigációs alkalmazást</string>
     <string name="nav_dashboard_choose_app">Válassz térképalkalmazást</string>
+    <string name="nav_dashboard_standalone_hint">A(z) %1$s telefonos alkalmazás: a térképe teljes képernyőn nyílik meg.</string>
     <string name="nav_guidance_on_phone">%1$s, a telefonon</string>
     <string name="nav_next_step_then">Majd</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Alkalmazások az autó képernyőjén (haladó)</string>
-    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
+    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, alapértelmezés szerint csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
     <string name="standalone_toggle_title">Telefonos alkalmazások indítása az autó képernyőjén</string>
-    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent. Csak álló autóban jelenik meg.</string>
+    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent, és mindegyiknél, mit tehet vezetés közben.</string>
     <string name="standalone_keep_awake_title">Nincs alvás mód az önálló alkalmazásokhoz</string>
     <string name="standalone_keep_awake_subtitle">Ébren tartja a telefon tényleges képernyőjét, amíg egy alkalmazás meg van nyitva. Az érintett Android 17-es telefonokon a virtuális kijelzők leállnak, amikor a telefon képernyője kikapcsol. Több akkumulátort használ.</string>
     <string name="standalone_need_root">Root vagy Shizuku szükséges. Állítsd be az egyiket az Autó hangja lapon, majd gyere vissza.</string>
     <string name="standalone_not_native">Nem Android Auto alkalmazás · használat álló autóban</string>
     <string name="standalone_starting">Indítás…</string>
     <string name="standalone_paused_driving">Vezetés közben szüneteltetve.</string>
+    <string name="standalone_audio_only_driving">A képernyő vezetés közben rejtve. A hang szól tovább.</string>
+    <string name="standalone_rule_title">Vezetés közben</string>
+    <string name="standalone_rule_parked">Csak álló autóban</string>
+    <string name="standalone_rule_audio">Csak hang</string>
+    <string name="standalone_rule_navigation">Navigáció</string>
+    <string name="standalone_rule_navigation_note">Vezetés közben is látszik, és ez lesz az autó navigációs alkalmazása: átveszi a térkép helyét, és megnyitja a kért úti célokat.</string>
     <string name="standalone_media_video_title">Videó médiaalkalmazásokból</string>
     <string name="standalone_media_video_subtitle">Hozzáadja a(z) „Videó megjelenítése” gombot az autó médiaképernyőjéhez: a médiaalkalmazás az autó képernyőjén nyílik meg a videójához. Csak parkoláskor; vezetés közben visszatér a borítókép.</string>
     <!-- browser: the in-car WebView browser -->
@@ -582,6 +593,17 @@
     <string name="setup_log_save">Mentés</string>
     <string name="setup_toggle_verbose_log_title">Részletes protokollnapló</string>
     <string name="setup_toggle_verbose_log_subtitle">A teljes fejegység-protokoll naplózása ebbe a naplóba, hogy csatolni lehessen egy hibajelentéshez. Sokat naplóz; egyébként hagyd kikapcsolva.</string>
+    <string name="setup_section_backup">Beállítások mentése</string>
+    <string name="setup_backup_hint">Mentse a beállításokat fájlba, vagy töltse vissza őket. A megbízható fejegységek, a tanúsítványok, a telefonhoz kötött adatok és azok a beállítások, amelyek az AARE-t a hálózat felé nyitják vagy kiiktatnak egy biztonsági ellenőrzést (fejegység-szerver, utas mód, root hang…), kimaradnak: ezeket minden telefonon kézzel állítsa be.</string>
+    <string name="setup_backup_export">Exportálás…</string>
+    <string name="setup_backup_import">Importálás…</string>
+    <string name="setup_backup_import_confirm_title">Lecseréli a beállításokat?</string>
+    <string name="setup_backup_import_confirm_text">A jelenlegi beállításokat felülírják a kiválasztott fájlban lévők. Ez nem vonható vissza.</string>
+    <string name="setup_backup_import_confirm_action">Csere</string>
+    <string name="setup_backup_import_done">Beállítások importálva.</string>
+    <string name="setup_backup_import_done_skipped">Beállítások importálva. Kihagyva (ismeretlen, tiltott vagy érvénytelen): %1$d</string>
+    <string name="setup_backup_import_failed">Ez a fájl nem importálható: nem AARE-beállításfájl, vagy túl nagy.</string>
+    <string name="setup_backup_export_failed">Nem sikerült menteni a beállításfájlt.</string>
     <string name="setup_nothing_to_open">Ezen a telefonon nincs olyan alkalmazás, amely meg tudná nyitni ezt</string>
     <string name="setup_wallpaper_failed">Nem sikerült ezt a fényképet háttérképként beállítani</string>
     <string name="msg_autoreply_default">Most vezetek, majd később válaszolok.</string>

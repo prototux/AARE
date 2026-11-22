@@ -8,7 +8,6 @@ import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,8 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /** Artwork for a browse item, loaded off the main thread; null until (or unless) it loads. */
 @Composable
@@ -92,7 +91,7 @@ internal fun CircleButton(
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Box(
         Modifier.size(size).clip(CircleShape).background(bg).alpha(if (enabled) 1f else 0.38f)
-            .carFocusHighlight(CircleShape).clickable(enabled = enabled, onClick = onClick),
+            .carClickable(CircleShape, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, label, tint = fg, modifier = Modifier.size(size * 0.47f))
@@ -106,7 +105,7 @@ internal fun Pill(text: String, selected: Boolean, onClick: () -> Unit, icon: Im
     val fg = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     Row(
         Modifier.height(56.dp).clip(MaterialTheme.shapes.large).background(bg)
-            .carFocusHighlight(MaterialTheme.shapes.large).clickable(onClick = onClick).padding(horizontal = 22.dp),
+            .carClickable(MaterialTheme.shapes.large, onClick = onClick).padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {

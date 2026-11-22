@@ -98,6 +98,10 @@
     <string name="setup_choice_bottom">Nederst</string>
     <string name="setup_toggle_dark_bar_title">Mørk stolpe</string>
     <string name="setup_toggle_dark_bar_subtitle">Hold stolpen mørk selv med dagfarger</string>
+    <string name="setup_toggle_split_screen_title">Delt skjerm</string>
+    <string name="setup_toggle_split_screen_subtitle">Trykk lenge på en app i bilens stolpe for å åpne den ved siden av den nåværende (oppgavelinjeoppsett, bare brede skjermer)</string>
+    <string name="car_split_close">Lukk delt skjerm</string>
+    <string name="car_split_open_beside">Åpne ved siden av den nåværende appen</string>
     <string name="setup_choice_text_size">Tekststørrelse</string>
     <string name="setup_choice_control_size">Størrelse på kontroller</string>
     <string name="setup_choice_size_default">Standard</string>
@@ -359,6 +363,7 @@
     <string name="nav_dashboard_where_to">Hvor til?</string>
     <string name="nav_dashboard_install_hint">Installer en navigasjonsapp som støtter Android Auto på telefonen</string>
     <string name="nav_dashboard_choose_app">Velg din kartapp</string>
+    <string name="nav_dashboard_standalone_hint">%1$s er en telefonapp: kartet åpnes i fullskjerm.</string>
     <string name="nav_guidance_on_phone">%1$s, på telefonen</string>
     <string name="nav_next_step_then">Deretter</string>
 
@@ -441,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apper på bilskjermen (avansert)</string>
-    <string name="standalone_section_warning">Dette er ikke Android Auto-apper: AARE viser deres vanlige telefonskjerm, bare når bilen er parkert, og krever root eller Shizuku. Bruk på eget ansvar.</string>
+    <string name="standalone_section_warning">Dette er ikke Android Auto-apper: AARE viser deres vanlige telefonskjerm, som standard bare når bilen er parkert, og krever root eller Shizuku. Bruk på eget ansvar.</string>
     <string name="standalone_toggle_title">Start telefonapper på bilskjermen</string>
-    <string name="standalone_toggle_subtitle">Velg appene nedenfor. Vises bare når parkert.</string>
+    <string name="standalone_toggle_subtitle">Velg appene nedenfor, og for hver hva den kan gjøre under kjøring.</string>
     <string name="standalone_keep_awake_title">Ingen-dvale-modus for frittstående apper</string>
     <string name="standalone_keep_awake_subtitle">Holder den fysiske telefonskjermen våken mens en app er åpen. På berørte Android 17-telefoner stopper virtuelle skjermer når telefonskjermen er av. Bruker mer batteri.</string>
     <string name="standalone_need_root">Krever root eller Shizuku. Sett opp en av dem på siden Bilaudio, og kom så tilbake.</string>
     <string name="standalone_not_native">Ikke en Android Auto-app · bruk ved parkering</string>
     <string name="standalone_starting">Starter…</string>
     <string name="standalone_paused_driving">Satt på pause under kjøring.</string>
+    <string name="standalone_audio_only_driving">Skjermen er skjult under kjøring. Lyden fortsetter.</string>
+    <string name="standalone_rule_title">Under kjøring</string>
+    <string name="standalone_rule_parked">Bare parkert</string>
+    <string name="standalone_rule_audio">Bare lyd</string>
+    <string name="standalone_rule_navigation">Navigasjon</string>
+    <string name="standalone_rule_navigation_note">Vises under kjøring og brukes som bilens navigasjonsapp: den tar kartets plass og åpner destinasjonene du ber om.</string>
     <string name="standalone_media_video_title">Video fra mediaapper</string>
     <string name="standalone_media_video_subtitle">Legger til \"Vis video\" på bilens mediaskjerm: mediaappen åpnes på bilskjermen for videoen sin. Bare parkert; albumomslaget kommer tilbake når du kjører.</string>
     <!-- browser: the in-car WebView browser -->
@@ -581,6 +592,17 @@
     <string name="setup_log_save">Lagre</string>
     <string name="setup_toggle_verbose_log_title">Detaljert protokollogg</string>
     <string name="setup_toggle_verbose_log_subtitle">Lagre hele protokollsporet mot hodeenheten i denne loggen, for å legge ved en feilrapport. Logger mye; la den stå av ellers.</string>
+    <string name="setup_section_backup">Sikkerhetskopi av innstillinger</string>
+    <string name="setup_backup_hint">Lagre innstillingene i en fil, eller last inn en igjen. Betrodde head units, sertifikater, telefonspesifikk tilstand og valg som åpner AARE mot nettverket eller hopper over en sikkerhetssjekk (head unit-server, passasjermodus, lyd via root…), utelates: still dem inn manuelt på hver telefon.</string>
+    <string name="setup_backup_export">Eksporter…</string>
+    <string name="setup_backup_import">Importer…</string>
+    <string name="setup_backup_import_confirm_title">Erstatte innstillingene?</string>
+    <string name="setup_backup_import_confirm_text">Dette overskriver de nåværende innstillingene med dem i den valgte filen. Det kan ikke angres.</string>
+    <string name="setup_backup_import_confirm_action">Erstatt</string>
+    <string name="setup_backup_import_done">Innstillingene er importert.</string>
+    <string name="setup_backup_import_done_skipped">Innstillingene er importert. Utelatt som ukjent, blokkert eller ugyldig: %1$d</string>
+    <string name="setup_backup_import_failed">Filen kan ikke importeres: den er ikke en AARE-innstillingsfil, eller den er for stor.</string>
+    <string name="setup_backup_export_failed">Kunne ikke lagre innstillingsfilen.</string>
     <string name="setup_nothing_to_open">Denne telefonen har ingen app som kan åpne dette</string>
     <string name="setup_wallpaper_failed">Kunne ikke bruke dette bildet som bakgrunn</string>
     <string name="msg_autoreply_default">Jeg kjører akkurat nå, jeg svarer senere.</string>
