@@ -56,6 +56,8 @@
     <string name="setup_hint_wireless_compat">原车车机和后装无线适配器（插在车辆 USB 口上）要求手机按不同顺序应答。自动使用标准顺序，或对上次以适配器顺序连接的车辆使用适配器顺序。如果无线适配器无法连接，请选择“适配器”；“原车”会让所有车辆恢复标准顺序。</string>
     <string name="setup_toggle_resume_music_title">恢复音乐播放</string>
     <string name="setup_toggle_resume_music_subtitle">车机连接时自动播放上次使用的音乐应用</string>
+    <string name="setup_toggle_calls_speaker_title">通话使用手机扬声器</string>
+    <string name="setup_toggle_calls_speaker_subtitle">连接到车辆时，通话会使用手机的扬声器和麦克风，而不是车辆的免提系统。适用于无线适配器或麦克风无法使用的车机。将在下次连接时生效。</string>
     <string name="setup_bt_address_label">手机蓝牙地址（可选）</string>
     <string name="setup_bt_address_hint">有些车机在确认连接的是哪台手机之前会显示黑屏。可在设置 &gt; 关于手机 &gt; 状态中找到该地址。如果你的车已经能正常使用，留空即可。</string>
     <string name="setup_section_location">位置</string>
@@ -63,6 +65,8 @@
     <string name="setup_toggle_car_gps_subtitle">连接期间，手机上的应用会获取车辆的位置而非手机自身的位置，避免导航应用混淆两者</string>
     <string name="setup_check_mock_location_title">允许 AARE 设置位置</string>
     <string name="setup_check_mock_location_subtitle">开发者选项 &gt; 选择模拟位置信息应用 &gt; AARE</string>
+    <string name="setup_check_background_location_title">手机锁屏时的导航</string>
+    <string name="setup_check_background_location_subtitle">可选。当 AARE 自行启动时（通过车辆的蓝牙），导航应用会在手机锁屏状态下保留位置信息。权限 &gt; 位置 &gt; 始终允许</string>
     <string name="setup_section_video">视频</string>
     <string name="setup_toggle_60fps_title">优先使用 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">车机支持时画面更流畅</string>
@@ -207,6 +211,11 @@
     <string name="cert_action_remove">移除</string>
     <string name="cert_action_import">导入证书…</string>
     <string name="cert_action_download">下载证书</string>
+    <string name="cert_auto_update_title">自动更新已下载的证书</string>
+    <string name="cert_auto_update_subtitle">AARE 每天一次（绝不会在连接期间）向同一个仓库查询是否有更新的证书并使用它。无论如何，AARE 都会在 Google 的证书到期前两周发出警告。</string>
+    <string name="cert_expiring_banner_title">Google 的证书将于 %1$s 到期</string>
+    <string name="cert_expired_banner_title">Google 的证书已于 %1$s 到期</string>
+    <string name="cert_expiry_banner_subtitle">只接受该证书的车辆将拒绝 AARE。点按以下载更新的证书。</string>
     <string name="cert_action_downloading">正在下载…</string>
     <string name="cert_download_unavailable">证书仓库已不存在（已删除或被下架）：%1$s。请改为从 Android Auto 应用中提取证书（参见 README）。</string>
     <string name="cert_download_network">无法下载证书：%1$s。请检查网络连接后重试。</string>
@@ -297,6 +306,12 @@
     <string name="notif_action_download_cert">下载证书</string>
     <string name="notif_action_navigate">导航</string>
     <string name="notif_action_open">打开</string>
+    <string name="notif_cert_updated_title">证书已更新</string>
+    <string name="notif_cert_updated_message">AARE 已下载更新的 Android Auto 证书，有效期至 %1$s。</string>
+    <string name="notif_cert_expiring_title">证书即将到期</string>
+    <string name="notif_cert_expiring_text">%1$s 将于 %2$s 到期。此后，只接受 Google 证书的车辆将拒绝 AARE：请下载更新的证书。</string>
+    <string name="notif_cert_expired_title">证书已过期</string>
+    <string name="notif_cert_expired_text">%1$s 已于 %2$s 到期。现在，只接受 Google 证书的车辆会拒绝 AARE：请下载更新的证书。</string>
     <string name="notif_cert_download_title">车机拒绝了 AARE 的证书</string>
     <string name="notif_cert_download_message">此车机只接受 Google 签发的证书。请从最新版 Android Auto 应用下载该证书，然后重新连接。</string>
     <string name="notif_cert_download_progress">正在下载 Android Auto 的证书…</string>
@@ -315,6 +330,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s，然后重新连接。</string>
     <string name="notif_cert_changed_message">车机证书已更改：仅在其软件已更新的情况下，在通知或 AARE 中点按“信任”，然后重新连接</string>
     <string name="notif_cert_untrusted_message">车机证书尚未被信任：在通知或 AARE 中点按“信任”，然后重新连接</string>
+    <string name="notif_cert_dates_title">检查车辆的日期和时间</string>
+    <string name="notif_cert_not_yet_valid_message">车机提示 AARE 的证书尚未生效：它的时钟可能慢了。请设置车辆的日期和时间，然后重新连接</string>
+    <string name="notif_cert_expired_message">车机提示 AARE 的证书已过期：如果并非如此，说明车辆的时钟偏快。请设置车辆的日期和时间，或在「高级」中获取更新的证书，然后重新连接</string>
     <string name="notif_car_nearby_title">附近有车辆</string>
     <string name="notif_car_nearby_text">点按以无线连接</string>
     <string name="notif_status_connecting_to">正在连接到 %1$s</string>
@@ -462,6 +480,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">车辆数据</string>
     <string name="setup_page_car_data_subtitle">车辆的实时速度、挡位和传感器数据</string>
+    <string name="setup_page_about_title">关于</string>
+    <string name="setup_page_about_subtitle">AARE 是什么、项目链接，以及是谁帮助开发了它</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">连接到车辆以查看其数据。</string>
@@ -517,6 +537,24 @@
     <string name="car_data_app_label">车载数据</string>
     <string name="car_data_show_in_car_title">在车机屏幕上显示</string>
     <string name="car_data_show_in_car_subtitle">在车机中添加一个诊断应用来显示这些实时数据</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">AARE 是什么</string>
+    <string name="about_text">AARE 是 Android Auto 手机端的开源重新实现：它直接通过 Android Auto 投屏协议与车辆车机通信，自行绘制车机画面，并运行导航、媒体和消息应用，而无需 Google Play 服务。</string>
+    <string name="about_section_links_title">项目</string>
+    <string name="about_link_repository">仓库</string>
+    <string name="about_link_issues">议题</string>
+    <string name="about_link_discussions">讨论</string>
+    <string name="about_section_thanks_title">致谢</string>
+    <string name="about_thanks_security_review">安全审查</string>
+    <string name="about_thanks_code_and_docs">代码与文档</string>
+    <string name="about_thanks_head_unit_reports">车机报告</string>
+    <string name="about_thanks_reports">报告与想法</string>
+    <string name="about_thanks_tips">小贴士</string>
+    <string name="about_section_oss_title">开源组件</string>
+    <string name="about_oss_libraries_title">库</string>
+    <string name="about_oss_protocol_title">协议定义</string>
+
     <string name="vehicles_section_title">车辆覆盖设置</string>
     <string name="vehicles_hint">无需重新构建应用，即可调整特定车辆的屏幕密度或可视区域边距。使用文件管理器编辑 vehicles.json，按品牌/型号/名称匹配车辆。</string>
     <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
@@ -559,6 +597,8 @@
     <string name="vehicles_malformed_at">vehicles.json 第 %1$d 行第 %2$d 列有错误（%3$s）：其中的规则会被忽略。</string>
     <string name="vehicles_malformed">vehicles.json 无法使用（%1$s）：其中的规则会被忽略。</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
+    <string name="setup_toggle_constant_bitrate_title">恒定码率视频</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">使每帧画面的大小大致保持一致。如果车辆在整幅画面变化时（例如显示手机屏幕或播放视频）断开连接，请开启此选项。细节较多的画面会略微变柔和。将在下次连接时生效。</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">重试</string>
@@ -585,6 +625,7 @@
     <string name="setup_backup_import_confirm_action">替换</string>
     <string name="setup_backup_import_done">设置已导入。</string>
     <string name="setup_backup_import_done_skipped">设置已导入。因未知、被阻止或无效而跳过：%1$d</string>
+    <string name="setup_backup_import_blocked">出于安全原因未导入（请在本机上手动开启这些设置）：%1$s</string>
     <string name="setup_backup_import_failed">无法导入此文件：它不是 AARE 设置文件，或文件过大。</string>
     <string name="setup_backup_export_failed">无法保存设置文件。</string>
     <string name="setup_nothing_to_open">此手机没有可打开此内容的应用</string>
@@ -625,6 +666,7 @@
     <string name="tpl_password_hint">密码</string>
     <string name="carapp_error_start">无法启动 %1$s</string>
     <string name="carapp_error_refused">%1$s 拒绝了连接</string>
+    <string name="carapp_error_no_answer">%1$s 没有响应。它可能只接受 Google 的 Android Auto（参见手机上的应用列表）。</string>
     <string name="carapp_error_api_level">%1$s 需要车载 API 级别 %2$d；此宿主支持 %3$d</string>
     <string name="carapp_error_stopped">%1$s 已停止</string>
     <string name="carapp_error_google_only">%1$s 只接受 Google 的 Android Auto。需要允许 AARE（参见手机上的应用列表）。</string>
