@@ -58,8 +58,9 @@ class VehicleOverridesTest {
     }
 
     @Test fun quirksAreParsed() {
-        val o = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"micSetup":false,"skipServices":["vendor"],"openServices":["wifi"," "]}}]}""").single().override
+        val o = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"micSetup":false,"dropOverflow":true,"skipServices":["vendor"],"openServices":["wifi"," "]}}]}""").single().override
         assertEquals(false, o.micSetup)
+        assertEquals(true, o.dropOverflow)
         assertEquals(setOf("vendor"), o.skipServices)
         assertEquals(setOf("wifi"), o.openServices)
         assertEquals(null, o.dpi)

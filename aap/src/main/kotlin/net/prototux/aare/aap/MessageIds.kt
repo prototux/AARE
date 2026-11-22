@@ -50,6 +50,8 @@ object MediaMsg {
     const val UPDATE_UI_CONFIG_REQUEST = 0x8009
     const val UPDATE_UI_CONFIG_REPLY = 0x800A
     const val AUDIO_UNDERFLOW_NOTIFICATION = 0x800B
+    /** Head unit to phone: playback statistics (MediaStats), when the START's media options ask for them. */
+    const val MEDIA_STATS = 0x8013
 }
 
 object InputMsg {
