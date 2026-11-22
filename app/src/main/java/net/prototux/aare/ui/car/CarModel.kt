@@ -1,11 +1,13 @@
 package net.prototux.aare.ui.car
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.notify.PhoneGuidance
@@ -15,7 +17,7 @@ import net.prototux.aare.ui.theme.AareTheme
  * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
  * it hands the screen back to the car's own.
  */
-enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
+enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, HOME, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
 
 /** One launchable app on the car screen. */
 @Stable
@@ -80,7 +82,16 @@ data class CarGeometry(
 class CarUiState {
     var night by mutableStateOf(true)
     var screen by mutableStateOf<CarScreen>(CarScreen.Dashboard)
+    /**
+     * Every app the car can open, in the user's order: also the built-ins hidden from the app grid,
+     * since the bell, the call card, the rail's phone button and the steering-wheel keys open them
+     * from here. The grids show [launcherApps].
+     */
     val apps = mutableStateListOf<CarAppEntry>()
+    /** Ids of built-in apps (CarRuntime.HIDEABLE_BUILTIN_IDS) the user hid from the app grid only. */
+    var launcherHidden by mutableStateOf<Set<String>>(emptySet())
+    /** What the app grid and launcher list show: [apps] without the ones in [launcherHidden]. */
+    val launcherApps: List<CarAppEntry> get() = apps.withoutLauncherHidden(launcherHidden)
     var nowPlaying by mutableStateOf<NowPlaying?>(null)
     /** The navigation app whose map is shown on the dashboard. */
     var activeNavAppId by mutableStateOf<String?>(null)
@@ -103,14 +114,16 @@ class CarUiState {
     var tripPackage by mutableStateOf<String?>(null)
     /** The weather next to the clock, if known and wanted. */
     var weather by mutableStateOf<Weather?>(null)
-    /** The next calendar event, for the dashboard. */
-    var nextEvent by mutableStateOf<NextEvent?>(null)
+    /** The next calendar events, earliest first (a setting decides how many), for the dashboard. */
+    var nextEvents by mutableStateOf<List<NextEvent>>(emptyList())
     /** The phone call ringing or on, if any. */
     var call by mutableStateOf<CarCall?>(null)
     /** The apps opened last, newest first (ids): the rail shows the recent ones. */
     val recentAppIds = mutableStateListOf<String>()
     /** The voice assistant showing as a bar over the screen (an app entry id), or null. */
     var assistantAppId by mutableStateOf<String?>(null)
+    /** A phone assistant without a car app, opened on the car screen through the launcher (see [assistantAppId]). */
+    var assistantStandalonePkg by mutableStateOf<String?>(null)
     /** Turn-by-turn from a navigation app running on the phone (Google Maps, Waze…). */
     var phoneGuidance by mutableStateOf<PhoneGuidance?>(null)
     /** Right-hand drive: the rail goes to the right, next to the driver. */
@@ -119,19 +132,53 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail's status widgets, in order (a setting). */
+    var railWidgets by mutableStateOf(RailWidget.DEFAULT)
+    /** The rail's chosen apps, in order (a setting; empty = the rail's built-in set). */
+    var railApps by mutableStateOf<List<String>>(emptyList())
+    /** A narrower rail: smaller icons, tighter spacing (a setting). */
+    var compactRail by mutableStateOf(false)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
+    /** The map keeps the big space wherever it is in [dashboardCards] (a setting). */
+    var dashboardMapBig by mutableStateOf(false)
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */
     var weatherInBar by mutableStateOf(true)
+    /** The clock, phone signal and battery the bar shows: not those the car draws itself (and a setting). */
+    var chrome by mutableStateOf(CarChrome.ALL)
     /** The theme (a setting, with the phone's accent colours if asked). */
     var theme by mutableStateOf(AareTheme)
     /** Where things go: a taskbar and dashboard, or a dock and app pages (a setting). */
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** Smart-home buttons and values (the phone's "Home actions"), for the Home card and app. */
+    var home by mutableStateOf(HomeUi())
+    /** Font-scale multiplier for the car screen's text (a setting). Independent of [controlScale]. */
+    var textScale by mutableStateOf(1f)
+    /** Multiplier for [net.prototux.aare.ui.theme.CarDimens] (touch targets, icons…) (a setting). */
+    var controlScale by mutableStateOf(1f)
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }
+
+/** The smart-home buttons and values the car shows. */
+@Immutable
+data class HomeUi(val buttons: List<HomeButton> = emptyList(), val tiles: List<HomeTileUi> = emptyList()) {
+    val isEmpty: Boolean get() = buttons.isEmpty() && tiles.isEmpty()
+}
+
+/** One action's button: [confirm] asks first; [running] while it is being sent. */
+@Immutable
+data class HomeButton(val id: String, val label: String, val confirm: Boolean, val onCard: Boolean, val running: Boolean)
+
+/** One value: [value] null while unknown; [failed] when the last update didn't work. */
+@Immutable
+data class HomeTileUi(val id: String, val label: String, val value: String?, val unit: String, val failed: Boolean)
+
+/** These apps without the [hidden] ones, for the app grid: everything else still reaches them. */
+internal fun List<CarAppEntry>.withoutLauncherHidden(hidden: Set<String>): List<CarAppEntry> =
+    if (hidden.isEmpty()) this else filter { it.id !in hidden }
 
 /** A phone call, ringing or on, for the car's call card. */
 @Stable
@@ -151,4 +198,6 @@ interface CarActions {
     fun endCall()
     /** Navigate to a place (an address or a name) in the car's navigation app. */
     fun navigateTo(place: String)
+    /** Send a home action (its confirmation, if it has one, was already asked). */
+    fun runHomeAction(id: String)
 }

@@ -32,6 +32,13 @@ interface ILaunchHost {
      */
     boolean view(String uri, String packageName) = 6;
 
+    /**
+     * Like [start], but opens [packageName]'s voice UI (ACTION_VOICE_COMMAND, else ACTION_ASSIST),
+     * or its main activity if it has neither: for an assistant on the car screen. Returns the
+     * display id, or -1 (and no display) if nothing could be opened.
+     */
+    int startAssistant(in Surface surface, int width, int height, int dpi, String packageName) = 7;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }

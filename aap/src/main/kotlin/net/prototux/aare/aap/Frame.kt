@@ -24,12 +24,18 @@ object Frame {
     const val FLAG_CONTROL = 0x04
     const val FLAG_ENCRYPTED = 0x08
 
+    /** Largest whole frame (header included) the official phone sends; some head units size their receive buffer to it. */
+    const val MAX_FRAME = 16128
+
+    /** Bytes a TLS 1.2 AES-GCM record adds around each encrypted chunk: 5 header + 8 explicit nonce + 16 tag. */
+    const val TLS_OVERHEAD = 5 + 8 + 16
+
     /**
-     * Largest plaintext chunk put in a single frame. The official phone caps whole frames at
-     * 16128 bytes including the header; with TLS overhead that stays under the 16 KiB receive
-     * buffers some head units allocate per frame.
+     * Largest plaintext chunk put in a single frame, so that a whole encrypted frame (header of a
+     * FIRST fragment + TLS record) never exceeds [MAX_FRAME]. Without the TLS overhead taken off,
+     * encrypted fragments came out at 16157 bytes.
      */
-    const val MAX_PAYLOAD = 16128 - 8
+    const val MAX_PAYLOAD = MAX_FRAME - 8 - TLS_OVERHEAD // 8: channel, flags, size, total size
 
     const val HEADER_SIZE = 2
     const val SHORT_SIZE = 2
