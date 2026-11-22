@@ -348,6 +348,7 @@
     <string name="nav_dashboard_where_to">إلى أين؟</string>
     <string name="nav_dashboard_install_hint">ثبّت تطبيق تنقّل يدعم Android Auto على الهاتف</string>
     <string name="nav_dashboard_choose_app">اختر تطبيق الخرائط</string>
+    <string name="nav_dashboard_standalone_hint">%1$s تطبيق هاتف: تُفتح خريطته على كامل الشاشة.</string>
     <string name="nav_guidance_on_phone">%1$s، على الهاتف</string>
     <string name="nav_next_step_then">ثم</string>
 
@@ -425,15 +426,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">تطبيقات على شاشة السيارة (متقدم)</string>
-    <string name="standalone_section_warning">هذه ليست تطبيقات Android Auto: يعرض AARE شاشة الهاتف العادية، فقط أثناء التوقف، ويحتاج إلى root أو Shizuku. استخدمها على مسؤوليتك الخاصة.</string>
+    <string name="standalone_section_warning">هذه ليست تطبيقات Android Auto: يعرض AARE شاشة الهاتف العادية، افتراضيًا فقط أثناء التوقف، ويحتاج إلى root أو Shizuku. استخدمها على مسؤوليتك الخاصة.</string>
     <string name="standalone_toggle_title">تشغيل تطبيقات الهاتف على شاشة السيارة</string>
-    <string name="standalone_toggle_subtitle">اختر التطبيقات أدناه. تظهر فقط عند التوقف.</string>
+    <string name="standalone_toggle_subtitle">اختر التطبيقات أدناه، ولكل منها ما يُسمح له به أثناء القيادة.</string>
     <string name="standalone_keep_awake_title">وضع منع السكون للتطبيقات المستقلة</string>
     <string name="standalone_keep_awake_subtitle">يُبقي شاشة الهاتف الفعلية مستيقظة أثناء فتح تطبيق. على هواتف Android 17 المتأثرة، تتوقف الشاشات الافتراضية عند إيقاف شاشة الهاتف. يستهلك بطارية أكثر.</string>
     <string name="standalone_need_root">يحتاج إلى root أو Shizuku. أعدّ أحدهما في صفحة صوت السيارة، ثم عد إلى هنا.</string>
     <string name="standalone_not_native">ليس تطبيق Android Auto · استخدام أثناء التوقف</string>
     <string name="standalone_starting">جارٍ البدء…</string>
     <string name="standalone_paused_driving">متوقف مؤقتًا أثناء القيادة.</string>
+    <string name="standalone_audio_only_driving">الشاشة مخفية أثناء القيادة. يستمر الصوت.</string>
+    <string name="standalone_rule_title">أثناء القيادة</string>
+    <string name="standalone_rule_parked">أثناء التوقف فقط</string>
+    <string name="standalone_rule_audio">الصوت فقط</string>
+    <string name="standalone_rule_navigation">الملاحة</string>
+    <string name="standalone_rule_navigation_note">يظهر أثناء القيادة ويُستخدم كتطبيق الملاحة في السيارة: يأخذ مكان الخريطة ويفتح الوجهات التي تطلبها.</string>
     <string name="standalone_media_video_title">فيديو من تطبيقات الوسائط</string>
     <string name="standalone_media_video_subtitle">يضيف \"عرض الفيديو\" إلى شاشة الوسائط في السيارة: يُفتح تطبيق الوسائط على شاشة السيارة لعرض الفيديو. أثناء التوقف فقط؛ يعود غلاف الألبوم عند القيادة.</string>
     <!-- browser: the in-car WebView browser -->

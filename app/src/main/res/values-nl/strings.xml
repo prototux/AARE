@@ -359,6 +359,7 @@
     <string name="nav_dashboard_where_to">Waarheen?</string>
     <string name="nav_dashboard_install_hint">Installeer een navigatie-app die Android Auto ondersteunt op de telefoon</string>
     <string name="nav_dashboard_choose_app">Kies uw kaarten-app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is een telefoon-app: de kaart opent op volledig scherm.</string>
     <string name="nav_guidance_on_phone">%1$s, op de telefoon</string>
     <string name="nav_next_step_then">Dan</string>
 
@@ -441,15 +442,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps op het autoscherm (geavanceerd)</string>
-    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
+    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, standaard alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
     <string name="standalone_toggle_title">Telefoonapps starten op het autoscherm</string>
-    <string name="standalone_toggle_subtitle">Kies de apps hieronder. Alleen getoond tijdens parkeren.</string>
+    <string name="standalone_toggle_subtitle">Kies de apps hieronder, en per app wat die tijdens het rijden mag.</string>
     <string name="standalone_keep_awake_title">Wakker blijven voor zelfstandige apps</string>
     <string name="standalone_keep_awake_subtitle">Houdt het fysieke telefoonscherm wakker terwijl een app open is. Op getroffen Android 17-telefoons stoppen virtuele schermen wanneer het telefoonscherm uit is. Gebruikt meer batterij.</string>
     <string name="standalone_need_root">Vereist root of Shizuku. Stel er een in op de pagina Autoaudio en kom dan terug.</string>
     <string name="standalone_not_native">Geen Android Auto-app · gebruik tijdens parkeren</string>
     <string name="standalone_starting">Starten…</string>
     <string name="standalone_paused_driving">Gepauzeerd tijdens het rijden.</string>
+    <string name="standalone_audio_only_driving">Scherm verborgen tijdens het rijden. Het geluid gaat door.</string>
+    <string name="standalone_rule_title">Tijdens het rijden</string>
+    <string name="standalone_rule_parked">Alleen geparkeerd</string>
+    <string name="standalone_rule_audio">Alleen audio</string>
+    <string name="standalone_rule_navigation">Navigatie</string>
+    <string name="standalone_rule_navigation_note">Getoond tijdens het rijden en gebruikt als navigatie-app van de auto: neemt de plaats van de kaart in en opent de bestemmingen die u vraagt.</string>
     <string name="standalone_media_video_title">Video uit media-apps</string>
     <string name="standalone_media_video_subtitle">Voegt \"Video tonen\" toe aan het mediascherm van de auto: de media-app opent op het autoscherm voor zijn video. Alleen geparkeerd; de hoes komt terug zodra je rijdt.</string>
     <!-- browser: the in-car WebView browser -->

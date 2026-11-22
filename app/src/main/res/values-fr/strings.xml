@@ -359,6 +359,7 @@
     <string name="nav_dashboard_where_to">Où aller ?</string>
     <string name="nav_dashboard_install_hint">Installez sur le téléphone une application de navigation compatible avec Android Auto</string>
     <string name="nav_dashboard_choose_app">Choisissez votre application de cartes</string>
+    <string name="nav_dashboard_standalone_hint">%1$s est une app du téléphone : sa carte s\'ouvre en plein écran.</string>
     <string name="nav_guidance_on_phone">%1$s, sur le téléphone</string>
     <string name="nav_next_step_then">Puis</string>
 
@@ -441,15 +442,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps sur l\'écran de la voiture (avancé)</string>
-    <string name="standalone_section_warning">Ce ne sont pas des apps Android Auto : AARE affiche leur écran de téléphone normal, uniquement à l\'arrêt, et nécessite root ou Shizuku. Utilisation à vos risques et périls.</string>
+    <string name="standalone_section_warning">Ce ne sont pas des apps Android Auto : AARE affiche leur écran de téléphone normal, par défaut uniquement à l\'arrêt, et nécessite root ou Shizuku. Utilisation à vos risques et périls.</string>
     <string name="standalone_toggle_title">Lancer des apps du téléphone sur l\'écran de la voiture</string>
-    <string name="standalone_toggle_subtitle">Choisissez les apps ci-dessous. Affichées uniquement à l\'arrêt.</string>
+    <string name="standalone_toggle_subtitle">Choisissez les apps ci-dessous et, pour chacune, ce qu\'elle peut faire pendant la conduite.</string>
     <string name="standalone_keep_awake_title">Mode sans veille pour les applications autonomes</string>
     <string name="standalone_keep_awake_subtitle">Maintient l\'écran physique du téléphone allumé pendant qu\'une application est ouverte. Sur les téléphones Android 17 concernés, les écrans virtuels s\'arrêtent quand l\'écran du téléphone est éteint. Consomme plus de batterie.</string>
     <string name="standalone_need_root">Nécessite root ou Shizuku. Configurez l\'un des deux dans Audio voiture, puis revenez ici.</string>
     <string name="standalone_not_native">Pas une app Android Auto · usage à l\'arrêt</string>
     <string name="standalone_starting">Démarrage…</string>
     <string name="standalone_paused_driving">Suspendu pendant la conduite.</string>
+    <string name="standalone_audio_only_driving">Écran masqué pendant la conduite. Le son continue.</string>
+    <string name="standalone_rule_title">Pendant la conduite</string>
+    <string name="standalone_rule_parked">À l\'arrêt uniquement</string>
+    <string name="standalone_rule_audio">Audio uniquement</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Affichée pendant la conduite et utilisée comme app de navigation de la voiture : elle prend la place de la carte et ouvre les destinations que vous demandez.</string>
     <string name="standalone_media_video_title">Vidéo des apps multimédias</string>
     <string name="standalone_media_video_subtitle">Ajoute « Afficher la vidéo » à l\'écran multimédia de la voiture : l\'app multimédia s\'ouvre sur l\'écran de la voiture pour sa vidéo. À l\'arrêt uniquement ; la pochette revient quand vous roulez.</string>
     <!-- browser: the in-car WebView browser -->
