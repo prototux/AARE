@@ -2,6 +2,7 @@ package net.prototux.aare.ui.car
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,8 +40,18 @@ fun Modifier.carFocusHighlight(shape: Shape): Modifier = composed {
  * in a refactor). [onClick] null means this element isn't clickable right now (e.g. a card with no
  * action) and is a no-op, matching the common null-check-then-click pattern it replaces.
  */
-fun Modifier.carClickable(shape: Shape, enabled: Boolean = true, onClick: (() -> Unit)?): Modifier =
-    if (onClick == null) this else carFocusHighlight(shape).clickable(enabled = enabled, onClick = onClick)
+fun Modifier.carClickable(
+    shape: Shape,
+    enabled: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+    onClick: (() -> Unit)?,
+): Modifier = when {
+    onClick == null -> this
+    onLongClick != null -> carFocusHighlight(shape)
+        .combinedClickable(enabled = enabled, onLongClickLabel = onLongClickLabel, onLongClick = onLongClick, onClick = onClick)
+    else -> carFocusHighlight(shape).clickable(enabled = enabled, onClick = onClick)
+}
 
 /**
  * Whether the car's last input was a navigation key rather than a touch (main thread). Car touches

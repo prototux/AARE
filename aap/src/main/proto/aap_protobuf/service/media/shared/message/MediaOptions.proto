@@ -1,0 +1,24 @@
+syntax="proto2";
+
+package aap_protobuf.service.media.shared.message;
+
+import "aap_protobuf/shared/Duration.proto";
+
+// AARE: media stream options, sent in Start field 4 and in
+// MEDIA_OPTIONS (0x8014). Field names are AARE's, taken from the settings that fill
+// each field (audio/video sync and timing). Schema only; AARE does not send them.
+message MediaOptions {
+  optional aap_protobuf.shared.Duration audio_buffer_limit = 1;
+  optional bool enable_sync = 2;
+  optional aap_protobuf.shared.Duration max_lag_tolerance = 3;
+  optional aap_protobuf.shared.Duration sync_interval = 4;
+  optional aap_protobuf.shared.Duration max_audio_delay_allowed = 5;
+  optional aap_protobuf.shared.Duration max_video_delay_allowed = 6;
+  optional uint32 average_lag_weight = 7;
+  optional aap_protobuf.shared.Duration sync_offset_override = 8;
+  optional bool enable_media_stats = 9;
+  optional aap_protobuf.shared.Duration media_stats_report_interval = 10;
+  optional bool enable_video_timing_controller = 11;
+  optional aap_protobuf.shared.Duration video_timing_min_delay = 12;
+  optional aap_protobuf.shared.Duration video_timing_max_delay = 13;
+}

@@ -59,6 +59,26 @@ class CarScreenReachabilityCheckTest {
             "carClickable's own implementation: the one .clickable car-screen code should route through.",
         ),
         Allowed(
+            "src/main/java/net/prototux/aare/ui/car/CarFocus.kt",
+            ".combinedClickable(enabled = enabled, onLongClickLabel = onLongClickLabel, onLongClick = onLongClick, onClick = onClick)",
+            "carClickable's own long-press variant (the rail's 'open beside').",
+        ),
+        Allowed(
+            "src/main/java/net/prototux/aare/ui/car/HomeScreen.kt",
+            ".clickable(enabled = false) {}",
+            "Not a control: swallows taps behind the confirmation card so they don't reach the home screen.",
+        ),
+        Allowed(
+            "src/main/java/net/prototux/aare/ui/car/CarShell.kt",
+            "detectDragGestures(",
+            "Split screen divider: no knob path yet (needs carAdjustable, #320 item 3); knob users keep the 50/50 split and the close buttons.",
+        ),
+        Allowed(
+            "src/main/java/net/prototux/aare/ui/car/RailWidgets.kt",
+            "Checkbox(checked = shown, onCheckedChange = null)",
+            "Decorative: the row around it is carClickable.",
+        ),
+        Allowed(
             "src/main/java/net/prototux/aare/ui/car/CarSettingsScreen.kt",
             "Switch(checked = checked, onCheckedChange = onChange)",
             "the row around it is carClickable and already knob-focusable and highlighted; no " +

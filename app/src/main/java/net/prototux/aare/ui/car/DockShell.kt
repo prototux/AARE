@@ -93,7 +93,7 @@ internal fun DockShell(
 
 @Composable
 private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = false) = CarTheme(night = true) {
-    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.NAVIGATION }
+    val nav = state.app(state.activeNavAppId) ?: state.apps.firstOrNull { it.isNavigation }
     val media = state.app(state.activeMediaAppId) ?: state.apps.firstOrNull { it.kind == CarAppKind.MEDIA }
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
@@ -117,7 +117,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
             Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) { Clock(); PhoneStatusIcons() }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) { if (state.chrome.clock) Clock(); PhoneStatusIcons(state.chrome) }
             Spacer(Modifier.weight(1f))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOfNotNull(nav, media, phone).forEach { app -> DockIcon(app, 60) { actions.openApp(app) } }
@@ -131,8 +131,8 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
         Modifier.fillMaxHeight().width(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Clock()
-        PhoneStatusIcons()
+        if (state.chrome.clock) Clock()
+        PhoneStatusIcons(state.chrome)
         WeatherChip(state.weather.takeIf { state.weatherInBar })
         // Only the apps are weighted: on a short screen they scroll, and voice and home keep their size.
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -161,7 +161,7 @@ private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true
         // Two rows in landscape; a portrait screen has room for more.
         val rows = if (maxHeight > maxWidth) (maxHeight / 170.dp).toInt().coerceIn(2, 5) else 2
         val perPage = columns * rows
-        val apps = state.apps
+        val apps = state.launcherApps
         val pages = maxOf(1, (apps.size + perPage - 1) / perPage)
         val pager = rememberPagerState { pages }
         Column(Modifier.fillMaxSize().padding(vertical = 24.dp)) {

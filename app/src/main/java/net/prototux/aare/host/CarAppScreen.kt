@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
@@ -180,6 +181,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override val night: Boolean get() = runtime.ui.night
     override val touchscreen: Boolean get() = runtime.touchscreen
     override val appLabel: String get() = conn.info.label
+    override val forceIconTint: Boolean = AppQuirks.FORCE_ICON_TINT.matches(conn.info.packageName, conn.info.versionCode)
     override fun contentLimit(type: Int): Int = runtime.contentLimit(type)
     override val done = CarAppConnection.templateDone
     override fun back() = conn.back()
@@ -193,13 +195,18 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         return Bitmap.createScaledBitmap(b, maxOf(1, (b.width * scale).toInt()), maxOf(1, (b.height * scale).toInt()), true).asImageBitmap()
     }
     override fun showParkedOnlyMessage() = runtime.notice(runtime.context.getString(R.string.notif_parked_only_title), runtime.context.getString(R.string.notif_parked_only_text))
+    override val appColors get() = conn.themeColors
+    override val timedActionParams = TemplateQuirks.timedActionParams(conn.info.packageName)
 
     @Composable
     override fun MapSurface(modifier: Modifier) {
         val owner = remember { Any() }
         val dpi = runtime.densityDpi
         AndroidView(
-            modifier = modifier,
+            // Clipped: up to Android 10 a SurfaceView punches its hole by clearing the whole canvas
+            // clip, which without this erases everything drawn before it (a bar on the left, the
+            // background), leaving it black.
+            modifier = modifier.clipToBounds(),
             factory = { ctx ->
                 SurfaceView(ctx).apply {
                     holder.addCallback(object : SurfaceHolder.Callback {
@@ -215,10 +222,29 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         DisposableEffect(owner) { onDispose { conn.surfaceDestroyed(owner) } }
     }
 
+    override val mapCardBottomInsetDp: Int get() = runtime.settings.mapCardBottomInset
     override fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setVisibleArea(Rect(left, top, right, bottom))
     override fun setStableArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setStableArea(Rect(left, top, right, bottom))
     override fun mapScroll(dx: Float, dy: Float) { conn.scroll(dx, dy) }
     override fun mapFling(vx: Float, vy: Float) { conn.fling(vx, vy) }
     override fun mapScale(focusX: Float, focusY: Float, factor: Float) { conn.scale(focusX, focusY, factor) }
     override fun mapClick(x: Float, y: Float) { conn.click(x, y) }
+}
+
+/**
+ * The dashboard card of a navigation app that runs full screen only: for
+ * versions older than the one it knows works on its dashboard ([AppQuirks.dashboardNavigationSupported]):
+ * the app's icon and name, and a tap opens it.
+ */
+@Composable
+fun CarAppLauncherCard(info: CarAppInfo, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    Column(
+        modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer).carClickable(RectangleShape, onClick = onOpen).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        info.icon?.let { Image(it.asImageBitmap(), null, Modifier.size(72.dp).clip(CircleShape)) }
+        Spacer(Modifier.height(16.dp))
+        Text(info.label, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    }
 }
