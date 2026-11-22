@@ -322,6 +322,11 @@
     <string name="media_search_app">Pesquisar %1$s</string>
     <string name="media_action_search">Pesquisar</string>
     <string name="media_action_browse">Explorar</string>
+    <string name="media_action_show_video">Mostrar vídeo</string>
+    <string name="media_video_close">Voltar ao leitor</string>
+    <string name="media_video_full_screen">Ecrã inteiro</string>
+    <string name="media_video_exit_full_screen">Sair do ecrã inteiro</string>
+    <string name="media_video_paused_driving">Vídeo em pausa durante a condução; o som continua.</string>
     <string name="media_now_playing_label">A reproduzir</string>
     <string name="media_nothing_here">Nada aqui</string>
     <string name="media_couldnt_load_more">Não foi possível carregar mais</string>
@@ -386,6 +391,8 @@
     <string name="standalone_not_native">Não é uma app do Android Auto · uso quando estacionado</string>
     <string name="standalone_starting">A iniciar…</string>
     <string name="standalone_paused_driving">Em pausa durante a condução.</string>
+    <string name="standalone_media_video_title">Vídeo de apps multimédia</string>
+    <string name="standalone_media_video_subtitle">Adiciona \"Mostrar vídeo\" ao ecrã multimédia do carro: a app multimédia abre no ecrã do carro para o seu vídeo. Só estacionado; a capa volta quando conduz.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Navegador</string>
     <string name="browser_app_row_subtitle">Um navegador web no ecrã do carro, para quando está estacionado</string>

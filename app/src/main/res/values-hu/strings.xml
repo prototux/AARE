@@ -322,6 +322,11 @@
     <string name="media_search_app">%1$s keresése</string>
     <string name="media_action_search">Keresés</string>
     <string name="media_action_browse">Böngészés</string>
+    <string name="media_action_show_video">Videó megjelenítése</string>
+    <string name="media_video_close">Vissza a lejátszóhoz</string>
+    <string name="media_video_full_screen">Teljes képernyő</string>
+    <string name="media_video_exit_full_screen">Kilépés a teljes képernyőből</string>
+    <string name="media_video_paused_driving">A videó vezetés közben szünetel; a hang szól tovább.</string>
     <string name="media_now_playing_label">Most szól</string>
     <string name="media_nothing_here">Itt nincs semmi</string>
     <string name="media_couldnt_load_more">Nem lehetett többet betölteni</string>
@@ -386,6 +391,8 @@
     <string name="standalone_not_native">Nem Android Auto alkalmazás · használat álló autóban</string>
     <string name="standalone_starting">Indítás…</string>
     <string name="standalone_paused_driving">Vezetés közben szüneteltetve.</string>
+    <string name="standalone_media_video_title">Videó médiaalkalmazásokból</string>
+    <string name="standalone_media_video_subtitle">Hozzáadja a(z) „Videó megjelenítése” gombot az autó médiaképernyőjéhez: a médiaalkalmazás az autó képernyőjén nyílik meg a videójához. Csak parkoláskor; vezetés közben visszatér a borítókép.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Böngésző</string>
     <string name="browser_app_row_subtitle">Webböngésző az autó képernyőjén, amikor parkolsz</string>

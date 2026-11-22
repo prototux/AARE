@@ -310,6 +310,11 @@
     <string name="media_search_app">在 %1$s 中搜索</string>
     <string name="media_action_search">搜索</string>
     <string name="media_action_browse">浏览</string>
+    <string name="media_action_show_video">显示视频</string>
+    <string name="media_video_close">返回播放器</string>
+    <string name="media_video_full_screen">全屏</string>
+    <string name="media_video_exit_full_screen">退出全屏</string>
+    <string name="media_video_paused_driving">行驶时视频已暂停；声音继续播放。</string>
     <string name="media_now_playing_label">正在播放</string>
     <string name="media_nothing_here">这里没有内容</string>
     <string name="media_couldnt_load_more">无法加载更多内容</string>
@@ -370,6 +375,8 @@
     <string name="standalone_not_native">不是 Android Auto 应用 · 仅限停车时使用</string>
     <string name="standalone_starting">正在启动…</string>
     <string name="standalone_paused_driving">行驶时已暂停。</string>
+    <string name="standalone_media_video_title">媒体应用的视频</string>
+    <string name="standalone_media_video_subtitle">在车机媒体界面添加“显示视频”：媒体应用会在车机屏幕上打开以播放视频。仅限停车时；行驶时恢复显示封面。</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">浏览器</string>
     <string name="browser_app_row_subtitle">车载屏幕上的网页浏览器，供停车时使用</string>

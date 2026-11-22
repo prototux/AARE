@@ -225,3 +225,13 @@ voice.
 - AARE has no listening (speech-to-text) of its own to apply the "exclusive transient focus while
   listening" half of the request to: `CarRuntime.openMicrophone` only relays the car's microphone
   to a connected car app (an assistant such as Lapin), which requests its own focus if it wants to.
+
+## Video from media apps: the app itself, parked only
+
+"Show video" on the car's media screen launches the media app on the car screen with the
+standalone-app launcher (root or Shizuku), instead of a video path of AARE's own: media sessions
+carry no video, and the app's own player already handles its streams and DRM. It is opt-in, under
+the standalone apps' switch. The app's screen sits above AARE's controls, or fills the app area
+(not the rail). When driving starts, the app stays on its display for its sound, under the cover
+art. Parking again hands the display a new surface rather than relaunching the app, because a
+relaunch would end the video.

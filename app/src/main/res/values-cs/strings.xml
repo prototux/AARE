@@ -322,6 +322,11 @@
     <string name="media_search_app">Hledat v %1$s</string>
     <string name="media_action_search">Hledat</string>
     <string name="media_action_browse">Procházet</string>
+    <string name="media_action_show_video">Zobrazit video</string>
+    <string name="media_video_close">Zpět na přehrávač</string>
+    <string name="media_video_full_screen">Celá obrazovka</string>
+    <string name="media_video_exit_full_screen">Ukončit celou obrazovku</string>
+    <string name="media_video_paused_driving">Video je během jízdy pozastaveno; zvuk pokračuje.</string>
     <string name="media_now_playing_label">Nyní se přehrává</string>
     <string name="media_nothing_here">Nic tady není</string>
     <string name="media_couldnt_load_more">Nepodařilo se načíst další</string>
@@ -386,6 +391,8 @@
     <string name="standalone_not_native">Není aplikací Android Auto · použití při zaparkování</string>
     <string name="standalone_starting">Spouští se…</string>
     <string name="standalone_paused_driving">Pozastaveno během jízdy.</string>
+    <string name="standalone_media_video_title">Video z aplikací médií</string>
+    <string name="standalone_media_video_subtitle">Přidá „Zobrazit video“ na obrazovku médií v autě: aplikace médií se otevře na obrazovce auta kvůli svému videu. Jen při parkování; při jízdě se vrátí obal alba.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Prohlížeč</string>
     <string name="browser_app_row_subtitle">Webový prohlížeč na obrazovce auta, pro chvíle, kdy jste zaparkováni</string>

@@ -322,6 +322,11 @@
     <string name="media_search_app">Поиск в %1$s</string>
     <string name="media_action_search">Поиск</string>
     <string name="media_action_browse">Обзор</string>
+    <string name="media_action_show_video">Показать видео</string>
+    <string name="media_video_close">Назад к плееру</string>
+    <string name="media_video_full_screen">Во весь экран</string>
+    <string name="media_video_exit_full_screen">Выйти из полноэкранного режима</string>
+    <string name="media_video_paused_driving">Видео приостановлено во время движения; звук продолжается.</string>
     <string name="media_now_playing_label">Сейчас играет</string>
     <string name="media_nothing_here">Здесь ничего нет</string>
     <string name="media_couldnt_load_more">Не удалось загрузить ещё</string>
@@ -386,6 +391,8 @@
     <string name="standalone_not_native">Не приложение Android Auto · использование на парковке</string>
     <string name="standalone_starting">Запуск…</string>
     <string name="standalone_paused_driving">Приостановлено во время движения.</string>
+    <string name="standalone_media_video_title">Видео из медиаприложений</string>
+    <string name="standalone_media_video_subtitle">Добавляет «Показать видео» на экран медиа в машине: медиаприложение открывается на экране машины для своего видео. Только на стоянке; во время движения возвращается обложка.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Браузер</string>
     <string name="browser_app_row_subtitle">Веб-браузер на экране автомобиля — для случаев, когда вы припаркованы</string>
