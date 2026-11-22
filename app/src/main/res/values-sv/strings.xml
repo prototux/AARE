@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Mörkt</string>
     <string name="setup_choice_light">Ljust</string>
+    <string name="setup_choice_night_source">Nattläge från</string>
+    <string name="setup_choice_night_source_car">Bilen</string>
+    <string name="setup_choice_night_source_light_sensor">Telefonens ljussensor</string>
     <string name="setup_choice_bar">Fält</string>
     <string name="setup_choice_bar_auto">Förarsida</string>
     <string name="setup_choice_left">Vänster</string>

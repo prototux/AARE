@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Oscuro</string>
     <string name="setup_choice_light">Claro</string>
+    <string name="setup_choice_night_source">Modo noche según</string>
+    <string name="setup_choice_night_source_car">El coche</string>
+    <string name="setup_choice_night_source_light_sensor">El sensor de luz del teléfono</string>
     <string name="setup_choice_bar">Barra</string>
     <string name="setup_choice_bar_auto">Lado del conductor</string>
     <string name="setup_choice_left">Izquierda</string>

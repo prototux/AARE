@@ -78,6 +78,9 @@
     <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Întunecat</string>
     <string name="setup_choice_light">Luminos</string>
+    <string name="setup_choice_night_source">Modul de noapte după</string>
+    <string name="setup_choice_night_source_car">Mașină</string>
+    <string name="setup_choice_night_source_light_sensor">Senzorul de lumină al telefonului</string>
     <string name="setup_choice_bar">Bară</string>
     <string name="setup_choice_bar_auto">Partea șoferului</string>
     <string name="setup_choice_left">Stânga</string>
