@@ -572,7 +572,6 @@ on from *Location > Navigation with the phone locked*, which opens AARE's app se
 and later only allow "Allow all the time" there). Without it nothing changes, and the connection
 log says what to turn on when the location type was refused. Tested by a user on a real car with
 the same one-line manifest change (#329).
-
 ## Launched apps while driving: a rule per app
 
 Each launched phone app has a driving rule, stored by package (`launch/DrivingRules.kt`): parked
@@ -598,6 +597,37 @@ apps. The dashboard's map card doesn't show its map: the launcher has one displa
 by the full-screen view, and moving it between the card and full screen would restart the app and
 its route at each switch. The card offers to open it, and shows its directions once it posts them.
 No Home/Work shortcuts: AARE has none for hosted navigation apps either.
+## Settings export and import
+
+Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each setting that may move
+between phones, with the `SharedPreferences` type Settings.kt reads it with. A setting added later
+stays out until someone adds it there on purpose.
+
+- An import file is not trusted. An entry with an unknown key, a blocked key or another type than
+  the allow-list's is skipped (and counted in the "imported" message), never written: an Int where
+  Settings calls `getBoolean` would throw `ClassCastException` on every launch, a crash loop the
+  user can only leave by clearing the app's data.
+- `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
+  head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
+  exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
+  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  be switched on by hand on the phone itself. A test checks the two lists never overlap.
+- A file carrying a blocked key (hand-edited, or from a version that exported one) leaves it
+  unchanged on import, in particular `hu_server_localhost`, `standalone_apps` and
+  `cert_auto_update`; the import message names those keys in one line ("not imported, for
+  safety"), apart from the unknown/invalid count, and `Settings.restore` refuses them a second time.
+- Device-specific state (instance id, update and certificate caches, the phone's Bluetooth MAC,
+  connection history, already-asked permissions) and anything secret (home-automation servers,
+  MQTT hosts and users, tokens, passwords) are simply not allowed. Trusted head-unit certificates
+  live in a separate preferences file (`PinnedHeadUnits`) and are never read here.
+- A "custom" wallpaper is left out on import: the photo itself isn't in the file.
+- Each value is tagged with its type rather than stored as a bare JSON value: the exported text has
+  no int/long/float distinction of its own, so an untagged `180` wouldn't say which
+  `SharedPreferences.Editor.put*` call it came from.
+- The file is read and parsed off the main thread, and refused past 1 MB (a real export is a few
+  KB). Failures show a fixed message and log only the exception's kind: a JSON error's message
+  quotes the file. After an import the settings screen is rebuilt (`key` on a generation counter),
+  so no card keeps showing, and on its next tap writing back, a value from before the import.
 
 ## Split screen: which app can take the second pane
 

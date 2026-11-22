@@ -593,6 +593,17 @@
     <string name="setup_log_save">Opslaan</string>
     <string name="setup_toggle_verbose_log_title">Uitgebreid protocollogboek</string>
     <string name="setup_toggle_verbose_log_subtitle">Legt het volledige head-unit-protocolverloop vast in dit logboek, om bij een bugrapport te voegen. Logt veel; laat dit anders uit.</string>
+    <string name="setup_section_backup">Back-up van instellingen</string>
+    <string name="setup_backup_hint">Sla je instellingen op in een bestand, of laad er een terug. Vertrouwde head units, certificaten, telefoongebonden gegevens en opties die AARE openstellen voor het netwerk of een veiligheidscontrole overslaan (head-unit-server, passagiersmodus, audio via root…) blijven buiten: stel die op elke telefoon met de hand in.</string>
+    <string name="setup_backup_export">Exporteren…</string>
+    <string name="setup_backup_import">Importeren…</string>
+    <string name="setup_backup_import_confirm_title">Instellingen vervangen?</string>
+    <string name="setup_backup_import_confirm_text">Je huidige instellingen worden overschreven door die uit het gekozen bestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="setup_backup_import_confirm_action">Vervangen</string>
+    <string name="setup_backup_import_done">Instellingen geïmporteerd.</string>
+    <string name="setup_backup_import_done_skipped">Instellingen geïmporteerd. Overgeslagen als onbekend, geblokkeerd of ongeldig: %1$d</string>
+    <string name="setup_backup_import_failed">Dit bestand kan niet worden geïmporteerd: het is geen AARE-instellingenbestand, of het is te groot.</string>
+    <string name="setup_backup_export_failed">Kan het instellingenbestand niet opslaan.</string>
     <string name="setup_nothing_to_open">Deze telefoon heeft geen app die dit kan openen</string>
     <string name="setup_wallpaper_failed">Kon deze foto niet als achtergrond gebruiken</string>
     <string name="msg_autoreply_default">Ik rijd nu, ik antwoord later.</string>

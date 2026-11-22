@@ -592,6 +592,17 @@
     <string name="setup_log_save">Guardar</string>
     <string name="setup_toggle_verbose_log_title">Registo detalhado do protocolo</string>
     <string name="setup_toggle_verbose_log_subtitle">Grava o registo completo do protocolo da unidade principal neste registo, para anexar a um relatório de erro. Regista muita informação; mantenha desligado nos outros casos.</string>
+    <string name="setup_section_backup">Cópia de segurança das definições</string>
+    <string name="setup_backup_hint">Guarde as definições num ficheiro ou volte a carregá-las. As unidades principais de confiança, os certificados, o estado próprio do telemóvel e as opções que abrem a AARE à rede ou dispensam uma verificação de segurança (servidor da unidade principal, modo passageiro, áudio por root…) ficam de fora: defina-as à mão em cada telemóvel.</string>
+    <string name="setup_backup_export">Exportar…</string>
+    <string name="setup_backup_import">Importar…</string>
+    <string name="setup_backup_import_confirm_title">Substituir as definições?</string>
+    <string name="setup_backup_import_confirm_text">As definições atuais serão substituídas pelas do ficheiro escolhido. Não é possível anular.</string>
+    <string name="setup_backup_import_confirm_action">Substituir</string>
+    <string name="setup_backup_import_done">Definições importadas.</string>
+    <string name="setup_backup_import_done_skipped">Definições importadas. Ignoradas por serem desconhecidas, bloqueadas ou inválidas: %1$d</string>
+    <string name="setup_backup_import_failed">Não é possível importar este ficheiro: não é um ficheiro de definições da AARE, ou é demasiado grande.</string>
+    <string name="setup_backup_export_failed">Não foi possível guardar o ficheiro de definições.</string>
     <string name="setup_nothing_to_open">Este telemóvel não tem nenhuma aplicação que possa abrir isto</string>
     <string name="setup_wallpaper_failed">Não foi possível utilizar esta fotografia como fundo</string>
     <string name="msg_autoreply_default">Estou a conduzir agora, responderei mais tarde.</string>

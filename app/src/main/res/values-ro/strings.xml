@@ -592,6 +592,17 @@
     <string name="setup_log_save">Salvează</string>
     <string name="setup_toggle_verbose_log_title">Jurnal detaliat al protocolului</string>
     <string name="setup_toggle_verbose_log_subtitle">Înregistrează traseul complet al protocolului cu unitatea multimedia în acest jurnal, pentru a-l atașa la un raport de eroare. Înregistrează mult; lasă-l dezactivat altfel.</string>
+    <string name="setup_section_backup">Copie de rezervă a setărilor</string>
+    <string name="setup_backup_hint">Salvați setările într-un fișier sau încărcați-le înapoi. Unitățile centrale de încredere, certificatele, starea proprie telefonului și opțiunile care deschid AARE către rețea sau ocolesc o verificare de siguranță (server unitate centrală, mod pasager, audio prin root…) sunt lăsate deoparte: setați-le manual pe fiecare telefon.</string>
+    <string name="setup_backup_export">Exportă…</string>
+    <string name="setup_backup_import">Importă…</string>
+    <string name="setup_backup_import_confirm_title">Înlocuiți setările?</string>
+    <string name="setup_backup_import_confirm_text">Setările actuale vor fi suprascrise cu cele din fișierul ales. Acțiunea nu poate fi anulată.</string>
+    <string name="setup_backup_import_confirm_action">Înlocuiește</string>
+    <string name="setup_backup_import_done">Setări importate.</string>
+    <string name="setup_backup_import_done_skipped">Setări importate. Omise ca necunoscute, blocate sau nevalide: %1$d</string>
+    <string name="setup_backup_import_failed">Acest fișier nu poate fi importat: nu este un fișier de setări AARE sau este prea mare.</string>
+    <string name="setup_backup_export_failed">Fișierul de setări nu a putut fi salvat.</string>
     <string name="setup_nothing_to_open">Acest telefon nu are nicio aplicație care poate deschide asta</string>
     <string name="setup_wallpaper_failed">Nu s-a putut folosi această fotografie ca fundal</string>
     <string name="msg_autoreply_default">Conduc acum, voi răspunde mai târziu.</string>

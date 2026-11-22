@@ -592,6 +592,17 @@
     <string name="setup_log_save">Uložit</string>
     <string name="setup_toggle_verbose_log_title">Podrobný protokol komunikace</string>
     <string name="setup_toggle_verbose_log_subtitle">Zaznamenat do tohoto protokolu úplný průběh komunikace s hlavní jednotkou, pro přiložení k hlášení chyby. Zaznamenává se hodně; jinak ho nechte vypnutý.</string>
+    <string name="setup_section_backup">Záloha nastavení</string>
+    <string name="setup_backup_hint">Uložte nastavení do souboru nebo je z něj načtěte zpět. Důvěryhodné hlavní jednotky, certifikáty, stav vázaný na telefon a volby, které otevírají AARE do sítě nebo obcházejí bezpečnostní kontrolu (server hlavní jednotky, režim spolujezdce, zvuk přes root…), se nepřenášejí: nastavte je ručně na každém telefonu.</string>
+    <string name="setup_backup_export">Exportovat…</string>
+    <string name="setup_backup_import">Importovat…</string>
+    <string name="setup_backup_import_confirm_title">Nahradit nastavení?</string>
+    <string name="setup_backup_import_confirm_text">Tímto přepíšete současné nastavení nastavením z vybraného souboru. Nelze to vrátit zpět.</string>
+    <string name="setup_backup_import_confirm_action">Nahradit</string>
+    <string name="setup_backup_import_done">Nastavení importováno.</string>
+    <string name="setup_backup_import_done_skipped">Nastavení importováno. Vynecháno (neznámé, blokované nebo neplatné): %1$d</string>
+    <string name="setup_backup_import_failed">Tento soubor nelze importovat: není to soubor nastavení AARE, nebo je příliš velký.</string>
+    <string name="setup_backup_export_failed">Soubor s nastavením se nepodařilo uložit.</string>
     <string name="setup_nothing_to_open">Tento telefon nemá aplikaci, která by to mohla otevřít</string>
     <string name="setup_wallpaper_failed">Tuto fotku se nepodařilo použít jako tapetu</string>
     <string name="msg_autoreply_default">Právě řídím, odpovím později.</string>

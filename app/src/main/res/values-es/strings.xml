@@ -592,6 +592,17 @@
     <string name="setup_log_save">Guardar</string>
     <string name="setup_toggle_verbose_log_title">Registro detallado del protocolo</string>
     <string name="setup_toggle_verbose_log_subtitle">Guarda en este registro la traza completa del protocolo con la unidad central, para adjuntarla a un informe de error. Genera mucho registro; déjalo desactivado si no lo necesitas.</string>
+    <string name="setup_section_backup">Copia de seguridad de los ajustes</string>
+    <string name="setup_backup_hint">Guarda tus ajustes en un archivo o vuelve a cargarlos. Las unidades centrales de confianza, los certificados, el estado propio del teléfono y las opciones que abren AARE a la red o anulan una comprobación de seguridad (servidor de unidad central, modo pasajero, audio con root…) se dejan fuera: configúralos a mano en cada teléfono.</string>
+    <string name="setup_backup_export">Exportar…</string>
+    <string name="setup_backup_import">Importar…</string>
+    <string name="setup_backup_import_confirm_title">¿Reemplazar tus ajustes?</string>
+    <string name="setup_backup_import_confirm_text">Esto sobrescribe tus ajustes actuales con los del archivo elegido. No se puede deshacer.</string>
+    <string name="setup_backup_import_confirm_action">Reemplazar</string>
+    <string name="setup_backup_import_done">Ajustes importados.</string>
+    <string name="setup_backup_import_done_skipped">Ajustes importados. Omitidos por desconocidos, bloqueados o no válidos: %1$d</string>
+    <string name="setup_backup_import_failed">No se puede importar este archivo: no es un archivo de ajustes de AARE o es demasiado grande.</string>
+    <string name="setup_backup_export_failed">No se pudo guardar el archivo de ajustes.</string>
     <string name="setup_nothing_to_open">Este teléfono no tiene ninguna app que pueda abrir esto</string>
     <string name="setup_wallpaper_failed">No se pudo usar esta foto como fondo de pantalla</string>
     <string name="msg_autoreply_default">Estoy conduciendo ahora, te responderé más tarde.</string>
