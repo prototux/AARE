@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.os.Build
+import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import android.view.InputEvent
@@ -86,6 +87,27 @@ class LaunchHostService : ILaunchHost.Stub {
         inject(ev)
     }
 
+    /**
+     * Before display [id] goes, hands the phone's focus to the display next in line, as a touch
+     * there would: another app hosted in the car, else the phone's own screen. A display removed
+     * while focused leaves Android 17's launcher on it, and Recents does nothing until a reboot; in
+     * the car no touch moves the focus first. Nothing happens when another display already leads.
+     */
+    private fun focusPhone(id: Int) = runCatching {
+        val atm = Class.forName("android.app.ActivityTaskManager").getMethod("getService").invoke(null)
+        // Root tasks from top to bottom, across displays.
+        val tasks = atm.javaClass.getMethod("getAllRootTaskInfos").invoke(atm) as List<*>
+        val next = nextFocus(tasks.mapNotNull { t -> t?.let { it.javaClass.getField("displayId").getInt(it) } }, id)
+        // The task manager's call where it has one, else the window manager's (gone in Android 17).
+        runCatching { atm.javaClass.getMethod("focusTopTask", Int::class.javaPrimitiveType).invoke(atm, next) }.getOrElse { first ->
+            Log.i(TAG, "focusTopTask: ${(first.cause ?: first).message}")
+            val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "window") as IBinder
+            val wm = Class.forName("android.view.IWindowManager\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)
+            wm.javaClass.getMethod("moveDisplayToTopIfAllowed", Int::class.javaPrimitiveType).invoke(wm, next)
+        }
+        Log.i(TAG, "focus on display $next before display $id goes")
+    }.onFailure { Log.w(TAG, "focus hand-back failed: ${(it.cause ?: it).message}") }
+
     override fun stop() {
         screenOffReceiver?.let { receiver ->
             receiverContext?.let { context -> runCatching { context.unregisterReceiver(receiver) } }
@@ -94,7 +116,7 @@ class LaunchHostService : ILaunchHost.Stub {
         receiverContext = null
         displayWakeLock?.let { lock -> runCatching { if (lock.isHeld) lock.release() } }
         displayWakeLock = null
-        display?.let { runCatching { it.release() } }
+        display?.let { focusPhone(displayId); runCatching { it.release() } }
         display = null
         displayId = -1
     }
@@ -226,6 +248,7 @@ class LaunchHostService : ILaunchHost.Stub {
                 "Landroid/app/ActivityThread;", "Landroid/hardware/input/InputManager;",
                 "Landroid/hardware/display/DisplayManager;", "Landroid/os/PowerManager;",
                 "Landroid/view/MotionEvent;", "Landroid/view/KeyEvent;",
+                "Landroid/os/ServiceManager;", "Landroid/view/IWindowManager", "Landroid/app/ActivityTaskManager", "Landroid/app/IActivityTaskManager", "Landroid/app/TaskInfo;",
             )
         }
     }
@@ -245,3 +268,6 @@ class LaunchHostService : ILaunchHost.Stub {
         const val FULL_FLAGS = FLAG_PUBLIC or FLAG_PRESENTATION or FLAG_TRUSTED or FLAG_OWN_DISPLAY_GROUP or FLAG_ALWAYS_UNLOCKED
     }
 }
+
+/** The display to focus before display [gone] goes: the top one of [displays] (top to bottom, repeats allowed) other than it, else the phone's. */
+internal fun nextFocus(displays: List<Int>, gone: Int): Int = displays.firstOrNull { it != gone } ?: android.view.Display.DEFAULT_DISPLAY

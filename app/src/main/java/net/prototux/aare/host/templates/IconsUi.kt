@@ -55,7 +55,8 @@ import net.prototux.aare.ui.theme.LocalCarColors
  * to fall back to, a white glyph drawn for Android Auto's dark screen would otherwise vanish on a
  * light theme: on a light theme only, one whose opaque pixels look like a monochrome glyph (see
  * [looksLikeMonochromeGlyph]) is tinted with the current content colour instead. Photos, album
- * art and coloured logos fail that check and are never touched, on either kind of theme.
+ * art and coloured logos fail that check and are never touched, on either kind of theme, except
+ * for the few apps whose custom icons are always tinted ([TemplateHost.forceIconTint]).
  */
 @Composable
 internal fun CarIconView(
@@ -84,7 +85,9 @@ internal fun CarIconView(
             }
             // A white glyph the app drew for Android Auto's own dark screen is invisible here on a
             // light theme; a photo, album art or a coloured logo fails the pixel check and is left alone.
-            val glyphTint = LocalContentColor.current.takeIf { !scheme.isNight && loaded.monochromeGlyph }
+            // A few apps' icons are always tinted for them (TemplateHost.forceIconTint).
+            val forced = LocalTemplateHost.current.forceIconTint
+            val glyphTint = LocalContentColor.current.takeIf { forced || (!scheme.isNight && loaded.monochromeGlyph) }
             val filterColor = tint ?: monochromeTint?.takeIf { icon.isResource() } ?: glyphTint
             Image(
                 loaded.bitmap,

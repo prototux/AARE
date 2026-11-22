@@ -2,6 +2,7 @@ package net.prototux.aare.host
 
 import android.content.Intent
 import android.location.Location
+import androidx.car.app.model.Alert
 import androidx.car.app.navigation.model.Trip
 
 /**
@@ -33,6 +34,9 @@ interface HostEnvironment {
     fun navigationStarted(app: CarAppConnection) {}
     fun navigationEnded(app: CarAppConnection) {}
     fun tripUpdated(app: CarAppConnection, trip: Trip) {}
+
+    /** The app showed an alert, or its alert went away ([alert] null). */
+    fun alertChanged(app: CarAppConnection, alert: Alert?) {}
 
     /**
      * Opens the car microphone for an app. PCM 16 kHz mono 16-bit little endian is written to
