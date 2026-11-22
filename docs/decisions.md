@@ -665,14 +665,20 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
   (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
   then those stay allowlisted.
 
-## The voice button stops the assistant too
+## Stopping the assistant: the voice button, or a red stop
 
-A second press of the voice button (on the car screen or the steering wheel) while the assistant
-is showing stops it, as Back does (a setting, *Voice button stops the assistant*, on by default as
-the official phone behaves; off, every press asks the assistant again): the assistant opened on the car screen closes, the assistant bar
-closes and its app loses the car's microphone (told through its stop-recording callback), and an
-assistant app open full screen stops listening. An assistant that only runs on the phone can't be
-stopped from the car, so a press still opens it.
+*Stopping the assistant* (Voice assistant settings) picks how the driver stops it, the steering
+wheel's voice key included:
+- **The voice button turns into Stop** (default): while the assistant is on (listening, or its bar
+  or car-screen view showing), the voice button is red with a stop icon, and a press stops it. The
+  bar keeps a plain close button that stops it too.
+- **Red stop button, the voice button asks again**: a big red stop on the assistant bar; the voice
+  button starts a new request, as before 1.6.0.
+- **Red stop button, the voice button stops too**: the red stop, and a second press stops as well.
+Stopping closes the assistant opened on the car screen, or closes the bar and takes its app's
+microphone away (told through its stop-recording callback), or makes an assistant app open full
+screen stop listening. An assistant that only runs on the phone can't be stopped from the car, so a
+press still opens it.
 
 Stopping the assistant bar (its big red stop button, the back key, or the voice button again) sends
 back to the assistant first, while its app is still started (hiding the bar stops it): Lapin takes
