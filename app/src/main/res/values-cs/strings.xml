@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Světlý</string>
     <string name="setup_choice_bar">Lišta</string>
     <string name="setup_choice_bar_auto">Strana řidiče</string>
+    <string name="setup_choice_status_items">Hodiny, signál a baterie</string>
+    <string name="setup_choice_status_items_auto">Podle auta</string>
+    <string name="setup_choice_status_items_show">Vždy zobrazit</string>
+    <string name="setup_choice_status_items_hide">Vždy skrýt</string>
+    <string name="setup_hint_status_items">Volba Podle auta vynechá, co auto už zobrazuje na své obrazovce.</string>
     <string name="setup_choice_left">Vlevo</string>
     <string name="setup_choice_right">Vpravo</string>
     <string name="setup_choice_bottom">Dole</string>

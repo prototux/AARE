@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Hell</string>
     <string name="setup_choice_bar">Leiste</string>
     <string name="setup_choice_bar_auto">Fahrerseite</string>
+    <string name="setup_choice_status_items">Uhr, Empfang und Akku</string>
+    <string name="setup_choice_status_items_auto">Wie das Auto</string>
+    <string name="setup_choice_status_items_show">Immer anzeigen</string>
+    <string name="setup_choice_status_items_hide">Immer ausblenden</string>
+    <string name="setup_hint_status_items">„Wie das Auto“ lässt weg, was das Auto schon auf seinem Bildschirm zeigt.</string>
     <string name="setup_choice_left">Links</string>
     <string name="setup_choice_right">Rechts</string>
     <string name="setup_choice_bottom">Unten</string>

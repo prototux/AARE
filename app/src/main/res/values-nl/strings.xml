@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Licht</string>
     <string name="setup_choice_bar">Balk</string>
     <string name="setup_choice_bar_auto">Bestuurderszijde</string>
+    <string name="setup_choice_status_items">Klok, signaal en batterij</string>
+    <string name="setup_choice_status_items_auto">Zoals de auto</string>
+    <string name="setup_choice_status_items_show">Altijd tonen</string>
+    <string name="setup_choice_status_items_hide">Altijd verbergen</string>
+    <string name="setup_hint_status_items">Zoals de auto laat weg wat de auto al op zijn eigen scherm toont.</string>
     <string name="setup_choice_left">Links</string>
     <string name="setup_choice_right">Rechts</string>
     <string name="setup_choice_bottom">Onder</string>

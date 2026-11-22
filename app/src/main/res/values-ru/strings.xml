@@ -80,6 +80,11 @@
     <string name="setup_choice_light">Светлый</string>
     <string name="setup_choice_bar">Панель</string>
     <string name="setup_choice_bar_auto">Сторона водителя</string>
+    <string name="setup_choice_status_items">Часы, сигнал и батарея</string>
+    <string name="setup_choice_status_items_auto">Как в машине</string>
+    <string name="setup_choice_status_items_show">Всегда показывать</string>
+    <string name="setup_choice_status_items_hide">Всегда скрывать</string>
+    <string name="setup_hint_status_items">«Как в машине» не показывает то, что машина уже выводит на свой экран.</string>
     <string name="setup_choice_left">Слева</string>
     <string name="setup_choice_right">Справа</string>
     <string name="setup_choice_bottom">Снизу</string>
