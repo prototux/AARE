@@ -113,6 +113,8 @@
     <string name="vehicles_rule_count">%1$d rule(s) loaded</string>
     <string name="vehicles_import">Import file…</string>
     <string name="vehicles_template">Write template</string>
+    <string name="vehicles_malformed_at">vehicles.json has an error at line %1$d, column %2$d (%3$s): its rules are ignored.</string>
+    <string name="vehicles_malformed">vehicles.json can\'t be used (%1$s): its rules are ignored.</string>
     <string name="setup_tagline">Open-source car projection</string>
     <string name="setup_status_certificate">certificate: %1$s</string>
     <string name="setup_status_disconnected_hint">Plug the phone into the car\'s Android Auto USB port, or connect to a paired car wirelessly.</string>

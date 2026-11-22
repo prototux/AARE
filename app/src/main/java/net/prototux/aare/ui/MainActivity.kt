@@ -1377,17 +1377,26 @@ private fun VehicleOverridesCard() {
     val ctx = LocalContext.current
     val file = remember { net.prototux.aare.car.VehicleOverrides.file(ctx) }
     var count by remember { mutableIntStateOf(net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)) }
+    var problem by remember { mutableStateOf(net.prototux.aare.car.VehicleOverrides.problem(ctx)) }
     val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         runCatching {
             ctx.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
         }.onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
         count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+        problem = net.prototux.aare.car.VehicleOverrides.problem(ctx)
     }
     Section(stringResource(R.string.vehicles_section_title)) {
         Text(stringResource(R.string.vehicles_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.vehicles_rule_count, count), style = MaterialTheme.typography.bodyMedium)
+        problem?.let { p ->
+            Text(
+                if (p.line != null && p.column != null) stringResource(R.string.vehicles_malformed_at, p.line, p.column, p.reason)
+                else stringResource(R.string.vehicles_malformed, p.reason),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error,
+            )
+        }
         Text(file.absolutePath, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
         Row {
@@ -1396,6 +1405,7 @@ private fun VehicleOverridesCard() {
                 runCatching { file.parentFile?.mkdirs(); file.writeText(net.prototux.aare.car.VehicleOverrides.template()) }
                     .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
                 count = net.prototux.aare.car.VehicleOverrides.ruleCount(ctx)
+                problem = net.prototux.aare.car.VehicleOverrides.problem(ctx)
                 Toast.makeText(ctx, file.absolutePath, Toast.LENGTH_LONG).show()
             }) { Text(stringResource(R.string.vehicles_template)) }
         }

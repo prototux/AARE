@@ -437,6 +437,8 @@
     <string name="vehicles_rule_count">%1$d regel(ler) indlæst</string>
     <string name="vehicles_import">Importer fil…</string>
     <string name="vehicles_template">Skriv skabelon</string>
+    <string name="vehicles_malformed_at">vehicles.json har en fejl i linje %1$d, kolonne %2$d (%3$s): dens regler ignoreres.</string>
+    <string name="vehicles_malformed">vehicles.json kan ikke bruges (%1$s): dens regler ignoreres.</string>
     <string name="setup_toggle_force_h264_title">Gennemtving H.264-video</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard bruger AARE den bedste codec, som bilen og telefonen har til fælles (H.265…). Slå til, hvis bilens billede er forvrænget.</string>
     <!-- common / setup / updates / audio / media / car app errors -->
