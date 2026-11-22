@@ -302,6 +302,7 @@
     <string name="notif_cert_download_failed">Varmenteen lataus epäonnistui: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Yhdistetään langattomasti…</string>
     <string name="notif_status_not_connected">Ei yhdistetty</string>
+    <string name="notif_status_reconnecting">Yhteys autoon katkesi, yhdistetään uudelleen (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · säilyttää näytön kaappausluvan auton äänille (Pysäytä vapauttaa sen)</string>
     <string name="notif_cert_changed_title">Soittolaitteen varmenne vaihtui</string>
     <string name="notif_new_head_unit_title">Uusi soittolaite</string>

@@ -203,6 +203,13 @@ class CarSession(
      */
     val closedBeforeVersionExchange: Boolean get() = aap.closedDuring == AapSession.State.VERSION
 
+    /** The protocol state the session was in when it closed. */
+    val closedDuring: AapSession.State get() = aap.closedDuring
+
+    /** Why the session failed; null when it ended with a bye-bye from either side (or is still running). */
+    @Volatile var closeError: Throwable? = null
+        private set
+
     /** The head unit listed its services: the connection itself worked, whatever happens next. */
     val reachedServiceDiscovery: Boolean get() = aap.discovery != null
 
@@ -393,6 +400,7 @@ class CarSession(
     private var pausedByCar = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
+        closeError = error
         val rejected = session.certificateRefusal
         val refusal = session.pinRefusal
         main.post {

@@ -302,6 +302,7 @@
     <string name="notif_cert_download_failed">Не удалось скачать сертификат: %1$s</string>
     <string name="notif_status_connecting_wirelessly">Беспроводное соединение…</string>
     <string name="notif_status_not_connected">Не подключено</string>
+    <string name="notif_status_reconnecting">Соединение с автомобилем потеряно, повторное подключение (%1$d/%2$d)…</string>
     <string name="notif_keeping_consent_suffix">%1$s · сохраняет согласие на захват экрана для звука в автомобиле (Остановить освободит его)</string>
     <string name="notif_cert_changed_title">Сертификат головного устройства изменился</string>
     <string name="notif_new_head_unit_title">Новое головное устройство</string>
