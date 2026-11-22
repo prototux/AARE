@@ -17,7 +17,6 @@ import androidx.car.app.navigation.model.MapWithContentTemplate
 import androidx.car.app.navigation.model.PanModeDelegate
 import androidx.car.app.navigation.model.PlaceListNavigationTemplate
 import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -63,12 +62,13 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -189,21 +189,27 @@ private fun CompactMapScaffold(modifier: Modifier, overlay: (@Composable BoxWith
             }
         }
     }
-    ReportAreas(registry, remember { mutableStateOf(false) })
+    // Some apps put their own widgets at the bottom of the visible area, over what they draw at
+    // the bottom of the surface (HERE WeGo's speed over its logo): an optional margin lifts them.
+    val inset = with(LocalDensity.current) { LocalTemplateHost.current.mapCardBottomInsetDp.dp.toPx() }
+    ReportAreas(registry, remember { mutableStateOf(false) }, inset)
 }
 
 /** Sends visible/stable area changes (map-surface px) to the app, deduplicated. */
 @Composable
-private fun ReportAreas(registry: ObstructionRegistry, panState: androidx.compose.runtime.State<Boolean>) {
+private fun ReportAreas(registry: ObstructionRegistry, panState: androidx.compose.runtime.State<Boolean>, bottomInsetPx: Float = 0f) {
     val host = LocalTemplateHost.current
-    LaunchedEffect(registry, host) {
+    LaunchedEffect(registry, host, bottomInsetPx) {
         var lastVisible: List<Int>? = null
         var lastStable: List<Int>? = null
         snapshotFlow { Triple(registry.map, registry.rects.values.toList(), panState.value) }
             .distinctUntilChanged()
             .collect { (map, rects, pan) ->
                 if (map.width <= 0f || map.height <= 0f) return@collect
-                val free = MapGeometry.unobstructed(map.toBox(), rects.map { it.toBox() })
+                val whole = MapGeometry.unobstructed(map.toBox(), rects.map { it.toBox() })
+                // never more than a quarter of the free height, so a small card keeps a usable area
+                val inset = bottomInsetPx.coerceIn(0f, maxOf(0f, whole.height / 4f))
+                val free = MapGeometry.Box(whole.left, whole.top, whole.right, whole.bottom - inset)
                 val area = listOf(
                     (free.left - map.left).roundToInt(), (free.top - map.top).roundToInt(),
                     (free.right - map.left).roundToInt(), (free.bottom - map.top).roundToInt(),
@@ -424,8 +430,7 @@ private fun MapListCard(
             {
                 Box(
                     Modifier.size(LocalCarDimens.current.touchTarget).clip(CircleShape)
-                        .carFocusHighlight(CircleShape)
-                        .clickable { safeCall("onContentRefreshRequested") { d.sendContentRefreshRequested(host.done) } },
+                        .carClickable(CircleShape) { safeCall("onContentRefreshRequested") { d.sendContentRefreshRequested(host.done) } },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Rounded.Refresh, "Refresh", tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(32.dp))

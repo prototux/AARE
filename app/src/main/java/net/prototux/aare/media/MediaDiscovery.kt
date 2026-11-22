@@ -8,6 +8,11 @@ import android.content.IntentFilter
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -96,7 +101,7 @@ internal class MediaDiscovery(private val context: Context, private val scope: C
                     packageName = si.packageName,
                     service = ComponentName(si.packageName, si.name),
                     label = appInfo.loadLabel(pm).toString(),
-                    icon = runCatching { appInfo.loadIcon(pm).toBitmap(ICON_PX, ICON_PX) }.getOrNull(),
+                    icon = runCatching { iconBitmap(appInfo.loadIcon(pm), si.packageName, ICON_PX) }.getOrNull(),
                 )
             } catch (e: Exception) {
                 Log.w(TAG, "skipping ${si.packageName}: $e")
@@ -131,11 +136,23 @@ internal class MediaDiscovery(private val context: Context, private val scope: C
         if (Build.VERSION.SDK_INT >= 33) getApplicationInfo(pkg, PackageManager.ApplicationInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
         else @Suppress("DEPRECATION") getApplicationInfo(pkg, PackageManager.GET_META_DATA)
 
+    /**
+     * Spotify's adaptive icon ships with no background layer, so compositing it as is leaves the
+     * foreground floating on nothing; give it the same solid black backing it gets elsewhere, with
+     * the system's own adaptive-icon mask rather than a hand-drawn shape.
+     */
+    private fun iconBitmap(icon: Drawable, packageName: String, sizePx: Int): Bitmap {
+        val drawable = if (packageName == SPOTIFY_PACKAGE && icon is AdaptiveIconDrawable)
+            AdaptiveIconDrawable(ColorDrawable(Color.BLACK), icon.foreground) else icon
+        return drawable.toBitmap(sizePx, sizePx)
+    }
+
     companion object {
         private const val TAG = "AareMediaApps"
         const val ACTION_MEDIA3_LIBRARY = "androidx.media3.session.MediaLibraryService"
         const val ACTION_LEGACY_BROWSER = "android.media.browse.MediaBrowserService"
         private const val META_CAR_APPLICATION = "com.google.android.gms.car.application"
+        private const val SPOTIFY_PACKAGE = "com.spotify.music"
         private const val ICON_PX = 128
     }
 }

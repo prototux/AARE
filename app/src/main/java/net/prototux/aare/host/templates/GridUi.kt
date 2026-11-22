@@ -7,7 +7,6 @@ import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,8 +43,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.distinctUntilChanged
 import net.prototux.aare.R
-import net.prototux.aare.ui.car.carFocusHighlight
 
+import net.prototux.aare.ui.car.carClickable
 /** GridTemplate: tiles of GridItems (icons or large images), with header and floating actions. */
 @Composable
 internal fun GridTemplateView(t: GridTemplate) {
@@ -118,7 +117,7 @@ internal fun GridItemCell(item: GridItem, circle: Boolean, cell: Dp, modifier: M
     val shape: Shape = if (circle) CircleShape else MaterialTheme.shapes.medium
     Column(
         modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
-            .then(if (delegate != null) Modifier.carFocusHighlight(MaterialTheme.shapes.medium).clickable { host.click(delegate) } else Modifier)
+            .carClickable(MaterialTheme.shapes.medium, onClick = delegate?.let { d -> { host.click(d) } })
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
