@@ -24,25 +24,36 @@ import kotlin.math.abs
  *  - plus a runtime guard: a coordinate past the declared panel proves the panel is too small, so
  *    that axis falls back to the visible area.
  *
+ * The head unit's touches belong to its own screen, not to the stream AARE chose: with a lower
+ * resolution picked (a setting or a vehicles.json cap), a panel the size of the car's screen is
+ * larger than the stream's visible area, and must not be taken for visible-area pixels (#269:
+ * every tap landed 1.5x off at 720p on a 1080p unit). So that check uses [nativeWidth] x
+ * [nativeHeight], the visible area of the car's largest resolution; the same as the stream's when
+ * nothing lowered it.
+ *
  * Output is clamped to the visible area so a stray report never dispatches off the surface.
  */
 class TouchMapper(
     touchWidth: Int,
     touchHeight: Int,
     private val layout: ProjectionLayout,
+    nativeWidth: Int = layout.visibleWidth,
+    nativeHeight: Int = layout.visibleHeight,
 ) {
     private val visW = layout.visibleWidth.coerceAtLeast(1)
     private val visH = layout.visibleHeight.coerceAtLeast(1)
+    private val natW = nativeWidth.coerceAtLeast(visW)
+    private val natH = nativeHeight.coerceAtLeast(visH)
     private val declX = touchWidth
     private val declY = touchHeight
 
-    /** The declared panel is larger than, but the same shape as, the visible area: visible-area pixels. */
-    private val visiblePixels = touchWidth > visW && touchHeight > visH &&
-        aspectClose(touchWidth, touchHeight, visW, visH)
+    /** The declared panel is larger than, but the same shape as, the car's visible area: visible-area pixels. */
+    private val visiblePixels = touchWidth > natW && touchHeight > natH &&
+        aspectClose(touchWidth, touchHeight, natW, natH)
 
     // The source extent each axis's coordinates are expressed in; may latch to the visible area.
-    private var srcX = if (touchWidth > 0 && !visiblePixels) touchWidth else visW
-    private var srcY = if (touchHeight > 0 && !visiblePixels) touchHeight else visH
+    private var srcX = if (visiblePixels) natW else if (touchWidth > 0) touchWidth else visW
+    private var srcY = if (visiblePixels) natH else if (touchHeight > 0) touchHeight else visH
 
     private var downTime = 0L
 

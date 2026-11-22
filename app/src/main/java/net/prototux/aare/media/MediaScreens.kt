@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.OndemandVideo
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
@@ -67,7 +68,7 @@ import net.prototux.aare.ui.theme.LocalCarDimens
  * browse tree, the now-playing view, the queue or the search keyboard.
  */
 @Composable
-internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolean, modifier: Modifier) {
+internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolean, modifier: Modifier, onShowVideo: (() -> Unit)? = null) {
     LaunchedEffect(app.service) { hub.select(app) }
     val current by hub.connection.collectAsState()
     val connection = current?.takeIf { it.app.service == app.service }
@@ -92,7 +93,7 @@ internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolea
     BackHandler(enabled = ui.canGoBack) { ui.back() }
 
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
-        TopBar(app, ui, status, source)
+        TopBar(app, ui, status, source, onShowVideo)
         Box(Modifier.weight(1f).fillMaxWidth()) {
             AnimatedContent(
                 targetState = ui.view,
@@ -111,7 +112,7 @@ internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolea
 }
 
 @Composable
-private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, source: SourceState) {
+private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, source: SourceState, onShowVideo: (() -> Unit)?) {
     val d = LocalCarDimens.current
     Row(
         Modifier.fillMaxWidth().height(d.touchTarget + 16.dp).padding(horizontal = 12.dp),
@@ -135,6 +136,9 @@ private fun TopBar(app: MediaApp, ui: MediaUi, status: MediaConnection.Status, s
                 }
                 else -> Title(app.label)
             }
+        }
+        if (onShowVideo != null && ui.view != MediaView.SEARCH) {
+            CircleButton(Icons.Rounded.OndemandVideo, stringResource(R.string.media_action_show_video), onClick = onShowVideo)
         }
         val ready = status as? MediaConnection.Status.Ready
         if (ready?.searchSupported == true && ui.view == MediaView.BROWSE) {

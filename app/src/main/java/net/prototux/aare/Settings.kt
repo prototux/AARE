@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import java.util.UUID
+import net.prototux.aare.car.CarKeyMapCodec
 
 /** User settings, in one SharedPreferences file. */
 class Settings(context: Context) {
@@ -126,6 +127,16 @@ class Settings(context: Context) {
 
     private val legacyCarPlay: Boolean get() = prefs.getString("car_style", null) == "carplay"
 
+    /** The car screen's text size, an id from `CarTextSize`: default, larger or largest. */
+    var carTextSize: String
+        get() = prefs.getString("car_text_size", null) ?: "default"
+        set(v) = prefs.edit { putString("car_text_size", v) }
+
+    /** The car screen's control (touch target) size, an id from `CarControlSize`. Independent of [carTextSize]. */
+    var carControlSize: String
+        get() = prefs.getString("car_control_size", null) ?: "default"
+        set(v) = prefs.edit { putString("car_control_size", v) }
+
     /**
      * The accent colour, an id from `CarAccents`: the theme's own ("theme"), the phone's ("phone",
      * Android 12 and later) or a colour. On a single-colour theme it colours everything.
@@ -159,6 +170,14 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
 
     /**
+     * Act on `aare://` links from the chosen assistant (AssistantLinkActivity). Off by default: the
+     * driver chooses to let the assistant's replies drive the car screen.
+     */
+    var assistantLinks: Boolean
+        get() = prefs.getBoolean("assistant_links", false)
+        set(v) = prefs.edit { putBoolean("assistant_links", v) }
+
+    /**
      * The dashboard's cards in order, ids from `DashCard`. Before it was configurable, two switches
      * set it: "music first" and "next calendar event" (the latest notification came last).
      */
@@ -170,10 +189,24 @@ class Settings(context: Context) {
         }
         set(v) = prefs.edit { putString("dashboard_cards", v.joinToString(",")) }
 
+    /** The map keeps the big space on the dashboard wherever it is in the order. */
+    var dashboardMapBig: Boolean
+        get() = prefs.getBoolean("dashboard_map_big", false)
+        set(v) = prefs.edit { putBoolean("dashboard_map_big", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO
         set(v) = prefs.edit { putString("car_theme", v) }
+
+    /**
+     * Where [THEME_AUTO] takes night mode from: the car's own day/night signal ([NIGHT_SOURCE_CAR],
+     * the default) or the phone's ambient light sensor ([NIGHT_SOURCE_LIGHT_SENSOR], with
+     * hysteresis — see `LightNightDecider`). Has no effect with [THEME_DARK] or [THEME_LIGHT].
+     */
+    var nightSource: String
+        get() = prefs.getString("night_source", NIGHT_SOURCE_CAR) ?: NIGHT_SOURCE_CAR
+        set(v) = prefs.edit { putString("night_source", v) }
 
     /** Stream phone audio to the car (needs the screen-capture consent for audio). */
     var carAudio: Boolean
@@ -221,6 +254,14 @@ class Settings(context: Context) {
     var standaloneKeepScreenAwake: Boolean
         get() = prefs.getBoolean("standalone_keep_screen_awake", false)
         set(v) = prefs.edit { putBoolean("standalone_keep_screen_awake", v) }
+
+    /**
+     * Offer "Show video" on the car's media screen: the media app itself is launched on the car screen
+     * (as [standaloneApps] are, so it needs them on and root or Shizuku), parked only.
+     */
+    var mediaVideo: Boolean
+        get() = prefs.getBoolean("media_video", false)
+        set(v) = prefs.edit { putBoolean("media_video", v) }
 
     /** The packages the user allows onto the car screen (see [standaloneApps]). */
     var standaloneAppPackages: Set<String>
@@ -337,6 +378,29 @@ class Settings(context: Context) {
         get() = prefs.getStringSet("hidden_apps", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("hidden_apps", v) }
 
+    /**
+     * Keys AARE has seen from a car, code to a readable name (`KeyEvent.keyCodeToString`), for
+     * the "Car buttons" chooser. Recorded as they arrive (`rememberCarKey`); never removed, so a
+     * button pressed once on an earlier car still has a row (harmless if that car is gone).
+     */
+    var carKeysSeen: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_keys_seen", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_keys_seen", CarKeyMapCodec.encode(v)) }
+
+    fun rememberCarKey(code: Int, name: String) {
+        val seen = carKeysSeen
+        if (seen[code] == name) return
+        carKeysSeen = seen + (code to name)
+    }
+
+    /**
+     * User-chosen remaps: a car key code to a `CarKeyAction` id. A key with no entry here keeps
+     * its normal behaviour (`CarSession.onKey`).
+     */
+    var carKeyMap: Map<Int, String>
+        get() = CarKeyMapCodec.decode(prefs.getStringSet("car_key_map", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("car_key_map", CarKeyMapCodec.encode(v)) }
+
     /** Stable random id sent to head units so they recognise this phone. */
     val instanceId: String
         get() = prefs.getString("instance_id", null) ?: UUID.randomUUID().toString().also { prefs.edit { putString("instance_id", it) } }
@@ -375,6 +439,8 @@ class Settings(context: Context) {
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
+        const val NIGHT_SOURCE_CAR = "car"
+        const val NIGHT_SOURCE_LIGHT_SENSOR = "light_sensor"
         const val WALLPAPER_CUSTOM = "custom"
         /** The user's wallpaper photo, in the app's files. */
         const val WALLPAPER_FILE = "wallpaper.jpg"

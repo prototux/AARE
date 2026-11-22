@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -42,6 +44,7 @@ import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
@@ -83,6 +86,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.host.templates.CarKeyboard
+import net.prototux.aare.host.templates.CarTextField
+import net.prototux.aare.host.templates.KeyboardMode
+import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
@@ -200,19 +207,23 @@ private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, ar
 }
 
 /** What a side rail has room for besides the clock, bell, menu and mic, from [sideRailFit]. */
-internal data class SideRailFit(val recentSlots: Int, val status: Boolean, val settings: Boolean)
+internal data class SideRailFit(val recentSlots: Int, val status: Boolean, val settings: Boolean, val phone: Boolean = true)
 
 /**
  * Fits the side rail to its [height] inside the padding. Everything takes about 614 dp (clock and
  * bell 72, phone status and weather 54, the four apps 328, menu and mic 160), so on shorter screens
- * the phone status and weather go first, then Settings (the launcher has it); below that the apps
- * scroll. Dropping items rather than shrinking them keeps every button a full touch target.
+ * the phone status and weather go first, then Settings (the launcher has it), then Phone on 480 dp
+ * screens (#269: it was cut off; calls still show their card, and the launcher and the steering
+ * wheel's call button open it). Dropping items rather than shrinking them keeps every button a full
+ * touch target.
  */
 internal fun sideRailFit(height: Dp) = SideRailFit(
     // A recent app only on tall screens: what an 800 dp screen leaves inside the padding.
     recentSlots = if (height >= 768.dp) 1 else 0,
     status = height >= 614.dp,
     settings = height >= 560.dp,
+    // Clock and bell 72, navigation, media and Phone 244, menu and mic 160.
+    phone = height >= 476.dp,
 )
 
 @Composable
@@ -245,13 +256,13 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     // (nothing chosen, or everything chosen is gone) falls back to the rail's built-in set below.
     val selfPackage = LocalContext.current.packageName
     val chosen = resolveRailApps(state.railApps, state.apps, selfPackage)
-    val apps: @Composable (Int, Boolean) -> Unit = if (chosen.isNotEmpty()) { _, _ ->
+    val apps: @Composable (Int, Boolean, Boolean) -> Unit = if (chosen.isNotEmpty()) { _, _, _ ->
         chosen.forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize) { actions.openApp(app) } }
-    } else { recentSlots, withSettings ->
+    } else { recentSlots, withSettings, withPhone ->
         RailApp(nav, Icons.Rounded.Map, on(nav), touch, iconSize, logoSize) { nav?.let(actions::openApp) ?: actions.openLauncher() }
         RailApp(media, Icons.Rounded.MusicNote, on(media), touch, iconSize, logoSize) { media?.let(actions::openApp) ?: actions.openLauncher() }
         recent.take(recentSlots).forEach { app -> RailApp(app, Icons.Rounded.Apps, on(app), touch, iconSize, logoSize) { actions.openApp(app) } }
-        phone?.let { RailApp(it, Icons.Rounded.Call, on(it), touch, iconSize, logoSize) { actions.openApp(it) } }
+        phone?.takeIf { withPhone }?.let { RailApp(it, Icons.Rounded.Call, on(it), touch, iconSize, logoSize) { actions.openApp(it) } }
         settings?.takeIf { withSettings }?.let { RailApp(it, Icons.Rounded.Settings, on(it), touch, iconSize, logoSize) { actions.openApp(it) } }
     }
     val menu: @Composable () -> Unit = {
@@ -275,7 +286,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appSpacing + 4.dp)) {
-                    apps(if (tightBar) 0 else 2, !tighterBar)
+                    apps(if (tightBar) 0 else 2, !tighterBar, true)
                 }
             }
             if (state.driverOnRight) driverEnd() else status()
@@ -301,7 +312,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
                     Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(appSpacing),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                ) { apps(fit.recentSlots, fit.settings) }
+                ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }
             menu()
             Spacer(Modifier.height(8.dp))
@@ -416,15 +427,15 @@ internal fun Dashboard(
     // navigation app's surface (when it stays in the same row or column).
     val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> key(card) { DashSlot(card, state, actions, navMap, m, compact) } }
     // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
-    // first gets the big space.
+    // first gets the big space, or the map wherever it is with Map always big.
     BoxWithConstraints(modifier) {
         val narrow = maxWidth < 560.dp
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
             // portrait screens (720x1280, 1080x1920…): the cards stacked, the first two sharing the height
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, when (i) {
+                layout.cards.forEachIndexed { i, card ->
+                    slot(card, when (layout.rank(i)) {
                         0 -> Modifier.weight(1.6f).fillMaxWidth()
                         1 -> Modifier.weight(1f).fillMaxWidth()
                         else -> Modifier.fillMaxWidth().height(180.dp)
@@ -432,31 +443,35 @@ internal fun Dashboard(
                 }
             }
         } else if (narrow) {
-            // small screens: one big card, the second as a strip under it
-            val cards = dashboardSlots(state.dashboardCards, 2, shown)
+            // small screens: one big card, the other as a strip
+            val layout = dashboardLayout(state.dashboardCards, 2, state.dashboardMapBig, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, if (i == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), i > 0)
+                layout.cards.forEachIndexed { i, card ->
+                    val rank = layout.rank(i)
+                    slot(card, if (rank == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), rank > 0)
                 }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, Modifier.weight(when (i) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
+                layout.cards.forEachIndexed { i, card ->
+                    slot(card, Modifier.weight(when (layout.rank(i)) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
                 }
             }
         } else {
             // the big card, and the others stacked beside it, the first of them taller
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
+            val cards = layout.cards
+            val bigSlot: @Composable RowScope.() -> Unit = { slot(cards[layout.big], Modifier.weight(1.65f).fillMaxHeight(), false) }
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                slot(cards.first(), Modifier.weight(1.65f).fillMaxHeight(), false)
+                if (layout.bigFirst) bigSlot()
                 if (cards.size > 1) Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                    cards.drop(1).forEachIndexed { i, card ->
+                    cards.filterIndexed { i, _ -> i != layout.big }.forEachIndexed { i, card ->
                         slot(card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
                     }
                 }
+                if (!layout.bigFirst) bigSlot()
             }
         }
     }
@@ -682,24 +697,60 @@ fun RoundIcon(icon: ImageVector, label: String, filled: Boolean, onClick: () -> 
 
 // ---------------------------------------------------------------- launcher
 
+/** The launcher's search box: apps matching [query] by label, case-insensitive; all of them when blank. */
+internal fun filterLauncherApps(apps: List<CarAppEntry>, query: String): List<CarAppEntry> =
+    if (query.isBlank()) apps else apps.filter { it.label.contains(query, ignoreCase = true) }
+
 @Composable
 internal fun Launcher(state: CarUiState, actions: CarActions, modifier: Modifier) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(150.dp),
-        modifier = modifier,
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        // Already in the user's order (CarRuntime.applyApps).
-        items(state.apps, key = { it.id }) { app ->
-            Column(
-                Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                AppIcon(app, 80)
-                Spacer(Modifier.height(10.dp))
-                Text(app.label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    var query by remember { mutableStateOf("") }
+    var keyboardWanted by remember { mutableStateOf(false) }
+    val keyboard = keyboardWanted && !state.drivingRestricted
+    // The keyboard is parked-only, like every other car keyboard (SearchTemplateView): driving
+    // starting mid-search hides it, but the typed filter stays so results don't jump as it closes.
+    LaunchedEffect(state.drivingRestricted) { if (state.drivingRestricted) keyboardWanted = false }
+    val apps = filterLauncherApps(state.apps, query)
+    Column(modifier) {
+        CarTextField(
+            value = query,
+            hint = stringResource(R.string.launcher_search_hint),
+            editing = keyboard,
+            onFocus = { if (!state.drivingRestricted) keyboardWanted = true },
+            onClear = { query = "" },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+            leadingIcon = Icons.Rounded.Search,
+        )
+        if (keyboard) {
+            val sink = remember {
+                object : KeyboardSink {
+                    override fun type(text: String) { query += text }
+                    override fun backspace() { if (query.isNotEmpty()) query = query.dropLast(1) }
+                    override fun submit() { keyboardWanted = false }
+                    override fun hide() { keyboardWanted = false }
+                }
+            }
+            CarKeyboard(KeyboardMode.Text, sink, Icons.Rounded.Search)
+        }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(150.dp),
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            if (apps.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
+                Text(stringResource(R.string.common_no_items), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            // Already in the user's order (CarRuntime.applyApps).
+            items(apps, key = { it.id }) { app ->
+                Column(
+                    Modifier.clip(MaterialTheme.shapes.medium).clickable { actions.openApp(app) }.padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AppIcon(app, 80)
+                    Spacer(Modifier.height(10.dp))
+                    Text(app.label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
     }

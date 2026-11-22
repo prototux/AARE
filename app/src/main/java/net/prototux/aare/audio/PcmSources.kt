@@ -180,9 +180,10 @@ internal object AudioPolicyCapture {
         if (status != 0) throw IllegalStateException("registerAudioPolicy: $status")
         val record = try {
             val sink = if (recordContext != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // The Builder overload (newer Android) keeps our attribution; without it, fall back.
+                // The Builder overload (newer Android) keeps our attribution and a buffer of ~160 ms
+                // rather than the policy's ~60 ms, which a late reader overruns; without it, fall back.
                 val withBuilder = runCatching { p.javaClass.getMethod("createAudioRecordSink", mixClass, AudioRecord.Builder::class.java) }.getOrNull()
-                if (withBuilder != null) withBuilder.invoke(p, mix, AudioRecord.Builder().setContext(recordContext)) as AudioRecord?
+                if (withBuilder != null) withBuilder.invoke(p, mix, AudioRecord.Builder().setContext(recordContext).setBufferSizeInBytes(bufferBytes(rate, channels))) as AudioRecord?
                 else p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
             } else {
                 p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
