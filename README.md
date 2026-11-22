@@ -572,6 +572,16 @@ The window also gives you:
   that use the phone's location (CoMaps) follow it.
 - **Headless mode:** `--headless DIR --script "tap:640,360@10 key:4@12"` runs without a window
   and saves screenshots, for automated tests.
+- **Test options**, to try AARE's error and logging paths without a car: `--name`, `--make`,
+  `--model`, `--year`, `--hu-make`, `--hu-model`, `--hu-sw` and `--vehicle-id` set what the head
+  unit says about itself; `--fault`, `--refuse-channel`, `--ignore-channel`, `--no-audio-ack`,
+  `--video-ack-delay`, `--mic-status`, `--no-audio-focus`, `--no-video-focus` and `--ping-ms` make
+  it misbehave; `--aac-sink` (listed only), `--unknown-service`, `--video-codec` (the offer only:
+  the window still decodes H.264 only) and `--wifi-projection` (with a fake password for phones
+  that ask for the car's Wi-Fi credentials) change what it offers; and `--script` also takes
+  protocol events (`bye`, `longkey:3`, `audiofocus:loss`, `garbage:7`...).
+  `headunit/build/install/aare-headunit/bin/aare-headunit --help` lists them all. While unused,
+  they change nothing.
 
 AARE's head unit works with AARE (or other open-source phone implementations), not with Google's
 Android Auto app: Android Auto only accepts head units whose certificate is issued by Google, and
