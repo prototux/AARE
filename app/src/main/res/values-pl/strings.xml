@@ -363,6 +363,7 @@
     <string name="nav_dashboard_where_to">Dokąd?</string>
     <string name="nav_dashboard_install_hint">Zainstaluj na telefonie aplikację nawigacyjną wspierającą Android Auto</string>
     <string name="nav_dashboard_choose_app">Wybierz aplikację mapową</string>
+    <string name="nav_dashboard_standalone_hint">%1$s to aplikacja telefonu: jej mapa otwiera się na pełnym ekranie.</string>
     <string name="nav_guidance_on_phone">%1$s, na telefonie</string>
     <string name="nav_next_step_then">Potem</string>
 
@@ -445,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplikacje na ekranie samochodu (zaawansowane)</string>
-    <string name="standalone_section_warning">To nie są aplikacje Android Auto: AARE wyświetla ich zwykły ekran telefonu, tylko po zaparkowaniu, i wymaga roota lub Shizuku. Używasz na własne ryzyko.</string>
+    <string name="standalone_section_warning">To nie są aplikacje Android Auto: AARE wyświetla ich zwykły ekran telefonu, domyślnie tylko po zaparkowaniu, i wymaga roota lub Shizuku. Używasz na własne ryzyko.</string>
     <string name="standalone_toggle_title">Uruchamianie aplikacji telefonu na ekranie samochodu</string>
-    <string name="standalone_toggle_subtitle">Wybierz aplikacje poniżej. Widoczne tylko po zaparkowaniu.</string>
+    <string name="standalone_toggle_subtitle">Wybierz aplikacje poniżej, a dla każdej, co może robić podczas jazdy.</string>
     <string name="standalone_keep_awake_title">Tryb bez usypiania dla samodzielnych aplikacji</string>
     <string name="standalone_keep_awake_subtitle">Utrzymuje fizyczny ekran telefonu aktywnym, gdy aplikacja jest otwarta. Na dotkniętych telefonach z Androidem 17 wirtualne wyświetlacze zatrzymują się, gdy ekran telefonu jest wyłączony. Zużywa więcej baterii.</string>
     <string name="standalone_need_root">Wymaga roota lub Shizuku. Skonfiguruj jedno z nich na stronie Dźwięk w samochodzie, a potem wróć.</string>
     <string name="standalone_not_native">Nie jest aplikacją Android Auto · użycie po zaparkowaniu</string>
     <string name="standalone_starting">Uruchamianie…</string>
     <string name="standalone_paused_driving">Wstrzymane podczas jazdy.</string>
+    <string name="standalone_audio_only_driving">Ekran ukryty podczas jazdy. Dźwięk gra dalej.</string>
+    <string name="standalone_rule_title">Podczas jazdy</string>
+    <string name="standalone_rule_parked">Tylko po zaparkowaniu</string>
+    <string name="standalone_rule_audio">Tylko dźwięk</string>
+    <string name="standalone_rule_navigation">Nawigacja</string>
+    <string name="standalone_rule_navigation_note">Widoczna podczas jazdy i używana jako aplikacja nawigacyjna samochodu: zajmuje miejsce mapy i otwiera cele, o które poprosisz.</string>
     <string name="standalone_media_video_title">Wideo z aplikacji multimedialnych</string>
     <string name="standalone_media_video_subtitle">Dodaje „Pokaż wideo” do ekranu multimediów w aucie: aplikacja multimedialna otwiera się na ekranie auta, by pokazać swoje wideo. Tylko na postoju; podczas jazdy wraca okładka.</string>
     <!-- browser: the in-car WebView browser -->

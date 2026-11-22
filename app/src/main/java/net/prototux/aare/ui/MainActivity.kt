@@ -158,6 +158,9 @@ import net.prototux.aare.host.UnsupportedCarApp
 import net.prototux.aare.mirror.MirrorTouchService
 import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
+import net.prototux.aare.launch.StandaloneDrivingRule
+import net.prototux.aare.launch.effectiveDrivingRule
+import net.prototux.aare.launch.isNavigationApp
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
 import net.prototux.aare.home.HomeStore
@@ -593,6 +596,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     // Read here, not in the Section's lambda, so coming back from Developer options re-checks it.
     @Suppress("UNUSED_EXPRESSION") refresh
     val mockAllowed = PhoneLocationFeed.allowed(ctx)
+    // Opt-in: only the user can grant it, in the app's settings (Location > Allow all the time).
+    val backgroundLocation = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+        ctx.checkSelfPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
@@ -647,6 +653,10 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
             if (carGps) Check(stringResource(R.string.setup_check_mock_location_title), stringResource(R.string.setup_check_mock_location_subtitle), mockAllowed) {
                 ctx.startSafely(Intent(AndroidSettings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS), appDetails(ctx))
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Check(stringResource(R.string.setup_check_background_location_title), stringResource(R.string.setup_check_background_location_subtitle),
+                    backgroundLocation) { ctx.startSafely(appDetails(ctx)) }
             }
         }
         Section(stringResource(R.string.setup_section_video)) {
@@ -1412,6 +1422,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     var keepAwake by remember { mutableStateOf(settings.standaloneKeepScreenAwake) }
     var mediaVideo by remember { mutableStateOf(settings.mediaVideo) }
     var allowed by remember { mutableStateOf(settings.standaloneAppPackages) }
+    var rules by remember { mutableStateOf(settings.standaloneDrivingRules) }
     val available = remember { AppLauncher.available(ctx) }
     Section(stringResource(R.string.standalone_section_title)) {
         Text(stringResource(R.string.standalone_section_warning), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -1434,7 +1445,7 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
             Toggle(stringResource(R.string.standalone_media_video_title), stringResource(R.string.standalone_media_video_subtitle), mediaVideo) {
                 mediaVideo = it; settings.mediaVideo = it
             }
-            val apps by produceState<List<Triple<String, String, android.graphics.Bitmap?>>?>(null) {
+            val apps by produceState<List<LaunchableApp>?>(null) {
                 value = withContext(Dispatchers.IO) { launchableApps(ctx) }
             }
             val list = apps
@@ -1442,10 +1453,16 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
                 Text(stringResource(R.string.setup_app_list_loading), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 12.dp))
             } else {
                 Spacer(Modifier.height(8.dp))
-                list.forEach { (pkg, label, icon) ->
+                list.forEach { (pkg, label, icon, navigation) ->
                     AppRow(icon, label, pkg, pkg in allowed) { on ->
                         allowed = if (on) allowed + pkg else allowed - pkg
                         settings.standaloneAppPackages = allowed
+                    }
+                    if (pkg in allowed) {
+                        DrivingRuleChoice(rules[pkg], navigation) { rule ->
+                            rules = rules + (pkg to rule)
+                            settings.standaloneDrivingRules = rules
+                        }
                     }
                 }
             }
@@ -1453,8 +1470,37 @@ private fun StandaloneAppsSection(settings: Settings, ctx: android.content.Conte
     }
 }
 
+/**
+ * What a launched app may do while driving. "Navigation" is offered to navigation apps only: any
+ * other app a passenger wants to use while driving is what passenger mode is for.
+ */
+@Composable
+private fun DrivingRuleChoice(rule: StandaloneDrivingRule?, navigation: Boolean, onSelect: (StandaloneDrivingRule) -> Unit) {
+    val current = effectiveDrivingRule(rule, navigation)
+    Column(Modifier.padding(start = 52.dp, bottom = 12.dp)) {
+        Choices(
+            stringResource(R.string.standalone_rule_title),
+            StandaloneDrivingRule.offered(navigation).map { r ->
+                r.key to stringResource(when (r) {
+                    StandaloneDrivingRule.PARKED_ONLY -> R.string.standalone_rule_parked
+                    StandaloneDrivingRule.AUDIO_ONLY -> R.string.standalone_rule_audio
+                    StandaloneDrivingRule.NAVIGATION -> R.string.standalone_rule_navigation
+                })
+            },
+            current.key,
+        ) { key -> StandaloneDrivingRule.byKey(key)?.let(onSelect) }
+        if (current == StandaloneDrivingRule.NAVIGATION) {
+            Text(stringResource(R.string.standalone_rule_navigation_note),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        }
+    }
+}
+
+/** A launchable app for the standalone allow-list; [navigation]: it may be given the navigation rule. */
+private data class LaunchableApp(val pkg: String, val label: String, val icon: android.graphics.Bitmap?, val navigation: Boolean)
+
 /** Every app with a launcher icon, except AARE itself, for the standalone allow-list. */
-private fun launchableApps(ctx: android.content.Context): List<Triple<String, String, android.graphics.Bitmap?>> {
+private fun launchableApps(ctx: android.content.Context): List<LaunchableApp> {
     val pm = ctx.packageManager
     val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
     return pm.queryIntentActivities(intent, 0)
@@ -1464,8 +1510,8 @@ private fun launchableApps(ctx: android.content.Context): List<Triple<String, St
         .mapNotNull { pkg ->
             val info = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull() ?: return@mapNotNull null
             val icon = runCatching { pm.getApplicationIcon(info).toBitmap(96, 96) }.getOrNull()
-            Triple(pkg, pm.getApplicationLabel(info).toString(), icon)
-        }.sortedBy { it.second.lowercase() }
+            LaunchableApp(pkg, pm.getApplicationLabel(info).toString(), icon, isNavigationApp(pkg, info.category))
+        }.sortedBy { it.label.lowercase() }
 }
 
 @Composable

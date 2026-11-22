@@ -827,15 +827,20 @@ class ProjectionService : Service() {
                 checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
         val micType = if (mic) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
         val locationType = if (location) ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION else 0
-        // Android 14 refuses either extra type when we were started from the background: try with
-        // both, then each, then neither.
+        // Android 14 refuses either extra type when we were started from the background (USB,
+        // Bluetooth), the location one unless the user allowed AARE's location all the time: try
+        // with both, then each, then neither.
         val attempts = listOf(types or micType or locationType, types or micType, types or locationType, types).distinct()
         runCatching {
             var last: Throwable? = null
             for (t in attempts) {
                 val ok = runCatching { start(t) }.onFailure { last = it }.isSuccess
                 if (ok) {
-                    if (location && t and locationType == 0) Log.i(TAG, "no location foreground type: ${last?.message}")
+                    if (location && t and locationType == 0) {
+                        Log.i(TAG, "no location foreground type: ${last?.message}")
+                        log("navigation apps lose the position once the phone locks: allow AARE's location all the time " +
+                            "(AARE settings > Location > Navigation with the phone locked) to keep it when AARE starts by itself")
+                    }
                     if (mic && t and micType == 0) Log.i(TAG, "no microphone foreground type: ${last?.message}")
                     return@runCatching
                 }

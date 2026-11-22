@@ -352,6 +352,7 @@
     <string name="nav_dashboard_where_to">去哪儿？</string>
     <string name="nav_dashboard_install_hint">在手机上安装一个支持 Android Auto 的导航应用</string>
     <string name="nav_dashboard_choose_app">选择你的地图应用</string>
+    <string name="nav_dashboard_standalone_hint">%1$s 是手机应用：其地图以全屏打开。</string>
     <string name="nav_guidance_on_phone">%1$s，在手机上</string>
     <string name="nav_next_step_then">然后</string>
 
@@ -429,15 +430,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">车载屏幕上的应用（高级）</string>
-    <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
+    <string name="standalone_section_warning">这些不是 Android Auto 应用：AARE 显示的是它们在手机上的普通界面，默认仅在停车时可用，且需要 root 或 Shizuku。使用风险自负。</string>
     <string name="standalone_toggle_title">在车载屏幕上启动手机应用</string>
-    <string name="standalone_toggle_subtitle">在下方选择应用。仅在停车时显示。</string>
+    <string name="standalone_toggle_subtitle">在下方选择应用，并为每个应用选择行驶时允许做什么。</string>
     <string name="standalone_keep_awake_title">独立应用的常亮模式</string>
     <string name="standalone_keep_awake_subtitle">应用打开时，使手机的物理屏幕保持常亮。在受影响的 Android 17 手机上，手机屏幕关闭时虚拟显示会停止。会消耗更多电量。</string>
     <string name="standalone_need_root">需要 root 或 Shizuku。请在车载音频设置中配置其中之一，然后返回。</string>
     <string name="standalone_not_native">不是 Android Auto 应用 · 仅限停车时使用</string>
     <string name="standalone_starting">正在启动…</string>
     <string name="standalone_paused_driving">行驶时已暂停。</string>
+    <string name="standalone_audio_only_driving">行驶时隐藏屏幕，声音继续播放。</string>
+    <string name="standalone_rule_title">行驶时</string>
+    <string name="standalone_rule_parked">仅限停车时</string>
+    <string name="standalone_rule_audio">仅音频</string>
+    <string name="standalone_rule_navigation">导航</string>
+    <string name="standalone_rule_navigation_note">行驶时显示，并用作车辆的导航应用：占用地图位置，并打开你请求的目的地。</string>
     <string name="standalone_media_video_title">媒体应用的视频</string>
     <string name="standalone_media_video_subtitle">在车机媒体界面添加“显示视频”：媒体应用会在车机屏幕上打开以播放视频。仅限停车时；行驶时恢复显示封面。</string>
     <!-- browser: the in-car WebView browser -->

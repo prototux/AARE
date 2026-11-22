@@ -363,6 +363,7 @@
     <string name="nav_dashboard_where_to">Minne?</string>
     <string name="nav_dashboard_install_hint">Asenna puhelimeen navigointisovellus, joka tukee Android Autoa</string>
     <string name="nav_dashboard_choose_app">Valitse karttasovelluksesi</string>
+    <string name="nav_dashboard_standalone_hint">%1$s on puhelinsovellus: sen kartta avautuu koko näytölle.</string>
     <string name="nav_guidance_on_phone">%1$s, puhelimessa</string>
     <string name="nav_next_step_then">Sitten</string>
 
@@ -445,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Sovellukset auton näytöllä (lisäasetukset)</string>
-    <string name="standalone_section_warning">Nämä eivät ole Android Auto -sovelluksia: AARE näyttää niiden tavallisen puhelinnäytön, vain pysäköitynä, ja vaatii root- tai Shizuku-oikeudet. Käytä omalla vastuullasi.</string>
+    <string name="standalone_section_warning">Nämä eivät ole Android Auto -sovelluksia: AARE näyttää niiden tavallisen puhelinnäytön, oletuksena vain pysäköitynä, ja vaatii root- tai Shizuku-oikeudet. Käytä omalla vastuullasi.</string>
     <string name="standalone_toggle_title">Käynnistä puhelinsovelluksia auton näytöllä</string>
-    <string name="standalone_toggle_subtitle">Valitse sovellukset alta. Näkyy vain pysäköitynä.</string>
+    <string name="standalone_toggle_subtitle">Valitse sovellukset alta ja kullekin, mitä se saa tehdä ajon aikana.</string>
     <string name="standalone_keep_awake_title">Ei-unitila itsenäisille sovelluksille</string>
     <string name="standalone_keep_awake_subtitle">Pitää puhelimen fyysisen näytön herätettynä, kun sovellus on avoinna. Vaikutuksen alaisilla Android 17 -puhelimilla virtuaalinäytöt pysähtyvät, kun puhelimen näyttö on pois päältä. Kuluttaa enemmän akkua.</string>
     <string name="standalone_need_root">Vaatii root- tai Shizuku-oikeudet. Ota jompikumpi käyttöön Auton äänet -sivulla ja palaa sitten takaisin.</string>
     <string name="standalone_not_native">Ei Android Auto -sovellus · käyttö pysäköitynä</string>
     <string name="standalone_starting">Käynnistyy…</string>
     <string name="standalone_paused_driving">Keskeytetty ajon ajaksi.</string>
+    <string name="standalone_audio_only_driving">Näyttö piilotettu ajon ajaksi. Ääni jatkuu.</string>
+    <string name="standalone_rule_title">Ajon aikana</string>
+    <string name="standalone_rule_parked">Vain pysäköitynä</string>
+    <string name="standalone_rule_audio">Vain ääni</string>
+    <string name="standalone_rule_navigation">Navigointi</string>
+    <string name="standalone_rule_navigation_note">Näkyy ajon aikana ja toimii auton navigointisovelluksena: se vie kartan paikan ja avaa pyytämäsi määränpäät.</string>
     <string name="standalone_media_video_title">Video mediasovelluksista</string>
     <string name="standalone_media_video_subtitle">Lisää \"Näytä video\" auton medianäyttöön: mediasovellus avautuu auton näytölle videotaan varten. Vain pysäköitynä; kansikuva palaa, kun ajat.</string>
     <!-- browser: the in-car WebView browser -->

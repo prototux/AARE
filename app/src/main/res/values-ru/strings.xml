@@ -363,6 +363,7 @@
     <string name="nav_dashboard_where_to">Куда?</string>
     <string name="nav_dashboard_install_hint">Установите на телефон навигационное приложение с поддержкой Android Auto</string>
     <string name="nav_dashboard_choose_app">Выберите приложение карт</string>
+    <string name="nav_dashboard_standalone_hint">%1$s — приложение телефона: его карта открывается на весь экран.</string>
     <string name="nav_guidance_on_phone">%1$s, на телефоне</string>
     <string name="nav_next_step_then">Затем</string>
 
@@ -445,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Приложения на экране автомобиля (расширенные)</string>
-    <string name="standalone_section_warning">Это не приложения Android Auto: AARE показывает их обычный экран телефона, только на парковке, и требует root или Shizuku. Используйте на свой риск.</string>
+    <string name="standalone_section_warning">Это не приложения Android Auto: AARE показывает их обычный экран телефона, по умолчанию только на парковке, и требует root или Shizuku. Используйте на свой риск.</string>
     <string name="standalone_toggle_title">Запуск приложений телефона на экране автомобиля</string>
-    <string name="standalone_toggle_subtitle">Выберите приложения ниже. Отображаются только на парковке.</string>
+    <string name="standalone_toggle_subtitle">Выберите приложения ниже и для каждого — что ему можно во время движения.</string>
     <string name="standalone_keep_awake_title">Режим без отключения экрана для автономных приложений</string>
     <string name="standalone_keep_awake_subtitle">Не даёт физическому экрану телефона выключиться, пока приложение открыто. На затронутых телефонах с Android 17 виртуальные дисплеи останавливаются, когда экран телефона выключен. Расходует больше заряда батареи.</string>
     <string name="standalone_need_root">Требуется root или Shizuku. Настройте одно из них на странице Звук в автомобиле, а затем вернитесь.</string>
     <string name="standalone_not_native">Не приложение Android Auto · использование на парковке</string>
     <string name="standalone_starting">Запуск…</string>
     <string name="standalone_paused_driving">Приостановлено во время движения.</string>
+    <string name="standalone_audio_only_driving">Экран скрыт во время движения. Звук продолжается.</string>
+    <string name="standalone_rule_title">Во время движения</string>
+    <string name="standalone_rule_parked">Только на парковке</string>
+    <string name="standalone_rule_audio">Только звук</string>
+    <string name="standalone_rule_navigation">Навигация</string>
+    <string name="standalone_rule_navigation_note">Отображается во время движения и используется как навигационное приложение автомобиля: занимает место карты и открывает запрошенные вами пункты назначения.</string>
     <string name="standalone_media_video_title">Видео из медиаприложений</string>
     <string name="standalone_media_video_subtitle">Добавляет «Показать видео» на экран медиа в машине: медиаприложение открывается на экране машины для своего видео. Только на стоянке; во время движения возвращается обложка.</string>
     <!-- browser: the in-car WebView browser -->

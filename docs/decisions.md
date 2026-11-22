@@ -562,6 +562,42 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
+## Background location, opt-in (#329)
+
+A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
+foreground service has the location type. Since Android 14 a service started from the background
+(AARE started by the car's USB or Bluetooth) only gets it when the app may use location all the
+time, so AARE declares `ACCESS_BACKGROUND_LOCATION`. Declaring it grants nothing: the user turns it
+on from *Location > Navigation with the phone locked*, which opens AARE's app settings (Android 11
+and later only allow "Allow all the time" there). Without it nothing changes, and the connection
+log says what to turn on when the location type was refused. Tested by a user on a real car with
+the same one-line manifest change (#329).
+
+## Launched apps while driving: a rule per app
+
+Each launched phone app has a driving rule, stored by package (`launch/DrivingRules.kt`): parked
+only (the default, for every app), audio only, or navigation. "Navigation" is offered only to
+navigation apps (the phone screen's `KNOWN_NAVIGATION`, or an app whose category is maps): it shows
+the app while driving and makes it the car's navigation app. There is no "allowed" rule for other
+apps: a passenger who wants one while driving uses passenger mode (ignore driving), which lifts
+every parked-only limit, these rules included, on the driver's responsibility. "Parked only" pauses
+the app's media session as well as hiding its screen (before, the card said "paused" while the
+sound went on), which is what tells it apart from "audio only". `StandalonePlaybackGuard` pauses
+it when driving starts and again each time it starts playing until driving ends (an autoplayed
+next track or video), whether or not its screen is open; not for a package that is also a hosted
+media app, whose sound is allowed while driving.
+
+## Phone navigation apps launched on the car screen
+
+(From #244.) A launched phone app (root/Shizuku launcher) counts as the car's navigation app when
+its driving rule is "navigation", which only navigation apps are offered (above). It then takes
+the rail's navigation slot, receives "navigate to" as an `ACTION_VIEW` of the same `geo:` URI hosted
+apps get (through the launcher's `view`, which only accepts `geo:`, as the helper starts activities
+with shell or root rights), and stays on screen while driving, like the phone screen's navigation
+apps. The dashboard's map card doesn't show its map: the launcher has one display per app, owned
+by the full-screen view, and moving it between the card and full screen would restart the app and
+its route at each switch. The card offers to open it, and shows its directions once it posts them.
+No Home/Work shortcuts: AARE has none for hosted navigation apps either.
 
 ## Split screen: which app can take the second pane
 

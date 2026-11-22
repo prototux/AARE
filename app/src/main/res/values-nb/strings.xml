@@ -363,6 +363,7 @@
     <string name="nav_dashboard_where_to">Hvor til?</string>
     <string name="nav_dashboard_install_hint">Installer en navigasjonsapp som støtter Android Auto på telefonen</string>
     <string name="nav_dashboard_choose_app">Velg din kartapp</string>
+    <string name="nav_dashboard_standalone_hint">%1$s er en telefonapp: kartet åpnes i fullskjerm.</string>
     <string name="nav_guidance_on_phone">%1$s, på telefonen</string>
     <string name="nav_next_step_then">Deretter</string>
 
@@ -445,15 +446,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apper på bilskjermen (avansert)</string>
-    <string name="standalone_section_warning">Dette er ikke Android Auto-apper: AARE viser deres vanlige telefonskjerm, bare når bilen er parkert, og krever root eller Shizuku. Bruk på eget ansvar.</string>
+    <string name="standalone_section_warning">Dette er ikke Android Auto-apper: AARE viser deres vanlige telefonskjerm, som standard bare når bilen er parkert, og krever root eller Shizuku. Bruk på eget ansvar.</string>
     <string name="standalone_toggle_title">Start telefonapper på bilskjermen</string>
-    <string name="standalone_toggle_subtitle">Velg appene nedenfor. Vises bare når parkert.</string>
+    <string name="standalone_toggle_subtitle">Velg appene nedenfor, og for hver hva den kan gjøre under kjøring.</string>
     <string name="standalone_keep_awake_title">Ingen-dvale-modus for frittstående apper</string>
     <string name="standalone_keep_awake_subtitle">Holder den fysiske telefonskjermen våken mens en app er åpen. På berørte Android 17-telefoner stopper virtuelle skjermer når telefonskjermen er av. Bruker mer batteri.</string>
     <string name="standalone_need_root">Krever root eller Shizuku. Sett opp en av dem på siden Bilaudio, og kom så tilbake.</string>
     <string name="standalone_not_native">Ikke en Android Auto-app · bruk ved parkering</string>
     <string name="standalone_starting">Starter…</string>
     <string name="standalone_paused_driving">Satt på pause under kjøring.</string>
+    <string name="standalone_audio_only_driving">Skjermen er skjult under kjøring. Lyden fortsetter.</string>
+    <string name="standalone_rule_title">Under kjøring</string>
+    <string name="standalone_rule_parked">Bare parkert</string>
+    <string name="standalone_rule_audio">Bare lyd</string>
+    <string name="standalone_rule_navigation">Navigasjon</string>
+    <string name="standalone_rule_navigation_note">Vises under kjøring og brukes som bilens navigasjonsapp: den tar kartets plass og åpner destinasjonene du ber om.</string>
     <string name="standalone_media_video_title">Video fra mediaapper</string>
     <string name="standalone_media_video_subtitle">Legger til \"Vis video\" på bilens mediaskjerm: mediaappen åpnes på bilskjermen for videoen sin. Bare parkert; albumomslaget kommer tilbake når du kjører.</string>
     <!-- browser: the in-car WebView browser -->
