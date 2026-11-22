@@ -67,7 +67,30 @@ class SettingsBackupTest {
         tampered.put("wireless", entry("b", false))
         val restored = SettingsBackup.import(file(tampered))
         assertEquals(mapOf("wireless" to false), restored.values)
-        assertEquals(SettingsBackup.BLOCKED, restored.skipped.toSet())
+        assertEquals(SettingsBackup.BLOCKED, restored.blocked.toSet())
+        assertTrue(restored.skipped.isEmpty())
+    }
+
+    @Test
+    fun importLeavesTheServerStandaloneAndCertificateSwitchesUnchanged() {
+        // The phone's own values before the import.
+        val prefs = mutableMapOf<String, Any>("hu_server_localhost" to false, "standalone_apps" to false, "cert_auto_update" to false)
+        val file = file(
+            JSONObject()
+                .put("hu_server_localhost", entry("b", true))
+                .put("standalone_apps", entry("b", true))
+                .put("cert_auto_update", entry("b", true))
+                .put("wireless", entry("b", true)),
+        )
+        val imported = SettingsBackup.import(file)
+        prefs.putAll(imported.values)
+        assertEquals(false, prefs["hu_server_localhost"])
+        assertEquals(false, prefs["standalone_apps"])
+        assertEquals(false, prefs["cert_auto_update"])
+        assertEquals(true, prefs["wireless"])
+        // Reported as blocked (the import's summary names them), not as unknown.
+        assertEquals(setOf("hu_server_localhost", "standalone_apps", "cert_auto_update"), imported.blocked.toSet())
+        assertTrue(imported.skipped.isEmpty())
     }
 
     @Test

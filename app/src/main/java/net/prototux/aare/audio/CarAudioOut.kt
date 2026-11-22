@@ -22,6 +22,8 @@ class CarAudioOut(
     private val source: PcmSource,
     private val channel: AudioChannel,
     private val focus: Focus,
+    /** Silent messages sent ahead of each stream, at most (see [StartSilence]). */
+    private val startSilence: Int = 0,
     private val onFailed: () -> Unit = {},
 ) {
     interface Focus {
@@ -89,9 +91,9 @@ class CarAudioOut(
         var lastSound = 0L
         playing = false
         var frames = 0L
-        // Timestamps on the video's clock (the encoder stamps System.nanoTime), as Android Auto does,
+        // Timestamps on the video's clock (elapsedRealtime, see VideoEncoder),
         // rather than starting at 0 µs.
-        val clockStartUs = System.nanoTime() / 1_000
+        val clockStartUs = SystemClock.elapsedRealtimeNanos() / 1_000
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
         // The source ended by itself (its service or the audio server died), not by stop(): the
@@ -137,10 +139,19 @@ class CarAudioOut(
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
                     startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
+                    // Silence ahead of the sound, stamped like the sound's start. Not
+                    // more than the stream was quiet for (stoppedAtMs is 0 before the first one).
+                    val silent = StartSilence.cap(startSilence, now - stoppedAtMs, 1000.0 / chunkMs)
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
-                    // not a raised one left over from the last stream's underflow.
-                    while (queued.size > baseBacklog) queued.removeFirst()
+                    // not a raised one left over from the last stream's underflow. The silence
+                    // counts towards it: on top, it would put the music further behind the video.
+                    val keep = StartSilence.soundKept(baseBacklog, silent, keepAll = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE)
+                    while (queued.size > keep) queued.removeFirst()
+                    if (silent > 0) {
+                        val at = queued.firstOrNull()?.second ?: ts
+                        repeat(silent) { queued.addFirst(ByteArray(10 + chunk) to at) }
+                    }
                     priming = true
                 } else if (!focus.granted) {
                     // Focus lost mid-stream (the Ford answers a nav prompt's request with LOSS):
@@ -209,7 +220,11 @@ class CarAudioOut(
         val now = channel.ackless
         if (now == lastAckless) return
         lastAckless = now
-        DiagLog.add("car audio ($label): " + if (now) "no acks from the car, sending unpaced" else "acks back, paced by the car again")
+        DiagLog.add("car audio ($label): " + when {
+            now && channel.dropsOverflow -> "the car drops what it can't take (protocol 5.0 and later), sending unpaced"
+            now -> "no acks from the car, sending unpaced"
+            else -> "acks back, paced by the car again"
+        })
     }
 
     /** Connection-log line with the chunks dropped (car's window full) during the stream that just ended. */

@@ -106,8 +106,11 @@ object SettingsBackup {
         return JSONObject().put(FORMAT_KEY, FORMAT_VERSION).put(SETTINGS_KEY, settings)
     }
 
-    /** What a file gives: the [values] to write, by key, and the keys [skipped] as unknown, blocked or of the wrong type. */
-    data class Imported(val values: Map<String, Any>, val skipped: List<String>)
+    /**
+     * What a file gives: the [values] to write, by key; the keys [skipped] as unknown or of the
+     * wrong type; and the [BLOCKED] keys it carried, never applied ([blocked], told to the user).
+     */
+    data class Imported(val values: Map<String, Any>, val skipped: List<String>, val blocked: List<String> = emptyList())
 
     /**
      * The reverse of [export]. Throws [IllegalArgumentException] on a file this version can't
@@ -119,14 +122,17 @@ object SettingsBackup {
         val settings = json.optJSONObject(SETTINGS_KEY) ?: JSONObject()
         val values = LinkedHashMap<String, Any>()
         val skipped = ArrayList<String>()
+        val blocked = ArrayList<String>()
         for (key in settings.keys()) {
+            // Whatever a file says (a hand-edited one, or one from a later version that exports them).
+            if (key in BLOCKED) { blocked += key; continue }
             val type = ALLOWED[key]
             val value = type?.let { decode(it, settings.get(key)) }
             // The photo behind "custom" isn't in the file, so it would leave the dashboard blank.
             if (value == null || (key == "wallpaper" && value == Settings.WALLPAPER_CUSTOM)) skipped += key
             else values[key] = value
         }
-        return Imported(values, skipped)
+        return Imported(values, skipped, blocked)
     }
 
     /** All of [input], or [IllegalArgumentException] as soon as it passes [limit] bytes (so a huge file is never read whole). */

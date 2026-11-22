@@ -17,8 +17,11 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.ServiceDiscoveryUpdateOuterClass.ServiceDiscoveryUpdate
 import aap_protobuf.service.control.message.VoiceSessionNotificationOuterClass.VoiceSessionNotification
 import aap_protobuf.shared.MessageStatusOuterClass.MessageStatus
+import com.google.protobuf.CodedInputStream
+import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.MessageLite
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
@@ -28,6 +31,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 /** The phone's TLS identity. */
 class PhoneIdentity(val certificate: X509Certificate, val privateKey: PrivateKey, val chain: List<X509Certificate> = emptyList())
@@ -55,10 +59,35 @@ class SessionOptions(
     val peerKey: String? = null,
     /** Trust the first certificate of a head unit with nothing trusted yet (Bluetooth-bonded ones). */
     val trustOnFirstUse: Boolean = false,
+    /** Clock for ping timestamps, in nanoseconds (elapsedRealtimeNanos). */
+    val clockNanos: () -> Long = System::nanoTime,
+    /**
+     * Answer the version request with the head unit's own version instead of AapSession.versionReply. Some
+     * aftermarket wireless adapters relay the phone's answer to the car and stall unless it
+     * matches what they asked for.
+     */
+    val echoHeadUnitVersion: Boolean = false,
 ) {
     init {
         require(pins == null || peerKey != null) { "peerKey is required with pins" }
     }
+}
+
+/**
+ * What the head unit asks of the phone's UI chrome, from the session_configuration bits of its
+ * service discovery response.
+ */
+class UiChrome(val bits: Int) {
+    /** The car shows its own clock: the phone's projected UI shouldn't. */
+    val hideClock get() = bits and 1 != 0
+    val hidePhoneSignal get() = bits and 2 != 0
+    val hideBatteryLevel get() = bits and 4 != 0
+    /** The car may keep playing its own media during a voice session. */
+    val nativeMediaDuringVoice get() = bits and 8 != 0
+
+    override fun toString() = listOfNotNull("hide clock".takeIf { hideClock }, "hide phone signal".takeIf { hidePhoneSignal },
+        "hide battery level".takeIf { hideBatteryLevel }, "native media during voice".takeIf { nativeMediaDuringVoice })
+        .joinToString().ifEmpty { "none" }
 }
 
 /** Minimal logging hook so the protocol module has no Android dependency. */
@@ -96,7 +125,7 @@ class AapSession(
     private val identity: PhoneIdentity,
     private val phone: PhoneDescription,
     private val callbacks: Callbacks,
-    private val log: AapLog = AapLog.Stdout,
+    internal val log: AapLog = AapLog.Stdout,
     private val options: SessionOptions = SessionOptions(),
 ) {
     interface Callbacks {
@@ -136,7 +165,9 @@ class AapSession(
     @Volatile private var tlsStarted = false
     @Volatile var discovery: ServiceDiscoveryResponse? = null
         private set
-    var headUnitVersion: Pair<Int, Int>? = null
+    /** The head unit's UI chrome wishes, once discovery is done. */
+    val uiChrome: UiChrome? get() = discovery?.let { UiChrome(it.sessionConfiguration) }
+    @Volatile var headUnitVersion: Pair<Int, Int>? = null
         private set
 
     private val cryptor = Cryptor(identity.certificate, identity.privateKey, identity.chain,
@@ -146,7 +177,7 @@ class AapSession(
     val pinRefusal: PinRefusal? get() = cryptor.pinRefusal
 
     @Volatile private var tlsUp = false
-    private val reader = FrameReader(transport.input) { if (tlsUp) cryptor else null }
+    private val reader = FrameReader(transport.input, log) { if (tlsUp) cryptor else null }
     private val writer = FrameWriter(transport.output) { if (tlsUp) cryptor else null }
 
     private val queue = PriorityBlockingQueue<Outgoing>()
@@ -158,6 +189,23 @@ class AapSession(
     }
     private val channels = java.util.concurrent.ConcurrentHashMap<Int, ServiceChannel>()
     private var pendingOpens = 0
+    /** Channels whose open request awaits its response. */
+    private val awaitingOpen = java.util.concurrent.ConcurrentHashMap.newKeySet<Int>()
+    /** Channels opened only once the sensor channel has been answered (see [sensorChannelFirst]). */
+    private val deferredOpens = AtomicReference<List<ServiceChannel>?>(null)
+    /** Channels the head unit refused or closed: their data is dropped (reader thread only). */
+    private val shutChannels = HashSet<Int>()
+    /** Channels that sent data before their open was answered, logged once each (reader thread only). */
+    private val earlyData = HashSet<Int>()
+
+    /**
+     * Open the sensor channel first and the others once the head unit has answered it (or after
+     * [DEFERRED_OPEN_MS]), instead of all at once. For head units that need it (vehicles.json);
+     * set it from [Callbacks.onServiceDiscovery].
+     */
+    @Volatile var sensorChannelFirst = false
+    /** The phone said bye-bye: only then is a bye-bye response expected. */
+    @Volatile private var byeByeSent = false
     /**
      * Set once the head unit said bye-bye: it may hang up before our response is written, and
      * that EOF or broken pipe is then the orderly end it announced, not a failure.
@@ -169,14 +217,22 @@ class AapSession(
     @Volatile private var lastOutboundMs = now()
     @Volatile private var writingSinceMs = -1L
     @Volatile private var slowestWriteMs = 0L
-    @Volatile private var pingIntervalMs = 1_000L
     /**
      * Silence that means the link is dead. Only applied once the head unit has shown it takes part
      * in keep-alives (some never answer the phone's pings); USB unplugs are caught by I/O errors.
      * Generous because some Wi-Fi head units go off channel for 20 s while scanning.
+     *
+     * Missing pings alone are usually recorded, with a 10 s read timeout on the socket; AARE's
+     * transports have none, so without this a Wi-Fi link that silently died would hang the session.
      */
     @Volatile private var deadAfterMs = 20_000L
     @Volatile private var pingEvidence = false
+    /** Timestamps of the phone's pings not answered yet, oldest first (guarded by itself). */
+    private val pingsInFlight = ArrayDeque<Long>()
+    /** The head unit answered one of the phone's pings: only then are unanswered pings capped. */
+    @Volatile private var pingAnswered = false
+    /** The phone's ping period: the head unit's ping configuration if it gives one. */
+    @Volatile private var pingIntervalMs = DEFAULT_PING_INTERVAL_MS
 
     /** Round trip of the last ping, for diagnostics. */
     @Volatile var lastRttMs = -1L
@@ -200,16 +256,26 @@ class AapSession(
         log.i("session started on ${transport.name}")
     }
 
-    /** Ends the session politely: bye-bye, then close after a short grace period. */
+    /**
+     * Ends the session politely: bye-bye, then close when the head unit answers or after a short
+     * grace period. The bye-bye goes out whatever the state once the version
+     * exchange is done, in the clear while TLS isn't up yet.
+     */
     fun stop(reason: ByeByeReason = ByeByeReason.USER_SELECTION) {
         if (closed.get()) return
-        if (state == State.RUNNING || state == State.OPENING) {
-            sendControl(ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(reason).build())
-            schedule({ close("stopped by phone", null) }, 1, TimeUnit.SECONDS)
-        } else {
+        if (state == State.VERSION) {
             close("stopped by phone", null)
+            return
         }
+        byeByeSent = true
+        val bye = ByeByeRequest.newBuilder().setReason(reason).build()
+        if (tlsUp) sendControl(ControlMsg.BYEBYE_REQUEST, bye)
+        else sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_REQUEST, bye.toByteArray()), encrypted = false)
+        schedule({ close("stopped by phone", null) }, BYEBYE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
     }
+
+    /** Ends a wireless session because the user turned wireless projection off on the phone. */
+    fun stopWirelessDisabled() = stop(wirelessDisabledReason(headUnitVersion))
 
     // ------------------------------------------------------------------ sending
 
@@ -217,7 +283,23 @@ class AapSession(
     fun sendRaw(channel: Int, plain: ByteArray, length: Int = plain.size, control: Boolean = false,
                 encrypted: Boolean = true, priority: Int = Priority.CONTROL, onSent: (() -> Unit)? = null) {
         if (closed.get()) return
+        if (!control && length >= 2) trace("tx", channel, ((plain[0].toInt() and 0xff) shl 8) or (plain[1].toInt() and 0xff))
         queue.offer(Outgoing(priority, seq.incrementAndGet(), channel, control, encrypted, plain, length, onSent))
+    }
+
+    /** The last messages [trace] showed as sent, for a head unit's "unexpected message" answer. */
+    private val recentlySent = ArrayDeque<String>()
+
+    /** Logs a message the verbose log keeps ([ProtocolTrace]): "tx video START", "rx AUDIO_FOCUS_NOTIFICATION"… */
+    private fun trace(direction: String, channel: Int, id: Int) {
+        val channelName = if (channel == 0) null else channels[channel]?.name ?: return
+        if (!ProtocolTrace.shown(channelName, id)) return
+        val what = (channelName?.let { "$it " } ?: "") + ProtocolTrace.name(channelName, id)
+        if (direction == "tx") synchronized(recentlySent) {
+            recentlySent.addLast(what)
+            if (recentlySent.size > 4) recentlySent.removeFirst()
+        }
+        log.d("$direction $what")
     }
 
     fun send(channel: Int, id: Int, body: MessageLite, control: Boolean = false, priority: Int = Priority.CONTROL) {
@@ -278,9 +360,23 @@ class AapSession(
                 lastInboundMs = now()
                 dispatch(msg)
             }
+        } catch (e: FramingException) {
+            onFramingError(e)
         } catch (e: Throwable) {
             fail(if (closed.get()) "closed" else "read failed", e)
         }
+    }
+
+    /**
+     * Tell the head unit its framing broke (FRAMING_ERROR, in the clear on
+     * the control channel, whether TLS is up or not) before hanging up. The write gets a short
+     * grace in case the writer is stuck.
+     */
+    private fun onFramingError(e: FramingException) {
+        if (closed.get()) return
+        sendRaw(0, AapMessage.plaintext(ControlMsg.FRAMING_ERROR, ByteArray(0)), encrypted = false,
+            onSent = { fail("framing error", e) })
+        schedule({ fail("framing error", e) }, 200, TimeUnit.MILLISECONDS)
     }
 
     private fun dispatch(msg: AapMessage) {
@@ -290,7 +386,12 @@ class AapSession(
             return
         }
         if (msg.channel == 0 && !msg.control) {
-            handleControl(msg)
+            try {
+                handleControl(msg)
+            } catch (e: InvalidProtocolBufferException) {
+                // A control message that doesn't parse is dropped, not fatal.
+                log.w("dropping malformed control message $msg", e)
+            }
             return
         }
         val ch = channels[msg.channel]
@@ -301,27 +402,54 @@ class AapSession(
         if (msg.control) {
             // Channel-control messages on a service channel: channel open response, ping on old units.
             when (msg.id) {
-                ControlMsg.CHANNEL_OPEN_RESPONSE -> {
-                    val status = ChannelOpenResponse.parseFrom(msg.bodyBytes()).status
-                    if (status == MessageStatus.STATUS_SUCCESS) {
-                        ch.opened = true
-                        log.i("channel ${ch.id} (${ch.name}) open")
-                        runHandler(ch) { ch.onOpened() }
-                    } else {
-                        log.w("head unit refused channel ${ch.id} (${ch.name}): $status")
-                    }
-                    // <= 0 and state guard: a duplicate open-response must not wedge OPENING forever.
-                    if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
-                }
+                ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
                     ch.opened = false
+                    shutChannels.add(ch.id)
                     runHandler(ch) { ch.onClosed() }
                 }
                 else -> log.w("unexpected control message on channel ${ch.id}: $msg")
             }
             return
         }
+        trace("rx", msg.channel, msg.id)
+        if (!ch.opened) {
+            // A refused or closed channel has nothing to say. One whose open isn't answered yet is
+            // taken as open: some head units start talking before they answer.
+            if (ch.id in shutChannels) {
+                if (earlyData.add(ch.id)) log.w("dropping data on refused or closed channel ${ch.id} (${ch.name}): $msg")
+                return
+            }
+            if (earlyData.add(ch.id)) log.w("data on channel ${ch.id} (${ch.name}) before its open was answered, delivering it: $msg")
+        }
         runHandler(ch) { ch.onMessage(msg) }
+    }
+
+    private fun onChannelOpenResponse(ch: ServiceChannel, msg: AapMessage) {
+        if (ch.id !in awaitingOpen) {
+            // A duplicate, or one never asked for: it must not count towards RUNNING again.
+            log.w("ignoring unexpected channel open response on channel ${ch.id} (${ch.name})")
+            return
+        }
+        val body = msg.bodyBytes()
+        val accepted = try {
+            openAccepted(body)
+        } catch (e: InvalidProtocolBufferException) {
+            log.w("dropping malformed channel open response on channel ${ch.id} (${ch.name})", e)
+            return
+        }
+        awaitingOpen.remove(ch.id)
+        if (accepted) {
+            if (unknownOpenStatus(body)) log.w("channel ${ch.id} (${ch.name}): open response with a status this build doesn't know, opening it")
+            ch.opened = true
+            log.i("channel ${ch.id} (${ch.name}) open")
+            runHandler(ch) { ch.onOpened() }
+        } else {
+            shutChannels.add(ch.id)
+            log.w("head unit refused channel ${ch.id} (${ch.name}): ${ChannelOpenResponse.parseFrom(body).status}")
+        }
+        if (ch.service.hasSensorSourceService()) openDeferred()
+        if (--pendingOpens <= 0 && state == State.OPENING) enterRunning()
     }
 
     private inline fun runHandler(ch: ServiceChannel, block: () -> Unit) {
@@ -336,7 +464,7 @@ class AapSession(
     // ------------------------------------------------------------------ control channel
 
     private fun handleControl(msg: AapMessage) {
-        log.d("rx $msg")
+        trace("rx", 0, msg.id)
         // Until service discovery only the version and TLS handshake messages make sense.
         if (state.ordinal < State.DISCOVERY.ordinal &&
             msg.id != ControlMsg.VERSION_REQUEST && msg.id != ControlMsg.ENCAPSULATED_SSL &&
@@ -357,8 +485,7 @@ class AapSession(
             }
             ControlMsg.PING_RESPONSE -> {
                 pingEvidence = true
-                val resp = PingResponse.parseFrom(msg.bodyBytes())
-                lastRttMs = (System.nanoTime() / 1_000 - resp.timestamp) / 1_000
+                onPingResponse(PingResponse.parseFrom(msg.bodyBytes()).timestamp)
             }
             ControlMsg.AUDIO_FOCUS_NOTIFICATION -> {
                 val n = AudioFocusNotification.parseFrom(msg.bodyBytes())
@@ -385,8 +512,16 @@ class AapSession(
                 sendRaw(0, AapMessage.plaintext(ControlMsg.BYEBYE_RESPONSE, ByeByeResponse.getDefaultInstance().toByteArray()),
                     onSent = { close(why, null) })
             }
-            ControlMsg.BYEBYE_RESPONSE -> close("session ended", null)
+            ControlMsg.BYEBYE_RESPONSE -> {
+                // One the phone didn't ask for still ends the session cleanly, as the head unit means it to.
+                if (!byeByeSent) log.w("bye-bye response without a bye-bye request")
+                close("session ended", null)
+            }
+            ControlMsg.SERVICE_DISCOVERY_UPDATE -> onServiceUpdate(ServiceDiscoveryUpdate.parseFrom(msg.bodyBytes()))
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
+            // It doesn't say which: the last ones sent are the suspects (#100: a protocol 1.3 unit).
+            ControlMsg.UNEXPECTED_MESSAGE -> log.w("head unit refused a message (unexpected message); last sent: " +
+                synchronized(recentlySent) { recentlySent.joinToString() }.ifEmpty { "nothing logged" })
             else -> log.d("unhandled control message $msg")
         }
     }
@@ -401,9 +536,10 @@ class AapSession(
         val major = if (msg.bodyLength >= 2) ((b[o].toInt() and 0xff) shl 8) or (b[o + 1].toInt() and 0xff) else 1
         val minor = if (msg.bodyLength >= 4) ((b[o + 2].toInt() and 0xff) shl 8) or (b[o + 3].toInt() and 0xff) else 0
         headUnitVersion = major to minor
-        // Like the official phone: 1.7 to anything up to 1.7, 6.1 to the newer GAL numbering.
-        // Status is always success; feature gating follows the head unit's own version.
-        val (replyMajor, replyMinor) = if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 1
+        // 1.7 to anything up to 1.7, 6.2 to anything newer (even above
+        // 6.2), or the head unit's own with echoHeadUnitVersion. Status is always success; feature
+        // gating follows the head unit's own version.
+        val (replyMajor, replyMinor) = versionAnswer(major, minor, options.echoHeadUnitVersion)
         log.i("head unit protocol $major.$minor, answering $replyMajor.$replyMinor")
         val body = byteArrayOf(
             (replyMajor shr 8).toByte(), replyMajor.toByte(),
@@ -486,6 +622,7 @@ class AapSession(
         }
         discovery = resp
         log.i("head unit: ${describe(resp)}")
+        if (resp.sessionConfiguration != 0) log.i("head unit UI chrome: ${UiChrome(resp.sessionConfiguration)}")
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
             if (pc.hasIntervalMs() && pc.intervalMs > 0) pingIntervalMs = pc.intervalMs.toLong().coerceIn(250, 5_000)
             if (pc.hasTimeoutMs() && pc.timeoutMs > 0) deadAfterMs = maxOf(pc.timeoutMs.toLong() * 3, 20_000L)
@@ -496,9 +633,14 @@ class AapSession(
         for (ch in wanted) {
             ch.attach(this)
             channels[ch.id] = ch
-            send(ch.id, ControlMsg.CHANNEL_OPEN_REQUEST,
-                ChannelOpenRequest.newBuilder().setPriority(ch.openPriority).setServiceId(ch.id).build(),
-                control = true)
+        }
+        val sensors = wanted.filter { it.service.hasSensorSourceService() }
+        if (!sensorChannelFirst || sensors.isEmpty() || sensors.size == wanted.size) {
+            wanted.forEach(::requestOpen)
+        } else {
+            deferredOpens.set(wanted - sensors.toSet())
+            sensors.forEach(::requestOpen)
+            schedule({ openDeferred() }, DEFERRED_OPEN_MS, TimeUnit.MILLISECONDS)
         }
         if (wanted.isEmpty()) {
             enterRunning()
@@ -511,6 +653,31 @@ class AapSession(
             }, 10, TimeUnit.SECONDS)
         }
         startKeepAlive()
+    }
+
+    private fun requestOpen(ch: ServiceChannel) {
+        awaitingOpen.add(ch.id)
+        send(ch.id, ControlMsg.CHANNEL_OPEN_REQUEST,
+            ChannelOpenRequest.newBuilder().setPriority(ch.openPriority).setServiceId(ch.id).build(),
+            control = true)
+    }
+
+    /** Opens the channels held back for the sensor channel, once (reader or timer thread). */
+    private fun openDeferred() {
+        if (closed.get()) return
+        deferredOpens.getAndSet(null)?.forEach(::requestOpen)
+    }
+
+    /** The head unit changed a service it listed in discovery. */
+    private fun onServiceUpdate(update: ServiceDiscoveryUpdate) {
+        val service = update.service
+        val ch = channels[service.id]
+        if (!update.hasService() || ch == null) {
+            log.w("update for a service not opened: ${serviceKind(service)}#${service.id}")
+            return
+        }
+        log.i("head unit updated ${serviceKind(service)}#${service.id}")
+        runHandler(ch) { ch.onServiceUpdate(service) }
     }
 
     /** From the reader or, on an open timeout, the timer: [Callbacks.onRunning] must still run once. */
@@ -530,12 +697,41 @@ class AapSession(
     private fun startKeepAlive() {
         scheduler.scheduleWithFixedDelay({
             if (closed.get()) return@scheduleWithFixedDelay
-            if (options.sendPings) {
-                sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(System.nanoTime() / 1_000).build())
-            }
+            if (options.sendPings) sendPing()
             val silent = now() - lastInboundMs
             if (silent > (if (pingEvidence) deadAfterMs else 60_000L)) fail("head unit silent for $silent ms", null)
         }, pingIntervalMs, pingIntervalMs, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * On wireless: the phone's clock in nanoseconds, bug_report explicitly false. Once the head
+     * unit has answered a ping, no new one goes out while [MAX_PINGS_IN_FLIGHT] are unanswered;
+     * until then pings keep going as they always have (some head units never answer them), and
+     * only the latest are remembered.
+     */
+    private fun sendPing() {
+        val timestamp = options.clockNanos()
+        synchronized(pingsInFlight) {
+            if (pingsInFlight.size >= MAX_PINGS_IN_FLIGHT) {
+                if (pingAnswered) return
+                pingsInFlight.removeFirst()
+            }
+            pingsInFlight.addLast(timestamp)
+        }
+        sendControl(ControlMsg.PING_REQUEST, PingRequest.newBuilder().setTimestamp(timestamp).setBugReport(false).build())
+    }
+
+    private fun onPingResponse(timestamp: Long) {
+        synchronized(pingsInFlight) {
+            // Answers come in order: pings older than this one were lost. One that isn't ours
+            // empties the list.
+            while (true) {
+                val sent = pingsInFlight.removeFirstOrNull() ?: return
+                if (sent == timestamp) break
+            }
+        }
+        pingAnswered = true
+        lastRttMs = (options.clockNanos() - timestamp) / 1_000_000
     }
 
     // ------------------------------------------------------------------ teardown
@@ -543,6 +739,9 @@ class AapSession(
     private fun fail(reason: String, error: Throwable?) {
         if (closed.get()) return
         headUnitByeBye?.let { close(it, null); return }
+        // After the phone's bye-bye, whatever the head unit does next (hang up, or answer before
+        // TLS, which the pre-discovery check refuses) is the end the phone asked for.
+        if (byeByeSent) { close("stopped by phone", null); return }
         log.w("session failed: $reason (${linkStats(now(), lastInboundMs, lastOutboundMs, writingSinceMs, slowestWriteMs, queue.size)})", error)
         close(reason, error ?: AapException(reason))
     }
@@ -587,8 +786,35 @@ class AapSession(
     companion object {
         const val PROTOCOL_MAJOR = 1
         const val PROTOCOL_MINOR = 7
+        /** How long the phone waits for the head unit's answer to its bye-bye. */
+        private const val BYEBYE_TIMEOUT_MS = 1_000L
+        /** The phone's ping period on wireless when the head unit doesn't give one. */
+        private const val DEFAULT_PING_INTERVAL_MS = 1_000L
+        private const val MAX_PINGS_IN_FLIGHT = 10
+        /** Longest wait for the sensor channel's answer before opening the other channels. */
+        private const val DEFERRED_OPEN_MS = 1_000L
 
         private fun now() = System.nanoTime() / 1_000_000
+
+        /** The protocol version the phone answers to a head unit asking for [major].[minor]. */
+        internal fun versionReply(major: Int, minor: Int): Pair<Int, Int> =
+            if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 2
+
+        /**
+         * The version we answer the head unit's [major].[minor] with: [versionReply], or the head
+         * unit's own with [echo] (SessionOptions.echoHeadUnitVersion, opt-in for wireless adapters).
+         */
+        internal fun versionAnswer(major: Int, minor: Int, echo: Boolean): Pair<Int, Int> =
+            if (echo) major to minor else versionReply(major, minor)
+
+        /**
+         * The bye-bye reason for wireless turned off on the phone: head units before 4.5 don't
+         * know WIRELESS_PROJECTION_DISABLED, so they get USER_SELECTION.
+         */
+        internal fun wirelessDisabledReason(headUnitVersion: Pair<Int, Int>?): ByeByeReason {
+            val (major, minor) = headUnitVersion ?: return ByeByeReason.USER_SELECTION
+            return if (major > 4 || (major == 4 && minor >= 5)) ByeByeReason.WIRELESS_PROJECTION_DISABLED else ByeByeReason.USER_SELECTION
+        }
 
         /**
          * The link's last moments, for a failed session's log line: tells a link that died while
@@ -607,6 +833,27 @@ class AapSession(
                 hu.headUnitModel.ifEmpty { r.headUnitModel }).filter { it.isNotEmpty() }.joinToString(" ")
             val services = r.channelsList.joinToString { serviceKind(it) + "#" + it.id }
             return "$name [${r.displayName}] services: $services"
+        }
+
+        /**
+         * Whether a channel open response accepts the channel: every status but a known refusal.
+         * A response with no status means SUCCESS (proto3 head units such as Ford SYNC 4 leave the
+         * 0 out, #74), and so does a status this build doesn't know, which protobuf keeps as an
+         * unknown field and reads as the SUCCESS default.
+         */
+        internal fun openAccepted(body: ByteArray): Boolean =
+            ChannelOpenResponse.parseFrom(body).status == MessageStatus.STATUS_SUCCESS
+
+        /** Whether the response carries a status value this build doesn't know (for the log). */
+        internal fun unknownOpenStatus(body: ByteArray): Boolean {
+            if (ChannelOpenResponse.parseFrom(body).hasStatus()) return false
+            val input = CodedInputStream.newInstance(body)
+            while (true) {
+                val tag = input.readTag()
+                if (tag == 0) return false
+                if (tag ushr 3 == 1) return true
+                input.skipField(tag)
+            }
         }
 
         fun serviceKind(s: Service): String = when {
@@ -651,6 +898,9 @@ abstract class ServiceChannel(val service: Service, val name: String) {
 
     /** The session ended or the head unit closed the channel. */
     open fun onClosed() {}
+
+    /** The head unit updated this channel's service (ServiceDiscoveryUpdate). Reader thread. */
+    open fun onServiceUpdate(update: Service) {}
 
     protected fun send(msgId: Int, body: MessageLite, priority: Int = Priority.CONTROL) =
         session.send(id, msgId, body, priority = priority)
