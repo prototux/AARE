@@ -21,6 +21,8 @@ import aap_protobuf.service.control.message.PingRequestOuterClass.PingRequest
 import aap_protobuf.service.control.message.PingResponseOuterClass.PingResponse
 import aap_protobuf.service.control.message.ServiceDiscoveryRequestOuterClass.ServiceDiscoveryRequest
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
+import aap_protobuf.service.control.message.UpdateUiConfigReplyOuterClass.UpdateUiConfigReply
+import aap_protobuf.service.control.message.UpdateUiConfigRequestOuterClass.UpdateUiConfigRequest
 import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.PointerActionOuterClass.PointerAction
@@ -29,7 +31,9 @@ import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration
 import aap_protobuf.service.media.shared.message.ConfigOuterClass.Config
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
+import aap_protobuf.service.media.shared.message.MediaStatsOuterClass.MediaStats
 import aap_protobuf.service.media.shared.message.StartOuterClass.Start
+import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.MediaSinkServiceOuterClass.MediaSinkService
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import aap_protobuf.service.media.sink.message.VideoCodecResolutionTypeOuterClass.VideoCodecResolutionType
@@ -97,10 +101,18 @@ class HeadUnitSimulator(
      * does, even the ones aasdk's definitions call required.
      */
     omitZeroFields: Boolean = false,
-    /** The protocol minor version the head unit announces (1.x). */
+    /** The protocol minor version the head unit announces. */
     private val protocolMinor: Int = 6,
     /** Pairing methods of a Bluetooth service to list; null lists no Bluetooth service. */
     private val bluetoothMethods: List<BluetoothPairingMethod>? = null,
+    /** The protocol major version the head unit announces. */
+    private val protocolMajor: Int = 1,
+    /** The status the video sink's Config carries (audio always says READY). */
+    private val videoConfigStatus: Config.Status = Config.Status.STATUS_READY,
+    /** More video Configs sent right after the first, with these statuses. */
+    private val moreVideoConfigs: List<Config.Status> = emptyList(),
+    /** The video configuration's UI config, if any (insets, margins, theme). */
+    private val videoUiConfig: UiConfig? = null,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -119,19 +131,37 @@ class HeadUnitSimulator(
     val discoveryRequest = CountDownLatch(1)
     var phoneRequest: ServiceDiscoveryRequest? = null
     val openedChannels = ConcurrentHashMap.newKeySet<Int>()
+    /** Channel open requests, in the order the phone sent them. */
+    val openOrder = LinkedBlockingQueue<Int>()
+    /** Channels the phone answered with UNEXPECTED_MESSAGE, in order. */
+    val unexpectedReplies = LinkedBlockingQueue<Int>()
+    /** The phone's pings, in order. */
+    val pingRequests = LinkedBlockingQueue<PingRequest>()
     val videoFrames = AtomicInteger()
     val videoBytes = AtomicInteger()
     val codecConfigs = AtomicInteger()
     val audioChunks = AtomicInteger()
     /** Set false to simulate a head unit that stops acking audio mid-stream (#82). */
     @Volatile var ackAudio = true
+    /** Set false to simulate a head unit that doesn't ack video. */
+    @Volatile var ackVideo = true
     val pingsAnswered = AtomicInteger()
     val focusRequests = AtomicInteger()
     val sensorRequests = ConcurrentHashMap.newKeySet<SensorType>()
+    /** Every sensor request in arrival order: (type, min_update_period). */
+    val sensorRequestLog = java.util.concurrent.LinkedBlockingQueue<Pair<SensorType, Long>>()
     val firstVideoFrame = CountDownLatch(1)
     val byeBye = CountDownLatch(1)
     val closed = CountDownLatch(1)
     @Volatile var videoStart: Start? = null
+    /** Every START the phone sent, by channel, latest last. */
+    val starts = ConcurrentHashMap<Int, LinkedBlockingQueue<Start>>()
+    /** UI configs the phone confirmed (UPDATE_UI_CONFIG_REPLY), in order. */
+    val uiConfigReplies = LinkedBlockingQueue<UiConfig>()
+    /** Video frames received when each UI config reply arrived. */
+    val framesAtUiConfigReply = LinkedBlockingQueue<Int>()
+    /** Each media channel's session, from its latest START: its acks carry it, as a head unit's do. */
+    val sessionIds = ConcurrentHashMap<Int, Int>()
     @Volatile var error: Throwable? = null
     /** Video focus the phone reported, in order. */
     val focusNotifications = LinkedBlockingQueue<VideoFocusMode>()
@@ -147,15 +177,23 @@ class HeadUnitSimulator(
     val authResults = LinkedBlockingQueue<BluetoothAuthenticationResult>()
     /** False plays a head unit that never answers the phone's bye-bye. */
     @Volatile var answerByeBye = true
+    /** False plays a head unit that never answers the phone's pings. */
+    @Volatile var answerPings = true
+    /** The ping interval the head unit asks for in its discovery response. */
+    @Volatile var pingIntervalMs = 1000
     /** AUTH_COMPLETE's status: non-zero plays a head unit that refuses the phone certificate. */
     @Volatile var authStatus = 0
     /** True plays a link that goes away in the middle of the TLS handshake (a cable pulled then). */
     @Volatile var hangUpInHandshake = false
+    /** The body of the phone's version response (major, minor, status: 16 bits each). */
+    @Volatile var versionResponse: ByteArray? = null
+    val versionAnswered = CountDownLatch(1)
 
     fun start() {
         Thread({
             try {
-                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(0, 1, 0, protocolMinor.toByte()))
+                sendPlain(0, ControlMsg.VERSION_REQUEST, byteArrayOf(
+                    (protocolMajor shr 8).toByte(), protocolMajor.toByte(), (protocolMinor shr 8).toByte(), protocolMinor.toByte()))
                 while (true) handle(reader.read())
             } catch (e: Throwable) {
                 if (byeBye.count > 0L) error = e
@@ -168,9 +206,11 @@ class HeadUnitSimulator(
     fun stop() = transport.close()
 
     private fun handle(m: AapMessage) {
+        if (m.id == ControlMsg.UNEXPECTED_MESSAGE && m.channel != 0) { unexpectedReplies.add(m.channel); return }
         if (m.channel == 0 && !m.control) return control(m)
         if (m.control && m.id == ControlMsg.CHANNEL_OPEN_REQUEST) {
             openedChannels.add(m.channel)
+            openOrder.add(m.channel)
             send(m.channel, ControlMsg.CHANNEL_OPEN_RESPONSE, ChannelOpenResponse.newBuilder()
                 .apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build(), control = true)
             return
@@ -183,6 +223,7 @@ class HeadUnitSimulator(
             sensors -> if (m.id == SensorMsg.REQUEST) {
                 val req = SensorRequest.parseFrom(m.bodyBytes())
                 sensorRequests.add(req.type)
+                sensorRequestLog.add(req.type to req.minUpdatePeriod)
                 send(sensors, SensorMsg.RESPONSE, SensorResponse.newBuilder().apply { if (writeZeros) setStatus(MessageStatus.STATUS_SUCCESS) }.build())
                 val batch = SensorBatch.newBuilder()
                 when (req.type) {
@@ -207,6 +248,8 @@ class HeadUnitSimulator(
     private fun control(m: AapMessage) {
         when (m.id) {
             ControlMsg.VERSION_RESPONSE -> {
+                versionResponse = m.bodyBytes()
+                versionAnswered.countDown()
                 cryptor.beginHandshake()
                 sendPlain(0, ControlMsg.ENCAPSULATED_SSL, cryptor.handshake(ByteArray(0)))
             }
@@ -226,8 +269,11 @@ class HeadUnitSimulator(
             }
             ControlMsg.PING_REQUEST -> {
                 val req = PingRequest.parseFrom(m.bodyBytes())
-                send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
-                pingsAnswered.incrementAndGet()
+                pingRequests.add(req)
+                if (answerPings) {
+                    send(0, ControlMsg.PING_RESPONSE, PingResponse.newBuilder().setTimestamp(req.timestamp).build())
+                    pingsAnswered.incrementAndGet()
+                }
             }
             ControlMsg.AUDIO_FOCUS_REQUEST -> {
                 val req = AudioFocusRequest.parseFrom(m.bodyBytes())
@@ -248,9 +294,21 @@ class HeadUnitSimulator(
 
     private fun mediaSink(m: AapMessage) {
         when (m.id) {
-            MediaMsg.SETUP -> send(m.channel, MediaMsg.CONFIG, Config.newBuilder().setStatus(Config.Status.STATUS_READY)
-                .setMaxUnacked(maxUnacked).addConfigurationIndices(0).build())
-            MediaMsg.START -> if (m.channel == video) videoStart = Start.parseFrom(m.bodyBytes())
+            MediaMsg.SETUP -> {
+                fun config(status: Config.Status) = Config.newBuilder().setStatus(status).setMaxUnacked(maxUnacked).addConfigurationIndices(0).build()
+                send(m.channel, MediaMsg.CONFIG, config(if (m.channel == video) videoConfigStatus else Config.Status.STATUS_READY))
+                if (m.channel == video) moreVideoConfigs.forEach { send(video, MediaMsg.CONFIG, config(it)) }
+            }
+            MediaMsg.START -> {
+                val start = Start.parseFrom(m.bodyBytes())
+                starts.computeIfAbsent(m.channel) { LinkedBlockingQueue() }.add(start)
+                sessionIds[m.channel] = start.sessionId
+                if (m.channel == video) videoStart = start
+            }
+            MediaMsg.UPDATE_UI_CONFIG_REPLY -> {
+                framesAtUiConfigReply.add(videoFrames.get())
+                uiConfigReplies.add(UpdateUiConfigReply.parseFrom(m.bodyBytes()).uiConfig)
+            }
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 focusRequests.incrementAndGet()
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
@@ -272,8 +330,8 @@ class HeadUnitSimulator(
                 } else {
                     audioChunks.incrementAndGet()
                 }
-                val session = if (m.channel == video) videoStart?.sessionId ?: 0 else 0
-                if (m.channel == video || ackAudio)
+                val session = sessionIds[m.channel] ?: 0
+                if (if (m.channel == video) ackVideo else ackAudio)
                     send(m.channel, MediaMsg.ACK, Ack.newBuilder().apply { if (session != 0 || writeZeros) setSessionId(session) }.setAck(1).build())
             }
         }
@@ -344,6 +402,17 @@ class HeadUnitSimulator(
     fun sendAuthenticationData(authData: String, method: BluetoothPairingMethod) = send(bluetooth, BluetoothMsg.AUTHENTICATION_DATA,
         BluetoothAuthenticationData.newBuilder().setAuthData(authData).setPairingMethod(method).build())
 
+    /** Changes the projection's layout at runtime, as some head units do (insets, margins). */
+    fun updateUiConfig(request: UpdateUiConfigRequest) = send(video, MediaMsg.UPDATE_UI_CONFIG_REQUEST, request)
+
+    /** Reports playback statistics on a media channel, as head units 6.0 and later do. */
+    fun sendMediaStats(channel: Int, stats: MediaStats) = send(channel, MediaMsg.MEDIA_STATS, stats)
+
+    /** Sends an ack of the head unit's own making on a media channel. */
+    fun sendAck(channel: Int, sessionId: Int, count: Int? = null, receiveTimesNs: List<Long> = emptyList()) =
+        send(channel, MediaMsg.ACK, Ack.newBuilder().setSessionId(sessionId).apply { count?.let { setAck(it) } }
+            .addAllReceiveTimestampNs(receiveTimesNs).build())
+
     fun sayByeBye() = send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
 
     fun discoveryResponse(): ServiceDiscoveryResponse {
@@ -360,11 +429,12 @@ class HeadUnitSimulator(
                 .setHeadUnitMake("AARE").setHeadUnitModel("hu-sim").setHeadUnitSoftwareVersion("1"))
             .setDisplayName("Simulated car")
             .setConnectionConfiguration(ConnectionConfiguration.newBuilder().setPingConfiguration(
-                PingConfiguration.newBuilder().setIntervalMs(1000).setTimeoutMs(3000).setTrackedPingCount(5)))
+                PingConfiguration.newBuilder().setIntervalMs(pingIntervalMs).setTimeoutMs(3000).setTrackedPingCount(5)))
             .addChannels(Service.newBuilder().setId(video).setMediaSinkService(MediaSinkService.newBuilder()
                 .setAvailableType(MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP)
                 .addVideoConfigs(VideoConfiguration.newBuilder().setCodecResolution(res)
-                    .setFrameRate(VideoFrameRateType.VIDEO_FPS_30).setDensity(dpi).apply { if (writeZeros) { setWidthMargin(0); setHeightMargin(0) } })))
+                    .setFrameRate(VideoFrameRateType.VIDEO_FPS_30).setDensity(dpi).apply { if (writeZeros) { setWidthMargin(0); setHeightMargin(0) } }
+                    .apply { videoUiConfig?.let { setUiConfig(it) } })))
             .addChannels(audio(mediaAudio, AudioStreamType.AUDIO_STREAM_MEDIA, 48000, 2))
             .addChannels(audio(guidance, AudioStreamType.AUDIO_STREAM_GUIDANCE, 16000, 1))
             .addChannels(audio(system, AudioStreamType.AUDIO_STREAM_SYSTEM_AUDIO, 16000, 1))
@@ -402,6 +472,11 @@ class HeadUnitSimulator(
 
     fun send(channel: Int, id: Int, body: MessageLite, control: Boolean = false) = synchronized(writeLock) {
         writer.write(channel, control, tlsUp, AapMessage.plaintext(id, body.toByteArray()))
+    }
+
+    /** Sends [body] as is after the message id: for messages a real head unit would get wrong. */
+    fun sendBytes(channel: Int, id: Int, body: ByteArray, control: Boolean = false) = synchronized(writeLock) {
+        writer.write(channel, control, tlsUp, AapMessage.plaintext(id, body))
     }
 
     private fun sendRaw(channel: Int, plain: ByteArray) = synchronized(writeLock) {
