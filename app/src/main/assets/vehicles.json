@@ -2,9 +2,9 @@
   "_comment": "Rules AARE ships for head units known to need them, same format as the user's vehicles.json (docs/vehicles.md). A user rule for the same head unit wins, field by field.",
   "rules": [
     {
-      "_comment": "VW Play (Visteon MIB Regio), e.g. the 2023 VW Polo GTS (#166): answers a SETUP on the microphone channel with 'unexpected message', then shows no video (#162).",
+      "_comment": "VW Play (Visteon MIB Regio), e.g. the 2023 VW Polo GTS (#166): answers a SETUP on the microphone channel with 'unexpected message', then shows no video (#162). It also drops the phone's hands-free link when projection starts, and connects it again only on a pairing request sent once the session runs (#268).",
       "match": { "make": "Volkswagen", "name": "MIB Regio" },
-      "apply": { "micSetup": false }
+      "apply": { "micSetup": false, "pairAgainWhenRunning": true }
     }
   ]
 }
