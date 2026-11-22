@@ -108,11 +108,25 @@
     <string name="dash_card_calendar">Következő naptáresemény</string>
     <string name="dash_card_notification">Legutóbbi értesítés</string>
     <string name="dash_card_weather">Időjárás</string>
+    <string name="rail_widgets_title">Sáv/tálca widgetek</string>
+    <string name="rail_widgets_hint">Kis állapotelemek a sávon (vagy a tálcán). Az óra mellett sorakoznak, ebben a sorrendben.</string>
+    <string name="rail_widget_clock">Óra</string>
+    <string name="rail_widget_temperature">Külső hőmérséklet</string>
+    <string name="rail_widget_battery">Telefon akkumulátora</string>
+    <string name="rail_widget_weather">Időjárás</string>
     <string name="setup_choice_wallpaper">Háttérkép</string>
     <string name="setup_wallpaper_none">Nincs</string>
     <string name="setup_wallpaper_photo">Fénykép</string>
+    <string name="setup_choice_map_inset">Margó a térkép alatt</string>
+    <string name="setup_map_inset_none">Nincs</string>
+    <string name="setup_map_inset_small">Kicsi</string>
+    <string name="setup_map_inset_medium">Közepes</string>
+    <string name="setup_map_inset_large">Nagy</string>
+    <string name="setup_hint_map_inset">Feljebb tolja, amit a navigációs alkalmazás a térkép aljára rajzol a műszerfalon. Például ha az autó aktuális sebességét eltakarja az alkalmazás logója (gyakran előfordul a HERE WeGo esetében)</string>
     <string name="setup_toggle_weather_title">Időjárás</string>
     <string name="setup_toggle_weather_subtitle">Az óra mellett, az Open-Meteo-tól (hozzávetőleges, kb. 10 km pontosságú pozíciót kap)</string>
+    <string name="setup_choice_agenda_count">Megjelenített naptáresemények</string>
+    <string name="setup_agenda_count_hint">Egynél több esetén napirend lesz belőle, mindegyik a napjával és idejével.</string>
     <string name="setup_section_driving">Vezetés</string>
     <string name="setup_toggle_passenger_title">Utas mód</string>
     <string name="setup_toggle_passenger_subtitle">Az autó vezetési állapotának figyelmen kívül hagyása: a gépelés, a hosszú listák és a telefon képernyője mozgás közben is elérhető marad, az utas számára. A vezető vezetés közben nem használhatja a képernyőt.</string>
@@ -398,6 +412,8 @@
     <string name="phone_action_answer">Felvétel</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Ma</string>
+    <string name="dash_agenda_tomorrow">Holnap</string>
+    <string name="dash_event_navigate">Navigálás</string>
     <string name="dash_latest_label">Legutóbbi</string>
     <string name="cluster_arrival_time">Érkezés: %1$s</string>
 

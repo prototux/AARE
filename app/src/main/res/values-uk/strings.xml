@@ -108,11 +108,25 @@
     <string name="dash_card_calendar">Наступна подія календаря</string>
     <string name="dash_card_notification">Останнє сповіщення</string>
     <string name="dash_card_weather">Погода</string>
+    <string name="rail_widgets_title">Віджети панелі/панелі завдань</string>
+    <string name="rail_widgets_hint">Невеликі елементи стану на панелі (або панелі завдань). Вони розташовуються поруч із годинником у цьому порядку.</string>
+    <string name="rail_widget_clock">Годинник</string>
+    <string name="rail_widget_temperature">Температура надворі</string>
+    <string name="rail_widget_battery">Батарея телефона</string>
+    <string name="rail_widget_weather">Погода</string>
     <string name="setup_choice_wallpaper">Шпалери</string>
     <string name="setup_wallpaper_none">Немає</string>
     <string name="setup_wallpaper_photo">Фото</string>
+    <string name="setup_choice_map_inset">Відступ під картою</string>
+    <string name="setup_map_inset_none">Немає</string>
+    <string name="setup_map_inset_small">Малий</string>
+    <string name="setup_map_inset_medium">Середній</string>
+    <string name="setup_map_inset_large">Великий</string>
+    <string name="setup_hint_map_inset">Піднімає те, що навігаційний застосунок малює в нижній частині карти на панелі приладів. Наприклад, коли поточну швидкість автомобіля закриває логотип застосунку (часто трапляється в HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Погода</string>
     <string name="setup_toggle_weather_subtitle">Біля годинника, від Open-Meteo (отримує приблизну позицію, близько 10 км)</string>
+    <string name="setup_choice_agenda_count">Показувані події календаря</string>
+    <string name="setup_agenda_count_hint">Більше однієї стає розкладом, кожна зі своїм днем і часом.</string>
     <string name="setup_section_driving">Керування</string>
     <string name="setup_toggle_passenger_title">Режим пасажира</string>
     <string name="setup_toggle_passenger_subtitle">Ігнорувати стан керування автомобілем: введення тексту, довгі списки та екран телефону залишаються доступними в русі, для пасажира. Водій не повинен використовувати екран під час керування.</string>
@@ -398,6 +412,8 @@
     <string name="phone_action_answer">Відповісти</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Сьогодні</string>
+    <string name="dash_agenda_tomorrow">Завтра</string>
+    <string name="dash_event_navigate">Маршрут</string>
     <string name="dash_latest_label">Останнє</string>
     <string name="cluster_arrival_time">Прибуття %1$s</string>
 

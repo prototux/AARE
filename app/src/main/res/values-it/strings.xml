@@ -108,11 +108,25 @@
     <string name="dash_card_calendar">Prossimo evento in calendario</string>
     <string name="dash_card_notification">Ultima notifica</string>
     <string name="dash_card_weather">Meteo</string>
+    <string name="rail_widgets_title">Widget della barra/barra delle applicazioni</string>
+    <string name="rail_widgets_hint">Piccoli elementi di stato sulla barra (o sulla barra delle applicazioni). Si affiancano all\'orologio, in quest\'ordine.</string>
+    <string name="rail_widget_clock">Orologio</string>
+    <string name="rail_widget_temperature">Temperatura esterna</string>
+    <string name="rail_widget_battery">Batteria del telefono</string>
+    <string name="rail_widget_weather">Meteo</string>
     <string name="setup_choice_wallpaper">Sfondo</string>
     <string name="setup_wallpaper_none">Nessuno</string>
     <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_choice_map_inset">Margine sotto la mappa</string>
+    <string name="setup_map_inset_none">Nessuno</string>
+    <string name="setup_map_inset_small">Piccolo</string>
+    <string name="setup_map_inset_medium">Medio</string>
+    <string name="setup_map_inset_large">Grande</string>
+    <string name="setup_hint_map_inset">Sposta in alto ciò che l\'app di navigazione disegna nella parte bassa della mappa nella dashboard. Per esempio, quando la velocità attuale dell\'auto è coperta dal logo dell\'app (capita spesso con HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Meteo</string>
     <string name="setup_toggle_weather_subtitle">Accanto all\'orologio, da Open-Meteo (usa una posizione approssimativa, circa 10 km)</string>
+    <string name="setup_choice_agenda_count">Eventi del calendario mostrati</string>
+    <string name="setup_agenda_count_hint">Più di uno diventa un\'agenda, ognuno con il suo giorno e orario.</string>
     <string name="setup_section_driving">Guida</string>
     <string name="setup_toggle_passenger_title">Modalità passeggero</string>
     <string name="setup_toggle_passenger_subtitle">Ignora lo stato di guida dell\'auto: la digitazione, gli elenchi lunghi e lo schermo del telefono restano disponibili in movimento, per un passeggero. Il conducente non deve usare lo schermo durante la guida.</string>
@@ -398,6 +412,8 @@
     <string name="phone_action_answer">Rispondi</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Oggi</string>
+    <string name="dash_agenda_tomorrow">Domani</string>
+    <string name="dash_event_navigate">Naviga</string>
     <string name="dash_latest_label">Ultimo</string>
     <string name="cluster_arrival_time">Arrivo %1$s</string>
 

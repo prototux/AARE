@@ -179,10 +179,24 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("ignore_driving", false)
         set(v) = prefs.edit { putBoolean("ignore_driving", v) }
 
+    /**
+     * Room (dp) kept free along the bottom of the dashboard's map card, in the visible area given
+     * to the navigation app: lifts what the app draws there itself (HERE WeGo's speed, over its
+     * logo). 0 gives the app the whole card.
+     */
+    var mapCardBottomInset: Int
+        get() = prefs.getInt("map_card_bottom_inset", 0)
+        set(v) = prefs.edit { putInt("map_card_bottom_inset", v) }
+
     /** The weather next to the clock (from Open-Meteo, with an approximate position). */
     var showWeather: Boolean
         get() = prefs.getBoolean("show_weather", true)
         set(v) = prefs.edit { putBoolean("show_weather", v) }
+
+    /** How many upcoming events the calendar card shows (1: today's behaviour, up to 5). */
+    var calendarAgendaCount: Int
+        get() = prefs.getInt("calendar_agenda_count", 1).coerceIn(1, 5)
+        set(v) = prefs.edit { putInt("calendar_agenda_count", v.coerceIn(1, 5)) }
 
 
     /** Behind the dashboard: none, one of the built-in gradients, or [WALLPAPER_CUSTOM] (filesDir/wallpaper.jpg). */
@@ -378,6 +392,15 @@ class Settings(context: Context) {
     var lastMediaApp: String?
         get() = prefs.getString("last_media", null)
         set(v) = prefs.edit { putString("last_media", v) }
+
+    /**
+     * The rail's status widgets, in order: ids from `RailWidget` (ui.car). Default: today's rail
+     * (the clock, the phone's battery, the weather); kept as raw ids here, not the enum, so this
+     * file doesn't depend on the UI layer.
+     */
+    var railWidgets: List<String>
+        get() = prefs.getString("rail_widgets", null)?.split(',')?.filter { it.isNotBlank() } ?: listOf("clock", "battery", "weather")
+        set(v) = prefs.edit { putString("rail_widgets", v.joinToString(",")) }
 
     /** The car launcher's order: app keys (package names, or the built-in apps' ids), first first. */
     var appOrder: List<String>

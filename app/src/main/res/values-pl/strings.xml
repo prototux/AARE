@@ -108,11 +108,25 @@
     <string name="dash_card_calendar">Następne wydarzenie w kalendarzu</string>
     <string name="dash_card_notification">Ostatnie powiadomienie</string>
     <string name="dash_card_weather">Pogoda</string>
+    <string name="rail_widgets_title">Widżety listwy/paska zadań</string>
+    <string name="rail_widgets_hint">Małe elementy stanu na listwie (lub pasku zadań). Ustawiają się obok zegara, w tej kolejności.</string>
+    <string name="rail_widget_clock">Zegar</string>
+    <string name="rail_widget_temperature">Temperatura zewnętrzna</string>
+    <string name="rail_widget_battery">Bateria telefonu</string>
+    <string name="rail_widget_weather">Pogoda</string>
     <string name="setup_choice_wallpaper">Tapeta</string>
     <string name="setup_wallpaper_none">Brak</string>
     <string name="setup_wallpaper_photo">Zdjęcie</string>
+    <string name="setup_choice_map_inset">Margines pod mapą</string>
+    <string name="setup_map_inset_none">Brak</string>
+    <string name="setup_map_inset_small">Mały</string>
+    <string name="setup_map_inset_medium">Średni</string>
+    <string name="setup_map_inset_large">Duży</string>
+    <string name="setup_hint_map_inset">Przesuwa w górę to, co aplikacja nawigacyjna rysuje w dolnej części mapy na panelu. Na przykład gdy aktualną prędkość samochodu zasłania logo aplikacji (często zdarza się w HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Pogoda</string>
     <string name="setup_toggle_weather_subtitle">Przy zegarze, z Open-Meteo (pobiera przybliżoną pozycję, około 10 km)</string>
+    <string name="setup_choice_agenda_count">Wyświetlane wydarzenia kalendarza</string>
+    <string name="setup_agenda_count_hint">Więcej niż jedno tworzy plan dnia, każde z dniem i godziną.</string>
     <string name="setup_section_driving">Jazda</string>
     <string name="setup_toggle_passenger_title">Tryb pasażera</string>
     <string name="setup_toggle_passenger_subtitle">Ignoruj stan jazdy samochodu: pisanie, długie listy i ekran telefonu pozostają dostępne w ruchu, dla pasażera. Kierowca nie może używać ekranu podczas jazdy.</string>
@@ -398,6 +412,8 @@
     <string name="phone_action_answer">Odbierz</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Dzisiaj</string>
+    <string name="dash_agenda_tomorrow">Jutro</string>
+    <string name="dash_event_navigate">Nawiguj</string>
     <string name="dash_latest_label">Najnowsze</string>
     <string name="cluster_arrival_time">Przyjazd %1$s</string>
 

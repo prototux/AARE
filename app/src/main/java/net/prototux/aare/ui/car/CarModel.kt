@@ -98,8 +98,8 @@ class CarUiState {
     var tripPackage by mutableStateOf<String?>(null)
     /** The weather next to the clock, if known and wanted. */
     var weather by mutableStateOf<Weather?>(null)
-    /** The next calendar event, for the dashboard. */
-    var nextEvent by mutableStateOf<NextEvent?>(null)
+    /** The next calendar events, earliest first (a setting decides how many), for the dashboard. */
+    var nextEvents by mutableStateOf<List<NextEvent>>(emptyList())
     /** The phone call ringing or on, if any. */
     var call by mutableStateOf<CarCall?>(null)
     /** The apps opened last, newest first (ids): the rail shows the recent ones. */
@@ -114,6 +114,8 @@ class CarUiState {
     var driverOnRight by mutableStateOf(false)
     /** The rail stays dark even with day colors (a setting). */
     var darkBar by mutableStateOf(false)
+    /** The rail's status widgets, in order (a setting). */
+    var railWidgets by mutableStateOf(RailWidget.DEFAULT)
     /** The rail's chosen apps, in order (a setting; empty = the rail's built-in set). */
     var railApps by mutableStateOf<List<String>>(emptyList())
     /** A narrower rail: smaller icons, tighter spacing (a setting). */

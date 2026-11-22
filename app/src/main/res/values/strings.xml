@@ -232,11 +232,25 @@
     <string name="dash_card_calendar">Next calendar event</string>
     <string name="dash_card_notification">Latest notification</string>
     <string name="dash_card_weather">Weather</string>
+    <string name="rail_widgets_title">Rail/taskbar widgets</string>
+    <string name="rail_widgets_hint">Small status items on the rail (or the taskbar). They stack beside the clock, in this order.</string>
+    <string name="rail_widget_clock">Clock</string>
+    <string name="rail_widget_temperature">Outside temperature</string>
+    <string name="rail_widget_battery">Phone battery</string>
+    <string name="rail_widget_weather">Weather</string>
     <string name="setup_choice_wallpaper">Wallpaper</string>
     <string name="setup_wallpaper_none">None</string>
     <string name="setup_wallpaper_photo">Photo</string>
+    <string name="setup_choice_map_inset">Margin under the map card</string>
+    <string name="setup_map_inset_none">None</string>
+    <string name="setup_map_inset_small">Small</string>
+    <string name="setup_map_inset_medium">Medium</string>
+    <string name="setup_map_inset_large">Large</string>
+    <string name="setup_hint_map_inset">Lifts what the navigation app draws at the bottom of the map on the dashboard. For example, when the car\'s current speed is hidden by the app\'s logo (as often happens in HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Weather</string>
     <string name="setup_toggle_weather_subtitle">Next to the clock, from Open-Meteo (it gets an approximate position, about 10 km)</string>
+    <string name="setup_choice_agenda_count">Calendar events shown</string>
+    <string name="setup_agenda_count_hint">More than one becomes an agenda, each with its day and time.</string>
     <string name="setup_section_driving">Driving</string>
     <string name="setup_toggle_passenger_title">Passenger mode</string>
     <string name="setup_toggle_passenger_subtitle">Ignore the car\'s driving status: typing, long lists and the phone screen stay available while moving, for a passenger. The driver must not use the screen while driving.</string>
@@ -602,6 +616,8 @@
     <string name="phone_action_answer">Answer</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">Today</string>
+    <string name="dash_agenda_tomorrow">Tomorrow</string>
+    <string name="dash_event_navigate">Navigate</string>
     <string name="dash_latest_label">Latest</string>
     <string name="cluster_arrival_time">Arrival %1$s</string>
 

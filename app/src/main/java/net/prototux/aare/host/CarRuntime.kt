@@ -62,6 +62,7 @@ import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.NotificationsScreen
 import net.prototux.aare.ui.car.NowPlaying
+import net.prototux.aare.ui.car.RailWidget
 import net.prototux.aare.ui.car.orderKey
 import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.MediaVideoScreen
@@ -388,6 +389,7 @@ class CarRuntime(
         ui.dashboardCards = DashCard.parse(settings.dashboardCards)
         ui.dashboardMapBig = settings.dashboardMapBig
         ui.weatherInBar = settings.showWeather
+        ui.railWidgets = RailWidget.parse(settings.railWidgets)
         ui.railApps = settings.railApps
         ui.compactRail = settings.compactRail
         val wallpaper = settings.wallpaper
@@ -431,7 +433,7 @@ class CarRuntime(
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "ignore_driving",
-            "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail" -> main.post { applyScreenSettings() }
+            "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail", "rail_widgets" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order" -> main.post { refreshApps() }
@@ -622,8 +624,8 @@ class CarRuntime(
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.weather(where) }?.let { ui.weather = it; lastWeather = now }
                 }
             }
-            ui.nextEvent = if (DashCard.CALENDAR in ui.dashboardCards)
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvent(context) } else null
+            ui.nextEvents = if (DashCard.CALENDAR in ui.dashboardCards)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvents(context, settings.calendarAgendaCount) } else emptyList()
             kotlinx.coroutines.delay(5 * 60_000)
         }
     }

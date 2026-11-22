@@ -108,11 +108,25 @@
     <string name="dash_card_calendar">Neste kalenderhendelse</string>
     <string name="dash_card_notification">Siste varsel</string>
     <string name="dash_card_weather">Vær</string>
+    <string name="rail_widgets_title">Moduler på stolpe/oppgavelinje</string>
+    <string name="rail_widgets_hint">Små statuselementer på stolpen (eller oppgavelinjen). De legges ved siden av klokken, i denne rekkefølgen.</string>
+    <string name="rail_widget_clock">Klokke</string>
+    <string name="rail_widget_temperature">Utetemperatur</string>
+    <string name="rail_widget_battery">Telefonens batteri</string>
+    <string name="rail_widget_weather">Vær</string>
     <string name="setup_choice_wallpaper">Bakgrunnsbilde</string>
     <string name="setup_wallpaper_none">Ingen</string>
     <string name="setup_wallpaper_photo">Foto</string>
+    <string name="setup_choice_map_inset">Marg under kartet</string>
+    <string name="setup_map_inset_none">Ingen</string>
+    <string name="setup_map_inset_small">Liten</string>
+    <string name="setup_map_inset_medium">Middels</string>
+    <string name="setup_map_inset_large">Stor</string>
+    <string name="setup_hint_map_inset">Flytter opp det navigasjonsappen tegner nederst på kartet på dashbordet. For eksempel når bilens nåværende hastighet er skjult bak appens logo (skjer ofte i HERE WeGo)</string>
     <string name="setup_toggle_weather_title">Vær</string>
     <string name="setup_toggle_weather_subtitle">Ved siden av klokken, fra Open-Meteo (den henter en omtrentlig posisjon, ca. 10 km)</string>
+    <string name="setup_choice_agenda_count">Viste kalenderhendelser</string>
+    <string name="setup_agenda_count_hint">Mer enn én blir en agenda, hver med sin dag og sitt klokkeslett.</string>
     <string name="setup_section_driving">Kjøring</string>
     <string name="setup_toggle_passenger_title">Passasjermodus</string>
     <string name="setup_toggle_passenger_subtitle">Ignorerer bilens kjørestatus: skriving, lange lister og telefonskjermen forblir tilgjengelige under kjøring, for en passasjer. Føreren må ikke bruke skjermen under kjøring.</string>
@@ -398,6 +412,8 @@
     <string name="phone_action_answer">Svar</string>
     <string name="phone_in_call_elapsed">%1$s · %2$s</string>
     <string name="dash_event_today">I dag</string>
+    <string name="dash_agenda_tomorrow">I morgen</string>
+    <string name="dash_event_navigate">Naviger</string>
     <string name="dash_latest_label">Nyeste</string>
     <string name="cluster_arrival_time">Ankomst %1$s</string>
 

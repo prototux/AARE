@@ -161,6 +161,8 @@ import net.prototux.aare.setup.ShizukuSetupClient
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.RailWidget
+import net.prototux.aare.ui.car.RailWidgetsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
 import net.prototux.aare.ui.car.movedBy
@@ -836,13 +838,16 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var rail by remember { mutableStateOf(settings.railPosition) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
+    var agendaCount by remember { mutableStateOf(settings.calendarAgendaCount) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
+    var mapInset by remember { mutableStateOf(settings.mapCardBottomInset) }
     val scope = rememberCoroutineScope()
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) scope.launch {
@@ -886,6 +891,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
             Spacer(Modifier.height(12.dp))
+            RailWidgetsEditor(railWidgets, 48.dp) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
+            Spacer(Modifier.height(12.dp))
             val sizeOptions = listOf(
                 CarTextSize.DEFAULT.id to stringResource(R.string.setup_choice_size_default),
                 CarTextSize.LARGER.id to stringResource(R.string.setup_choice_size_larger),
@@ -909,10 +916,22 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_map_inset), listOf("0" to stringResource(R.string.setup_map_inset_none), "24" to stringResource(R.string.setup_map_inset_small),
+                "40" to stringResource(R.string.setup_map_inset_medium), "56" to stringResource(R.string.setup_map_inset_large)), mapInset.toString()) {
+                mapInset = it.toInt(); settings.mapCardBottomInset = mapInset
+            }
+            Text(stringResource(R.string.setup_hint_map_inset),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
                 mapBig = it; settings.dashboardMapBig = it
             }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
+                agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
+            }
+            Text(stringResource(R.string.setup_agenda_count_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {
