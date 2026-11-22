@@ -676,6 +676,7 @@
     <string name="msg_voice_reply_confirm">Send your reply to %1$s?</string>
     <string name="msg_voice_reply_read_back">%1$s. Send it to %2$s?</string>
     <string name="msg_voice_reply_not_heard">Didn\'t catch that</string>
+    <string name="msg_voice_reply_try_again">Couldn\'t listen just now. Try again</string>
     <string name="msg_voice_reply_unavailable">Speech recognition isn\'t available on this phone</string>
     <string name="msg_voice_reply_send">Send</string>
     <!-- Comma-separated words that answer the read-back aloud; English ones always count too. -->

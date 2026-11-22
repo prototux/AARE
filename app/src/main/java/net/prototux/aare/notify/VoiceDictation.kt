@@ -6,6 +6,8 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -18,7 +20,8 @@ import java.util.Locale
  * the car's microphone like any app, and AARE handles no microphone itself. Main thread only.
  *
  * While listening it holds transient exclusive focus with the assistant usage, so the music pauses
- * (the car hears the cabin, not the speakers) and the car goes back to it afterwards.
+ * (the car hears the cabin, not the speakers) and the car goes back to it afterwards. A recognizer
+ * that neither answers nor fails is given up after [TIMEOUT_MS], so the music never stays paused.
  */
 internal class VoiceDictation(
     private val context: Context,
@@ -29,12 +32,21 @@ internal class VoiceDictation(
     enum class Failure {
         /** Nothing understood: worth trying again. */
         NotHeard,
+        /** No answer from the recognizer (network, server, busy, timeout): worth trying again. */
+        TryAgain,
         /** No recognizer, no permission, or it broke: trying again won't help. */
         Unavailable,
     }
 
     private var recognizer: SpeechRecognizer? = null
     private var focus: AudioFocusRequest? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private val timeout = Runnable {
+        if (recognizer == null) return@Runnable
+        Log.w(TAG, "speech recognizer gave no answer in ${TIMEOUT_MS / 1000} s")
+        cancel()
+        onFailure(Failure.TryAgain)
+    }
 
     fun start() {
         cancel()
@@ -44,6 +56,7 @@ internal class VoiceDictation(
         recognizer = r
         r.setRecognitionListener(listener)
         requestFocus()
+        handler.postDelayed(timeout, TIMEOUT_MS)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
@@ -63,6 +76,7 @@ internal class VoiceDictation(
     }
 
     private fun finish() {
+        handler.removeCallbacks(timeout)
         recognizer?.let { runCatching { it.destroy() } }
         recognizer = null
         abandonFocus()
@@ -110,14 +124,27 @@ internal class VoiceDictation(
 
     companion object {
         private const val TAG = "AareVoiceReply"
+        /** Longest wait for a result: a reply is short, and the music is paused meanwhile. */
+        const val TIMEOUT_MS = 15_000L
 
         private fun firstText(results: Bundle?): String? =
             results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() }
 
-        /** Silence or nothing recognised can be tried again; anything else won't get better. */
+        /**
+         * Silence or nothing recognised: try again. A weak signal (in a tunnel, while driving), a
+         * server or a busy recognizer: try again too. No permission, no recognizer, a broken
+         * client: trying again won't help.
+         */
         fun failureOf(error: Int): Failure = when (error) {
             SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Failure.NotHeard
+            SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT, SpeechRecognizer.ERROR_SERVER,
+            SpeechRecognizer.ERROR_RECOGNIZER_BUSY, ERROR_SERVER_DISCONNECTED, ERROR_TOO_MANY_REQUESTS -> Failure.TryAgain
             else -> Failure.Unavailable
         }
+
+        // SpeechRecognizer.ERROR_SERVER_DISCONNECTED / ERROR_TOO_MANY_REQUESTS, API 31: inlined
+        // values, so they're understood on any release.
+        private const val ERROR_SERVER_DISCONNECTED = 11
+        private const val ERROR_TOO_MANY_REQUESTS = 10
     }
 }

@@ -183,6 +183,20 @@ class CarNotificationListener : NotificationListenerService() {
      */
     fun say(text: String, onDone: (() -> Unit)? = null) = speak(text, onDone)
 
+    /**
+     * Stops whatever AARE is saying (a voice reply about to listen mustn't hear AARE's own voice,
+     * least of all through the car's microphone), and releases the speech focus with it.
+     */
+    fun stopSpeaking() {
+        synchronized(speechLock) {
+            waitingSpeech.clear()
+            utteranceCallbacks.clear()
+            pendingUtterances = 0
+            if (ttsReady) runCatching { tts?.stop() }
+            abandonSpeechFocus()
+        }
+    }
+
     /** The newest guidance notification still showing, if any. */
     private fun refreshGuidance() {
         _guidance.value = runCatching { activeNotifications }.getOrNull().orEmpty()

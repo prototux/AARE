@@ -11,6 +11,8 @@ internal sealed interface VoiceReplyStep {
     data class Confirm(val text: String) : VoiceReplyStep
     /** Nothing understood: the user may try again. */
     data object NotHeard : VoiceReplyStep
+    /** The recognizer didn't answer (weak signal, server, busy, timeout): the user may try again. */
+    data object TryAgain : VoiceReplyStep
     /** No speech recognition on this phone (or it broke): only cancelling is offered. */
     data object Unavailable : VoiceReplyStep
 
@@ -30,6 +32,7 @@ internal sealed interface VoiceReplyStep {
         fun failure(step: VoiceReplyStep, failure: VoiceDictation.Failure): VoiceReplyStep = when {
             step !is Listening -> step
             failure == VoiceDictation.Failure.NotHeard -> NotHeard
+            failure == VoiceDictation.Failure.TryAgain -> TryAgain
             else -> Unavailable
         }
 

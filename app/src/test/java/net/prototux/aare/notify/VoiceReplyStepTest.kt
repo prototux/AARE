@@ -39,6 +39,14 @@ class VoiceReplyStepTest {
     }
 
     @Test
+    fun aRecognizerThatDidntAnswerCanBeTriedAgain() {
+        assertEquals(VoiceReplyStep.TryAgain, failure(VoiceReplyStep.Listening(), VoiceDictation.Failure.TryAgain))
+        assertEquals(VoiceReplyStep.Listening(), retry(VoiceReplyStep.TryAgain))
+        // While waiting for the spoken answer, a timeout just leaves the buttons.
+        assertEquals(VoiceReplyStep.Confirm("Hi"), failure(VoiceReplyStep.Confirm("Hi"), VoiceDictation.Failure.TryAgain))
+    }
+
+    @Test
     fun noRecognitionOnlyOffersCancelling() {
         assertEquals(VoiceReplyStep.Unavailable, failure(VoiceReplyStep.Listening(), VoiceDictation.Failure.Unavailable))
         assertEquals(VoiceReplyStep.Unavailable, retry(VoiceReplyStep.Unavailable))
@@ -48,6 +56,13 @@ class VoiceReplyStepTest {
     fun recognizerErrors() {
         assertEquals(VoiceDictation.Failure.NotHeard, VoiceDictation.failureOf(SpeechRecognizer.ERROR_NO_MATCH))
         assertEquals(VoiceDictation.Failure.NotHeard, VoiceDictation.failureOf(SpeechRecognizer.ERROR_SPEECH_TIMEOUT))
+        // A weak signal (a tunnel), a server or a busy recognizer: worth trying again.
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(SpeechRecognizer.ERROR_NETWORK))
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(SpeechRecognizer.ERROR_NETWORK_TIMEOUT))
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(SpeechRecognizer.ERROR_SERVER))
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(SpeechRecognizer.ERROR_RECOGNIZER_BUSY))
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(11)) // ERROR_SERVER_DISCONNECTED
+        assertEquals(VoiceDictation.Failure.TryAgain, VoiceDictation.failureOf(10)) // ERROR_TOO_MANY_REQUESTS
         assertEquals(VoiceDictation.Failure.Unavailable, VoiceDictation.failureOf(SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS))
         assertEquals(VoiceDictation.Failure.Unavailable, VoiceDictation.failureOf(SpeechRecognizer.ERROR_CLIENT))
     }

@@ -684,5 +684,10 @@ default) adds a button that dictates the answer, while driving too, as Android A
   (`VoiceReplyStep`, unit-tested).
 - While driving the dictated text isn't shown, like messages: it is read aloud instead.
 - While listening AARE holds transient exclusive focus with the assistant usage, so the music
-  pauses and the car goes back to it; the read-back ducks it like a message read aloud.
+  pauses and the car goes back to it; the read-back ducks it like a message read aloud. A
+  recognizer that neither answers nor fails is given up after 15 s, so the music never stays
+  paused. Before listening AARE stops its own voice (*Again* during the read-back), so the
+  recognizer can't transcribe it, least of all through the car's microphone.
+- A weak signal (tunnels, driving), a server error or a busy recognizer offers *Again*; only no
+  recognizer or no permission is final.
 - It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).

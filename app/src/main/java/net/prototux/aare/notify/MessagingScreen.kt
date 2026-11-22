@@ -284,7 +284,12 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
 
     // Listening starts on every new Listening step (the first one and each retry).
     val listening = step is VoiceReplyStep.Listening
-    LaunchedEffect(listening) { if (listening) dictation[0]?.start() }
+    LaunchedEffect(listening) {
+        if (!listening) return@LaunchedEffect
+        // "Again" may come in the middle of the read-back: AARE stops talking before it listens.
+        CarNotificationListener.instance?.stopSpeaking()
+        dictation[0]?.start()
+    }
     DisposableEffect(c.key) { onDispose { dictation[0]?.cancel() } }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
@@ -297,6 +302,7 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
                     if (driving) stringResource(R.string.msg_voice_reply_confirm, c.title) else s.text,
                     loading = false, icon = Icons.AutoMirrored.Rounded.Send)
                 VoiceReplyStep.NotHeard -> Placeholder(stringResource(R.string.msg_voice_reply_not_heard), loading = false, icon = Icons.Rounded.Mic)
+                VoiceReplyStep.TryAgain -> Placeholder(stringResource(R.string.msg_voice_reply_try_again), loading = false, icon = Icons.Rounded.Mic)
                 VoiceReplyStep.Unavailable -> Placeholder(stringResource(R.string.msg_voice_reply_unavailable), loading = false, icon = Icons.Rounded.Mic)
             }
         }
@@ -304,7 +310,7 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
             val s = step
             if (s is VoiceReplyStep.Confirm) Pill(stringResource(R.string.msg_voice_reply_send), selected = true, icon = Icons.AutoMirrored.Rounded.Send,
                 onClick = { send(s.text) })
-            if (s is VoiceReplyStep.Confirm || s == VoiceReplyStep.NotHeard) Pill(stringResource(R.string.msg_voice_reply_again), selected = false,
+            if (s is VoiceReplyStep.Confirm || s == VoiceReplyStep.NotHeard || s == VoiceReplyStep.TryAgain) Pill(stringResource(R.string.msg_voice_reply_again), selected = false,
                 icon = Icons.Rounded.Refresh, onClick = { step = VoiceReplyStep.retry(step) })
             Pill(stringResource(R.string.common_cancel), selected = false, icon = Icons.Rounded.Close, onClick = ::cancel)
         }
