@@ -219,6 +219,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         DisposableEffect(owner) { onDispose { conn.surfaceDestroyed(owner) } }
     }
 
+    override val mapCardBottomInsetDp: Int get() = runtime.settings.mapCardBottomInset
     override fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setVisibleArea(Rect(left, top, right, bottom))
     override fun setStableArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setStableArea(Rect(left, top, right, bottom))
     override fun mapScroll(dx: Float, dy: Float) { conn.scroll(dx, dy) }

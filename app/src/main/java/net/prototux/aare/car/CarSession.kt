@@ -106,6 +106,8 @@ class CarSession(
     private val listener: Listener,
     /** Offer the phone screen to the car; false for the developer TCP server unless opted in, as its peer is unauthenticated. */
     mirror: Boolean = true,
+    /** Answer the version request with the head unit's own version (SessionOptions.echoHeadUnitVersion), for wireless adapters. */
+    echoHeadUnitVersion: Boolean = false,
 ) : AapSession.Callbacks {
 
     interface Listener {
@@ -124,7 +126,7 @@ class CarSession(
         deviceName = deviceName(), label = "Android", instanceId = settings.instanceId,
         smallIcon = icon(32), mediumIcon = icon(64), largeIcon = icon(128),
     ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse,
-        clockNanos = SystemClock::elapsedRealtimeNanos))
+        clockNanos = SystemClock::elapsedRealtimeNanos, echoHeadUnitVersion = echoHeadUnitVersion))
 
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null
@@ -201,6 +203,9 @@ class CarSession(
      */
     val closedBeforeVersionExchange: Boolean get() = aap.closedDuring == AapSession.State.VERSION
 
+    /** The head unit listed its services: the connection itself worked, whatever happens next. */
+    val reachedServiceDiscovery: Boolean get() = aap.discovery != null
+
     /**
      * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
      * Focus isn't dropped here: the head unit answers with a native VIDEO_FOCUS_NOTIFICATION (or
@@ -210,7 +215,7 @@ class CarSession(
     fun exitToCar() {
         val ch = video ?: return
         if (aap.state != AapSession.State.RUNNING || !ch.opened) return
-        Log.i(TAG, "asking the car for its own screen")
+        DiagLog.add("asking the car for its own screen")
         ch.requestNativeFocus()
     }
 
@@ -301,7 +306,7 @@ class CarSession(
             InputChannel(s, inputListener).also { ch ->
                 ch.touchScreen?.let { touchSize = it.width to it.height }
                 channels += ch
-                Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
+                DiagLog.add("input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
         }
         // Services the head unit lists that AARE doesn't speak, opened because a rule says this car wants them open.
@@ -434,7 +439,7 @@ class CarSession(
         }
 
         override fun onVideoFocus(projected: Boolean) {
-            Log.i(TAG, "video focus: ${if (projected) "projected" else "native"}")
+            DiagLog.add("video focus: ${if (projected) "projected" else "native"}")
             main.post {
                 encoder?.setSuspended(!projected)
                 // The encoder was paused while the car showed its own screen: time the stall check from here.
@@ -548,7 +553,8 @@ class CarSession(
                 frames++
                 lastFrameMs = SystemClock.elapsedRealtime()
                 if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
-                    Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
+                    // In the verbose log: whether frames flow, and whether the car had given focus (a black screen).
+                    net.prototux.aare.SessionAapLog.i("video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
                 }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
                 abr.onFrame(ch)
@@ -693,6 +699,10 @@ class CarSession(
             if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
             return
         }
+        // The car's buttons, in the connection log: which ones reach the phone at all (the voice
+        // button on some cars only on a long press, or not during projection). Not the rotary
+        // knob's steps or the touchpad's moves, which come by the dozen.
+        if (!down && logsCarKey(code)) DiagLog.add("car key ${KeyEvent.keyCodeToString(code)}${if (longPress) ", held" else ""}")
         // A user remap wins over the key's normal behaviour below (never over the guard above:
         // that's about not acting before there's a screen at all, remapped or not).
         resolveCarKeyAction(carKeyMap, code)?.let { action ->
@@ -898,11 +908,11 @@ class CarSession(
             val ch = video ?: return
             if (closed || ch.focusHeard) return
             if (videoFocusAsks >= VIDEO_FOCUS_RETRIES) {
-                Log.w(TAG, "video focus: the car never answered")
+                DiagLog.add("video focus: the car never answered")
                 return
             }
             videoFocusAsks++
-            Log.i(TAG, "video focus: no answer from the car, asking again ($videoFocusAsks/$VIDEO_FOCUS_RETRIES)")
+            DiagLog.add("video focus: no answer from the car, asking again ($videoFocusAsks/$VIDEO_FOCUS_RETRIES)")
             ch.requestProjectedFocus()
             main.postDelayed(this, VIDEO_FOCUS_RETRY_MS)
         }
@@ -1240,3 +1250,13 @@ class CarSession(
 }
 
 private fun androidx.compose.ui.graphics.ImageBitmap.asAndroidBitmapCompat(): Bitmap = asAndroidBitmap()
+
+/** The rotary knob and touchpad keys, left out of the connection log. */
+private val NAV_KEYS = setOf(
+    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_NAVIGATE_NEXT,
+    KeyEvent.KEYCODE_NAVIGATE_PREVIOUS, KeyEvent.KEYCODE_NAVIGATE_IN, KeyEvent.KEYCODE_NAVIGATE_OUT,
+)
+
+/** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
+internal fun logsCarKey(code: Int) = code !in NAV_KEYS

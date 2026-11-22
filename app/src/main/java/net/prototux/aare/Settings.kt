@@ -3,6 +3,8 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.aap.wireless.WirelessHandshake
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import java.util.UUID
 import net.prototux.aare.car.CarKeyMapCodec
 
@@ -50,6 +52,30 @@ class Settings(context: Context) {
     var wireless: Boolean
         get() = prefs.getBoolean("wireless", true)
         set(v) = prefs.edit { putBoolean("wireless", v) }
+
+    /**
+     * The wireless bootstrap's order of answers (HandshakeChoice): [HandshakeChoice.AUTO] (the
+     * standard order, or the one that last worked with that car), [HandshakeChoice.BUILT_IN] (what
+     * AARE always did) or [HandshakeChoice.ADAPTER]. The adapter order is never guessed.
+     */
+    var wirelessCompatibility: String
+        get() = prefs.getString("wireless_compatibility", null) ?: HandshakeChoice.AUTO
+        set(v) = prefs.edit { putString("wireless_compatibility", v) }
+
+    /**
+     * The handshake that last reached service discovery, per head unit Bluetooth address (for Auto).
+     * TODO: move into KnownHeadUnits once #233 is merged.
+     */
+    val wirelessHandshakes: Map<String, WirelessHandshake>
+        get() = HandshakeChoice.parse(wirelessHandshakeEntries)
+
+    fun rememberWirelessHandshake(address: String, handshake: WirelessHandshake) {
+        val entries = HandshakeChoice.remember(wirelessHandshakeEntries, address, handshake)
+        prefs.edit { putString("wireless_handshakes", entries.joinToString("\n")) }
+    }
+
+    private val wirelessHandshakeEntries: List<String>
+        get() = prefs.getString("wireless_handshakes", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
 
     /** Check GitHub for a newer release and warn on the home screen. Off never touches the network. */
     var checkUpdates: Boolean
@@ -152,6 +178,15 @@ class Settings(context: Context) {
     var ignoreDriving: Boolean
         get() = prefs.getBoolean("ignore_driving", false)
         set(v) = prefs.edit { putBoolean("ignore_driving", v) }
+
+    /**
+     * Room (dp) kept free along the bottom of the dashboard's map card, in the visible area given
+     * to the navigation app: lifts what the app draws there itself (HERE WeGo's speed, over its
+     * logo). 0 gives the app the whole card.
+     */
+    var mapCardBottomInset: Int
+        get() = prefs.getInt("map_card_bottom_inset", 0)
+        set(v) = prefs.edit { putInt("map_card_bottom_inset", v) }
 
     /** The weather next to the clock (from Open-Meteo, with an approximate position). */
     var showWeather: Boolean
@@ -361,10 +396,29 @@ class Settings(context: Context) {
         get() = prefs.getString("last_media", null)
         set(v) = prefs.edit { putString("last_media", v) }
 
+    /**
+     * The rail's status widgets, in order: ids from `RailWidget` (ui.car). Default: today's rail
+     * (the clock, the phone's battery, the weather); kept as raw ids here, not the enum, so this
+     * file doesn't depend on the UI layer.
+     */
+    var railWidgets: List<String>
+        get() = prefs.getString("rail_widgets", null)?.split(',')?.filter { it.isNotBlank() } ?: listOf("clock", "battery", "weather")
+        set(v) = prefs.edit { putString("rail_widgets", v.joinToString(",")) }
+
     /** The car launcher's order: app keys (package names, or the built-in apps' ids), first first. */
     var appOrder: List<String>
         get() = prefs.getString("app_order", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
         set(v) = prefs.edit { putString("app_order", v.joinToString("\n")) }
+
+    /** The rail's chosen apps, in order (keys as [appOrder]'s). Empty: the rail's built-in set. */
+    var railApps: List<String>
+        get() = prefs.getString("rail_apps", null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+        set(v) = prefs.edit { putString("rail_apps", v.joinToString("\n")) }
+
+    /** A narrower rail, with smaller icons and tighter spacing. */
+    var compactRail: Boolean
+        get() = prefs.getBoolean("compact_rail", false)
+        set(v) = prefs.edit { putBoolean("compact_rail", v) }
 
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>

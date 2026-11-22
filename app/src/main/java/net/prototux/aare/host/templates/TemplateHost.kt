@@ -64,6 +64,9 @@ interface TemplateHost {
     fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int)
     fun setStableArea(left: Int, top: Int, right: Int, bottom: Int)
 
+    /** Room (dp) to leave out of those areas along the bottom of the dashboard's map card. */
+    val mapCardBottomInsetDp: Int get() = 0
+
     /** Map gestures in pan mode, forwarded to the app's SurfaceCallback. */
     fun mapScroll(dx: Float, dy: Float)
     fun mapFling(vx: Float, vy: Float)

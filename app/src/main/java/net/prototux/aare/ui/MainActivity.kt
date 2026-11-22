@@ -154,14 +154,19 @@ import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.car.CarData
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.setup.SetupPermissions
 import net.prototux.aare.setup.ShizukuSetup
 import net.prototux.aare.setup.ShizukuSetupClient
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.RailWidget
+import net.prototux.aare.ui.car.RailWidgetsEditor
 import net.prototux.aare.ui.car.StyleChoices
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
+import net.prototux.aare.ui.car.movedBy
+import net.prototux.aare.ui.car.withKey
 import net.prototux.aare.ui.theme.CarTextSize
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
@@ -554,6 +559,7 @@ private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
 @Composable
 private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var wireless by remember { mutableStateOf(settings.wireless) }
+    var wirelessCompat by remember { mutableStateOf(settings.wirelessCompatibility) }
     var checkUpdates by remember { mutableStateOf(settings.checkUpdates) }
     // What "Check now" found, shown next to it; [checking] while it asks.
     var updateStatus by remember { mutableStateOf<String?>(null) }
@@ -578,6 +584,15 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.setup_section_connecting)) {
             Toggle(stringResource(R.string.setup_toggle_wireless_title), stringResource(R.string.setup_toggle_wireless_subtitle), wireless) { wireless = it; settings.wireless = it; if (it) ProjectionService.probeWireless(ctx) }
+            if (wireless) {
+                Choices(stringResource(R.string.setup_choice_wireless_compat), listOf(
+                    HandshakeChoice.AUTO to stringResource(R.string.setup_choice_wireless_compat_auto),
+                    HandshakeChoice.BUILT_IN to stringResource(R.string.setup_choice_wireless_compat_builtin),
+                    HandshakeChoice.ADAPTER to stringResource(R.string.setup_choice_wireless_compat_adapter),
+                ), wirelessCompat) { wirelessCompat = it; settings.wirelessCompatibility = it }
+                Text(stringResource(R.string.setup_hint_wireless_compat), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+            }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
@@ -824,6 +839,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var chrome by remember { mutableStateOf(settings.carChrome) }
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
@@ -831,6 +847,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
+    var mapInset by remember { mutableStateOf(settings.mapCardBottomInset) }
     val scope = rememberCoroutineScope()
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) scope.launch {
@@ -879,6 +896,8 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Text(stringResource(R.string.setup_hint_status_items), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_dark_bar_title), stringResource(R.string.setup_toggle_dark_bar_subtitle), darkBar) { darkBar = it; settings.darkBar = it }
             Spacer(Modifier.height(12.dp))
+            RailWidgetsEditor(railWidgets, 48.dp) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
+            Spacer(Modifier.height(12.dp))
             val sizeOptions = listOf(
                 CarTextSize.DEFAULT.id to stringResource(R.string.setup_choice_size_default),
                 CarTextSize.LARGER.id to stringResource(R.string.setup_choice_size_larger),
@@ -902,6 +921,13 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(12.dp))
+            Choices(stringResource(R.string.setup_choice_map_inset), listOf("0" to stringResource(R.string.setup_map_inset_none), "24" to stringResource(R.string.setup_map_inset_small),
+                "40" to stringResource(R.string.setup_map_inset_medium), "56" to stringResource(R.string.setup_map_inset_large)), mapInset.toString()) {
+                mapInset = it.toInt(); settings.mapCardBottomInset = mapInset
+            }
+            Text(stringResource(R.string.setup_hint_map_inset),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
             Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
                 mapBig = it; settings.dashboardMapBig = it
@@ -1176,6 +1202,7 @@ private fun AppsCard(settings: Settings) {
             }
         }
         if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
+        if (l != null) RailAppsSection(settings, l, hidden, phoneScreen, browser)
         StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
@@ -1190,11 +1217,13 @@ private fun AppsCard(settings: Settings) {
     }
 }
 
-/** The order of the car's app list: the visible apps, with up and down buttons. */
+/**
+ * Everything the car launcher can list, keyed as `CarRuntime.orderKey` does (packages, or the
+ * built-in apps' ids): shared by the launcher's own order ([AppOrder]) and the rail's ([RailAppsSection]).
+ */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
-    // Keys as CarRuntime.orderKey: packages, or the built-in apps' ids.
-    val all = buildList {
+private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean): List<Triple<String, String, android.graphics.Bitmap?>> =
+    buildList {
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.messaging.forEach { add(Triple(it.packageName, it.label, it.icon)) }
@@ -1205,6 +1234,11 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
         if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
     )
+
+/** The order of the car's app list: the visible apps, with up and down buttons. */
+@Composable
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
+    val all = launcherCandidates(l, hidden, phoneScreen, browser)
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }
     val sorted = all.sortedWith(compareBy({ index[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
@@ -1228,6 +1262,45 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 IconButton(onClick = { move(i, -1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
                 IconButton(onClick = { move(i, 1) }, enabled = i < sorted.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
+            }
+        }
+    }
+}
+
+/**
+ * The rail's own, shorter app list, picked on the phone: a switch per candidate (the same ones the
+ * launcher order lists) to put it on the rail, and up/down to order the chosen ones. Nothing chosen
+ * (the default): the rail keeps its built-in set (today's behaviour) — see CarShell.RailContent.
+ */
+@Composable
+private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
+    val candidates = launcherCandidates(l, hidden, phoneScreen, browser)
+    var compact by remember { mutableStateOf(settings.compactRail) }
+    var chosen by remember { mutableStateOf(settings.railApps) }
+    fun setChosen(keys: List<String>) { chosen = keys; settings.railApps = keys }
+    val chosenIndex = chosen.withIndex().associate { (i, k) -> k to i }
+    val sorted = candidates.sortedWith(compareBy({ chosenIndex[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
+    Section(stringResource(R.string.setup_section_car_rail)) {
+        Text(stringResource(R.string.setup_car_rail_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        Toggle(stringResource(R.string.setup_toggle_compact_rail_title), stringResource(R.string.setup_toggle_compact_rail_subtitle), compact) {
+            compact = it; settings.compactRail = it
+        }
+        Spacer(Modifier.height(8.dp))
+        sorted.forEach { (key, label, icon) ->
+            val i = chosen.indexOf(key)
+            val on = i >= 0
+            Row(Modifier.fillMaxWidth().clickable { setChosen(chosen.withKey(key, !on)) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Switch(checked = on, onCheckedChange = { setChosen(chosen.withKey(key, it)) })
+                Spacer(Modifier.width(12.dp))
+                if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
+                else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
+                Spacer(Modifier.width(12.dp))
+                Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                if (on) {
+                    IconButton(onClick = { setChosen(chosen.movedBy(i, -1)) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
+                    IconButton(onClick = { setChosen(chosen.movedBy(i, 1)) }, enabled = i < chosen.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
+                }
             }
         }
     }

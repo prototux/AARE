@@ -46,6 +46,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
     var aloud by remember { mutableStateOf(settings.readMessagesAloud) }
     var audio by remember { mutableStateOf(settings.carAudio) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
+    var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
@@ -74,6 +75,9 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             )
         }
         item { SwitchRow(stringResource(R.string.setup_switch_dark_bar), darkBar) { darkBar = it; settings.darkBar = it } }
+        item {
+            RailWidgetsEditor(railWidgets, LocalCarDimens.current.touchTarget) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
+        }
         item {
             DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }

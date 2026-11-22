@@ -45,9 +45,9 @@ class DashboardCardsTest {
 
     @Test
     fun movingSwapsAndClamps() {
-        assertEquals(listOf(MEDIA, MAP, CALENDAR), listOf(MAP, MEDIA, CALENDAR).moved(1, -1))
-        assertEquals(listOf(MAP, MEDIA, CALENDAR), listOf(MAP, MEDIA, CALENDAR).moved(0, -1))
-        assertEquals(listOf(MEDIA, CALENDAR, MAP), listOf(MAP, MEDIA, CALENDAR).moved(0, 5))
+        assertEquals(listOf(MEDIA, MAP, CALENDAR), listOf(MAP, MEDIA, CALENDAR).movedBy(1, -1))
+        assertEquals(listOf(MAP, MEDIA, CALENDAR), listOf(MAP, MEDIA, CALENDAR).movedBy(0, -1))
+        assertEquals(listOf(MEDIA, CALENDAR, MAP), listOf(MAP, MEDIA, CALENDAR).movedBy(0, 5))
     }
 
     @Test
