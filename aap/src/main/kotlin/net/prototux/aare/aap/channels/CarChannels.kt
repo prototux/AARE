@@ -347,14 +347,13 @@ class BluetoothChannel(service: Service, private val phoneAddress: String?, priv
 
         /**
          * The pairing method to ask for: numeric comparison when the car offers it, else PIN, else
-         * the first method the car lists, else numeric comparison. Head units that pair today keep
-         * getting the method they pair with; "unavailable" is never asked for.
+         * the first method the car lists (even "unavailable": head units that pair today keep getting
+         * exactly the method they pair with), else numeric comparison.
          */
         fun pairingMethod(offered: List<BluetoothPairingMethod>): BluetoothPairingMethod = when {
             BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
             BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN in offered -> BluetoothPairingMethod.BLUETOOTH_PAIRING_PIN
-            else -> offered.firstOrNull { it != BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE }
-                ?: BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
+            else -> offered.firstOrNull() ?: BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON
         }
     }
 }
