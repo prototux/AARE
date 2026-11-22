@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Pysäytä</string>
     <string name="notif_action_trust">Luota</string>
     <string name="notif_action_download_cert">Lataa varmenne</string>
+    <string name="notif_action_navigate">Navigoi</string>
+    <string name="notif_action_open">Avaa</string>
     <string name="notif_cert_download_title">Soittolaite hylkäsi AARE:n varmenteen</string>
     <string name="notif_cert_download_message">Tämä soittolaite hyväksyy vain Googlen varmenteen. Lataa se uusimmasta Android Auto -sovelluksesta ja yhdistä sitten uudelleen.</string>
     <string name="notif_cert_download_progress">Ladataan Android Auton varmennetta…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s pyysi valitsemaan koodin, jossa on * tai #, ei puhelinnumeroa</string>
     <string name="notif_calling_title">Soitetaan %1$s</string>
     <string name="notif_asked_by">Pyytäjä: %1$s</string>
+    <string name="notif_asked_by_link">Pyytäjä: linkki avustajan vastauksessa</string>
     <string name="notif_call_confirm_title">Soitetaanko %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigoidaanko kohteeseen %1$s?</string>
+    <string name="notif_open_confirm_title">Avataanko %1$s?</string>
     <string name="notif_no_nav_app">Puhelimessa ei ole navigointisovellusta</string>
     <string name="notif_cant_open">Tätä ei voi avata autosta</string>
     <string name="notif_navigation_title">Navigointi</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Päivitä</string>
     <string name="browser_home">Aloitussivu</string>
     <string name="browser_address_hint">Hae tai kirjoita verkko-osoite</string>
+    <string name="assistant_links_title">Linkit avustajalta</string>
+    <string name="assistant_links_subtitle">Anna valitun avustajan vastauksissa olevien aare://-linkkien ohjata musiikkia tai tarjota auton näytöllä navigointia, sovelluksen avaamista tai soittoa. Muiden sovellusten ja verkkosivujen linkit ohitetaan.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auton tiedot</string>
     <string name="setup_page_car_data_subtitle">Nopeus, vaihde ja anturit suoraan autosta</string>

@@ -160,6 +160,14 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("dark_bar", v) }
 
     /**
+     * Act on `aare://` links from the chosen assistant (AssistantLinkActivity). Off by default: the
+     * driver chooses to let the assistant's replies drive the car screen.
+     */
+    var assistantLinks: Boolean
+        get() = prefs.getBoolean("assistant_links", false)
+        set(v) = prefs.edit { putBoolean("assistant_links", v) }
+
+    /**
      * The dashboard's cards in order, ids from `DashCard`. Before it was configurable, two switches
      * set it: "music first" and "next calendar event" (the latest notification came last).
      */

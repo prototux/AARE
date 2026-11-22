@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Zatrzymaj</string>
     <string name="notif_action_trust">Zaufaj</string>
     <string name="notif_action_download_cert">Pobierz certyfikat</string>
+    <string name="notif_action_navigate">Nawiguj</string>
+    <string name="notif_action_open">Otwórz</string>
     <string name="notif_cert_download_title">Jednostka centralna odrzuciła certyfikat AARE</string>
     <string name="notif_cert_download_message">Ta jednostka centralna akceptuje tylko certyfikat wydany przez Google. Pobierz go z najnowszej aplikacji Android Auto, a potem połącz się ponownie.</string>
     <string name="notif_cert_download_progress">Pobieranie certyfikatu Android Auto…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s poprosił o wybranie kodu z * lub #, a nie numeru telefonu</string>
     <string name="notif_calling_title">Dzwonienie do %1$s</string>
     <string name="notif_asked_by">Prośba od %1$s</string>
+    <string name="notif_asked_by_link">Prośba od linku w odpowiedzi asystenta</string>
     <string name="notif_call_confirm_title">Zadzwonić do %1$s?</string>
+    <string name="notif_navigate_confirm_title">Nawigować do %1$s?</string>
+    <string name="notif_open_confirm_title">Otworzyć %1$s?</string>
     <string name="notif_no_nav_app">Brak aplikacji nawigacyjnej na telefonie</string>
     <string name="notif_cant_open">Nie można tego otworzyć z samochodu</string>
     <string name="notif_navigation_title">Nawigacja</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Odśwież</string>
     <string name="browser_home">Strona główna</string>
     <string name="browser_address_hint">Szukaj lub wpisz adres internetowy</string>
+    <string name="assistant_links_title">Linki od asystenta</string>
+    <string name="assistant_links_subtitle">Pozwala linkom aare:// w odpowiedziach wybranego asystenta sterować muzyką albo proponować na ekranie samochodu nawigację, otwarcie aplikacji lub połączenie. Linki z innych aplikacji i ze stron internetowych są ignorowane.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dane samochodu</string>
     <string name="setup_page_car_data_subtitle">Prędkość, bieg i czujniki na żywo z samochodu</string>

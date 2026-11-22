@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Stopp</string>
     <string name="notif_action_trust">Lita på</string>
     <string name="notif_action_download_cert">Ladda ner certifikat</string>
+    <string name="notif_action_navigate">Navigera</string>
+    <string name="notif_action_open">Öppna</string>
     <string name="notif_cert_download_title">Head unit avvisade AAREs certifikat</string>
     <string name="notif_cert_download_message">Den här head unit-enheten accepterar bara Googles certifikat. Ladda ner det från den senaste Android Auto-appen och anslut igen.</string>
     <string name="notif_cert_download_progress">Laddar ner Android Autos certifikat…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s bad om att ringa en kod med * eller #, inte ett telefonnummer</string>
     <string name="notif_calling_title">Ringer %1$s</string>
     <string name="notif_asked_by">Begärt av %1$s</string>
+    <string name="notif_asked_by_link">Begärt av en länk i assistentens svar</string>
     <string name="notif_call_confirm_title">Ring %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigera till %1$s?</string>
+    <string name="notif_open_confirm_title">Öppna %1$s?</string>
     <string name="notif_no_nav_app">Ingen navigeringsapp på telefonen</string>
     <string name="notif_cant_open">Kan inte öppna det från bilen</string>
     <string name="notif_navigation_title">Navigering</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Uppdatera</string>
     <string name="browser_home">Startsida</string>
     <string name="browser_address_hint">Sök eller skriv en webbadress</string>
+    <string name="assistant_links_title">Länkar från assistenten</string>
+    <string name="assistant_links_subtitle">Låt aare://-länkar i den valda assistentens svar styra musiken, eller erbjuda att navigera, öppna en app eller ringa på bilens skärm. Länkar från andra appar och från webbsidor ignoreras.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighet, växel och sensorer direkt från bilen</string>

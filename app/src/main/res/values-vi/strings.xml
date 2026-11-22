@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Dừng</string>
     <string name="notif_action_trust">Tin tưởng</string>
     <string name="notif_action_download_cert">Tải chứng chỉ xuống</string>
+    <string name="notif_action_navigate">Điều hướng</string>
+    <string name="notif_action_open">Mở</string>
     <string name="notif_cert_download_title">Đầu đĩa đã từ chối chứng chỉ của AARE</string>
     <string name="notif_cert_download_message">Đầu đĩa này chỉ chấp nhận chứng chỉ do Google cấp. Hãy tải chứng chỉ đó từ ứng dụng Android Auto mới nhất, rồi kết nối lại.</string>
     <string name="notif_cert_download_progress">Đang tải chứng chỉ của Android Auto…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s yêu cầu bấm một mã có * hoặc #, không phải số điện thoại</string>
     <string name="notif_calling_title">Đang gọi %1$s</string>
     <string name="notif_asked_by">Được yêu cầu bởi %1$s</string>
+    <string name="notif_asked_by_link">Được yêu cầu bởi một liên kết trong câu trả lời của trợ lý</string>
     <string name="notif_call_confirm_title">Gọi %1$s?</string>
+    <string name="notif_navigate_confirm_title">Điều hướng đến %1$s?</string>
+    <string name="notif_open_confirm_title">Mở %1$s?</string>
     <string name="notif_no_nav_app">Không có ứng dụng điều hướng trên điện thoại</string>
     <string name="notif_cant_open">Không thể mở mục đó từ xe</string>
     <string name="notif_navigation_title">Điều hướng</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Tải lại</string>
     <string name="browser_home">Trang chủ</string>
     <string name="browser_address_hint">Tìm kiếm hoặc nhập địa chỉ web</string>
+    <string name="assistant_links_title">Liên kết từ trợ lý</string>
+    <string name="assistant_links_subtitle">Cho phép các liên kết aare:// trong câu trả lời của trợ lý đã chọn điều khiển nhạc, hoặc đề xuất điều hướng, mở ứng dụng hay gọi điện trên màn hình xe. Liên kết từ các ứng dụng khác và từ trang web sẽ bị bỏ qua.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dữ liệu xe</string>
     <string name="setup_page_car_data_subtitle">Tốc độ, số và cảm biến trực tiếp từ xe</string>

@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Zastavit</string>
     <string name="notif_action_trust">Důvěřovat</string>
     <string name="notif_action_download_cert">Stáhnout certifikát</string>
+    <string name="notif_action_navigate">Navigovat</string>
+    <string name="notif_action_open">Otevřít</string>
     <string name="notif_cert_download_title">Hlavní jednotka odmítla certifikát AARE</string>
     <string name="notif_cert_download_message">Tato hlavní jednotka přijímá pouze certifikát Google. Stáhněte certifikát z nejnovější aplikace Android Auto a pak se znovu připojte.</string>
     <string name="notif_cert_download_progress">Stahuje se certifikát Android Auto…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s požádal o vytočení kódu s * nebo #, ne telefonního čísla</string>
     <string name="notif_calling_title">Volání %1$s</string>
     <string name="notif_asked_by">Vyžádáno %1$s</string>
+    <string name="notif_asked_by_link">Vyžádáno odkazem v odpovědi asistenta</string>
     <string name="notif_call_confirm_title">Zavolat %1$s?</string>
+    <string name="notif_navigate_confirm_title">Navigovat do %1$s?</string>
+    <string name="notif_open_confirm_title">Otevřít %1$s?</string>
     <string name="notif_no_nav_app">V telefonu není navigační aplikace</string>
     <string name="notif_cant_open">Toto nelze z auta otevřít</string>
     <string name="notif_navigation_title">Navigace</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Obnovit</string>
     <string name="browser_home">Domovská stránka</string>
     <string name="browser_address_hint">Hledat nebo zadat webovou adresu</string>
+    <string name="assistant_links_title">Odkazy od asistenta</string>
+    <string name="assistant_links_subtitle">Umožní odkazům aare:// v odpovědích zvoleného asistenta ovládat hudbu nebo na obrazovce auta nabídnout navigaci, otevření aplikace či hovor. Odkazy z jiných aplikací a z webových stránek se ignorují.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Data vozu</string>
     <string name="setup_page_car_data_subtitle">Rychlost, rychlostní stupeň a senzory z vozu naživo</string>

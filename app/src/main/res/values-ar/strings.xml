@@ -245,6 +245,8 @@
     <string name="notif_action_stop">إيقاف</string>
     <string name="notif_action_trust">وثوق</string>
     <string name="notif_action_download_cert">تنزيل الشهادة</string>
+    <string name="notif_action_navigate">تنقّل</string>
+    <string name="notif_action_open">فتح</string>
     <string name="notif_cert_download_title">رفضت وحدة التحكم شهادة AARE</string>
     <string name="notif_cert_download_message">تقبل وحدة التحكم هذه فقط شهادة Google. نزّل الشهادة من أحدث تطبيق Android Auto، ثم أعد الاتصال.</string>
     <string name="notif_cert_download_progress">جارٍ تنزيل شهادة Android Auto…</string>
@@ -272,7 +274,10 @@
     <string name="notif_not_calling_text">طلب %1$s الاتصال برمز يحتوي على * أو #، وليس برقم هاتف</string>
     <string name="notif_calling_title">جارٍ الاتصال بـ %1$s</string>
     <string name="notif_asked_by">طلب ذلك %1$s</string>
+    <string name="notif_asked_by_link">طلب ذلك رابط في رد المساعد</string>
     <string name="notif_call_confirm_title">الاتصال بـ %1$s؟</string>
+    <string name="notif_navigate_confirm_title">التنقّل إلى %1$s؟</string>
+    <string name="notif_open_confirm_title">فتح %1$s؟</string>
     <string name="notif_no_nav_app">لا يوجد تطبيق تنقّل على الهاتف</string>
     <string name="notif_cant_open">تعذّر فتح ذلك من السيارة</string>
     <string name="notif_navigation_title">التنقّل</string>
@@ -387,6 +392,8 @@
     <string name="browser_reload">إعادة التحميل</string>
     <string name="browser_home">الصفحة الرئيسية</string>
     <string name="browser_address_hint">ابحث أو اكتب عنوان ويب</string>
+    <string name="assistant_links_title">روابط من المساعد</string>
+    <string name="assistant_links_subtitle">السماح لروابط aare:// في ردود المساعد المختار بالتحكم في الموسيقى، أو باقتراح التنقّل أو فتح تطبيق أو الاتصال على شاشة السيارة. يتم تجاهل الروابط القادمة من تطبيقات أخرى ومن صفحات الويب.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">بيانات السيارة</string>
     <string name="setup_page_car_data_subtitle">السرعة والترس والحساسات المباشرة من السيارة</string>

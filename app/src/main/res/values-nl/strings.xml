@@ -254,6 +254,8 @@
     <string name="notif_action_stop">Stoppen</string>
     <string name="notif_action_trust">Vertrouwen</string>
     <string name="notif_action_download_cert">Certificaat downloaden</string>
+    <string name="notif_action_navigate">Navigeren</string>
+    <string name="notif_action_open">Openen</string>
     <string name="notif_cert_download_title">De head unit heeft AARE\'s certificaat geweigerd</string>
     <string name="notif_cert_download_message">Deze head unit accepteert alleen Google\'s certificaat. Download het certificaat van de nieuwste Android Auto-app en maak opnieuw verbinding.</string>
     <string name="notif_cert_download_progress">Android Auto\'s certificaat wordt gedownload…</string>
@@ -281,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s vroeg om een code met * of # te bellen, geen telefoonnummer</string>
     <string name="notif_calling_title">Bellen naar %1$s</string>
     <string name="notif_asked_by">Gevraagd door %1$s</string>
+    <string name="notif_asked_by_link">Gevraagd door een link in het antwoord van de assistent</string>
     <string name="notif_call_confirm_title">%1$s bellen?</string>
+    <string name="notif_navigate_confirm_title">Navigeren naar %1$s?</string>
+    <string name="notif_open_confirm_title">%1$s openen?</string>
     <string name="notif_no_nav_app">Geen navigatie-app op de telefoon</string>
     <string name="notif_cant_open">Kan dit niet openen vanuit de auto</string>
     <string name="notif_navigation_title">Navigatie</string>
@@ -403,6 +408,8 @@
     <string name="browser_reload">Vernieuwen</string>
     <string name="browser_home">Startpagina</string>
     <string name="browser_address_hint">Zoeken of een webadres invoeren</string>
+    <string name="assistant_links_title">Links van de assistent</string>
+    <string name="assistant_links_subtitle">Laat aare://-links in de antwoorden van de gekozen assistent de muziek bedienen, of op het autoscherm aanbieden om te navigeren, een app te openen of te bellen. Links uit andere apps en van webpagina\'s worden genegeerd.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
     <string name="setup_page_car_data_subtitle">Snelheid, versnelling en sensoren live vanuit de auto</string>
