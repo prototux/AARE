@@ -75,7 +75,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">Aussehen</string>
     <string name="setup_choice_colors">Farben</string>
-    <string name="setup_choice_colors_auto">Tag/Nacht des Autos</string>
+    <string name="setup_choice_colors_auto">Auto</string>
     <string name="setup_choice_dark">Dunkel</string>
     <string name="setup_choice_light">Hell</string>
     <string name="setup_choice_bar">Leiste</string>
@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Karten</string>
     <string name="dash_cards_hint">Die erste Karte bekommt den meisten Platz, die anderen füllen den Rest des Bildschirms. Eine Karte ohne Inhalt überlässt ihren Platz der nächsten.</string>
+    <string name="dash_map_big_title">Landkarte immer groß</string>
+    <string name="dash_map_big_subtitle">Wo auch immer sie in der Reihenfolge steht, bekommt die Landkarte den meisten Platz</string>
     <string name="dash_card_map">Landkarte</string>
     <string name="dash_card_media">Musik</string>
     <string name="dash_card_calendar">Nächster Kalendertermin</string>
@@ -118,8 +120,23 @@
     <string name="setup_app_entry_phone">Telefon</string>
     <string name="setup_app_entry_settings">Einstellungen</string>
     <string name="setup_app_entry_notifications">Benachrichtigungen</string>
+    <string name="launcher_search_hint">Apps suchen</string>
     <string name="setup_section_app_order">Reihenfolge im Auto</string>
     <string name="setup_section_connection_log">Verbindungsprotokoll</string>
+    <string name="setup_section_car_buttons">Tasten im Auto</string>
+    <string name="setup_car_buttons_hint">Tasten, die AARE von diesem Auto empfangen hat. Wählen Sie, was jede tut; eine Taste auf „Standard“ behält ihr normales Verhalten.</string>
+    <string name="setup_car_buttons_empty">Noch keine Tasten erkannt. Mit einem Auto verbinden und eine drücken.</string>
+    <string name="setup_car_button_default">Standard</string>
+    <string name="setup_car_action_home">Start</string>
+    <string name="setup_car_action_back">Zurück</string>
+    <string name="setup_car_action_assistant">Sprachassistent</string>
+    <string name="setup_car_action_play_pause">Wiedergabe/Pause</string>
+    <string name="setup_car_action_next">Nächster Titel</string>
+    <string name="setup_car_action_previous">Vorheriger Titel</string>
+    <string name="setup_car_action_open_navigation">Navigations-App öffnen</string>
+    <string name="setup_car_action_open_media">Medien-App öffnen</string>
+    <string name="setup_car_action_open_phone">Telefon-App öffnen</string>
+    <string name="setup_car_action_nothing">Nichts</string>
     <string name="setup_about_text">AARE %1$s · GPL-3.0-or-later · Nicht mit Google verbunden. Android Auto ist eine Marke von Google LLC.</string>
     <string name="setup_choice_style">Stil</string>
     <string name="setup_choice_theme">Design</string>
@@ -237,6 +254,8 @@
     <string name="notif_action_stop">Stopp</string>
     <string name="notif_action_trust">Vertrauen</string>
     <string name="notif_action_download_cert">Zertifikat herunterladen</string>
+    <string name="notif_action_navigate">Navigieren</string>
+    <string name="notif_action_open">Öffnen</string>
     <string name="notif_cert_download_title">Head Unit hat das Zertifikat von AARE abgelehnt</string>
     <string name="notif_cert_download_message">Diese Head Unit akzeptiert nur das Zertifikat von Google. Laden Sie es aus der neuesten Android-Auto-App herunter und verbinden Sie sich dann erneut.</string>
     <string name="notif_cert_download_progress">Zertifikat von Android Auto wird heruntergeladen…</string>
@@ -264,7 +283,10 @@
     <string name="notif_not_calling_text">%1$s bat um die Wahl eines Codes mit * oder #, keine Telefonnummer</string>
     <string name="notif_calling_title">Anruf bei %1$s</string>
     <string name="notif_asked_by">Angefragt von %1$s</string>
+    <string name="notif_asked_by_link">Angefragt von einem Link in der Antwort des Assistenten</string>
     <string name="notif_call_confirm_title">%1$s anrufen?</string>
+    <string name="notif_navigate_confirm_title">Zu %1$s navigieren?</string>
+    <string name="notif_open_confirm_title">%1$s öffnen?</string>
     <string name="notif_no_nav_app">Keine Navigations-App auf dem Telefon</string>
     <string name="notif_cant_open">Kann das nicht vom Auto aus öffnen</string>
     <string name="notif_navigation_title">Navigation</string>
@@ -305,6 +327,11 @@
     <string name="media_search_app">%1$s durchsuchen</string>
     <string name="media_action_search">Suche</string>
     <string name="media_action_browse">Durchsuchen</string>
+    <string name="media_action_show_video">Video anzeigen</string>
+    <string name="media_video_close">Zurück zum Player</string>
+    <string name="media_video_full_screen">Vollbild</string>
+    <string name="media_video_exit_full_screen">Vollbild beenden</string>
+    <string name="media_video_paused_driving">Video während der Fahrt pausiert; der Ton läuft weiter.</string>
     <string name="media_now_playing_label">Läuft gerade</string>
     <string name="media_nothing_here">Hier ist nichts</string>
     <string name="media_couldnt_load_more">Konnte nicht mehr laden</string>
@@ -341,6 +368,11 @@
     <string name="phone_call_in_progress">Anruf läuft</string>
     <string name="phone_action_hang_up">Auflegen</string>
     <string name="phone_keypad_delete">Löschen</string>
+    <string name="voip_mic_title">%1$s kann das Mikrofon nicht verwenden</string>
+    <string name="voip_mic_car_text">Die Gegenseite hört Sie nicht. Erlauben Sie es auf dem Telefon: siehe Benachrichtigung</string>
+    <string name="voip_mic_notification_text">Anrufe aus dem Auto über %1$s brauchen dessen Mikrofonberechtigung. Tippen, um die Einstellungen zu öffnen</string>
+    <string name="voip_call_failed_title">Anruf über %1$s nicht möglich</string>
+    <string name="voip_call_failed_text">Zum Anrufen auf dem Telefon öffnen</string>
     <string name="phone_status_wifi">Wi-Fi</string>
     <string name="phone_status_charging">Lädt</string>
     <string name="phone_incoming_call">Eingehender Anruf</string>
@@ -369,6 +401,8 @@
     <string name="standalone_not_native">Keine Android Auto-App · Nutzung beim Parken</string>
     <string name="standalone_starting">Wird gestartet…</string>
     <string name="standalone_paused_driving">Während der Fahrt pausiert.</string>
+    <string name="standalone_media_video_title">Video aus Medien-Apps</string>
+    <string name="standalone_media_video_subtitle">Fügt „Video anzeigen“ zum Medienbildschirm im Auto hinzu: Die Medien-App öffnet sich für ihr Video auf dem Autobildschirm. Nur beim Parken; beim Fahren kommt das Cover zurück.</string>
     <!-- browser: the in-car WebView browser -->
     <string name="browser_app_label">Browser</string>
     <string name="browser_app_row_subtitle">Ein Webbrowser auf dem Autobildschirm, für wenn du geparkt bist</string>
@@ -379,6 +413,8 @@
     <string name="browser_reload">Neu laden</string>
     <string name="browser_home">Startseite</string>
     <string name="browser_address_hint">Suchen oder eine Webadresse eingeben</string>
+    <string name="assistant_links_title">Links vom Assistenten</string>
+    <string name="assistant_links_subtitle">aare://-Links in den Antworten des gewählten Assistenten dürfen die Musik steuern oder auf dem Autobildschirm anbieten, zu navigieren, eine App zu öffnen oder anzurufen. Links aus anderen Apps und von Webseiten werden ignoriert.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Fahrzeugdaten</string>
     <string name="setup_page_car_data_subtitle">Geschwindigkeit, Gang und Sensoren live aus dem Auto</string>
@@ -429,6 +465,11 @@
     <string name="car_data_accelerometer">Beschleunigungssensor</string>
     <string name="car_data_gyroscope">Gyroskop</string>
     <string name="car_data_dtc">Fehlercodes</string>
+    <string name="car_data_dtc_unknown">Unbekannt</string>
+    <string name="car_data_dtc_manufacturer_powertrain">Herstellerspezifischer Antriebsstrang-Code</string>
+    <string name="car_data_dtc_manufacturer_chassis">Herstellerspezifischer Fahrwerk-Code</string>
+    <string name="car_data_dtc_manufacturer_body">Herstellerspezifischer Karosserie-Code</string>
+    <string name="car_data_dtc_manufacturer_network">Herstellerspezifischer Netzwerk-Code</string>
     <string name="car_data_app_label">Fahrzeugdaten</string>
     <string name="car_data_show_in_car_title">Auf dem Autobildschirm anzeigen</string>
     <string name="car_data_show_in_car_subtitle">Fügen Sie im Auto eine Diagnose-App für diese Live-Daten hinzu</string>
@@ -437,6 +478,8 @@
     <string name="vehicles_rule_count">%1$d Regel(n) geladen</string>
     <string name="vehicles_import">Datei importieren…</string>
     <string name="vehicles_template">Vorlage schreiben</string>
+    <string name="vehicles_malformed_at">vehicles.json hat einen Fehler in Zeile %1$d, Spalte %2$d (%3$s): Die Regeln darin werden ignoriert.</string>
+    <string name="vehicles_malformed">vehicles.json kann nicht verwendet werden (%1$s): Die Regeln darin werden ignoriert.</string>
     <string name="setup_toggle_force_h264_title">H.264-Video erzwingen</string>
     <string name="setup_toggle_force_h264_subtitle">Standardmäßig verwendet AARE den besten Codec, den Auto und Telefon gemeinsam unterstützen (H.265…). Aktivieren Sie dies, wenn das Bild im Auto ruckelt oder gestört ist.</string>
     <string name="common_ok">OK</string>
@@ -445,6 +488,11 @@
     <string name="setup_section_updates">Updates</string>
     <string name="setup_toggle_updates_title">Auf Updates prüfen</string>
     <string name="setup_toggle_updates_subtitle">Warnt auf dem Startbildschirm, wenn eine neuere Version auf GitHub verfügbar ist. Aus verbindet sich nie mit dem Internet.</string>
+    <string name="update_check_now">Jetzt prüfen</string>
+    <string name="update_checking">Wird geprüft…</string>
+    <string name="update_check_latest">Sie haben die neueste Version (%1$s).</string>
+    <string name="update_check_available">AARE %1$s ist verfügbar: siehe Startbildschirm.</string>
+    <string name="update_check_failed">GitHub nicht erreichbar. Bitte später erneut versuchen.</string>
     <string name="update_available_title">Update verfügbar — %1$s</string>
     <string name="update_available_subtitle">Sie haben %1$s. Tippen, um die Version anzuzeigen.</string>
     <string name="setup_log_save">Speichern</string>
