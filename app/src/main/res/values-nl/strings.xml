@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Kaarten</string>
     <string name="dash_cards_hint">De eerste kaart krijgt de meeste ruimte; de andere vullen de rest van het scherm. Een kaart zonder iets te tonen laat zijn plek aan de volgende.</string>
+    <string name="dash_map_big_title">Plattegrond altijd groot</string>
+    <string name="dash_map_big_subtitle">Waar de plattegrond ook staat in de volgorde, hij krijgt de meeste ruimte</string>
     <string name="dash_card_map">Plattegrond</string>
     <string name="dash_card_media">Muziek</string>
     <string name="dash_card_calendar">Volgende agenda-afspraak</string>

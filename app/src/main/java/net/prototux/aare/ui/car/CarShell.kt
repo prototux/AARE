@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -386,15 +387,15 @@ internal fun Dashboard(
     // navigation app's surface (when it stays in the same row or column).
     val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> key(card) { DashSlot(card, state, actions, navMap, m, compact) } }
     // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
-    // first gets the big space.
+    // first gets the big space, or the map wherever it is with Map always big.
     BoxWithConstraints(modifier) {
         val narrow = maxWidth < 560.dp
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
             // portrait screens (720x1280, 1080x1920…): the cards stacked, the first two sharing the height
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, when (i) {
+                layout.cards.forEachIndexed { i, card ->
+                    slot(card, when (layout.rank(i)) {
                         0 -> Modifier.weight(1.6f).fillMaxWidth()
                         1 -> Modifier.weight(1f).fillMaxWidth()
                         else -> Modifier.fillMaxWidth().height(180.dp)
@@ -402,31 +403,35 @@ internal fun Dashboard(
                 }
             }
         } else if (narrow) {
-            // small screens: one big card, the second as a strip under it
-            val cards = dashboardSlots(state.dashboardCards, 2, shown)
+            // small screens: one big card, the other as a strip
+            val layout = dashboardLayout(state.dashboardCards, 2, state.dashboardMapBig, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, if (i == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), i > 0)
+                layout.cards.forEachIndexed { i, card ->
+                    val rank = layout.rank(i)
+                    slot(card, if (rank == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), rank > 0)
                 }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
             // very wide screens (1920x720, 2560x720…): three cards side by side, like Android Auto's
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                cards.forEachIndexed { i, card ->
-                    slot(card, Modifier.weight(when (i) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
+                layout.cards.forEachIndexed { i, card ->
+                    slot(card, Modifier.weight(when (layout.rank(i)) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
                 }
             }
         } else {
             // the big card, and the others stacked beside it, the first of them taller
-            val cards = dashboardSlots(state.dashboardCards, 3, shown)
+            val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
+            val cards = layout.cards
+            val bigSlot: @Composable RowScope.() -> Unit = { slot(cards[layout.big], Modifier.weight(1.65f).fillMaxHeight(), false) }
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
-                slot(cards.first(), Modifier.weight(1.65f).fillMaxHeight(), false)
+                if (layout.bigFirst) bigSlot()
                 if (cards.size > 1) Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
-                    cards.drop(1).forEachIndexed { i, card ->
+                    cards.filterIndexed { i, _ -> i != layout.big }.forEachIndexed { i, card ->
                         slot(card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
                     }
                 }
+                if (!layout.bigFirst) bigSlot()
             }
         }
     }

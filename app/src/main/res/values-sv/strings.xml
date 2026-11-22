@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Instrumentpanel</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det första kortet får mest plats; de andra fyller resten av skärmen. Ett kort utan något att visa lämnar sin plats till nästa.</string>
+    <string name="dash_map_big_title">Kartan alltid stor</string>
+    <string name="dash_map_big_subtitle">Var den än står i ordningen får kartan mest plats</string>
     <string name="dash_card_map">Karta</string>
     <string name="dash_card_media">Musik</string>
     <string name="dash_card_calendar">Nästa kalenderhändelse</string>

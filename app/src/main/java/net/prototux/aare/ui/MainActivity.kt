@@ -691,6 +691,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
+    var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
     var wallpaper by remember { mutableStateOf(settings.wallpaper) }
@@ -740,6 +741,10 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             }
             Spacer(Modifier.height(8.dp))
             DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            Spacer(Modifier.height(8.dp))
+            Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
+                mapBig = it; settings.dashboardMapBig = it
+            }
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {

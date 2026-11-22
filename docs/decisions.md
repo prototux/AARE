@@ -149,4 +149,9 @@ stands in when nothing is left, and the last card can't be hidden.
   list. The calendar is read only when its card is shown; the weather when it is next to the clock
   or its card is shown.
 - With no event, the latest notification now fills that slot on ordinary landscape screens too.
+- *Map always big* (off by default) is the one exception to the first card getting the big space:
+  with it on, the map keeps the big space wherever it is in the order and the other cards fill the
+  rest in order, so the music can come first with a big map, as with the old "music first" switch.
+  Its side in the landscape layout follows the order too (first only when the map is first), so a
+  card that comes and goes before it doesn't move it.
 

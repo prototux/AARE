@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Schede</string>
     <string name="dash_cards_hint">La prima scheda ha più spazio; le altre riempiono il resto dello schermo. Una scheda senza nulla da mostrare lascia il posto alla successiva.</string>
+    <string name="dash_map_big_title">Mappa sempre grande</string>
+    <string name="dash_map_big_subtitle">Ovunque sia nell\'ordine, la mappa ha lo spazio più grande</string>
     <string name="dash_card_map">Mappa</string>
     <string name="dash_card_media">Musica</string>
     <string name="dash_card_calendar">Prossimo evento in calendario</string>

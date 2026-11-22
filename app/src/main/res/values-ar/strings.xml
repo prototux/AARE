@@ -86,6 +86,8 @@
     <string name="setup_section_dashboard">لوحة المعلومات</string>
     <string name="dash_cards_title">البطاقات</string>
     <string name="dash_cards_hint">تحصل البطاقة الأولى على أكبر مساحة، وتملأ البقية ما تتركه الشاشة. البطاقة التي ليس لديها ما تعرضه تترك مكانها للتالية.</string>
+    <string name="dash_map_big_title">الخريطة كبيرة دائمًا</string>
+    <string name="dash_map_big_subtitle">أينما كانت في الترتيب، تحصل الخريطة على أكبر مساحة</string>
     <string name="dash_card_map">الخريطة</string>
     <string name="dash_card_media">الموسيقى</string>
     <string name="dash_card_calendar">حدث التقويم التالي</string>

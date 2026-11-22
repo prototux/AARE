@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Tableau de bord</string>
     <string name="dash_cards_title">Cartes</string>
     <string name="dash_cards_hint">La première carte a le plus de place ; les autres remplissent le reste de l\'écran. Une carte sans rien à montrer laisse sa place à la suivante.</string>
+    <string name="dash_map_big_title">Plan toujours grand</string>
+    <string name="dash_map_big_subtitle">Où qu\'il soit dans l\'ordre, le plan a le plus de place</string>
     <string name="dash_card_map">Plan</string>
     <string name="dash_card_media">Musique</string>
     <string name="dash_card_calendar">Prochain événement de l\'agenda</string>

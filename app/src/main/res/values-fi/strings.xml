@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Kojelauta</string>
     <string name="dash_cards_title">Kortit</string>
     <string name="dash_cards_hint">Ensimmäinen kortti saa eniten tilaa, muut täyttävät loput näytöstä. Kortti, jolla ei ole näytettävää, antaa paikkansa seuraavalle.</string>
+    <string name="dash_map_big_title">Kartta aina suurena</string>
+    <string name="dash_map_big_subtitle">Missä kohdassa järjestystä kartta onkin, se saa eniten tilaa</string>
     <string name="dash_card_map">Kartta</string>
     <string name="dash_card_media">Musiikki</string>
     <string name="dash_card_calendar">Seuraava kalenteritapahtuma</string>

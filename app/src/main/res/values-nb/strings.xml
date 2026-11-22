@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Dashbord</string>
     <string name="dash_cards_title">Kort</string>
     <string name="dash_cards_hint">Det første kortet får mest plass; de andre fyller resten av skjermen. Et kort uten noe å vise gir plassen sin til det neste.</string>
+    <string name="dash_map_big_title">Kartet alltid stort</string>
+    <string name="dash_map_big_subtitle">Uansett hvor det står i rekkefølgen, får kartet mest plass</string>
     <string name="dash_card_map">Kart</string>
     <string name="dash_card_media">Musikk</string>
     <string name="dash_card_calendar">Neste kalenderhendelse</string>

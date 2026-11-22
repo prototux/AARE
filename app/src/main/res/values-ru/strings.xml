@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Панель приборов</string>
     <string name="dash_cards_title">Карточки</string>
     <string name="dash_cards_hint">Первая карточка получает больше всего места, остальные заполняют оставшийся экран. Карточка, которой нечего показать, уступает место следующей.</string>
+    <string name="dash_map_big_title">Карта всегда большая</string>
+    <string name="dash_map_big_subtitle">Где бы карта ни стояла в списке, она получает больше всего места</string>
     <string name="dash_card_map">Карта</string>
     <string name="dash_card_media">Музыка</string>
     <string name="dash_card_calendar">Следующее событие календаря</string>

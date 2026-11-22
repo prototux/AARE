@@ -88,6 +88,8 @@
     <string name="setup_section_dashboard">Tablou de bord</string>
     <string name="dash_cards_title">Carduri</string>
     <string name="dash_cards_hint">Primul card primește cel mai mult spațiu; celelalte umplu restul ecranului. Un card fără nimic de arătat își cedează locul următorului.</string>
+    <string name="dash_map_big_title">Harta mereu mare</string>
+    <string name="dash_map_big_subtitle">Oriunde ar fi în ordine, harta primește cel mai mult loc</string>
     <string name="dash_card_map">Hartă</string>
     <string name="dash_card_media">Muzică</string>
     <string name="dash_card_calendar">Următorul eveniment din calendar</string>

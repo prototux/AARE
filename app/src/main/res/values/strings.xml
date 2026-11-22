@@ -182,6 +182,8 @@
     <string name="setup_section_dashboard">Dashboard</string>
     <string name="dash_cards_title">Cards</string>
     <string name="dash_cards_hint">The first card gets the most room; the others fill what the screen leaves. A card with nothing to show gives its place to the next.</string>
+    <string name="dash_map_big_title">Map always big</string>
+    <string name="dash_map_big_subtitle">Wherever it is in the order, the map gets the most room</string>
     <string name="dash_card_map">Map</string>
     <string name="dash_card_media">Music</string>
     <string name="dash_card_calendar">Next calendar event</string>
