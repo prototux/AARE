@@ -668,7 +668,8 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
 ## The voice button stops the assistant too
 
 A second press of the voice button (on the car screen or the steering wheel) while the assistant
-is showing stops it, as Back does: the assistant opened on the car screen closes, the assistant bar
+is showing stops it, as Back does (a setting, *Voice button stops the assistant*, on by default as
+the official phone behaves; off, every press asks the assistant again): the assistant opened on the car screen closes, the assistant bar
 closes and its app loses the car's microphone (told through its stop-recording callback), and an
 assistant app open full screen stops listening. An assistant that only runs on the phone can't be
 stopped from the car, so a press still opens it.

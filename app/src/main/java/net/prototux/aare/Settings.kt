@@ -341,6 +341,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("assistant_on_car_screen", false)
         set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
 
+    /**
+     * The voice button (car screen or steering wheel) pressed again while the assistant shows stops
+     * it, like Back. On by default, as the official phone does; off, a press always asks again.
+     */
+    var voiceButtonStops: Boolean
+        get() = prefs.getBoolean("voice_button_stops", true)
+        set(v) = prefs.edit { putBoolean("voice_button_stops", v) }
+
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
         get() = prefs.getBoolean("phone_screen", false)

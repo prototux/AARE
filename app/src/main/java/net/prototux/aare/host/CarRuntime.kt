@@ -978,10 +978,12 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
-        // A second press while the assistant is showing stops it, like Back: the assistant opened on the
-        // car screen closes, the assistant bar closes and its app loses the car's microphone.
-        if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
-        ui.assistantAppId?.let { id ->
+        // A second press while the assistant is showing stops it, like Back (unless the user turned that
+        // off): the assistant opened on the car screen closes, the assistant bar closes and its app
+        // loses the car's microphone.
+        val stops = settings.voiceButtonStops
+        if (stops && ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
+        if (stops) ui.assistantAppId?.let { id ->
             connections[id]?.stopMicrophone()
             ui.assistantAppId = null
             return
@@ -994,7 +996,7 @@ class CarRuntime(
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
         // The assistant's own app open full screen and listening: the press stops the listening.
-        if (entry != null && conn != null && conn.listening && (ui.screen as? CarScreen.App)?.appId == entry.id) {
+        if (stops && entry != null && conn != null && conn.listening && (ui.screen as? CarScreen.App)?.appId == entry.id) {
             conn.stopMicrophone()
             return
         }
