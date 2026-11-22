@@ -1,3 +1,5 @@
+minApiVersion=102
+targetApiVersion=102
 id=net.prototux.aare.xposed
 name=AARE host shims
 version=0.1.0

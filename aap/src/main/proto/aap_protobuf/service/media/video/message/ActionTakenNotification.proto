@@ -1,0 +1,11 @@
+syntax="proto2";
+
+import "aap_protobuf/service/media/shared/message/UiAction.proto";
+
+package aap_protobuf.service.media.video.message;
+
+// AARE: MEDIA_MESSAGE_ACTION_TAKEN_NOTIFICATION (phone -> head unit); sent
+// it, for an action the head unit listed in UiConfig.supported_actions.
+message ActionTakenNotification {
+    optional shared.message.UiAction action_type = 1;
+}

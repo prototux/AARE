@@ -76,6 +76,9 @@ fun labelAgenda(events: List<NextEvent>, nowMs: Long, zone: ZoneId): List<Agenda
     }
 }
 
+/** Whether temperatures are shown in Fahrenheit: the countries that use it, by the phone's locale. */
+internal fun usesFahrenheit(locale: Locale = Locale.getDefault()): Boolean = locale.country in setOf("US", "LR", "MM")
+
 /**
  * What Android Auto shows around the map: the weather and the next calendar event. The weather
  * comes from Open-Meteo (no account, no Google), asked for an approximate position only.
@@ -88,7 +91,7 @@ object DashboardInfo {
         // ~10 km is plenty for the weather, and says less about where the car is.
         val lat = "%.1f".format(Locale.ROOT, location.latitude)
         val lon = "%.1f".format(Locale.ROOT, location.longitude)
-        val fahrenheit = Locale.getDefault().country in setOf("US", "LR", "MM")
+        val fahrenheit = usesFahrenheit()
         val url = URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
             "&current=temperature_2m,weather_code,is_day" + if (fahrenheit) "&temperature_unit=fahrenheit" else "")
         val c = url.openConnection() as HttpURLConnection
