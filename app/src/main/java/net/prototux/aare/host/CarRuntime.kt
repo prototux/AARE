@@ -1046,10 +1046,21 @@ class CarRuntime(
         if (screenBacks[appId] === handler) screenBacks.remove(appId)
     }
 
+    /**
+     * The driver closed the assistant bar (its close button, or the back key): the assistant gets
+     * back, which Lapin takes as "stop" (it stops listening or speaking), then the bar closes.
+     * Back goes first, while the app is still started: hiding the bar stops it.
+     */
+    fun stopAssistant() {
+        val conn = ui.assistantAppId?.let { connections[it] }
+        if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back()
+        ui.assistantAppId = null
+    }
+
     /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
-        if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
+        if (ui.assistantAppId != null) { stopAssistant(); return }
         val secondaryId = ui.secondaryAppId
         if (secondaryId != null && ui.focusedPane == CarPane.SECONDARY) {
             // The secondary pane has no screen stack of the dashboard's own (it's not a CarScreen):
@@ -1126,6 +1137,7 @@ class CarRuntime(
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
+                                onStop = ::stopAssistant,
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
