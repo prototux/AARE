@@ -978,6 +978,14 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
+        // A second press while the assistant is showing stops it, like Back: the assistant opened on the
+        // car screen closes, the assistant bar closes and its app loses the car's microphone.
+        if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
+        ui.assistantAppId?.let { id ->
+            connections[id]?.stopMicrophone()
+            ui.assistantAppId = null
+            return
+        }
         val pkg = assistantPackage()
         if (pkg == null) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_choose_text))
@@ -985,6 +993,11 @@ class CarRuntime(
         }
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
+        // The assistant's own app open full screen and listening: the press stops the listening.
+        if (entry != null && conn != null && conn.listening && (ui.screen as? CarScreen.App)?.appId == entry.id) {
+            conn.stopMicrophone()
+            return
+        }
         if (entry != null && conn != null) {
             // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen. Set before
             // the intent goes out: the app may open the microphone before the bar is drawn (see openMicrophone).

@@ -664,3 +664,11 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
 - **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
   (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
   then those stay allowlisted.
+
+## The voice button stops the assistant too
+
+A second press of the voice button (on the car screen or the steering wheel) while the assistant
+is showing stops it, as Back does: the assistant opened on the car screen closes, the assistant bar
+closes and its app loses the car's microphone (told through its stop-recording callback), and an
+assistant app open full screen stops listening. An assistant that only runs on the phone can't be
+stopped from the car, so a press still opens it.

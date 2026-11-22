@@ -664,8 +664,10 @@ class CarAppConnection(
         val request = runCatching { requestBundle.get() as OpenMicrophoneRequest }.getOrNull()
         val pipe = ParcelFileDescriptor.createReliablePipe()
         val p = MicPipe(ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]))
+        val tellApp = { runCatching { request?.carAudioCallbackDelegate?.onStopRecording() }; Unit }
+        p.onHostStop = tellApp
         val handle = env.openMicrophone(this, sink = p::write, onStopped = {
-            runCatching { request?.carAudioCallbackDelegate?.onStopRecording() }
+            tellApp()
             p.stop()
         })
         if (handle == null) {
@@ -691,6 +693,8 @@ class CarAppConnection(
         private val queue = ArrayBlockingQueue<ByteArray>(MIC_QUEUE_CHUNKS)
         private val stopped = AtomicBoolean()
         @Volatile private var handle: MicHandle? = null
+        /** Tells the app that AARE, not the app, ended the recording (see [stopMicrophone]). */
+        @Volatile var onHostStop: (() -> Unit)? = null
         private val writer = Thread({
             try {
                 while (true) out.write(queue.take())
@@ -719,6 +723,16 @@ class CarAppConnection(
             runCatching { out.close() }
         }
     }
+
+    /** Ends the app's open microphone, if any, and tells the app so (the voice button pressed again). */
+    fun stopMicrophone() {
+        val p = mic ?: return
+        p.onHostStop?.invoke()
+        p.stop()
+    }
+
+    /** Whether the app has the car's microphone open right now. */
+    val listening: Boolean get() = mic != null
 
     private fun hasPermission(permission: String): Boolean =
         context.packageManager.checkPermission(permission, info.packageName) == PackageManager.PERMISSION_GRANTED
