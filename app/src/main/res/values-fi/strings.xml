@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Puhelimeen ei ole asetettu oletusavustajaa</string>
     <string name="assistant_has_car_app_subtitle">Auton näytöllä, auton mikrofonilla</string>
     <string name="assistant_opens_on_phone">Avautuu puhelimessa</string>
+    <string name="assistant_opens_on_car_screen">Avautuu auton näytöllä pysäköitynä, ajon aikana puhelimessa</string>
     <string name="assistant_hint">Ohjauspyörän äänipainike ja listan mikrofoni avaavat tämän avustajan. Parhaiten toimivat avustajat, joilla on autosovellus, kuten Lapin.</string>
+    <string name="assistant_car_screen_toggle_title">Avaa avustajat, joilla ei ole autosovellusta, auton näytöllä</string>
+    <string name="assistant_car_screen_toggle_subtitle">Pysäköitynä näyttää avustajan puhekäyttöliittymän auton näytöllä puhelimen sijaan. Ajon aikana se avautuu puhelimessa, ellei matkustajatila ole päällä. Vaatii root- tai Shizuku-oikeudet.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Autoyhteys</string>

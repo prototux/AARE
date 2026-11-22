@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Ingen standardassistent inställd på telefonen</string>
     <string name="assistant_has_car_app_subtitle">På bilskärmen, med bilens mikrofon</string>
     <string name="assistant_opens_on_phone">Öppnas på telefonen</string>
+    <string name="assistant_opens_on_car_screen">Öppnas på bilskärmen när bilen är parkerad, på telefonen under körning</string>
     <string name="assistant_hint">Rattens röstknapp och fältets mikrofon öppnar denna assistent. Assistenter med en bilapp, som Lapin, fungerar bäst.</string>
+    <string name="assistant_car_screen_toggle_title">Öppna assistenter utan bilapp på bilskärmen</string>
+    <string name="assistant_car_screen_toggle_subtitle">När bilen är parkerad visas assistentens röstgränssnitt på bilskärmen i stället för på telefonen. Under körning öppnas den på telefonen, om inte passagerarläge är på. Kräver root eller Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Bilanslutning</string>

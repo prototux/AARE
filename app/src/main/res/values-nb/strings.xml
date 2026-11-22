@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Ingen standardassistent angitt på telefonen</string>
     <string name="assistant_has_car_app_subtitle">På bilskjermen, med bilens mikrofon</string>
     <string name="assistant_opens_on_phone">Åpner på telefonen</string>
+    <string name="assistant_opens_on_car_screen">Åpner på bilskjermen når bilen er parkert, på telefonen under kjøring</string>
     <string name="assistant_hint">Taleknappen på rattet og mikrofonen på stolpen åpner denne assistenten. Assistenter med en bilapp, som Lapin, fungerer best.</string>
+    <string name="assistant_car_screen_toggle_title">Åpne assistenter uten bilapp på bilskjermen</string>
+    <string name="assistant_car_screen_toggle_subtitle">Når bilen er parkert, vises assistentens talegrensesnitt på bilskjermen i stedet for på telefonen. Under kjøring åpnes den på telefonen, med mindre passasjermodus er på. Krever root eller Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Biltilkobling</string>

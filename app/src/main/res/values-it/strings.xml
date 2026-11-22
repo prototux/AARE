@@ -284,7 +284,10 @@
     <string name="assistant_no_default">Nessun assistente predefinito impostato sul telefono</string>
     <string name="assistant_has_car_app_subtitle">Sullo schermo dell\'auto, con il microfono dell\'auto</string>
     <string name="assistant_opens_on_phone">Si apre sul telefono</string>
+    <string name="assistant_opens_on_car_screen">Si apre sullo schermo dell\'auto da parcheggiati, sul telefono durante la guida</string>
     <string name="assistant_hint">Il pulsante vocale sul volante e il microfono della barra aprono questo assistente. Gli assistenti con un\'app per l\'auto, come Lapin, funzionano meglio.</string>
+    <string name="assistant_car_screen_toggle_title">Apri sullo schermo dell\'auto gli assistenti senza app per l\'auto</string>
+    <string name="assistant_car_screen_toggle_subtitle">Da parcheggiati, mostra l\'interfaccia vocale dell\'assistente sullo schermo dell\'auto invece che sul telefono. Durante la guida si apre sul telefono, a meno che la modalità passeggero sia attiva. Richiede root o Shizuku.</string>
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Connessione auto</string>
