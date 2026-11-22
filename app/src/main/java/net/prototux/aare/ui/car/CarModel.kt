@@ -116,6 +116,8 @@ class CarUiState {
     var darkBar by mutableStateOf(false)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
+    /** The map keeps the big space wherever it is in [dashboardCards] (a setting). */
+    var dashboardMapBig by mutableStateOf(false)
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */
     var weatherInBar by mutableStateOf(true)
     /** The theme (a setting, with the phone's accent colours if asked). */
@@ -124,6 +126,10 @@ class CarUiState {
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** Font-scale multiplier for the car screen's text (a setting). Independent of [controlScale]. */
+    var textScale by mutableStateOf(1f)
+    /** Multiplier for [net.prototux.aare.ui.theme.CarDimens] (touch targets, icons…) (a setting). */
+    var controlScale by mutableStateOf(1f)
 
     fun app(id: String?): CarAppEntry? = apps.firstOrNull { it.id == id }
 }

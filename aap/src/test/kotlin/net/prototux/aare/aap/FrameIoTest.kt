@@ -78,4 +78,34 @@ class FrameIoTest {
         assertEquals(0x8001, msg.id)
         assertArrayEquals(body, msg.bodyBytes())
     }
+
+    /** Records the size of each flushed write, as one USB bulk transfer each. */
+    private class TransferRecorder : java.io.OutputStream() {
+        val transfers = ArrayList<Int>()
+        private var pending = 0
+        override fun write(b: Int) { pending++ }
+        override fun write(b: ByteArray, off: Int, len: Int) { pending += len }
+        override fun flush() { if (pending > 0) transfers.add(pending); pending = 0 }
+    }
+
+    @Test
+    fun everyEncryptedFrameIsItsOwnTransferWithinTheOfficialSize() {
+        val phoneCert = SelfSignedCertificate.generate("phone")
+        val huCert = SelfSignedCertificate.generate("head unit")
+        val phone = Cryptor(phoneCert.certificate, phoneCert.keyPair.private)
+        val hu = Cryptor(huCert.certificate, huCert.keyPair.private, client = true)
+        phone.beginHandshake(); hu.beginHandshake()
+        var toPhone = hu.handshake(ByteArray(0))
+        while (!(phone.handshakeDone && hu.handshakeDone)) toPhone = hu.handshake(phone.handshake(toPhone))
+
+        // A large video frame: several fragments.
+        val body = Random(3).nextBytes(42_850)
+        val rec = TransferRecorder()
+        FrameWriter(rec) { phone }.write(1, false, true, AapMessage.plaintext(0x0000, body))
+        val frames = (body.size + 2 + Frame.MAX_PAYLOAD - 1) / Frame.MAX_PAYLOAD
+        assertEquals("one transfer per frame", frames, rec.transfers.size)
+        for (t in rec.transfers) assertTrue("frame of $t bytes > ${Frame.MAX_FRAME}", t <= Frame.MAX_FRAME)
+        // The full-size first fragment lands exactly on the official limit.
+        assertEquals(Frame.MAX_FRAME, rec.transfers.first())
+    }
 }
