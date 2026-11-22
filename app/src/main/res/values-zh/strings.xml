@@ -73,7 +73,7 @@
     <string name="setup_sha256_fingerprint">SHA-256 %1$s...</string>
     <string name="setup_section_look">外观</string>
     <string name="setup_choice_colors">颜色</string>
-    <string name="setup_choice_colors_auto">跟随车辆日间/夜间模式</string>
+    <string name="setup_choice_colors_auto">自动</string>
     <string name="setup_choice_dark">深色</string>
     <string name="setup_choice_light">浅色</string>
     <string name="setup_choice_bar">导航条</string>
@@ -86,6 +86,8 @@
     <string name="setup_section_dashboard">仪表盘</string>
     <string name="dash_cards_title">卡片</string>
     <string name="dash_cards_hint">第一张卡片占用最多空间，其余卡片填满屏幕剩下的部分。没有内容可显示的卡片会把位置让给下一张。</string>
+    <string name="dash_map_big_title">地图始终最大</string>
+    <string name="dash_map_big_subtitle">无论地图排在第几位，它都占据最大的空间</string>
     <string name="dash_card_map">地图</string>
     <string name="dash_card_media">音乐</string>
     <string name="dash_card_calendar">下一个日历活动</string>
@@ -116,6 +118,7 @@
     <string name="setup_app_entry_phone">电话</string>
     <string name="setup_app_entry_settings">设置</string>
     <string name="setup_app_entry_notifications">通知</string>
+    <string name="launcher_search_hint">搜索应用</string>
     <string name="setup_section_app_order">车机中的排列顺序</string>
     <string name="setup_section_connection_log">连接日志</string>
     <string name="setup_section_car_buttons">车辆按键</string>
@@ -435,6 +438,8 @@
     <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
     <string name="vehicles_import">导入文件…</string>
     <string name="vehicles_template">写入模板</string>
+    <string name="vehicles_malformed_at">vehicles.json 第 %1$d 行第 %2$d 列有错误（%3$s）：其中的规则会被忽略。</string>
+    <string name="vehicles_malformed">vehicles.json 无法使用（%1$s）：其中的规则会被忽略。</string>
     <string name="setup_toggle_force_h264_title">强制使用 H.264 视频</string>
     <string name="setup_toggle_force_h264_subtitle">AARE 默认使用车机和手机都支持的最佳编解码器（H.265…）。如果车机画面出现花屏，请开启此选项。</string>
     <string name="common_ok">OK</string>
@@ -443,6 +448,11 @@
     <string name="setup_section_updates">更新</string>
     <string name="setup_toggle_updates_title">检查更新</string>
     <string name="setup_toggle_updates_subtitle">GitHub 上有新版本时，在主屏幕提示。关闭后绝不会连接网络。</string>
+    <string name="update_check_now">立即检查</string>
+    <string name="update_checking">正在检查…</string>
+    <string name="update_check_latest">你已是最新版本（%1$s）。</string>
+    <string name="update_check_available">AARE %1$s 已推出：请查看主屏幕。</string>
+    <string name="update_check_failed">无法连接 GitHub，请稍后再试。</string>
     <string name="update_available_title">有可用更新 — %1$s</string>
     <string name="update_available_subtitle">当前版本为 %1$s。点按查看该版本。</string>
     <string name="setup_log_save">保存</string>

@@ -171,6 +171,11 @@ class Settings(context: Context) {
         }
         set(v) = prefs.edit { putString("dashboard_cards", v.joinToString(",")) }
 
+    /** The map keeps the big space on the dashboard wherever it is in the order. */
+    var dashboardMapBig: Boolean
+        get() = prefs.getBoolean("dashboard_map_big", false)
+        set(v) = prefs.edit { putBoolean("dashboard_map_big", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO

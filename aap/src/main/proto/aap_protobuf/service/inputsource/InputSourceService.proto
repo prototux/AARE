@@ -13,6 +13,8 @@ message InputSourceService {
         optional int32 width = 1;
         optional int32 height = 2;
         optional message.TouchScreenType type = 3;
+        // AARE-only: no field 4 here otherwise. Kept because AARE reads it to skip
+        // secondary touch screens.
         optional bool is_secondary = 4;
     }
 
