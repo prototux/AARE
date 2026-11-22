@@ -359,6 +359,7 @@
     <string name="nav_dashboard_where_to">¿Adónde vamos?</string>
     <string name="nav_dashboard_install_hint">Instala en el teléfono una app de navegación compatible con Android Auto</string>
     <string name="nav_dashboard_choose_app">Elige tu app de mapas</string>
+    <string name="nav_dashboard_standalone_hint">%1$s es una app del teléfono: su mapa se abre a pantalla completa.</string>
     <string name="nav_guidance_on_phone">%1$s, en el teléfono</string>
     <string name="nav_next_step_then">Luego</string>
 
@@ -441,15 +442,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps en la pantalla del coche (avanzado)</string>
-    <string name="standalone_section_warning">Estas no son apps de Android Auto: AARE muestra su pantalla normal del teléfono, solo mientras está estacionado, y necesita root o Shizuku. Úsalo bajo tu propia responsabilidad.</string>
+    <string name="standalone_section_warning">Estas no son apps de Android Auto: AARE muestra su pantalla normal del teléfono, por defecto solo mientras está estacionado, y necesita root o Shizuku. Úsalo bajo tu propia responsabilidad.</string>
     <string name="standalone_toggle_title">Iniciar apps del teléfono en la pantalla del coche</string>
-    <string name="standalone_toggle_subtitle">Elige las apps a continuación. Se muestran solo al estacionar.</string>
+    <string name="standalone_toggle_subtitle">Elige las apps a continuación y, para cada una, qué puede hacer mientras conduces.</string>
     <string name="standalone_keep_awake_title">Modo sin suspensión para apps independientes</string>
     <string name="standalone_keep_awake_subtitle">Mantiene la pantalla física del teléfono encendida mientras una app está abierta. En los teléfonos Android 17 afectados, las pantallas virtuales se detienen cuando la pantalla del teléfono está apagada. Usa más batería.</string>
     <string name="standalone_need_root">Necesita root o Shizuku. Configura uno en Audio del coche y luego vuelve.</string>
     <string name="standalone_not_native">No es una app de Android Auto · uso al estacionar</string>
     <string name="standalone_starting">Iniciando…</string>
     <string name="standalone_paused_driving">Pausado mientras conduces.</string>
+    <string name="standalone_audio_only_driving">Pantalla oculta mientras conduces. El sonido continúa.</string>
+    <string name="standalone_rule_title">Mientras conduces</string>
+    <string name="standalone_rule_parked">Solo estacionado</string>
+    <string name="standalone_rule_audio">Solo audio</string>
+    <string name="standalone_rule_navigation">Navegación</string>
+    <string name="standalone_rule_navigation_note">Se muestra mientras conduces y se usa como la app de navegación del coche: ocupa el lugar del mapa y abre los destinos que pidas.</string>
     <string name="standalone_media_video_title">Vídeo de apps multimedia</string>
     <string name="standalone_media_video_subtitle">Añade «Mostrar vídeo» a la pantalla multimedia del coche: la app multimedia se abre en la pantalla del coche para su vídeo. Solo aparcado; la carátula vuelve cuando conduces.</string>
     <!-- browser: the in-car WebView browser -->

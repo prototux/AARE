@@ -484,15 +484,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps on the car screen (advanced)</string>
-    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, only while parked, and needs root or Shizuku. Use at your own risk.</string>
+    <string name="standalone_section_warning">These are not Android Auto apps: AARE shows their normal phone screen, by default only while parked, and needs root or Shizuku. Use at your own risk.</string>
     <string name="standalone_toggle_title">Launch phone apps on the car screen</string>
-    <string name="standalone_toggle_subtitle">Pick the apps below. Shown only when parked.</string>
+    <string name="standalone_toggle_subtitle">Pick the apps below, and for each what it may do while driving.</string>
     <string name="standalone_keep_awake_title">No-sleep mode for standalone apps</string>
     <string name="standalone_keep_awake_subtitle">Keeps the physical phone screen awake while an app is open. On affected Android 17 phones, virtual displays stop when the phone screen is off. Uses more battery.</string>
     <string name="standalone_need_root">Needs root or Shizuku. Set one up in Audio settings, then come back.</string>
     <string name="standalone_not_native">Not an Android Auto app · parked use</string>
     <string name="standalone_starting">Starting…</string>
     <string name="standalone_paused_driving">Paused while driving.</string>
+    <string name="standalone_audio_only_driving">Screen hidden while driving. The sound goes on.</string>
+    <string name="standalone_rule_title">While driving</string>
+    <string name="standalone_rule_parked">Parked only</string>
+    <string name="standalone_rule_audio">Audio only</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Shown while driving, and used as the car\'s navigation app: it takes the map slot and opens the destinations you ask for.</string>
     <string name="standalone_media_video_title">Video from media apps</string>
     <string name="standalone_media_video_subtitle">Adds "Show video" to the car\'s media screen: the media app opens on the car screen, for its video. Parked only; the cover art comes back when you drive.</string>
     <!-- browser: the in-car WebView browser -->
@@ -594,6 +600,7 @@
     <string name="nav_dashboard_where_to">Where to?</string>
     <string name="nav_dashboard_install_hint">Install a navigation app that supports Android Auto on the phone</string>
     <string name="nav_dashboard_choose_app">Choose your maps app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is a phone app: its map opens full screen.</string>
     <string name="nav_guidance_on_phone">%1$s, on the phone</string>
     <string name="nav_next_step_then">Then</string>
 

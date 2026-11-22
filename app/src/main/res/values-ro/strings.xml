@@ -359,6 +359,7 @@
     <string name="nav_dashboard_where_to">Încotro?</string>
     <string name="nav_dashboard_install_hint">Instalează pe telefon o aplicație de navigație care acceptă Android Auto</string>
     <string name="nav_dashboard_choose_app">Alege aplicația de hărți</string>
+    <string name="nav_dashboard_standalone_hint">%1$s este o aplicație de telefon: harta ei se deschide pe tot ecranul.</string>
     <string name="nav_guidance_on_phone">%1$s, pe telefon</string>
     <string name="nav_next_step_then">Apoi</string>
 
@@ -441,15 +442,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplicații pe ecranul mașinii (avansat)</string>
-    <string name="standalone_section_warning">Acestea nu sunt aplicații Android Auto: AARE afișează ecranul normal al telefonului, doar la parcare, și necesită root sau Shizuku. Folosește pe propriul risc.</string>
+    <string name="standalone_section_warning">Acestea nu sunt aplicații Android Auto: AARE afișează ecranul normal al telefonului, implicit doar la parcare, și necesită root sau Shizuku. Folosește pe propriul risc.</string>
     <string name="standalone_toggle_title">Lansează aplicații de telefon pe ecranul mașinii</string>
-    <string name="standalone_toggle_subtitle">Alege aplicațiile de mai jos. Afișate doar la parcare.</string>
+    <string name="standalone_toggle_subtitle">Alege aplicațiile de mai jos și, pentru fiecare, ce are voie să facă în timpul condusului.</string>
     <string name="standalone_keep_awake_title">Mod fără repaus pentru aplicațiile independente</string>
     <string name="standalone_keep_awake_subtitle">Menține ecranul fizic al telefonului activ cât timp o aplicație este deschisă. Pe telefoanele Android 17 afectate, afișajele virtuale se opresc atunci când ecranul telefonului este stins. Consumă mai multă baterie.</string>
     <string name="standalone_need_root">Necesită root sau Shizuku. Configurează unul dintre ele în Audio mașină, apoi revino.</string>
     <string name="standalone_not_native">Nu este o aplicație Android Auto · utilizare la parcare</string>
     <string name="standalone_starting">Se pornește…</string>
     <string name="standalone_paused_driving">Pus pe pauză în timpul condusului.</string>
+    <string name="standalone_audio_only_driving">Ecran ascuns în timpul condusului. Sunetul continuă.</string>
+    <string name="standalone_rule_title">În timpul condusului</string>
+    <string name="standalone_rule_parked">Doar la parcare</string>
+    <string name="standalone_rule_audio">Doar audio</string>
+    <string name="standalone_rule_navigation">Navigare</string>
+    <string name="standalone_rule_navigation_note">Afișată în timpul condusului și folosită ca aplicație de navigare a mașinii: ia locul hărții și deschide destinațiile pe care le ceri.</string>
     <string name="standalone_media_video_title">Video din aplicațiile media</string>
     <string name="standalone_media_video_subtitle">Adaugă „Afișează videoclipul” pe ecranul media al mașinii: aplicația media se deschide pe ecranul mașinii pentru videoclipul ei. Doar în parcare; coperta revine când conduci.</string>
     <!-- browser: the in-car WebView browser -->

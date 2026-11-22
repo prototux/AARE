@@ -359,6 +359,7 @@
     <string name="nav_dashboard_where_to">Hová?</string>
     <string name="nav_dashboard_install_hint">Telepíts a telefonra egy Android Autót támogató navigációs alkalmazást</string>
     <string name="nav_dashboard_choose_app">Válassz térképalkalmazást</string>
+    <string name="nav_dashboard_standalone_hint">A(z) %1$s telefonos alkalmazás: a térképe teljes képernyőn nyílik meg.</string>
     <string name="nav_guidance_on_phone">%1$s, a telefonon</string>
     <string name="nav_next_step_then">Majd</string>
 
@@ -441,15 +442,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Alkalmazások az autó képernyőjén (haladó)</string>
-    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
+    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, alapértelmezés szerint csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
     <string name="standalone_toggle_title">Telefonos alkalmazások indítása az autó képernyőjén</string>
-    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent. Csak álló autóban jelenik meg.</string>
+    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent, és mindegyiknél, mit tehet vezetés közben.</string>
     <string name="standalone_keep_awake_title">Nincs alvás mód az önálló alkalmazásokhoz</string>
     <string name="standalone_keep_awake_subtitle">Ébren tartja a telefon tényleges képernyőjét, amíg egy alkalmazás meg van nyitva. Az érintett Android 17-es telefonokon a virtuális kijelzők leállnak, amikor a telefon képernyője kikapcsol. Több akkumulátort használ.</string>
     <string name="standalone_need_root">Root vagy Shizuku szükséges. Állítsd be az egyiket az Autó hangja lapon, majd gyere vissza.</string>
     <string name="standalone_not_native">Nem Android Auto alkalmazás · használat álló autóban</string>
     <string name="standalone_starting">Indítás…</string>
     <string name="standalone_paused_driving">Vezetés közben szüneteltetve.</string>
+    <string name="standalone_audio_only_driving">A képernyő vezetés közben rejtve. A hang szól tovább.</string>
+    <string name="standalone_rule_title">Vezetés közben</string>
+    <string name="standalone_rule_parked">Csak álló autóban</string>
+    <string name="standalone_rule_audio">Csak hang</string>
+    <string name="standalone_rule_navigation">Navigáció</string>
+    <string name="standalone_rule_navigation_note">Vezetés közben is látszik, és ez lesz az autó navigációs alkalmazása: átveszi a térkép helyét, és megnyitja a kért úti célokat.</string>
     <string name="standalone_media_video_title">Videó médiaalkalmazásokból</string>
     <string name="standalone_media_video_subtitle">Hozzáadja a(z) „Videó megjelenítése” gombot az autó médiaképernyőjéhez: a médiaalkalmazás az autó képernyőjén nyílik meg a videójához. Csak parkoláskor; vezetés közben visszatér a borítókép.</string>
     <!-- browser: the in-car WebView browser -->
