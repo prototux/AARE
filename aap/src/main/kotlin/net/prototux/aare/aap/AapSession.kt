@@ -61,6 +61,12 @@ class SessionOptions(
     val trustOnFirstUse: Boolean = false,
     /** Clock for ping timestamps, in nanoseconds (elapsedRealtimeNanos). */
     val clockNanos: () -> Long = System::nanoTime,
+    /**
+     * Answer the version request with the head unit's own version instead of AapSession.versionReply. Some
+     * aftermarket wireless adapters relay the phone's answer to the car and stall unless it
+     * matches what they asked for.
+     */
+    val echoHeadUnitVersion: Boolean = false,
 ) {
     init {
         require(pins == null || peerKey != null) { "peerKey is required with pins" }
@@ -119,7 +125,7 @@ class AapSession(
     private val identity: PhoneIdentity,
     private val phone: PhoneDescription,
     private val callbacks: Callbacks,
-    private val log: AapLog = AapLog.Stdout,
+    internal val log: AapLog = AapLog.Stdout,
     private val options: SessionOptions = SessionOptions(),
 ) {
     interface Callbacks {
@@ -161,7 +167,7 @@ class AapSession(
         private set
     /** The head unit's UI chrome wishes, once discovery is done. */
     val uiChrome: UiChrome? get() = discovery?.let { UiChrome(it.sessionConfiguration) }
-    var headUnitVersion: Pair<Int, Int>? = null
+    @Volatile var headUnitVersion: Pair<Int, Int>? = null
         private set
 
     private val cryptor = Cryptor(identity.certificate, identity.privateKey, identity.chain,
@@ -277,7 +283,23 @@ class AapSession(
     fun sendRaw(channel: Int, plain: ByteArray, length: Int = plain.size, control: Boolean = false,
                 encrypted: Boolean = true, priority: Int = Priority.CONTROL, onSent: (() -> Unit)? = null) {
         if (closed.get()) return
+        if (!control && length >= 2) trace("tx", channel, ((plain[0].toInt() and 0xff) shl 8) or (plain[1].toInt() and 0xff))
         queue.offer(Outgoing(priority, seq.incrementAndGet(), channel, control, encrypted, plain, length, onSent))
+    }
+
+    /** The last messages [trace] showed as sent, for a head unit's "unexpected message" answer. */
+    private val recentlySent = ArrayDeque<String>()
+
+    /** Logs a message the verbose log keeps ([ProtocolTrace]): "tx video START", "rx AUDIO_FOCUS_NOTIFICATION"… */
+    private fun trace(direction: String, channel: Int, id: Int) {
+        val channelName = if (channel == 0) null else channels[channel]?.name ?: return
+        if (!ProtocolTrace.shown(channelName, id)) return
+        val what = (channelName?.let { "$it " } ?: "") + ProtocolTrace.name(channelName, id)
+        if (direction == "tx") synchronized(recentlySent) {
+            recentlySent.addLast(what)
+            if (recentlySent.size > 4) recentlySent.removeFirst()
+        }
+        log.d("$direction $what")
     }
 
     fun send(channel: Int, id: Int, body: MessageLite, control: Boolean = false, priority: Int = Priority.CONTROL) {
@@ -390,6 +412,7 @@ class AapSession(
             }
             return
         }
+        trace("rx", msg.channel, msg.id)
         if (!ch.opened) {
             // A refused or closed channel has nothing to say. One whose open isn't answered yet is
             // taken as open: some head units start talking before they answer.
@@ -441,7 +464,7 @@ class AapSession(
     // ------------------------------------------------------------------ control channel
 
     private fun handleControl(msg: AapMessage) {
-        log.d("rx $msg")
+        trace("rx", 0, msg.id)
         // Until service discovery only the version and TLS handshake messages make sense.
         if (state.ordinal < State.DISCOVERY.ordinal &&
             msg.id != ControlMsg.VERSION_REQUEST && msg.id != ControlMsg.ENCAPSULATED_SSL &&
@@ -496,6 +519,9 @@ class AapSession(
             }
             ControlMsg.SERVICE_DISCOVERY_UPDATE -> onServiceUpdate(ServiceDiscoveryUpdate.parseFrom(msg.bodyBytes()))
             ControlMsg.CHANNEL_OPEN_RESPONSE -> log.w("channel open response on control channel")
+            // It doesn't say which: the last ones sent are the suspects (#100: a protocol 1.3 unit).
+            ControlMsg.UNEXPECTED_MESSAGE -> log.w("head unit refused a message (unexpected message); last sent: " +
+                synchronized(recentlySent) { recentlySent.joinToString() }.ifEmpty { "nothing logged" })
             else -> log.d("unhandled control message $msg")
         }
     }
@@ -510,9 +536,10 @@ class AapSession(
         val major = if (msg.bodyLength >= 2) ((b[o].toInt() and 0xff) shl 8) or (b[o + 1].toInt() and 0xff) else 1
         val minor = if (msg.bodyLength >= 4) ((b[o + 2].toInt() and 0xff) shl 8) or (b[o + 3].toInt() and 0xff) else 0
         headUnitVersion = major to minor
-        // Like the official phone: 1.7 to anything up to 1.7, 6.1 to the newer GAL numbering.
-        // Status is always success; feature gating follows the head unit's own version.
-        val (replyMajor, replyMinor) = if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 1
+        // 1.7 to anything up to 1.7, 6.2 to anything newer (even above
+        // 6.2), or the head unit's own with echoHeadUnitVersion. Status is always success; feature
+        // gating follows the head unit's own version.
+        val (replyMajor, replyMinor) = versionAnswer(major, minor, options.echoHeadUnitVersion)
         log.i("head unit protocol $major.$minor, answering $replyMajor.$replyMinor")
         val body = byteArrayOf(
             (replyMajor shr 8).toByte(), replyMajor.toByte(),
@@ -768,6 +795,17 @@ class AapSession(
         private const val DEFERRED_OPEN_MS = 1_000L
 
         private fun now() = System.nanoTime() / 1_000_000
+
+        /** The protocol version the phone answers to a head unit asking for [major].[minor]. */
+        internal fun versionReply(major: Int, minor: Int): Pair<Int, Int> =
+            if (major < 1 || (major == 1 && minor <= 7)) 1 to 7 else 6 to 2
+
+        /**
+         * The version we answer the head unit's [major].[minor] with: [versionReply], or the head
+         * unit's own with [echo] (SessionOptions.echoHeadUnitVersion, opt-in for wireless adapters).
+         */
+        internal fun versionAnswer(major: Int, minor: Int, echo: Boolean): Pair<Int, Int> =
+            if (echo) major to minor else versionReply(major, minor)
 
         /**
          * The bye-bye reason for wireless turned off on the phone: head units before 4.5 don't

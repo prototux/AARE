@@ -37,3 +37,41 @@ class CarAppCatalogTest {
         assertFalse(decideIsNavigation(categories, setOf(navTemplates)))
     }
 }
+
+class CarAppListingTest {
+    private val service = "com.example.CarService"
+
+    @Test
+    fun ordinaryAppsAreListed() {
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_NAVIGATION)))
+        assertTrue(listedAsCarApp("com.example", service, emptySet()))
+    }
+
+    @Test
+    fun zoomMeetingServicesAreNever() {
+        assertFalse(listedAsCarApp("us.zoom.videomeetings", "com.zipow.videobox.auto.ZmAutoMeetingService", emptySet()))
+        assertFalse(listedAsCarApp("us.zoom.videomeetingsforgood", "com.zipow.videobox.auto.ZmAutoMeetingServiceV2", emptySet()))
+        // Another service of the same app is.
+        assertTrue(listedAsCarApp("us.zoom.videomeetings", "com.zipow.videobox.auto.OtherService", emptySet()))
+    }
+
+    @Test
+    fun settingsScreensAreNotApps() {
+        assertFalse(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS)))
+    }
+
+    @Test
+    fun aSettingsScreenThatIsAlsoAnAppIsListed() {
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_POI)))
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_NAVIGATION)))
+        // A feature (the cluster) or a non-Car-App category doesn't make a settings screen an app.
+        assertFalse(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, CarAppInfo.CATEGORY_CLUSTER)))
+        assertFalse(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_SETTINGS, "android.intent.category.DEFAULT")))
+    }
+
+    @Test
+    fun messagingAppsAreListedWithoutTheGoogleApp() {
+        // AARE runs on phones without the Google app.
+        assertTrue(listedAsCarApp("com.example", service, setOf(CarAppInfo.CATEGORY_MESSAGING)))
+    }
+}

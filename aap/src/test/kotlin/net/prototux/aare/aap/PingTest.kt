@@ -57,6 +57,9 @@ class PingTest {
         for (i in 1..4) hu.pingRequests.poll(3, TimeUnit.SECONDS)!!
         val ms = (System.nanoTime() - start) / 1_000_000
         assertTrue("4 pings took $ms ms", ms < 2_500)
-        assertTrue(hu.pingsAnswered.get() >= 5)
+        // The head unit answers each ping just after recording it: give the fifth answer a moment.
+        val deadline = System.nanoTime() + 2_000_000_000L
+        while (hu.pingsAnswered.get() < 5 && System.nanoTime() < deadline) Thread.sleep(10)
+        assertTrue("answered ${hu.pingsAnswered.get()}", hu.pingsAnswered.get() >= 5)
     }
 }

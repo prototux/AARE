@@ -4,7 +4,7 @@ package aap_protobuf.service.control.message;
 
 import "aap_protobuf/service/control/message/ConnectionConfiguration.proto";
 
-// AARE: appends this to its VERSION_RESPONSE (after major, minor
+// AARE: appended to VERSION_RESPONSE (after major, minor
 // and status) only when a setting of its own is on and the head unit is new enough, to give the
 // head unit its ping configuration. AARE doesn't send it.
 message VersionResponseOptions {
