@@ -28,23 +28,24 @@ object SystemHooks {
     private const val PERMISSION_GRANTED = 0 // PackageManager.PERMISSION_GRANTED
 
     fun install(xposed: XposedInterface, cl: ClassLoader) {
-        hookAppOps(xposed, cl)
-        hookPermissionCheck(xposed, cl)
+        xposed.report("system_server", "AppOpsService.checkOperation(PROJECT_MEDIA)", hookAppOps(xposed, cl))
+        xposed.report("system_server", "checkUidPermission", hookPermissionCheck(xposed, cl))
     }
 
     /** `AppOpsService.checkOperation(code, uid, packageName)` → ALLOWED for AARE's PROJECT_MEDIA. */
-    private fun hookAppOps(xposed: XposedInterface, cl: ClassLoader) {
-        val cls = runCatching { cl.loadClass("com.android.server.appop.AppOpsService") }.getOrNull() ?: return
+    private fun hookAppOps(xposed: XposedInterface, cl: ClassLoader): Boolean {
+        val cls = runCatching { cl.loadClass("com.android.server.appop.AppOpsService") }.getOrNull() ?: return false
         val method = runCatching {
             cls.getDeclaredMethod("checkOperation", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java)
-        }.getOrNull() ?: return
+        }.getOrNull() ?: return false
         val op = projectMediaOp
-        if (op < 0) return
+        if (op < 0) return false
         xposed.hook(method).intercept { chain ->
             val code = chain.getArg(0) as Int
             val pkg = chain.getArg(2) as? String
             if (pkg == ModuleMain.AARE_PACKAGE && code == op) AppOpsManager.MODE_ALLOWED else chain.proceed()
         }
+        return true
     }
 
     /**
@@ -52,7 +53,7 @@ object SystemHooks {
      * (`PermissionManagerService`, then `…ServiceImpl`), so try the known classes and hook the first
      * `checkUidPermission(String, int, …) : int` that resolves.
      */
-    private fun hookPermissionCheck(xposed: XposedInterface, cl: ClassLoader) {
+    private fun hookPermissionCheck(xposed: XposedInterface, cl: ClassLoader): Boolean {
         val classNames = listOf(
             "com.android.server.pm.permission.PermissionManagerServiceImpl",
             "com.android.server.pm.permission.PermissionManagerService",
@@ -65,15 +66,14 @@ object SystemHooks {
                     it.parameterTypes.contains(String::class.java) &&
                     it.parameterTypes.contains(Int::class.javaPrimitiveType)
             } ?: continue
-            val uid = aareUid
-            if (uid < 0) return
             xposed.hook(method).intercept { chain ->
                 val permission = chain.args.firstOrNull { it is String } as? String
                 val callerUid = chain.args.firstOrNull { it is Int } as? Int
-                if (permission in AARE_PRIVILEGED_PERMISSIONS && callerUid == uid) PERMISSION_GRANTED else chain.proceed()
+                if (permission in AARE_PRIVILEGED_PERMISSIONS && callerUid == aareUid()) PERMISSION_GRANTED else chain.proceed()
             }
-            return
+            return true
         }
+        return false
     }
 
     /** `AppOpsManager.OP_PROJECT_MEDIA` is @hide; read it reflectively (system_server is unrestricted). */
@@ -83,23 +83,29 @@ object SystemHooks {
         }.getOrDefault(-1)
     }
 
+    @Volatile private var resolvedAareUid = -1
+
     /**
-     * AARE's app uid, resolved once in system_server. `currentApplication()` is usually null there,
-     * so ask the package manager service directly (`AppGlobals.getPackageManager().getPackageUid`),
-     * whose overloads vary by version; -1 if none resolves, which skips the permission hook.
+     * AARE's app uid in system_server, or -1 while it can't be resolved. The package manager isn't
+     * running yet when these hooks install, so look it up on first use and retry until it resolves.
+     * `currentApplication()` is usually null there, so ask the package manager service directly
+     * (`AppGlobals.getPackageManager().getPackageUid`), whose overloads vary by version.
      */
-    private val aareUid: Int by lazy {
-        runCatching {
-            val ipm = Class.forName("android.app.AppGlobals").getMethod("getPackageManager").invoke(null)
-            val m = ipm.javaClass.methods.first {
-                it.name == "getPackageUid" && it.returnType == Int::class.javaPrimitiveType &&
-                    it.parameterTypes.firstOrNull() == String::class.java
-            }
-            val extra: Array<Any> = when (m.parameterTypes.size) {
-                3 -> arrayOf(0L, 0)   // (String, long flags, int userId)
-                else -> arrayOf(0, 0) // (String, int flags, int userId)
-            }
-            m.invoke(ipm, ModuleMain.AARE_PACKAGE, *extra) as Int
-        }.getOrDefault(-1)
+    private fun aareUid(): Int {
+        if (resolvedAareUid < 0) {
+            resolvedAareUid = runCatching {
+                val ipm = Class.forName("android.app.AppGlobals").getMethod("getPackageManager").invoke(null)
+                val m = ipm.javaClass.methods.first {
+                    it.name == "getPackageUid" && it.returnType == Int::class.javaPrimitiveType &&
+                        it.parameterTypes.firstOrNull() == String::class.java
+                }
+                val extra: Array<Any> = when (m.parameterTypes.size) {
+                    3 -> arrayOf(0L, 0)   // (String, long flags, int userId)
+                    else -> arrayOf(0, 0) // (String, int flags, int userId)
+                }
+                m.invoke(ipm, ModuleMain.AARE_PACKAGE, *extra) as Int
+            }.getOrDefault(-1)
+        }
+        return resolvedAareUid
     }
 }
