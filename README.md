@@ -793,8 +793,8 @@ prompts, navigation apps out of the messaging list, the map card clear of its bu
 app icons that stay visible on light themes) and whose fork's features were ported into 1.6.0
 (settings backup, the car rail's own apps and compact size, the calendar agenda, split screen,
 video from media apps, the assistant on the car screen and its car links), along with his own
-Shizuku audio priority, car keys in the connection log, Recents after a phone app, and the
-screen-capture consent kept.
+Shizuku audio priority, car keys in the connection log, Recents after a phone app, a fresh USB
+link replacing a stale retry, and the screen-capture consent kept.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),
@@ -827,7 +827,8 @@ led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops a
 (the Audi A3's authentication answer, #43), [@pollio2008](https://github.com/pollio2008) (more
 navigation apps on the phone screen, discussion #150), [@Delgrey](https://github.com/Delgrey)
 (Open Headunit, discussion #47), [@Pirrotto](https://github.com/Pirrotto) (navigation with the phone
-locked, #329) and [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320). And tips from
+locked, #329), [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320) and
+[@burtshulman](https://github.com/burtshulman) (Android 6 and 7, discussion #314). And tips from
 [@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
 [@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 
