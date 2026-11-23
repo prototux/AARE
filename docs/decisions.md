@@ -664,3 +664,11 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
 - **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
   (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
   then those stay allowlisted.
+- **`Modifier.carAdjustable(shape, vertical, onStep)`** (`ui/car/CarFocus.kt`), built for the split
+  screen divider, its first real case. Select (knob press, D-pad centre) starts adjusting; then
+  each knob detent or D-pad press along the control steps the value by one, and select again (or a
+  D-pad press across it) stops. A mode rather than always-on, because the knob's turn and the
+  D-pad also move the focus: a control that always took them would trap the focus on it. The
+  divider steps from rest point to rest point (`stepSplitRatio`) through the same commit as a drag,
+  so stepping past two thirds closes that pane like dragging to the edge. The scan accepts a drag
+  detector with `.carAdjustable(` in the lines just before it, so the divider left the allowlist.
