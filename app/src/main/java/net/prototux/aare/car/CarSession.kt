@@ -1069,9 +1069,9 @@ class CarSession(
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
                 when (method) {
-                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch)
-                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch)
-                    else -> SuPolicySource(context, usages, rate, ch)
+                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch, captureVolume())
+                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch, captureVolume())
+                    else -> SuPolicySource(context, usages, rate, ch, captureVolume())
                 }
             }
             CaptureMethod.SHIZUKU -> when {
@@ -1338,6 +1338,19 @@ class CarSession(
         }
     }
 
+    /**
+     * The loop back's volume for a capture (Settings.carAudioFullVolume). Full volume a killed
+     * session left behind is put back when the setting is off, so off has no lasting effect.
+     */
+    private fun captureVolume(): Int = when {
+        settings.carAudioFullVolume && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            settings.carAudioFullVolumeLeft = true
+            net.prototux.aare.audio.AudioPolicyCapture.VOLUME_FULL
+        }
+        settings.carAudioFullVolumeLeft -> net.prototux.aare.audio.AudioPolicyCapture.VOLUME_REPAIR
+        else -> net.prototux.aare.audio.AudioPolicyCapture.VOLUME_AS_IS
+    }
+
     private fun teardown() {
         closed = true
         btPairing?.privileged = null
@@ -1359,6 +1372,8 @@ class CarSession(
         settings.unregisterListener(phoneAppsMicSetting)
         phoneAppsMic?.stop(); phoneAppsMic = null
         micRouter.shutdown()
+        // The captures closed with the session (above): the loop back's volume is as it was.
+        settings.carAudioFullVolumeLeft = false
         teardownVideo()
         runtime.stop()
         CarData.reset(owner = this)

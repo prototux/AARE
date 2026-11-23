@@ -78,7 +78,7 @@ object SuAudioMain {
 
     private fun startPolicy(service: ShellAudioService, out: FrameWriter, c: Command.Policy, send: (() -> Unit) -> Unit) {
         val pfd = try {
-            service.openPolicy(c.id, c.rate, c.channels, c.usages.toIntArray())
+            service.openPolicy(c.id, c.rate, c.channels, c.usages.toIntArray(), c.volume)
         } catch (e: Throwable) {
             System.err.println("policy ${c.id} refused: ${describe(e)}")
             send { out.reply(Reply.Failed(c.id, describe(e))) }

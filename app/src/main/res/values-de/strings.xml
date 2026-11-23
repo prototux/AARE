@@ -270,6 +270,8 @@
     <string name="audio_page_subtitle">Wie der Ton des Telefons ins Auto gelangt</string>
     <string name="audio_toggle_enable_title">Telefonaudio im Auto</string>
     <string name="audio_toggle_enable_subtitle">Musik, Podcasts, der Assistent und, je nach Methode, die Navigationsstimme</string>
+    <string name="audio_toggle_full_volume_title">Volle Lautstärke ans Auto</string>
+    <string name="audio_toggle_full_volume_subtitle">Sendet den Ton mit voller Lautstärke, wie Android Auto, und das Auto regelt die Lautstärke. Vor der ersten Fahrt damit die Lautstärke im Auto herunterdrehen: Es spielt deutlich lauter als vorher. Aus: Die Medienlautstärke des Handys gilt. Mit Audio-Policy-Aufnahme (AARE als System-App, Shizuku oder Root), ab Android 12. Gilt ab der nächsten Verbindung.</string>
     <string name="audio_using_method">Verwendet: %1$s</string>
     <string name="audio_no_method">Noch keine Methode eingerichtet: Wählen Sie unten eine aus.</string>
     <string name="audio_section_methods">Methoden, beste zuerst</string>

@@ -460,6 +460,8 @@
     <string name="audio_page_subtitle">How the phone\'s sound reaches the car</string>
     <string name="audio_toggle_enable_title">Phone audio in the car</string>
     <string name="audio_toggle_enable_subtitle">Music, podcasts, the assistant and, depending on the method, navigation voice</string>
+    <string name="audio_toggle_full_volume_title">Full volume to the car</string>
+    <string name="audio_toggle_full_volume_subtitle">Sends the sound at full volume, as Android Auto does, and the car sets the level. Turn the car\'s volume down before the first drive with it: it plays much louder than before. Off: the phone\'s media volume applies. Audio policy capture (AARE as a system app, Shizuku or root), Android 12 and later. Takes effect at the next connection.</string>
     <string name="audio_using_method">Using: %1$s</string>
     <string name="audio_no_method">No method is set up yet: choose one below.</string>
     <string name="audio_section_methods">Methods, best first</string>

@@ -99,6 +99,13 @@ class SuAudioWireTest {
         assertEquals("policy 1 48000 2 1,14,0", policy.line())
         assertEquals(policy, Command.parse(policy.line()))
         assertEquals(Command.Policy(2, 16_000, 1, listOf(12, 16)), Command.parse("policy 2 16000 1 12,16\n"))
+        // The volume rides along as a trailing field, only when it isn't "as is": the line stays as before otherwise.
+        assertEquals(Command.Policy(2, 16_000, 1, listOf(12, 16), AudioPolicyCapture.VOLUME_FULL), Command.parse("policy 2 16000 1 12,16 1\n"))
+        assertEquals(Command.Policy(2, 16_000, 1, listOf(12, 16), AudioPolicyCapture.VOLUME_REPAIR), Command.parse("policy 2 16000 1 12,16 2\n"))
+        val full = Command.Policy(3, 48_000, 2, listOf(1), AudioPolicyCapture.VOLUME_FULL)
+        assertEquals(full, Command.parse(full.line()))
+        assertEquals("policy 3 48000 2 1", Command.Policy(3, 48_000, 2, listOf(1)).line())
+        assertEquals(null, Command.parse("policy 2 16000 1 12,16 3\n"))
         assertEquals(Command.Stop(7), Command.parse(Command.Stop(7).line()))
     }
 
