@@ -577,6 +577,11 @@ class Settings(context: Context) {
         get() = prefs.getString("last_head_unit", null)
         set(v) = prefs.edit { putString("last_head_unit", v) }
 
+    /** "Don't show again" on the Android 6/7 notice (MainActivity). OK alone shows it again next launch. */
+    var oldAndroidNoticeDismissed: Boolean
+        get() = prefs.getBoolean("old_android_notice_dismissed", false)
+        set(v) = prefs.edit { putBoolean("old_android_notice_dismissed", v) }
+
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val HOME_ACTIONS_KEY = "home_actions"

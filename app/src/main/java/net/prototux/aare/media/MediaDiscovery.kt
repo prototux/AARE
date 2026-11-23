@@ -142,7 +142,8 @@ internal class MediaDiscovery(private val context: Context, private val scope: C
      * the system's own adaptive-icon mask rather than a hand-drawn shape.
      */
     private fun iconBitmap(icon: Drawable, packageName: String, sizePx: Int): Bitmap {
-        val drawable = if (packageName == SPOTIFY_PACKAGE && icon is AdaptiveIconDrawable)
+        // AdaptiveIconDrawable needs Android 8; below that Spotify's icon is used as is (no black backing).
+        val drawable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageName == SPOTIFY_PACKAGE && icon is AdaptiveIconDrawable)
             AdaptiveIconDrawable(ColorDrawable(Color.BLACK), icon.foreground) else icon
         return drawable.toBitmap(sizePx, sizePx)
     }

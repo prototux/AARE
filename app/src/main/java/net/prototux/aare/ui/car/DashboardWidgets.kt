@@ -52,9 +52,9 @@ import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
 import net.prototux.aare.car.labelAgenda
 import net.prototux.aare.ui.theme.LocalCarDimens
-import java.time.ZoneId
-import java.time.format.TextStyle
+import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 /** WMO weather codes (Open-Meteo) to an icon. */
 private fun weatherIcon(w: Weather): ImageVector = when (w.code) {
@@ -94,7 +94,7 @@ internal fun WeatherCard(weather: Weather) {
 @Composable
 internal fun CalendarAgendaCard(events: List<NextEvent>, onNavigate: (String) -> Unit, modifier: Modifier) {
     val context = LocalContext.current
-    val items = remember(events) { labelAgenda(events, System.currentTimeMillis(), ZoneId.systemDefault()) }
+    val items = remember(events) { labelAgenda(events, System.currentTimeMillis(), TimeZone.getDefault()) }
     val rowHeight = LocalCarDimens.current.touchTarget
     BoxWithConstraints(modifier) {
         // As many rows as the card's height holds (each the navigate button's touch target tall),
@@ -139,7 +139,8 @@ private fun agendaWhen(item: AgendaItem, context: Context): String {
     val day = when (val d = item.day) {
         AgendaDay.Today -> context.getString(R.string.dash_event_today)
         AgendaDay.Tomorrow -> context.getString(R.string.dash_agenda_tomorrow)
-        is AgendaDay.Later -> d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        is AgendaDay.Later -> Calendar.getInstance(Locale.getDefault()).apply { set(Calendar.DAY_OF_WEEK, d.dayOfWeek) }
+            .getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()) ?: ""
     }
     return if (item.event.allDay) day else "$day · " + DateFormat.getTimeFormat(context).format(item.event.startMs)
 }

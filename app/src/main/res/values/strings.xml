@@ -172,6 +172,9 @@
     <string name="setup_check_notification_access_subtitle">Messages, directions from Google Maps and Waze, now playing</string>
     <string name="setup_check_audio_subtitle">Let the phone\'s sound reach the car</string>
     <string name="setup_action_set_up">Set up</string>
+    <string name="setup_old_android_title">Running on an older Android</string>
+    <string name="setup_old_android_message">AARE also runs on Android 6 and 7, but Android 8 is the better-supported baseline. On Android 6 and 7, connection notifications can\'t be put in their own channel, so they can\'t be muted separately from AARE\'s other notices in system settings. Everything else works the same, or falls back to an older method automatically.</string>
+    <string name="setup_old_android_dont_show_again">Don\'t show again</string>
     <string name="shizuku_setup_title">Grant AARE\'s permissions with Shizuku</string>
     <string name="shizuku_setup_subtitle">One tap grants what is still missing, without each permission\'s own dialog: microphone, location, contacts, call log, calendar, phone calls, nearby devices (Bluetooth, Wi-Fi), local network, notifications and notification access</string>
     <string name="shizuku_setup_working">Granting…</string>
