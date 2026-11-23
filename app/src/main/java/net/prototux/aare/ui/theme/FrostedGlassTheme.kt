@@ -10,7 +10,8 @@ import net.prototux.aare.R
  * Frosted glass: cards and bars of translucent white over a soft color gradient, with a fine light
  * edge, as glass dashboards do. Compose can't blur what lies behind a card, so the gradient is
  * already smooth and the cards only lighten it. Every translucent color is checked for contrast
- * over each color of the gradient.
+ * over each color of the gradient. Cards that can sit over a live map (surfaceContainerHighest)
+ * are opaque.
  */
 val FrostedGlassTheme: CarThemeSpec = run {
     fun white(alpha: Float) = Color.White.copy(alpha = alpha)
@@ -41,7 +42,9 @@ val FrostedGlassTheme: CarThemeSpec = run {
             surfaceContainerLow = white(0.08f),
             surfaceContainer = white(0.10f),
             surfaceContainerHigh = white(0.16f),
-            surfaceContainerHighest = white(0.20f),
+            // Opaque: alerts, calls, the assistant bar and the keyboard sit over a live map. The
+            // glass's own tint (20% white over the backdrop), solid so the map can't show through.
+            surfaceContainerHighest = Color(0xFF454F65),
             outline = white(0.30f),
             outlineVariant = white(0.16f),
             error = Color(0xFFFF8A80),
@@ -67,7 +70,7 @@ val FrostedGlassTheme: CarThemeSpec = run {
             surfaceContainerLow = white(0.40f),
             surfaceContainer = white(0.50f),
             surfaceContainerHigh = white(0.60f),
-            surfaceContainerHighest = white(0.70f),
+            surfaceContainerHighest = Color(0xFFEFF3FA), // opaque, as at night
             outline = white(0.85f),
             outlineVariant = white(0.60f),
             error = Color(0xFFB91C1C),
@@ -109,7 +112,7 @@ val DarkGlassTheme: CarThemeSpec = run {
         surfaceContainerLow = white(0.05f),
         surfaceContainer = white(0.07f),
         surfaceContainerHigh = white(0.10f),
-        surfaceContainerHighest = white(0.13f),
+        surfaceContainerHighest = Color(0xFF27282B), // opaque, as in Frosted glass
         outline = white(0.18f),
         outlineVariant = white(0.10f),
     )
