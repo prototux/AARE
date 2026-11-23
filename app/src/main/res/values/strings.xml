@@ -462,6 +462,7 @@
     <string name="audio_method_policy">System audio routing (like Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, music and navigation apart (like Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku or root</string>
+    <string name="audio_method_root_policy">Root, music and navigation apart</string>
     <string name="audio_method_playback_capture">Screen-capture permission</string>
     <string name="audio_policy_not_ready">Like Android Auto: music and navigation voice apart, phone speaker off. Needs a rooted phone: install AARE as a system app with the Magisk module (see the README).</string>
     <string name="audio_shizuku_ready">Ready. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
