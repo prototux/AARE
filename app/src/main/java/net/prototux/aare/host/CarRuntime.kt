@@ -93,7 +93,6 @@ import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarControlScale
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
-import java.time.ZonedDateTime
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -396,6 +395,7 @@ class CarRuntime(
     /** Applies the theme and bar position settings (also when they change during a drive). */
     private fun applyScreenSettings() {
         updateLightSensor()
+        ui.assistantStopStyle = settings.assistantStopStyle
         val night = when (settings.carTheme) {
             Settings.THEME_DARK -> true
             Settings.THEME_LIGHT -> false
@@ -424,6 +424,7 @@ class CarRuntime(
         ui.railWidgets = RailWidget.parse(settings.railWidgets)
         ui.railApps = settings.railApps
         ui.compactRail = settings.compactRail
+        ui.railSpacing = settings.railSpacing
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -469,7 +470,7 @@ class CarRuntime(
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "car_chrome", "ignore_driving",
-            "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
+            "car_text_size", "car_control_size", "night_source", "assistant_stop", "rail_apps", "compact_rail", "rail_spacing", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules" -> main.post { refreshApps() }
@@ -497,7 +498,7 @@ class CarRuntime(
         midnightRefresh?.cancel()
         midnightRefresh = scope.launch {
             while (true) {
-                delay(msUntilNextDay(ZonedDateTime.now()))
+                delay(msUntilNextDay(System.currentTimeMillis()))
                 refreshApps()
             }
         }
@@ -978,10 +979,10 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
-        // A second press while the assistant is showing stops it, like Back (unless the user turned that
-        // off): the assistant opened on the car screen closes, the assistant bar closes and its app
-        // loses the car's microphone.
-        val stops = settings.voiceButtonStops
+        // A press while the assistant is on stops it, like Back (unless the chosen style is the red
+        // stop with the voice button asking again): the assistant opened on the car screen closes, the
+        // assistant bar closes and its app loses the car's microphone.
+        val stops = settings.assistantStopStyle != Settings.ASSISTANT_STOP_RED_RESTART
         if (stops && ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
         if (stops && ui.assistantAppId != null) { stopAssistant(); return }
         val pkg = assistantPackage()
@@ -1136,6 +1137,7 @@ class CarRuntime(
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
                                 onStop = ::stopAssistant,
+                                bigStop = ui.assistantStopStyle != Settings.ASSISTANT_STOP_VOICE_BUTTON,
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })

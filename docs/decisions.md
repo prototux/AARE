@@ -489,6 +489,33 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
+## Reply by voice, opt-in
+
+The messages screen answers with the car keyboard only when parked. *Reply by voice* (off by
+default) adds a button that dictates the answer, while driving too, as Android Auto does:
+
+- Listening uses the phone's own speech recognizer (`SpeechRecognizer`, the one voice typing
+  uses), so AARE handles no microphone for it: with *Car microphone for phone apps* on
+  (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
+  permission (RECORD_AUDIO is already asked for in setup) and no new connection.
+- Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
+  only on a spoken "yes" or *Send*. The answer is listened for once the read-back is over (so it
+  doesn't hear itself); a "no" anywhere cancels and wins over a "yes", so "no, don't send it"
+  never sends; anything else, or silence, leaves it to the buttons. The words are strings
+  (`msg_voice_reply_yes_words` / `_no_words`, comma-separated) so each language gets its own,
+  and the English ones always count. *Again* dictates anew, *Cancel* or back drops it. Late
+  recognizer callbacks can't change a reply waiting for its answer, and a reply is sent once
+  (`VoiceReplyStep`, unit-tested).
+- While driving the dictated text isn't shown, like messages: it is read aloud instead.
+- While listening AARE holds transient exclusive focus with the assistant usage, so the music
+  pauses and the car goes back to it; the read-back ducks it like a message read aloud. A
+  recognizer that neither answers nor fails is given up after 15 s, so the music never stays
+  paused. Before listening AARE stops its own voice (*Again* during the read-back), so the
+  recognizer can't transcribe it, least of all through the car's microphone.
+- A weak signal (tunnels, driving), a server error or a busy recognizer offers *Again*; only no
+  recognizer or no permission is final.
+- It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).
+
 ## Car apps' own colours
 
 A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
@@ -562,6 +589,66 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
+
+## Android 6 and 7 supported (minSdk 23)
+
+Maintainer's decision: lower `minSdk` from 26 (Android 8) to 23 (Android 6), so AARE installs on
+older phones too. Android 8 stays the better-supported baseline; a one-time notice on the home
+screen (`OldAndroidNotice`, MainActivity) tells Android 6 and 7 users what's limited there, with a
+"Don't show again" choice (`Settings.oldAndroidNoticeDismissed`); OK alone shows it again next
+launch. Behaviour on Android 8+ is unchanged — every fix here only adds a branch for `SDK_INT < 26`
+(or rewrites something to work identically everywhere, see below), never changes what already ran
+on 8+.
+
+What the lower `minSdk` touched:
+- **Notification channels (API 26) and `startForegroundService` (API 26).** `ProjectionService`
+  gained `ensureChannel`/`notificationBuilder` helpers: a channel (and its own `Notification.Builder`
+  overload) from Android 8, the deprecated single-argument builder with `PRIORITY_LOW` below that
+  (same look, but it can't be muted separately from AARE's other notices in system settings — the
+  one thing the notice calls out). `CertificateUpdates` and `VoipCalls` share the same helpers.
+  Starting the service now goes through `ContextCompat.startForegroundService`, which already picks
+  `startService` below Android 8.
+- **`AudioFocusRequest` (API 26).** `CarNotificationListener`'s read-aloud focus now falls back to
+  the deprecated `requestAudioFocus(listener, streamType, durationHint)`/`abandonAudioFocus` below
+  Android 8; same `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK` behaviour either way.
+- **`AdaptiveIconDrawable` (API 26).** `MediaDiscovery`'s Spotify icon fix (a black backing layer)
+  only runs from Android 8; below that Spotify's icon is used as shipped (no black backing, a
+  cosmetic difference only).
+- **`CompanionDeviceManager` (API 26).** Already gated well above the new floor (Android 13), so
+  behaviour doesn't change; `CarCompanion` only needed `@RequiresApi`/`@ChecksSdkIntAtLeast`
+  annotations so lint can see that its own `supported()` guard covers it.
+- **`java.time` (API 26), without core library desugaring (a new dependency, and the owner's call to
+  skip it).** `CalendarIcon.msUntilNextDay` and the calendar agenda (`DashboardInfo.selectAgenda`/
+  `labelAgenda`, `DashboardWidgets`) were rewritten on `java.util.Calendar`/`TimeZone` instead of
+  `ZonedDateTime`/`LocalDate`/`ZoneId`/`DayOfWeek`: a day is the epoch millis of its local midnight
+  (comparable and orderable), `Calendar.add(DAY_OF_MONTH, 1)` keeps DST handling (a 23- or 25-hour
+  day), and `AgendaDay.Later` carries a `Calendar.DAY_OF_WEEK` int instead of `java.time.DayOfWeek`.
+  This runs the same way on every supported Android version, not just below 26; the existing
+  timezone-edge-case unit tests were ported to the new types to check it. `NavigationUi`'s one
+  `ZoneOffset` (building a fixed-offset `TimeZone` for a head-unit-supplied UTC offset) became a
+  plain `SimpleTimeZone`, also unconditionally.
+
+The Xposed host-shims module (`xposed/`) stays at `minSdk 26`: unlike the app, it hooks framework
+internals that are no safer to assume down to Android 6 without testing against that framework,
+and it isn't released, so there's no user-facing reason to lower it.
+
+**Overriding Shizuku's own `minSdkVersion 24` (owner's decision).** `dev.rikka.shizuku:api`
+declares `minSdkVersion 24` in its own manifest, which the manifest merger otherwise refuses
+under `minSdk 23`; `AndroidManifest.xml`'s `<uses-sdk tools:overrideLibrary="rikka.shizuku.api" />`
+lifts that check. This is safe here because the override only removes a build-time refusal, not a
+runtime guarantee, and nothing in AARE calls into Shizuku below API 24 regardless: every call site
+is either behind an explicit `SDK_INT` check at or above Shizuku's own floor (Android 12,
+`CaptureMethods.shizukuAvailable`/`shizukuNeedsPermission`'s callers in `MainActivity`, the Shizuku
+Wi-Fi approval and Bluetooth auto-pairing paths) or behind `Shizuku.pingBinder()` finding a live
+binder — which it never can below API 24, because `ShizukuProvider` (the component that would set
+that binder) is declared `android:enabled="@bool/shizuku_provider_enabled"`, false in
+`values/bools.xml` and true only from `values-v24/bools.xml`, so it never starts with the app
+there. The `AppLauncher`/`ShellBluetooth`/`ShellWifi`/`ShellAudio`/setup-helper `UserServiceArgs`
+builders (plain object construction, not a platform call) are either behind the same checks or,
+where a caller could reach them without one (`AppLauncher`, used by the root-or-Shizuku standalone-
+apps launcher), built lazily so they're never constructed unless a Shizuku bind is actually
+attempted.
+
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
@@ -664,15 +751,29 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
 - **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
   (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
   then those stay allowlisted.
+- **`Modifier.carAdjustable(shape, vertical, onStep)`** (`ui/car/CarFocus.kt`), built for the split
+  screen divider, its first real case. Select (knob press, D-pad centre) starts adjusting; then
+  each knob detent or D-pad press along the control steps the value by one, and select again (or a
+  D-pad press across it) stops. A mode rather than always-on, because the knob's turn and the
+  D-pad also move the focus: a control that always took them would trap the focus on it. The
+  divider steps from rest point to rest point (`stepSplitRatio`) through the same commit as a drag,
+  so stepping past two thirds closes that pane like dragging to the edge. The scan accepts a drag
+  detector with `.carAdjustable(` in the lines just before it, so the divider left the allowlist.
 
-## The voice button stops the assistant too
+## Stopping the assistant: the voice button, or a red stop
 
-A second press of the voice button (on the car screen or the steering wheel) while the assistant
-is showing stops it, as Back does (a setting, *Voice button stops the assistant*, on by default as
-the official phone behaves; off, every press asks the assistant again): the assistant opened on the car screen closes, the assistant bar
-closes and its app loses the car's microphone (told through its stop-recording callback), and an
-assistant app open full screen stops listening. An assistant that only runs on the phone can't be
-stopped from the car, so a press still opens it.
+*Stopping the assistant* (Voice assistant settings) picks how the driver stops it, the steering
+wheel's voice key included:
+- **The voice button turns into Stop** (default): while the assistant is on (listening, or its bar
+  or car-screen view showing), the voice button is red with a stop icon, and a press stops it. The
+  bar keeps a plain close button that stops it too.
+- **Red stop button, the voice button asks again**: a big red stop on the assistant bar; the voice
+  button starts a new request, as before 1.6.0.
+- **Red stop button, the voice button stops too**: the red stop, and a second press stops as well.
+Stopping closes the assistant opened on the car screen, or closes the bar and takes its app's
+microphone away (told through its stop-recording callback), or makes an assistant app open full
+screen stop listening. An assistant that only runs on the phone can't be stopped from the car, so a
+press still opens it.
 
 Stopping the assistant bar (its big red stop button, the back key, or the voice button again) sends
 back to the assistant first, while its app is still started (hiding the bar stops it): Lapin takes
@@ -680,29 +781,34 @@ back as "stop" and ends listening, thinking or speaking. The car's microphone is
 too, for an app that doesn't. The bar closing by itself after an answer doesn't send back, so a
 reply still being spoken isn't cut.
 
-## Reply by voice, opt-in
+## Root car audio: music and navigation voice apart, through one su helper
 
-The messages screen answers with the car keyboard only when parked. *Reply by voice* (off by
-default) adds a button that dictates the answer, while driving too, as Android Auto does:
+With root alone (the normal APK, no Magisk module, no Shizuku app), car audio used to be the
+phone's whole output, navigation voice mixed into the music. Now the root helper registers the
+same audio policy as the Shizuku path, so music and navigation voice go to their own car channels.
 
-- Listening uses the phone's own speech recognizer (`SpeechRecognizer`, the one voice typing
-  uses), so AARE handles no microphone for it: with *Car microphone for phone apps* on
-  (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
-  permission (RECORD_AUDIO is already asked for in setup) and no new connection.
-- Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
-  only on a spoken "yes" or *Send*. The answer is listened for once the read-back is over (so it
-  doesn't hear itself); a "no" anywhere cancels and wins over a "yes", so "no, don't send it"
-  never sends; anything else, or silence, leaves it to the buttons. The words are strings
-  (`msg_voice_reply_yes_words` / `_no_words`, comma-separated) so each language gets its own,
-  and the English ones always count. *Again* dictates anew, *Cancel* or back drops it. Late
-  recognizer callbacks can't change a reply waiting for its answer, and a reply is sent once
-  (`VoiceReplyStep`, unit-tested).
-- While driving the dictated text isn't shown, like messages: it is read aloud instead.
-- While listening AARE holds transient exclusive focus with the assistant usage, so the music
-  pauses and the car goes back to it; the read-back ducks it like a message read aloud. A
-  recognizer that neither answers nor fails is given up after 15 s, so the music never stays
-  paused. Before listening AARE stops its own voice (*Again* during the read-back), so the
-  recognizer can't transcribe it, least of all through the car's microphone.
-- A weak signal (tunnels, driving), a server error or a busy recognizer offers *Again*; only no
-  recognizer or no permission is final.
-- It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).
+- **Where the policy is registered:** in the su helper (`SuAudioMain mux`), which first drops from
+  root to the shell uid (`dropRootToShell`), then calls `ShellAudioService.openPolicy`: the very
+  code the Shizuku process runs (`startPolicy` now wraps it). Root itself would pass the
+  MODIFY_AUDIO_ROUTING check, but the policy's recorder is a remote-submix one, which needs
+  CAPTURE_AUDIO_OUTPUT on the recording uid: root doesn't hold it, the shell does.
+- **One helper, one stdout, framed** (`SuAudioWire`): music and navigation voice start at
+  different times, each with its own rate and channels (the guidance channel is often 16 kHz
+  mono), and either can stop and start again. So the helper takes commands on stdin
+  (`policy <id> <rate> <channels> <usages>`, `stop <id>`) and sends frames on stdout
+  (`[id: 1 byte][length: 4 bytes, big-endian][payload]`; id 0 is control text: `started`,
+  `failed <reason>`, `ended`). Rejected: one su process per channel (no framing, but two root
+  grants, toasts and app_process instances per connection, and the two would need their own
+  coordination for the fallback); two named pipes or unix sockets (paths or SELinux labels to get
+  right between an app and a root process, for nothing a framed pipe can't do).
+- **No stream holds up the other:** AARE's reader thread puts each stream's PCM in its own ring
+  (`PcmRing`, one second), which drops its oldest sound, in whole sample frames, rather than block.
+- **No orphan root process:** end of stdin (AARE closed it, or died) stops every stream and ends the
+  helper; so does any failed write to AARE, as before. AARE closes the helper's stdin first when
+  the last stream stops, since killing the su process alone may not reach the helper.
+- **Fallback:** a refused policy comes back as `failed <reason>`, written to the connection log
+  ("root audio routing refused (…)"); the method is then marked failed for the session and AARE
+  uses today's whole-output capture through su (`SuSource`, unchanged), as the Shizuku policy
+  path falls back to Shizuku's whole output.
+- **Shizuku and the privileged install don't change:** the new method (`ROOT_POLICY`) comes after
+  both, and only when Shizuku isn't running.

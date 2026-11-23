@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Viestit, Google Mapsin ja Wazen reittiohjeet, nyt soi</string>
     <string name="setup_check_audio_subtitle">Anna puhelimen äänen kuulua autossa</string>
     <string name="setup_action_set_up">Ota käyttöön</string>
+    <string name="setup_old_android_title">Käytössä vanhempi Android</string>
+    <string name="setup_old_android_message">AARE toimii myös Android 6:lla ja 7:llä, mutta Android 8 on paremmin tuettu perusta. Android 6:lla ja 7:llä yhteysilmoituksia ei voida sijoittaa omaan kanavaansa, jolloin niitä ei voi mykistää erikseen AAREn muista ilmoituksista järjestelmän asetuksissa. Kaikki muu toimii samalla tavalla, tai palautuu automaattisesti vanhempaan menetelmään.</string>
+    <string name="setup_old_android_dont_show_again">Älä näytä uudelleen</string>
     <string name="setup_section_connecting">Yhdistäminen</string>
     <string name="setup_toggle_wireless_title">Langaton</string>
     <string name="setup_toggle_wireless_subtitle">Yhdistä laiteparina oleviin autoihin Wi-Fin kautta, kun ne tulevat Bluetooth-kantaman sisään</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Järjestelmän äänen reititys (kuten Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, musiikki ja navigointi erikseen (kuten Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku tai root</string>
+    <string name="audio_method_root_policy">Root, musiikki ja navigointi erikseen</string>
     <string name="audio_method_playback_capture">Näytön kaappauslupa</string>
     <string name="audio_policy_not_ready">Kuten Android Auto: musiikki ja navigoinnin ääniohjaus erikseen, puhelimen kaiutin pois päältä. Vaatii juuritetun puhelimen: asenna AARE järjestelmäsovelluksena Magisk-moduulilla (katso README).</string>
     <string name="audio_shizuku_ready">Valmis. Kaikki, mitä puhelin toistaa, kulkee autoon, navigoinnin ääniohjaus mukaan lukien; puhelin pysyy hiljaisena.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Aloitussivu</string>
     <string name="browser_address_hint">Hae tai kirjoita verkko-osoite</string>
     <string name="assistant_links_title">Linkit avustajalta</string>
+    <string name="assistant_stop">Pysäytä avustaja</string>
+    <string name="assistant_stop_style_title">Avustajan pysäyttäminen</string>
+    <string name="assistant_stop_style_voice_button">Äänipainikkeesta tulee Pysäytä</string>
+    <string name="assistant_stop_style_red_restart">Punainen pysäytyspainike, äänipainike kysyy uudelleen</string>
+    <string name="assistant_stop_style_red_stop">Punainen pysäytyspainike, äänipainike pysäyttää myös</string>
     <string name="assistant_links_subtitle">Anna valitun avustajan vastauksissa olevien aare://-linkkien ohjata musiikkia tai tarjota auton näytöllä navigointia, sovelluksen avaamista tai soittoa. Muiden sovellusten ja verkkosivujen linkit ohitetaan.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auton tiedot</string>

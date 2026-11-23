@@ -42,6 +42,8 @@ enum class CaptureMethod(val label: String, @StringRes val title: Int) {
     AUDIO_POLICY("System audio routing (like Android Auto)", R.string.audio_method_policy),
     /** The same audio policy, registered by a Shizuku (adb rights) process: the shell holds MODIFY_AUDIO_ROUTING. */
     SHIZUKU_POLICY("Shizuku, music and navigation apart (like Android Auto)", R.string.audio_method_shizuku_policy),
+    /** The same audio policy again, registered by a root helper (su) dropped to the shell uid: no Shizuku app, no Magisk module. */
+    ROOT_POLICY("Root, music and navigation apart", R.string.audio_method_root_policy),
     /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
     SHIZUKU("Shizuku or root", R.string.audio_method_shizuku),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
@@ -90,6 +92,8 @@ object CaptureMethods {
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
         CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
         CaptureMethod.SHIZUKU_POLICY !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU_POLICY
+        // Not while Shizuku runs: its methods come first, and its fallback stays as it was.
+        CaptureMethod.ROOT_POLICY !in exclude && !shizukuAvailable() && rootAvailable(context) -> CaptureMethod.ROOT_POLICY
         CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable(context)) -> CaptureMethod.SHIZUKU
         // Capturing other apps' sound arrived in Android 10.
         CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
@@ -341,8 +345,8 @@ class ShizukuPolicySource(
 /**
  * The phone's whole output, recorded by [SuAudioMain] in a root process AARE starts with `su` and
  * `app_process` (the scrcpy/Shizuku way). The same capture as [ShizukuSource], for rooted phones
- * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module. PCM arrives on the
- * process's stdout.
+ * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module, when the system
+ * refuses [SuPolicySource]'s audio policy. PCM arrives on the process's stdout.
  */
 class SuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
     private var process: Process? = null

@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -203,6 +204,8 @@ internal fun ContentArea(
  * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
  * so a navigation or templated app stays full screen only.
  *
+ * The divider is [carAdjustable] too: a knob or D-pad steps it from rest point to rest point.
+ *
  * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
  * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
  * every drag frame, which would otherwise tear it down and rebuild it dozens of times a second).
@@ -248,6 +251,8 @@ private fun SplitPane(
             Modifier
                 .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
                 .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                // The knob path: each step moves to the next rest point, committed like a drag.
+                .carAdjustable(RoundedCornerShape(8.dp)) { step -> actions.commitSplitRatio(stepSplitRatio(restRatio, step)) }
                 .pointerInput(totalWidth) {
                     detectDragGestures(
                         onDragStart = { dragRatio = restRatio },
@@ -337,6 +342,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val railSize = if (compact) minOf(d.railWidth, d.touchTarget + 4.dp) else d.railWidth
     val outerPadding = if (compact) 10.dp else 16.dp
     val appSpacing = if (compact) 6.dp else 8.dp
+    val appGap = (state.railSpacing ?: railGapDp(compact, horizontal)).dp
     // The apps chosen on the phone (Settings.railApps), resolved against what's installed now; empty
     // (nothing chosen, or everything chosen is gone) falls back to the rail's built-in set below.
     val selfPackage = LocalContext.current.packageName
@@ -354,7 +360,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), false, touch, iconSize) { actions.openLauncher() }
         else RailButton(Icons.Rounded.Home, stringResource(R.string.dash_menu_home), false, touch, iconSize) { actions.goHome() }
     }
-    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize) { actions.assistant() } }
+    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize, stop = state.voiceButtonIsStop) { actions.assistant() } }
     val bell = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     // One poll of the phone's status for the whole rail: its battery widget and network icons share it.
@@ -380,7 +386,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appSpacing + 4.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appGap)) {
                     apps(if (tightBar) 0 else 2, !tighterBar, true)
                 }
             }
@@ -405,7 +411,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Column(
                     Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(appSpacing),
+                    verticalArrangement = Arrangement.spacedBy(appGap),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }
@@ -490,15 +496,19 @@ private fun RailApp(
 internal fun MicButton(
     listening: Boolean,
     size: Dp = LocalCarDimens.current.touchTarget, iconSize: Dp = LocalCarDimens.current.iconSize,
+    /** The assistant is on and this button stops it (Settings.assistantStopStyle): red, with a stop icon. */
+    stop: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-    val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val scheme = MaterialTheme.colorScheme
+    val bg = when { stop -> scheme.error; listening -> scheme.primary; else -> scheme.surfaceContainerHigh }
+    val fg = when { stop -> scheme.onError; listening -> scheme.onPrimary; else -> scheme.primary }
     Box(
         Modifier.size(size).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
+        if (stop) Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.assistant_stop), tint = fg, modifier = Modifier.size(iconSize))
+        else Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
     }
 }
 

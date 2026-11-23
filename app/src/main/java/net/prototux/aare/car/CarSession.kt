@@ -6,6 +6,7 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService.TouchPad
 import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
@@ -83,6 +84,7 @@ import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuPolicySource
 import net.prototux.aare.audio.ShizukuSource
 import net.prototux.aare.audio.StartSilence
+import net.prototux.aare.audio.SuPolicySource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.R
@@ -185,6 +187,8 @@ class CarSession(
     @Volatile private var guidanceAnswered = false
     @Volatile var headUnitName: String = ""
         private set
+    /** The head unit has answered at all (its version response): this link reaches it. */
+    val reachedHeadUnit: Boolean get() = aap.headUnitVersion != null
     @Volatile var videoDescription: String = ""
         private set
 
@@ -779,6 +783,17 @@ class CarSession(
         DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
     }
 
+    /**
+     * The car changed its touchpad's sensitivity during the session (reader thread). The navigator
+     * is kept, so a swipe under way goes on; its steps change on the main thread, where it runs.
+     */
+    private fun onTouchpadUpdate(pad: TouchPad) {
+        if (!pad.uiNavigation || touchpad == null) return
+        val thresholds = TouchpadThresholds.of(pad)
+        main.post { touchpad?.thresholds = thresholds }
+        DiagLog.add("car touchpad sensitivity ${pad.sensitivity}: step ${thresholds.move}/${thresholds.multiMove}")
+    }
+
     /** A touchpad report (reader thread). */
     private fun onTouchpad(ev: TouchEvent) {
         val nav = touchpad ?: return
@@ -801,6 +816,8 @@ class CarSession(
     }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
 
     private val inputListener = object : InputChannel.Listener {
+        override fun onTouchPadUpdate(pad: TouchPad) = onTouchpadUpdate(pad)
+
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
                 val ev = touch?.map(report.touchEvent) ?: return
@@ -1008,7 +1025,7 @@ class CarSession(
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
-            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY -> {
+            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY, CaptureMethod.ROOT_POLICY -> {
                 // Without a guidance channel in the car, navigation voice goes with the music.
                 val hasGuidance = !singleChannel && audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
                 val usages = when {
@@ -1016,8 +1033,11 @@ class CarSession(
                     hasGuidance -> CaptureMethods.MEDIA_USAGES
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
-                if (method == CaptureMethod.AUDIO_POLICY) AudioPolicySource(context, usages, rate, ch)
-                else ShizukuPolicySource(context, usages, rate, ch)
+                when (method) {
+                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch)
+                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch)
+                    else -> SuPolicySource(context, usages, rate, ch)
+                }
             }
             CaptureMethod.SHIZUKU -> when {
                 guidance -> return
@@ -1046,7 +1066,7 @@ class CarSession(
                 startAudio(channel)
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
-                if (method == CaptureMethod.SHIZUKU_POLICY) {
+                if (method == CaptureMethod.SHIZUKU_POLICY || method == CaptureMethod.ROOT_POLICY) {
                     audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
                         startAudio(other)
