@@ -877,7 +877,7 @@
     <string name="calibration_result_timeout">Pas d\'appui de vérification à temps : rien n\'a été enregistré.</string>
     <string name="calibration_result_cancelled">Calibrage annulé : rien n\'a été enregistré.</string>
     <string name="calibration_result_no_spread">Les 4 appuis sont arrivés au même endroit, ou sur une même ligne : la voiture n\'indique peut-être pas où l\'écran est touché. Rien n\'a été enregistré ; le journal de connexion contient les détails.</string>
-    <string name="calibration_result_interrupted">La voiture a redémarré la vidéo pendant le calibrage : rien n\'a été enregistré. Recommencez.</string>
+    <string name="calibration_result_interrupted">La voiture a modifié ou redémarré l\'écran pendant le calibrage : rien n\'a été enregistré. Recommencez.</string>
     <string name="calibration_result_driving">La voiture s\'est mise à rouler : rien n\'a été enregistré.</string>
     <string name="calibration_result_reset">Retour aux valeurs de la voiture.</string>
     <string name="calibration_car_area">Calibrage de l\'écran tactile. Utilisez le téléphone pour amener chaque coin jaune au bord de cet écran.</string>

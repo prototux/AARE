@@ -879,7 +879,7 @@
     <string name="calibration_result_timeout">Nicio atingere de verificare la timp: nu s-a salvat nimic.</string>
     <string name="calibration_result_cancelled">Calibrare anulată: nu s-a salvat nimic.</string>
     <string name="calibration_result_no_spread">Cele 4 atingeri au venit în același loc sau pe o singură linie: este posibil ca mașina să nu raporteze unde este atins ecranul. Nu s-a salvat nimic; jurnalul conexiunii are detaliile.</string>
-    <string name="calibration_result_interrupted">Mașina a repornit videoclipul în timpul calibrării: nu s-a salvat nimic. Începeți din nou.</string>
+    <string name="calibration_result_interrupted">Mașina a modificat sau a repornit ecranul în timpul calibrării: nu s-a salvat nimic. Începeți din nou.</string>
     <string name="calibration_result_driving">Mașina a pornit: nu s-a salvat nimic.</string>
     <string name="calibration_result_reset">Înapoi la valorile proprii ale mașinii.</string>
     <string name="calibration_car_area">Se calibrează ecranul tactil. Folosiți telefonul pentru a duce fiecare colț galben la marginea acestui ecran.</string>

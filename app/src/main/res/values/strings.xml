@@ -907,7 +907,7 @@
     <string name="calibration_result_timeout">No check touch in time: nothing was saved.</string>
     <string name="calibration_result_cancelled">Calibration cancelled: nothing was saved.</string>
     <string name="calibration_result_no_spread">The 4 touches came in at the same place, or on one line: the car may not report where the screen is touched. Nothing was saved; the connection log has the details.</string>
-    <string name="calibration_result_interrupted">The car restarted the video during calibration: nothing was saved. Start again.</string>
+    <string name="calibration_result_interrupted">The car changed or restarted its screen during calibration: nothing was saved. Start again.</string>
     <string name="calibration_result_driving">The car started moving: nothing was saved.</string>
     <string name="calibration_result_reset">Back to the car\'s own values.</string>
     <string name="calibration_car_area">Calibrating the touchscreen. Use the phone to move each yellow corner to the edge of this screen.</string>

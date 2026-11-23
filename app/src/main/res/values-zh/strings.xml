@@ -861,7 +861,7 @@
     <string name="calibration_result_timeout">未及时进行检查触摸：未保存任何内容。</string>
     <string name="calibration_result_cancelled">已取消校准：未保存任何内容。</string>
     <string name="calibration_result_no_spread">4 次触摸落在同一位置或同一条线上：车辆可能没有报告屏幕被触摸的位置。未保存任何内容；详情见连接日志。</string>
-    <string name="calibration_result_interrupted">校准期间车辆重新启动了视频：未保存任何内容。请重新开始。</string>
+    <string name="calibration_result_interrupted">校准期间车辆更改或重新启动了屏幕：未保存任何内容。请重新开始。</string>
     <string name="calibration_result_driving">车辆已开始行驶：未保存任何内容。</string>
     <string name="calibration_result_reset">已恢复为车辆自身的值。</string>
     <string name="calibration_car_area">正在校准触摸屏。请用手机将每个黄色角移动到此屏幕的边缘。</string>

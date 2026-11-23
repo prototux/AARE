@@ -878,7 +878,7 @@
     <string name="calibration_result_timeout">Nessun tocco di verifica in tempo: non è stato salvato nulla.</string>
     <string name="calibration_result_cancelled">Calibrazione annullata: non è stato salvato nulla.</string>
     <string name="calibration_result_no_spread">I 4 tocchi sono arrivati nello stesso punto o su una stessa linea: l\'auto potrebbe non indicare dove viene toccato lo schermo. Non è stato salvato nulla; il registro di connessione contiene i dettagli.</string>
-    <string name="calibration_result_interrupted">L\'auto ha riavviato il video durante la calibrazione: non è stato salvato nulla. Ricomincia.</string>
+    <string name="calibration_result_interrupted">L\'auto ha cambiato o riavviato lo schermo durante la calibrazione: non è stato salvato nulla. Ricomincia.</string>
     <string name="calibration_result_driving">L\'auto ha iniziato a muoversi: non è stato salvato nulla.</string>
     <string name="calibration_result_reset">Tornato ai valori dell\'auto.</string>
     <string name="calibration_car_area">Calibrazione del touchscreen. Usa il telefono per portare ogni angolo giallo sul bordo di questo schermo.</string>

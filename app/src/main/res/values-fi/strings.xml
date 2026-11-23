@@ -877,7 +877,7 @@
     <string name="calibration_result_timeout">Tarkistuskosketusta ei tullut ajoissa: mitään ei tallennettu.</string>
     <string name="calibration_result_cancelled">Kalibrointi peruttu: mitään ei tallennettu.</string>
     <string name="calibration_result_no_spread">Kaikki 4 kosketusta tulivat samaan kohtaan tai samalle suoralle: auto ei ehkä kerro, mihin näyttöä kosketetaan. Mitään ei tallennettu; yhteyslokissa on lisätietoja.</string>
-    <string name="calibration_result_interrupted">Auto käynnisti videon uudelleen kalibroinnin aikana: mitään ei tallennettu. Aloita alusta.</string>
+    <string name="calibration_result_interrupted">Auto muutti tai käynnisti näytön uudelleen kalibroinnin aikana: mitään ei tallennettu. Aloita alusta.</string>
     <string name="calibration_result_driving">Auto lähti liikkeelle: mitään ei tallennettu.</string>
     <string name="calibration_result_reset">Palattu auton omiin arvoihin.</string>
     <string name="calibration_car_area">Kosketusnäyttöä kalibroidaan. Siirrä puhelimella kukin keltainen kulma tämän näytön reunaan.</string>

@@ -878,7 +878,7 @@
     <string name="calibration_result_timeout">Ingen kontrolltrykk i tide: ingenting ble lagret.</string>
     <string name="calibration_result_cancelled">Kalibreringen ble avbrutt: ingenting ble lagret.</string>
     <string name="calibration_result_no_spread">De 4 trykkene kom på samme sted eller på én linje: bilen rapporterer kanskje ikke hvor skjermen berøres. Ingenting ble lagret; tilkoblingsloggen har detaljene.</string>
-    <string name="calibration_result_interrupted">Bilen startet videoen på nytt under kalibreringen: ingenting ble lagret. Begynn på nytt.</string>
+    <string name="calibration_result_interrupted">Bilen endret eller startet skjermen på nytt under kalibreringen: ingenting ble lagret. Begynn på nytt.</string>
     <string name="calibration_result_driving">Bilen begynte å kjøre: ingenting ble lagret.</string>
     <string name="calibration_result_reset">Tilbake til bilens egne verdier.</string>
     <string name="calibration_car_area">Berøringsskjermen kalibreres. Bruk telefonen til å flytte hvert gule hjørne ut til kanten av denne skjermen.</string>

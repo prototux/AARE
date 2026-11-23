@@ -865,7 +865,7 @@
     <string name="calibration_result_timeout">لم تصل لمسة التحقق في الوقت المحدد: لم يُحفظ شيء.</string>
     <string name="calibration_result_cancelled">أُلغيت المعايرة: لم يُحفظ شيء.</string>
     <string name="calibration_result_no_spread">وصلت اللمسات الأربع في المكان نفسه أو على خط واحد: ربما لا تُبلغ السيارة عن مكان لمس الشاشة. لم يُحفظ شيء؛ التفاصيل في سجل الاتصال.</string>
-    <string name="calibration_result_interrupted">أعادت السيارة تشغيل الفيديو أثناء المعايرة: لم يُحفظ شيء. ابدأ من جديد.</string>
+    <string name="calibration_result_interrupted">غيّرت السيارة شاشتها أو أعادت تشغيلها أثناء المعايرة: لم يُحفظ شيء. ابدأ من جديد.</string>
     <string name="calibration_result_driving">بدأت السيارة بالتحرك: لم يُحفظ شيء.</string>
     <string name="calibration_result_reset">تمت العودة إلى قيم السيارة الخاصة.</string>
     <string name="calibration_car_area">جارٍ معايرة شاشة اللمس. استخدم الهاتف لتحريك كل زاوية صفراء إلى حافة هذه الشاشة.</string>

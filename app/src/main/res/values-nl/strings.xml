@@ -879,7 +879,7 @@
     <string name="calibration_result_timeout">Geen controleaanraking op tijd: er is niets opgeslagen.</string>
     <string name="calibration_result_cancelled">Kalibratie geannuleerd: er is niets opgeslagen.</string>
     <string name="calibration_result_no_spread">De 4 aanrakingen kwamen op dezelfde plek of op één lijn binnen: de auto meldt misschien niet waar het scherm wordt aangeraakt. Er is niets opgeslagen; het verbindingslogboek bevat de details.</string>
-    <string name="calibration_result_interrupted">De auto heeft de video tijdens het kalibreren opnieuw gestart: er is niets opgeslagen. Begin opnieuw.</string>
+    <string name="calibration_result_interrupted">De auto heeft het scherm tijdens het kalibreren gewijzigd of opnieuw gestart: er is niets opgeslagen. Begin opnieuw.</string>
     <string name="calibration_result_driving">De auto begon te rijden: er is niets opgeslagen.</string>
     <string name="calibration_result_reset">Terug naar de eigen waarden van de auto.</string>
     <string name="calibration_car_area">Touchscreen wordt gekalibreerd. Gebruik de telefoon om elke gele hoek naar de rand van dit scherm te verplaatsen.</string>

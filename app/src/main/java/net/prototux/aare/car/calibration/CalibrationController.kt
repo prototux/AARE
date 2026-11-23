@@ -93,7 +93,7 @@ class CalibrationController(private val host: Host, private val main: Scheduler)
     private fun log(line: String) = DiagLog.add("calibration: $line")
     private fun ready() = CalState.Ready(host.car, frame?.saved != null, host.driving)
 
-    /** A projection (re)started: any calibration in progress was for the old one. */
+    /** A projection (re)started or was laid out again (a UI config update): a run in progress was for the old frame. */
     fun onProjection(p: Projection) {
         val wasActive = capturing || state is CalState.Area
         frame = p

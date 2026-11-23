@@ -881,7 +881,7 @@
     <string name="calibration_result_timeout">Brak dotknięcia kontrolnego na czas: nic nie zapisano.</string>
     <string name="calibration_result_cancelled">Kalibracja anulowana: nic nie zapisano.</string>
     <string name="calibration_result_no_spread">4 dotknięcia trafiły w to samo miejsce lub na jedną linię: samochód może nie podawać, gdzie dotknięto ekranu. Nic nie zapisano; szczegóły są w dzienniku połączenia.</string>
-    <string name="calibration_result_interrupted">Samochód ponownie uruchomił obraz podczas kalibracji: nic nie zapisano. Zacznij od nowa.</string>
+    <string name="calibration_result_interrupted">Samochód zmienił lub ponownie uruchomił ekran podczas kalibracji: nic nie zapisano. Zacznij od nowa.</string>
     <string name="calibration_result_driving">Samochód ruszył: nic nie zapisano.</string>
     <string name="calibration_result_reset">Przywrócono własne wartości samochodu.</string>
     <string name="calibration_car_area">Kalibracja ekranu dotykowego. Za pomocą telefonu przesuń każdy żółty róg do krawędzi tego ekranu.</string>

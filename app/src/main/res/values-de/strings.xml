@@ -882,7 +882,7 @@
     <string name="calibration_result_timeout">Keine Prüfberührung rechtzeitig: Es wurde nichts gespeichert.</string>
     <string name="calibration_result_cancelled">Kalibrierung abgebrochen: Es wurde nichts gespeichert.</string>
     <string name="calibration_result_no_spread">Die 4 Berührungen kamen an derselben Stelle oder auf einer Linie an: Das Auto meldet möglicherweise nicht, wo der Bildschirm berührt wird. Es wurde nichts gespeichert; Details stehen im Verbindungsprotokoll.</string>
-    <string name="calibration_result_interrupted">Das Auto hat das Video während der Kalibrierung neu gestartet: Es wurde nichts gespeichert. Beginnen Sie erneut.</string>
+    <string name="calibration_result_interrupted">Das Auto hat den Bildschirm während der Kalibrierung geändert oder neu gestartet: Es wurde nichts gespeichert. Beginnen Sie erneut.</string>
     <string name="calibration_result_driving">Das Auto ist losgefahren: Es wurde nichts gespeichert.</string>
     <string name="calibration_result_reset">Zurück zu den eigenen Werten des Autos.</string>
     <string name="calibration_car_area">Touchscreen wird kalibriert. Verschieben Sie am Telefon jede gelbe Ecke an den Rand dieses Bildschirms.</string>

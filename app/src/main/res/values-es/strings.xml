@@ -877,7 +877,7 @@
     <string name="calibration_result_timeout">No hubo toque de comprobación a tiempo: no se guardó nada.</string>
     <string name="calibration_result_cancelled">Calibración cancelada: no se guardó nada.</string>
     <string name="calibration_result_no_spread">Los 4 toques llegaron en el mismo lugar o en una misma línea: puede que el coche no indique dónde se toca la pantalla. No se guardó nada; el registro de conexión tiene los detalles.</string>
-    <string name="calibration_result_interrupted">El coche reinició el vídeo durante la calibración: no se guardó nada. Empieza de nuevo.</string>
+    <string name="calibration_result_interrupted">El coche cambió o reinició la pantalla durante la calibración: no se guardó nada. Empieza de nuevo.</string>
     <string name="calibration_result_driving">El coche empezó a moverse: no se guardó nada.</string>
     <string name="calibration_result_reset">De vuelta a los valores propios del coche.</string>
     <string name="calibration_car_area">Calibrando la pantalla táctil. Usa el teléfono para llevar cada esquina amarilla al borde de esta pantalla.</string>

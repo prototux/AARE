@@ -877,7 +877,7 @@
     <string name="calibration_result_timeout">Không có lần chạm kiểm tra kịp thời: không có gì được lưu.</string>
     <string name="calibration_result_cancelled">Đã hủy hiệu chỉnh: không có gì được lưu.</string>
     <string name="calibration_result_no_spread">4 lần chạm đến cùng một chỗ hoặc trên một đường thẳng: có thể xe không báo vị trí màn hình được chạm. Không có gì được lưu; nhật ký kết nối có chi tiết.</string>
-    <string name="calibration_result_interrupted">Xe đã khởi động lại video trong khi hiệu chỉnh: không có gì được lưu. Hãy bắt đầu lại.</string>
+    <string name="calibration_result_interrupted">Xe đã thay đổi hoặc khởi động lại màn hình trong khi hiệu chỉnh: không có gì được lưu. Hãy bắt đầu lại.</string>
     <string name="calibration_result_driving">Xe đã bắt đầu di chuyển: không có gì được lưu.</string>
     <string name="calibration_result_reset">Đã trở về giá trị riêng của xe.</string>
     <string name="calibration_car_area">Đang hiệu chỉnh màn hình cảm ứng. Dùng điện thoại để đưa từng góc màu vàng tới mép màn hình này.</string>

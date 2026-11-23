@@ -878,7 +878,7 @@
     <string name="calibration_result_timeout">Intet kontroltryk i tide: intet blev gemt.</string>
     <string name="calibration_result_cancelled">Kalibreringen blev annulleret: intet blev gemt.</string>
     <string name="calibration_result_no_spread">De 4 tryk kom samme sted eller på én linje: bilen rapporterer måske ikke, hvor skærmen berøres. Intet blev gemt; forbindelsesloggen har detaljerne.</string>
-    <string name="calibration_result_interrupted">Bilen genstartede videoen under kalibreringen: intet blev gemt. Start forfra.</string>
+    <string name="calibration_result_interrupted">Bilen ændrede eller genstartede skærmen under kalibreringen: intet blev gemt. Start forfra.</string>
     <string name="calibration_result_driving">Bilen begyndte at køre: intet blev gemt.</string>
     <string name="calibration_result_reset">Tilbage til bilens egne værdier.</string>
     <string name="calibration_car_area">Touchskærmen kalibreres. Brug telefonen til at flytte hvert gult hjørne ud til kanten af denne skærm.</string>

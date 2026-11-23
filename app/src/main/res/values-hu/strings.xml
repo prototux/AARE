@@ -879,7 +879,7 @@
     <string name="calibration_result_timeout">Nem érkezett időben ellenőrző érintés: semmi sem lett mentve.</string>
     <string name="calibration_result_cancelled">Kalibrálás megszakítva: semmi sem lett mentve.</string>
     <string name="calibration_result_no_spread">A 4 érintés ugyanarra a helyre vagy egy vonalba esett: lehet, hogy az autó nem jelzi, hol érintik meg a képernyőt. Semmi sem lett mentve; a részletek a kapcsolati naplóban vannak.</string>
-    <string name="calibration_result_interrupted">Az autó kalibrálás közben újraindította a videót: semmi sem lett mentve. Kezdd újra.</string>
+    <string name="calibration_result_interrupted">Az autó kalibrálás közben módosította vagy újraindította a képernyőt: semmi sem lett mentve. Kezdd újra.</string>
     <string name="calibration_result_driving">Az autó elindult: semmi sem lett mentve.</string>
     <string name="calibration_result_reset">Visszaállítva az autó saját értékeire.</string>
     <string name="calibration_car_area">Érintőképernyő kalibrálása. A telefonnal vidd az egyes sárga sarkokat ennek a képernyőnek a szélére.</string>

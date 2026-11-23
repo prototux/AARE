@@ -880,7 +880,7 @@
     <string name="calibration_result_timeout">Проверочного касания не было вовремя: ничего не сохранено.</string>
     <string name="calibration_result_cancelled">Калибровка отменена: ничего не сохранено.</string>
     <string name="calibration_result_no_spread">Все 4 касания пришли в одно место или на одну линию: возможно, автомобиль не сообщает, где коснулись экрана. Ничего не сохранено; подробности в журнале подключения.</string>
-    <string name="calibration_result_interrupted">Автомобиль перезапустил видео во время калибровки: ничего не сохранено. Начните заново.</string>
+    <string name="calibration_result_interrupted">Автомобиль изменил или перезапустил экран во время калибровки: ничего не сохранено. Начните заново.</string>
     <string name="calibration_result_driving">Автомобиль начал движение: ничего не сохранено.</string>
     <string name="calibration_result_reset">Возвращены собственные значения автомобиля.</string>
     <string name="calibration_car_area">Калибровка сенсорного экрана. С помощью телефона передвиньте каждый жёлтый угол к краю этого экрана.</string>

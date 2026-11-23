@@ -880,7 +880,7 @@
     <string name="calibration_result_timeout">Перевірного дотику не було вчасно: нічого не збережено.</string>
     <string name="calibration_result_cancelled">Калібрування скасовано: нічого не збережено.</string>
     <string name="calibration_result_no_spread">Усі 4 дотики надійшли в одне місце або на одну лінію: можливо, автомобіль не повідомляє, де торкнулися екрана. Нічого не збережено; подробиці в журналі підключення.</string>
-    <string name="calibration_result_interrupted">Автомобіль перезапустив відео під час калібрування: нічого не збережено. Почніть знову.</string>
+    <string name="calibration_result_interrupted">Автомобіль змінив або перезапустив екран під час калібрування: нічого не збережено. Почніть знову.</string>
     <string name="calibration_result_driving">Автомобіль почав рух: нічого не збережено.</string>
     <string name="calibration_result_reset">Повернуто власні значення автомобіля.</string>
     <string name="calibration_car_area">Калібрування сенсорного екрана. За допомогою телефона пересуньте кожен жовтий кут до краю цього екрана.</string>

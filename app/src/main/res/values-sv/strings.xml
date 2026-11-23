@@ -879,7 +879,7 @@
     <string name="calibration_result_timeout">Inget kontrolltryck i tid: ingenting sparades.</string>
     <string name="calibration_result_cancelled">Kalibreringen avbröts: ingenting sparades.</string>
     <string name="calibration_result_no_spread">De 4 trycken kom på samma ställe eller på en linje: bilen kanske inte rapporterar var skärmen trycks. Ingenting sparades; anslutningsloggen har detaljerna.</string>
-    <string name="calibration_result_interrupted">Bilen startade om videon under kalibreringen: ingenting sparades. Börja om.</string>
+    <string name="calibration_result_interrupted">Bilen ändrade eller startade om skärmen under kalibreringen: ingenting sparades. Börja om.</string>
     <string name="calibration_result_driving">Bilen började köra: ingenting sparades.</string>
     <string name="calibration_result_reset">Tillbaka till bilens egna värden.</string>
     <string name="calibration_car_area">Pekskärmen kalibreras. Använd telefonen för att flytta varje gult hörn till kanten av den här skärmen.</string>

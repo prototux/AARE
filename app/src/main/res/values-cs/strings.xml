@@ -879,7 +879,7 @@
     <string name="calibration_result_timeout">Kontrolní dotyk nepřišel včas: nic nebylo uloženo.</string>
     <string name="calibration_result_cancelled">Kalibrace zrušena: nic nebylo uloženo.</string>
     <string name="calibration_result_no_spread">4 dotyky přišly na stejné místo nebo na jednu přímku: auto možná nehlásí, kde se obrazovky dotýkáte. Nic nebylo uloženo; podrobnosti jsou v protokolu připojení.</string>
-    <string name="calibration_result_interrupted">Auto během kalibrace restartovalo video: nic nebylo uloženo. Začněte znovu.</string>
+    <string name="calibration_result_interrupted">Auto během kalibrace změnilo nebo restartovalo obrazovku: nic nebylo uloženo. Začněte znovu.</string>
     <string name="calibration_result_driving">Auto se rozjelo: nic nebylo uloženo.</string>
     <string name="calibration_result_reset">Zpět na vlastní hodnoty auta.</string>
     <string name="calibration_car_area">Kalibrace dotykové obrazovky. Pomocí telefonu posuňte každý žlutý roh k okraji této obrazovky.</string>
