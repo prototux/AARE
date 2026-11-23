@@ -418,8 +418,9 @@ class CarSession(
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (!m.group || settings.groupMessages) {
-                    runtime.remember(m.title, m.text, m.icon, m.actions)
-                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
+                    val open = runtime.opener(m.packageName)
+                    runtime.remember(m.title, m.text, m.icon, m.actions, open)
+                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
                     if (settings.readMessagesAloud) m.readAloud()
                 }
             }
