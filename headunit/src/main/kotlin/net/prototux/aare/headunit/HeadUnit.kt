@@ -226,8 +226,9 @@ class HeadUnit(
     /** Polite disconnect, like turning the car off. */
     fun byeBye() {
         if (!tlsUp) return close("disconnected")
-        send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
+        // Before sending: the phone's answer closes this, and the timer with it, at once.
         timer.schedule({ close("disconnected") }, 1, TimeUnit.SECONDS)
+        send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
     }
 
     // ------------------------------------------------------------------ input
