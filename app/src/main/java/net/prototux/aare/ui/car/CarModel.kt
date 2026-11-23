@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.Settings
 import android.graphics.Bitmap
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -27,6 +28,11 @@ class CarAppEntry(
     val label: String,
     val icon: Bitmap?,
     val kind: CarAppKind,
+    /**
+     * Takes the navigation app's place (rail, dashboard, "navigate to"): a hosted navigation app, or
+     * a phone navigation app launched on the car screen ([CarAppKind.STANDALONE]).
+     */
+    val isNavigation: Boolean = kind == CarAppKind.NAVIGATION,
 )
 
 @Stable
@@ -119,6 +125,12 @@ class CarUiState {
     var assistantAppId by mutableStateOf<String?>(null)
     /** A phone assistant without a car app, opened on the car screen through the launcher (see [assistantAppId]). */
     var assistantStandalonePkg by mutableStateOf<String?>(null)
+    /** How the assistant is stopped (Settings.ASSISTANT_STOP_*). */
+    var assistantStopStyle by mutableStateOf(Settings.ASSISTANT_STOP_VOICE_BUTTON)
+    /** The voice button is a stop button now: the assistant is on, and that's the chosen way to stop it. */
+    val voiceButtonIsStop: Boolean
+        get() = assistantStopStyle == Settings.ASSISTANT_STOP_VOICE_BUTTON &&
+            (listening || assistantAppId != null || assistantStandalonePkg != null)
     /** Turn-by-turn from a navigation app running on the phone (Google Maps, Waze…). */
     var phoneGuidance by mutableStateOf<PhoneGuidance?>(null)
     /** Right-hand drive: the rail goes to the right, next to the driver. */
@@ -147,6 +159,14 @@ class CarUiState {
     var layout by mutableStateOf(CarLayout.TASKBAR)
     /** The rail runs along the bottom instead of a side. */
     var railBottom by mutableStateOf(false)
+    /** Split screen is on (a setting): an app can be opened beside the current one. */
+    var splitScreenSetting by mutableStateOf(false)
+    /** The app sharing the screen with the current one, when split; null for one pane. */
+    var secondaryAppId by mutableStateOf<String?>(null)
+    /** The primary pane's share of the content width while split; one of [snapSplitRatio]'s rest points. */
+    var splitRatio by mutableStateOf(0.5f)
+    /** Which pane the rotary/D-pad knob is in, while split: where a physical back key applies. */
+    var focusedPane by mutableStateOf(CarPane.PRIMARY)
     /** Smart-home buttons and values (the phone's "Home actions"), for the Home card and app. */
     var home by mutableStateOf(HomeUi())
     /** Font-scale multiplier for the car screen's text (a setting). Independent of [controlScale]. */
@@ -193,6 +213,15 @@ interface CarActions {
     fun endCall()
     /** Navigate to a place (an address or a name) in the car's navigation app. */
     fun navigateTo(place: String)
+    /** Opens [app] beside the current one (a long-press in the rail): only for [canOpenBeside] kinds. */
+    fun openBeside(app: CarAppEntry)
+    /** Closes the second pane; the current app stays, full screen. */
+    fun closeSplit()
+    /** The divider was released at this raw ratio (0..1 of the primary pane's share): snaps it, or
+     * closes whichever pane the drag reached the edge of. */
+    fun commitSplitRatio(raw: Float)
+    /** The rotary/D-pad knob (or a tap) moved into this pane. */
+    fun focusPane(pane: CarPane)
     /** Send a home action (its confirmation, if it has one, was already asked). */
     fun runHomeAction(id: String)
 }

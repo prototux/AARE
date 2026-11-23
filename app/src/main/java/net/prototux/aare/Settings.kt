@@ -3,6 +3,9 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.launch.StandaloneDrivingRule
+import net.prototux.aare.launch.formatDrivingRules
+import net.prototux.aare.launch.parseDrivingRules
 import net.prototux.aare.aap.wireless.WirelessHandshake
 import net.prototux.aare.transport.wireless.HandshakeChoice
 import java.util.UUID
@@ -183,6 +186,14 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putString("car_control_size", v) }
 
     /**
+     * Two apps side by side on the car screen (the taskbar layout only, and only when the screen is
+     * wide enough): off by default, like any screen real estate change the driver didn't ask for.
+     */
+    var splitScreen: Boolean
+        get() = prefs.getBoolean("split_screen", false)
+        set(v) = prefs.edit { putBoolean("split_screen", v) }
+
+    /**
      * The accent colour, an id from `CarAccents`: the theme's own ("theme"), the phone's ("phone",
      * Android 12 and later) or a colour. On a single-colour theme it colours everything.
      */
@@ -330,15 +341,26 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("assistant_on_car_screen", false)
         set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
 
+    /**
+     * How the driver stops the assistant ([ASSISTANT_STOP_VOICE_BUTTON], the default: the voice button
+     * turns into a stop button while the assistant is on; [ASSISTANT_STOP_RED_RESTART]: a big red stop
+     * on the assistant bar, the voice button asks again; [ASSISTANT_STOP_RED_STOP]: the red stop, and
+     * the voice button stops too). The steering wheel's voice key does what the voice button does.
+     */
+    var assistantStopStyle: String
+        get() = prefs.getString("assistant_stop", ASSISTANT_STOP_VOICE_BUTTON) ?: ASSISTANT_STOP_VOICE_BUTTON
+        set(v) = prefs.edit { putString("assistant_stop", v) }
+
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
         get() = prefs.getBoolean("phone_screen", false)
         set(v) = prefs.edit { putBoolean("phone_screen", v) }
 
     /**
-     * Launch ordinary phone apps on the car screen (NewPipe, emulators, a browser…): a parked-only,
-     * opt-in convenience that needs root or Shizuku. These apps are not Android Auto apps; AARE
-     * mirrors their normal phone UI and injects the car's touches, so it is paused while driving.
+     * Launch ordinary phone apps on the car screen (NewPipe, emulators, a browser…): an opt-in
+     * convenience that needs root or Shizuku. These apps are not Android Auto apps; AARE mirrors
+     * their normal phone UI and injects the car's touches, so by default they are paused while
+     * driving (see [standaloneDrivingRules]).
      */
     var standaloneApps: Boolean
         get() = prefs.getBoolean("standalone_apps", false)
@@ -361,6 +383,14 @@ class Settings(context: Context) {
     var standaloneAppPackages: Set<String>
         get() = prefs.getStringSet("standalone_app_pkgs", emptySet()) ?: emptySet()
         set(v) = prefs.edit { putStringSet("standalone_app_pkgs", HashSet(v)) }
+
+    /**
+     * What each launched app may do while driving, by package: parked only (also for a package with
+     * no rule), audio only, or, for navigation apps only, navigation.
+     */
+    var standaloneDrivingRules: Map<String, StandaloneDrivingRule>
+        get() = parseDrivingRules(prefs.getStringSet("standalone_driving_rules", emptySet()).orEmpty())
+        set(v) = prefs.edit { putStringSet("standalone_driving_rules", formatDrivingRules(v)) }
     /** Show a web browser (a WebView) on the car screen. Off by default; paused while driving. */
     var browser: Boolean
         get() = prefs.getBoolean("browser", false)
@@ -559,6 +589,9 @@ class Settings(context: Context) {
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
         const val RAIL_BOTTOM = "bottom"
+        const val ASSISTANT_STOP_VOICE_BUTTON = "voice_button"
+        const val ASSISTANT_STOP_RED_RESTART = "red_restart"
+        const val ASSISTANT_STOP_RED_STOP = "red_stop"
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"
@@ -574,4 +607,27 @@ class Settings(context: Context) {
 
     fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.registerOnSharedPreferenceChangeListener(l)
     fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) = prefs.unregisterOnSharedPreferenceChangeListener(l)
+
+    /** Every entry backing a setting, for [SettingsBackup.export] to filter and turn into JSON. */
+    val all: Map<String, Any?> get() = prefs.all
+
+    /**
+     * Writes [values] (SettingsBackup.Imported.values: allowed keys with the types their getters
+     * read, already checked) over the current settings. Existing keys not
+     * in [values] are left alone: an older export (fewer settings than this version knows about)
+     * only replaces what it has, it doesn't reset the rest to their defaults.
+     */
+    fun restore(values: Map<String, Any>) {
+        prefs.edit {
+            // SettingsBackup.import already leaves these out; a second check where they'd be written.
+            for ((key, value) in values) if (key !in SettingsBackup.BLOCKED) when (value) {
+                is String -> putString(key, value)
+                is Boolean -> putBoolean(key, value)
+                is Int -> putInt(key, value)
+                is Long -> putLong(key, value)
+                is Float -> putFloat(key, value)
+                is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
+            }
+        }
+    }
 }

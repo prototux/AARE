@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Sisäänrakennetut soittolaitteet ja jälkiasennetut langattomat sovittimet (kytketty auton USB-liitäntään) odottavat puhelimen vastaavan eri järjestyksessä. Automaattinen käyttää vakiojärjestystä tai sovitinjärjestystä autolle, joka viimeksi yhdisti sillä. Valitse Sovitin, jos langaton sovittimesi ei yhdistä; Sisäänrakennettu palauttaa vakiojärjestyksen kaikille autoille.</string>
     <string name="setup_toggle_resume_music_title">Jatka musiikkia</string>
     <string name="setup_toggle_resume_music_subtitle">Käynnistä viimeksi soitettu musiikkisovellus, kun auto yhdistetään</string>
+    <string name="setup_toggle_calls_speaker_title">Puhelut puhelimen kaiuttimesta</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Kun yhteys autoon on muodostettu, puhelut käyttävät puhelimen kaiutinta ja mikrofonia auton handsfree-yhteyden sijaan. Langattomille sovittimille tai soittolaitteille, joiden mikrofoni ei toimi. Astuu voimaan seuraavasta yhteydestä alkaen.</string>
     <string name="setup_bt_address_label">Puhelimen Bluetooth-osoite (valinnainen)</string>
     <string name="setup_bt_address_hint">Jotkin soittolaitteet näyttävät mustan näytön, kunnes ne tietävät, mikä puhelin on yhdistetty. Löydät sen kohdasta Asetukset &gt; Tietoja puhelimesta &gt; Tila. Jätä tyhjäksi, jos autosi toimii jo.</string>
     <string name="setup_section_location">Sijainti</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Yhteyden aikana puhelimen sovellukset näkevät auton sijainnin puhelimen oman sijainnin sijaan, jotta navigointisovellukset eivät sekoita niitä</string>
     <string name="setup_check_mock_location_title">Anna AARElle lupa asettaa sijainti</string>
     <string name="setup_check_mock_location_subtitle">Kehittäjäasetukset &gt; Valitse simuloitu sijaintisovellus &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigointi puhelimen ollessa lukittuna</string>
+    <string name="setup_check_background_location_subtitle">Valinnainen. Kun AARE käynnistyy itsestään (auton Bluetooth), navigointisovellukset säilyttävät sijainnin puhelimen ollessa lukittuna. Käyttöoikeudet &gt; Sijainti &gt; Salli aina</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Suosi 60 kuvaa/s</string>
     <string name="setup_toggle_60fps_subtitle">Sujuvampaa, jos auto tukee sitä</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Alaosa</string>
     <string name="setup_toggle_dark_bar_title">Tumma palkki</string>
     <string name="setup_toggle_dark_bar_subtitle">Pidä palkki tummana myös vaaleilla väreillä</string>
+    <string name="setup_toggle_split_screen_title">Jaettu näyttö</string>
+    <string name="setup_toggle_split_screen_subtitle">Avaa sovellus nykyisen viereen painamalla sitä pitkään auton palkissa (tehtäväpalkkiasettelu, vain leveät näytöt)</string>
+    <string name="car_split_close">Sulje jaettu näyttö</string>
+    <string name="car_split_open_beside">Avaa nykyisen sovelluksen viereen</string>
     <string name="setup_choice_text_size">Tekstin koko</string>
     <string name="setup_choice_control_size">Säätimien koko</string>
     <string name="setup_choice_size_default">Oletus</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Poista</string>
     <string name="cert_action_import">Tuo varmenne…</string>
     <string name="cert_action_download">Lataa varmenne</string>
+    <string name="cert_auto_update_title">Päivitä ladattu varmenne automaattisesti</string>
+    <string name="cert_auto_update_subtitle">Kerran päivässä, ei koskaan yhteyden aikana, AARE kysyy samalta varastolta uudempaa varmennetta ja käyttää sitä. Joka tapauksessa AARE varoittaa kaksi viikkoa ennen kuin Googlen varmenne vanhenee.</string>
+    <string name="cert_expiring_banner_title">Googlen varmenne vanhenee %1$s</string>
+    <string name="cert_expired_banner_title">Googlen varmenne vanheni %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Autot, jotka hyväksyvät vain sen, hylkäävät AARE:n. Napauta latataksesi uudemman.</string>
     <string name="cert_action_downloading">Ladataan…</string>
     <string name="cert_download_unavailable">Varmennevarastoa ei enää ole (poistettu tai estetty): %1$s. Pura varmenne sen sijaan Android Auto -sovelluksesta (katso README).</string>
     <string name="cert_download_network">Varmenteen lataus epäonnistui: %1$s. Tarkista yhteys ja yritä uudelleen.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Lataa varmenne</string>
     <string name="notif_action_navigate">Navigoi</string>
     <string name="notif_action_open">Avaa</string>
+    <string name="notif_cert_updated_title">Varmenne päivitetty</string>
+    <string name="notif_cert_updated_message">AARE latasi uudemman Android Auto -varmenteen, voimassa %1$s asti.</string>
+    <string name="notif_cert_expiring_title">Varmenne vanhenee pian</string>
+    <string name="notif_cert_expiring_text">%1$s vanhenee %2$s. Autot, jotka hyväksyvät vain Googlen varmenteen, hylkäävät AARE:n sen jälkeen: lataa uudempi.</string>
+    <string name="notif_cert_expired_title">Varmenne vanhentunut</string>
+    <string name="notif_cert_expired_text">%1$s vanheni %2$s. Autot, jotka hyväksyvät vain Googlen varmenteen, hylkäävät AARE:n nyt: lataa uudempi.</string>
     <string name="notif_cert_download_title">Soittolaite hylkäsi AARE:n varmenteen</string>
     <string name="notif_cert_download_message">Tämä soittolaite hyväksyy vain Googlen varmenteen. Lataa se uusimmasta Android Auto -sovelluksesta ja yhdistä sitten uudelleen.</string>
     <string name="notif_cert_download_progress">Ladataan Android Auton varmennetta…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, yhdistä sitten uudelleen.</string>
     <string name="notif_cert_changed_message">soittolaitteen varmenne vaihtui: napauta Luota ilmoituksessa tai AARE:ssa vain, jos sen ohjelmisto on päivitetty, yhdistä sitten uudelleen</string>
     <string name="notif_cert_untrusted_message">soittolaitteen varmenteeseen ei vielä luoteta: napauta Luota ilmoituksessa tai AARE:ssa, yhdistä sitten uudelleen</string>
+    <string name="notif_cert_dates_title">Tarkista auton päivämäärä ja aika</string>
+    <string name="notif_cert_not_yet_valid_message">soittolaite sanoo, että AAREn varmenne ei ole vielä voimassa: sen kello on todennäköisesti jäljessä. Aseta auton päivämäärä ja aika, yhdistä sitten uudelleen</string>
+    <string name="notif_cert_expired_message">soittolaite sanoo, että AAREn varmenne on vanhentunut: jos ei ole, auton kello on edellä. Aseta auton päivämäärä ja aika, tai hanki uudempi varmenne kohdasta Lisäasetukset, yhdistä sitten uudelleen</string>
     <string name="notif_car_nearby_title">Auto lähellä</string>
     <string name="notif_car_nearby_text">Napauta yhdistääksesi langattomasti</string>
     <string name="notif_status_connecting_to">Yhdistetään %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Minne?</string>
     <string name="nav_dashboard_install_hint">Asenna puhelimeen navigointisovellus, joka tukee Android Autoa</string>
     <string name="nav_dashboard_choose_app">Valitse karttasovelluksesi</string>
+    <string name="nav_dashboard_standalone_hint">%1$s on puhelinsovellus: sen kartta avautuu koko näytölle.</string>
     <string name="nav_guidance_on_phone">%1$s, puhelimessa</string>
     <string name="nav_next_step_then">Sitten</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Sovellukset auton näytöllä (lisäasetukset)</string>
-    <string name="standalone_section_warning">Nämä eivät ole Android Auto -sovelluksia: AARE näyttää niiden tavallisen puhelinnäytön, vain pysäköitynä, ja vaatii root- tai Shizuku-oikeudet. Käytä omalla vastuullasi.</string>
+    <string name="standalone_section_warning">Nämä eivät ole Android Auto -sovelluksia: AARE näyttää niiden tavallisen puhelinnäytön, oletuksena vain pysäköitynä, ja vaatii root- tai Shizuku-oikeudet. Käytä omalla vastuullasi.</string>
     <string name="standalone_toggle_title">Käynnistä puhelinsovelluksia auton näytöllä</string>
-    <string name="standalone_toggle_subtitle">Valitse sovellukset alta. Näkyy vain pysäköitynä.</string>
+    <string name="standalone_toggle_subtitle">Valitse sovellukset alta ja kullekin, mitä se saa tehdä ajon aikana.</string>
     <string name="standalone_keep_awake_title">Ei-unitila itsenäisille sovelluksille</string>
     <string name="standalone_keep_awake_subtitle">Pitää puhelimen fyysisen näytön herätettynä, kun sovellus on avoinna. Vaikutuksen alaisilla Android 17 -puhelimilla virtuaalinäytöt pysähtyvät, kun puhelimen näyttö on pois päältä. Kuluttaa enemmän akkua.</string>
     <string name="standalone_need_root">Vaatii root- tai Shizuku-oikeudet. Ota jompikumpi käyttöön Auton äänet -sivulla ja palaa sitten takaisin.</string>
     <string name="standalone_not_native">Ei Android Auto -sovellus · käyttö pysäköitynä</string>
     <string name="standalone_starting">Käynnistyy…</string>
     <string name="standalone_paused_driving">Keskeytetty ajon ajaksi.</string>
+    <string name="standalone_audio_only_driving">Näyttö piilotettu ajon ajaksi. Ääni jatkuu.</string>
+    <string name="standalone_rule_title">Ajon aikana</string>
+    <string name="standalone_rule_parked">Vain pysäköitynä</string>
+    <string name="standalone_rule_audio">Vain ääni</string>
+    <string name="standalone_rule_navigation">Navigointi</string>
+    <string name="standalone_rule_navigation_note">Näkyy ajon aikana ja toimii auton navigointisovelluksena: se vie kartan paikan ja avaa pyytämäsi määränpäät.</string>
     <string name="standalone_media_video_title">Video mediasovelluksista</string>
     <string name="standalone_media_video_subtitle">Lisää \"Näytä video\" auton medianäyttöön: mediasovellus avautuu auton näytölle videotaan varten. Vain pysäköitynä; kansikuva palaa, kun ajat.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auton tiedot</string>
     <string name="setup_page_car_data_subtitle">Nopeus, vaihde ja anturit suoraan autosta</string>
+    <string name="setup_page_about_title">Tietoja</string>
+    <string name="setup_page_about_subtitle">Mitä AARE on, projektin linkit ja ketkä auttoivat sen rakentamisessa</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Yhdistä autoon nähdäksesi sen tiedot.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Auton tiedot</string>
     <string name="car_data_show_in_car_title">Näytä auton näytöllä</string>
     <string name="car_data_show_in_car_subtitle">Lisää autoon diagnostiikkasovellus näitä reaaliaikaisia tietoja varten</string>
+
+    <!-- about: Tietoja-sivu -->
+    <string name="about_section_what_title">Mitä AARE on</string>
+    <string name="about_text">AARE on avoimen lähdekoodin uudelleentoteutus Android Auton puhelinpuolesta: se puhuu Android Auton projisointiprotokollaa suoraan auton soittolaitteen kanssa, piirtää auton näytön itse ja suorittaa navigointi-, media- ja viestisovelluksia tarvitsematta Google Play -palveluita.</string>
+    <string name="about_section_links_title">Projekti</string>
+    <string name="about_link_repository">Koodivarasto</string>
+    <string name="about_link_issues">Ongelmat</string>
+    <string name="about_link_discussions">Keskustelut</string>
+    <string name="about_section_thanks_title">Kiitokset</string>
+    <string name="about_thanks_security_review">Tietoturvakatselmus</string>
+    <string name="about_thanks_code_and_docs">Koodi ja dokumentaatio</string>
+    <string name="about_thanks_head_unit_reports">Soittolaiteraportit</string>
+    <string name="about_thanks_reports">Raportit ja ideat</string>
+    <string name="about_thanks_tips">Vinkit</string>
+    <string name="about_section_oss_title">Avoimen lähdekoodin komponentit</string>
+    <string name="about_oss_libraries_title">Kirjastot</string>
+    <string name="about_oss_protocol_title">Protokollamääritykset</string>
+
     <string name="vehicles_section_title">Autokohtaiset asetukset</string>
     <string name="vehicles_hint">Korjaa tietyn auton tiheys tai näkyvän alueen reunat ilman uutta koontiversiota. Muokkaa vehicles.json-tiedostoa tiedostonhallinnalla ja täsmäytä auto merkin/mallin/nimen mukaan.</string>
     <string name="vehicles_rule_count">Ladattuja sääntöjä: %1$d</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json-tiedostossa on virhe rivillä %1$d, sarakkeessa %2$d (%3$s): sen säännöt ohitetaan.</string>
     <string name="vehicles_malformed">vehicles.json-tiedostoa ei voi käyttää (%1$s): sen säännöt ohitetaan.</string>
     <string name="setup_toggle_force_h264_title">Pakota H.264-video</string>
+    <string name="setup_toggle_constant_bitrate_title">Vakiobittinopeuksinen video</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Pitää kunkin kuvan likimain samankokoisena. Ota käyttöön, jos auto katkaisee yhteyden koko kuvan vaihtuessa, kuten puhelimen näytön tai videon kanssa. Vilkkaat kuvat pehmenevät hieman. Astuu voimaan seuraavasta yhteydestä alkaen.</string>
     <string name="setup_toggle_force_h264_subtitle">AARE käyttää oletusarvoisesti parasta koodekkia, jonka auto ja puhelin jakavat (H.265…). Ota käyttöön, jos auton kuva on häiriöinen.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Yritä uudelleen</string>
@@ -581,6 +632,18 @@
     <string name="setup_log_save">Tallenna</string>
     <string name="setup_toggle_verbose_log_title">Yksityiskohtainen protokollaloki</string>
     <string name="setup_toggle_verbose_log_subtitle">Tallentaa koko soittolaitteen protokollajäljen tähän lokiin, liitettäväksi vikailmoitukseen. Kirjaa paljon; jätä muuten pois päältä.</string>
+    <string name="setup_section_backup">Asetusten varmuuskopio</string>
+    <string name="setup_backup_hint">Tallenna asetukset tiedostoon tai lataa ne takaisin. Luotetut soittolaitteet, varmenteet, puhelinkohtaiset tiedot ja valinnat, jotka avaavat AAREn verkkoon tai ohittavat turvatarkistuksen (soittolaitteen palvelin, matkustajatila, root-ääni…), jätetään pois: aseta ne käsin jokaisessa puhelimessa.</string>
+    <string name="setup_backup_export">Vie…</string>
+    <string name="setup_backup_import">Tuo…</string>
+    <string name="setup_backup_import_confirm_title">Korvataanko asetukset?</string>
+    <string name="setup_backup_import_confirm_text">Nykyiset asetuksesi korvataan valitun tiedoston asetuksilla. Tätä ei voi kumota.</string>
+    <string name="setup_backup_import_confirm_action">Korvaa</string>
+    <string name="setup_backup_import_done">Asetukset tuotu.</string>
+    <string name="setup_backup_import_done_skipped">Asetukset tuotu. Ohitettu tuntemattomina, estettyinä tai virheellisinä: %1$d</string>
+    <string name="setup_backup_import_blocked">Ei tuotu, turvallisuuden vuoksi (ota nämä käyttöön käsin tässä puhelimessa): %1$s</string>
+    <string name="setup_backup_import_failed">Tiedostoa ei voi tuoda: se ei ole AAREn asetustiedosto tai se on liian suuri.</string>
+    <string name="setup_backup_export_failed">Asetustiedostoa ei voitu tallentaa.</string>
     <string name="setup_nothing_to_open">Puhelimessa ei ole sovellusta, joka voisi avata tämän</string>
     <string name="setup_wallpaper_failed">Tätä kuvaa ei voitu käyttää taustakuvana</string>
     <string name="msg_autoreply_default">Ajan juuri nyt, vastaan myöhemmin.</string>
@@ -619,6 +682,7 @@
     <string name="tpl_password_hint">Salasana</string>
     <string name="carapp_error_start">%1$s:n käynnistäminen epäonnistui</string>
     <string name="carapp_error_refused">%1$s kielsi yhteyden</string>
+    <string name="carapp_error_no_answer">%1$s ei vastannut. Se saattaa hyväksyä vain Googlen Android Auton (katso sovellusluettelo puhelimesta).</string>
     <string name="carapp_error_api_level">%1$s vaatii auton API-tason %2$d; tämä laite tukee tasoa %3$d</string>
     <string name="carapp_error_stopped">%1$s pysähtyi</string>
     <string name="carapp_error_google_only">%1$s hyväksyy vain Googlen Android Auton. Sen täytyy sallia AARE (katso sovellusluettelo puhelimesta).</string>

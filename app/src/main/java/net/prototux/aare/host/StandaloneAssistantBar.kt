@@ -1,5 +1,6 @@
 package net.prototux.aare.host
 
+import net.prototux.aare.ui.car.carClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -73,7 +74,7 @@ internal fun StandaloneAssistantBar(packageName: String, runtime: CarRuntime, mo
                 })
             if (!started) Placeholder(stringResource(R.string.standalone_starting), loading = true)
             Box(
-                Modifier.align(Alignment.TopEnd).size(d.touchTarget).clip(CircleShape).clickable(onClick = onClose),
+                Modifier.align(Alignment.TopEnd).size(d.touchTarget).clip(CircleShape).carClickable(CircleShape, onClick = onClose),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.common_close), tint = Color.White)

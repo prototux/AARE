@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">A beépített fejegységek és az utólagos vezeték nélküli adapterek (az autó USB-csatlakozójába dugva) eltérő sorrendben várják a telefon válaszait. Az Automatikus a szabványos sorrendet használja, vagy az adapteres sorrendet annál az autónál, amely legutóbb azzal csatlakozott. Válaszd az Adapter lehetőséget, ha a vezeték nélküli adaptered nem csatlakozik; a Beépített minden autónál visszaáll a szabványos sorrendre.</string>
     <string name="setup_toggle_resume_music_title">Zene folytatása</string>
     <string name="setup_toggle_resume_music_subtitle">Az utoljára játszott zenealkalmazás elindítása, amikor az autó csatlakozik</string>
+    <string name="setup_toggle_calls_speaker_title">Hívások a telefon hangszóróján</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Autóhoz csatlakozva a hívások a telefon hangszóróját és mikrofonját használják az autó kézmentes rendszere helyett. Olyan vezeték nélküli adapterekhez vagy fejegységekhez, amelyek mikrofonja nem működik. A következő csatlakozástól lép életbe.</string>
     <string name="setup_bt_address_label">Telefon Bluetooth-címe (opcionális)</string>
     <string name="setup_bt_address_hint">Néhány fejegység fekete képernyőt mutat, amíg nem tudja, melyik telefon csatlakozik. Megtalálod itt: Beállítások &gt; A telefonról &gt; Állapot. Hagyd üresen, ha az autód már működik.</string>
     <string name="setup_section_location">Helyadatok</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Csatlakoztatva a telefon alkalmazásai az autó pozícióját látják a telefon saját helyzete helyett, így a navigációs alkalmazások nem keverik össze a kettőt</string>
     <string name="setup_check_mock_location_title">Engedélyezd, hogy az AARE beállítsa a helyet</string>
     <string name="setup_check_mock_location_subtitle">Fejlesztői beállítások &gt; Látszatpozíció-alkalmazás kiválasztása &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigáció zárolt telefonnal</string>
+    <string name="setup_check_background_location_subtitle">Opcionális. Amikor az AARE önmagától elindul (az autó Bluetooth-ja), a navigációs alkalmazások megtartják a helyzetet zárolt telefonnal is. Engedélyek &gt; Helyadatok &gt; Mindig engedélyezve</string>
     <string name="setup_section_video">Videó</string>
     <string name="setup_toggle_60fps_title">60 fps előnyben részesítése</string>
     <string name="setup_toggle_60fps_subtitle">Simább, ha az autó támogatja</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Alul</string>
     <string name="setup_toggle_dark_bar_title">Sötét sáv</string>
     <string name="setup_toggle_dark_bar_subtitle">A sáv sötét marad nappali színeknél is</string>
+    <string name="setup_toggle_split_screen_title">Osztott képernyő</string>
+    <string name="setup_toggle_split_screen_subtitle">Nyomj hosszan egy alkalmazást az autó sávjában, hogy a jelenlegi mellett nyíljon meg (tálca elrendezés, csak széles képernyőn)</string>
+    <string name="car_split_close">Osztott képernyő bezárása</string>
+    <string name="car_split_open_beside">Megnyitás a jelenlegi alkalmazás mellett</string>
     <string name="setup_choice_text_size">Szövegméret</string>
     <string name="setup_choice_control_size">Vezérlők mérete</string>
     <string name="setup_choice_size_default">Alapértelmezett</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Eltávolítás</string>
     <string name="cert_action_import">Tanúsítvány importálása…</string>
     <string name="cert_action_download">Tanúsítvány letöltése</string>
+    <string name="cert_auto_update_title">A letöltött tanúsítvány automatikus frissítése</string>
+    <string name="cert_auto_update_subtitle">Naponta egyszer, soha csatlakozás közben, az AARE megkérdezi ugyanazt a tárolót egy újabb tanúsítványról, és használja azt. Mindenesetre az AARE két héttel a Google tanúsítványának lejárata előtt figyelmeztet.</string>
+    <string name="cert_expiring_banner_title">A Google tanúsítványa lejár: %1$s</string>
+    <string name="cert_expired_banner_title">A Google tanúsítványa lejárt: %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Azok az autók, amelyek csak ezt fogadják el, elutasítják az AARE-t. Koppints egy újabb letöltéséhez.</string>
     <string name="cert_action_downloading">Letöltés…</string>
     <string name="cert_download_unavailable">A tanúsítványtároló már nem létezik (törölték vagy eltávolították): %1$s. Inkább nyerd ki a tanúsítványt az Android Auto alkalmazásból (lásd a README-t).</string>
     <string name="cert_download_network">Nem sikerült letölteni a tanúsítványt: %1$s. Ellenőrizd a kapcsolatot, és próbáld újra.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Tanúsítvány letöltése</string>
     <string name="notif_action_navigate">Navigáció</string>
     <string name="notif_action_open">Megnyitás</string>
+    <string name="notif_cert_updated_title">Tanúsítvány frissítve</string>
+    <string name="notif_cert_updated_message">Az AARE letöltött egy újabb Android Auto tanúsítványt, amely %1$s-ig érvényes.</string>
+    <string name="notif_cert_expiring_title">A tanúsítvány hamarosan lejár</string>
+    <string name="notif_cert_expiring_text">%1$s lejár: %2$s. Az autók, amelyek csak a Google tanúsítványát fogadják el, ezután elutasítják az AARE-t: töltsön le egy újabbat.</string>
+    <string name="notif_cert_expired_title">A tanúsítvány lejárt</string>
+    <string name="notif_cert_expired_text">%1$s lejárt: %2$s. Azok az autók, amelyek csak a Google tanúsítványát fogadják el, most elutasítják az AARE-t: töltsön le egy újabbat.</string>
     <string name="notif_cert_download_title">A fejegység elutasította az AARE tanúsítványát</string>
     <string name="notif_cert_download_message">Ez a fejegység csak a Google tanúsítványát fogadja el. Töltsd le a legújabb Android Auto alkalmazásból, majd csatlakozz újra.</string>
     <string name="notif_cert_download_progress">Az Android Auto tanúsítványának letöltése…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, majd csatlakozz újra.</string>
     <string name="notif_cert_changed_message">a fejegység tanúsítványa megváltozott: koppints a Megbízom gombra az értesítésben vagy az AARE-ban, de csak ha a szoftvere frissült, majd csatlakozz újra</string>
     <string name="notif_cert_untrusted_message">a fejegység tanúsítványa még nem megbízható: koppints a Megbízom gombra az értesítésben vagy az AARE-ban, majd csatlakozz újra</string>
+    <string name="notif_cert_dates_title">Ellenőrizd az autó dátumát és idejét</string>
+    <string name="notif_cert_not_yet_valid_message">a fejegység szerint az AARE tanúsítványa még nem érvényes: az órája valószínűleg lassik. Állítsd be az autó dátumát és idejét, majd csatlakozz újra</string>
+    <string name="notif_cert_expired_message">a fejegység szerint az AARE tanúsítványa lejárt: ha nem, akkor az autó órája siet. Állítsd be az autó dátumát és idejét, vagy szerezz egy újabb tanúsítványt a Speciális alatt, majd csatlakozz újra</string>
     <string name="notif_car_nearby_title">Autó a közelben</string>
     <string name="notif_car_nearby_text">Koppints a vezeték nélküli csatlakozáshoz</string>
     <string name="notif_status_connecting_to">Csatlakozás ehhez: %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Hová?</string>
     <string name="nav_dashboard_install_hint">Telepíts a telefonra egy Android Autót támogató navigációs alkalmazást</string>
     <string name="nav_dashboard_choose_app">Válassz térképalkalmazást</string>
+    <string name="nav_dashboard_standalone_hint">A(z) %1$s telefonos alkalmazás: a térképe teljes képernyőn nyílik meg.</string>
     <string name="nav_guidance_on_phone">%1$s, a telefonon</string>
     <string name="nav_next_step_then">Majd</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Alkalmazások az autó képernyőjén (haladó)</string>
-    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
+    <string name="standalone_section_warning">Ezek nem Android Auto alkalmazások: az AARE a szokásos telefonos képernyőjüket jeleníti meg, alapértelmezés szerint csak álló autóban, és root vagy Shizuku szükséges hozzá. Használata saját felelősségre.</string>
     <string name="standalone_toggle_title">Telefonos alkalmazások indítása az autó képernyőjén</string>
-    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent. Csak álló autóban jelenik meg.</string>
+    <string name="standalone_toggle_subtitle">Válaszd ki az alkalmazásokat lent, és mindegyiknél, mit tehet vezetés közben.</string>
     <string name="standalone_keep_awake_title">Nincs alvás mód az önálló alkalmazásokhoz</string>
     <string name="standalone_keep_awake_subtitle">Ébren tartja a telefon tényleges képernyőjét, amíg egy alkalmazás meg van nyitva. Az érintett Android 17-es telefonokon a virtuális kijelzők leállnak, amikor a telefon képernyője kikapcsol. Több akkumulátort használ.</string>
     <string name="standalone_need_root">Root vagy Shizuku szükséges. Állítsd be az egyiket az Autó hangja lapon, majd gyere vissza.</string>
     <string name="standalone_not_native">Nem Android Auto alkalmazás · használat álló autóban</string>
     <string name="standalone_starting">Indítás…</string>
     <string name="standalone_paused_driving">Vezetés közben szüneteltetve.</string>
+    <string name="standalone_audio_only_driving">A képernyő vezetés közben rejtve. A hang szól tovább.</string>
+    <string name="standalone_rule_title">Vezetés közben</string>
+    <string name="standalone_rule_parked">Csak álló autóban</string>
+    <string name="standalone_rule_audio">Csak hang</string>
+    <string name="standalone_rule_navigation">Navigáció</string>
+    <string name="standalone_rule_navigation_note">Vezetés közben is látszik, és ez lesz az autó navigációs alkalmazása: átveszi a térkép helyét, és megnyitja a kért úti célokat.</string>
     <string name="standalone_media_video_title">Videó médiaalkalmazásokból</string>
     <string name="standalone_media_video_subtitle">Hozzáadja a(z) „Videó megjelenítése” gombot az autó médiaképernyőjéhez: a médiaalkalmazás az autó képernyőjén nyílik meg a videójához. Csak parkoláskor; vezetés közben visszatér a borítókép.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Autó adatai</string>
     <string name="setup_page_car_data_subtitle">Élő sebesség, sebességfokozat és érzékelők az autóból</string>
+    <string name="setup_page_about_title">Névjegy</string>
+    <string name="setup_page_about_subtitle">Mi az AARE, a projekt linkjei, és kik segítettek megépíteni</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Csatlakozzon egy autóhoz az adatainak megtekintéséhez.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Autó adatai</string>
     <string name="car_data_show_in_car_title">Megjelenítés az autó képernyőjén</string>
     <string name="car_data_show_in_car_subtitle">Adj hozzá egy diagnosztikai alkalmazást az autóban ehhez az élő adathoz</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">Mi az AARE</string>
+    <string name="about_text">Az AARE az Android Auto telefonos oldalának nyílt forráskódú újraimplementációja: közvetlenül az autó fejegységével beszéli az Android Auto projekciós protokollját, maga rajzolja ki az autó képernyőjét, és navigációs, média- és üzenetküldő alkalmazásokat futtat a Google Play szolgáltatások nélkül.</string>
+    <string name="about_section_links_title">Projekt</string>
+    <string name="about_link_repository">Tároló</string>
+    <string name="about_link_issues">Problémák</string>
+    <string name="about_link_discussions">Megbeszélések</string>
+    <string name="about_section_thanks_title">Köszönet</string>
+    <string name="about_thanks_security_review">Biztonsági felülvizsgálat</string>
+    <string name="about_thanks_code_and_docs">Kód és dokumentáció</string>
+    <string name="about_thanks_head_unit_reports">Fejegység-jelentések</string>
+    <string name="about_thanks_reports">Jelentések és ötletek</string>
+    <string name="about_thanks_tips">Tippek</string>
+    <string name="about_section_oss_title">Nyílt forráskódú összetevők</string>
+    <string name="about_oss_libraries_title">Könyvtárak</string>
+    <string name="about_oss_protocol_title">Protokolldefiníciók</string>
+
     <string name="vehicles_section_title">Autónkénti beállítások</string>
     <string name="vehicles_hint">Javítsd egy adott autó sűrűségét vagy a látható terület margóit új build nélkül. Szerkeszd a vehicles.json fájlt egy fájlkezelővel, az autót márka/modell/név alapján azonosítva.</string>
     <string name="vehicles_rule_count">%1$d szabály betöltve</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">A vehicles.json hibás a(z) %1$d. sor %2$d. oszlopában (%3$s): a szabályai figyelmen kívül maradnak.</string>
     <string name="vehicles_malformed">A vehicles.json nem használható (%1$s): a szabályai figyelmen kívül maradnak.</string>
     <string name="setup_toggle_force_h264_title">H.264 videó kényszerítése</string>
+    <string name="setup_toggle_constant_bitrate_title">Állandó bitrátájú videó</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Minden képkockát körülbelül azonos méretben tart. Kapcsold be, ha az autó megszakítja a kapcsolatot a teljes kép megváltozásakor, mint a telefon képernyőjénél vagy egy videónál. A zsúfolt képek kissé puhábbak lesznek. A következő csatlakozástól lép életbe.</string>
     <string name="setup_toggle_force_h264_subtitle">Alapértelmezés szerint az AARE a legjobb, az autó és a telefon által is támogatott kodeket használja (H.265…). Kapcsolja be, ha az autó képe akadozik.</string>
     <!-- newly translated strings -->
     <string name="common_ok">OK</string>
@@ -582,6 +633,18 @@
     <string name="setup_log_save">Mentés</string>
     <string name="setup_toggle_verbose_log_title">Részletes protokollnapló</string>
     <string name="setup_toggle_verbose_log_subtitle">A teljes fejegység-protokoll naplózása ebbe a naplóba, hogy csatolni lehessen egy hibajelentéshez. Sokat naplóz; egyébként hagyd kikapcsolva.</string>
+    <string name="setup_section_backup">Beállítások mentése</string>
+    <string name="setup_backup_hint">Mentse a beállításokat fájlba, vagy töltse vissza őket. A megbízható fejegységek, a tanúsítványok, a telefonhoz kötött adatok és azok a beállítások, amelyek az AARE-t a hálózat felé nyitják vagy kiiktatnak egy biztonsági ellenőrzést (fejegység-szerver, utas mód, root hang…), kimaradnak: ezeket minden telefonon kézzel állítsa be.</string>
+    <string name="setup_backup_export">Exportálás…</string>
+    <string name="setup_backup_import">Importálás…</string>
+    <string name="setup_backup_import_confirm_title">Lecseréli a beállításokat?</string>
+    <string name="setup_backup_import_confirm_text">A jelenlegi beállításokat felülírják a kiválasztott fájlban lévők. Ez nem vonható vissza.</string>
+    <string name="setup_backup_import_confirm_action">Csere</string>
+    <string name="setup_backup_import_done">Beállítások importálva.</string>
+    <string name="setup_backup_import_done_skipped">Beállítások importálva. Kihagyva (ismeretlen, tiltott vagy érvénytelen): %1$d</string>
+    <string name="setup_backup_import_blocked">Nincs importálva, biztonsági okból (kapcsold be ezeket kézzel ezen a telefonon): %1$s</string>
+    <string name="setup_backup_import_failed">Ez a fájl nem importálható: nem AARE-beállításfájl, vagy túl nagy.</string>
+    <string name="setup_backup_export_failed">Nem sikerült menteni a beállításfájlt.</string>
     <string name="setup_nothing_to_open">Ezen a telefonon nincs olyan alkalmazás, amely meg tudná nyitni ezt</string>
     <string name="setup_wallpaper_failed">Nem sikerült ezt a fényképet háttérképként beállítani</string>
     <string name="msg_autoreply_default">Most vezetek, majd később válaszolok.</string>
@@ -620,6 +683,7 @@
     <string name="tpl_password_hint">Jelszó</string>
     <string name="carapp_error_start">Nem sikerült elindítani: %1$s</string>
     <string name="carapp_error_refused">%1$s elutasította a kapcsolatot</string>
+    <string name="carapp_error_no_answer">%1$s nem válaszolt. Lehet, hogy csak a Google Android Auto alkalmazását fogadja el (lásd az alkalmazáslistát a telefonon).</string>
     <string name="carapp_error_api_level">A %1$s a %2$d autós API szintet igényli; ez a fejegység a %3$d szintet támogatja</string>
     <string name="carapp_error_stopped">%1$s leállt</string>
     <string name="carapp_error_google_only">%1$s csak a Google Android Auto alkalmazását fogadja el. Engedélyeznie kell az AARE-t (lásd az alkalmazáslistát a telefonon).</string>

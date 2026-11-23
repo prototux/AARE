@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Indbyggede head units og eftermonterede trådløse adaptere (sat i bilens USB) forventer, at telefonen svarer i forskellig rækkefølge. Automatisk bruger standardrækkefølgen eller adapterrækkefølgen for en bil, der sidst oprettede forbindelse med den. Vælg Adapter, hvis din trådløse adapter ikke vil oprette forbindelse; Indbygget går tilbage til standardrækkefølgen for alle biler.</string>
     <string name="setup_toggle_resume_music_title">Genoptag musik</string>
     <string name="setup_toggle_resume_music_subtitle">Starter den sidst afspillede musik-app, når bilen opretter forbindelse</string>
+    <string name="setup_toggle_calls_speaker_title">Opkald via telefonens højttaler</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Når der er forbindelse til en bil, bruger opkald telefonens højttaler og mikrofon i stedet for bilens håndfrie forbindelse. Til trådløse adaptere eller head units, hvis mikrofon ikke virker. Træder i kraft fra næste forbindelse.</string>
     <string name="setup_bt_address_label">Telefonens Bluetooth-adresse (valgfrit)</string>
     <string name="setup_bt_address_hint">Nogle head units viser en sort skærm, indtil de ved, hvilken telefon der er forbundet. Find den i Indstillinger &gt; Om telefonen &gt; Status. Lad den stå tom, hvis din bil allerede fungerer.</string>
     <string name="setup_section_location">Placering</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Mens forbundet ser apps på telefonen bilens position i stedet for telefonens egen, så navigations-apps ikke blander de to</string>
     <string name="setup_check_mock_location_title">Tillad AARE at angive placeringen</string>
     <string name="setup_check_mock_location_subtitle">Udviklerindstillinger &gt; Vælg app til fiktiv placering &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigation med låst telefon</string>
+    <string name="setup_check_background_location_subtitle">Valgfrit. Når AARE starter af sig selv (bilens Bluetooth), bevarer navigationsapps positionen, selv når telefonen er låst. Tilladelser &gt; Placering &gt; Tillad hele tiden</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Foretræk 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Mere jævnt, når bilen understøtter det</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Nederst</string>
     <string name="setup_toggle_dark_bar_title">Mørk bar</string>
     <string name="setup_toggle_dark_bar_subtitle">Hold baren mørk, selv med dagfarver</string>
+    <string name="setup_toggle_split_screen_title">Delt skærm</string>
+    <string name="setup_toggle_split_screen_subtitle">Tryk længe på en app i bilens bar for at åbne den ved siden af den aktuelle (proceslinjelayout, kun brede skærme)</string>
+    <string name="car_split_close">Luk delt skærm</string>
+    <string name="car_split_open_beside">Åbn ved siden af den aktuelle app</string>
     <string name="setup_choice_text_size">Tekststørrelse</string>
     <string name="setup_choice_control_size">Størrelse på knapper</string>
     <string name="setup_choice_size_default">Standard</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Fjern</string>
     <string name="cert_action_import">Importer certifikat…</string>
     <string name="cert_action_download">Hent certifikat</string>
+    <string name="cert_auto_update_title">Opdater det hentede certifikat automatisk</string>
+    <string name="cert_auto_update_subtitle">En gang om dagen, aldrig mens der er forbindelse, spørger AARE det samme lager om et nyere certifikat og bruger det. Uanset hvad advarer AARE to uger før Googles certifikat udløber.</string>
+    <string name="cert_expiring_banner_title">Googles certifikat udløber den %1$s</string>
+    <string name="cert_expired_banner_title">Googles certifikat udløb den %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Biler, der kun accepterer det, afviser AARE. Tryk for at hente en nyere.</string>
     <string name="cert_action_downloading">Henter…</string>
     <string name="cert_download_unavailable">Certifikatlageret findes ikke længere (slettet eller fjernet): %1$s. Udtræk i stedet certifikatet fra Android Auto-appen (se README).</string>
     <string name="cert_download_network">Kunne ikke hente certifikatet: %1$s. Tjek forbindelsen, og prøv igen.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Hent certifikat</string>
     <string name="notif_action_navigate">Naviger</string>
     <string name="notif_action_open">Åbn</string>
+    <string name="notif_cert_updated_title">Certifikat opdateret</string>
+    <string name="notif_cert_updated_message">AARE hentede et nyere Android Auto-certifikat, gyldigt til %1$s.</string>
+    <string name="notif_cert_expiring_title">Certifikat udløber snart</string>
+    <string name="notif_cert_expiring_text">%1$s udløber den %2$s. Biler, der kun accepterer Googles certifikat, afviser derefter AARE: hent en nyere.</string>
+    <string name="notif_cert_expired_title">Certifikat udløbet</string>
+    <string name="notif_cert_expired_text">%1$s udløb den %2$s. Biler, der kun accepterer Googles certifikat, afviser nu AARE: hent en nyere.</string>
     <string name="notif_cert_download_title">Head unit afviste AAREs certifikat</string>
     <string name="notif_cert_download_message">Denne head unit accepterer kun Googles certifikat. Hent det fra den nyeste Android Auto-app, og opret derefter forbindelse igen.</string>
     <string name="notif_cert_download_progress">Henter Android Autos certifikat…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, opret derefter forbindelse igen.</string>
     <string name="notif_cert_changed_message">head unit-certifikat ændret: tryk på Stol på i notifikationen eller i AARE kun hvis dens software er blevet opdateret, opret derefter forbindelse igen</string>
     <string name="notif_cert_untrusted_message">head unit-certifikat endnu ikke betroet: tryk på Stol på i notifikationen eller i AARE, opret derefter forbindelse igen</string>
+    <string name="notif_cert_dates_title">Kontroller bilens dato og klokkeslæt</string>
+    <string name="notif_cert_not_yet_valid_message">head unit\'en siger, at AAREs certifikat endnu ikke er gyldigt: dens klokke går sandsynligvis for langsomt. Indstil bilens dato og klokkeslæt, og opret derefter forbindelse igen</string>
+    <string name="notif_cert_expired_message">head unit\'en siger, at AAREs certifikat er udløbet: hvis det ikke er det, går bilens klokke for hurtigt. Indstil bilens dato og klokkeslæt, eller hent et nyere certifikat under Avanceret, og opret derefter forbindelse igen</string>
     <string name="notif_car_nearby_title">Bil i nærheden</string>
     <string name="notif_car_nearby_text">Tryk for at oprette trådløs forbindelse</string>
     <string name="notif_status_connecting_to">Opretter forbindelse til %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Hvorhen?</string>
     <string name="nav_dashboard_install_hint">Installer en navigations-app, der understøtter Android Auto, på telefonen</string>
     <string name="nav_dashboard_choose_app">Vælg din kort-app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s er en telefonapp: dens kort åbner i fuld skærm.</string>
     <string name="nav_guidance_on_phone">%1$s, på telefonen</string>
     <string name="nav_next_step_then">Derefter</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps på bilskærmen (avanceret)</string>
-    <string name="standalone_section_warning">Dette er ikke Android Auto-apps: AARE viser deres normale telefonskærm, kun når bilen er parkeret, og kræver root eller Shizuku. Bruges på eget ansvar.</string>
+    <string name="standalone_section_warning">Dette er ikke Android Auto-apps: AARE viser deres normale telefonskærm, som standard kun når bilen er parkeret, og kræver root eller Shizuku. Bruges på eget ansvar.</string>
     <string name="standalone_toggle_title">Start telefonapps på bilskærmen</string>
-    <string name="standalone_toggle_subtitle">Vælg apps nedenfor. Vises kun når parkeret.</string>
+    <string name="standalone_toggle_subtitle">Vælg apps nedenfor, og for hver, hvad den må under kørsel.</string>
     <string name="standalone_keep_awake_title">Ingen-dvale-tilstand for selvstændige apps</string>
     <string name="standalone_keep_awake_subtitle">Holder den fysiske telefonskærm vågen, mens en app er åben. På berørte Android 17-telefoner stopper virtuelle skærme, når telefonskærmen er slukket. Bruger mere batteri.</string>
     <string name="standalone_need_root">Kræver root eller Shizuku. Konfigurer en af dem på siden Bilaudio, og kom så tilbage.</string>
     <string name="standalone_not_native">Ikke en Android Auto-app · brug ved parkering</string>
     <string name="standalone_starting">Starter…</string>
     <string name="standalone_paused_driving">Sat på pause under kørsel.</string>
+    <string name="standalone_audio_only_driving">Skærmen er skjult under kørsel. Lyden fortsætter.</string>
+    <string name="standalone_rule_title">Under kørsel</string>
+    <string name="standalone_rule_parked">Kun parkeret</string>
+    <string name="standalone_rule_audio">Kun lyd</string>
+    <string name="standalone_rule_navigation">Navigation</string>
+    <string name="standalone_rule_navigation_note">Vises under kørsel og bruges som bilens navigationsapp: den tager kortets plads og åbner de destinationer, du beder om.</string>
     <string name="standalone_media_video_title">Video fra medieapps</string>
     <string name="standalone_media_video_subtitle">Tilføjer \"Vis video\" til bilens medieskærm: medieappen åbner på bilens skærm for at vise sin video. Kun parkeret; albumcoveret kommer tilbage, når du kører.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
     <string name="setup_page_car_data_subtitle">Hastighed, gear og sensorer fra bilen i realtid</string>
+    <string name="setup_page_about_title">Om</string>
+    <string name="setup_page_about_subtitle">Hvad AARE er, projektlinks, og hvem der har hjulpet med at bygge det</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Opret forbindelse til en bil for at se dens data.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Bildata</string>
     <string name="car_data_show_in_car_title">Vis på bilskærmen</string>
     <string name="car_data_show_in_car_subtitle">Tilføj en diagnoseapp i bilen for at se disse livedata</string>
+
+    <!-- about: Om-siden -->
+    <string name="about_section_what_title">Hvad AARE er</string>
+    <string name="about_text">AARE er en open source-genimplementering af telefonsiden af Android Auto: den taler Android Autos projektionsprotokol direkte med bilens head unit, tegner selv bilskærmen og kører navigations-, medie- og meddelelsesapps uden at have brug for Google Play-tjenester.</string>
+    <string name="about_section_links_title">Projekt</string>
+    <string name="about_link_repository">Kodelager</string>
+    <string name="about_link_issues">Problemer</string>
+    <string name="about_link_discussions">Diskussioner</string>
+    <string name="about_section_thanks_title">Tak</string>
+    <string name="about_thanks_security_review">Sikkerhedsgennemgang</string>
+    <string name="about_thanks_code_and_docs">Kode og dokumentation</string>
+    <string name="about_thanks_head_unit_reports">Rapporter om head units</string>
+    <string name="about_thanks_reports">Rapporter og idéer</string>
+    <string name="about_thanks_tips">Tips</string>
+    <string name="about_section_oss_title">Open source-komponenter</string>
+    <string name="about_oss_libraries_title">Biblioteker</string>
+    <string name="about_oss_protocol_title">Protokoldefinitioner</string>
+
     <string name="vehicles_section_title">Tilpasninger pr. bil</string>
     <string name="vehicles_hint">Ret en bestemt bils tæthed eller margener for synligt område uden en ny build. Rediger vehicles.json med en filhåndtering, og match bilen efter mærke/model/navn.</string>
     <string name="vehicles_rule_count">%1$d regel(ler) indlæst</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json har en fejl i linje %1$d, kolonne %2$d (%3$s): dens regler ignoreres.</string>
     <string name="vehicles_malformed">vehicles.json kan ikke bruges (%1$s): dens regler ignoreres.</string>
     <string name="setup_toggle_force_h264_title">Gennemtving H.264-video</string>
+    <string name="setup_toggle_constant_bitrate_title">Video med konstant bitrate</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Holder hvert billede nogenlunde samme størrelse. Slå til, hvis bilen afbryder forbindelsen, når hele billedet ændrer sig, som med telefonskærmen eller en video. Travle billeder bliver lidt blødere. Træder i kraft fra næste forbindelse.</string>
     <string name="setup_toggle_force_h264_subtitle">Som standard bruger AARE den bedste codec, som bilen og telefonen har til fælles (H.265…). Slå til, hvis bilens billede er forvrænget.</string>
     <!-- common / setup / updates / audio / media / car app errors -->
     <string name="common_ok">OK</string>
@@ -582,6 +633,18 @@
     <string name="setup_log_save">Gem</string>
     <string name="setup_toggle_verbose_log_title">Detaljeret protokollog</string>
     <string name="setup_toggle_verbose_log_subtitle">Optag den fulde protokolsporing for bilenheden i denne log, så den kan vedhæftes en fejlrapport. Logger meget; lad den være slået fra ellers.</string>
+    <string name="setup_section_backup">Sikkerhedskopi af indstillinger</string>
+    <string name="setup_backup_hint">Gem dine indstillinger i en fil, eller indlæs en igen. Betroede head units, certifikater, telefonspecifik tilstand og de valg, der åbner AARE mod netværket eller springer et sikkerhedstjek over (head unit-server, passagertilstand, lyd via root…), udelades: indstil dem manuelt på hver telefon.</string>
+    <string name="setup_backup_export">Eksportér…</string>
+    <string name="setup_backup_import">Importér…</string>
+    <string name="setup_backup_import_confirm_title">Erstat dine indstillinger?</string>
+    <string name="setup_backup_import_confirm_text">Dette overskriver dine nuværende indstillinger med dem i den valgte fil. Det kan ikke fortrydes.</string>
+    <string name="setup_backup_import_confirm_action">Erstat</string>
+    <string name="setup_backup_import_done">Indstillinger importeret.</string>
+    <string name="setup_backup_import_done_skipped">Indstillinger importeret. Udeladt som ukendt, blokeret eller ugyldig: %1$d</string>
+    <string name="setup_backup_import_blocked">Ikke importeret, af sikkerhedsmæssige årsager (slå disse til manuelt på denne telefon): %1$s</string>
+    <string name="setup_backup_import_failed">Filen kan ikke importeres: det er ikke en AARE-indstillingsfil, eller den er for stor.</string>
+    <string name="setup_backup_export_failed">Indstillingsfilen kunne ikke gemmes.</string>
     <string name="setup_nothing_to_open">Denne telefon har ingen app, der kan åbne dette</string>
     <string name="setup_wallpaper_failed">Kunne ikke bruge dette billede som baggrund</string>
     <string name="msg_autoreply_default">Jeg kører lige nu, jeg svarer senere.</string>
@@ -620,6 +683,7 @@
     <string name="tpl_password_hint">Adgangskode</string>
     <string name="carapp_error_start">Kunne ikke starte %1$s</string>
     <string name="carapp_error_refused">%1$s afviste forbindelsen</string>
+    <string name="carapp_error_no_answer">%1$s svarede ikke. Den accepterer måske kun Googles Android Auto (se applisten på telefonen).</string>
     <string name="carapp_error_api_level">%1$s kræver bil-API-niveau %2$d; denne vært understøtter %3$d</string>
     <string name="carapp_error_stopped">%1$s stoppede</string>
     <string name="carapp_error_google_only">%1$s accepterer kun Googles Android Auto. Den skal tillade AARE (se applisten på telefonen).</string>

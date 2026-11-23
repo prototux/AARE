@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Vestavěné hlavní jednotky a dodatečné bezdrátové adaptéry (zapojené do USB auta) očekávají odpovědi telefonu v různém pořadí. Automaticky používá standardní pořadí, nebo pořadí adaptéru pro auto, které se s ním naposledy připojilo. Zvolte Adaptér, pokud se váš bezdrátový adaptér nepřipojí; Vestavěná vrátí standardní pořadí pro všechna auta.</string>
     <string name="setup_toggle_resume_music_title">Obnovit hudbu</string>
     <string name="setup_toggle_resume_music_subtitle">Spustit poslední přehrávanou hudební aplikaci při připojení auta</string>
+    <string name="setup_toggle_calls_speaker_title">Hovory přes reproduktor telefonu</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Při připojení k autu používají hovory reproduktor a mikrofon telefonu místo handsfree systému auta. Pro bezdrátové adaptéry nebo hlavní jednotky, jejichž mikrofon nefunguje. Platí od příštího připojení.</string>
     <string name="setup_bt_address_label">Bluetooth adresa telefonu (nepovinné)</string>
     <string name="setup_bt_address_hint">Některé hlavní jednotky zobrazují černou obrazovku, dokud nevědí, který telefon je připojen. Najdete ji v Nastavení &gt; O telefonu &gt; Stav. Nechte prázdné, pokud vaše auto už funguje.</string>
     <string name="setup_section_location">Poloha</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Při připojení aplikace v telefonu vidí polohu auta místo polohy telefonu, takže navigační aplikace obě polohy nemíchají</string>
     <string name="setup_check_mock_location_title">Povolit AARE nastavovat polohu</string>
     <string name="setup_check_mock_location_subtitle">Možnosti pro vývojáře &gt; Vybrat aplikaci pro simulovanou polohu &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigace se zablokovaným telefonem</string>
+    <string name="setup_check_background_location_subtitle">Volitelné. Když se AARE spustí sám (Bluetooth auta), navigační aplikace udržují polohu i se zablokovaným telefonem. Oprávnění &gt; Poloha &gt; Povolit po celou dobu</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Preferovat 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Plynnější, pokud to auto podporuje</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Dole</string>
     <string name="setup_toggle_dark_bar_title">Tmavá lišta</string>
     <string name="setup_toggle_dark_bar_subtitle">Zachovat tmavou lištu i se světlými barvami</string>
+    <string name="setup_toggle_split_screen_title">Rozdělená obrazovka</string>
+    <string name="setup_toggle_split_screen_subtitle">Dlouhým stisknutím aplikace na liště auta ji otevřete vedle aktuální (rozvržení Hlavní panel, jen široké obrazovky)</string>
+    <string name="car_split_close">Zavřít rozdělenou obrazovku</string>
+    <string name="car_split_open_beside">Otevřít vedle aktuální aplikace</string>
     <string name="setup_choice_text_size">Velikost textu</string>
     <string name="setup_choice_control_size">Velikost ovládacích prvků</string>
     <string name="setup_choice_size_default">Výchozí</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Odstranit</string>
     <string name="cert_action_import">Importovat certifikát…</string>
     <string name="cert_action_download">Stáhnout certifikát</string>
+    <string name="cert_auto_update_title">Automaticky aktualizovat stažený certifikát</string>
+    <string name="cert_auto_update_subtitle">Jednou denně, nikdy během připojení, se AARE zeptá stejného repozitáře na novější certifikát a použije ho. V každém případě AARE upozorní dva týdny před vypršením platnosti certifikátu Google.</string>
+    <string name="cert_expiring_banner_title">Certifikát Google vyprší %1$s</string>
+    <string name="cert_expired_banner_title">Certifikát Google vypršel %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Auta, která přijímají pouze ji, odmítnou AARE. Klepnutím stáhnete novější.</string>
     <string name="cert_action_downloading">Stahování…</string>
     <string name="cert_download_unavailable">Repozitář s certifikáty už neexistuje (byl smazán nebo stažen): %1$s. Místo toho extrahujte certifikát z aplikace Android Auto (viz README).</string>
     <string name="cert_download_network">Certifikát se nepodařilo stáhnout: %1$s. Zkontrolujte připojení a zkuste to znovu.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Stáhnout certifikát</string>
     <string name="notif_action_navigate">Navigovat</string>
     <string name="notif_action_open">Otevřít</string>
+    <string name="notif_cert_updated_title">Certifikát aktualizován</string>
+    <string name="notif_cert_updated_message">AARE stáhlo novější certifikát Android Auto, platný do %1$s.</string>
+    <string name="notif_cert_expiring_title">Certifikát brzy vyprší</string>
+    <string name="notif_cert_expiring_text">%1$s vyprší %2$s. Auta, která přijímají pouze certifikát Google, pak odmítnou AARE: stáhněte novější.</string>
+    <string name="notif_cert_expired_title">Certifikát vypršel</string>
+    <string name="notif_cert_expired_text">%1$s vypršel %2$s. Auta, která přijímají pouze certifikát Google, nyní odmítají AARE: stáhněte novější.</string>
     <string name="notif_cert_download_title">Hlavní jednotka odmítla certifikát AARE</string>
     <string name="notif_cert_download_message">Tato hlavní jednotka přijímá pouze certifikát Google. Stáhněte certifikát z nejnovější aplikace Android Auto a pak se znovu připojte.</string>
     <string name="notif_cert_download_progress">Stahuje se certifikát Android Auto…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, pak se znovu připojte.</string>
     <string name="notif_cert_changed_message">certifikát hlavní jednotky se změnil: klepněte na Důvěřovat v oznámení nebo v AARE pouze pokud byl její software aktualizován, pak se znovu připojte</string>
     <string name="notif_cert_untrusted_message">certifikát hlavní jednotky ještě není důvěryhodný: klepněte na Důvěřovat v oznámení nebo v AARE, pak se znovu připojte</string>
+    <string name="notif_cert_dates_title">Zkontrolujte datum a čas v autě</string>
+    <string name="notif_cert_not_yet_valid_message">hlavní jednotka říká, že certifikát AARE ještě není platný: její hodiny jsou pravděpodobně pozadu. Nastavte datum a čas auta, pak se znovu připojte</string>
+    <string name="notif_cert_expired_message">hlavní jednotka říká, že certifikát AARE vypršel: pokud nevypršel, hodiny auta jdou napřed. Nastavte datum a čas auta, nebo získejte novější certifikát v Pokročilé, pak se znovu připojte</string>
     <string name="notif_car_nearby_title">Auto v okolí</string>
     <string name="notif_car_nearby_text">Klepnutím se bezdrátově připojíte</string>
     <string name="notif_status_connecting_to">Připojování k %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Kam?</string>
     <string name="nav_dashboard_install_hint">Nainstalujte do telefonu navigační aplikaci podporující Android Auto</string>
     <string name="nav_dashboard_choose_app">Vyberte si mapovou aplikaci</string>
+    <string name="nav_dashboard_standalone_hint">%1$s je aplikace telefonu: její mapa se otevře na celou obrazovku.</string>
     <string name="nav_guidance_on_phone">%1$s, na telefonu</string>
     <string name="nav_next_step_then">Pak</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplikace na obrazovce auta (pokročilé)</string>
-    <string name="standalone_section_warning">Toto nejsou aplikace Android Auto: AARE zobrazuje jejich běžnou obrazovku telefonu, jen při zaparkování, a vyžaduje root nebo Shizuku. Používáte na vlastní riziko.</string>
+    <string name="standalone_section_warning">Toto nejsou aplikace Android Auto: AARE zobrazuje jejich běžnou obrazovku telefonu, ve výchozím nastavení jen při zaparkování, a vyžaduje root nebo Shizuku. Používáte na vlastní riziko.</string>
     <string name="standalone_toggle_title">Spouštět aplikace telefonu na obrazovce auta</string>
-    <string name="standalone_toggle_subtitle">Vyberte aplikace níže. Zobrazeno jen při zaparkování.</string>
+    <string name="standalone_toggle_subtitle">Vyberte aplikace níže a u každé, co smí dělat během jízdy.</string>
     <string name="standalone_keep_awake_title">Režim bez spánku pro samostatné aplikace</string>
     <string name="standalone_keep_awake_subtitle">Udržuje fyzickou obrazovku telefonu probuzenou, když je aplikace otevřená. Na postižených telefonech s Androidem 17 se virtuální obrazovky zastaví, když je obrazovka telefonu vypnutá. Spotřebovává více baterie.</string>
     <string name="standalone_need_root">Vyžaduje root nebo Shizuku. Nastavte jedno z nich na stránce Zvuk v autě a pak se vraťte.</string>
     <string name="standalone_not_native">Není aplikací Android Auto · použití při zaparkování</string>
     <string name="standalone_starting">Spouští se…</string>
     <string name="standalone_paused_driving">Pozastaveno během jízdy.</string>
+    <string name="standalone_audio_only_driving">Obrazovka je během jízdy skrytá. Zvuk hraje dál.</string>
+    <string name="standalone_rule_title">Během jízdy</string>
+    <string name="standalone_rule_parked">Jen při zaparkování</string>
+    <string name="standalone_rule_audio">Jen zvuk</string>
+    <string name="standalone_rule_navigation">Navigace</string>
+    <string name="standalone_rule_navigation_note">Zobrazeno během jízdy a použito jako navigační aplikace auta: zabere místo mapy a otevírá cíle, o které požádáte.</string>
     <string name="standalone_media_video_title">Video z aplikací médií</string>
     <string name="standalone_media_video_subtitle">Přidá „Zobrazit video“ na obrazovku médií v autě: aplikace médií se otevře na obrazovce auta kvůli svému videu. Jen při parkování; při jízdě se vrátí obal alba.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Data vozu</string>
     <string name="setup_page_car_data_subtitle">Rychlost, rychlostní stupeň a senzory z vozu naživo</string>
+    <string name="setup_page_about_title">O aplikaci</string>
+    <string name="setup_page_about_subtitle">Co je AARE, odkazy na projekt a kdo pomohl s jeho vývojem</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Připojte se k autu pro zobrazení jeho dat.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Data vozu</string>
     <string name="car_data_show_in_car_title">Zobrazit na obrazovce auta</string>
     <string name="car_data_show_in_car_subtitle">Pro tato živá data přidejte v autě diagnostickou aplikaci</string>
+
+    <!-- about: stránka O aplikaci -->
+    <string name="about_section_what_title">Co je AARE</string>
+    <string name="about_text">AARE je open-source reimplementace telefonní strany Android Auto: hovoří s hlavní jednotkou auta přímo pomocí projekčního protokolu Android Auto, sama vykresluje obrazovku auta a spouští navigační, mediální a zprávové aplikace bez potřeby Služeb Google Play.</string>
+    <string name="about_section_links_title">Projekt</string>
+    <string name="about_link_repository">Repozitář</string>
+    <string name="about_link_issues">Problémy</string>
+    <string name="about_link_discussions">Diskuze</string>
+    <string name="about_section_thanks_title">Poděkování</string>
+    <string name="about_thanks_security_review">Bezpečnostní revize</string>
+    <string name="about_thanks_code_and_docs">Kód a dokumentace</string>
+    <string name="about_thanks_head_unit_reports">Hlášení o hlavních jednotkách</string>
+    <string name="about_thanks_reports">Hlášení a nápady</string>
+    <string name="about_thanks_tips">Tipy</string>
+    <string name="about_section_oss_title">Open-source komponenty</string>
+    <string name="about_oss_libraries_title">Knihovny</string>
+    <string name="about_oss_protocol_title">Definice protokolu</string>
+
     <string name="vehicles_section_title">Vlastní nastavení pro jednotlivá auta</string>
     <string name="vehicles_hint">Opravte hustotu nebo okraje viditelné oblasti konkrétního auta bez nového sestavení. Upravte soubor vehicles.json ve správci souborů, auto se identifikuje podle výrobce/modelu/názvu.</string>
     <string name="vehicles_rule_count">Načtená pravidla: %1$d</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json obsahuje chybu na řádku %1$d, ve sloupci %2$d (%3$s): jeho pravidla se ignorují.</string>
     <string name="vehicles_malformed">vehicles.json nelze použít (%1$s): jeho pravidla se ignorují.</string>
     <string name="setup_toggle_force_h264_title">Vynutit video H.264</string>
+    <string name="setup_toggle_constant_bitrate_title">Video s konstantním datovým tokem</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Udržuje přibližně stejnou velikost každého snímku. Zapněte, pokud auto přeruší připojení, když se změní celý obraz, například u obrazovky telefonu nebo videa. Náročné obrazy budou o něco měkčí. Platí od příštího připojení.</string>
     <string name="setup_toggle_force_h264_subtitle">Ve výchozím nastavení AARE používá nejlepší kodek sdílený autem a telefonem (H.265…). Zapněte, pokud obraz v autě trhá nebo je poškozený.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Zkusit znovu</string>
@@ -581,6 +632,18 @@
     <string name="setup_log_save">Uložit</string>
     <string name="setup_toggle_verbose_log_title">Podrobný protokol komunikace</string>
     <string name="setup_toggle_verbose_log_subtitle">Zaznamenat do tohoto protokolu úplný průběh komunikace s hlavní jednotkou, pro přiložení k hlášení chyby. Zaznamenává se hodně; jinak ho nechte vypnutý.</string>
+    <string name="setup_section_backup">Záloha nastavení</string>
+    <string name="setup_backup_hint">Uložte nastavení do souboru nebo je z něj načtěte zpět. Důvěryhodné hlavní jednotky, certifikáty, stav vázaný na telefon a volby, které otevírají AARE do sítě nebo obcházejí bezpečnostní kontrolu (server hlavní jednotky, režim spolujezdce, zvuk přes root…), se nepřenášejí: nastavte je ručně na každém telefonu.</string>
+    <string name="setup_backup_export">Exportovat…</string>
+    <string name="setup_backup_import">Importovat…</string>
+    <string name="setup_backup_import_confirm_title">Nahradit nastavení?</string>
+    <string name="setup_backup_import_confirm_text">Tímto přepíšete současné nastavení nastavením z vybraného souboru. Nelze to vrátit zpět.</string>
+    <string name="setup_backup_import_confirm_action">Nahradit</string>
+    <string name="setup_backup_import_done">Nastavení importováno.</string>
+    <string name="setup_backup_import_done_skipped">Nastavení importováno. Vynecháno (neznámé, blokované nebo neplatné): %1$d</string>
+    <string name="setup_backup_import_blocked">Nenaimportováno z bezpečnostních důvodů (zapněte je ručně na tomto telefonu): %1$s</string>
+    <string name="setup_backup_import_failed">Tento soubor nelze importovat: není to soubor nastavení AARE, nebo je příliš velký.</string>
+    <string name="setup_backup_export_failed">Soubor s nastavením se nepodařilo uložit.</string>
     <string name="setup_nothing_to_open">Tento telefon nemá aplikaci, která by to mohla otevřít</string>
     <string name="setup_wallpaper_failed">Tuto fotku se nepodařilo použít jako tapetu</string>
     <string name="msg_autoreply_default">Právě řídím, odpovím později.</string>
@@ -619,6 +682,7 @@
     <string name="tpl_password_hint">Heslo</string>
     <string name="carapp_error_start">Nepodařilo se spustit %1$s</string>
     <string name="carapp_error_refused">%1$s odmítl připojení</string>
+    <string name="carapp_error_no_answer">%1$s neodpověděl. Možná akceptuje pouze Android Auto od Googlu (viz seznam aplikací na telefonu).</string>
     <string name="carapp_error_api_level">%1$s vyžaduje úroveň car API %2$d; tato hlavní jednotka podporuje %3$d</string>
     <string name="carapp_error_stopped">%1$s se zastavilo</string>
     <string name="carapp_error_google_only">%1$s akceptuje pouze Android Auto od Googlu. Musí povolit AARE (viz seznam aplikací na telefonu).</string>

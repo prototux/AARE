@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Ingebouwde head units en losse draadloze adapters (in de USB-poort van de auto) verwachten dat de telefoon in een andere volgorde antwoordt. Automatisch gebruikt de standaardvolgorde, of de adaptervolgorde voor een auto die de vorige keer zo verbonden was. Kies Adapter als uw draadloze adapter geen verbinding maakt; Ingebouwd zet alle auto\'s terug op de standaardvolgorde.</string>
     <string name="setup_toggle_resume_music_title">Muziek hervatten</string>
     <string name="setup_toggle_resume_music_subtitle">Start de laatst gebruikte muziekapp wanneer de auto verbinding maakt</string>
+    <string name="setup_toggle_calls_speaker_title">Gesprekken via de luidspreker van de telefoon</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Wanneer verbonden met een auto, gebruiken gesprekken de luidspreker en microfoon van de telefoon in plaats van de handsfree-verbinding van de auto. Voor draadloze adapters of head units waarvan de microfoon niet werkt. Wordt van kracht vanaf de volgende verbinding.</string>
     <string name="setup_bt_address_label">Bluetooth-adres van de telefoon (optioneel)</string>
     <string name="setup_bt_address_hint">Sommige head units tonen een zwart scherm totdat ze weten welke telefoon verbonden is. U vindt het bij Instellingen &gt; Over de telefoon &gt; Status. Laat dit leeg als uw auto al werkt.</string>
     <string name="setup_section_location">Locatie</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Tijdens de verbinding zien apps op de telefoon de positie van de auto in plaats van die van de telefoon zelf, zodat navigatie-apps de twee niet mengen</string>
     <string name="setup_check_mock_location_title">AARE toestaan de locatie in te stellen</string>
     <string name="setup_check_mock_location_subtitle">Ontwikkelaarsopties &gt; App voor neplocatie selecteren &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigatie met vergrendelde telefoon</string>
+    <string name="setup_check_background_location_subtitle">Optioneel. Wanneer AARE zichzelf start (de Bluetooth van de auto), houden navigatie-apps de locatie bij met de telefoon vergrendeld. Machtigingen &gt; Locatie &gt; Altijd toestaan</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Voorkeur voor 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Vloeiender als de auto het ondersteunt</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Onder</string>
     <string name="setup_toggle_dark_bar_title">Donkere balk</string>
     <string name="setup_toggle_dark_bar_subtitle">Houd de balk donker, ook bij dagkleuren</string>
+    <string name="setup_toggle_split_screen_title">Gesplitst scherm</string>
+    <string name="setup_toggle_split_screen_subtitle">Houd een app in de balk van de auto ingedrukt om hem naast de huidige te openen (taakbalkindeling, alleen brede schermen)</string>
+    <string name="car_split_close">Gesplitst scherm sluiten</string>
+    <string name="car_split_open_beside">Openen naast de huidige app</string>
     <string name="setup_choice_text_size">Tekstgrootte</string>
     <string name="setup_choice_control_size">Grootte van bedieningselementen</string>
     <string name="setup_choice_size_default">Standaard</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Verwijderen</string>
     <string name="cert_action_import">Certificaat importeren…</string>
     <string name="cert_action_download">Certificaat downloaden</string>
+    <string name="cert_auto_update_title">Gedownload certificaat automatisch bijwerken</string>
+    <string name="cert_auto_update_subtitle">Eén keer per dag, nooit terwijl er verbinding is, vraagt AARE dezelfde repository om een nieuwer certificaat en gebruikt dit. In elk geval waarschuwt AARE twee weken voordat het certificaat van Google verloopt.</string>
+    <string name="cert_expiring_banner_title">Het certificaat van Google verloopt op %1$s</string>
+    <string name="cert_expired_banner_title">Het certificaat van Google is verlopen op %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Auto\'s die alleen dit accepteren, zullen AARE weigeren. Tik om een nieuwer certificaat te downloaden.</string>
     <string name="cert_action_downloading">Downloaden…</string>
     <string name="cert_download_unavailable">De certificaatrepository bestaat niet meer (verwijderd of offline gehaald): %1$s. Haal het certificaat in plaats daarvan uit de Android Auto-app (zie de README).</string>
     <string name="cert_download_network">Kan het certificaat niet downloaden: %1$s. Controleer de verbinding en probeer het opnieuw.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Certificaat downloaden</string>
     <string name="notif_action_navigate">Navigeren</string>
     <string name="notif_action_open">Openen</string>
+    <string name="notif_cert_updated_title">Certificaat bijgewerkt</string>
+    <string name="notif_cert_updated_message">AARE heeft een nieuwer Android Auto-certificaat gedownload, geldig tot %1$s.</string>
+    <string name="notif_cert_expiring_title">Certificaat verloopt binnenkort</string>
+    <string name="notif_cert_expiring_text">%1$s verloopt op %2$s. Auto\'s die alleen het certificaat van Google accepteren, zullen AARE daarna weigeren: download een nieuwer certificaat.</string>
+    <string name="notif_cert_expired_title">Certificaat verlopen</string>
+    <string name="notif_cert_expired_text">%1$s is verlopen op %2$s. Auto\'s die alleen het certificaat van Google accepteren, weigeren nu AARE: download een nieuwer certificaat.</string>
     <string name="notif_cert_download_title">De head unit heeft AARE\'s certificaat geweigerd</string>
     <string name="notif_cert_download_message">Deze head unit accepteert alleen Google\'s certificaat. Download het certificaat van de nieuwste Android Auto-app en maak opnieuw verbinding.</string>
     <string name="notif_cert_download_progress">Android Auto\'s certificaat wordt gedownload…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, maak dan opnieuw verbinding.</string>
     <string name="notif_cert_changed_message">certificaat van head unit gewijzigd: tik op Vertrouwen in de melding of in AARE, alleen als de software is bijgewerkt, maak dan opnieuw verbinding</string>
     <string name="notif_cert_untrusted_message">certificaat van head unit nog niet vertrouwd: tik op Vertrouwen in de melding of in AARE, maak dan opnieuw verbinding</string>
+    <string name="notif_cert_dates_title">Controleer de datum en tijd van de auto</string>
+    <string name="notif_cert_not_yet_valid_message">de head unit zegt dat het certificaat van AARE nog niet geldig is: de klok loopt waarschijnlijk achter. Stel de datum en tijd van de auto in en maak dan opnieuw verbinding</string>
+    <string name="notif_cert_expired_message">de head unit zegt dat het certificaat van AARE is verlopen: als dat niet zo is, loopt de klok van de auto voor. Stel de datum en tijd van de auto in, of haal een nieuwer certificaat op onder Geavanceerd, en maak dan opnieuw verbinding</string>
     <string name="notif_car_nearby_title">Auto in de buurt</string>
     <string name="notif_car_nearby_text">Tik om draadloos verbinding te maken</string>
     <string name="notif_status_connecting_to">Verbinden met %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Waarheen?</string>
     <string name="nav_dashboard_install_hint">Installeer een navigatie-app die Android Auto ondersteunt op de telefoon</string>
     <string name="nav_dashboard_choose_app">Kies uw kaarten-app</string>
+    <string name="nav_dashboard_standalone_hint">%1$s is een telefoon-app: de kaart opent op volledig scherm.</string>
     <string name="nav_guidance_on_phone">%1$s, op de telefoon</string>
     <string name="nav_next_step_then">Dan</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Apps op het autoscherm (geavanceerd)</string>
-    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
+    <string name="standalone_section_warning">Dit zijn geen Android Auto-apps: AARE toont hun normale telefoonscherm, standaard alleen tijdens parkeren, en vereist root of Shizuku. Gebruik op eigen risico.</string>
     <string name="standalone_toggle_title">Telefoonapps starten op het autoscherm</string>
-    <string name="standalone_toggle_subtitle">Kies de apps hieronder. Alleen getoond tijdens parkeren.</string>
+    <string name="standalone_toggle_subtitle">Kies de apps hieronder, en per app wat die tijdens het rijden mag.</string>
     <string name="standalone_keep_awake_title">Wakker blijven voor zelfstandige apps</string>
     <string name="standalone_keep_awake_subtitle">Houdt het fysieke telefoonscherm wakker terwijl een app open is. Op getroffen Android 17-telefoons stoppen virtuele schermen wanneer het telefoonscherm uit is. Gebruikt meer batterij.</string>
     <string name="standalone_need_root">Vereist root of Shizuku. Stel er een in op de pagina Autoaudio en kom dan terug.</string>
     <string name="standalone_not_native">Geen Android Auto-app · gebruik tijdens parkeren</string>
     <string name="standalone_starting">Starten…</string>
     <string name="standalone_paused_driving">Gepauzeerd tijdens het rijden.</string>
+    <string name="standalone_audio_only_driving">Scherm verborgen tijdens het rijden. Het geluid gaat door.</string>
+    <string name="standalone_rule_title">Tijdens het rijden</string>
+    <string name="standalone_rule_parked">Alleen geparkeerd</string>
+    <string name="standalone_rule_audio">Alleen audio</string>
+    <string name="standalone_rule_navigation">Navigatie</string>
+    <string name="standalone_rule_navigation_note">Getoond tijdens het rijden en gebruikt als navigatie-app van de auto: neemt de plaats van de kaart in en opent de bestemmingen die u vraagt.</string>
     <string name="standalone_media_video_title">Video uit media-apps</string>
     <string name="standalone_media_video_subtitle">Voegt \"Video tonen\" toe aan het mediascherm van de auto: de media-app opent op het autoscherm voor zijn video. Alleen geparkeerd; de hoes komt terug zodra je rijdt.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
     <string name="setup_page_car_data_subtitle">Snelheid, versnelling en sensoren live vanuit de auto</string>
+    <string name="setup_page_about_title">Over</string>
+    <string name="setup_page_about_subtitle">Wat AARE is, de projectlinks, en wie heeft helpen bouwen</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Maak verbinding met een auto om de gegevens te zien.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Autogegevens</string>
     <string name="car_data_show_in_car_title">Weergeven op het autoscherm</string>
     <string name="car_data_show_in_car_subtitle">Voeg een diagnose-app toe in de auto voor deze livegegevens</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">Wat AARE is</string>
+    <string name="about_text">AARE is een opensource-herimplementatie van de telefoonkant van Android Auto: het spreekt het projectieprotocol van Android Auto rechtstreeks met de head unit van de auto, tekent het autoscherm zelf, en voert navigatie-, media- en berichten-apps uit zonder Google Play-services nodig te hebben.</string>
+    <string name="about_section_links_title">Project</string>
+    <string name="about_link_repository">Repository</string>
+    <string name="about_link_issues">Problemen</string>
+    <string name="about_link_discussions">Discussies</string>
+    <string name="about_section_thanks_title">Dank</string>
+    <string name="about_thanks_security_review">Beveiligingsreview</string>
+    <string name="about_thanks_code_and_docs">Code en documentatie</string>
+    <string name="about_thanks_head_unit_reports">Rapporten over head units</string>
+    <string name="about_thanks_reports">Rapporten en ideeën</string>
+    <string name="about_thanks_tips">Tips</string>
+    <string name="about_section_oss_title">Opensource-componenten</string>
+    <string name="about_oss_libraries_title">Bibliotheken</string>
+    <string name="about_oss_protocol_title">Protocoldefinities</string>
+
     <string name="vehicles_section_title">Uitzonderingen per voertuig</string>
     <string name="vehicles_hint">Pas de dichtheid of de marges van het zichtbare gebied aan voor een specifieke auto, zonder nieuwe build. Bewerk vehicles.json met een bestandsbeheerder en match de auto op merk/model/naam.</string>
     <string name="vehicles_rule_count">Regels geladen: %1$d</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json bevat een fout op regel %1$d, kolom %2$d (%3$s): de regels erin worden genegeerd.</string>
     <string name="vehicles_malformed">vehicles.json kan niet worden gebruikt (%1$s): de regels erin worden genegeerd.</string>
     <string name="setup_toggle_force_h264_title">H.264-video forceren</string>
+    <string name="setup_toggle_constant_bitrate_title">Video met constante bitrate</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Houdt elk frame ongeveer dezelfde grootte. Schakel in als de auto de verbinding verbreekt wanneer het hele beeld verandert, zoals bij het telefoonscherm of een video. Druk bezette beelden worden iets zachter. Wordt van kracht vanaf de volgende verbinding.</string>
     <string name="setup_toggle_force_h264_subtitle">Standaard gebruikt AARE de beste codec die auto en telefoon gemeen hebben (H.265…). Schakel dit in als het beeld in de auto hapert.</string>
     <!-- newly translated strings -->
     <string name="common_ok">OK</string>
@@ -582,6 +633,18 @@
     <string name="setup_log_save">Opslaan</string>
     <string name="setup_toggle_verbose_log_title">Uitgebreid protocollogboek</string>
     <string name="setup_toggle_verbose_log_subtitle">Legt het volledige head-unit-protocolverloop vast in dit logboek, om bij een bugrapport te voegen. Logt veel; laat dit anders uit.</string>
+    <string name="setup_section_backup">Back-up van instellingen</string>
+    <string name="setup_backup_hint">Sla je instellingen op in een bestand, of laad er een terug. Vertrouwde head units, certificaten, telefoongebonden gegevens en opties die AARE openstellen voor het netwerk of een veiligheidscontrole overslaan (head-unit-server, passagiersmodus, audio via root…) blijven buiten: stel die op elke telefoon met de hand in.</string>
+    <string name="setup_backup_export">Exporteren…</string>
+    <string name="setup_backup_import">Importeren…</string>
+    <string name="setup_backup_import_confirm_title">Instellingen vervangen?</string>
+    <string name="setup_backup_import_confirm_text">Je huidige instellingen worden overschreven door die uit het gekozen bestand. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="setup_backup_import_confirm_action">Vervangen</string>
+    <string name="setup_backup_import_done">Instellingen geïmporteerd.</string>
+    <string name="setup_backup_import_done_skipped">Instellingen geïmporteerd. Overgeslagen als onbekend, geblokkeerd of ongeldig: %1$d</string>
+    <string name="setup_backup_import_blocked">Niet geïmporteerd, voor de veiligheid (schakel deze handmatig in op deze telefoon): %1$s</string>
+    <string name="setup_backup_import_failed">Dit bestand kan niet worden geïmporteerd: het is geen AARE-instellingenbestand, of het is te groot.</string>
+    <string name="setup_backup_export_failed">Kan het instellingenbestand niet opslaan.</string>
     <string name="setup_nothing_to_open">Deze telefoon heeft geen app die dit kan openen</string>
     <string name="setup_wallpaper_failed">Kon deze foto niet als achtergrond gebruiken</string>
     <string name="msg_autoreply_default">Ik rijd nu, ik antwoord later.</string>
@@ -620,6 +683,7 @@
     <string name="tpl_password_hint">Wachtwoord</string>
     <string name="carapp_error_start">Kan %1$s niet starten</string>
     <string name="carapp_error_refused">%1$s heeft de verbinding geweigerd</string>
+    <string name="carapp_error_no_answer">%1$s heeft niet gereageerd. Het accepteert mogelijk alleen Google\'s Android Auto (zie de app-lijst op de telefoon).</string>
     <string name="carapp_error_api_level">%1$s heeft auto-API-niveau %2$d nodig; deze host ondersteunt %3$d</string>
     <string name="carapp_error_stopped">%1$s is gestopt</string>
     <string name="carapp_error_google_only">%1$s accepteert alleen Google\'s Android Auto. Het moet AARE toestaan (zie de app-lijst op de telefoon).</string>

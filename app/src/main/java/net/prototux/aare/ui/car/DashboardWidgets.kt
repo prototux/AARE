@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.format.DateFormat
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -163,7 +162,7 @@ internal fun CalendarCard(event: NextEvent, onNavigate: (String) -> Unit, modifi
             Spacer(Modifier.height(10.dp))
             Row(
                 Modifier.clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.secondaryContainer)
-                    .clickable { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    .carClickable(MaterialTheme.shapes.medium) { onNavigate(event.location) }.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.Navigation, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(18.dp))

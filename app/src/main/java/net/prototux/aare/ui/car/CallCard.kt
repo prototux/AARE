@@ -1,7 +1,6 @@
 package net.prototux.aare.ui.car
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -106,6 +105,10 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
             Modifier.align(Alignment.TopCenter)
                 .offset { clamp(offset).let { IntOffset(it.x.roundToInt(), it.y.roundToInt()) } }
                 .onSizeChanged { barSize = it }
+                // Drag only repositions the strip on screen, a touch convenience with no knob
+                // equivalent (see the allowlist in CarScreenReachabilityCheckTest); the call itself
+                // stays fully usable from its default spot, and the strip's own tap and hang-up
+                // button below are both carClickable.
                 .pointerInput(barSize, maxX, maxY) {
                     detectDragGestures(
                         onDrag = { _, drag -> offset = clamp(offset + drag) },
@@ -113,7 +116,7 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
                     )
                 }
                 .padding(12.dp).clip(MaterialTheme.shapes.large).background(LocalCarColors.current.accept)
-                .clickable { phone?.let(actions::openApp) }.padding(start = 20.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                .carClickable(MaterialTheme.shapes.large) { phone?.let(actions::openApp) }.padding(start = 20.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Rounded.Call, null, tint = LocalCarColors.current.onCall)
@@ -130,7 +133,7 @@ private fun InCall(call: CarCall, state: CarUiState, actions: CarActions, modifi
 @Composable
 private fun RoundButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, color: Color,
                         size: androidx.compose.ui.unit.Dp = LocalCarDimens.current.touchTarget, onClick: () -> Unit) {
-    Box(Modifier.size(size).clip(CircleShape).background(color).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(size).clip(CircleShape).background(color).carClickable(CircleShape, onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, label, tint = LocalCarColors.current.onCall)
     }
 }

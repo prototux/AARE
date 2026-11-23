@@ -5,7 +5,6 @@ import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.CarText
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,8 +40,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import net.prototux.aare.ui.car.carFocusHighlight
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.carClickable
 
 /** Where an action is drawn; decides its size and default colours. */
 internal enum class ActionLook {
@@ -208,7 +207,7 @@ private fun ActionSurface(
             .clip(shape)
             .background(bg)
             .then(if (countdown != null) Modifier.drawBehind { drawCountdown(countdown(), countdownColor) } else Modifier)
-            .then(if (onClick != null && enabled) Modifier.carFocusHighlight(shape).clickable(onClick = onClick) else Modifier)
+            .carClickable(shape, enabled = enabled, onClick = onClick)
             .alpha(if (enabled) 1f else 0.38f)
             .padding(horizontal = horizontalPadding),
         verticalAlignment = Alignment.CenterVertically,

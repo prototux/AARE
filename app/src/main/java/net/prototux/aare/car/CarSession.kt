@@ -185,6 +185,8 @@ class CarSession(
     @Volatile private var guidanceAnswered = false
     @Volatile var headUnitName: String = ""
         private set
+    /** The head unit has answered at all (its version response): this link reaches it. */
+    val reachedHeadUnit: Boolean get() = aap.headUnitVersion != null
     @Volatile var videoDescription: String = ""
         private set
 

@@ -738,6 +738,10 @@ connection (`adb logcat | grep -i aare`).
 
 Before sending a pull request, run `./build.sh :aap:test` and build the app.
 
+Every car-screen control must be reachable, highlighted and usable by a knob or D-pad, not just by
+touch (`Modifier.carClickable` in `ui/car/CarFocus.kt`); a gesture (drag, swipe) needs a key path
+too, or stays touch-only with a reason in `CarScreenReachabilityCheckTest`'s allowlist.
+
 ## Thanks
 
 To [@dustfeather](https://github.com/dustfeather), for a security review of AARE and the fixes
@@ -766,13 +770,22 @@ separate-app-sound write-up), [@MattMaaaan](https://github.com/MattMaaaan) (diag
 navigation location while the phone is locked, the reverse-camera video restart, car audio through
 Shizuku, the Ford SYNC 2.5 audio crackle and the home screen's map card),
 [@l0rdg3x](https://github.com/l0rdg3x) (head units on Google's receiver library, audio focus,
-pausing and resuming the music with the car, and the home screen's music card),
+pausing and resuming the music with the car, the home screen's music card, "Map always big", the
+desktop head unit's test options, and vehicles.json errors that say where without quoting it),
 [@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8),
-[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units)
-and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0: the
+[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units,
+calls through the car on the VW Play), [@jhahvhi](https://github.com/jhahvhi) (the bar that
+vanished behind a full-screen map, the margin under the map card),
+[@PCCV](https://github.com/PCCV) (one frame per USB transfer, for head units that reset the link
+otherwise), [@Charlie284](https://github.com/Charlie284) (the Xposed module that actually loads)
+and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0 (the
 certificate kept and the Trust button that stays after a dropped link, car apps' permission
 prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
-app icons that stay visible on light themes.
+app icons that stay visible on light themes) and whose fork's features were ported into 1.6.0
+(settings backup, the car rail's own apps and compact size, the calendar agenda, split screen,
+video from media apps, the assistant on the car screen and its car links), along with his own
+Shizuku audio priority, car keys in the connection log, Recents after a phone app, and the
+screen-capture consent kept.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),
@@ -803,8 +816,9 @@ led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops a
 #82), [@henkv1](https://github.com/henkv1) (connections from the phone itself, #131),
 [@kveld9](https://github.com/kveld9) (the translations, #51), [@Ronsone](https://github.com/Ronsone)
 (the Audi A3's authentication answer, #43), [@pollio2008](https://github.com/pollio2008) (more
-navigation apps on the phone screen, discussion #150) and [@Delgrey](https://github.com/Delgrey)
-(Open Headunit, discussion #47). And tips from
+navigation apps on the phone screen, discussion #150), [@Delgrey](https://github.com/Delgrey)
+(Open Headunit, discussion #47), [@Pirrotto](https://github.com/Pirrotto) (navigation with the phone
+locked, #329) and [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320). And tips from
 [@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
 [@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 

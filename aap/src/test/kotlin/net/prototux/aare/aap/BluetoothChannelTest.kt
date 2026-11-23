@@ -68,8 +68,9 @@ class BluetoothChannelTest {
     @Test
     fun otherwiseTheCarsFirstMethodThenNumericComparison() {
         assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_OOB, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
-        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE)))
+        // As before: the first listed method, even "unavailable".
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothPairingMethod.BLUETOOTH_PAIRING_PASSKEY_ENTRY)))
+        assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE, BluetoothChannel.pairingMethod(listOf(BluetoothPairingMethod.BLUETOOTH_PAIRING_UNAVAILABLE)))
         assertEquals(BluetoothPairingMethod.BLUETOOTH_PAIRING_NUMERIC_COMPARISON, BluetoothChannel.pairingMethod(emptyList()))
     }
 

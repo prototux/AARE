@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">Unitățile centrale integrate și adaptoarele wireless aftermarket (conectate la USB-ul mașinii) așteaptă ca telefonul să răspundă în ordini diferite. Automat folosește ordinea standard sau ordinea adaptorului pentru o mașină care s-a conectat ultima dată așa. Alege Adaptor dacă adaptorul wireless nu se conectează; Integrată revine la ordinea standard pentru toate mașinile.</string>
     <string name="setup_toggle_resume_music_title">Reiau muzica</string>
     <string name="setup_toggle_resume_music_subtitle">Pornește ultima aplicație muzicală redată când se conectează mașina</string>
+    <string name="setup_toggle_calls_speaker_title">Apeluri prin difuzorul telefonului</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Când este conectat la o mașină, apelurile folosesc difuzorul și microfonul telefonului în loc de sistemul hands-free al mașinii. Pentru adaptoare wireless sau unități centrale a căror microfon nu funcționează. Se aplică de la următoarea conectare.</string>
     <string name="setup_bt_address_label">Adresa Bluetooth a telefonului (opțional)</string>
     <string name="setup_bt_address_hint">Unele unități centrale afișează un ecran negru până află ce telefon este conectat. Îl găsești în Setări &gt; Despre telefon &gt; Stare. Lasă necompletat dacă mașina ta funcționează deja.</string>
     <string name="setup_section_location">Locație</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Cât timp ești conectat, aplicațiile de pe telefon văd poziția mașinii în loc de cea a telefonului, astfel încât aplicațiile de navigație nu le confundă</string>
     <string name="setup_check_mock_location_title">Permite AARE să seteze locația</string>
     <string name="setup_check_mock_location_subtitle">Opțiuni dezvoltator &gt; Selectează aplicația de locație simulată &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navigație cu telefonul blocat</string>
+    <string name="setup_check_background_location_subtitle">Opțional. Când AARE pornește de la sine (Bluetooth-ul mașinii), aplicațiile de navigație păstrează poziția cu telefonul blocat. Permisiuni &gt; Locație &gt; Permite tot timpul</string>
     <string name="setup_section_video">Video</string>
     <string name="setup_toggle_60fps_title">Preferă 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Mai fluid când mașina îl acceptă</string>
@@ -98,6 +102,10 @@
     <string name="setup_choice_bottom">Jos</string>
     <string name="setup_toggle_dark_bar_title">Bară întunecată</string>
     <string name="setup_toggle_dark_bar_subtitle">Păstrează bara întunecată chiar și cu culori de zi</string>
+    <string name="setup_toggle_split_screen_title">Ecran împărțit</string>
+    <string name="setup_toggle_split_screen_subtitle">Apasă lung o aplicație din bara mașinii pentru a o deschide lângă cea curentă (aspect bară de activități, doar ecrane late)</string>
+    <string name="car_split_close">Închide ecranul împărțit</string>
+    <string name="car_split_open_beside">Deschide lângă aplicația curentă</string>
     <string name="setup_choice_text_size">Dimensiunea textului</string>
     <string name="setup_choice_control_size">Dimensiunea comenzilor</string>
     <string name="setup_choice_size_default">Implicită</string>
@@ -206,6 +214,11 @@
     <string name="cert_action_remove">Elimină</string>
     <string name="cert_action_import">Importă certificat…</string>
     <string name="cert_action_download">Descarcă certificatul</string>
+    <string name="cert_auto_update_title">Actualizează automat certificatul descărcat</string>
+    <string name="cert_auto_update_subtitle">O dată pe zi, niciodată în timp ce este conectat, AARE cere aceluiași depozit un certificat mai nou și îl folosește. În orice caz, AARE avertizează cu două săptămâni înainte ca certificatul Google să expire.</string>
+    <string name="cert_expiring_banner_title">Certificatul Google expiră pe %1$s</string>
+    <string name="cert_expired_banner_title">Certificatul Google a expirat pe %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Mașinile care îl acceptă doar pe acesta vor refuza AARE. Apasă pentru a descărca unul mai nou.</string>
     <string name="cert_action_downloading">Se descarcă…</string>
     <string name="cert_download_unavailable">Depozitul de certificate nu mai există (șters sau eliminat): %1$s. Extrage în schimb certificatul din aplicația Android Auto (vezi README).</string>
     <string name="cert_download_network">Certificatul nu a putut fi descărcat: %1$s. Verifică conexiunea și încearcă din nou.</string>
@@ -302,6 +315,12 @@
     <string name="notif_action_download_cert">Descarcă certificatul</string>
     <string name="notif_action_navigate">Navighează</string>
     <string name="notif_action_open">Deschide</string>
+    <string name="notif_cert_updated_title">Certificat actualizat</string>
+    <string name="notif_cert_updated_message">AARE a descărcat un certificat Android Auto mai nou, valabil până la %1$s.</string>
+    <string name="notif_cert_expiring_title">Certificatul expiră în curând</string>
+    <string name="notif_cert_expiring_text">%1$s expiră pe %2$s. Mașinile care acceptă doar certificatul Google vor refuza AARE după aceea: descarcă unul mai nou.</string>
+    <string name="notif_cert_expired_title">Certificat expirat</string>
+    <string name="notif_cert_expired_text">%1$s a expirat pe %2$s. Mașinile care acceptă doar certificatul Google refuză acum AARE: descarcă unul mai nou.</string>
     <string name="notif_cert_download_title">Unitatea centrală a refuzat certificatul AARE</string>
     <string name="notif_cert_download_message">Această unitate centrală acceptă doar un certificat emis de Google. Descarcă-l din cea mai recentă aplicație Android Auto, apoi reconectează-te.</string>
     <string name="notif_cert_download_progress">Se descarcă certificatul Android Auto…</string>
@@ -320,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, apoi reconectează-te.</string>
     <string name="notif_cert_changed_message">certificatul unității centrale s-a schimbat: apasă Acceptă în notificare sau în AARE doar dacă software-ul ei a fost actualizat, apoi reconectează-te</string>
     <string name="notif_cert_untrusted_message">certificatul unității centrale nu este încă acceptat: apasă Acceptă în notificare sau în AARE, apoi reconectează-te</string>
+    <string name="notif_cert_dates_title">Verifică data și ora mașinii</string>
+    <string name="notif_cert_not_yet_valid_message">unitatea centrală spune că certificatul AARE nu este încă valid: ceasul ei este probabil în urmă. Setează data și ora mașinii, apoi reconectează-te</string>
+    <string name="notif_cert_expired_message">unitatea centrală spune că certificatul AARE a expirat: dacă nu a expirat, ceasul mașinii este înainte. Setează data și ora mașinii sau obține un certificat mai nou din Avansat, apoi reconectează-te</string>
     <string name="notif_car_nearby_title">Mașină în apropiere</string>
     <string name="notif_car_nearby_text">Apasă pentru a te conecta wireless</string>
     <string name="notif_status_connecting_to">Se conectează la %1$s</string>
@@ -359,6 +381,7 @@
     <string name="nav_dashboard_where_to">Încotro?</string>
     <string name="nav_dashboard_install_hint">Instalează pe telefon o aplicație de navigație care acceptă Android Auto</string>
     <string name="nav_dashboard_choose_app">Alege aplicația de hărți</string>
+    <string name="nav_dashboard_standalone_hint">%1$s este o aplicație de telefon: harta ei se deschide pe tot ecranul.</string>
     <string name="nav_guidance_on_phone">%1$s, pe telefon</string>
     <string name="nav_next_step_then">Apoi</string>
 
@@ -441,15 +464,21 @@
 
     <!-- standalone: launching ordinary phone apps on the car screen (root/Shizuku, parked only) -->
     <string name="standalone_section_title">Aplicații pe ecranul mașinii (avansat)</string>
-    <string name="standalone_section_warning">Acestea nu sunt aplicații Android Auto: AARE afișează ecranul normal al telefonului, doar la parcare, și necesită root sau Shizuku. Folosește pe propriul risc.</string>
+    <string name="standalone_section_warning">Acestea nu sunt aplicații Android Auto: AARE afișează ecranul normal al telefonului, implicit doar la parcare, și necesită root sau Shizuku. Folosește pe propriul risc.</string>
     <string name="standalone_toggle_title">Lansează aplicații de telefon pe ecranul mașinii</string>
-    <string name="standalone_toggle_subtitle">Alege aplicațiile de mai jos. Afișate doar la parcare.</string>
+    <string name="standalone_toggle_subtitle">Alege aplicațiile de mai jos și, pentru fiecare, ce are voie să facă în timpul condusului.</string>
     <string name="standalone_keep_awake_title">Mod fără repaus pentru aplicațiile independente</string>
     <string name="standalone_keep_awake_subtitle">Menține ecranul fizic al telefonului activ cât timp o aplicație este deschisă. Pe telefoanele Android 17 afectate, afișajele virtuale se opresc atunci când ecranul telefonului este stins. Consumă mai multă baterie.</string>
     <string name="standalone_need_root">Necesită root sau Shizuku. Configurează unul dintre ele în Audio mașină, apoi revino.</string>
     <string name="standalone_not_native">Nu este o aplicație Android Auto · utilizare la parcare</string>
     <string name="standalone_starting">Se pornește…</string>
     <string name="standalone_paused_driving">Pus pe pauză în timpul condusului.</string>
+    <string name="standalone_audio_only_driving">Ecran ascuns în timpul condusului. Sunetul continuă.</string>
+    <string name="standalone_rule_title">În timpul condusului</string>
+    <string name="standalone_rule_parked">Doar la parcare</string>
+    <string name="standalone_rule_audio">Doar audio</string>
+    <string name="standalone_rule_navigation">Navigare</string>
+    <string name="standalone_rule_navigation_note">Afișată în timpul condusului și folosită ca aplicație de navigare a mașinii: ia locul hărții și deschide destinațiile pe care le ceri.</string>
     <string name="standalone_media_video_title">Video din aplicațiile media</string>
     <string name="standalone_media_video_subtitle">Adaugă „Afișează videoclipul” pe ecranul media al mașinii: aplicația media se deschide pe ecranul mașinii pentru videoclipul ei. Doar în parcare; coperta revine când conduci.</string>
     <!-- browser: the in-car WebView browser -->
@@ -467,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Date despre mașină</string>
     <string name="setup_page_car_data_subtitle">Viteză, treaptă de viteză și senzori în timp real din mașină</string>
+    <string name="setup_page_about_title">Despre</string>
+    <string name="setup_page_about_subtitle">Ce este AARE, legăturile proiectului și cine a ajutat la construirea lui</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Conectează-te la o mașină pentru a-i vedea datele.</string>
@@ -522,6 +553,24 @@
     <string name="car_data_app_label">Date mașină</string>
     <string name="car_data_show_in_car_title">Arată pe ecranul mașinii</string>
     <string name="car_data_show_in_car_subtitle">Adaugă o aplicație de diagnoză în mașină pentru aceste date live</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">Ce este AARE</string>
+    <string name="about_text">AARE este o reimplementare open-source a laturii de telefon a Android Auto: vorbește protocolul de proiecție Android Auto direct cu unitatea centrală a mașinii, desenează ecranul mașinii singur și execută aplicații de navigație, media și mesagerie fără a avea nevoie de Servicii Google Play.</string>
+    <string name="about_section_links_title">Proiect</string>
+    <string name="about_link_repository">Depozit</string>
+    <string name="about_link_issues">Probleme</string>
+    <string name="about_link_discussions">Discuții</string>
+    <string name="about_section_thanks_title">Mulțumiri</string>
+    <string name="about_thanks_security_review">Revizuire de securitate</string>
+    <string name="about_thanks_code_and_docs">Cod și documentație</string>
+    <string name="about_thanks_head_unit_reports">Rapoarte despre unitățile centrale</string>
+    <string name="about_thanks_reports">Rapoarte și idei</string>
+    <string name="about_thanks_tips">Sfaturi</string>
+    <string name="about_section_oss_title">Componente open-source</string>
+    <string name="about_oss_libraries_title">Biblioteci</string>
+    <string name="about_oss_protocol_title">Definiții de protocol</string>
+
     <string name="vehicles_section_title">Suprascrieri per vehicul</string>
     <string name="vehicles_hint">Corectează densitatea sau marginile zonei vizibile pentru o mașină specifică, fără o compilare nouă. Editează vehicles.json cu un administrator de fișiere, identificând mașina după marcă/model/nume.</string>
     <string name="vehicles_rule_count">Reguli încărcate: %1$d</string>
@@ -564,6 +613,8 @@
     <string name="vehicles_malformed_at">vehicles.json are o eroare la linia %1$d, coloana %2$d (%3$s): regulile sale sunt ignorate.</string>
     <string name="vehicles_malformed">vehicles.json nu poate fi folosit (%1$s): regulile sale sunt ignorate.</string>
     <string name="setup_toggle_force_h264_title">Forțează video H.264</string>
+    <string name="setup_toggle_constant_bitrate_title">Video cu bitrate constant</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Păstrează fiecare cadru la aproximativ aceeași dimensiune. Activează dacă mașina întrerupe conexiunea atunci când întreaga imagine se schimbă, ca în cazul ecranului telefonului sau al unui video. Imaginile încărcate devin puțin mai estompate. Se aplică de la următoarea conectare.</string>
     <string name="setup_toggle_force_h264_subtitle">Implicit, AARE folosește cel mai bun codec pe care mașina și telefonul îl au în comun (H.265…). Activează dacă imaginea din mașină are probleme.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Încearcă din nou</string>
@@ -581,6 +632,18 @@
     <string name="setup_log_save">Salvează</string>
     <string name="setup_toggle_verbose_log_title">Jurnal detaliat al protocolului</string>
     <string name="setup_toggle_verbose_log_subtitle">Înregistrează traseul complet al protocolului cu unitatea multimedia în acest jurnal, pentru a-l atașa la un raport de eroare. Înregistrează mult; lasă-l dezactivat altfel.</string>
+    <string name="setup_section_backup">Copie de rezervă a setărilor</string>
+    <string name="setup_backup_hint">Salvați setările într-un fișier sau încărcați-le înapoi. Unitățile centrale de încredere, certificatele, starea proprie telefonului și opțiunile care deschid AARE către rețea sau ocolesc o verificare de siguranță (server unitate centrală, mod pasager, audio prin root…) sunt lăsate deoparte: setați-le manual pe fiecare telefon.</string>
+    <string name="setup_backup_export">Exportă…</string>
+    <string name="setup_backup_import">Importă…</string>
+    <string name="setup_backup_import_confirm_title">Înlocuiți setările?</string>
+    <string name="setup_backup_import_confirm_text">Setările actuale vor fi suprascrise cu cele din fișierul ales. Acțiunea nu poate fi anulată.</string>
+    <string name="setup_backup_import_confirm_action">Înlocuiește</string>
+    <string name="setup_backup_import_done">Setări importate.</string>
+    <string name="setup_backup_import_done_skipped">Setări importate. Omise ca necunoscute, blocate sau nevalide: %1$d</string>
+    <string name="setup_backup_import_blocked">Neimportate, din motive de siguranță (activează-le manual pe acest telefon): %1$s</string>
+    <string name="setup_backup_import_failed">Acest fișier nu poate fi importat: nu este un fișier de setări AARE sau este prea mare.</string>
+    <string name="setup_backup_export_failed">Fișierul de setări nu a putut fi salvat.</string>
     <string name="setup_nothing_to_open">Acest telefon nu are nicio aplicație care poate deschide asta</string>
     <string name="setup_wallpaper_failed">Nu s-a putut folosi această fotografie ca fundal</string>
     <string name="msg_autoreply_default">Conduc acum, voi răspunde mai târziu.</string>
@@ -619,6 +682,7 @@
     <string name="tpl_password_hint">Parolă</string>
     <string name="carapp_error_start">Nu s-a putut porni %1$s</string>
     <string name="carapp_error_refused">%1$s a refuzat conexiunea</string>
+    <string name="carapp_error_no_answer">%1$s nu a răspuns. Poate accepta doar Android Auto de la Google (vezi lista de aplicații de pe telefon).</string>
     <string name="carapp_error_api_level">%1$s necesită nivelul API auto %2$d; acest sistem acceptă %3$d</string>
     <string name="carapp_error_stopped">%1$s s-a oprit</string>
     <string name="carapp_error_google_only">%1$s acceptă doar Android Auto de la Google. Trebuie să permită AARE (vezi lista de aplicații de pe telefon).</string>
