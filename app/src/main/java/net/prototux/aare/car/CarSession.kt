@@ -72,6 +72,7 @@ import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.channels.WifiProjectionChannel
 import net.prototux.aare.DiagLog
+import net.prototux.aare.ui.car.showsMedia
 import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
@@ -1107,7 +1108,7 @@ class CarSession(
                     }
                 }
             }
-        })
+        }, holdOpen = { !guidance && runtime.ui.screen.showsMedia { id -> runtime.ui.app(id)?.kind } })
         audioOuts[channel.streamType] = out.also { it.start() }
     }
 

@@ -25,6 +25,12 @@ class CarAudioOut(
     /** Silent messages sent ahead of each stream, at most (see [StartSilence]). */
     private val startSilence: Int = 0,
     private val onFailed: () -> Unit = {},
+    /**
+     * While true, the stream stays open through silence and opens without sound: a media app is on
+     * the car screen, so the car's volume buttons already have this source to act on before the
+     * music starts ("playback not active" otherwise).
+     */
+    private val holdOpen: () -> Boolean = { false },
 ) {
     interface Focus {
         /** About to play (true) or done (false). */
@@ -120,10 +126,11 @@ class CarAudioOut(
                 if (!isSilent(buf, 10, chunk)) lastSound = now
                 val ts = clockStartUs + frames * 1_000_000L / rate
                 frames += chunk / (2 * channels)
-                if (!playing && lastSound == now) {
+                val hold = holdOpen()
+                if (!playing && (lastSound == now || hold)) {
                     focus.request(true)
                     playing = true
-                } else if (playing && now - lastSound > SILENCE_MS) {
+                } else if (playing && !hold && now - lastSound > SILENCE_MS) {
                     noteDropped()
                     noteStream(now)
                     channel.stopPlayback()
