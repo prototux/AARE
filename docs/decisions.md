@@ -489,6 +489,33 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
+## Reply by voice, opt-in
+
+The messages screen answers with the car keyboard only when parked. *Reply by voice* (off by
+default) adds a button that dictates the answer, while driving too, as Android Auto does:
+
+- Listening uses the phone's own speech recognizer (`SpeechRecognizer`, the one voice typing
+  uses), so AARE handles no microphone for it: with *Car microphone for phone apps* on
+  (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
+  permission (RECORD_AUDIO is already asked for in setup) and no new connection.
+- Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
+  only on a spoken "yes" or *Send*. The answer is listened for once the read-back is over (so it
+  doesn't hear itself); a "no" anywhere cancels and wins over a "yes", so "no, don't send it"
+  never sends; anything else, or silence, leaves it to the buttons. The words are strings
+  (`msg_voice_reply_yes_words` / `_no_words`, comma-separated) so each language gets its own,
+  and the English ones always count. *Again* dictates anew, *Cancel* or back drops it. Late
+  recognizer callbacks can't change a reply waiting for its answer, and a reply is sent once
+  (`VoiceReplyStep`, unit-tested).
+- While driving the dictated text isn't shown, like messages: it is read aloud instead.
+- While listening AARE holds transient exclusive focus with the assistant usage, so the music
+  pauses and the car goes back to it; the read-back ducks it like a message read aloud. A
+  recognizer that neither answers nor fails is given up after 15 s, so the music never stays
+  paused. Before listening AARE stops its own voice (*Again* during the read-back), so the
+  recognizer can't transcribe it, least of all through the car's microphone.
+- A weak signal (tunnels, driving), a server error or a busy recognizer offers *Again*; only no
+  recognizer or no permission is final.
+- It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).
+
 ## Car apps' own colours
 
 A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
@@ -692,9 +719,9 @@ stays out until someone adds it there on purpose.
 
 ## Split screen: which app can take the second pane
 
-`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), and an app is never in both panes, so two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) run side by side without sharing anything.
 
-So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) puts built-in screens and hosted car apps in the second pane (`canOpenBeside`). The phone mirror and a launched phone app stay full screen only. A car app in the second pane gets Back like any other; when it finishes, the other pane's app is left alone on screen (`leftAlone`). The primary pane is unrestricted (today's one-app slot).
 
 Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
 

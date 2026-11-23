@@ -177,6 +177,26 @@ class CarNotificationListener : NotificationListenerService() {
 
     fun readAloud(c: Conversation) = speak(c.spoken())
 
+    /**
+     * Speaks [text] like a message read aloud (a voice reply's read-back); [onDone] runs on the
+     * main thread once it has been spoken, or at once if it couldn't be.
+     */
+    fun say(text: String, onDone: (() -> Unit)? = null) = speak(text, onDone)
+
+    /**
+     * Stops whatever AARE is saying (a voice reply about to listen mustn't hear AARE's own voice,
+     * least of all through the car's microphone), and releases the speech focus with it.
+     */
+    fun stopSpeaking() {
+        synchronized(speechLock) {
+            waitingSpeech.clear()
+            utteranceCallbacks.clear()
+            pendingUtterances = 0
+            if (ttsReady) runCatching { tts?.stop() }
+            abandonSpeechFocus()
+        }
+    }
+
     /** The newest guidance notification still showing, if any. */
     private fun refreshGuidance() {
         _guidance.value = runCatching { activeNotifications }.getOrNull().orEmpty()
@@ -298,14 +318,18 @@ class CarNotificationListener : NotificationListenerService() {
 
     private val utteranceListener = object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) = Unit
-        override fun onDone(utteranceId: String?) = utteranceDone()
+        override fun onDone(utteranceId: String?) = utteranceDone(utteranceId)
         @Suppress("DEPRECATION")
-        override fun onError(utteranceId: String?) = utteranceDone()
-        override fun onStop(utteranceId: String?, interrupted: Boolean) = utteranceDone()
+        override fun onError(utteranceId: String?) = utteranceDone(utteranceId)
+        override fun onStop(utteranceId: String?, interrupted: Boolean) = utteranceDone(utteranceId)
     }
 
-    private fun utteranceDone() {
+    /** Run on the main thread once their utterance is done (see [say]). */
+    private val utteranceCallbacks = HashMap<String, () -> Unit>()
+
+    private fun utteranceDone(utteranceId: String?) {
         synchronized(speechLock) {
+            utteranceId?.let { utteranceCallbacks.remove(it) }?.let { mainHandler.post(it) }
             pendingUtterances = (pendingUtterances - 1).coerceAtLeast(0)
             if (pendingUtterances == 0) abandonSpeechFocus()
         }
@@ -349,11 +373,12 @@ class CarNotificationListener : NotificationListenerService() {
      * already asks the car to duck, not pause, the music) rather than the media one, and takes
      * transient "may duck" focus on the phone itself for the same reason.
      */
-    private fun speak(text: String) {
+    private fun speak(text: String, onDone: (() -> Unit)? = null) {
         synchronized(speechLock) {
             requestSpeechFocus()
             pendingUtterances++
             val utteranceId = "aare-tts-${++utteranceSeq}"
+            if (onDone != null) utteranceCallbacks[utteranceId] = onDone
             val t = tts
             if (t != null && ttsReady) { say(t, text, utteranceId); return }
             waitingSpeech += text to utteranceId
@@ -371,7 +396,7 @@ class CarNotificationListener : NotificationListenerService() {
     private fun say(t: TextToSpeech, text: String, utteranceId: String) {
         if (t.speak(text, TextToSpeech.QUEUE_ADD, Bundle(), utteranceId) != TextToSpeech.SUCCESS) {
             Log.w(TAG, "text-to-speech refused an utterance")
-            utteranceDone()
+            utteranceDone(utteranceId)
         }
     }
 
@@ -384,7 +409,7 @@ class CarNotificationListener : NotificationListenerService() {
                 Log.w(TAG, "no text-to-speech")
                 tts = null
                 t.shutdown()
-                repeat(waitingSpeech.size) { utteranceDone() }
+                waitingSpeech.forEach { (_, id) -> utteranceDone(id) }
                 waitingSpeech.clear()
                 return
             }

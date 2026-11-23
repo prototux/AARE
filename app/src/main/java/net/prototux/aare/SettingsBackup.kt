@@ -72,6 +72,7 @@ object SettingsBackup {
         "auto_reply" to Type.BOOLEAN,
         "auto_reply_text" to Type.STRING,
         "read_messages" to Type.BOOLEAN,
+        "voice_reply" to Type.BOOLEAN,
         "last_nav" to Type.STRING,
         "last_media" to Type.STRING,
         "app_order" to Type.STRING,
