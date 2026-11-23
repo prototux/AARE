@@ -6,6 +6,7 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService.TouchPad
 import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
@@ -782,6 +783,17 @@ class CarSession(
         DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
     }
 
+    /**
+     * The car changed its touchpad's sensitivity during the session (reader thread). The navigator
+     * is kept, so a swipe under way goes on; its steps change on the main thread, where it runs.
+     */
+    private fun onTouchpadUpdate(pad: TouchPad) {
+        if (!pad.uiNavigation || touchpad == null) return
+        val thresholds = TouchpadThresholds.of(pad)
+        main.post { touchpad?.thresholds = thresholds }
+        DiagLog.add("car touchpad sensitivity ${pad.sensitivity}: step ${thresholds.move}/${thresholds.multiMove}")
+    }
+
     /** A touchpad report (reader thread). */
     private fun onTouchpad(ev: TouchEvent) {
         val nav = touchpad ?: return
@@ -804,6 +816,8 @@ class CarSession(
     }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
 
     private val inputListener = object : InputChannel.Listener {
+        override fun onTouchPadUpdate(pad: TouchPad) = onTouchpadUpdate(pad)
+
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
                 val ev = touch?.map(report.touchEvent) ?: return
