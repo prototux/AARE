@@ -71,7 +71,7 @@ import net.prototux.aare.ui.theme.LocalCarDimens
  * A messaging app on the car screen, as Android Auto shows it: the conversations of its
  * notifications, read aloud, marked as read, or answered with the car keyboard when parked.
  * Message text is hidden while driving; it is read aloud instead. With Settings.voiceReply, a
- * reply can also be dictated, while driving too: it is read back and sent only on Send.
+ * reply can also be dictated, while driving too: it is read back and sent on Send or a spoken "yes".
  */
 @Composable
 internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRuntime, modifier: Modifier) {
