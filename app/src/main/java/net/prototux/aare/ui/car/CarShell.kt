@@ -342,6 +342,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val railSize = if (compact) minOf(d.railWidth, d.touchTarget + 4.dp) else d.railWidth
     val outerPadding = if (compact) 10.dp else 16.dp
     val appSpacing = if (compact) 6.dp else 8.dp
+    val appGap = (state.railSpacing ?: railGapDp(compact, horizontal)).dp
     // The apps chosen on the phone (Settings.railApps), resolved against what's installed now; empty
     // (nothing chosen, or everything chosen is gone) falls back to the rail's built-in set below.
     val selfPackage = LocalContext.current.packageName
@@ -385,7 +386,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appSpacing + 4.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appGap)) {
                     apps(if (tightBar) 0 else 2, !tighterBar, true)
                 }
             }
@@ -410,7 +411,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Column(
                     Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(appSpacing),
+                    verticalArrangement = Arrangement.spacedBy(appGap),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }

@@ -339,6 +339,9 @@
     <string name="setup_car_rail_hint">Choose which apps sit on the rail (or the taskbar) and in which order. Nothing chosen: the rail keeps its built-in set (navigation, music, recent apps, phone).</string>
     <string name="setup_toggle_compact_rail_title">Compact rail</string>
     <string name="setup_toggle_compact_rail_subtitle">A narrower rail, with smaller icons and tighter spacing</string>
+    <string name="setup_rail_spacing">Space between the apps in the bar</string>
+    <string name="setup_rail_spacing_dp">%1$d dp</string>
+    <string name="setup_rail_spacing_reset">Standard</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_section_car_buttons">Car buttons</string>
     <string name="setup_car_buttons_hint">Keys AARE has seen from this car. Choose what each one does; a key left at \"Default\" keeps its normal behaviour.</string>
