@@ -850,17 +850,14 @@ class ProjectionService : Service() {
             .onFailure { Log.w(TAG, "startForeground", it); log("can't run in the foreground: ${it.message}") }
     }
 
-    private fun createChannel() {
-        val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
-    }
+    private fun createChannel() = ensureChannel(this)
 
     private fun notification(text: String): Notification {
         // Screen-capture consent only lives as long as the service: say why it stays without a car.
         val shown = if (session == null && projection != null) getString(R.string.notif_keeping_consent_suffix, text) else text
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1, Intent(this, ProjectionService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
-        return Notification.Builder(this, CHANNEL)
+        return notificationBuilder(this)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(shown)
@@ -883,7 +880,7 @@ class ProjectionService : Service() {
                 .putExtra(TrustReceiver.EXTRA_SHA256, refusal.fingerprint),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val text = getString(R.string.notif_untrusted_message, refusal.fingerprint.take(16), getString(R.string.notif_trust_warning))
-        getSystemService(NotificationManager::class.java).notify(TrustReceiver.NOTIFICATION_ID, Notification.Builder(this, CHANNEL)
+        getSystemService(NotificationManager::class.java).notify(TrustReceiver.NOTIFICATION_ID, notificationBuilder(this)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(if (refusal.changed) getString(R.string.notif_cert_changed_title) else getString(R.string.notif_new_head_unit_title))
             .setContentText(text)
@@ -902,7 +899,7 @@ class ProjectionService : Service() {
      * the first offer and after a failed attempt; the progress and success notices are plain.
      */
     private fun certNotice(title: String, text: String, retry: Boolean) {
-        val builder = Notification.Builder(this, CHANNEL)
+        val builder = notificationBuilder(this)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
@@ -1039,7 +1036,7 @@ class ProjectionService : Service() {
         }
 
         fun startUsb(context: Context, accessory: UsbAccessory) {
-            context.startForegroundService(Intent(context, ProjectionService::class.java).setAction(ACTION_USB)
+            ContextCompat.startForegroundService(context, Intent(context, ProjectionService::class.java).setAction(ACTION_USB)
                 .putExtra(UsbManager.EXTRA_ACCESSORY, accessory))
         }
 
@@ -1047,7 +1044,7 @@ class ProjectionService : Service() {
         fun startIdleIfEnabled(context: Context) {
             val s = Settings(context)
             if (s.headUnitServer || _state.value.running) {
-                context.startForegroundService(Intent(context, ProjectionService::class.java).setAction(ACTION_IDLE))
+                ContextCompat.startForegroundService(context, Intent(context, ProjectionService::class.java).setAction(ACTION_IDLE))
             }
         }
 
@@ -1058,31 +1055,48 @@ class ProjectionService : Service() {
         /** Try to connect to a car already on Bluetooth (#56): opening AARE, or enabling wireless. */
         fun probeWireless(context: Context) {
             if (!Settings(context).wireless) return
-            context.startForegroundService(Intent(context, ProjectionService::class.java).setAction(ACTION_PROBE_WIRELESS))
+            ContextCompat.startForegroundService(context, Intent(context, ProjectionService::class.java).setAction(ACTION_PROBE_WIRELESS))
         }
 
         fun startWireless(context: Context, address: String) {
             val intent = Intent(context, ProjectionService::class.java).setAction(ACTION_WIRELESS).putExtra(EXTRA_DEVICE, address)
             try {
-                context.startForegroundService(intent)
+                ContextCompat.startForegroundService(context, intent)
             } catch (e: Exception) {
                 Log.w(TAG, "can't start from background, asking the user", e)
                 DiagLog.add("wireless: Android didn't let AARE start in the background; tap the notification to connect")
-                val nm = context.getSystemService(NotificationManager::class.java)
-                nm.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
+                ensureChannel(context)
                 val pi = PendingIntent.getForegroundService(context, 2, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-                nm.notify(2, Notification.Builder(context, CHANNEL).setSmallIcon(R.drawable.ic_notification)
+                context.getSystemService(NotificationManager::class.java).notify(2, notificationBuilder(context).setSmallIcon(R.drawable.ic_notification)
                     .setContentTitle(context.getString(R.string.notif_car_nearby_title)).setContentText(context.getString(R.string.notif_car_nearby_text)).setContentIntent(pi).setAutoCancel(true).build())
             }
         }
 
         fun giveAudioConsent(context: Context, resultCode: Int, data: Intent) {
-            context.startForegroundService(Intent(context, ProjectionService::class.java).setAction(ACTION_AUDIO_CONSENT)
+            ContextCompat.startForegroundService(context, Intent(context, ProjectionService::class.java).setAction(ACTION_AUDIO_CONSENT)
                 .putExtra(EXTRA_RESULT_CODE, resultCode).putExtra(EXTRA_RESULT_DATA, data))
         }
 
         fun stop(context: Context) {
             context.startService(Intent(context, ProjectionService::class.java).setAction(ACTION_STOP))
         }
+
+        /** Ensures [CHANNEL] exists: a no-op below Android 8, which has no notification channels. */
+        internal fun ensureChannel(context: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.getSystemService(NotificationManager::class.java)
+                    .createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
+            }
+        }
+
+        /**
+         * A builder for a [CHANNEL] notification: its own channel from Android 8, so the user can
+         * mute connection notices separately in system settings; the deprecated low-priority builder
+         * below that, where there are no channels to split them out into.
+         */
+        @Suppress("DEPRECATION")
+        internal fun notificationBuilder(context: Context): Notification.Builder =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(context, CHANNEL)
+            else Notification.Builder(context).setPriority(Notification.PRIORITY_LOW)
     }
 }
