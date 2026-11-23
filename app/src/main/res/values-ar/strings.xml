@@ -46,6 +46,9 @@
     <string name="setup_check_notification_access_subtitle">الرسائل، الاتجاهات من Google Maps و Waze، التشغيل الحالي</string>
     <string name="setup_check_audio_subtitle">السماح لصوت الهاتف بالوصول إلى السيارة</string>
     <string name="setup_action_set_up">إعداد</string>
+    <string name="setup_old_android_title">التشغيل على إصدار أقدم من Android</string>
+    <string name="setup_old_android_message">يعمل AARE أيضًا على Android 6 و7، لكن Android 8 هو الأساس الأفضل دعمًا. على Android 6 و7، لا يمكن وضع إشعارات الاتصال في قناة خاصة بها، ولذلك لا يمكن كتمها بشكل منفصل عن إشعارات AARE الأخرى في إعدادات النظام. كل شيء آخر يعمل بنفس الطريقة، أو يعود تلقائيًا إلى طريقة أقدم.</string>
+    <string name="setup_old_android_dont_show_again">عدم الإظهار مرة أخرى</string>
     <string name="setup_section_connecting">الاتصال</string>
     <string name="setup_toggle_wireless_title">الاتصال اللاسلكي</string>
     <string name="setup_toggle_wireless_subtitle">الاتصال بالسيارات المقترنة عبر Wi-Fi عند دخولها نطاق Bluetooth</string>
@@ -265,6 +268,7 @@
     <string name="audio_method_policy">توجيه صوت النظام (مثل Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku، مع فصل الموسيقى عن التنقّل (مثل Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku أو root</string>
+    <string name="audio_method_root_policy">root، مع فصل الموسيقى عن التنقّل</string>
     <string name="audio_method_playback_capture">إذن تسجيل الشاشة</string>
     <string name="audio_policy_not_ready">كما في Android Auto: الموسيقى وصوت التنقّل منفصلان، ومكبر صوت الهاتف موقوف. يتطلب هاتفًا بصلاحيات root: ثبّت AARE كتطبيق نظام باستخدام وحدة Magisk (راجع ملف README).</string>
     <string name="audio_shizuku_ready">جاهز. كل ما يشغّله الهاتف يصل إلى السيارة، بما فيه صوت التنقّل؛ ويبقى الهاتف صامتًا.</string>
@@ -476,6 +480,11 @@
     <string name="browser_home">الصفحة الرئيسية</string>
     <string name="browser_address_hint">ابحث أو اكتب عنوان ويب</string>
     <string name="assistant_links_title">روابط من المساعد</string>
+    <string name="assistant_stop">إيقاف المساعد</string>
+    <string name="assistant_stop_style_title">طريقة إيقاف المساعد</string>
+    <string name="assistant_stop_style_voice_button">يتحول زر الصوت إلى إيقاف</string>
+    <string name="assistant_stop_style_red_restart">زر إيقاف أحمر، ويطلب زر الصوت مرة أخرى</string>
+    <string name="assistant_stop_style_red_stop">زر إيقاف أحمر، ويوقف زر الصوت أيضًا</string>
     <string name="assistant_links_subtitle">السماح لروابط aare:// في ردود المساعد المختار بالتحكم في الموسيقى، أو باقتراح التنقّل أو فتح تطبيق أو الاتصال على شاشة السيارة. يتم تجاهل الروابط القادمة من تطبيقات أخرى ومن صفحات الويب.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">بيانات السيارة</string>

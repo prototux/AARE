@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Tin nhắn, chỉ đường từ Google Maps và Waze, nhạc đang phát</string>
     <string name="setup_check_audio_subtitle">Cho phép âm thanh của điện thoại truyền đến xe</string>
     <string name="setup_action_set_up">Thiết lập</string>
+    <string name="setup_old_android_title">Đang chạy trên phiên bản Android cũ hơn</string>
+    <string name="setup_old_android_message">AARE cũng chạy trên Android 6 và 7, nhưng Android 8 là nền tảng được hỗ trợ tốt hơn. Trên Android 6 và 7, thông báo kết nối không thể đặt vào kênh riêng, nên không thể tắt tiếng riêng biệt với các thông báo khác của AARE trong cài đặt hệ thống. Mọi thứ khác hoạt động như bình thường, hoặc tự động chuyển về phương thức cũ hơn.</string>
+    <string name="setup_old_android_dont_show_again">Không hiển thị lại</string>
     <string name="setup_section_connecting">Đang kết nối</string>
     <string name="setup_toggle_wireless_title">Không dây</string>
     <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Định tuyến âm thanh hệ thống (giống Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, nhạc và điều hướng tách riêng (giống Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku hoặc root</string>
+    <string name="audio_method_root_policy">Root, nhạc và điều hướng tách riêng</string>
     <string name="audio_method_playback_capture">Quyền ghi màn hình</string>
     <string name="audio_policy_not_ready">Giống Android Auto: nhạc và giọng điều hướng tách riêng, loa điện thoại tắt. Cần điện thoại đã root: cài AARE như ứng dụng hệ thống bằng module Magisk (xem README).</string>
     <string name="audio_shizuku_ready">Đã sẵn sàng. Mọi âm thanh điện thoại phát ra đều truyền đến xe, kể cả giọng điều hướng; điện thoại vẫn im lặng.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Trang chủ</string>
     <string name="browser_address_hint">Tìm kiếm hoặc nhập địa chỉ web</string>
     <string name="assistant_links_title">Liên kết từ trợ lý</string>
+    <string name="assistant_stop">Dừng trợ lý</string>
+    <string name="assistant_stop_style_title">Cách dừng trợ lý</string>
+    <string name="assistant_stop_style_voice_button">Nút giọng nói chuyển thành Dừng</string>
+    <string name="assistant_stop_style_red_restart">Nút dừng màu đỏ, nút giọng nói hỏi lại</string>
+    <string name="assistant_stop_style_red_stop">Nút dừng màu đỏ, nút giọng nói cũng dừng</string>
     <string name="assistant_links_subtitle">Cho phép các liên kết aare:// trong câu trả lời của trợ lý đã chọn điều khiển nhạc, hoặc đề xuất điều hướng, mở ứng dụng hay gọi điện trên màn hình xe. Liên kết từ các ứng dụng khác và từ trang web sẽ bị bỏ qua.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dữ liệu xe</string>
