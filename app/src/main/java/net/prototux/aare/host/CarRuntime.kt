@@ -473,7 +473,8 @@ class CarRuntime(
             "car_text_size", "car_control_size", "night_source", "assistant_stop", "rail_apps", "compact_rail", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
-            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules" -> main.post { refreshApps() }
+            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules",
+            "standalone_apps", "standalone_app_pkgs", "browser", "car_data_app" -> main.post { refreshApps() }
         }
     }
 
