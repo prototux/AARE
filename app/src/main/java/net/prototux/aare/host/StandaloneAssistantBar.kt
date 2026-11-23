@@ -67,7 +67,7 @@ internal fun StandaloneAssistantBar(packageName: String, runtime: CarRuntime, mo
                 .clip(MaterialTheme.shapes.large).background(Color.Black),
         ) {
             LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
-                start = { surface, w, h -> launcher.startAssistant(surface, w, h, runtime.densityDpi, packageName) },
+                start = { surface, w, h -> launcher.keyboardInCar(!runtime.ui.drivingRestricted); launcher.startAssistant(surface, w, h, runtime.densityDpi, packageName) },
                 onStarted = { ok ->
                     if (ok) started = true
                     else { launcher.release(); runtime.assistantStandaloneFailed(packageName) }

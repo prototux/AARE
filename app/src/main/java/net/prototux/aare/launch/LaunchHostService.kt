@@ -37,6 +37,7 @@ class LaunchHostService : ILaunchHost.Stub {
     private val injectedContext: Context?
     @Volatile private var display: VirtualDisplay? = null
     @Volatile private var displayId: Int = -1
+    @Volatile private var keyboardInCar = false
     @Volatile private var displayWakeLock: PowerManager.WakeLock? = null
     private var screenOffReceiver: BroadcastReceiver? = null
     private var receiverContext: Context? = null
@@ -62,7 +63,7 @@ class LaunchHostService : ILaunchHost.Stub {
         val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
         display = vd
         displayId = vd.display.displayId
-        keyboardOn(displayId)
+        keyboard(displayId, keyboardInCar)
         if (keepDisplayAwake) enableKeepAwakeFallback(ctx, displayId)
         if (!launch(ctx, packageName, displayId)) {
             Log.w(TAG, "created display ${displayId} but could not launch $packageName on it")
@@ -76,7 +77,7 @@ class LaunchHostService : ILaunchHost.Stub {
         val vd = createDisplay(ctx, surface, width, height, dpi) ?: return -1
         display = vd
         displayId = vd.display.displayId
-        keyboardOn(displayId)
+        keyboard(displayId, keyboardInCar)
         if (!launchAssistant(ctx, packageName, displayId)) {
             // Unlike start(), no empty display: the caller opens the assistant on the phone instead.
             Log.w(TAG, "created display $displayId but could not open $packageName's assistant on it")
@@ -140,6 +141,11 @@ class LaunchHostService : ILaunchHost.Stub {
         }
         Log.i(TAG, "focus on display $next before display $id goes")
     }.onFailure { Log.w(TAG, "focus hand-back failed: ${(it.cause ?: it).message}") }
+
+    override fun keyboardInCar(inCar: Boolean) {
+        keyboardInCar = inCar
+        displayId.takeIf { display != null && it >= 0 }?.let { keyboard(it, inCar) }
+    }
 
     override fun stop() {
         screenOffReceiver?.let { receiver ->
@@ -266,12 +272,21 @@ class LaunchHostService : ILaunchHost.Stub {
      * doesn't own, and is refused. Like scrcpy. The plain call where the hidden one is gone or changed.
      */
     private fun startOn(ctx: Context, intent: Intent, opts: Bundle): Boolean {
+        val am = runCatching { Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null) }.getOrNull()
+        val int = Int::class.javaPrimitiveType
+        val thread = runCatching { Class.forName("android.app.IApplicationThread") }.getOrNull()
+        val profiler = runCatching { Class.forName("android.app.ProfilerInfo") }.getOrNull()
+        // Android 11 and later: startActivityAsUserWithFeature (a feature id after the package);
+        // before, and where a vendor kept only the older one, startActivityAsUser.
         val result = runCatching {
-            val am = Class.forName("android.app.ActivityManager").getMethod("getService").invoke(null)
-            val int = Int::class.javaPrimitiveType
-            am.javaClass.getMethod(
-                "startActivityAsUser", Class.forName("android.app.IApplicationThread"), String::class.java, Intent::class.java,
-                String::class.java, IBinder::class.java, String::class.java, int, int, Class.forName("android.app.ProfilerInfo"), Bundle::class.java, int,
+            am!!.javaClass.getMethod(
+                "startActivityAsUserWithFeature", thread, String::class.java, String::class.java, Intent::class.java,
+                String::class.java, IBinder::class.java, String::class.java, int, int, profiler, Bundle::class.java, int,
+            ).invoke(am, null, ctx.packageName, null, intent, null, null, null, 0, 0, null, opts, USER_CURRENT) as Int
+        }.recoverCatching {
+            am!!.javaClass.getMethod(
+                "startActivityAsUser", thread, String::class.java, Intent::class.java,
+                String::class.java, IBinder::class.java, String::class.java, int, int, profiler, Bundle::class.java, int,
             ).invoke(am, null, ctx.packageName, intent, null, null, null, 0, 0, null, opts, USER_CURRENT) as Int
         }.onFailure { Log.w(TAG, "startActivityAsUser unavailable: ${(it.cause ?: it).message}") }.getOrNull()
         if (result == null) ctx.startActivity(intent, opts)
@@ -280,18 +295,19 @@ class LaunchHostService : ILaunchHost.Stub {
     }
 
     /**
-     * The keyboard of an app on display [id] shows there, in the car, not on the phone's screen:
-     * Android keeps it on the phone for a display of this kind. Like scrcpy's --display-ime-policy=local.
+     * The keyboard of an app on display [id] shows there, in the car ([inCar]), or on the phone's
+     * screen, where Android keeps it for a display of this kind. Like scrcpy's --display-ime-policy=local.
      */
-    private fun keyboardOn(id: Int) = runCatching {
+    private fun keyboard(id: Int, inCar: Boolean) = runCatching {
         // Straight from the service manager: WindowManagerGlobal fails in this process on Android 17,
         // as no app was ever set up in it.
         val binder = Class.forName("android.os.ServiceManager").getMethod("getService", String::class.java).invoke(null, "window")
         val wm = Class.forName("android.view.IWindowManager\$Stub").getMethod("asInterface", IBinder::class.java).invoke(null, binder)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            wm.javaClass.getMethod("setDisplayImePolicy", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType).invoke(wm, id, DISPLAY_IME_POLICY_LOCAL)
+            wm.javaClass.getMethod("setDisplayImePolicy", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType).invoke(wm, id,
+                if (inCar) DISPLAY_IME_POLICY_LOCAL else DISPLAY_IME_POLICY_FALLBACK_DISPLAY)
         } else {
-            wm.javaClass.getMethod("setShouldShowIme", Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType).invoke(wm, id, true)
+            wm.javaClass.getMethod("setShouldShowIme", Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType).invoke(wm, id, inCar)
         }
     }.onFailure { Log.w(TAG, "keyboard on display $id: ${(it.cause ?: it).message}") }
 
@@ -355,6 +371,7 @@ class LaunchHostService : ILaunchHost.Stub {
         const val SOURCE_KEYBOARD = 0x00000101 // InputDevice.SOURCE_KEYBOARD
         const val INJECT_INPUT_EVENT_MODE_ASYNC = 0
         const val DISPLAY_IME_POLICY_LOCAL = 0 // WindowManager.DISPLAY_IME_POLICY_LOCAL, hidden
+        const val DISPLAY_IME_POLICY_FALLBACK_DISPLAY = 1 // WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY, hidden
         const val USER_CURRENT = -2
 
         // VirtualDisplay flags (public + hidden bits). Hidden ones let a foreign app run and take focus.
