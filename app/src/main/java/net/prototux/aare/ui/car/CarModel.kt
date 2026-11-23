@@ -65,6 +65,8 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
+    /** A tap on it: its app on the car screen, if there is one. */
+    val open: (() -> Unit)? = null,
 )
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
@@ -145,6 +147,8 @@ class CarUiState {
     var railApps by mutableStateOf<List<String>>(emptyList())
     /** A narrower rail: smaller icons, tighter spacing (a setting). */
     var compactRail by mutableStateOf(false)
+    /** The space between the rail's apps in dp (a setting; null = the standard one, [railGapDp]). */
+    var railSpacing by mutableStateOf<Int?>(null)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
     /** The map keeps the big space wherever it is in [dashboardCards] (a setting). */
@@ -225,3 +229,10 @@ interface CarActions {
     /** Send a home action (its confirmation, if it has one, was already asked). */
     fun runHomeAction(id: String)
 }
+
+/** The app a message from [packageName] opens: its conversations where the car screen has them, else any app of it. */
+fun messageApp(apps: List<CarAppEntry>, packageName: String): CarAppEntry? =
+    apps.filter { it.packageName == packageName }.let { own -> own.firstOrNull { it.kind == CarAppKind.MESSAGING } ?: own.firstOrNull() }
+
+/** The standard space between the rail's apps, in dp: tighter on a [compact] rail, wider on a [bottom] bar. */
+fun railGapDp(compact: Boolean, bottom: Boolean): Int = (if (compact) 6 else 8) + (if (bottom) 4 else 0)

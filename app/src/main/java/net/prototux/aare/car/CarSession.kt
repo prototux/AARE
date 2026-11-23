@@ -6,6 +6,7 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService.TouchPad
 import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
 import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
@@ -83,6 +84,7 @@ import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuPolicySource
 import net.prototux.aare.audio.ShizukuSource
 import net.prototux.aare.audio.StartSilence
+import net.prototux.aare.audio.SuPolicySource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.R
@@ -416,8 +418,9 @@ class CarSession(
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
-                    runtime.remember(m.title, m.text, m.icon, m.actions)
-                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
+                    val open = runtime.opener(m.packageName)
+                    runtime.remember(m.title, m.text, m.icon, m.actions, open)
+                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
                     if (settings.readMessagesAloud) m.readAloud()
                 }
             }
@@ -554,10 +557,12 @@ class CarSession(
         override fun onVideoFocus(projected: Boolean) {
             DiagLog.add("video focus: ${if (projected) "projected" else "native"}")
             main.post {
+                if (projected) logNextKeyFrame = true
                 encoder?.setSuspended(!projected)
                 // The encoder was paused while the car showed its own screen: time the stall check from here.
                 lastFrameMs = SystemClock.elapsedRealtime()
                 if (projected) {
+                    startVideoReports()
                     encoder?.requestKeyFrame()
                     display?.invalidate()
                 }
@@ -658,31 +663,34 @@ class CarSession(
         pixelAspect = aspect
         videoFormat = "${w}x$h@$fps ${dpi}dpi" + (if (aspect != 1f) " pixel aspect $aspect" else "")
         videoDescription = videoFormat + layout.describe()
-        Log.i(TAG, "projection $videoDescription")
+        net.prototux.aare.SessionAapLog.i("projection $videoDescription")
 
         val ch = video ?: return
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
-        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo, sink = object : VideoEncoder.Sink {
+        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo,
+            headersOnce = vehicleOverride?.videoHeadersOnce == true, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) {
-                Log.i(TAG, "codec config: $length bytes")
+                // The stream's profile, level and size (SPS, PPS): what a car's decoder may refuse.
+                net.prototux.aare.SessionAapLog.i("video codec config, $length bytes: " + hex(data, offset, minOf(length, 64)))
                 ch.sendCodecConfig(data, offset, length)
             }
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) {
                 frames++
                 lastFrameMs = SystemClock.elapsedRealtime()
-                if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
+                if (frames == 1 || keyFrame && (frames < 100 || logNextKeyFrame) || frames % 600 == 0) {
                     // In the verbose log: whether frames flow, and whether the car had given focus (a black screen).
+                    if (keyFrame) logNextKeyFrame = false
                     net.prototux.aare.SessionAapLog.i("video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
                 }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
                 abr.onFrame(ch)
             }
             override fun onError(e: Exception) {
-                Log.e(TAG, "encoder failed, restarting", e)
+                net.prototux.aare.SessionAapLog.e("video encoder failed, restarting", e)
                 main.post {
                     // The session ended, or this encoder was already replaced: nothing to restart.
                     if (closed || encoder !== enc) return@post
@@ -719,6 +727,8 @@ class CarSession(
         lastFrameMs = SystemClock.elapsedRealtime()
         main.removeCallbacks(stallCheck)
         main.postDelayed(stallCheck, STALL_CHECK_MS)
+        // A restarted stream (encoder error, new layout) while the car shows it.
+        if (ch.focused) startVideoReports()
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
@@ -750,8 +760,34 @@ class CarSession(
         }
     }
 
+    /** The next key frame goes to the log: the one sent because the car gave its screen (again). */
+    @Volatile private var logNextKeyFrame = false
+    private var videoReports = 0
+    @Volatile private var touches = 0
+
+    /** Verbose log: how the car takes the video, more often right after it gave its screen. Main thread. */
+    private val videoReport = object : Runnable {
+        override fun run() {
+            if (closed || display == null) return
+            logVideo()
+            main.postDelayed(this, videoReportDelayMs(++videoReports))
+        }
+    }
+
+    private fun startVideoReports() {
+        videoReports = 0
+        main.removeCallbacks(videoReport)
+        main.postDelayed(videoReport, videoReportDelayMs(0))
+    }
+
+    private fun logVideo() {
+        video?.let { net.prototux.aare.SessionAapLog.i("video: ${it.closingReport ?: it.report()}, $touches touches from the car") }
+    }
+
     private fun teardownVideo() {
         main.removeCallbacks(stallCheck)
+        main.removeCallbacks(videoReport)
+        if (display != null) logVideo()
         display?.release(); display = null
         encoder?.stop(); encoder = null
     }
@@ -781,6 +817,17 @@ class CarSession(
         DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
     }
 
+    /**
+     * The car changed its touchpad's sensitivity during the session (reader thread). The navigator
+     * is kept, so a swipe under way goes on; its steps change on the main thread, where it runs.
+     */
+    private fun onTouchpadUpdate(pad: TouchPad) {
+        if (!pad.uiNavigation || touchpad == null) return
+        val thresholds = TouchpadThresholds.of(pad)
+        main.post { touchpad?.thresholds = thresholds }
+        DiagLog.add("car touchpad sensitivity ${pad.sensitivity}: step ${thresholds.move}/${thresholds.multiMove}")
+    }
+
     /** A touchpad report (reader thread). */
     private fun onTouchpad(ev: TouchEvent) {
         val nav = touchpad ?: return
@@ -803,8 +850,11 @@ class CarSession(
     }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
 
     private val inputListener = object : InputChannel.Listener {
+        override fun onTouchPadUpdate(pad: TouchPad) = onTouchpadUpdate(pad)
+
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent()) {
+                if (touches++ == 0) net.prototux.aare.SessionAapLog.i("first touch from the car")
                 val ev = touch?.map(report.touchEvent) ?: return
                 display?.dispatchTouch(ev)
             }
@@ -1010,7 +1060,7 @@ class CarSession(
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
-            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY -> {
+            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY, CaptureMethod.ROOT_POLICY -> {
                 // Without a guidance channel in the car, navigation voice goes with the music.
                 val hasGuidance = !singleChannel && audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
                 val usages = when {
@@ -1018,8 +1068,11 @@ class CarSession(
                     hasGuidance -> CaptureMethods.MEDIA_USAGES
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
-                if (method == CaptureMethod.AUDIO_POLICY) AudioPolicySource(context, usages, rate, ch)
-                else ShizukuPolicySource(context, usages, rate, ch)
+                when (method) {
+                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch)
+                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch)
+                    else -> SuPolicySource(context, usages, rate, ch)
+                }
             }
             CaptureMethod.SHIZUKU -> when {
                 guidance -> return
@@ -1048,7 +1101,7 @@ class CarSession(
                 startAudio(channel)
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
-                if (method == CaptureMethod.SHIZUKU_POLICY) {
+                if (method == CaptureMethod.SHIZUKU_POLICY || method == CaptureMethod.ROOT_POLICY) {
                     audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
                         startAudio(other)
@@ -1525,3 +1578,10 @@ internal fun logsCarKey(code: Int) = code !in NAV_KEYS
 
 /** Whether a message from [packageName] reaches the car screen: its app isn't [muted], and [groups] lets a [group]'s through. */
 internal fun showsMessage(packageName: String, group: Boolean, groups: Boolean, muted: Set<String>) = packageName !in muted && (!group || groups)
+
+/** How long until video report [n] (0: the first) after the car gave its screen: soon at first, then one in 30 s. */
+internal fun videoReportDelayMs(n: Int): Long = longArrayOf(1_000, 2_000, 7_000, 10_000).getOrElse(n) { 30_000 }
+
+/** [length] bytes of [data] from [offset] in hex. */
+internal fun hex(data: ByteArray, offset: Int, length: Int): String =
+    (offset until offset + length).joinToString("") { "%02x".format(data[it]) }

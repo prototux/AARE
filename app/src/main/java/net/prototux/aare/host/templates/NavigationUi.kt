@@ -67,8 +67,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
-import java.time.ZoneOffset
 import java.util.Date
+import java.util.SimpleTimeZone
 import java.util.TimeZone
 
 /**
@@ -355,7 +355,8 @@ private fun TravelEstimateCard(estimate: TravelEstimate, modifier: Modifier) {
 /** "14:32", or "14:32 CET" when the destination is in another time zone than the phone. */
 private fun arrivalText(dt: DateTimeWithZone, context: Context): String {
     val millis = dt.timeSinceEpochMillis
-    val zone = TimeZone.getTimeZone(ZoneOffset.ofTotalSeconds(dt.zoneOffsetSeconds))
+    // A fixed UTC offset, like the ZoneOffset this used to be built from: no daylight saving of its own.
+    val zone: TimeZone = SimpleTimeZone(dt.zoneOffsetSeconds * 1000, "fixed")
     val format = android.text.format.DateFormat.getTimeFormat(context).apply { timeZone = zone }
     val text = format.format(Date(millis))
     val local = TimeZone.getDefault().getOffset(millis) == dt.zoneOffsetSeconds * 1000

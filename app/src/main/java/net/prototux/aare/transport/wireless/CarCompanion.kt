@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import net.prototux.aare.DiagLog
 
@@ -24,6 +25,7 @@ object CarCompanion {
     /** One association: the car's Bluetooth [address] and the name Android showed. */
     data class Car(val id: Int, val address: String, val name: String)
 
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
     fun supported(context: Context): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             context.packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP)
@@ -103,5 +105,6 @@ object CarCompanion {
         return Car(info.id, mac, info.displayName?.toString().orEmpty().ifBlank { mac })
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun manager(context: Context): CompanionDeviceManager = context.getSystemService(CompanionDeviceManager::class.java)
 }

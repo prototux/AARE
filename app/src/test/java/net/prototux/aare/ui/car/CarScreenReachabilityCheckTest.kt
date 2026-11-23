@@ -28,8 +28,12 @@ class CarScreenReachabilityCheckTest {
         "src/main/java/net/prototux/aare/host",
     )
 
-    /** One construct the scan rejects, and the regex (applied line by line) that finds it. */
-    private data class BannedPattern(val name: String, val regex: Regex)
+    /**
+     * One construct the scan rejects, and the regex (applied line by line) that finds it. With
+     * [keyPathBefore], it's accepted when one of the [KEY_PATH_LOOKBACK] lines before it matches
+     * that: the same modifier chain gives the gesture a knob path.
+     */
+    private data class BannedPattern(val name: String, val regex: Regex, val keyPathBefore: Regex? = null)
 
     private val bannedPatterns = listOf(
         BannedPattern("a raw .clickable", Regex("""\.clickable\s*[(\{]""")),
@@ -37,7 +41,8 @@ class CarScreenReachabilityCheckTest {
         BannedPattern("a raw .selectable", Regex("""\.selectable\s*[(\{]""")),
         BannedPattern("a raw combinedClickable", Regex("""\bcombinedClickable\s*[(\{]""")),
         BannedPattern("a tap gesture detector", Regex("""\bdetectTapGestures\s*\(""")),
-        BannedPattern("a drag gesture detector", Regex("""\bdetectDragGestures\s*\(""")),
+        // A drag that changes a value is fine with carAdjustable as its knob path, just before it.
+        BannedPattern("a drag gesture detector", Regex("""\bdetectDragGestures\s*\("""), keyPathBefore = Regex("""\.carAdjustable\s*\(""")),
         BannedPattern("a Material Slider", Regex("""\bSlider\s*\(""")),
         BannedPattern("a Material Switch", Regex("""\bSwitch\s*\(""")),
         BannedPattern("a Material Checkbox", Regex("""\bCheckbox\s*\(""")),
@@ -67,11 +72,6 @@ class CarScreenReachabilityCheckTest {
             "src/main/java/net/prototux/aare/ui/car/HomeScreen.kt",
             ".clickable(enabled = false) {}",
             "Not a control: swallows taps behind the confirmation card so they don't reach the home screen.",
-        ),
-        Allowed(
-            "src/main/java/net/prototux/aare/ui/car/CarShell.kt",
-            "detectDragGestures(",
-            "Split screen divider: no knob path yet (needs carAdjustable, #320 item 3); knob users keep the 50/50 split and the close buttons.",
         ),
         Allowed(
             "src/main/java/net/prototux/aare/ui/car/RailWidgets.kt",
@@ -125,10 +125,14 @@ class CarScreenReachabilityCheckTest {
             check(dir.isDirectory) { "scan root doesn't exist: $scanRoot (did it move?)" }
             dir.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { file ->
                 val relativePath = file.relativeTo(root).path.replace(File.separatorChar, '/')
-                file.readLines().forEachIndexed { index, line ->
+                val lines = file.readLines()
+                lines.forEachIndexed { index, line ->
                     val lineNumber = index + 1
                     bannedPatterns.forEach { pattern ->
-                        if (pattern.regex.containsMatchIn(line)) {
+                        val keyPath = pattern.keyPathBefore?.let { re ->
+                            lines.subList(maxOf(0, index - KEY_PATH_LOOKBACK), index).any { re.containsMatchIn(it) }
+                        } == true
+                        if (pattern.regex.containsMatchIn(line) && !keyPath) {
                             val allowed = allowlist.firstOrNull { it.file == relativePath && line.contains(it.linePattern) }
                             if (allowed != null) {
                                 usedAllowlistEntries += allowed
@@ -154,5 +158,10 @@ class CarScreenReachabilityCheckTest {
                 stale.joinToString("\n") { "${it.file}: ${it.linePattern}" },
             stale.isEmpty(),
         )
+    }
+
+    private companion object {
+        /** How many lines before a gesture its modifier chain's carAdjustable may be. */
+        const val KEY_PATH_LOOKBACK = 4
     }
 }

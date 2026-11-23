@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit
 class AppLauncher(private val context: Context) {
     @Volatile private var host: ILaunchHost? = null
 
-    // --- Shizuku path ---
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
-        .daemon(false).processNameSuffix("launch").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    // --- Shizuku path --- (only built when connectShizuku() runs, itself behind shizukuAvailable())
+    private val args by lazy {
+        Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
+            .daemon(false).processNameSuffix("launch").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    }
     private val bound = CountDownLatch(1)
     private var didBind = false
     private val connection = object : ServiceConnection {
@@ -91,6 +93,9 @@ class AppLauncher(private val context: Context) {
     fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String): Int =
         runCatching { host?.startAssistant(surface, width, height, dpi, pkg) ?: -1 }
             .onFailure { Log.w(TAG, "startAssistant", it) }.getOrDefault(-1)
+
+    /** Keyboard on the car screen (parked) or on the phone (driving): see [ILaunchHost.keyboardInCar]. */
+    fun keyboardInCar(inCar: Boolean) { runCatching { host?.keyboardInCar(inCar) } }
 
     fun resize(surface: Surface, width: Int, height: Int, dpi: Int) { runCatching { host?.resize(surface, width, height, dpi) } }
     fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {

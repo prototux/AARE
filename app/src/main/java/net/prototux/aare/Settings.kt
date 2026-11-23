@@ -459,6 +459,15 @@ class Settings(context: Context) {
         get() = prefs.getString("auto_reply_text", null)?.takeIf { it.isNotBlank() } ?: appContext.getString(R.string.msg_autoreply_default)
         set(v) = prefs.edit { putString("auto_reply_text", v) }
 
+    /**
+     * Reply to a message by voice from the car screen, while driving too (notify/VoiceDictation):
+     * the phone's speech recognizer listens (the car's microphone with [carMicForPhoneApps] on),
+     * the text is read back and sent on Send or a spoken "yes". Off by default.
+     */
+    var voiceReply: Boolean
+        get() = prefs.getBoolean("voice_reply", false)
+        set(v) = prefs.edit { putBoolean("voice_reply", v) }
+
     /** Read incoming messages aloud as they arrive. */
     var readMessagesAloud: Boolean
         get() = prefs.getBoolean("read_messages", false)
@@ -514,6 +523,11 @@ class Settings(context: Context) {
     var compactRail: Boolean
         get() = prefs.getBoolean("compact_rail", false)
         set(v) = prefs.edit { putBoolean("compact_rail", v) }
+
+    /** The space between the rail's apps in dp, or null for the standard one. */
+    var railSpacing: Int?
+        get() = if (prefs.contains("rail_spacing")) prefs.getInt("rail_spacing", 0) else null
+        set(v) = prefs.edit { if (v == null) remove("rail_spacing") else putInt("rail_spacing", v) }
 
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
@@ -581,6 +595,11 @@ class Settings(context: Context) {
     var lastHeadUnit: String?
         get() = prefs.getString("last_head_unit", null)
         set(v) = prefs.edit { putString("last_head_unit", v) }
+
+    /** "Don't show again" on the Android 6/7 notice (MainActivity). OK alone shows it again next launch. */
+    var oldAndroidNoticeDismissed: Boolean
+        get() = prefs.getBoolean("old_android_notice_dismissed", false)
+        set(v) = prefs.edit { putBoolean("old_android_notice_dismissed", v) }
 
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
