@@ -457,7 +457,7 @@ class Settings(context: Context) {
     /**
      * Reply to a message by voice from the car screen, while driving too (notify/VoiceDictation):
      * the phone's speech recognizer listens (the car's microphone with [carMicForPhoneApps] on),
-     * the text is read back and sent only on Send. Off by default.
+     * the text is read back and sent on Send or a spoken "yes". Off by default.
      */
     var voiceReply: Boolean
         get() = prefs.getBoolean("voice_reply", false)

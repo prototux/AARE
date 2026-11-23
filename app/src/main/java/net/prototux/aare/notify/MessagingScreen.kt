@@ -256,10 +256,14 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
     }
 
     val dictation = remember(c.key) { arrayOfNulls<VoiceDictation>(1) }
+    // The read-back is being spoken: leaving the screen stops it (and only then AARE's speech).
+    val readingBack = remember(c.key) { booleanArrayOf(false) }
     fun readBack(confirm: VoiceReplyStep.Confirm) {
         val listener = CarNotificationListener.instance ?: return
+        readingBack[0] = true
         // The answer is listened for once the read-back is over, so it doesn't hear itself.
         listener.say(context.getString(R.string.msg_voice_reply_read_back, confirm.text, c.title)) {
+            readingBack[0] = false
             if (!finished && step == confirm) dictation[0]?.start()
         }
     }
@@ -290,7 +294,18 @@ private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) 
         CarNotificationListener.instance?.stopSpeaking()
         dictation[0]?.start()
     }
-    DisposableEffect(c.key) { onDispose { dictation[0]?.cancel() } }
+    // Back, the top bar's back or the conversation gone: the reply is over. Nothing may listen or
+    // send afterwards, and a read-back still being spoken stops.
+    DisposableEffect(c.key) {
+        onDispose {
+            finished = true
+            dictation[0]?.cancel()
+            if (readingBack[0]) {
+                readingBack[0] = false
+                CarNotificationListener.instance?.stopSpeaking()
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {

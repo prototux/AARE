@@ -8,6 +8,7 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -21,7 +22,9 @@ import java.util.Locale
  *
  * While listening it holds transient exclusive focus with the assistant usage, so the music pauses
  * (the car hears the cabin, not the speakers) and the car goes back to it afterwards. A recognizer
- * that neither answers nor fails is given up after [TIMEOUT_MS], so the music never stays paused.
+ * that hears no speech within [TIMEOUT_MS] is given up; once speech started it ends by itself when
+ * the user stops talking, so a long reply isn't cut, and [MAX_MS] still bounds it: the music never
+ * stays paused.
  */
 internal class VoiceDictation(
     private val context: Context,
@@ -39,11 +42,12 @@ internal class VoiceDictation(
     }
 
     private var recognizer: SpeechRecognizer? = null
+    private var startedAt = 0L
     private var focus: AudioFocusRequest? = null
     private val handler = Handler(Looper.getMainLooper())
     private val timeout = Runnable {
         if (recognizer == null) return@Runnable
-        Log.w(TAG, "speech recognizer gave no answer in ${TIMEOUT_MS / 1000} s")
+        Log.w(TAG, "speech recognizer gave no answer in time")
         cancel()
         onFailure(Failure.TryAgain)
     }
@@ -56,6 +60,7 @@ internal class VoiceDictation(
         recognizer = r
         r.setRecognitionListener(listener)
         requestFocus()
+        startedAt = SystemClock.uptimeMillis()
         handler.postDelayed(timeout, TIMEOUT_MS)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -84,7 +89,12 @@ internal class VoiceDictation(
 
     private val listener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) = Unit
-        override fun onBeginningOfSpeech() = Unit
+        override fun onBeginningOfSpeech() {
+            // Speech started: the recognizer ends on the silence after it; only the overall limit stays.
+            if (recognizer == null) return
+            handler.removeCallbacks(timeout)
+            handler.postDelayed(timeout, MAX_MS - (SystemClock.uptimeMillis() - startedAt).coerceAtLeast(0))
+        }
         override fun onRmsChanged(rmsdB: Float) = Unit
         override fun onBufferReceived(buffer: ByteArray?) = Unit
         override fun onEndOfSpeech() = Unit
@@ -124,8 +134,10 @@ internal class VoiceDictation(
 
     companion object {
         private const val TAG = "AareVoiceReply"
-        /** Longest wait for a result: a reply is short, and the music is paused meanwhile. */
+        /** Longest wait for the user to start talking: the music is paused meanwhile. */
         const val TIMEOUT_MS = 15_000L
+        /** Longest a dictation can last once speech started, so a long reply fits but nothing hangs. */
+        const val MAX_MS = 60_000L
 
         private fun firstText(results: Bundle?): String? =
             results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim()?.takeIf { it.isNotEmpty() }
