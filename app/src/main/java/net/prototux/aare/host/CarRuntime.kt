@@ -93,7 +93,6 @@ import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarControlScale
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
-import java.time.ZonedDateTime
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -498,7 +497,7 @@ class CarRuntime(
         midnightRefresh?.cancel()
         midnightRefresh = scope.launch {
             while (true) {
-                delay(msUntilNextDay(ZonedDateTime.now()))
+                delay(msUntilNextDay(System.currentTimeMillis()))
                 refreshApps()
             }
         }
