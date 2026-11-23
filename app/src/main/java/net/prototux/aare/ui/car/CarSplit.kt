@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
@@ -50,6 +51,16 @@ fun canOpenBeside(kind: CarAppKind): Boolean = kind in SPLIT_SECONDARY_KINDS
  */
 fun hasCloseButton(kind: CarAppKind): Boolean =
     kind != CarAppKind.NAVIGATION && kind != CarAppKind.TEMPLATED && kind != CarAppKind.ASSISTANT
+
+/** True inside a split pane, whose size changes as the divider moves. */
+val LocalInSplitPane = staticCompositionLocalOf { false }
+
+/**
+ * Whether Back in the second pane closes it rather than going to the app: when the app can't go
+ * back itself, as it isn't [ready] or is on its first screen ([screens] its stack's depth). With a
+ * knob or D-pad, Back is the way to close just that pane.
+ */
+fun backClosesPane(ready: Boolean, screens: Int): Boolean = !ready || screens <= 1
 
 /** Whether the content area is wide enough to split at all. */
 fun splitScreenFits(width: Dp): Boolean = width >= SPLIT_MIN_SCREEN_WIDTH

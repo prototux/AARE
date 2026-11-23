@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.LocalInSplitPane
 import net.prototux.aare.host.templates.LocalCompactMap
 import net.prototux.aare.host.templates.RenderTemplate
 import net.prototux.aare.host.templates.TemplateHost
@@ -205,7 +206,9 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         // A new surface for a new size (a pane resized, or back to full screen): an app given its
         // old surface at another size may crash or keep drawing at the old one. Each surface has
         // its own owner, so the old one going away can't take the new one with it.
-        BoxWithConstraints(modifier) { key(constraints.maxWidth, constraints.maxHeight) { SizedMapSurface(Modifier.fillMaxSize()) } }
+        // Only in a split pane: elsewhere the app is told of a new size on the same surface.
+        if (!LocalInSplitPane.current) SizedMapSurface(modifier)
+        else BoxWithConstraints(modifier) { key(constraints.maxWidth, constraints.maxHeight) { SizedMapSurface(Modifier.fillMaxSize()) } }
     }
 
     @Composable

@@ -154,4 +154,11 @@ class CarSplitTest {
         // A stale pane beside no main app: the app gets the one pane, never both.
         assertEquals(SplitPanes("phone", null, CarPane.PRIMARY), openInPanes("phone", null, "phone"))
     }
+
+    @Test fun backClosesThePaneWhereTheAppCantGoBack() {
+        assertTrue(backClosesPane(ready = true, screens = 1))
+        assertTrue(backClosesPane(ready = true, screens = 0))
+        assertTrue(backClosesPane(ready = false, screens = 3))
+        assertFalse(backClosesPane(ready = true, screens = 2))
+    }
 }

@@ -83,6 +83,7 @@ import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.MediaVideoScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
+import net.prototux.aare.ui.car.backClosesPane
 import net.prototux.aare.ui.car.canOpenBeside
 import net.prototux.aare.ui.car.leftAlone
 import net.prototux.aare.ui.car.openInPanes
@@ -894,12 +895,19 @@ class CarRuntime(
         ui.focusedPane = panes.focused
     }
 
+    private fun CarAppEntry.isNavigationLike() = kind == CarAppKind.NAVIGATION || (kind == CarAppKind.STANDALONE && isNavigation)
+
     /** Whether [appId] is on screen, alone or in one of the panes. */
     private fun shows(appId: String): Boolean =
         (ui.screen as? CarScreen.App)?.let { it.appId == appId || ui.secondaryAppId == appId } == true
 
-    /** Gets [app] ready to be shown: connected, or chosen as the active media or navigation app. */
-    private fun start(app: CarAppEntry) {
+    /**
+     * Gets [app] ready to be shown: connected, or chosen as the active media or navigation app. A
+     * navigation app opened [beside] another stays connected only: the dashboard and the cluster
+     * keep following the active one.
+     */
+    private fun start(app: CarAppEntry, beside: Boolean = false) {
+        if (beside && app.isNavigationLike()) { connection(app.id)?.connect(); return }
         when (app.kind) {
             CarAppKind.MEDIA -> {
                 ui.activeMediaAppId = app.id
@@ -946,7 +954,7 @@ class CarRuntime(
         override fun openBeside(app: CarAppEntry) {
             val primaryId = (ui.screen as? CarScreen.App)?.appId
             if (primaryId == null || app.id == primaryId || !ui.splitScreenSetting || !canOpenBeside(app.kind)) return
-            start(app)
+            start(app, beside = true)
             // The ratio isn't reset here: reopening a split during the same session resumes at the
             // width the driver last chose, rather than snapping back to an even half every time.
             ui.secondaryAppId = app.id
@@ -1073,9 +1081,9 @@ class CarRuntime(
             // its own back stack (if any) first, otherwise back simply closes that pane.
             if (screenBacks[secondaryId]?.invoke() == true) return
             val conn = connections[secondaryId]
-            // A car app goes back itself, as full screen (finishing closes its pane); one still
-            // connecting or that failed has no screen to go back in.
-            if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back() else actions.closeSplit()
+            // A car app goes back itself, as full screen; on its first screen, or still connecting,
+            // Back closes the pane instead (with a knob, the way to close just that pane).
+            if (conn == null || backClosesPane(conn.status == CarAppConnection.Status.READY, conn.screens)) actions.closeSplit() else conn.back()
             return
         }
         when (val s = ui.screen) {

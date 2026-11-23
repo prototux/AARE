@@ -57,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -236,14 +237,14 @@ private fun SplitPane(
                 Modifier.weight(restRatio).fillMaxHeight().focusGroup()
                     .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) }
                     .onTouched { actions.focusPane(CarPane.PRIMARY) },
-            ) { appContent(primary, Modifier.fillMaxSize()) }
+            ) { CompositionLocalProvider(LocalInSplitPane provides true) { appContent(primary, Modifier.fillMaxSize()) } }
             Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
             Box(
                 Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
                     .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) }
                     .onTouched { actions.focusPane(CarPane.SECONDARY) },
             ) {
-                appContent(secondary, Modifier.fillMaxSize())
+                CompositionLocalProvider(LocalInSplitPane provides true) { appContent(secondary, Modifier.fillMaxSize()) }
                 if (hasCloseButton(secondary.kind)) Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                     RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
                 }
