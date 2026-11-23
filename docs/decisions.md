@@ -563,6 +563,48 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
 
+## Android 6 and 7 supported (minSdk 23)
+
+Maintainer's decision: lower `minSdk` from 26 (Android 8) to 23 (Android 6), so AARE installs on
+older phones too. Android 8 stays the better-supported baseline; a one-time notice on the home
+screen (`OldAndroidNotice`, MainActivity) tells Android 6 and 7 users what's limited there, with a
+"Don't show again" choice (`Settings.oldAndroidNoticeDismissed`); OK alone shows it again next
+launch. Behaviour on Android 8+ is unchanged — every fix here only adds a branch for `SDK_INT < 26`
+(or rewrites something to work identically everywhere, see below), never changes what already ran
+on 8+.
+
+What the lower `minSdk` touched:
+- **Notification channels (API 26) and `startForegroundService` (API 26).** `ProjectionService`
+  gained `ensureChannel`/`notificationBuilder` helpers: a channel (and its own `Notification.Builder`
+  overload) from Android 8, the deprecated single-argument builder with `PRIORITY_LOW` below that
+  (same look, but it can't be muted separately from AARE's other notices in system settings — the
+  one thing the notice calls out). `CertificateUpdates` and `VoipCalls` share the same helpers.
+  Starting the service now goes through `ContextCompat.startForegroundService`, which already picks
+  `startService` below Android 8.
+- **`AudioFocusRequest` (API 26).** `CarNotificationListener`'s read-aloud focus now falls back to
+  the deprecated `requestAudioFocus(listener, streamType, durationHint)`/`abandonAudioFocus` below
+  Android 8; same `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK` behaviour either way.
+- **`AdaptiveIconDrawable` (API 26).** `MediaDiscovery`'s Spotify icon fix (a black backing layer)
+  only runs from Android 8; below that Spotify's icon is used as shipped (no black backing, a
+  cosmetic difference only).
+- **`CompanionDeviceManager` (API 26).** Already gated well above the new floor (Android 13), so
+  behaviour doesn't change; `CarCompanion` only needed `@RequiresApi`/`@ChecksSdkIntAtLeast`
+  annotations so lint can see that its own `supported()` guard covers it.
+- **`java.time` (API 26), without core library desugaring (a new dependency, and the owner's call to
+  skip it).** `CalendarIcon.msUntilNextDay` and the calendar agenda (`DashboardInfo.selectAgenda`/
+  `labelAgenda`, `DashboardWidgets`) were rewritten on `java.util.Calendar`/`TimeZone` instead of
+  `ZonedDateTime`/`LocalDate`/`ZoneId`/`DayOfWeek`: a day is the epoch millis of its local midnight
+  (comparable and orderable), `Calendar.add(DAY_OF_MONTH, 1)` keeps DST handling (a 23- or 25-hour
+  day), and `AgendaDay.Later` carries a `Calendar.DAY_OF_WEEK` int instead of `java.time.DayOfWeek`.
+  This runs the same way on every supported Android version, not just below 26; the existing
+  timezone-edge-case unit tests were ported to the new types to check it. `NavigationUi`'s one
+  `ZoneOffset` (building a fixed-offset `TimeZone` for a head-unit-supplied UTC offset) became a
+  plain `SimpleTimeZone`, also unconditionally.
+
+The Xposed host-shims module (`xposed/`) stays at `minSdk 26`: unlike the app, it hooks framework
+internals that are no safer to assume down to Android 6 without testing against that framework,
+and it isn't released, so there's no user-facing reason to lower it.
+
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's

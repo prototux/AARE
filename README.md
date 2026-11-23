@@ -70,10 +70,12 @@ Services, no account.
 
 ### What you need
 
-- A phone with **Android 8** or newer. Some features need a newer Android:
+- A phone with **Android 6** or newer; some features need Android 8 or newer, and AARE shows a
+  one-time notice of what's limited when it's running on Android 6 or 7.
 
   | Feature | Needs |
   |---|---|
+  | Connection notifications in their own channel (so they can be muted separately) | Android 8 |
   | Car audio by screen capture | Android 10 (on Android 8 and 9: the privileged install, or the car's Bluetooth) |
   | Car audio through Shizuku | Android 12 |
   | WPA3-only car Wi-Fi (wireless) | Android 10 (WPA2 and WPA2/WPA3 work from Android 8) |
