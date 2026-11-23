@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Messaggi, indicazioni da Google Maps e Waze, brano in riproduzione</string>
     <string name="setup_check_audio_subtitle">Fai arrivare l\'audio del telefono in auto</string>
     <string name="setup_action_set_up">Configura</string>
+    <string name="setup_old_android_title">In esecuzione su un Android più vecchio</string>
+    <string name="setup_old_android_message">AARE funziona anche su Android 6 e 7, ma Android 8 è la base meglio supportata. Su Android 6 e 7, le notifiche di connessione non possono essere inserite in un proprio canale, quindi non possono essere disattivate separatamente dalle altre notifiche di AARE nelle impostazioni di sistema. Tutto il resto funziona allo stesso modo, oppure torna automaticamente a un metodo più vecchio.</string>
+    <string name="setup_old_android_dont_show_again">Non mostrare più</string>
     <string name="setup_section_connecting">Connessione</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Connettiti via Wi-Fi alle auto associate quando entrano nel raggio Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Instradamento audio di sistema (come Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, musica e navigazione separate (come Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku o root</string>
+    <string name="audio_method_root_policy">Root, musica e navigazione separate</string>
     <string name="audio_method_playback_capture">Permesso di registrazione dello schermo</string>
     <string name="audio_policy_not_ready">Come Android Auto: musica e voce di navigazione separate, altoparlante del telefono disattivato. Richiede un telefono rootato: installa AARE come app di sistema con il modulo Magisk (vedi il README).</string>
     <string name="audio_shizuku_ready">Pronto. Tutto ciò che il telefono riproduce arriva in auto, voce di navigazione compresa; il telefono resta silenzioso.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Pagina iniziale</string>
     <string name="browser_address_hint">Cerca o digita un indirizzo web</string>
     <string name="assistant_links_title">Link dall\'assistente</string>
+    <string name="assistant_stop">Interrompi l\'assistente</string>
+    <string name="assistant_stop_style_title">Interruzione dell\'assistente</string>
+    <string name="assistant_stop_style_voice_button">Il pulsante vocale diventa Interrompi</string>
+    <string name="assistant_stop_style_red_restart">Pulsante di stop rosso, il pulsante vocale richiede di nuovo</string>
+    <string name="assistant_stop_style_red_stop">Pulsante di stop rosso, anche il pulsante vocale interrompe</string>
     <string name="assistant_links_subtitle">Consente ai link aare:// nelle risposte dell\'assistente scelto di controllare la musica, o di proporre sullo schermo dell\'auto di navigare, aprire un\'app o chiamare. I link da altre app e da pagine web vengono ignorati.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dati dell\'auto</string>
