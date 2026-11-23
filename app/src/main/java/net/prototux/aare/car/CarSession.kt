@@ -87,6 +87,9 @@ import net.prototux.aare.audio.StartSilence
 import net.prototux.aare.audio.SuPolicySource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
+import net.prototux.aare.audio.MicTakeover
+import net.prototux.aare.audio.PhoneAppsMic
+import net.prototux.aare.audio.PhoneRecording
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
@@ -427,6 +430,7 @@ class CarSession(
             if (settings.resumeMedia) runtime.resumeMedia()
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
+            if (settings.pauseWhileRecording) context.getSystemService(android.media.AudioManager::class.java)?.registerAudioRecordingCallback(recordings, main)
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
             applyPhoneAppsMic()
             settings.registerListener(phoneAppsMicSetting)
@@ -451,6 +455,55 @@ class CarSession(
                 phoneAppsMic = CarMicForApps(context, micRouter, cfg?.samplingRate ?: 16_000, cfg?.numberOfChannels ?: 1).also { it.start() }
             }
         }
+    }
+
+    /** Music or a video AARE paused because a phone app records: it plays on once the app is done. */
+    private var pausedForRecording = false
+    /** When a phone app records and when it is done, a moment's break (a recording moving to the car's mic) not counted. */
+    private val recordingPause = MicTakeover()
+    private val recordingDone = Runnable {
+        if (closed) return@Runnable
+        if (recordingPause.onTick(SystemClock.uptimeMillis()) == MicTakeover.Action.CLOSE) main.post(resumeAfterRecording)
+        scheduleRecordingDone()
+    }
+
+    /** Plays on what a recording paused, once no call or assistant answer runs on the phone. */
+    private val resumeAfterRecording: Runnable = Runnable {
+        if (closed || !pausedForRecording) return@Runnable
+        // An assistant's spoken answer or a call still going: music now would talk over it.
+        val mode = context.getSystemService(android.media.AudioManager::class.java)?.mode
+        if (mode != null && mode != android.media.AudioManager.MODE_NORMAL) { main.postDelayed(resumeAfterRecording, CALL_CHECK_MS); return@Runnable }
+        pausedForRecording = false
+        // Already playing (the driver pressed play), or the car's focus loss paused it and its focus answer brings it back.
+        if (!pausedByCar && media.playback.value?.playing != true) media.playPause()
+    }
+
+    /**
+     * A phone app records (a voice message, an assistant listening): what plays would talk over it,
+     * so it pauses, and plays on once the app is done (Settings.pauseWhileRecording). Android tells
+     * every app about recordings, without their apps' names, so this needs no Shizuku. AARE's own
+     * phone microphone (the car app's voice input) counts too: the music pauses for it as well.
+     */
+    private val recordings = object : android.media.AudioManager.AudioRecordingCallback() {
+        override fun onRecordingConfigChanged(configs: MutableList<android.media.AudioRecordingConfiguration>) {
+            if (closed) return
+            val recording = PhoneAppsMic.anyTakesOver(
+                configs.map { PhoneRecording(-1, it.clientAudioSource, Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && it.isClientSilenced) },
+                emptySet(),
+            )
+            if (recordingPause.onRecording(recording, SystemClock.uptimeMillis()) == MicTakeover.Action.OPEN) {
+                main.removeCallbacks(resumeAfterRecording)
+                pausedForRecording = pausedForRecording || media.playback.value?.playing == true
+                if (pausedForRecording) media.pause()
+            }
+            scheduleRecordingDone()
+        }
+    }
+
+    private fun scheduleRecordingDone() {
+        main.removeCallbacks(recordingDone)
+        val at = recordingPause.nextTick()
+        if (at >= 0) main.postAtTime(recordingDone, at)
     }
 
     override fun onAudioFocus(session: AapSession, notification: AudioFocusNotification) {
@@ -934,7 +987,7 @@ class CarSession(
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
-            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) media.pause()
+            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) { pausedForRecording = false; media.pause() }
             KeyEvent.KEYCODE_MEDIA_NEXT -> if (!down) media.next()
             KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) media.previous()
             KEYCODE_MEDIA -> if (!down) runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
@@ -1356,6 +1409,9 @@ class CarSession(
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
+        context.getSystemService(android.media.AudioManager::class.java)?.unregisterAudioRecordingCallback(recordings)
+        main.removeCallbacks(recordingDone)
+        main.removeCallbacks(resumeAfterRecording)
         settings.unregisterListener(phoneAppsMicSetting)
         phoneAppsMic?.stop(); phoneAppsMic = null
         micRouter.shutdown()
@@ -1420,6 +1476,8 @@ class CarSession(
         /** A projected screen with no new frame for this long gets redrawn (see stallCheck). */
         private const val STALL_MS = 1_000L
         private const val STALL_CHECK_MS = 500L
+        /** How often a paused resume looks again whether the phone's call or assistant answer ended. */
+        private const val CALL_CHECK_MS = 1_000L
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L

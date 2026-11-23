@@ -215,6 +215,8 @@
     <string name="setup_toggle_companion_shizuku_subtitle">For associated cars, Shizuku answers Android\'s \"connect to device\" question, so it isn\'t asked again. The car\'s network stays AARE\'s own, never the phone\'s internet connection. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_toggle_pause_while_recording_title">Pause while an app records</string>
+    <string name="setup_toggle_pause_while_recording_subtitle">Music or a video pauses while a phone app records (a voice message, an assistant listening), and plays on once it is done. Takes effect at the next connection.</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>
     <string name="setup_toggle_calls_speaker_subtitle">While connected to a car, calls use the phone\'s loudspeaker and microphone instead of the car\'s hands-free link. For wireless adapters or head units whose microphone doesn\'t work. Takes effect from the next connection.</string>
     <string name="setup_toggle_auto_pair_title">Pair the car\'s Bluetooth automatically</string>

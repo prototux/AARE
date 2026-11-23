@@ -429,6 +429,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("resume_media", false)
         set(v) = prefs.edit { putBoolean("resume_media", v) }
 
+    /**
+     * Pause what plays while a phone app records (a voice message, an assistant listening), and
+     * play it on once the app is done. Off by default.
+     */
+    var pauseWhileRecording: Boolean
+        get() = prefs.getBoolean("pause_while_recording", false)
+        set(v) = prefs.edit { putBoolean("pause_while_recording", v) }
+
     /** Show incoming messages as banners on the car screen. */
     var messageBanners: Boolean
         get() = prefs.getBoolean("message_banners", true)
