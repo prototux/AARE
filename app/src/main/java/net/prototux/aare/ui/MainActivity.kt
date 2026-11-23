@@ -15,6 +15,7 @@ import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
+import net.prototux.aare.ui.car.movedAmong
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings as AndroidSettings
@@ -1345,7 +1346,7 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
     )
 }
 
-/** The order of the car's app list: the visible apps, with up and down buttons. */
+/** The order of the car's app list: the visible apps, sorted by dragging. */
 @Composable
 private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     val all = launcherCandidates(l, hidden, phoneScreen, browser)
@@ -1353,33 +1354,25 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
     val index = order.withIndex().associate { (i, k) -> k to i }
     val sorted = all.sortedWith(compareBy({ index[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
     fun move(i: Int, by: Int) {
-        val keys = sorted.map { it.first }.toMutableList()
-        val j = (i + by).coerceIn(0, keys.lastIndex)
-        keys.add(j, keys.removeAt(i))
-        // Hidden apps keep their saved slots, so showing one again puts it back where it was:
-        // the shown keys fill their old slots in the new order, new ones go at the end.
-        val queue = ArrayDeque(keys)
-        val shown = keys.toSet()
-        val merged = order.mapNotNull { if (it in shown) queue.removeFirstOrNull() else it } + queue
+        val merged = order.movedAmong(sorted.map { it.first }, i, by)
         order = merged; settings.appOrder = merged
     }
     Section(stringResource(R.string.setup_section_app_order)) {
-        sorted.forEachIndexed { i, (_, label, icon) ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        val drag = remember { RowDrag() }
+        sorted.forEachIndexed { i, (key, label, icon) -> key(key) {
+            SortableRow(key, i, sorted.size, drag, Modifier.padding(vertical = 4.dp), move = { move(i, it) }) {
                 if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
                 else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
                 Spacer(Modifier.width(12.dp))
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { move(i, -1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
-                IconButton(onClick = { move(i, 1) }, enabled = i < sorted.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
             }
-        }
+        } }
     }
 }
 
 /**
  * The rail's own, shorter app list, picked on the phone: a switch per candidate (the same ones the
- * launcher order lists) to put it on the rail, and up/down to order the chosen ones. Nothing chosen
+ * launcher order lists) to put it on the rail, and dragging to order the chosen ones. Nothing chosen
  * (the default): the rail keeps its built-in set (today's behaviour) — see CarShell.RailContent.
  */
 @Composable
@@ -1397,22 +1390,21 @@ private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<St
             compact = it; settings.compactRail = it
         }
         Spacer(Modifier.height(8.dp))
-        sorted.forEach { (key, label, icon) ->
-            val i = chosen.indexOf(key)
+        val drag = remember { RowDrag() }
+        val shownChosen = sorted.map { it.first }.filter { it in chosenIndex }
+        sorted.forEach { (key, label, icon) -> key(key) {
+            val i = shownChosen.indexOf(key)
             val on = i >= 0
-            Row(Modifier.fillMaxWidth().clickable { setChosen(chosen.withKey(key, !on)) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            SortableRow(key, i, shownChosen.size, drag, Modifier.clickable { setChosen(chosen.withKey(key, !on)) }.padding(vertical = 4.dp),
+                sortable = on, move = { setChosen(chosen.movedAmong(shownChosen, i, it)) }) {
                 Switch(checked = on, onCheckedChange = { setChosen(chosen.withKey(key, it)) })
                 Spacer(Modifier.width(12.dp))
                 if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
                 else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
                 Spacer(Modifier.width(12.dp))
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                if (on) {
-                    IconButton(onClick = { setChosen(chosen.movedBy(i, -1)) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
-                    IconButton(onClick = { setChosen(chosen.movedBy(i, 1)) }, enabled = i < chosen.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
-                }
             }
-        }
+        } }
     }
 }
 
