@@ -26,3 +26,9 @@ internal fun resolveRailApps(keys: List<String>, apps: List<CarAppEntry>, selfPa
 /** This order with [key] chosen (added at the end) or dropped. */
 internal fun List<String>.withKey(key: String, chosen: Boolean): List<String> =
     if (chosen) { if (key in this) this else this + key } else this - key
+
+/**
+ * The launched phone apps the rail and the app order list: those [allowed] while launching is
+ * [enabled], less the ones [taken] by an entry of another kind, which has the same key.
+ */
+fun launchedCandidates(enabled: Boolean, allowed: Set<String>, taken: Set<String>): Set<String> = if (enabled) allowed - taken else emptySet()

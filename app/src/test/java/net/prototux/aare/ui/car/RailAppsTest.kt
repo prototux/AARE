@@ -50,4 +50,10 @@ class RailAppsTest {
         assertEquals(listOf("a", "c", "b"), listOf("a", "b", "c").movedBy(2, -1))
         assertEquals(listOf("a", "b"), listOf("a", "b").movedBy(5, -1)) // out of range: unchanged
     }
+
+    @Test
+    fun launchedAppsAreCandidatesOnceAndOnlyWhileLaunchingIsOn() {
+        assertEquals(setOf("maps"), launchedCandidates(true, setOf("maps", "music"), setOf("music", "phone")))
+        assertEquals(emptySet<String>(), launchedCandidates(false, setOf("maps"), emptySet()))
+    }
 }

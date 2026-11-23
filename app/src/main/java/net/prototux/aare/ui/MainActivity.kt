@@ -15,6 +15,8 @@ import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
+import net.prototux.aare.ui.car.launchedCandidates
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings as AndroidSettings
@@ -1277,7 +1279,7 @@ internal fun Choices(title: String, options: List<Pair<String, String>>, selecte
 // ---------------------------------------------------------------- apps
 
 /** Everything the car's launcher lists, as it groups it. */
-private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>)
+private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>, val launched: List<LaunchableApp>)
 
 @Composable
 private fun AppsCard(settings: Settings) {
@@ -1287,7 +1289,14 @@ private fun AppsCard(settings: Settings) {
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
-    val lists by produceState<LauncherLists?>(null) {
+    // The launched phone apps are picked further down the page: loaded again when that changes.
+    var picks by remember { mutableIntStateOf(0) }
+    DisposableEffect(Unit) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == "standalone_apps" || key == "standalone_app_pkgs") picks++ }
+        settings.registerListener(listener)
+        onDispose { settings.unregisterListener(listener) }
+    }
+    val lists by produceState<LauncherLists?>(null, picks) {
         value = withContext(Dispatchers.IO) {
             val car = CarAppCatalog.query(ctx)
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
@@ -1295,7 +1304,10 @@ private fun AppsCard(settings: Settings) {
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
             val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
+            val messages = messaging.filter { it.packageName !in shown }
+            val launched = launchedCandidates(settings.standaloneApps && AppLauncher.available(ctx), settings.standaloneAppPackages,
+                shown + messages.map { it.packageName })
+            LauncherLists(car, media, messages, if (launched.isEmpty()) emptyList() else launchableApps(ctx).filter { it.pkg in launched })
         }
     }
     fun toggle(pkg: String, visible: Boolean) {
@@ -1376,6 +1388,7 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.messaging.forEach { add(Triple(it.packageName, it.label, it.icon)) }
+        l.launched.forEach { add(Triple(it.pkg, it.label, it.icon)) }
     }.filter { it.first !in hidden } + listOfNotNull(
         if (CarRuntime.PHONE_ID !in hidden) Triple(CarRuntime.PHONE_ID, stringResource(R.string.setup_app_entry_phone), null) else null,
         // Settings is always in the car's list (never hidden): always in this order too.
