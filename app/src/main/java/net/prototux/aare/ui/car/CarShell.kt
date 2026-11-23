@@ -204,6 +204,8 @@ internal fun ContentArea(
  * [primary] and [secondary] side by side with a draggable divider, [secondary] one of the kinds
  * [canOpenBeside] allows there. The pane touched last, or holding the knob's focus, gets Back.
  *
+ * The divider is [carAdjustable] too: a knob or D-pad steps it from rest point to rest point.
+ *
  * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
  * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
  * every drag frame, which would otherwise tear it down and rebuild it dozens of times a second).
@@ -251,6 +253,8 @@ private fun SplitPane(
             Modifier
                 .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
                 .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                // The knob path: each step moves to the next rest point, committed like a drag.
+                .carAdjustable(RoundedCornerShape(8.dp)) { step -> actions.commitSplitRatio(stepSplitRatio(restRatio, step)) }
                 .pointerInput(totalWidth) {
                     detectDragGestures(
                         onDragStart = { dragRatio = restRatio },
@@ -347,6 +351,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val railSize = if (compact) minOf(d.railWidth, d.touchTarget + 4.dp) else d.railWidth
     val outerPadding = if (compact) 10.dp else 16.dp
     val appSpacing = if (compact) 6.dp else 8.dp
+    val appGap = (state.railSpacing ?: railGapDp(compact, horizontal)).dp
     // The apps chosen on the phone (Settings.railApps), resolved against what's installed now; empty
     // (nothing chosen, or everything chosen is gone) falls back to the rail's built-in set below.
     val selfPackage = LocalContext.current.packageName
@@ -390,7 +395,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appSpacing + 4.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appGap)) {
                     apps(if (tightBar) 0 else 2, !tighterBar, true)
                 }
             }
@@ -415,7 +420,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Column(
                     Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(appSpacing),
+                    verticalArrangement = Arrangement.spacedBy(appGap),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }

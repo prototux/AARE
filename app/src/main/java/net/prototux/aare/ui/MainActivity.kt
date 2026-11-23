@@ -15,6 +15,8 @@ import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
+import net.prototux.aare.ui.car.launchedCandidates
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.provider.Settings as AndroidSettings
@@ -91,6 +93,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -115,6 +118,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import net.prototux.aare.ui.car.styleSwatch
+import net.prototux.aare.ui.car.Swatch
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -122,6 +128,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import net.prototux.aare.ui.car.railGapDp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -254,6 +261,7 @@ private fun Home() {
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
     BackHandler(enabled = page != null) { page = null }
+    OldAndroidNotice(settings)
 
     key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
@@ -400,6 +408,36 @@ private fun CertificateExpiryBanner() {
             }
         }
     }
+}
+
+/**
+ * Once per launch on Android 6 and 7 (minSdk 23; Android 8 is otherwise the baseline): what falls
+ * back to an older, more limited method there. "Don't show again" persists in [Settings]; OK
+ * alone shows it again next launch.
+ */
+@Composable
+private fun OldAndroidNotice(settings: Settings) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || settings.oldAndroidNoticeDismissed) return
+    var open by remember { mutableStateOf(true) }
+    if (!open) return
+    var dontShowAgain by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.setup_old_android_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.setup_old_android_message), style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+                Toggle(stringResource(R.string.setup_old_android_dont_show_again), "", dontShowAgain) { dontShowAgain = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (dontShowAgain) settings.oldAndroidNoticeDismissed = true
+                open = false
+            }) { Text(stringResource(R.string.common_ok)) }
+        },
+    )
 }
 
 @Composable
@@ -948,7 +986,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) },
                 onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
                 onAccent = { accent = it; settings.carAccent = it },
-                select = { title, options, selected, onSelect -> Select(title, options, selected, onSelect) },
+                select = { title, options, selected, onSelect -> Select(title, options, selected, ::styleSwatch, onSelect) },
             )
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
@@ -1106,20 +1144,24 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
     }
+    // Shizuku itself needs Android 12 (CaptureMethods.shizukuAvailable); its listener is never
+    // registered below that, so it's never live when there's no binder to answer it.
     DisposableEffect(Unit) {
-        val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
-        runCatching { Shizuku.addRequestPermissionResultListener(l) }
-        onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
+            runCatching { Shizuku.addRequestPermissionResultListener(l) }
+            onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        } else onDispose {}
     }
     @Suppress("UNUSED_EXPRESSION") refresh
     val policy = CaptureMethods.audioPolicyAvailable(ctx)
     val shizuku = CaptureMethods.shizukuAvailable()
-    val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
+    val shizukuAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && CaptureMethods.shizukuNeedsPermission()
     val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
         shizuku -> CaptureMethod.SHIZUKU_POLICY
-        root -> CaptureMethod.SHIZUKU
+        root -> CaptureMethod.ROOT_POLICY
         state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
     }
@@ -1190,7 +1232,7 @@ private const val SHIZUKU_REQUEST = 42
 /** A labelled drop-down of mutually exclusive options, for lists too long for a row of [Choices]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Select(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+private fun Select(title: String, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Text(title, style = MaterialTheme.typography.bodyLarge)
     Spacer(Modifier.height(6.dp))
@@ -1200,6 +1242,7 @@ private fun Select(title: String, options: List<Pair<String, String>>, selected:
             onValueChange = {},
             readOnly = true,
             singleLine = true,
+            leadingIcon = swatch(selected).takeIf { it.isNotEmpty() }?.let { { Swatch(it, 20.dp) } },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
         )
@@ -1208,6 +1251,7 @@ private fun Select(title: String, options: List<Pair<String, String>>, selected:
                 DropdownMenuItem(
                     text = { Text(label) },
                     onClick = { expanded = false; onSelect(value) },
+                    leadingIcon = swatch(value).takeIf { it.isNotEmpty() }?.let { { Swatch(it, 20.dp) } },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
             }
@@ -1235,7 +1279,7 @@ internal fun Choices(title: String, options: List<Pair<String, String>>, selecte
 // ---------------------------------------------------------------- apps
 
 /** Everything the car's launcher lists, as it groups it. */
-private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>)
+private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>, val launched: List<LaunchableApp>)
 
 @Composable
 private fun AppsCard(settings: Settings) {
@@ -1245,7 +1289,14 @@ private fun AppsCard(settings: Settings) {
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
-    val lists by produceState<LauncherLists?>(null) {
+    // The launched phone apps are picked further down the page: loaded again when that changes.
+    var picks by remember { mutableIntStateOf(0) }
+    DisposableEffect(Unit) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == "standalone_apps" || key == "standalone_app_pkgs") picks++ }
+        settings.registerListener(listener)
+        onDispose { settings.unregisterListener(listener) }
+    }
+    val lists by produceState<LauncherLists?>(null, picks) {
         value = withContext(Dispatchers.IO) {
             val car = CarAppCatalog.query(ctx)
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
@@ -1253,7 +1304,10 @@ private fun AppsCard(settings: Settings) {
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
             val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
+            val messages = messaging.filter { it.packageName !in shown }
+            val launched = launchedCandidates(settings.standaloneApps && AppLauncher.available(ctx), settings.standaloneAppPackages,
+                shown + messages.map { it.packageName })
+            LauncherLists(car, media, messages, if (launched.isEmpty()) emptyList() else launchableApps(ctx).filter { it.pkg in launched })
         }
     }
     fun toggle(pkg: String, visible: Boolean) {
@@ -1334,6 +1388,7 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.messaging.forEach { add(Triple(it.packageName, it.label, it.icon)) }
+        l.launched.forEach { add(Triple(it.pkg, it.label, it.icon)) }
     }.filter { it.first !in hidden } + listOfNotNull(
         if (CarRuntime.PHONE_ID !in hidden) Triple(CarRuntime.PHONE_ID, stringResource(R.string.setup_app_entry_phone), null) else null,
         // Settings is always in the car's list (never hidden): always in this order too.
@@ -1386,6 +1441,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
 private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     val candidates = launcherCandidates(l, hidden, phoneScreen, browser)
     var compact by remember { mutableStateOf(settings.compactRail) }
+    var spacing by remember { mutableStateOf(settings.railSpacing) }
     var chosen by remember { mutableStateOf(settings.railApps) }
     fun setChosen(keys: List<String>) { chosen = keys; settings.railApps = keys }
     val chosenIndex = chosen.withIndex().associate { (i, k) -> k to i }
@@ -1395,6 +1451,18 @@ private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<St
         Spacer(Modifier.height(8.dp))
         Toggle(stringResource(R.string.setup_toggle_compact_rail_title), stringResource(R.string.setup_toggle_compact_rail_subtitle), compact) {
             compact = it; settings.compactRail = it
+        }
+        Spacer(Modifier.height(8.dp))
+        val gap = spacing ?: railGapDp(compact, bottom = settings.railPosition == Settings.RAIL_BOTTOM)
+        fun setSpacing(dp: Int?) { spacing = dp; settings.railSpacing = dp }
+        Text(stringResource(R.string.setup_rail_spacing), style = MaterialTheme.typography.bodyLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(onClick = { setSpacing(gap - 1) }, enabled = gap > 0) { Text("\u2212") }
+            Text(stringResource(R.string.setup_rail_spacing_dp, gap), style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
+            OutlinedButton(onClick = { setSpacing(gap + 1) }, enabled = gap < 40) { Text("+") }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { setSpacing(null) }, enabled = spacing != null) { Text(stringResource(R.string.setup_rail_spacing_reset)) }
         }
         Spacer(Modifier.height(8.dp))
         sorted.forEach { (key, label, icon) ->

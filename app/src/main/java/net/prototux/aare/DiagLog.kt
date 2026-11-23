@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import net.prototux.aare.aap.ProtocolTrace
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,7 +36,9 @@ object DiagLog {
     }
 
     @Synchronized
-    fun add(line: String) {
+    fun add(message: String) {
+        // Posted with reports: no hardware addresses of the phone, the car or other devices.
+        val line = ProtocolTrace.masked(message)
         Log.i(TAG, line)
         val stamp = SimpleDateFormat("dd/MM HH:mm:ss", Locale.US).format(Date())
         val all = (_lines.value + "$stamp  $line").takeLast(MAX_LINES)

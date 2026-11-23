@@ -45,7 +45,7 @@ class DrivingMode(context: Context, private val settings: Settings) {
         val listener = CarNotificationListener.instance ?: return
         val c = listener.conversations().firstOrNull { it.key == key } ?: return
         if (!c.canReply || !replied.add(c.packageName + "/" + c.title)) return
-        if (listener.reply(c, settings.autoReplyText)) DiagLog.add("driving: auto-replied to ${c.title}")
+        if (listener.reply(c, settings.autoReplyText)) DiagLog.add("driving: auto-replied to a message")
     }
 
     companion object {

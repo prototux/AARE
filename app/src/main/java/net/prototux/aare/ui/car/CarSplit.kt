@@ -64,6 +64,17 @@ fun snapSplitRatio(raw: Float): Float {
     return SPLIT_SNAP_RATIOS.minByOrNull { abs(it - clamped) } ?: 0.5f
 }
 
+/**
+ * Where one knob or D-pad step ([steps] of them, + toward the secondary's edge) takes a divider
+ * resting at [ratio]: to the next rest point of [snapSplitRatio], so the step goes through the same
+ * commit as a drag released there. Past the last real rest point it reaches 0f or 1f, which closes
+ * that pane like dragging to the edge; it never goes beyond.
+ */
+fun stepSplitRatio(ratio: Float, steps: Int): Float {
+    val at = SPLIT_SNAP_RATIOS.indices.minByOrNull { abs(SPLIT_SNAP_RATIOS[it] - ratio.coerceIn(0f, 1f)) } ?: 2
+    return SPLIT_SNAP_RATIOS[(at + steps).coerceIn(0, SPLIT_SNAP_RATIOS.lastIndex)]
+}
+
 /** The narrower of the two panes' width at [ratio] of [totalWidth], the divider's own width set aside. */
 fun minPaneWidth(totalWidth: Dp, ratio: Float): Dp {
     val usable = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value).coerceAtLeast(0f)

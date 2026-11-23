@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Zprávy, navigace z Google Maps a Waze, právě přehrávané</string>
     <string name="setup_check_audio_subtitle">Umožnit, aby zvuk telefonu doputoval do auta</string>
     <string name="setup_action_set_up">Nastavit</string>
+    <string name="setup_old_android_title">Běží na starším Androidu</string>
+    <string name="setup_old_android_message">AARE běží také na Androidu 6 a 7, ale Android 8 je lépe podporovaným základem. Na Androidu 6 a 7 nelze oznámení o připojení umístit do vlastního kanálu, takže je nelze ztlumit samostatně od ostatních oznámení AARE v nastavení systému. Všechno ostatní funguje stejně, nebo se automaticky vrátí ke starší metodě.</string>
+    <string name="setup_old_android_dont_show_again">Už nezobrazovat</string>
     <string name="setup_section_connecting">Připojování</string>
     <string name="setup_toggle_wireless_title">Bezdrátově</string>
     <string name="setup_toggle_wireless_subtitle">Připojit se k párovaným autům přes Wi-Fi, jakmile se dostanou do dosahu Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systémové směrování zvuku (jako Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, hudba a navigace oddělené (jako Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku nebo root</string>
+    <string name="audio_method_root_policy">Root, hudba a navigace oddělené</string>
     <string name="audio_method_playback_capture">Oprávnění ke snímání obrazovky</string>
     <string name="audio_policy_not_ready">Jako Android Auto: hudba a hlas navigace samostatně, reproduktor telefonu vypnutý. Vyžaduje telefon s rootem: nainstalujte AARE jako systémovou aplikaci pomocí modulu Magisk (viz README).</string>
     <string name="audio_shizuku_ready">Připraveno. Vše, co telefon přehrává, jde do auta, včetně hlasu navigace; telefon zůstává tichý.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Domovská stránka</string>
     <string name="browser_address_hint">Hledat nebo zadat webovou adresu</string>
     <string name="assistant_links_title">Odkazy od asistenta</string>
+    <string name="assistant_stop">Zastavit asistenta</string>
+    <string name="assistant_stop_style_title">Zastavení asistenta</string>
+    <string name="assistant_stop_style_voice_button">Tlačítko hlasu se změní na Zastavit</string>
+    <string name="assistant_stop_style_red_restart">Červené tlačítko stop, tlačítko hlasu se znovu zeptá</string>
+    <string name="assistant_stop_style_red_stop">Červené tlačítko stop, tlačítko hlasu také zastaví</string>
     <string name="assistant_links_subtitle">Umožní odkazům aare:// v odpovědích zvoleného asistenta ovládat hudbu nebo na obrazovce auta nabídnout navigaci, otevření aplikace či hovor. Odkazy z jiných aplikací a z webových stránek se ignorují.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Data vozu</string>

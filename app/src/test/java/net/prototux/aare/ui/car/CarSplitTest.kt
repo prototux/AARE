@@ -48,6 +48,27 @@ class CarSplitTest {
     }
 
     @Test
+    fun aKnobStepMovesTheDividerOneRestPoint() {
+        assertEquals(2f / 3f, stepSplitRatio(0.5f, 1), 0.0001f)
+        assertEquals(1f / 3f, stepSplitRatio(0.5f, -1), 0.0001f)
+        assertEquals(0.5f, stepSplitRatio(1f / 3f, 1), 0.0001f)
+        // Every step lands where snapSplitRatio would leave a drag released there.
+        for (r in listOf(1f / 3f, 0.5f, 2f / 3f)) for (step in listOf(-1, 1)) {
+            val next = stepSplitRatio(r, step)
+            assertEquals(snapSplitRatio(next), next, 0.0001f)
+        }
+    }
+
+    @Test
+    fun aKnobStepPastTheLastRestPointClosesThatPaneAndGoesNoFurther() {
+        // Same values a drag to the edge commits: 1f closes the secondary, 0f the primary.
+        assertEquals(1f, stepSplitRatio(2f / 3f, 1), 0.0001f)
+        assertEquals(0f, stepSplitRatio(1f / 3f, -1), 0.0001f)
+        assertEquals(1f, stepSplitRatio(0.5f, 5), 0.0001f)
+        assertEquals(0f, stepSplitRatio(0.5f, -5), 0.0001f)
+    }
+
+    @Test
     fun outOfRangeRatiosAreClampedBeforeSnapping() {
         assertEquals(0f, snapSplitRatio(-5f), 0.0001f)
         assertEquals(1f, snapSplitRatio(5f), 0.0001f)
