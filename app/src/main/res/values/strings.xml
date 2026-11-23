@@ -172,6 +172,9 @@
     <string name="setup_check_notification_access_subtitle">Messages, directions from Google Maps and Waze, now playing</string>
     <string name="setup_check_audio_subtitle">Let the phone\'s sound reach the car</string>
     <string name="setup_action_set_up">Set up</string>
+    <string name="setup_old_android_title">Running on an older Android</string>
+    <string name="setup_old_android_message">AARE also runs on Android 6 and 7, but Android 8 is the better-supported baseline. On Android 6 and 7, connection notifications can\'t be put in their own channel, so they can\'t be muted separately from AARE\'s other notices in system settings. Everything else works the same, or falls back to an older method automatically.</string>
+    <string name="setup_old_android_dont_show_again">Don\'t show again</string>
     <string name="shizuku_setup_title">Grant AARE\'s permissions with Shizuku</string>
     <string name="shizuku_setup_subtitle">One tap grants what is still missing, without each permission\'s own dialog: microphone, location, contacts, call log, calendar, phone calls, nearby devices (Bluetooth, Wi-Fi), local network, notifications and notification access</string>
     <string name="shizuku_setup_working">Granting…</string>
@@ -336,6 +339,9 @@
     <string name="setup_car_rail_hint">Choose which apps sit on the rail (or the taskbar) and in which order. Nothing chosen: the rail keeps its built-in set (navigation, music, recent apps, phone).</string>
     <string name="setup_toggle_compact_rail_title">Compact rail</string>
     <string name="setup_toggle_compact_rail_subtitle">A narrower rail, with smaller icons and tighter spacing</string>
+    <string name="setup_rail_spacing">Space between the apps in the bar</string>
+    <string name="setup_rail_spacing_dp">%1$d dp</string>
+    <string name="setup_rail_spacing_reset">Standard</string>
     <string name="setup_section_connection_log">Connection log</string>
     <string name="setup_section_car_buttons">Car buttons</string>
     <string name="setup_car_buttons_hint">Keys AARE has seen from this car. Choose what each one does; a key left at \"Default\" keeps its normal behaviour.</string>
@@ -459,6 +465,7 @@
     <string name="audio_method_policy">System audio routing (like Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, music and navigation apart (like Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku or root</string>
+    <string name="audio_method_root_policy">Root, music and navigation apart</string>
     <string name="audio_method_playback_capture">Screen-capture permission</string>
     <string name="audio_policy_not_ready">Like Android Auto: music and navigation voice apart, phone speaker off. Needs a rooted phone: install AARE as a system app with the Magisk module (see the README).</string>
     <string name="audio_shizuku_ready">Ready. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
@@ -518,6 +525,11 @@
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_links_title">Links from the assistant</string>
+    <string name="assistant_stop">Stop the assistant</string>
+    <string name="assistant_stop_style_title">Stopping the assistant</string>
+    <string name="assistant_stop_style_voice_button">The voice button turns into Stop</string>
+    <string name="assistant_stop_style_red_restart">Red stop button, the voice button asks again</string>
+    <string name="assistant_stop_style_red_stop">Red stop button, the voice button stops too</string>
     <string name="assistant_links_subtitle">Let aare:// links in the chosen assistant\'s replies control the music, or offer to navigate, open an app or call on the car screen. Links from other apps and from web pages are ignored.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>

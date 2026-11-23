@@ -341,6 +341,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("assistant_on_car_screen", false)
         set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
 
+    /**
+     * How the driver stops the assistant ([ASSISTANT_STOP_VOICE_BUTTON], the default: the voice button
+     * turns into a stop button while the assistant is on; [ASSISTANT_STOP_RED_RESTART]: a big red stop
+     * on the assistant bar, the voice button asks again; [ASSISTANT_STOP_RED_STOP]: the red stop, and
+     * the voice button stops too). The steering wheel's voice key does what the voice button does.
+     */
+    var assistantStopStyle: String
+        get() = prefs.getString("assistant_stop", ASSISTANT_STOP_VOICE_BUTTON) ?: ASSISTANT_STOP_VOICE_BUTTON
+        set(v) = prefs.edit { putString("assistant_stop", v) }
+
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
         get() = prefs.getBoolean("phone_screen", false)
@@ -500,6 +510,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("compact_rail", false)
         set(v) = prefs.edit { putBoolean("compact_rail", v) }
 
+    /** The space between the rail's apps in dp, or null for the standard one. */
+    var railSpacing: Int?
+        get() = if (prefs.contains("rail_spacing")) prefs.getInt("rail_spacing", 0) else null
+        set(v) = prefs.edit { if (v == null) remove("rail_spacing") else putInt("rail_spacing", v) }
+
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
         get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()
@@ -567,6 +582,11 @@ class Settings(context: Context) {
         get() = prefs.getString("last_head_unit", null)
         set(v) = prefs.edit { putString("last_head_unit", v) }
 
+    /** "Don't show again" on the Android 6/7 notice (MainActivity). OK alone shows it again next launch. */
+    var oldAndroidNoticeDismissed: Boolean
+        get() = prefs.getBoolean("old_android_notice_dismissed", false)
+        set(v) = prefs.edit { putBoolean("old_android_notice_dismissed", v) }
+
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val HOME_ACTIONS_KEY = "home_actions"
@@ -574,6 +594,9 @@ class Settings(context: Context) {
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
         const val RAIL_BOTTOM = "bottom"
+        const val ASSISTANT_STOP_VOICE_BUTTON = "voice_button"
+        const val ASSISTANT_STOP_RED_RESTART = "red_restart"
+        const val ASSISTANT_STOP_RED_STOP = "red_stop"
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"

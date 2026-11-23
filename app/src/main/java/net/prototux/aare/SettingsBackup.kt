@@ -55,6 +55,7 @@ object SettingsBackup {
         "car_theme" to Type.STRING,
         "car_audio" to Type.BOOLEAN,
         "assistant_pkg" to Type.STRING,
+        "assistant_stop" to Type.STRING,
         "phone_screen" to Type.BOOLEAN,
         "standalone_keep_screen_awake" to Type.BOOLEAN,
         "standalone_app_pkgs" to Type.STRING_SET,
@@ -75,6 +76,17 @@ object SettingsBackup {
         "last_media" to Type.STRING,
         "app_order" to Type.STRING,
         "hidden_apps" to Type.STRING_SET,
+        "rail_apps" to Type.STRING,
+        "compact_rail" to Type.BOOLEAN,
+        "rail_widgets" to Type.STRING,
+        "split_screen" to Type.BOOLEAN,
+        "car_text_size" to Type.STRING,
+        "car_control_size" to Type.STRING,
+        "car_chrome" to Type.STRING,
+        "night_source" to Type.STRING,
+        "dashboard_map_big" to Type.BOOLEAN,
+        "calendar_agenda_count" to Type.INT,
+        "car_key_map" to Type.STRING_SET,
     )
 
     /**
@@ -92,6 +104,13 @@ object SettingsBackup {
         "ignore_driving", // passenger mode: lifts the driving restrictions
         "root_audio", // capture through su, granted in the audio settings
         "standalone_apps", // phone apps on the car screen through root or Shizuku, behind a warning
+        "assistant_links", // lets another app act on the car
+        "assistant_on_car_screen", // the next five work through root or Shizuku
+        "media_video",
+        "car_mic_for_phone_apps",
+        "auto_pair_car_bluetooth",
+        "companion_wifi_shizuku",
+        "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate
     )
 
