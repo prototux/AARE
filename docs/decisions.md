@@ -670,7 +670,8 @@ stays out until someone adds it there on purpose.
 - `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
   head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
   exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
-  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  (root/Shizuku, behind a warning) and their driving rules, the other root or Shizuku options, the
+  assistant's links and certificate auto-update (a third-party download). Each must
   be switched on by hand on the phone itself. A test checks the two lists never overlap.
 - A file carrying a blocked key (hand-edited, or from a version that exported one) leaves it
   unchanged on import, in particular `hu_server_localhost`, `standalone_apps` and
