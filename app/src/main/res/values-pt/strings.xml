@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Mensagens, indicações do Google Maps e do Waze, a reproduzir agora</string>
     <string name="setup_check_audio_subtitle">Permitir que o som do telemóvel chegue ao carro</string>
     <string name="setup_action_set_up">Configurar</string>
+    <string name="setup_old_android_title">A funcionar num Android mais antigo</string>
+    <string name="setup_old_android_message">A AARE também funciona no Android 6 e 7, mas o Android 8 é a base com melhor suporte. No Android 6 e 7, as notificações de ligação não podem ser colocadas no seu próprio canal, por isso não podem ser silenciadas separadamente das outras notificações da AARE nas definições do sistema. Tudo o resto funciona da mesma forma, ou recorre automaticamente a um método mais antigo.</string>
+    <string name="setup_old_android_dont_show_again">Não mostrar novamente</string>
     <string name="setup_section_connecting">A ligar</string>
     <string name="setup_toggle_wireless_title">Sem fios</string>
     <string name="setup_toggle_wireless_subtitle">Ligar a carros emparelhados por Wi-Fi quando entram no alcance do Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Encaminhamento de áudio do sistema (como no Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, música e navegação separadas (como no Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku ou root</string>
+    <string name="audio_method_root_policy">Root, música e navegação separadas</string>
     <string name="audio_method_playback_capture">Permissão de captura de ecrã</string>
     <string name="audio_policy_not_ready">Como no Android Auto: música e voz de navegação separadas, altifalante do telemóvel desligado. Requer um telemóvel com root: instale a AARE como aplicação do sistema com o módulo Magisk (consulte o README).</string>
     <string name="audio_shizuku_ready">Pronto. Tudo o que o telemóvel reproduz vai para o carro, incluindo a voz de navegação; o telemóvel fica em silêncio.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Página inicial</string>
     <string name="browser_address_hint">Pesquisar ou introduzir um endereço Web</string>
     <string name="assistant_links_title">Ligações do assistente</string>
+    <string name="assistant_stop">Parar o assistente</string>
+    <string name="assistant_stop_style_title">Como parar o assistente</string>
+    <string name="assistant_stop_style_voice_button">O botão de voz transforma-se em Parar</string>
+    <string name="assistant_stop_style_red_restart">Botão de paragem vermelho, o botão de voz volta a perguntar</string>
+    <string name="assistant_stop_style_red_stop">Botão de paragem vermelho, o botão de voz também para</string>
     <string name="assistant_links_subtitle">Permite que as ligações aare:// nas respostas do assistente escolhido controlem a música, ou proponham no ecrã do carro navegar, abrir uma aplicação ou ligar. As ligações de outras aplicações e de páginas web são ignoradas.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dados do carro</string>

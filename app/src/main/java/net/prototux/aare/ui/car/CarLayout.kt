@@ -1,11 +1,21 @@
 package net.prototux.aare.ui.car
 
 import android.os.Build
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.ui.theme.CarAccents
@@ -54,6 +64,25 @@ object CarStyles {
     /** The style a theme and layout make up, or null for a mix of the user's own ("Custom"). */
     fun matching(themeId: String, layout: CarLayout): CarStyle? =
         all.firstOrNull { it.themeId == themeId && it.layout == layout }
+}
+
+/**
+ * What a style, theme or accent looks like, for the dot next to its name: its night background to
+ * its accent, or its one color. Empty for one without a color of its own (a mix, the theme's or the
+ * phone's accent).
+ */
+internal fun styleSwatch(value: String): List<Color> {
+    CarAccents.all.firstOrNull { it.id == value }?.let { return listOf(it.dark.primary) }
+    val theme = CarThemes.all.firstOrNull { it.id == value.substringBefore('/') } ?: return emptyList()
+    return listOf(theme.night.background, theme.night.primary)
+}
+
+/** A dot in [colors] (see [styleSwatch]). */
+@Composable
+internal fun Swatch(colors: List<Color>, size: Dp) {
+    Box(Modifier.size(size).clip(CircleShape)
+        .background(Brush.linearGradient(if (colors.size == 1) colors + colors else colors))
+        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape))
 }
 
 /**

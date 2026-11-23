@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.KeyguardManager
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ContentUris
@@ -124,12 +123,11 @@ object VoipCalls {
     /** A phone notification asking to let [target]'s app use the microphone; a tap opens its settings. */
     fun askForMicrophone(context: Context, target: VoipTarget) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
-        nm.createNotificationChannel(NotificationChannel(ProjectionService.CHANNEL,
-            context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
+        ProjectionService.ensureChannel(context)
         val settings = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", target.app.packageName, null))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val text = context.getString(R.string.voip_mic_notification_text, target.app.label)
-        val notification = Notification.Builder(context, ProjectionService.CHANNEL)
+        val notification = ProjectionService.notificationBuilder(context)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.voip_mic_title, target.app.label))
             .setContentText(text)

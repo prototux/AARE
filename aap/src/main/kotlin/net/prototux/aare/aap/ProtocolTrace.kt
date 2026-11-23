@@ -24,6 +24,14 @@ object ProtocolTrace {
         else -> true
     }
 
+    /** [text] with every Bluetooth or Wi-Fi hardware address replaced by xx:xx:xx:xx:xx:xx. */
+    fun masked(text: String): String = text.replace(MAC, "xx:xx:xx:xx:xx:xx")
+
+    /** A head unit's key in the trust store without its USB serial number ("usb:make|model|serial"). */
+    fun peer(key: String): String = if (key.startsWith("usb:")) key.split('|').take(2).joinToString("|") else key
+
+    private val MAC = Regex("(?i)\\b[0-9a-f]{2}([:-])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}\\b")
+
     /** A readable name for message [id] on [channelName], or its hex id when unknown. */
     fun name(channelName: String?, id: Int): String {
         val names = when {
