@@ -488,7 +488,7 @@ class CarSession(
                 pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && playing
                 // A call on the phone, or an assistant listening over Bluetooth, which the car takes
                 // for one: it plays on once that ends (see modeChanged), if chosen.
-                pausedForCall = settings.resumeAfterCall && playing && phoneInCall()
+                pausedForCall = settings.resumeAfterCall && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && playing && phoneInCall()
                 pausedForGuidance = false
                 media.pause()
             }
