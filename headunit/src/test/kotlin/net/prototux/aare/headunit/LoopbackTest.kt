@@ -168,11 +168,14 @@ class LoopbackTest {
         hu.navFocus()
         l.navFocus.poll(5, TimeUnit.SECONDS)!!
         assertTrue(l.errors.isNotEmpty())
-        assertFalse(l.phone.isClosed)
+        assertFalse("phone closed: ${l.closeReason}", l.phone.isClosed)
+        assertNull("head unit closed before the bye-bye; phone errors: ${l.errors}", l.huClosed)
 
         hu.byeBye()
         l.awaitClosed()
         assertNull("an orderly end", l.closeError)
+        l.awaitTrue("head unit closed") { l.huClosed != null }
+        assertEquals("disconnected", l.huClosed)
     }
 
     // ------------------------------------------------------------------ harness
@@ -190,6 +193,10 @@ class LoopbackTest {
         private val running = CountDownLatch(1)
         private val closed = CountDownLatch(1)
         @Volatile var closeError: Throwable? = null
+        /** Why the phone session closed, once it has. */
+        @Volatile var closeReason: String? = null
+        /** Why the head unit closed itself, once it has. */
+        @Volatile var huClosed: String? = null
         @Volatile var discovery: ServiceDiscoveryResponse? = null
         /** The channels the phone asked to open, in the order it asked. */
         @Volatile var channels: Map<Int, ServiceChannel> = emptyMap()
@@ -224,7 +231,7 @@ class LoopbackTest {
                 override fun navigation(text: String) {}
                 override fun nowPlaying(text: String) {}
                 override fun phone(text: String) {}
-                override fun closed(reason: String) {}
+                override fun closed(reason: String) { huClosed = reason }
             })
             phone.start()
             hu.start()
@@ -304,6 +311,7 @@ class LoopbackTest {
             override fun onNavFocus(session: AapSession, notification: NavFocusNotification) { navFocus += notification }
             override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
                 closeError = error
+                closeReason = reason
                 closed.countDown()
             }
         }
