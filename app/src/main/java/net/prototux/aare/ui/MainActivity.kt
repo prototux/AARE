@@ -1823,6 +1823,15 @@ private fun CarDataCard() {
         Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
         // Takes effect at the next connection (the reader runs with the car session).
         Toggle(stringResource(R.string.obd_adapter_title), stringResource(R.string.obd_adapter_subtitle), obdOn) { obdOn = it; settings.obdAdapter = it }
+        if (obdOn) {
+            // Which paired device to read: by default any clearly named adapter, or the one picked here.
+            val paired = remember { net.prototux.aare.obd.BluetoothObdLink.pairedDevices(ctx) }
+            var chosen by remember { mutableStateOf(settings.obdAdapterAddress.orEmpty()) }
+            val options = listOf("" to stringResource(R.string.obd_adapter_auto)) + paired +
+                listOfNotNull(chosen.takeIf { c -> c.isNotEmpty() && paired.none { it.first == c } }?.let { it to it })
+            Spacer(Modifier.height(8.dp))
+            Select(stringResource(R.string.obd_adapter_pick), options, chosen) { chosen = it; settings.obdAdapterAddress = it.ifEmpty { null } }
+        }
         if (obdOn && net.prototux.aare.BuildConfig.DEBUG) {
             Toggle(stringResource(R.string.obd_simulated_title), stringResource(R.string.obd_simulated_subtitle), obdFake) { obdFake = it; settings.obdSimulated = it }
         }

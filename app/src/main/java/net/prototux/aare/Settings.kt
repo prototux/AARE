@@ -418,6 +418,10 @@ class Settings(context: Context) {
     var obdAdapter: Boolean
         get() = prefs.getBoolean("obd_adapter", false)
         set(v) = prefs.edit { putBoolean("obd_adapter", v) }
+    /** The adapter the user picked (Bluetooth address); null: any paired device clearly named as one. */
+    var obdAdapterAddress: String?
+        get() = prefs.getString("obd_adapter_address", null)
+        set(v) = prefs.edit { if (v == null) remove("obd_adapter_address") else putString("obd_adapter_address", v) }
     /** Debug builds: a pretend adapter instead of a real one, to try the Car data page without a car. */
     var obdSimulated: Boolean
         get() = prefs.getBoolean("obd_simulated", false)

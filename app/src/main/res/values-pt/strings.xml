@@ -582,6 +582,8 @@
 
     <string name="obd_adapter_title">Ler um adaptador OBD2</string>
     <string name="obd_adapter_subtitle">Um adaptador ELM327 emparelhado por Bluetooth, lido enquanto o carro está ligado: dados do motor que o carro não envia à AARE. Só leitura: a AARE nunca escreve no carro.</string>
+    <string name="obd_adapter_pick">Adaptador</string>
+    <string name="obd_adapter_auto">Automático: um aparelho pareado com nome de adaptador (OBD, ELM327, V-LINK…)</string>
     <string name="obd_simulated_title">Adaptador OBD2 simulado (depuração)</string>
     <string name="obd_simulated_subtitle">Um carro simulado em vez de um adaptador real, para experimentar esta página</string>
     <string name="obd_section">Adaptador OBD2</string>

@@ -6,7 +6,11 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.UUID
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 /**
  * Talks to an OBD2 adapter (an ELM327 or compatible over classic Bluetooth) and turns the car's
@@ -31,6 +35,7 @@ interface ObdLink {
 class BluetoothObdLink(device: BluetoothDevice) : ObdLink {
     override val name: String = device.name ?: "OBD2"
     private val socket: BluetoothSocket
+    private val stream: ElmStream
 
     init {
         var s = device.createRfcommSocketToServiceRecord(SPP)
@@ -42,28 +47,12 @@ class BluetoothObdLink(device: BluetoothDevice) : ObdLink {
             s.connect()
         }
         socket = s
+        stream = ElmStream(s.inputStream, s.outputStream)
     }
 
-    override fun send(command: String, waitMs: Long): String {
-        val input = socket.inputStream
-        val output = socket.outputStream
-        while (input.available() > 0) input.read() // leftovers
-        output.write("$command\r".toByteArray())
-        output.flush()
-        val answer = StringBuilder()
-        val deadline = System.currentTimeMillis() + waitMs
-        while (System.currentTimeMillis() < deadline) {
-            if (input.available() > 0) {
-                val c = input.read().toChar()
-                if (c == '>') return answer.toString()
-                answer.append(c)
-            } else {
-                try { Thread.sleep(5) } catch (_: InterruptedException) { throw IOException("stopped") }
-            }
-        }
-        return answer.toString() + ObdLink.NO_ANSWER
-    }
+    override fun send(command: String, waitMs: Long) = stream.send(command, waitMs)
 
+    /** Closing the socket also ends [ElmStream]'s reading thread. */
     override fun close() {
         runCatching { socket.close() }
     }
@@ -71,17 +60,80 @@ class BluetoothObdLink(device: BluetoothDevice) : ObdLink {
     companion object {
         /** The Bluetooth "serial port" profile. */
         val SPP: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-        private val ADAPTER_NAME = Regex("(?i)obd|elm|v-?link|vgate|icar|konnwei|vlink|scan")
 
-        /** Paired devices whose name looks like an OBD2 adapter. */
+        /**
+         * The adapter to read: the one the user picked ([chosen], a Bluetooth address), or else the
+         * paired devices whose name is clearly an OBD2 adapter ([Elm327.isAdapterName]).
+         */
         @SuppressLint("MissingPermission")
-        fun pairedAdapters(context: Context): List<BluetoothDevice> {
+        fun pairedAdapters(context: Context, chosen: String?): List<BluetoothDevice> {
             val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter ?: return emptyList()
             if (!adapter.isEnabled) return emptyList()
-            return adapter.bondedDevices.filter { d -> d.name?.let(ADAPTER_NAME::containsMatchIn) == true }
+            val bonded = adapter.bondedDevices.orEmpty()
+            if (chosen != null) return bonded.filter { it.address == chosen }
+            return bonded.filter { d -> d.name?.let(Elm327::isAdapterName) == true }
         }
 
+        /** The paired devices (address to name), for picking the adapter in the settings. */
+        @SuppressLint("MissingPermission")
+        fun pairedDevices(context: Context): List<Pair<String, String>> = runCatching {
+            context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty()
+                .map { it.address to (it.name ?: it.address) }.sortedBy { it.second.lowercase() }
+        }.getOrDefault(emptyList())
+
         fun bluetoothOn(context: Context) = context.getSystemService(BluetoothManager::class.java)?.adapter?.isEnabled == true
+    }
+}
+
+/**
+ * The ELM327's text exchange over a serial stream. A thread blocks reading [input] and hands each
+ * byte over, so waiting for an answer sleeps until it arrives (a Bluetooth socket's stream has no
+ * read timeout, so [send]'s limit is kept here) instead of checking the stream over and over.
+ */
+class ElmStream(private val input: InputStream, private val output: OutputStream) {
+    private val bytes = LinkedBlockingQueue<Int>()
+    @Volatile private var closed = false
+
+    init {
+        Thread({
+            val buffer = ByteArray(256)
+            try {
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n < 0) break
+                    for (i in 0 until n) bytes.put(buffer[i].toInt() and 0xFF)
+                }
+            } catch (_: IOException) {
+                // The link was closed.
+            } finally {
+                closed = true
+                bytes.put(END)
+            }
+        }, "aare-obd-read").apply { isDaemon = true; start() }
+    }
+
+    /** Sends a command and returns the answer up to the ">" prompt, or with [ObdLink.NO_ANSWER] after [waitMs]. */
+    @Throws(IOException::class)
+    fun send(command: String, waitMs: Long): String {
+        if (closed) throw IOException("closed")
+        bytes.clear() // leftovers of an answer that came too late
+        output.write("$command\r".toByteArray())
+        output.flush()
+        val answer = StringBuilder()
+        val deadline = System.currentTimeMillis() + waitMs
+        while (true) {
+            val left = deadline - System.currentTimeMillis()
+            if (left <= 0) break
+            val c = try { bytes.poll(left, TimeUnit.MILLISECONDS) } catch (_: InterruptedException) { throw IOException("stopped") } ?: break
+            if (c == END) throw IOException("closed")
+            if (c == '>'.code) return answer.toString()
+            answer.append(c.toChar())
+        }
+        return answer.toString() + ObdLink.NO_ANSWER
+    }
+
+    private companion object {
+        const val END = -1
     }
 }
 
@@ -107,6 +159,13 @@ data class ObdReadings(
 
 /** The ELM327 language and the standard mode 01 formulas. */
 object Elm327 {
+    /**
+     * A paired device's name that is clearly an OBD2 adapter (OBD, OBDII, OBDLink, ELM327, V-LINK,
+     * Vgate, Konnwei, Veepeak): commands go only to those, never to a headset or a car.
+     */
+    fun isAdapterName(name: String) = ADAPTER_NAME.containsMatchIn(name)
+    private val ADAPTER_NAME = Regex("(?i)obd|elm ?327|\\bv-?link|vgate|konnwei|veepeak")
+
     /** Reset, no echo, no extra line feeds, no spaces, no headers, automatic protocol. */
     val SETUP = listOf("ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0")
     /** Adaptive timing and the engine only (7E0): on some cars two modules answer and the ELM waits for its timeout. */

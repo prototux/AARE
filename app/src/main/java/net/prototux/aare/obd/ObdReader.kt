@@ -7,6 +7,7 @@ import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.prototux.aare.DiagLog
+import net.prototux.aare.Settings
 import java.io.IOException
 
 /**
@@ -128,7 +129,7 @@ object ObdReader {
 
     private fun connect(context: Context): ObdLink? {
         if (!BluetoothObdLink.bluetoothOn(context)) return null
-        for (device in BluetoothObdLink.pairedAdapters(context)) {
+        for (device in BluetoothObdLink.pairedAdapters(context, Settings(context).obdAdapterAddress)) {
             try {
                 return BluetoothObdLink(device)
             } catch (e: IOException) {

@@ -96,6 +96,8 @@
     <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>
     <string name="obd_adapter_title">Read an OBD2 adapter</string>
     <string name="obd_adapter_subtitle">An ELM327 adapter paired over Bluetooth, read while the car is connected: engine data the car doesn\'t send to AARE. Read only: AARE never writes to the car.</string>
+    <string name="obd_adapter_pick">Adapter</string>
+    <string name="obd_adapter_auto">Automatic: a paired device named like an adapter (OBD, ELM327, V-LINK…)</string>
     <string name="obd_simulated_title">Pretend OBD2 adapter (debug)</string>
     <string name="obd_simulated_subtitle">A simulated car instead of a real adapter, to try this page</string>
     <string name="obd_section">OBD2 adapter</string>
