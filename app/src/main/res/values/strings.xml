@@ -154,6 +154,8 @@
     <string name="quirks_exit_to_car_subtitle">On: show the app list\'s Exit to car entry for this car. Off: hide it.</string>
     <string name="quirks_mic_setup_title">Microphone SETUP message</string>
     <string name="quirks_mic_setup_subtitle">On: send SETUP when the microphone channel opens. Off: never send it.</string>
+    <string name="quirks_video_headers_once_title">Video headers only once</string>
+    <string name="quirks_video_headers_once_subtitle">Try On when the car plays the sound but shows no picture. On: the video\'s SPS/PPS goes out only at the start. Off: before every key frame, as usual. Some head units can\'t decode that.</string>
     <string name="vehicles_malformed_at">vehicles.json has an error at line %1$d, column %2$d (%3$s): its rules are ignored.</string>
     <string name="vehicles_malformed">vehicles.json can\'t be used (%1$s): its rules are ignored.</string>
     <string name="setup_tagline">Open-source car projection</string>
@@ -687,6 +689,20 @@
     <string name="msg_action_read_aloud">Read aloud</string>
     <string name="msg_action_mark_read">Mark as read</string>
     <string name="msg_action_reply">Reply</string>
+    <string name="msg_action_voice_reply">Reply by voice</string>
+    <string name="msg_voice_reply_listening">Say your reply to %1$s</string>
+    <string name="msg_voice_reply_confirm">Send your reply to %1$s?</string>
+    <string name="msg_voice_reply_read_back">%1$s. Send it to %2$s?</string>
+    <string name="msg_voice_reply_not_heard">Didn\'t catch that</string>
+    <string name="msg_voice_reply_try_again">Couldn\'t listen just now. Try again</string>
+    <string name="msg_voice_reply_unavailable">Speech recognition isn\'t available on this phone</string>
+    <string name="msg_voice_reply_send">Send</string>
+    <!-- Comma-separated words that answer the read-back aloud; English ones always count too. -->
+    <string name="msg_voice_reply_yes_words">yes,yeah,send,send it,ok,okay,sure</string>
+    <string name="msg_voice_reply_no_words">no,cancel,don\'t,stop</string>
+    <string name="msg_voice_reply_again">Again</string>
+    <string name="msg_toggle_voice_reply_title">Reply by voice</string>
+    <string name="msg_toggle_voice_reply_subtitle">Dictate a reply from the car screen, also while driving. It\'s read back and sent only when you say yes or tap Send. With Car microphone for phone apps on, the car\'s microphone listens</string>
     <string name="msg_reply_hint">Message to %1$s</string>
     <string name="msg_message_count_one">1 message</string>
     <string name="msg_message_count_many">%1$d messages</string>

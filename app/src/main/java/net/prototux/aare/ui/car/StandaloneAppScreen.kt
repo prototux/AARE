@@ -104,10 +104,17 @@ internal fun StandaloneAppScreen(
         withContext(Dispatchers.IO) { launcher.view(pendingView, packageName) }
     }
 
+    // An app allowed while driving (a navigation app) stays on its display: its keyboard goes back
+    // to the phone once driving starts, and to the car screen when parked again.
+    val keyboardInCar = !runtime.ui.drivingRestricted
+    LaunchedEffect(started, keyboardInCar) {
+        if (started) withContext(Dispatchers.IO) { launcher.keyboardInCar(keyboardInCar) }
+    }
+
     Box(modifier.background(Color.Black)) {
         if (!driving) {
             LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
-                start = { surface, w, h -> launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
+                start = { surface, w, h -> launcher.keyboardInCar(!runtime.ui.drivingRestricted); launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
                 onStarted = { started = it },
                 // Back from a drive: the app kept running on its display, so it gets the new
                 // surface rather than a restart (start() relaunches it, which would end a video, or

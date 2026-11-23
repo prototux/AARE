@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
@@ -27,21 +28,39 @@ val SPLIT_DIVIDER_WIDTH = 32.dp
 private val SPLIT_SNAP_RATIOS = floatArrayOf(0f, 1f / 3f, 0.5f, 2f / 3f, 1f)
 
 /**
- * Car apps that can take the second pane: built-ins and non-hosted screens the dashboard already
- * runs beside the map today (media, phone, notifications…), none of which binds a second Car App
- * Library connection. A navigation/templated/assistant app keeps CarAppConnection's one-surface-
- * owner-at-a-time assumption (see CarAppConnection.surfaceAvailable): it only runs full screen or
- * on the dashboard's map card, never in both panes of a split. The phone mirror and a launched
- * phone app are single, device-wide resources (one phone screen, one virtual display per package
- * already used elsewhere) that aren't worth doubling up for a first version of split screen.
+ * Car apps that can take the second pane: built-ins, non-hosted screens (media, phone,
+ * notifications…) and hosted car apps. Each hosted app has its own CarAppConnection with its own
+ * surface, so two different ones run side by side; one connection still only has one surface
+ * owner (see CarAppConnection.surfaceAvailable), as an app is never in both panes
+ * ([openInPanes]). The phone mirror and a launched phone app are single, device-wide resources
+ * (one phone screen, one virtual display per package already used elsewhere) that aren't worth
+ * doubling up for a first version of split screen.
  */
 private val SPLIT_SECONDARY_KINDS = setOf(
     CarAppKind.MEDIA, CarAppKind.PHONE, CarAppKind.MESSAGING, CarAppKind.BROWSER,
     CarAppKind.CAR_DATA, CarAppKind.SETTINGS, CarAppKind.NOTIFICATIONS,
+    CarAppKind.NAVIGATION, CarAppKind.TEMPLATED, CarAppKind.ASSISTANT,
 )
 
 /** Whether [kind] may be opened in the second pane, beside whatever is already the main app. */
 fun canOpenBeside(kind: CarAppKind): Boolean = kind in SPLIT_SECONDARY_KINDS
+
+/**
+ * Whether the second pane shows its own close button over [kind]. Not over a hosted car app, whose
+ * own buttons are in that corner: the divider dragged to the edge and the home button close its pane.
+ */
+fun hasCloseButton(kind: CarAppKind): Boolean =
+    kind != CarAppKind.NAVIGATION && kind != CarAppKind.TEMPLATED && kind != CarAppKind.ASSISTANT
+
+/** True inside a split pane, whose size changes as the divider moves. */
+val LocalInSplitPane = staticCompositionLocalOf { false }
+
+/**
+ * Whether Back in the second pane closes it rather than going to the app: when the app can't go
+ * back itself, as it isn't [ready] or is on its first screen ([screens] its stack's depth). With a
+ * knob or D-pad, Back is the way to close just that pane.
+ */
+fun backClosesPane(ready: Boolean, screens: Int): Boolean = !ready || screens <= 1
 
 /** Whether the content area is wide enough to split at all. */
 fun splitScreenFits(width: Dp): Boolean = width >= SPLIT_MIN_SCREEN_WIDTH
@@ -110,4 +129,15 @@ fun openInPanes(appId: String, primary: String?, secondary: String?): SplitPanes
     appId == secondary && primary != null -> SplitPanes(primary, secondary, CarPane.SECONDARY)
     appId == secondary -> SplitPanes(appId, null, CarPane.PRIMARY)
     else -> SplitPanes(appId, secondary, CarPane.PRIMARY)
+}
+
+/**
+ * The app left alone on screen once [appId] finished while [primary] and [secondary] share it: the
+ * one in the other pane. Null when none is left (the dashboard), or [appId] was in neither pane.
+ */
+fun leftAlone(appId: String, primary: String?, secondary: String?): String? = when {
+    primary == null || secondary == null -> null
+    appId == primary -> secondary
+    appId == secondary -> primary
+    else -> null
 }
