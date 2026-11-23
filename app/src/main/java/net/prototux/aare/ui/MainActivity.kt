@@ -246,6 +246,7 @@ private fun Home() {
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
     BackHandler(enabled = page != null) { page = null }
+    OldAndroidNotice(settings)
 
     AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
@@ -391,6 +392,36 @@ private fun CertificateExpiryBanner() {
             }
         }
     }
+}
+
+/**
+ * Once per launch on Android 6 and 7 (minSdk 23; Android 8 is otherwise the baseline): what falls
+ * back to an older, more limited method there. "Don't show again" persists in [Settings]; OK
+ * alone shows it again next launch.
+ */
+@Composable
+private fun OldAndroidNotice(settings: Settings) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || settings.oldAndroidNoticeDismissed) return
+    var open by remember { mutableStateOf(true) }
+    if (!open) return
+    var dontShowAgain by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.setup_old_android_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.setup_old_android_message), style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+                Toggle(stringResource(R.string.setup_old_android_dont_show_again), "", dontShowAgain) { dontShowAgain = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (dontShowAgain) settings.oldAndroidNoticeDismissed = true
+                open = false
+            }) { Text(stringResource(R.string.common_ok)) }
+        },
+    )
 }
 
 @Composable
