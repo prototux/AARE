@@ -294,7 +294,8 @@ private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Uni
 private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, area: DpSize) {
     // The "dark bar" setting: night colors for the rail even when the rest is in day colors.
     if (state.darkBar && !state.night) {
-        CarTheme(night = true) { RailContent(state, actions, horizontal, area) }
+        // carBackdrop: a glass theme's rail is transparent, over its night backdrop here, not the day one.
+        CarTheme(night = true) { Box(Modifier.carBackdrop()) { RailContent(state, actions, horizontal, area) } }
     } else {
         RailContent(state, actions, horizontal, area)
     }

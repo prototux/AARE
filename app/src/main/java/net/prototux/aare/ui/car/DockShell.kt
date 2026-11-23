@@ -121,7 +121,8 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     }
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
+            // carBackdrop: a glass theme's dock is transparent, over its night backdrop (the dock is always night).
+            Modifier.fillMaxWidth().height(96.dp).carBackdrop().background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) { if (state.chrome.clock) Clock(); PhoneStatusIcons(state.chrome) }
@@ -135,7 +136,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
         return@CarTheme
     }
     Column(
-        Modifier.fillMaxHeight().width(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
+        Modifier.fillMaxHeight().width(96.dp).carBackdrop().background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (state.chrome.clock) Clock()
@@ -162,7 +163,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
 private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true) {
     val scheme = MaterialTheme.colorScheme
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerLowest, scheme.background))),
+        Modifier.fillMaxSize().carBackdrop().background(Brush.verticalGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerLowest, scheme.background))),
     ) {
         val columns = maxOf(3, (maxWidth / 150.dp).toInt())
         // Two rows in landscape; a portrait screen has room for more.

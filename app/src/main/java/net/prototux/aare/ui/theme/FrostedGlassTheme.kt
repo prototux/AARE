@@ -42,7 +42,7 @@ val FrostedGlassTheme: CarThemeSpec = run {
             surfaceContainerLow = white(0.08f),
             surfaceContainer = white(0.10f),
             surfaceContainerHigh = white(0.16f),
-            // Opaque: alerts, calls, the assistant bar and the keyboard sit over a live map. The
+            // Opaque: alerts, calls and the assistant bar can sit over a live map. The
             // glass's own tint (20% white over the backdrop), solid so the map can't show through.
             surfaceContainerHighest = Color(0xFF454F65),
             outline = white(0.30f),

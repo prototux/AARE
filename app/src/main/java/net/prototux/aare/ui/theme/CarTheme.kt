@@ -8,6 +8,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -201,7 +202,8 @@ fun OverMap(content: @Composable () -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val backdrop = (if (scheme == theme.night) theme.nightBackdrop else theme.dayBackdrop).firstOrNull()
     if (backdrop == null) { content(); return }
-    MaterialTheme(colorScheme = scheme.opaqueOver(backdrop), typography = MaterialTheme.typography, shapes = MaterialTheme.shapes, content = content)
+    val solid = remember(scheme, backdrop) { scheme.opaqueOver(backdrop) }
+    MaterialTheme(colorScheme = solid, typography = MaterialTheme.typography, shapes = MaterialTheme.shapes, content = content)
 }
 
 /** [ColorScheme] with its translucent surfaces and containers solid over [base]; fully transparent ones stay so. */
