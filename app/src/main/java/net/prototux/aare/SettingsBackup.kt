@@ -40,6 +40,7 @@ object SettingsBackup {
         "force_h264" to Type.BOOLEAN,
         "constant_bitrate_video" to Type.BOOLEAN,
         "calls_on_phone_speaker" to Type.BOOLEAN,
+        "resume_after_call" to Type.BOOLEAN,
         "rail_position" to Type.STRING,
         "rail_right" to Type.BOOLEAN, // before rail_position; Settings still reads it when that's unset
         "style_theme" to Type.STRING,

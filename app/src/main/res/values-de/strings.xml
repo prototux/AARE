@@ -63,6 +63,8 @@
     <string name="setup_toggle_resume_music_subtitle">Startet die zuletzt verwendete Musik-App, wenn sich das Auto verbindet</string>
     <string name="setup_toggle_calls_speaker_title">Anrufe über den Lautsprecher des Telefons</string>
     <string name="setup_toggle_calls_speaker_subtitle">Bei Verbindung mit einem Auto nutzen Anrufe den Lautsprecher und das Mikrofon des Telefons statt der Freisprecheinrichtung des Autos. Für kabellose Adapter oder Head-Units, deren Mikrofon nicht funktioniert. Wird ab der nächsten Verbindung wirksam.</string>
+    <string name="setup_toggle_resume_after_call_title">Musik nach einem Anruf weiter</string>
+    <string name="setup_toggle_resume_after_call_subtitle">Nach einem Anruf am Handy oder einem zuhörenden Assistenten das Auto erneut um den Ton bitten und weiterspielen, was es pausiert hat. Für Autos, die den Ton des Anrufs behalten, bis man fragt. Ab Android 12.</string>
     <string name="setup_bt_address_label">Bluetooth-Adresse des Telefons (optional)</string>
     <string name="setup_bt_address_hint">Manche Head Units zeigen einen schwarzen Bildschirm, bis sie wissen, welches Telefon verbunden ist. Sie finden sie unter Einstellungen &gt; Über das Telefon &gt; Status. Lassen Sie das Feld leer, wenn Ihr Auto bereits funktioniert.</string>
     <string name="setup_section_location">Standort</string>

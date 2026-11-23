@@ -26,6 +26,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import android.location.Location
+import android.media.AudioManager
 import android.media.projection.MediaProjection
 import android.os.Build
 import android.os.Handler
@@ -428,6 +429,9 @@ class CarSession(
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
+            if (settings.resumeAfterCall && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                context.getSystemService(AudioManager::class.java)?.addOnModeChangedListener(context.mainExecutor, modeChanged)
+            }
             applyPhoneAppsMic()
             settings.registerListener(phoneAppsMicSetting)
         }
@@ -480,18 +484,24 @@ class CarSession(
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
             // does, and play again when a transient loss ends.
             notification.unsolicited && (state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT) -> main.post {
-                pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && media.playback.value?.playing == true
+                val playing = media.playback.value?.playing == true
+                pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && playing
+                // A call on the phone, or an assistant listening over Bluetooth, which the car takes
+                // for one: it plays on once that ends (see modeChanged), if chosen.
+                pausedForCall = settings.resumeAfterCall && playing && phoneInCall()
                 pausedForGuidance = false
                 media.pause()
             }
             // Only the car handing focus back resumes: a gain answering our own request means
-            // something else is playing now, and the old music must stay paused. Except after a
-            // pause for navigation voice: the car often hands the sound back by answering the
-            // prompt's own requests, and the music would stay paused for the rest of the drive.
+            // something else is playing now, and the old music must stay paused. Unless it answers
+            // the request made when the phone's call ended, or came after a pause for navigation
+            // voice: the car often hands the sound back by answering the prompt's own requests, and
+            // the music would stay paused for the rest of the drive.
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY -> main.post {
-                if (pausedByCar) {
-                    val resume = resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
+                if (pausedByCar || pausedForCall) {
+                    val resume = pausedForCall || resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
                     pausedByCar = false
+                    pausedForCall = false
                     pausedForGuidance = false
                     if (resume && media.playback.value?.playing != true) media.playPause()
                 }
@@ -506,6 +516,30 @@ class CarSession(
     private var pausedByCar = false
     /** [pausedByCar] by the car keeping only navigation voice (main thread). */
     private var pausedForGuidance = false
+    /** Media paused by a focus loss during a call on the phone, to resume once it ends (main thread, Settings.resumeAfterCall). */
+    private var pausedForCall = false
+
+    private fun phoneInCall() = context.getSystemService(AudioManager::class.java)?.mode.let { it != null && it != AudioManager.MODE_NORMAL }
+
+    /**
+     * The phone's call ended (an assistant listening over Bluetooth counts as one): the car took
+     * the media focus for it and doesn't hand it back by itself, so it is asked again. Releasing
+     * first makes it switch back from the call, as a retry does. Only with Settings.resumeAfterCall.
+     */
+    // Lazy: the listener type is Android 12+, and it is only used there.
+    private val modeChanged by lazy { AudioManager.OnModeChangedListener { mode ->
+        // Only what the car's loss paused: music merely playing on may have lost the car to its radio.
+        if (closed || mode != AudioManager.MODE_NORMAL || mediaFocus || !(pausedForCall || pausedByCar)) return@OnModeChangedListener
+        // The call may have begun just after the car's loss: what it paused plays on with the answer.
+        pausedForCall = pausedForCall || pausedByCar
+        synchronized(focusLock) {
+            DiagLog.add("audio focus: asking again after the phone's call")
+            mediaFocusRetry.onRequested(SystemClock.uptimeMillis())
+            scheduleFocusCheck()
+            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
+            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+        }
+    } }
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
         closeError = error
@@ -1358,6 +1392,8 @@ class CarSession(
         cluster?.stop()
         settings.unregisterListener(phoneAppsMicSetting)
         phoneAppsMic?.stop(); phoneAppsMic = null
+        // Throws when never added: a session that closed before it got that far, or with the setting off.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) runCatching { context.getSystemService(AudioManager::class.java)?.removeOnModeChangedListener(modeChanged) }
         micRouter.shutdown()
         teardownVideo()
         runtime.stop()
