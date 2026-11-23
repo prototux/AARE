@@ -110,6 +110,8 @@ object SettingsBackup {
         "media_video",
         "car_mic_for_phone_apps",
         "auto_pair_car_bluetooth",
+        "location_on_in_car", // switches the phone's location through Shizuku or root
+        "location_off_after_car", // same
         "companion_wifi_shizuku",
         "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate

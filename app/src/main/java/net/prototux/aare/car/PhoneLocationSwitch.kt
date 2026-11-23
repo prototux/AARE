@@ -34,7 +34,10 @@ class PhoneLocationSwitch(private val context: Context) {
             // Decided here, after the last session's off ran.
             if (!wanted()) return@execute
             val lm = context.getSystemService(LocationManager::class.java) ?: return@execute
-            if (!locationSwitches(on, lm.isLocationEnabled, ours) || !set(on)) return@execute
+            val enabled = lm.isLocationEnabled
+            // Already on as the session starts: the driver's, whatever an earlier session did.
+            if (on && enabled) ours = false
+            if (!locationSwitches(on, enabled, ours) || !set(on)) return@execute
             ours = on
             offAt = if (on) 0L else SystemClock.elapsedRealtime()
         }
