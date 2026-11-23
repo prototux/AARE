@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Вивчено передач: %1$d</string>
     <string name="obd_set_gears_forget">Забути</string>
     <string name="obd_coolant_short">ОР</string>
-    <string name="obd_set_note">Авто: навантаження двигуна, доки не з’явиться наддув. Об’єм двигуна: для витрати в авто без ДМРП. Етанол: якщо в авто немає датчика (0 чистий бензин, 27 бразильський бензин, 100 етанол).</string>
     <string name="obd_dash_card">Авто</string>
     <string name="obd_set_card">Картка «Авто» (головний екран)</string>
     <string name="obd_set_card_pick">Вибрати</string>

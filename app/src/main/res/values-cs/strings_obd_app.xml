@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Naučené stupně: %1$d</string>
     <string name="obd_set_gears_forget">Zapomenout</string>
     <string name="obd_coolant_short">Chladivo</string>
-    <string name="obd_set_note">Automatický budík: zatížení motoru, dokud neuvidí plnicí tlak. Objem motoru: pro spotřebu u aut bez měřiče hmotnosti vzduchu. Etanol: když auto nemá čidlo (0 čistý benzín, 27 brazilský benzín, 100 etanol).</string>
     <string name="obd_dash_card">Auto</string>
     <string name="obd_set_card">Karta Auto (domů)</string>
     <string name="obd_set_card_pick">Vybrat</string>

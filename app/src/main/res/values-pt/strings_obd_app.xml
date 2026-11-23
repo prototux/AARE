@@ -44,7 +44,6 @@
     <string name="obd_set_gears">Marchas aprendidas: %1$d</string>
     <string name="obd_set_gears_forget">Esquecer</string>
     <string name="obd_coolant_short">Água</string>
-    <string name="obd_set_note">Mostrador automático: carga do motor até ver pressão de turbo. Cilindrada: para o consumo em carros sem sensor de fluxo de ar. Etanol: quando o carro não tem sensor (0 gasolina pura, 27 gasolina brasileira, 100 etanol).</string>
     <string name="obd_dash_card">Carro</string>
     <string name="obd_set_card">Cartão Carro (painel)</string>
     <string name="obd_set_card_pick">Escolher</string>
@@ -52,4 +51,9 @@
     <string name="obd_done">Pronto</string>
     <string name="obd_card_gauge">Turbo / carga</string>
     <string name="obd_card_now">Consumo agora</string>
+    <string name="obd_track_parked">Só com o carro parado: Pista, Volta e Dino são para pista ou área fechada. O modo passageiro libera, por sua conta e risco.</string>
+    <string name="obd_set_page_car">Carro</string>
+    <string name="obd_set_page_gauges">Mostradores</string>
+    <string name="obd_set_note_car">Cilindrada: para o consumo em carros sem sensor de fluxo de ar. Etanol: quando o carro não tem sensor (0 gasolina pura, 27 gasolina brasileira, 100 etanol). Segure − ou + para passos maiores.</string>
+    <string name="obd_set_note_gauges">Automático: carga do motor até ver pressão de turbo; aí passa a mostrar o turbo. Segure − ou + para passos maiores.</string>
 </resources>

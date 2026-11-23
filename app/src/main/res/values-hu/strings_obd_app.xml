@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Tanult fokozatok: %1$d</string>
     <string name="obd_set_gears_forget">Elfelejt</string>
     <string name="obd_coolant_short">Hűtőfolyadék</string>
-    <string name="obd_set_note">Automatikus mérő: motorterhelés, amíg töltőnyomást nem lát. Hengerűrtartalom: a fogyasztáshoz légtömegmérő nélküli autóknál. Etanol: ha az autónak nincs érzékelője (0 tiszta benzin, 27 brazil benzin, 100 etanol).</string>
     <string name="obd_dash_card">Autó</string>
     <string name="obd_set_card">Autó kártya (kezdőlap)</string>
     <string name="obd_set_card_pick">Kiválasztás</string>

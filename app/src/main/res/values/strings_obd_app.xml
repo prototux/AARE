@@ -45,7 +45,6 @@
     <string name="obd_set_gears">Gears learned: %1$d</string>
     <string name="obd_set_gears_forget">Forget</string>
     <string name="obd_coolant_short">Coolant</string>
-    <string name="obd_set_note">Automatic gauge: engine load until it sees boost. Engine size: for fuel use on cars without an air flow sensor. Ethanol: when the car has no sensor (0 plain petrol, 27 Brazilian petrol, 100 ethanol).</string>
     <string name="obd_dash_card">Car</string>
     <string name="obd_set_card">Car card (dashboard)</string>
     <string name="obd_set_card_pick">Choose</string>
@@ -53,4 +52,9 @@
     <string name="obd_done">Done</string>
     <string name="obd_card_gauge">Boost / load</string>
     <string name="obd_card_now">Fuel use now</string>
+    <string name="obd_track_parked">Parked only: Track, Lap and Dyno are for a track or a closed area. Passenger mode lifts this, on your own responsibility.</string>
+    <string name="obd_set_page_car">Car</string>
+    <string name="obd_set_page_gauges">Gauges</string>
+    <string name="obd_set_note_car">Engine size: for fuel use on cars without an air flow sensor. Ethanol: when the car has no sensor (0 plain petrol, 27 Brazilian petrol, 100 ethanol). Hold − or + for bigger steps.</string>
+    <string name="obd_set_note_gauges">Automatic: engine load until it sees boost, then the turbo gauge. Hold − or + for bigger steps.</string>
 </resources>

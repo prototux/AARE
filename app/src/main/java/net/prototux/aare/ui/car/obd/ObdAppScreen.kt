@@ -2,7 +2,6 @@ package net.prototux.aare.ui.car.obd
 
 import android.location.Location
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,9 +33,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.carClickable
 import net.prototux.aare.obd.ObdReader
 import net.prototux.aare.obdapp.CardValue
 import net.prototux.aare.obdapp.ObdApp
@@ -58,10 +59,11 @@ private const val REF_HEIGHT = 600f
  * The OBD2 app on the car screen: everything the adapter gives, in tabs. Only listed with the
  * OBD2 setting on (see CarRuntime), so a car without an adapter never sees it.
  * Every page fits the screen at once, whatever its size or shape: nothing scrolls.
+ * Track, Lap and Dyno are parked only while [drivingRestricted] (passenger mode lifts it).
  * [location] gives the car's GPS, for the lap timer.
  */
 @Composable
-fun ObdAppScreen(modifier: Modifier, location: () -> Location?) {
+fun ObdAppScreen(modifier: Modifier, drivingRestricted: Boolean, location: () -> Location?) {
     val ctx = LocalContext.current
     val settings = remember { ObdApp.settings(ctx) }
     var tab by rememberSaveable { mutableStateOf(ObdTab.DASH) }
@@ -83,7 +85,10 @@ fun ObdAppScreen(modifier: Modifier, location: () -> Location?) {
                 }
                 if (snap.simulated && snap.readings != null) Note(stringResource(R.string.obd_simulated_badge), maxLines = 1, color = ObdRed)
                 Box(Modifier.fillMaxWidth().weight(1f)) {
-                    if (snap.readings == null && tab != ObdTab.HISTORY && tab != ObdTab.SETTINGS) {
+                    if (drivingRestricted && (tab == ObdTab.TRACK || tab == ObdTab.LAP || tab == ObdTab.DYNO)) {
+                        Text(stringResource(R.string.obd_track_parked), Modifier.align(Alignment.Center).padding(horizontal = sdp(40f)),
+                            fontSize = ssp(22f), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else if (snap.readings == null && tab != ObdTab.HISTORY && tab != ObdTab.SETTINGS) {
                         Text(statusText(status), Modifier.align(Alignment.Center), fontSize = ssp(20f), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else when (tab) {
                         ObdTab.DASH -> DashTab(snap, settings, wide)
@@ -292,29 +297,38 @@ private fun SettingsTab(settings: ObdAppSettings, wide: Boolean) {
         { m -> Stepper(stringResource(R.string.obd_set_tank), tank, "L", 1, 20..150, bigStep = 10, modifier = m) { tank = it; settings.tankLiters = it } },
         { m -> Stepper(stringResource(R.string.obd_set_mass), mass, "kg", 10, 500..4000, bigStep = 100, modifier = m) { mass = it; settings.massKg = it } },
         { m ->
-            Column(m, verticalArrangement = Arrangement.Center) {
-                Text(stringResource(R.string.obd_set_card), fontSize = ssp(17f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Chip(stringResource(R.string.obd_set_card_pick), modifier = Modifier.padding(top = sdp(6f))) { picking = true }
+            Row(m, verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.obd_set_card), fontSize = ssp(18f), maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Chip(stringResource(R.string.obd_set_card_pick)) { picking = true }
             }
         },
         { m ->
-            Column(m, verticalArrangement = Arrangement.Center) {
-                Text(stringResource(R.string.obd_set_gears, gears), fontSize = ssp(17f), maxLines = 1)
-                Chip(stringResource(R.string.obd_set_gears_forget), modifier = Modifier.padding(top = sdp(6f))) { ObdApp.forgetGears(); gears = 0 }
+            Row(m, verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.obd_set_gears, gears), fontSize = ssp(18f), maxLines = 2, modifier = Modifier.weight(1f))
+                Chip(stringResource(R.string.obd_set_gears_forget)) { ObdApp.forgetGears(); gears = 0 }
             }
         },
     )
-    Column(Modifier.fillMaxSize()) {
+    // Two pages, so every setting keeps a full-size touch target and a page still fits a short screen.
+    var page by rememberSaveable { mutableIntStateOf(0) }
+    val pages = listOf(
+        R.string.obd_set_page_car to listOf(items[1], items[5], items[4], items[6], items[7]),
+        R.string.obd_set_page_gauges to listOf(items[0], items[2], items[3], items[8], items[9]),
+    )
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(sdp(10f))) {
+        Row(horizontalArrangement = Arrangement.spacedBy(sdp(8f)), verticalAlignment = Alignment.CenterVertically) {
+            pages.forEachIndexed { i, (label, _) -> Chip(stringResource(label), i == page) { page = i } }
+            Note(stringResource(if (page == 0) R.string.obd_set_note_car else R.string.obd_set_note_gauges), Modifier.weight(1f).padding(start = sdp(8f)), maxLines = 3)
+        }
         val cols = if (wide) 2 else 1
-        Column(Modifier.fillMaxWidth().weight(1f)) {
-            items.chunked(cols).forEach { row ->
-                Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(sdp(20f))) {
-                    row.forEach { it(Modifier.weight(1f).fillMaxHeight()) }
+        Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(sdp(8f))) {
+            pages[page].second.chunked(cols).forEach { row ->
+                Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(sdp(28f)), verticalAlignment = Alignment.CenterVertically) {
+                    row.forEach { it(Modifier.weight(1f)) }
                     repeat(cols - row.size) { Box(Modifier.weight(1f)) }
                 }
             }
         }
-        Note(stringResource(R.string.obd_set_note), maxLines = 2)
     }
 }
 
@@ -331,7 +345,7 @@ private fun CardPicker(settings: ObdAppSettings, wide: Boolean, onDone: () -> Un
             val selected = place >= 0
             Row(
                 m.themed(MaterialTheme.shapes.small, if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
-                    .clickable {
+                    .carClickable(MaterialTheme.shapes.small) {
                         picked = if (selected) picked - v else if (picked.size < CardValue.MAX) picked + v else picked
                         settings.cardValues = picked
                     }.padding(horizontal = sdp(12f)),
@@ -356,10 +370,8 @@ private fun CardPicker(settings: ObdAppSettings, wide: Boolean, onDone: () -> Un
 
 @Composable
 private fun <T> Choices(title: String, options: List<Pair<T, Int>>, selected: T, modifier: Modifier, onSelect: (T) -> Unit) {
-    Column(modifier, verticalArrangement = Arrangement.Center) {
-        Text(title, fontSize = ssp(17f), maxLines = 1)
-        Row(Modifier.padding(top = sdp(6f)), horizontalArrangement = Arrangement.spacedBy(sdp(6f))) {
-            options.forEach { (v, label) -> Chip(stringResource(label), v == selected) { onSelect(v) } }
-        }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(sdp(6f))) {
+        Text(title, fontSize = ssp(18f), maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        options.forEach { (v, label) -> Chip(stringResource(label), v == selected) { onSelect(v) } }
     }
 }

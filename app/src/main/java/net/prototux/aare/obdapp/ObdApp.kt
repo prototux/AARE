@@ -80,10 +80,17 @@ object ObdApp {
 
     fun settings(context: Context): ObdAppSettings = settings ?: ObdAppSettings(context)
 
+    /**
+     * Track, Lap and Dyno are parked only, like the car screen's other parked-only limits:
+     * passenger mode lifts it (CarRuntime keeps this up to date). Driving off disarms them.
+     */
+    @Volatile var trackAllowed = true
+
     @Synchronized
     private fun onRound(r: ObdReadings?, now: Long, sim: Boolean) {
         val s = settings ?: return
         if (r == null) { endTrip(s); return }
+        if (!trackAllowed) disarmTrack()
         if (!running) { running = true; simulated = sim; trip.reset() }
         val car = s.car()
         dyno.massKg = car.massKg.toFloat()
@@ -121,8 +128,14 @@ object ObdApp {
         s.gears = gears.save()
         trip.average?.let { s.lastAverage = it }
         if (!simulated && trip.km >= MIN_TRIP_KM) record(ObdHistory.Entry(System.currentTimeMillis(), ObdHistory.Kind.TRIP, trip.km, trip.average ?: 0f))
-        tests.disarmAll(); laps.disarm(); if (dyno.armed) dyno.toggle()
+        disarmTrack()
         _snapshot.value = _snapshot.value.copy(readings = null)
+    }
+
+    private fun disarmTrack() {
+        if (tests.all.any { it.armed }) tests.disarmAll()
+        if (laps.state != LapTimer.State.OFF) laps.disarm()
+        if (dyno.armed) dyno.toggle()
     }
 
     @Synchronized

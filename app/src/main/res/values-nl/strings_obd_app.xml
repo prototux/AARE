@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Geleerde versnellingen: %1$d</string>
     <string name="obd_set_gears_forget">Vergeten</string>
     <string name="obd_coolant_short">Koelvloeistof</string>
-    <string name="obd_set_note">Automatische meter: motorbelasting tot er turbodruk is. Cilinderinhoud: voor het verbruik bij auto\'s zonder luchtmassameter. Ethanol: als de auto geen sensor heeft (0 pure benzine, 27 Braziliaanse benzine, 100 ethanol).</string>
     <string name="obd_dash_card">Auto</string>
     <string name="obd_set_card">Autokaart (start)</string>
     <string name="obd_set_card_pick">Kiezen</string>

@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Rapports appris : %1$d</string>
     <string name="obd_set_gears_forget">Oublier</string>
     <string name="obd_coolant_short">Eau</string>
-    <string name="obd_set_note">Cadran automatique : charge moteur jusqu\'à voir de la pression turbo. Cylindrée : pour la consommation sans débitmètre d\'air. Éthanol : quand la voiture n\'a pas de capteur (0 essence pure, 27 essence brésilienne, 100 éthanol).</string>
     <string name="obd_dash_card">Voiture</string>
     <string name="obd_set_card">Carte Voiture (accueil)</string>
     <string name="obd_set_card_pick">Choisir</string>

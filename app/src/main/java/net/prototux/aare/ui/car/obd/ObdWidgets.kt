@@ -1,14 +1,18 @@
 package net.prototux.aare.ui.car.obd
 
+import net.prototux.aare.ui.car.carClickable
+import net.prototux.aare.ui.theme.LocalCarDimens
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -146,7 +150,7 @@ internal fun Gauge(
 internal fun Stat(label: String, value: String, modifier: Modifier = Modifier, unit: String = "", alert: Boolean = false, onClick: (() -> Unit)? = null, footer: String? = null) {
     BoxWithConstraints(
         modifier.themed(MaterialTheme.shapes.small, MaterialTheme.colorScheme.surfaceContainerHigh)
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+            .let { if (onClick != null) it.carClickable(MaterialTheme.shapes.small, onClick = onClick) else it }
             .padding(horizontal = sdp(14f), vertical = sdp(6f)),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -181,31 +185,35 @@ internal fun TileGrid(items: List<@Composable (Modifier) -> Unit>, columns: Int,
     }
 }
 
-/** A tab, a choice or a small button: a rounded chip whose size follows the screen. */
+/**
+ * A tab, a choice or a small button: at least the car screen's touch target (76 dp) each way, so
+ * it's usable at arm's length, and reachable with the knob. [onLongClick]: holding it.
+ */
 @Composable
-internal fun Chip(text: String, selected: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun Chip(text: String, selected: Boolean = false, modifier: Modifier = Modifier, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
+    val touch = LocalCarDimens.current.touchTarget
     Box(
-        modifier.themed(MaterialTheme.shapes.large, if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
-            .clickable(onClick = onClick).padding(horizontal = sdp(12f), vertical = sdp(8f)),
+        modifier.heightIn(min = touch).widthIn(min = touch)
+            .themed(MaterialTheme.shapes.large, if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+            .carClickable(MaterialTheme.shapes.large, onLongClick = onLongClick, onClick = onClick).padding(horizontal = sdp(14f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, fontSize = ssp(18f), maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
+        Text(text, fontSize = ssp(20f), maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
             color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
     }
 }
 
-/** A setting with − and + buttons (and a bigger step on the outer ones when [bigStep] is set). */
+/**
+ * A setting on one line: its name, then − and + (each a full touch target). Holding − or + moves
+ * by [bigStep]: big steps without more buttons, so a page of settings fits a short screen.
+ */
 @Composable
 internal fun Stepper(title: String, value: Int, unit: String, step: Int, range: IntRange, bigStep: Int = 0, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
-    Column(modifier, verticalArrangement = Arrangement.Center) {
-        Text(title, fontSize = ssp(17f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Row(Modifier.padding(top = sdp(6f)), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(sdp(6f))) {
-            if (bigStep > 0) Chip("−$bigStep") { onChange((value - bigStep).coerceIn(range)) }
-            Chip("  −  ") { onChange((value - step).coerceIn(range)) }
-            Text("$value $unit", fontSize = ssp(20f), maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = sdp(6f)))
-            Chip("  +  ") { onChange((value + step).coerceIn(range)) }
-            if (bigStep > 0) Chip("+$bigStep") { onChange((value + bigStep).coerceIn(range)) }
-        }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(sdp(8f))) {
+        Text(title, fontSize = ssp(18f), maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Chip("−", onLongClick = if (bigStep > 0) ({ onChange((value - bigStep).coerceIn(range)) }) else null) { onChange((value - step).coerceIn(range)) }
+        Text("$value $unit", fontSize = ssp(20f), maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = sdp(110f)))
+        Chip("+", onLongClick = if (bigStep > 0) ({ onChange((value + bigStep).coerceIn(range)) }) else null) { onChange((value + step).coerceIn(range)) }
     }
 }
 
@@ -213,11 +221,12 @@ internal fun Stepper(title: String, value: Int, unit: String, step: Int, range: 
 @Composable
 internal fun ObdButton(text: String, modifier: Modifier = Modifier, primary: Boolean = false, onClick: () -> Unit) {
     Box(
-        modifier.themed(MaterialTheme.shapes.large, if (primary) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
-            .clickable(onClick = onClick).padding(horizontal = sdp(20f), vertical = sdp(10f)),
+        modifier.heightIn(min = LocalCarDimens.current.touchTarget)
+            .themed(MaterialTheme.shapes.large, if (primary) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+            .carClickable(MaterialTheme.shapes.large, onClick = onClick).padding(horizontal = sdp(22f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, fontSize = ssp(18f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+        Text(text, fontSize = ssp(20f), maxLines = 1, overflow = TextOverflow.Ellipsis,
             color = if (primary) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
     }
 }

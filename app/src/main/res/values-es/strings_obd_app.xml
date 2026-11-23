@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Marchas aprendidas: %1$d</string>
     <string name="obd_set_gears_forget">Olvidar</string>
     <string name="obd_coolant_short">Agua</string>
-    <string name="obd_set_note">Indicador automático: carga del motor hasta ver presión de turbo. Cilindrada: para el consumo en coches sin caudalímetro. Etanol: cuando el coche no tiene sensor (0 gasolina pura, 27 gasolina brasileña, 100 etanol).</string>
     <string name="obd_dash_card">Coche</string>
     <string name="obd_set_card">Tarjeta Coche (inicio)</string>
     <string name="obd_set_card_pick">Elegir</string>

@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Opitut vaihteet: %1$d</string>
     <string name="obd_set_gears_forget">Unohda</string>
     <string name="obd_coolant_short">Jäähdytysneste</string>
-    <string name="obd_set_note">Automaattinen mittari: moottorin kuorma, kunnes ahtopainetta näkyy. Iskutilavuus: kulutukseen autoissa ilman ilmamassamittaria. Etanoli: kun autossa ei ole anturia (0 puhdas bensiini, 27 brasilialainen bensiini, 100 etanoli).</string>
     <string name="obd_dash_card">Auto</string>
     <string name="obd_set_card">Autokortti (aloitus)</string>
     <string name="obd_set_card_pick">Valitse</string>

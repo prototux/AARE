@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Выучено передач: %1$d</string>
     <string name="obd_set_gears_forget">Забыть</string>
     <string name="obd_coolant_short">ОЖ</string>
-    <string name="obd_set_note">Авто: нагрузка двигателя, пока не появится наддув. Объём двигателя: для расхода в машинах без ДМРВ. Этанол: если у машины нет датчика (0 чистый бензин, 27 бразильский бензин, 100 этанол).</string>
     <string name="obd_dash_card">Машина</string>
     <string name="obd_set_card">Карточка «Машина» (главный экран)</string>
     <string name="obd_set_card_pick">Выбрать</string>

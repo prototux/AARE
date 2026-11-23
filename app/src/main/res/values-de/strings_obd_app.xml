@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Gelernte Gänge: %1$d</string>
     <string name="obd_set_gears_forget">Vergessen</string>
     <string name="obd_coolant_short">Wasser</string>
-    <string name="obd_set_note">Automatische Anzeige: Motorlast, bis Ladedruck erkannt wird. Hubraum: für den Verbrauch bei Autos ohne Luftmassenmesser. Ethanol: wenn das Auto keinen Sensor hat (0 reines Benzin, 27 brasilianisches Benzin, 100 Ethanol).</string>
     <string name="obd_dash_card">Auto</string>
     <string name="obd_set_card">Auto-Karte (Startseite)</string>
     <string name="obd_set_card_pick">Auswählen</string>

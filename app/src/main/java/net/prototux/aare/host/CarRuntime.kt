@@ -412,6 +412,8 @@ class CarRuntime(
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
         // A phone assistant shown through the launcher is parked only, like other launched apps.
         if (ui.drivingRestricted) ui.assistantStandalonePkg = null
+        // The Cockpit's track pages (timed runs, lap timer, dyno) are parked only too.
+        net.prototux.aare.obdapp.ObdApp.trackAllowed = !ui.drivingRestricted
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.textScale = CarTextSize.byId(settings.carTextSize).fontScale
@@ -1120,7 +1122,7 @@ class CarRuntime(
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
-                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, location = { carLocation })
+                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, ui.drivingRestricted, location = { carLocation })
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)

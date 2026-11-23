@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Nauczone biegi: %1$d</string>
     <string name="obd_set_gears_forget">Zapomnij</string>
     <string name="obd_coolant_short">Płyn chł.</string>
-    <string name="obd_set_note">Wskaźnik automatyczny: obciążenie silnika, dopóki nie pojawi się doładowanie. Pojemność: do spalania w autach bez przepływomierza. Etanol: gdy auto nie ma czujnika (0 czysta benzyna, 27 benzyna brazylijska, 100 etanol).</string>
     <string name="obd_dash_card">Samochód</string>
     <string name="obd_set_card">Karta Samochód (start)</string>
     <string name="obd_set_card_pick">Wybierz</string>

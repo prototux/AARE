@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Lærte gear: %1$d</string>
     <string name="obd_set_gears_forget">Glem</string>
     <string name="obd_coolant_short">Kølevæske</string>
-    <string name="obd_set_note">Automatisk måler: motorbelastning, indtil den ser ladetryk. Slagvolumen: til forbruget i biler uden luftmassemåler. Ethanol: når bilen ikke har en sensor (0 ren benzin, 27 brasiliansk benzin, 100 ethanol).</string>
     <string name="obd_dash_card">Bil</string>
     <string name="obd_set_card">Bilkort (start)</string>
     <string name="obd_set_card_pick">Vælg</string>

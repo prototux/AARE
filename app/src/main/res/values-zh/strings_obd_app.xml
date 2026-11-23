@@ -40,7 +40,6 @@
     <string name="obd_set_gears">已学习挡位：%1$d</string>
     <string name="obd_set_gears_forget">忘记</string>
     <string name="obd_coolant_short">水温</string>
-    <string name="obd_set_note">自动仪表：在检测到增压前显示发动机负荷。排量：用于没有空气流量传感器的车辆计算油耗。乙醇：车辆没有传感器时填写（0 纯汽油，27 巴西汽油，100 乙醇）。</string>
     <string name="obd_dash_card">车辆</string>
     <string name="obd_set_card">车辆卡片（主屏幕）</string>
     <string name="obd_set_card_pick">选择</string>

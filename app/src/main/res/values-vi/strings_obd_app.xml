@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Số đã học: %1$d</string>
     <string name="obd_set_gears_forget">Quên</string>
     <string name="obd_coolant_short">Nước làm mát</string>
-    <string name="obd_set_note">Đồng hồ tự động: tải động cơ cho đến khi thấy áp suất turbo. Dung tích: để tính tiêu hao cho xe không có cảm biến lưu lượng khí. Ethanol: khi xe không có cảm biến (0 xăng nguyên chất, 27 xăng Brazil, 100 ethanol).</string>
     <string name="obd_dash_card">Xe</string>
     <string name="obd_set_card">Thẻ Xe (màn hình chính)</string>
     <string name="obd_set_card_pick">Chọn</string>

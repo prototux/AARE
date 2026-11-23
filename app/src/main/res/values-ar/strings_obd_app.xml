@@ -40,7 +40,6 @@
     <string name="obd_set_gears">النواقل المتعلَّمة: %1$d</string>
     <string name="obd_set_gears_forget">نسيان</string>
     <string name="obd_coolant_short">التبريد</string>
-    <string name="obd_set_note">العداد التلقائي: حمل المحرك حتى يرى ضغط التيربو. سعة المحرك: لحساب الاستهلاك في السيارات بلا حساس تدفق الهواء. الإيثانول: عندما لا يوجد حساس في السيارة (0 بنزين خالص، 27 بنزين برازيلي، 100 إيثانول).</string>
     <string name="obd_dash_card">السيارة</string>
     <string name="obd_set_card">بطاقة السيارة (الرئيسية)</string>
     <string name="obd_set_card_pick">اختيار</string>

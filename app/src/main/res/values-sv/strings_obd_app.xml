@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Inlärda växlar: %1$d</string>
     <string name="obd_set_gears_forget">Glöm</string>
     <string name="obd_coolant_short">Kylvätska</string>
-    <string name="obd_set_note">Automatisk mätare: motorlast tills den ser laddtryck. Slagvolym: för förbrukningen i bilar utan luftmassemätare. Etanol: när bilen saknar sensor (0 ren bensin, 27 brasiliansk bensin, 100 etanol).</string>
     <string name="obd_dash_card">Bil</string>
     <string name="obd_set_card">Bilkort (start)</string>
     <string name="obd_set_card_pick">Välj</string>

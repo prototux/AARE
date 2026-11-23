@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Trepte învățate: %1$d</string>
     <string name="obd_set_gears_forget">Uită</string>
     <string name="obd_coolant_short">Lichid răcire</string>
-    <string name="obd_set_note">Indicator automat: sarcina motorului până vede presiune de turbo. Capacitate: pentru consum la mașinile fără debitmetru de aer. Etanol: când mașina nu are senzor (0 benzină pură, 27 benzină braziliană, 100 etanol).</string>
     <string name="obd_dash_card">Mașină</string>
     <string name="obd_set_card">Card Mașină (acasă)</string>
     <string name="obd_set_card_pick">Alege</string>

@@ -40,7 +40,6 @@
     <string name="obd_set_gears">Marce apprese: %1$d</string>
     <string name="obd_set_gears_forget">Dimentica</string>
     <string name="obd_coolant_short">Acqua</string>
-    <string name="obd_set_note">Indicatore automatico: carico motore finché non vede pressione turbo. Cilindrata: per il consumo sulle auto senza debimetro. Etanolo: quando l\'auto non ha il sensore (0 benzina pura, 27 benzina brasiliana, 100 etanolo).</string>
     <string name="obd_dash_card">Auto</string>
     <string name="obd_set_card">Scheda Auto (home)</string>
     <string name="obd_set_card_pick">Scegli</string>
