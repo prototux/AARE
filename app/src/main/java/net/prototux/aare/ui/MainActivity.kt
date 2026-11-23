@@ -91,6 +91,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -122,6 +123,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import net.prototux.aare.ui.car.railGapDp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -1386,6 +1388,7 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
 private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     val candidates = launcherCandidates(l, hidden, phoneScreen, browser)
     var compact by remember { mutableStateOf(settings.compactRail) }
+    var spacing by remember { mutableStateOf(settings.railSpacing) }
     var chosen by remember { mutableStateOf(settings.railApps) }
     fun setChosen(keys: List<String>) { chosen = keys; settings.railApps = keys }
     val chosenIndex = chosen.withIndex().associate { (i, k) -> k to i }
@@ -1395,6 +1398,18 @@ private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<St
         Spacer(Modifier.height(8.dp))
         Toggle(stringResource(R.string.setup_toggle_compact_rail_title), stringResource(R.string.setup_toggle_compact_rail_subtitle), compact) {
             compact = it; settings.compactRail = it
+        }
+        Spacer(Modifier.height(8.dp))
+        val gap = spacing ?: railGapDp(compact, bottom = settings.railPosition == Settings.RAIL_BOTTOM)
+        fun setSpacing(dp: Int?) { spacing = dp; settings.railSpacing = dp }
+        Text(stringResource(R.string.setup_rail_spacing), style = MaterialTheme.typography.bodyLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(onClick = { setSpacing(gap - 1) }, enabled = gap > 0) { Text("\u2212") }
+            Text(stringResource(R.string.setup_rail_spacing_dp, gap), style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
+            OutlinedButton(onClick = { setSpacing(gap + 1) }, enabled = gap < 40) { Text("+") }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { setSpacing(null) }, enabled = spacing != null) { Text(stringResource(R.string.setup_rail_spacing_reset)) }
         }
         Spacer(Modifier.height(8.dp))
         sorted.forEach { (key, label, icon) ->

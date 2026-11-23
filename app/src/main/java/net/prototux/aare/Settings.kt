@@ -510,6 +510,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("compact_rail", false)
         set(v) = prefs.edit { putBoolean("compact_rail", v) }
 
+    /** The space between the rail's apps in dp, or null for the standard one. */
+    var railSpacing: Int?
+        get() = if (prefs.contains("rail_spacing")) prefs.getInt("rail_spacing", 0) else null
+        set(v) = prefs.edit { if (v == null) remove("rail_spacing") else putInt("rail_spacing", v) }
+
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
         get() = prefs.getStringSet("requested_permissions", emptySet()) ?: emptySet()
