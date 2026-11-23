@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -76,7 +77,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             StyleChoices(
                 themeId, layoutId, accent,
                 choice = { title, options, selected, onSelect -> Choice(title, options, selected, onSelect) },
-                select = { title, options, selected, onSelect -> CarSelect(title, options, selected, onSelect) },
+                select = { title, options, selected, onSelect -> CarSelect(title, options, selected, ::styleSwatch, onSelect) },
                 onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
                 onAccent = { accent = it; settings.carAccent = it },
             )
@@ -119,7 +120,7 @@ private fun Choice(title: String, options: List<Pair<String, String>>, selected:
  * eleven labels at arm's length.
  */
 @Composable
-private fun CarSelect(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+private fun CarSelect(title: String, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
     var open by remember { mutableStateOf(false) }
     val rowHeight = LocalCarDimens.current.touchTarget
     Column {
@@ -135,6 +136,7 @@ private fun CarSelect(title: String, options: List<Pair<String, String>>, select
         if (open) options.forEach { (value, label) ->
             Row(Modifier.fillMaxWidth().heightIn(min = rowHeight).carClickable(MaterialTheme.shapes.medium) { onSelect(value); open = false }
                 .padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                swatch(value).takeIf { it.isNotEmpty() }?.let { Swatch(it, 32.dp); Spacer(Modifier.width(16.dp)) }
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 if (value == selected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
             }

@@ -14,11 +14,13 @@ class CalendarIconTest {
 
     @Test
     fun theIconsAreRedrawnJustAfterMidnight() {
-        val zone = java.time.ZoneId.of("Europe/Paris")
-        assertEquals(60_000L + 1_000, msUntilNextDay(java.time.ZonedDateTime.of(2026, 11, 14, 23, 59, 0, 0, zone)))
-        assertEquals(24 * 3_600_000L + 1_000, msUntilNextDay(java.time.ZonedDateTime.of(2026, 11, 14, 0, 0, 0, 0, zone)))
+        val zone = java.util.TimeZone.getTimeZone("Europe/Paris")
+        fun at(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long =
+            java.util.Calendar.getInstance(zone).apply { set(year, month - 1, day, hour, minute, 0); set(java.util.Calendar.MILLISECOND, 0) }.timeInMillis
+        assertEquals(60_000L + 1_000, msUntilNextDay(at(2026, 11, 14, 23, 59), zone))
+        assertEquals(24 * 3_600_000L + 1_000, msUntilNextDay(at(2026, 11, 14, 0, 0), zone))
         // The night the clocks go back is 25 hours long.
-        assertEquals(25 * 3_600_000L + 1_000, msUntilNextDay(java.time.ZonedDateTime.of(2026, 10, 25, 0, 0, 0, 0, zone)))
+        assertEquals(25 * 3_600_000L + 1_000, msUntilNextDay(at(2026, 10, 25, 0, 0), zone))
     }
 
     @Test

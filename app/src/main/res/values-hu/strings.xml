@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Üzenetek, útirányok a Google Maps és a Waze alkalmazásból, épp lejátszott szám</string>
     <string name="setup_check_audio_subtitle">Engedd, hogy a telefon hangja elérje az autót</string>
     <string name="setup_action_set_up">Beállítás</string>
+    <string name="setup_old_android_title">Régebbi Androidon fut</string>
+    <string name="setup_old_android_message">Az AARE az Android 6-on és 7-en is fut, de az Android 8 a jobban támogatott alap. Android 6-on és 7-en a kapcsolódási értesítések nem helyezhetők el saját csatornájukban, így nem némíthatók el külön az AARE többi értesítésétől a rendszerbeállításokban. Minden más ugyanúgy működik, vagy automatikusan egy régebbi módszerre esik vissza.</string>
+    <string name="setup_old_android_dont_show_again">Ne jelenjen meg újra</string>
     <string name="setup_section_connecting">Kapcsolódás</string>
     <string name="setup_toggle_wireless_title">Vezeték nélküli</string>
     <string name="setup_toggle_wireless_subtitle">Kapcsolódás a párosított autókhoz Wi-Fi-n keresztül, amint Bluetooth-hatótávolságba kerülnek</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Rendszerszintű hang-útválasztás (mint az Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, a zene és a navigáció különválasztva (mint az Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku vagy root</string>
+    <string name="audio_method_root_policy">Root, a zene és a navigáció különválasztva</string>
     <string name="audio_method_playback_capture">Képernyőrögzítési jogosultság</string>
     <string name="audio_policy_not_ready">Mint az Android Auto: a zene és a navigációs hang külön, a telefon hangszórója kikapcsolva. Rootolt telefon szükséges: telepítsd az AARE-t rendszeralkalmazásként a Magisk modullal (lásd a README-t).</string>
     <string name="audio_shizuku_ready">Kész. Minden, amit a telefon lejátszik, eljut az autóba, a navigációs hangot is beleértve; a telefon néma marad.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Kezdőlap</string>
     <string name="browser_address_hint">Keresés vagy webcím beírása</string>
     <string name="assistant_links_title">Hivatkozások az asszisztenstől</string>
+    <string name="assistant_stop">Asszisztens leállítása</string>
+    <string name="assistant_stop_style_title">Az asszisztens leállítása</string>
+    <string name="assistant_stop_style_voice_button">A hanggomb Leállításra vált</string>
+    <string name="assistant_stop_style_red_restart">Piros leállítógomb, a hanggomb újra kérdez</string>
+    <string name="assistant_stop_style_red_stop">Piros leállítógomb, a hanggomb is leállít</string>
     <string name="assistant_links_subtitle">A kiválasztott asszisztens válaszaiban lévő aare:// hivatkozások vezérelhetik a zenét, vagy az autó képernyőjén felajánlhatják a navigációt, egy alkalmazás megnyitását vagy egy hívást. A más alkalmazásokból és weboldalakról érkező hivatkozások figyelmen kívül maradnak.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Autó adatai</string>

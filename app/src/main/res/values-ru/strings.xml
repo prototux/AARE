@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Сообщения, маршруты из Google Maps и Waze, то, что сейчас играет</string>
     <string name="setup_check_audio_subtitle">Разрешить звуку телефона достигать автомобиля</string>
     <string name="setup_action_set_up">Настроить</string>
+    <string name="setup_old_android_title">Работает на более старой версии Android</string>
+    <string name="setup_old_android_message">AARE также работает на Android 6 и 7, но Android 8 — это лучше поддерживаемая база. На Android 6 и 7 уведомления о соединении не могут быть помещены в собственный канал, поэтому их нельзя отключить отдельно от других уведомлений AARE в настройках системы. Всё остальное работает так же или автоматически переключается на более старый метод.</string>
+    <string name="setup_old_android_dont_show_again">Не показывать снова</string>
     <string name="setup_section_connecting">Подключение</string>
     <string name="setup_toggle_wireless_title">По беспроводной сети</string>
     <string name="setup_toggle_wireless_subtitle">Соединяться с парными автомобилями по Wi-Fi, когда они оказываются в зоне действия Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Системная маршрутизация звука (как Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, музыка и навигация отдельно (как Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku или root</string>
+    <string name="audio_method_root_policy">Root, музыка и навигация отдельно</string>
     <string name="audio_method_playback_capture">Разрешение на захват экрана</string>
     <string name="audio_policy_not_ready">Как Android Auto: музыка и голос навигации отдельно, динамик телефона выключен. Требуется телефон с root-правами: установите AARE как системное приложение с помощью модуля Magisk (см. README).</string>
     <string name="audio_shizuku_ready">Готово. Всё, что воспроизводит телефон, идёт в автомобиль, включая голос навигации; телефон остаётся тихим.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Домашняя страница</string>
     <string name="browser_address_hint">Поиск или введите веб-адрес</string>
     <string name="assistant_links_title">Ссылки от ассистента</string>
+    <string name="assistant_stop">Остановить ассистента</string>
+    <string name="assistant_stop_style_title">Остановка ассистента</string>
+    <string name="assistant_stop_style_voice_button">Голосовая кнопка превращается в Остановить</string>
+    <string name="assistant_stop_style_red_restart">Красная кнопка стоп, голосовая кнопка спрашивает снова</string>
+    <string name="assistant_stop_style_red_stop">Красная кнопка стоп, голосовая кнопка тоже останавливает</string>
     <string name="assistant_links_subtitle">Ссылки aare:// в ответах выбранного ассистента могут управлять музыкой или предлагать на экране автомобиля проложить маршрут, открыть приложение или позвонить. Ссылки из других приложений и с веб-страниц игнорируются.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Данные автомобиля</string>

@@ -69,6 +69,8 @@ internal fun StandaloneAppScreen(
      * apps keep the relaunch they always had on parking again ("audio only" ones resume too, see below).
      */
     resumeAfterDrive: Boolean = false,
+    /** The car app this is the screen of, which Back is looked up by: a media app's video is its media app's. */
+    appId: String = CarRuntime.standaloneId(packageName),
 ) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
@@ -85,10 +87,9 @@ internal fun StandaloneAppScreen(
                 launcher.connected
             }
         }
-        val id = CarRuntime.standaloneId(packageName)
-        runtime.registerScreenBack(id, back)
+        runtime.registerScreenBack(appId, back)
         onDispose {
-            runtime.unregisterScreenBack(id, back)
+            runtime.unregisterScreenBack(appId, back)
             // A place that never made it (no launcher) mustn't come back on the next, unrelated open.
             runtime.standaloneViews.remove(packageName)
             launcher.release()

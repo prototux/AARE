@@ -223,11 +223,14 @@ class HeadUnit(
         ui.closed(reason)
     }
 
-    /** Polite disconnect, like turning the car off. */
+    /** Polite disconnect, like turning the car off; nothing to do once the session is closed. */
     fun byeBye() {
+        if (closed.get()) return
         if (!tlsUp) return close("disconnected")
+        // The fallback goes on the timer before the request goes out: the phone's answer can close
+        // the session (and shut the timer down) on the reader thread before send() returns.
+        later(1000) { close("disconnected") }
         send(0, ControlMsg.BYEBYE_REQUEST, ByeByeRequest.newBuilder().setReason(ByeByeReason.USER_SELECTION).build())
-        timer.schedule({ close("disconnected") }, 1, TimeUnit.SECONDS)
     }
 
     // ------------------------------------------------------------------ input

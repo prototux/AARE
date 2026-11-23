@@ -45,4 +45,16 @@ class ProtocolTraceTest {
         assertEquals("FRAMING_ERROR", ProtocolTrace.name(null, ControlMsg.FRAMING_ERROR))
         assertEquals("0x63", ProtocolTrace.name(null, 99))
     }
+
+    @Test fun hardwareAddressesAreMasked() {
+        assertEquals("from xx:xx:xx:xx:xx:xx, on", ProtocolTrace.masked("from " + listOf("0A", "1b", "2C", "3d", "4E", "5f").joinToString(":") + ", on"))
+        assertEquals("xx:xx:xx:xx:xx:xx", ProtocolTrace.masked(listOf("0a", "1b", "2c", "3d", "4e", "5f").joinToString("-")))
+        assertEquals("12:34:56 1080x1920", ProtocolTrace.masked("12:34:56 1080x1920"))
+    }
+
+    @Test fun theUsbSerialNumberStaysOut() {
+        assertEquals("usb:Android|Open Automotive", ProtocolTrace.peer("usb:Android|Open Automotive|0123456789"))
+        assertEquals("usb:A|B", ProtocolTrace.peer("usb:A|B|12|34"))
+        assertEquals("tcp", ProtocolTrace.peer("tcp"))
+    }
 }

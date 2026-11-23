@@ -58,9 +58,14 @@ internal data class TouchpadThresholds(val move: Int, val multiMove: Int) {
  * moved (or showed). Main thread.
  */
 internal class TouchpadNavigator(
-    private val thresholds: TouchpadThresholds,
+    thresholds: TouchpadThresholds,
     private val moveFocus: (keyCode: Int) -> Boolean,
 ) {
+    /**
+     * The step sizes. The car can change its sensitivity during the session: a swipe under way
+     * keeps where it started and its steps so far, and goes on with the new size from its next event.
+     */
+    var thresholds = thresholds
     private var tracking = false
     private var originX = 0f
     private var originY = 0f
