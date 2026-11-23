@@ -133,6 +133,8 @@ class CarAppConnection(
     private var retries = 0
     /** Screen stack of the last template applied, top first (as ScreenManager lists it). */
     private var screenStack: List<TemplateInfo> = emptyList()
+    /** How many screens the app has stacked: 1 on its first, where its Back does nothing. */
+    val screens: Int get() = screenStack.size
     /** getTemplate calls started / the newest one applied: replies can come back out of order. */
     private var fetchSeq = 0
     private var appliedSeq = 0
