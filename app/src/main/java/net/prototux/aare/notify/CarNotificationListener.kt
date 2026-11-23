@@ -283,8 +283,10 @@ class CarNotificationListener : NotificationListenerService() {
      * move the pending count and the focus.
      */
     private val speechLock = Any()
-    /** Held while something is queued to speak; released once the last utterance finishes (see [speak]). */
+    /** Held while something is queued to speak; released once the last utterance finishes (see [speak]). Android 8+. */
     private var speechFocus: AudioFocusRequest? = null
+    /** The same, below Android 8, which has no [AudioFocusRequest]: the deprecated focus APIs need the listener back to abandon it. */
+    private var speechFocusListener: AudioManager.OnAudioFocusChangeListener? = null
     /** Utterances queued but not yet done, so overlapping messages release focus only once. */
     private var pendingUtterances = 0
     private var utteranceSeq = 0
@@ -315,20 +317,30 @@ class CarNotificationListener : NotificationListenerService() {
      * takes the car's microphone for a reply (full transient focus; see CarRuntime.openMicrophone).
      */
     private fun requestSpeechFocus() {
-        if (speechFocus != null) return
+        if (speechFocus != null || speechFocusListener != null) return
         val am = getSystemService(AudioManager::class.java) ?: return
-        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            .build()
-        if (am.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) speechFocus = request
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+                .build()
+            if (am.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) speechFocus = request
+        } else {
+            val listener = AudioManager.OnAudioFocusChangeListener { }
+            @Suppress("DEPRECATION")
+            if (am.requestAudioFocus(listener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+                speechFocusListener = listener
+        }
     }
 
     private fun abandonSpeechFocus() {
         synchronized(speechLock) {
-            val request = speechFocus ?: return
-            speechFocus = null
-            runCatching { getSystemService(AudioManager::class.java)?.abandonAudioFocusRequest(request) }
+            val am = getSystemService(AudioManager::class.java)
+            speechFocus?.let { request -> speechFocus = null; runCatching { am?.abandonAudioFocusRequest(request) } }
+            speechFocusListener?.let { listener ->
+                speechFocusListener = null
+                @Suppress("DEPRECATION") runCatching { am?.abandonAudioFocus(listener) }
+            }
         }
     }
 

@@ -134,7 +134,7 @@ class VideoEncoder(
                     break
                 } catch (e: Exception) {
                     lastError = e
-                    Log.w(TAG, "encoder ${c.name} rejected $format: ${e.message}")
+                    net.prototux.aare.SessionAapLog.w("video encoder ${c.name} rejected $format: ${e.message}")
                     runCatching { c.reset() }
                 }
             }
@@ -143,7 +143,7 @@ class VideoEncoder(
             c.start()
             inputSurface = surface
             codec = c
-            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
+            net.prototux.aare.SessionAapLog.i("video encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
         } catch (e: Throwable) {
             surface?.let { runCatching { it.release() } }
             c?.let { runCatching { it.release() } }
@@ -227,7 +227,7 @@ class VideoEncoder(
         }
 
         override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            Log.i(TAG, "encoder output format $format")
+            net.prototux.aare.SessionAapLog.i("video encoder output: $format")
         }
     }
 

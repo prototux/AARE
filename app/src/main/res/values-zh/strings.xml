@@ -46,6 +46,9 @@
     <string name="setup_check_notification_access_subtitle">消息、Google Maps 与 Waze 的导航提示、正在播放信息</string>
     <string name="setup_check_audio_subtitle">让手机的声音传到车机</string>
     <string name="setup_action_set_up">设置</string>
+    <string name="setup_old_android_title">运行在较旧版本的 Android 上</string>
+    <string name="setup_old_android_message">AARE 在 Android 6 和 7 上也能运行，但 Android 8 是支持更完善的基准版本。在 Android 6 和 7 上，连接通知无法放入专属通道，因此无法在系统设置中与 AARE 的其他通知分开静音。其余功能均照常工作，或自动回退到较旧的方式。</string>
+    <string name="setup_old_android_dont_show_again">不再显示</string>
     <string name="setup_section_connecting">连接</string>
     <string name="setup_toggle_wireless_title">无线连接</string>
     <string name="setup_toggle_wireless_subtitle">已配对车辆进入蓝牙范围时，通过 Wi-Fi 自动连接</string>
@@ -265,6 +268,7 @@
     <string name="audio_method_policy">系统音频路由（类似 Android Auto）</string>
     <string name="audio_method_shizuku_policy">Shizuku，音乐与导航分开（类似 Android Auto）</string>
     <string name="audio_method_shizuku">Shizuku 或 root</string>
+    <string name="audio_method_root_policy">Root，音乐与导航分开</string>
     <string name="audio_method_playback_capture">屏幕录制权限</string>
     <string name="audio_policy_not_ready">效果类似 Android Auto：音乐与导航语音分开，手机扬声器关闭。需要已获取 root 权限的手机：通过 Magisk 模块将 AARE 安装为系统应用（详见 README）。</string>
     <string name="audio_shizuku_ready">已就绪。手机播放的所有声音（包括导航语音）都会传到车机，手机保持静音。</string>
@@ -476,6 +480,11 @@
     <string name="browser_home">主页</string>
     <string name="browser_address_hint">搜索或输入网址</string>
     <string name="assistant_links_title">来自助手的链接</string>
+    <string name="assistant_stop">停止助手</string>
+    <string name="assistant_stop_style_title">停止助手的方式</string>
+    <string name="assistant_stop_style_voice_button">语音按钮会变为停止</string>
+    <string name="assistant_stop_style_red_restart">红色停止按钮，语音按钮会再次询问</string>
+    <string name="assistant_stop_style_red_stop">红色停止按钮，语音按钮也会停止</string>
     <string name="assistant_links_subtitle">允许所选助手回复中的 aare:// 链接控制音乐，或在车机屏幕上提议导航、打开应用或拨打电话。来自其他应用和网页的链接会被忽略。</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">车辆数据</string>

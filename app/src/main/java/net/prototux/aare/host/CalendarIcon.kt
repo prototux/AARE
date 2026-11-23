@@ -6,9 +6,8 @@ import android.graphics.Bitmap
 import android.os.Build
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
-import java.time.Duration
-import java.time.LocalDate
-import java.time.ZonedDateTime
+import java.util.Calendar
+import java.util.TimeZone
 
 /** Calendar apps whose launcher icon shows the day of the month, read from their own metadata. */
 private val CALENDAR_PACKAGES = setOf("com.google.android.calendar", "com.samsung.android.calendar")
@@ -17,11 +16,18 @@ private val CALENDAR_PACKAGES = setOf("com.google.android.calendar", "com.samsun
 private const val DYNAMIC_ICONS_META_KEY = "com.google.android.calendar.dynamic_icons"
 
 /**
- * How long from [now] until the icons show the next day: a second past the coming local
- * midnight, so the date has surely turned when they are redrawn.
+ * How long from [nowMs] (in [zone]) until the icons show the next day: a second past the coming
+ * local midnight, so the date has surely turned when they are redrawn. [Calendar.add] keeps the
+ * day a calendar day even across a DST change (23 or 25 real hours), like a [zone]d date would.
  */
-fun msUntilNextDay(now: ZonedDateTime): Long =
-    Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay(now.zone)).toMillis().coerceAtLeast(0) + 1_000
+fun msUntilNextDay(nowMs: Long, zone: TimeZone = TimeZone.getDefault()): Long {
+    val midnight = Calendar.getInstance(zone).apply {
+        timeInMillis = nowMs
+        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        add(Calendar.DAY_OF_MONTH, 1)
+    }
+    return (midnight.timeInMillis - nowMs).coerceAtLeast(0) + 1_000
+}
 
 /** The 0-based index into a per-day icon array for [dayOfMonth] (1-31), or null if out of range. */
 fun dynamicCalendarIconIndex(dayOfMonth: Int, arrayLength: Int): Int? {
@@ -45,7 +51,7 @@ fun dynamicCalendarIcon(context: Context, packageName: String, sizePx: Int): Bit
         val resources = pm.getResourcesForApplication(packageName)
         val array = resources.obtainTypedArray(arrayRes)
         val resourceId = try {
-            dynamicCalendarIconIndex(LocalDate.now().dayOfMonth, array.length())?.let { array.getResourceId(it, 0) }
+            dynamicCalendarIconIndex(Calendar.getInstance().get(Calendar.DAY_OF_MONTH), array.length())?.let { array.getResourceId(it, 0) }
         } finally {
             array.recycle()
         }

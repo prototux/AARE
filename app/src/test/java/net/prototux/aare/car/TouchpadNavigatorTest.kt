@@ -112,6 +112,19 @@ class TouchpadNavigatorTest {
     }
 
     @Test
+    fun aSensitivityChangeMidSwipeKeepsTheSwipeGoing() {
+        down(0, 0)
+        assertFalse(move(50, 0))
+        // The car made the pad more sensitive: still measured from where the swipe started.
+        nav.thresholds = TouchpadThresholds(50, 70)
+        assertTrue(move(55, 0))
+        // The second step of the swipe takes the new long step, from 50.
+        assertFalse(move(115, 0))
+        assertTrue(move(120, 0))
+        assertEquals(List(2) { KeyEvent.KEYCODE_DPAD_RIGHT }, keys)
+    }
+
+    @Test
     fun eachSwipeStartsWithTheShortStep() {
         down(0, 0)
         assertTrue(move(0, 100))

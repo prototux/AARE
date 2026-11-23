@@ -95,10 +95,20 @@ class SettingsBackupTest {
 
     @Test
     fun theSafetyAndNetworkKeysAreBlockedAndNoneIsAllowed() {
-        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_audio")) {
+        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_audio", "assistant_links",
+            "assistant_on_car_screen", "media_video", "car_mic_for_phone_apps", "auto_pair_car_bluetooth", "companion_wifi_shizuku", "standalone_driving_rules")) {
             assertTrue(key, key in SettingsBackup.BLOCKED)
         }
         assertTrue(SettingsBackup.BLOCKED.intersect(SettingsBackup.ALLOWED.keys).isEmpty())
+    }
+
+    @Test
+    fun theRailAndScreenSettingsMove() {
+        val all = mapOf<String, Any?>("rail_apps" to "phone\nmaps", "compact_rail" to true, "split_screen" to true, "calendar_agenda_count" to 3,
+            "car_key_map" to setOf("5=home"))
+        val restored = SettingsBackup.import(JSONObject(SettingsBackup.export(all).toString()))
+        assertEquals(all, restored.values)
+        assertTrue(restored.skipped.isEmpty())
     }
 
     @Test

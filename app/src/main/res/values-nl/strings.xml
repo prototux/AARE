@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Berichten, routebeschrijvingen van Google Maps en Waze, nu afspelend</string>
     <string name="setup_check_audio_subtitle">Laat het geluid van de telefoon naar de auto gaan</string>
     <string name="setup_action_set_up">Instellen</string>
+    <string name="setup_old_android_title">Draait op een oudere Android</string>
+    <string name="setup_old_android_message">AARE draait ook op Android 6 en 7, maar Android 8 is de beter ondersteunde basis. Op Android 6 en 7 kunnen verbindingsmeldingen niet in hun eigen kanaal worden geplaatst, dus ze kunnen niet los van AAREs andere meldingen worden gedempt in de systeeminstellingen. Al het andere werkt op dezelfde manier, of valt automatisch terug op een oudere methode.</string>
+    <string name="setup_old_android_dont_show_again">Niet meer weergeven</string>
     <string name="setup_section_connecting">Verbinden</string>
     <string name="setup_toggle_wireless_title">Draadloos</string>
     <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systeemaudiorouting (zoals Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, muziek en navigatie apart (zoals Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku of root</string>
+    <string name="audio_method_root_policy">Root, muziek en navigatie apart</string>
     <string name="audio_method_playback_capture">Schermopname-machtiging</string>
     <string name="audio_policy_not_ready">Zoals Android Auto: muziek en navigatiestem apart, telefoonluidspreker uit. Vereist een geroote telefoon: installeer AARE als systeemapp met de Magisk-module (zie de README).</string>
     <string name="audio_shizuku_ready">Gereed. Alles wat de telefoon afspeelt gaat naar de auto, inclusief navigatiestem; de telefoon blijft stil.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Startpagina</string>
     <string name="browser_address_hint">Zoeken of een webadres invoeren</string>
     <string name="assistant_links_title">Links van de assistent</string>
+    <string name="assistant_stop">Assistent stoppen</string>
+    <string name="assistant_stop_style_title">Assistent stoppen</string>
+    <string name="assistant_stop_style_voice_button">De spraakknop wordt Stoppen</string>
+    <string name="assistant_stop_style_red_restart">Rode stopknop, de spraakknop vraagt opnieuw</string>
+    <string name="assistant_stop_style_red_stop">Rode stopknop, de spraakknop stopt ook</string>
     <string name="assistant_links_subtitle">Laat aare://-links in de antwoorden van de gekozen assistent de muziek bedienen, of op het autoscherm aanbieden om te navigeren, een app te openen of te bellen. Links uit andere apps en van webpagina\'s worden genegeerd.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
