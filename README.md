@@ -70,12 +70,15 @@ Services, no account.
 
 ### What you need
 
-- A phone with **Android 8** or newer. Some features need a newer Android:
+- A phone with **Android 6** or newer; some features need Android 8 or newer, and AARE shows a
+  one-time notice of what's limited when it's running on Android 6 or 7.
 
   | Feature | Needs |
   |---|---|
+  | Connection notifications in their own channel (so they can be muted separately) | Android 8 |
   | Car audio by screen capture | Android 10 (on Android 8 and 9: the privileged install, or the car's Bluetooth) |
   | Car audio through Shizuku | Android 12 |
+  | Car audio through root (su) | Android 12 |
   | WPA3-only car Wi-Fi (wireless) | Android 10 (WPA2 and WPA2/WPA3 work from Android 8) |
   | Signal bars on the car screen | Android 9 |
   | Hanging up or declining from the car | Android 9 |
@@ -357,6 +360,7 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
 |---|---|---|---|
 | **System audio routing**, as Android Auto does it | a rooted phone, AARE installed as a privileged app (below), or the permission granted over `adb root` | yes, on the car's navigation channel | off |
 | **Shizuku** | [Shizuku](https://shizuku.rikka.app/) running, Android 12+ | yes, on the car's navigation channel | off |
+| **Root** | a rooted phone (KernelSU, Magisk, APatch…), Android 12+: the normal APK, nothing else to install | yes, on the car's navigation channel | off |
 | **Screen-capture permission** | one consent (choose *Entire screen*) | no | still plays |
 
 - **Privileged install (root):** `tools/magisk/build-module.sh` makes `build/aare-magisk.zip`
@@ -384,6 +388,13 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
   computer*: started that way it doesn't need wireless debugging, and runs until the phone
   reboots (as long as USB debugging stays on)
   ([discussion](https://github.com/prototux/AARE/discussions/49)).
+- **Root alone (no Magisk module, no Shizuku):** on AARE's *Car audio* page tap *Shizuku or root*
+  and allow AARE in the root manager. AARE then starts a small helper of its own with `su`, which
+  takes the shell's rights and registers the same audio policy as the privileged install: music
+  and navigation voice go to their own car channels. If the phone refuses it, AARE falls back to
+  recording the phone's whole output through root, with navigation voice mixed into the music.
+  When Shizuku runs too, AARE uses Shizuku. The Magisk module and `adb root` remain options: they
+  let AARE register the policy itself, with no helper.
 - **Screen capture:** works everywhere, but Android only gives normal apps media, game and
   "unknown" sounds, so navigation voice stays on the phone, and apps may opt out. Android asks
   for the permission again once AARE has been closed. Reported but not confirmed yet: after a
@@ -768,13 +779,22 @@ separate-app-sound write-up), [@MattMaaaan](https://github.com/MattMaaaan) (diag
 navigation location while the phone is locked, the reverse-camera video restart, car audio through
 Shizuku, the Ford SYNC 2.5 audio crackle and the home screen's map card),
 [@l0rdg3x](https://github.com/l0rdg3x) (head units on Google's receiver library, audio focus,
-pausing and resuming the music with the car, and the home screen's music card),
+pausing and resuming the music with the car, the home screen's music card, "Map always big", the
+desktop head unit's test options, and vehicles.json errors that say where without quoting it),
 [@akanshu-sapra](https://github.com/akanshu-sapra) (the black screen on Android 8),
-[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units)
-and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0: the
+[@filipeniquini](https://github.com/filipeniquini) (navigation messages for protocol 1.5 head units,
+calls through the car on the VW Play), [@jhahvhi](https://github.com/jhahvhi) (the bar that
+vanished behind a full-screen map, the margin under the map card),
+[@PCCV](https://github.com/PCCV) (one frame per USB transfer, for head units that reset the link
+otherwise), [@Charlie284](https://github.com/Charlie284) (the Xposed module that actually loads)
+and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0 (the
 certificate kept and the Trust button that stays after a dropped link, car apps' permission
 prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
-app icons that stay visible on light themes.
+app icons that stay visible on light themes) and whose fork's features were ported into 1.6.0
+(settings backup, the car rail's own apps and compact size, the calendar agenda, split screen,
+video from media apps, the assistant on the car screen and its car links), along with his own
+Shizuku audio priority, car keys in the connection log, Recents after a phone app, and the
+screen-capture consent kept.
 
 Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@dani203](https://github.com/dani203), [@pgwipeout](https://github.com/pgwipeout),
@@ -805,8 +825,9 @@ led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops a
 #82), [@henkv1](https://github.com/henkv1) (connections from the phone itself, #131),
 [@kveld9](https://github.com/kveld9) (the translations, #51), [@Ronsone](https://github.com/Ronsone)
 (the Audi A3's authentication answer, #43), [@pollio2008](https://github.com/pollio2008) (more
-navigation apps on the phone screen, discussion #150) and [@Delgrey](https://github.com/Delgrey)
-(Open Headunit, discussion #47). And tips from
+navigation apps on the phone screen, discussion #150), [@Delgrey](https://github.com/Delgrey)
+(Open Headunit, discussion #47), [@Pirrotto](https://github.com/Pirrotto) (navigation with the phone
+locked, #329) and [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320). And tips from
 [@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
 [@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 

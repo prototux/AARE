@@ -48,12 +48,8 @@ class ShellAudioService : IShellAudio.Stub {
     override fun start(sampleRate: Int, channels: Int): ParcelFileDescriptor? {
         stop()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-        // Shizuku runs this as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT; the su helper
-        // (SuAudioMain via app_process) runs as uid 0, which doesn't — the permission is checked
-        // against the recording uid, and being root isn't enough. Drop to the shell uid (gid before
-        // uid; once dropped we can't go back, which is fine: we only record audio from here on).
-        if (Process.myUid() == 0) runCatching { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
-            .onFailure { Log.w(TAG, "could not drop to the shell uid", it); return null }
+        // The su helper runs as root, which can't record the remote submix: see dropRootToShell.
+        runCatching { dropRootToShell() }.onFailure { Log.w(TAG, "could not drop to the shell uid", it); return null }
         return try {
             val format = AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -92,29 +88,37 @@ class ShellAudioService : IShellAudio.Stub {
     private val policies = HashMap<Int, PolicyStream>()
     private val policyLooper: Looper by lazy { HandlerThread("aare-shell-policy").apply { start() }.looper }
 
-    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor? = asShell { synchronized(policies) {
-        stopPolicyLocked(key)
+    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor? = asShell {
         try {
-            val ctx = ShellContext(context ?: systemContext())
-            val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx)
-            val stream = PolicyStream(handle)
-            val (read, write) = ParcelFileDescriptor.createPipe()
-            val chunk = sampleRate / 50 * channels * 2
-            stream.pump = Thread({
-                pump(handle.record, write, chunk) { stream.open }
-                // As for the remote submix: a policy nobody reads keeps its sound off the phone's
-                // speaker for good, so it goes with its reader.
-                if (stream.open) synchronized(policies) {
-                    if (policies[key] === stream) { Log.i(TAG, "policy $key pipe closed; stopping"); stopPolicyLocked(key) }
-                }
-            }, "aare-shell-policy-$key").apply { start() }
-            policies[key] = stream
-            read
+            openPolicy(key, sampleRate, channels, usages)
         } catch (e: Throwable) {
             Log.w(TAG, "audio policy as the shell failed", e)
             null
         }
-    } }
+    }
+
+    /**
+     * [startPolicy], throwing when the system refuses: the root helper ([SuAudioMain]) calls it
+     * directly, to tell AARE why. Run as the process itself (see [asShell]).
+     */
+    internal fun openPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor = synchronized(policies) {
+        stopPolicyLocked(key)
+        val ctx = ShellContext(context ?: systemContext())
+        val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx)
+        val stream = PolicyStream(handle)
+        val (read, write) = ParcelFileDescriptor.createPipe()
+        val chunk = sampleRate / 50 * channels * 2
+        stream.pump = Thread({
+            pump(handle.record, write, chunk) { stream.open }
+            // As for the remote submix: a policy nobody reads keeps its sound off the phone's
+            // speaker for good, so it goes with its reader.
+            if (stream.open) synchronized(policies) {
+                if (policies[key] === stream) { Log.i(TAG, "policy $key pipe closed; stopping"); stopPolicyLocked(key) }
+            }
+        }, "aare-shell-policy-$key").apply { start() }
+        policies[key] = stream
+        read
+    }
 
     override fun stopPolicy(key: Int) = asShell { synchronized(policies) { stopPolicyLocked(key) } }
 
@@ -245,11 +249,22 @@ class ShellAudioService : IShellAudio.Stub {
 
     private companion object {
         const val TAG = "AareShellAudio"
-        const val SHELL_UID = 2000
     }
 }
 
 private const val SHELL_PACKAGE = "com.android.shell"
+private const val SHELL_UID = 2000
+
+/**
+ * Drops the su helper (uid 0) to the shell uid; any other uid is left as it is. Shizuku runs this
+ * service as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT and MODIFY_AUDIO_ROUTING; root
+ * doesn't hold the first: it is checked against the recording uid, and being root isn't enough
+ * (the audio policy's recorder is a remote-submix one too). Gid before uid; once dropped there's
+ * no way back, which is fine: the helper only records audio from then on. Throws if refused.
+ */
+internal fun dropRootToShell() {
+    if (Process.myUid() == 0) { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
+}
 
 /** A context that says "the shell", so what the helper records or plays is attributed to the uid running it. */
 internal class ShellContext(base: Context) : ContextWrapper(base) {

@@ -16,9 +16,11 @@ android {
 
     defaultConfig {
         applicationId = "net.prototux.aare"
-        // Android 8. Newer features need newer Android: car audio by screen capture and the
-        // modern Wi-Fi join (10), Shizuku capture (12); older phones fall back or go without.
-        minSdk = 26
+        // Android 6. Newer features need newer Android: notification channels and foreground-
+        // service start (8), car audio by screen capture and the modern Wi-Fi join (10), Shizuku
+        // capture (12); older phones fall back or go without. A one-time notice on Android 6 and 7
+        // (MainActivity) lists what's limited there.
+        minSdk = 23
         targetSdk = 37
         // The release workflow passes the tag's version (-PversionName=1.2.3 -PversionCode=10203).
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 10000

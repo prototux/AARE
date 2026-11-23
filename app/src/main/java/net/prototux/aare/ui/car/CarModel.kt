@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.Settings
 import android.graphics.Bitmap
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -124,6 +125,12 @@ class CarUiState {
     var assistantAppId by mutableStateOf<String?>(null)
     /** A phone assistant without a car app, opened on the car screen through the launcher (see [assistantAppId]). */
     var assistantStandalonePkg by mutableStateOf<String?>(null)
+    /** How the assistant is stopped (Settings.ASSISTANT_STOP_*). */
+    var assistantStopStyle by mutableStateOf(Settings.ASSISTANT_STOP_VOICE_BUTTON)
+    /** The voice button is a stop button now: the assistant is on, and that's the chosen way to stop it. */
+    val voiceButtonIsStop: Boolean
+        get() = assistantStopStyle == Settings.ASSISTANT_STOP_VOICE_BUTTON &&
+            (listening || assistantAppId != null || assistantStandalonePkg != null)
     /** Turn-by-turn from a navigation app running on the phone (Google Maps, Waze…). */
     var phoneGuidance by mutableStateOf<PhoneGuidance?>(null)
     /** Right-hand drive: the rail goes to the right, next to the driver. */

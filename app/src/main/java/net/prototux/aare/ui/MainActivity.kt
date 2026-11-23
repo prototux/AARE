@@ -254,6 +254,7 @@ private fun Home() {
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
     BackHandler(enabled = page != null) { page = null }
+    OldAndroidNotice(settings)
 
     key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
@@ -400,6 +401,36 @@ private fun CertificateExpiryBanner() {
             }
         }
     }
+}
+
+/**
+ * Once per launch on Android 6 and 7 (minSdk 23; Android 8 is otherwise the baseline): what falls
+ * back to an older, more limited method there. "Don't show again" persists in [Settings]; OK
+ * alone shows it again next launch.
+ */
+@Composable
+private fun OldAndroidNotice(settings: Settings) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || settings.oldAndroidNoticeDismissed) return
+    var open by remember { mutableStateOf(true) }
+    if (!open) return
+    var dontShowAgain by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.setup_old_android_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.setup_old_android_message), style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+                Toggle(stringResource(R.string.setup_old_android_dont_show_again), "", dontShowAgain) { dontShowAgain = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (dontShowAgain) settings.oldAndroidNoticeDismissed = true
+                open = false
+            }) { Text(stringResource(R.string.common_ok)) }
+        },
+    )
 }
 
 @Composable
@@ -1106,20 +1137,24 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
     }
+    // Shizuku itself needs Android 12 (CaptureMethods.shizukuAvailable); its listener is never
+    // registered below that, so it's never live when there's no binder to answer it.
     DisposableEffect(Unit) {
-        val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
-        runCatching { Shizuku.addRequestPermissionResultListener(l) }
-        onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
+            runCatching { Shizuku.addRequestPermissionResultListener(l) }
+            onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        } else onDispose {}
     }
     @Suppress("UNUSED_EXPRESSION") refresh
     val policy = CaptureMethods.audioPolicyAvailable(ctx)
     val shizuku = CaptureMethods.shizukuAvailable()
-    val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
+    val shizukuAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && CaptureMethods.shizukuNeedsPermission()
     val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
         shizuku -> CaptureMethod.SHIZUKU_POLICY
-        root -> CaptureMethod.SHIZUKU
+        root -> CaptureMethod.ROOT_POLICY
         state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
         else -> null
     }
@@ -1592,6 +1627,13 @@ private fun AssistantCard(settings: Settings) {
                 onCarScreen,
             ) { onCarScreen = it; settings.assistantOnCarScreen = it }
         }
+        var stopStyle by remember { mutableStateOf(settings.assistantStopStyle) }
+        Spacer(Modifier.height(8.dp))
+        Select(stringResource(R.string.assistant_stop_style_title), listOf(
+            Settings.ASSISTANT_STOP_VOICE_BUTTON to stringResource(R.string.assistant_stop_style_voice_button),
+            Settings.ASSISTANT_STOP_RED_RESTART to stringResource(R.string.assistant_stop_style_red_restart),
+            Settings.ASSISTANT_STOP_RED_STOP to stringResource(R.string.assistant_stop_style_red_stop),
+        ), stopStyle) { stopStyle = it; settings.assistantStopStyle = it }
         var links by remember { mutableStateOf(settings.assistantLinks) }
         Spacer(Modifier.height(8.dp))
         Toggle(stringResource(R.string.assistant_links_title), stringResource(R.string.assistant_links_subtitle), links) {

@@ -58,6 +58,8 @@
     <string name="setup_hint_wireless_compat">As unidades principais integradas e os adaptadores sem fios de terceiros (ligados à USB do carro) esperam que o telemóvel responda por ordens diferentes. Automático usa a ordem padrão, ou a do adaptador para um carro que se ligou assim da última vez. Escolha Adaptador se o seu adaptador sem fios não ligar; Integrada volta à ordem padrão para todos os carros.</string>
     <string name="setup_toggle_resume_music_title">Retomar a música</string>
     <string name="setup_toggle_resume_music_subtitle">Iniciar a última aplicação de música quando o carro se ligar</string>
+    <string name="setup_toggle_calls_speaker_title">Chamadas no altifalante do telemóvel</string>
+    <string name="setup_toggle_calls_speaker_subtitle">Quando ligado a um carro, as chamadas usam o altifalante e o microfone do telemóvel em vez do sistema de mãos-livres do carro. Para adaptadores sem fios ou unidades principais cujo microfone não funciona. Aplica-se a partir da próxima ligação.</string>
     <string name="setup_bt_address_label">Endereço Bluetooth do telemóvel (opcional)</string>
     <string name="setup_bt_address_hint">Algumas unidades principais mostram um ecrã preto até saberem qual é o telemóvel ligado. Encontre-o em Definições &gt; Acerca do telefone &gt; Estado. Deixe em branco se o seu carro já funcionar.</string>
     <string name="setup_section_location">Localização</string>
@@ -65,6 +67,8 @@
     <string name="setup_toggle_car_gps_subtitle">Enquanto ligado, as aplicações no telemóvel veem a posição do carro em vez da do próprio telemóvel, para que as aplicações de navegação não misturem as duas</string>
     <string name="setup_check_mock_location_title">Permitir que a AARE defina a localização</string>
     <string name="setup_check_mock_location_subtitle">Opções de programador &gt; Selecionar aplicação de localização fictícia &gt; AARE</string>
+    <string name="setup_check_background_location_title">Navegação com o telemóvel bloqueado</string>
+    <string name="setup_check_background_location_subtitle">Opcional. Quando a AARE é iniciada por si só (o Bluetooth do carro), as aplicações de navegação mantêm a posição com o telemóvel bloqueado. Autorizações &gt; Localização &gt; Permitir sempre</string>
     <string name="setup_section_video">Vídeo</string>
     <string name="setup_toggle_60fps_title">Preferir 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Mais suave quando o carro o suporta</string>
@@ -210,6 +214,11 @@
     <string name="cert_action_remove">Remover</string>
     <string name="cert_action_import">Importar certificado…</string>
     <string name="cert_action_download">Transferir certificado</string>
+    <string name="cert_auto_update_title">Atualizar automaticamente o certificado transferido</string>
+    <string name="cert_auto_update_subtitle">Uma vez por dia, nunca enquanto está ligado, a AARE pede ao mesmo repositório um certificado mais recente e utiliza-o. De qualquer forma, a AARE avisa duas semanas antes de o certificado da Google expirar.</string>
+    <string name="cert_expiring_banner_title">O certificado da Google expira em %1$s</string>
+    <string name="cert_expired_banner_title">O certificado da Google expirou em %1$s</string>
+    <string name="cert_expiry_banner_subtitle">Os carros que só aceitam este rejeitarão a AARE. Toque para transferir um mais recente.</string>
     <string name="cert_action_downloading">A transferir…</string>
     <string name="cert_download_unavailable">O repositório de certificados já não existe (eliminado ou removido): %1$s. Em alternativa, extraia o certificado da app Android Auto (consulte o README).</string>
     <string name="cert_download_network">Não foi possível transferir o certificado: %1$s. Verifique a ligação e tente novamente.</string>
@@ -306,6 +315,12 @@
     <string name="notif_action_download_cert">Transferir certificado</string>
     <string name="notif_action_navigate">Navegar</string>
     <string name="notif_action_open">Abrir</string>
+    <string name="notif_cert_updated_title">Certificado atualizado</string>
+    <string name="notif_cert_updated_message">A AARE transferiu um certificado do Android Auto mais recente, válido até %1$s.</string>
+    <string name="notif_cert_expiring_title">O certificado está a expirar em breve</string>
+    <string name="notif_cert_expiring_text">%1$s expira em %2$s. Os carros que só aceitam o certificado da Google rejeitarão a AARE depois disso: transfira um mais recente.</string>
+    <string name="notif_cert_expired_title">Certificado expirado</string>
+    <string name="notif_cert_expired_text">%1$s expirou em %2$s. Os carros que só aceitam o certificado da Google rejeitam agora a AARE: transfira um mais recente.</string>
     <string name="notif_cert_download_title">A unidade principal rejeitou o certificado da AARE</string>
     <string name="notif_cert_download_message">Esta unidade principal só aceita um certificado emitido pela Google. Transfira o da aplicação Android Auto mais recente e, depois, volte a ligar-se.</string>
     <string name="notif_cert_download_progress">A transferir o certificado do Android Auto…</string>
@@ -324,6 +339,9 @@
     <string name="notif_trust_reconnect_suffix">%1$s, depois volte a ligar.</string>
     <string name="notif_cert_changed_message">certificado da unidade principal alterado: toque em Confiar na notificação ou na AARE apenas se o respetivo software tiver sido atualizado, depois volte a ligar</string>
     <string name="notif_cert_untrusted_message">certificado da unidade principal ainda não é de confiança: toque em Confiar na notificação ou na AARE, depois volte a ligar</string>
+    <string name="notif_cert_dates_title">Verifique a data e a hora do carro</string>
+    <string name="notif_cert_not_yet_valid_message">a unidade principal diz que o certificado da AARE ainda não é válido: o relógio dela provavelmente está atrasado. Acerte a data e a hora do carro e volte a ligar-se</string>
+    <string name="notif_cert_expired_message">a unidade principal diz que o certificado da AARE expirou: se não expirou, o relógio do carro está adiantado. Acerte a data e a hora do carro, ou obtenha um certificado mais recente em Avançado, e volte a ligar-se</string>
     <string name="notif_car_nearby_title">Carro próximo</string>
     <string name="notif_car_nearby_text">Toque para ligar sem fios</string>
     <string name="notif_status_connecting_to">A ligar a %1$s</string>
@@ -478,6 +496,8 @@
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dados do carro</string>
     <string name="setup_page_car_data_subtitle">Velocidade, mudança e sensores em tempo real do carro</string>
+    <string name="setup_page_about_title">Acerca</string>
+    <string name="setup_page_about_subtitle">O que é a AARE, as ligações do projeto e quem ajudou a construí-la</string>
 
     <!-- car_data: the read-only car sensor viewer -->
     <string name="car_data_not_connected">Ligue-se a um carro para ver os seus dados.</string>
@@ -533,6 +553,24 @@
     <string name="car_data_app_label">Dados do carro</string>
     <string name="car_data_show_in_car_title">Mostrar no ecrã do carro</string>
     <string name="car_data_show_in_car_subtitle">Adicione uma aplicação de diagnóstico no carro para estes dados em tempo real</string>
+
+    <!-- about: the About page -->
+    <string name="about_section_what_title">O que é a AARE</string>
+    <string name="about_text">A AARE é uma reimplementação de código aberto do lado do telemóvel do Android Auto: fala o protocolo de projeção do Android Auto diretamente com a unidade principal do carro, desenha o ecrã do carro por si própria e executa aplicações de navegação, multimédia e mensagens sem precisar dos Serviços do Google Play.</string>
+    <string name="about_section_links_title">Projeto</string>
+    <string name="about_link_repository">Repositório</string>
+    <string name="about_link_issues">Problemas</string>
+    <string name="about_link_discussions">Discussões</string>
+    <string name="about_section_thanks_title">Agradecimentos</string>
+    <string name="about_thanks_security_review">Revisão de segurança</string>
+    <string name="about_thanks_code_and_docs">Código e documentação</string>
+    <string name="about_thanks_head_unit_reports">Relatórios sobre unidades principais</string>
+    <string name="about_thanks_reports">Relatórios e ideias</string>
+    <string name="about_thanks_tips">Dicas</string>
+    <string name="about_section_oss_title">Componentes de código aberto</string>
+    <string name="about_oss_libraries_title">Bibliotecas</string>
+    <string name="about_oss_protocol_title">Definições do protocolo</string>
+
     <string name="vehicles_section_title">Substituições por veículo</string>
     <string name="vehicles_hint">Corrija a densidade ou as margens da área visível de um carro específico, sem uma nova compilação. Edite o vehicles.json com um gestor de ficheiros, associando o carro pela marca/modelo/nome.</string>
     <string name="vehicles_rule_count">Regras carregadas: %1$d</string>
@@ -575,6 +613,8 @@
     <string name="vehicles_malformed_at">O vehicles.json tem um erro na linha %1$d, coluna %2$d (%3$s): as suas regras são ignoradas.</string>
     <string name="vehicles_malformed">O vehicles.json não pode ser usado (%1$s): as suas regras são ignoradas.</string>
     <string name="setup_toggle_force_h264_title">Forçar vídeo H.264</string>
+    <string name="setup_toggle_constant_bitrate_title">Vídeo com bitrate constante</string>
+    <string name="setup_toggle_constant_bitrate_subtitle">Mantém cada fotograma com um tamanho aproximadamente igual. Ative se o carro cortar a ligação quando toda a imagem muda, como com o ecrã do telemóvel ou um vídeo. As imagens com mais detalhe ficam um pouco mais suaves. Aplica-se a partir da próxima ligação.</string>
     <string name="setup_toggle_force_h264_subtitle">Por predefinição, a AARE usa o melhor codec partilhado pelo carro e pelo telemóvel (H.265…). Ative se a imagem do carro estiver com falhas.</string>
     <string name="common_ok">OK</string>
     <string name="common_try_again">Tentar novamente</string>
@@ -601,6 +641,7 @@
     <string name="setup_backup_import_confirm_action">Substituir</string>
     <string name="setup_backup_import_done">Definições importadas.</string>
     <string name="setup_backup_import_done_skipped">Definições importadas. Ignoradas por serem desconhecidas, bloqueadas ou inválidas: %1$d</string>
+    <string name="setup_backup_import_blocked">Não importadas, por segurança (ative-as manualmente neste telemóvel): %1$s</string>
     <string name="setup_backup_import_failed">Não é possível importar este ficheiro: não é um ficheiro de definições da AARE, ou é demasiado grande.</string>
     <string name="setup_backup_export_failed">Não foi possível guardar o ficheiro de definições.</string>
     <string name="setup_nothing_to_open">Este telemóvel não tem nenhuma aplicação que possa abrir isto</string>
@@ -641,6 +682,7 @@
     <string name="tpl_password_hint">Palavra-passe</string>
     <string name="carapp_error_start">Não foi possível iniciar %1$s</string>
     <string name="carapp_error_refused">%1$s recusou a ligação</string>
+    <string name="carapp_error_no_answer">%1$s não respondeu. Pode aceitar apenas o Android Auto da Google (veja a lista de aplicações no telemóvel).</string>
     <string name="carapp_error_api_level">%1$s requer o nível de API de carro %2$d; este anfitrião suporta %3$d</string>
     <string name="carapp_error_stopped">%1$s parou</string>
     <string name="carapp_error_google_only">%1$s apenas aceita o Android Auto da Google. É necessário permitir a AARE (veja a lista de aplicações no telemóvel).</string>

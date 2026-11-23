@@ -172,6 +172,9 @@
     <string name="setup_check_notification_access_subtitle">Messages, directions from Google Maps and Waze, now playing</string>
     <string name="setup_check_audio_subtitle">Let the phone\'s sound reach the car</string>
     <string name="setup_action_set_up">Set up</string>
+    <string name="setup_old_android_title">Running on an older Android</string>
+    <string name="setup_old_android_message">AARE also runs on Android 6 and 7, but Android 8 is the better-supported baseline. On Android 6 and 7, connection notifications can\'t be put in their own channel, so they can\'t be muted separately from AARE\'s other notices in system settings. Everything else works the same, or falls back to an older method automatically.</string>
+    <string name="setup_old_android_dont_show_again">Don\'t show again</string>
     <string name="shizuku_setup_title">Grant AARE\'s permissions with Shizuku</string>
     <string name="shizuku_setup_subtitle">One tap grants what is still missing, without each permission\'s own dialog: microphone, location, contacts, call log, calendar, phone calls, nearby devices (Bluetooth, Wi-Fi), local network, notifications and notification access</string>
     <string name="shizuku_setup_working">Granting…</string>
@@ -459,6 +462,7 @@
     <string name="audio_method_policy">System audio routing (like Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, music and navigation apart (like Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku or root</string>
+    <string name="audio_method_root_policy">Root, music and navigation apart</string>
     <string name="audio_method_playback_capture">Screen-capture permission</string>
     <string name="audio_policy_not_ready">Like Android Auto: music and navigation voice apart, phone speaker off. Needs a rooted phone: install AARE as a system app with the Magisk module (see the README).</string>
     <string name="audio_shizuku_ready">Ready. Everything the phone plays goes to the car, navigation voice included; the phone stays quiet.</string>
@@ -518,6 +522,11 @@
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_links_title">Links from the assistant</string>
+    <string name="assistant_stop">Stop the assistant</string>
+    <string name="assistant_stop_style_title">Stopping the assistant</string>
+    <string name="assistant_stop_style_voice_button">The voice button turns into Stop</string>
+    <string name="assistant_stop_style_red_restart">Red stop button, the voice button asks again</string>
+    <string name="assistant_stop_style_red_stop">Red stop button, the voice button stops too</string>
     <string name="assistant_links_subtitle">Let aare:// links in the chosen assistant\'s replies control the music, or offer to navigate, open an app or call on the car screen. Links from other apps and from web pages are ignored.</string>
     <string name="assistant_settings_title">Voice assistant</string>
     <string name="assistant_page_subtitle">What the voice button opens</string>
