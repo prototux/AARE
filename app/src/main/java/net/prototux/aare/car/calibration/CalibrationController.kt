@@ -50,7 +50,8 @@ object CalibrationHub {
  * with nothing saved, when the car starts moving.
  *
  * Main thread, except [capturing] and [onTouchFromReader] (the session's reader thread). While
- * [capturing], touches go here and not to the car UI: with a wrong mapping it would get random taps.
+ * [capturing], from the visible-area step to the end, touches go here and not to the car UI: the
+ * car UI is hidden under the tool, and with a wrong mapping it would get random taps.
  */
 class CalibrationController(private val host: Host, private val main: Scheduler) {
     /** The main thread's queue (a [Handler] in the app, a fake clock in tests). */
@@ -71,11 +72,10 @@ class CalibrationController(private val host: Host, private val main: Scheduler)
     interface Host {
         val car: String
         val driving: Boolean
-        /** The running projection's frame and the margins the car declared; null when there is none. */
-        val projection: Projection?
-        /** Stores [c] for [car] (null: removes it) and lays the projection out again with it. */
+        /** Stores [c] for this head unit (null: removes it) and lays the projection out again with it, calling [onProjection]. */
         fun apply(c: TouchCalibration?)
     }
+    /** A [width] x [height] frame, the car's own area in it, and the calibration in use. */
     class Projection(val width: Int, val height: Int, val carLayout: ProjectionLayout, val saved: TouchCalibration?)
 
     @Volatile var capturing = false
@@ -120,6 +120,8 @@ class CalibrationController(private val host: Host, private val main: Scheduler)
         // Start from what is in use: a saved area, or the car's.
         p.saved?.margins(p.width, p.height)?.let { margins = it.toList() }
         log("started for ${host.car}, frame ${p.width}x${p.height}, car margins ${p.carLayout.describe().ifBlank { " none" }}")
+        // From here, the car's taps would reach the car UI hidden under the tool.
+        capturing = true
         set(CalState.Area(p.width, p.height, margins, carMargins(p)))
     }
 
@@ -142,7 +144,6 @@ class CalibrationController(private val host: Host, private val main: Scheduler)
         log("visible area: margins l${margins[0]} t${margins[1]} r${margins[2]} b${margins[3]}")
         targets = CalibrationMath.targets(p.width, p.height, margins.toIntArray())
         taps.fill(null); retries = 0
-        capturing = true
         set(CalState.Target(0, targets[0], retry = false))
     }
 

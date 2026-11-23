@@ -6,7 +6,10 @@ import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioF
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
 import aap_protobuf.service.control.message.DriverPositionOuterClass.DriverPosition
+import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService.TouchPad
+import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
+import aap_protobuf.service.inputsource.message.TouchEventOuterClass.TouchEvent
 import aap_protobuf.service.media.shared.message.MediaCodecTypeOuterClass.MediaCodecType
 import aap_protobuf.service.media.shared.message.UiConfigOuterClass.UiConfig
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
@@ -17,7 +20,9 @@ import aap_protobuf.service.mediaplayback.message.MediaPlaybackMetadataOuterClas
 import aap_protobuf.service.mediaplayback.message.MediaPlaybackStatusOuterClass.MediaPlaybackStatus
 import aap_protobuf.service.sensorsource.message.SensorBatchOuterClass.SensorBatch
 import aap_protobuf.service.ServiceOuterClass.Service
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import android.location.Location
@@ -27,11 +32,14 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.ViewConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -64,17 +72,22 @@ import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.channels.WifiProjectionChannel
 import net.prototux.aare.DiagLog
+import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.car.calibration.CalibrationController
+import net.prototux.aare.car.calibration.TouchCalibration
 import net.prototux.aare.ui.car.CalibrationOverlay
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CarAudioOut
+import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.audio.PcmSource
 import net.prototux.aare.audio.PlaybackCaptureSource
 import net.prototux.aare.audio.ShizukuPolicySource
 import net.prototux.aare.audio.ShizukuSource
+import net.prototux.aare.audio.StartSilence
+import net.prototux.aare.audio.SuPolicySource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.R
@@ -100,12 +113,14 @@ class CarSession(
     private val projection: () -> MediaProjection?,
     private val wireless: Boolean,
     /** Identifies the head unit among the trusted certificates: Bluetooth address, USB accessory, or "tcp". */
-    peerKey: String,
+    private val peerKey: String,
     /** Trust the head unit's first certificate without asking (Bluetooth bonding already was the user's consent). */
     trustOnFirstUse: Boolean,
     private val listener: Listener,
     /** Offer the phone screen to the car; false for the developer TCP server unless opted in, as its peer is unauthenticated. */
     mirror: Boolean = true,
+    /** Answer the version request with the head unit's own version (SessionOptions.echoHeadUnitVersion), for wireless adapters. */
+    echoHeadUnitVersion: Boolean = false,
 ) : AapSession.Callbacks {
 
     interface Listener {
@@ -123,7 +138,8 @@ class CarSession(
     private val aap = AapSession(transport, identity, PhoneDescription(
         deviceName = deviceName(), label = "Android", instanceId = settings.instanceId,
         smallIcon = icon(32), mediumIcon = icon(64), largeIcon = icon(128),
-    ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse))
+    ), this, net.prototux.aare.SessionAapLog.also { it.verbose = settings.verboseProtocolLog }, SessionOptions(sendPings = wireless, pins = PinnedHeadUnits(context), peerKey = peerKey, trustOnFirstUse = trustOnFirstUse,
+        clockNanos = SystemClock::elapsedRealtimeNanos, echoHeadUnitVersion = echoHeadUnitVersion))
 
     private var video: VideoChannel? = null
     private var mic: MicrophoneChannel? = null
@@ -134,6 +150,8 @@ class CarSession(
     private var phoneStatus: net.prototux.aare.aap.channels.PhoneStatusChannel? = null
     /** Calls, signal, battery and call availability to the car (from onRunning). */
     @Volatile private var phoneBridge: PhoneStatusBridge? = null
+    /** Answers the car's Bluetooth passkey or PIN while it pairs; null without a Bluetooth service. */
+    @Volatile private var btPairing: BluetoothPairing? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
     private val audio = ArrayList<AudioChannel>()
@@ -153,10 +171,14 @@ class CarSession(
     @Volatile private var touch: TouchMapper? = null
     /** Overrides for this specific head unit from vehicles.json (density, margins…), matched at discovery. */
     @Volatile private var vehicleOverride: VehicleOverride? = null
+    /** Who the head unit said it is, at discovery. */
+    @Volatile private var headUnit: HeadUnitIdentity? = null
     /** The video codec matched to this head unit (phone-hardware ∩ car-advertised), chosen at discovery. */
     @Volatile private var videoCodec: VideoCodecKind = VideoCodecKind.H264
     private val audioOuts = java.util.concurrent.ConcurrentHashMap<AudioStreamType, CarAudioOut>()
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
+    /** The car's mic for the phone's own apps (Settings.carMicForPhoneApps); null when off or the car has none. */
+    private var phoneAppsMic: CarMicForApps? = null
     @Volatile private var mediaFocus = false
     /** The car lets navigation voice play (but not music). */
     @Volatile private var guidanceFocusState = false
@@ -168,6 +190,8 @@ class CarSession(
     @Volatile private var guidanceAnswered = false
     @Volatile var headUnitName: String = ""
         private set
+    /** The head unit has answered at all (its version response): this link reaches it. */
+    val reachedHeadUnit: Boolean get() = aap.headUnitVersion != null
     @Volatile var videoDescription: String = ""
         private set
 
@@ -187,10 +211,14 @@ class CarSession(
             navBridge?.updatePhone(g)
         }
         runtime.start()
+        settings.registerListener(carKeyPrefsListener)
         listener.onStatus(this, context.getString(R.string.notif_status_connecting_to, transport.name))
     }
 
     fun stop() = aap.stop()
+
+    /** Ends this wireless session because the user turned wireless off. */
+    fun stopWirelessDisabled() = aap.stopWirelessDisabled()
 
     /**
      * The session closed before the head unit's version request ever came in: this attempt never
@@ -199,6 +227,16 @@ class CarSession(
      * its own link was ready.
      */
     val closedBeforeVersionExchange: Boolean get() = aap.closedDuring == AapSession.State.VERSION
+
+    /** The protocol state the session was in when it closed. */
+    val closedDuring: AapSession.State get() = aap.closedDuring
+
+    /** Why the session failed; null when it ended with a bye-bye from either side (or is still running). */
+    @Volatile var closeError: Throwable? = null
+        private set
+
+    /** The head unit listed its services: the connection itself worked, whatever happens next. */
+    val reachedServiceDiscovery: Boolean get() = aap.discovery != null
 
     /**
      * Asks the head unit to show its own UI (radio, vehicle settings), like Android Auto's "Exit".
@@ -209,7 +247,7 @@ class CarSession(
     fun exitToCar() {
         val ch = video ?: return
         if (aap.state != AapSession.State.RUNNING || !ch.opened) return
-        Log.i(TAG, "asking the car for its own screen")
+        DiagLog.add("asking the car for its own screen")
         ch.requestNativeFocus()
     }
 
@@ -217,26 +255,72 @@ class CarSession(
 
     // ------------------------------------------------------------------ AAP callbacks (reader thread)
 
+    /**
+     * Who this head unit is, kept by the Bluetooth address it announces, for quirks needed before
+     * the next session says it again. Not by the address a wireless session came in on: that can
+     * be an adapter that passes the head unit's identity through, and a rule for the head unit
+     * must not keep the adapter from connecting. That address is only marked as one wireless works
+     * with, which no rule overrides. Head units are looked up this way before wireless starts.
+     */
+    private fun rememberHeadUnit(response: ServiceDiscoveryResponse, id: HeadUnitIdentity) {
+        // The car list's name for it (Settings.rememberCar), so that forgetting the car forgets this.
+        val carName = response.displayName.ifBlank { headUnitName }
+        val announced = announcedAddress(response)
+        val wirelessPeer = peerKey.trim().uppercase().takeIf { wireless && BluetoothAdapter.checkBluetoothAddress(it) }
+        runCatching {
+            val store = KnownHeadUnits(context)
+            if (announced != null) store.put(announced, id, carName) else store.name(peerKey, carName)
+            wirelessPeer?.let { store.markWirelessWorked(it, carName) }
+            settings.lastHeadUnit = carKey(response)
+        }.onFailure { Log.w(TAG, "can't remember the head unit", it) }
+    }
+
+    /** The Bluetooth address the head unit announces, if any. */
+    private fun announcedAddress(response: ServiceDiscoveryResponse): String? =
+        response.channelsList.firstOrNull { it.hasBluetoothService() }?.bluetoothService?.carAddress
+            ?.trim()?.uppercase()?.takeIf { BluetoothAdapter.checkBluetoothAddress(it) }
+
+    /**
+     * The head unit's key in KnownHeadUnits, which keeps its "Car quirks" choices: the Bluetooth
+     * address it announces (the same over USB and wireless), else the session's peer key.
+     */
+    private fun carKey(response: ServiceDiscoveryResponse): String = announcedAddress(response) ?: peerKey.trim()
+
     override fun onServiceDiscovery(session: AapSession, response: ServiceDiscoveryResponse): List<ServiceChannel> {
         headUnitName = AapSession.describe(response).substringBefore(" [").ifBlank { response.displayName }
-        response.headunitInfo.let { hu ->
-            vehicleOverride = VehicleOverrides.forHeadUnit(context,
-                make = hu.make.ifEmpty { response.make }, model = hu.model.ifEmpty { response.model }, name = headUnitName)
-            vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
-        }
-        CarData.discovered(response, owner = this)
+        val id = HeadUnitIdentity.of(response, headUnitName, session.headUnitVersion)
+        headUnit = id
+        DiagLog.add("vehicles.json match keys: make \"${id.make}\", model \"${id.model}\", year \"${id.year}\", " +
+            "headUnitMake \"${id.headUnitMake}\", headUnitModel \"${id.headUnitModel}\", headUnitBuild \"${id.headUnitBuild}\", " +
+            "protocol ${id.protocol?.let { (major, minor) -> "\"$major.$minor\"" } ?: "unknown"}")
+        // The per-car vehicles.json match, with this car's "Car quirks" page choices applied on top
+        // (VehicleOverrides.effective): the one place this session's quirks are decided.
+        vehicleOverride = VehicleOverrides.effective(VehicleOverrides.forHeadUnit(context, id),
+            runCatching { KnownHeadUnits(context).quirks(carKey(response)) }.getOrDefault(QuirkSettings()))
+        vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
+        rememberHeadUnit(response, id)
+        calibrationKey = carKey(response)
+        calibrationCarName = response.displayName.ifBlank { headUnitName }
+        touchCalibration = runCatching { KnownHeadUnits(context).calibration(calibrationKey) }
+            .onFailure { Log.w(TAG, "can't read the touch calibration", it) }.getOrNull()
+        CarData.discovered(response, owner = this, forceElectric = vehicleOverride?.forceElectric == true)
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
+        val quirks = vehicleOverride
         main.post {
             runtime.ui.headUnitName = response.displayName.ifBlank { headUnitName }
             listener.onStatus(this, context.getString(R.string.notif_status_connected_to, headUnitName))
             settings.rememberCar(runtime.ui.headUnitName)
+            // "Exit to car" named after the car, or left out (vehicles.json, the built-in car fixes).
+            if (quirks?.exitToCar == false) runtime.exitToCar = null
+            runtime.exitLabel = ExitLabel.of(quirks?.exitLabel, response.displayName, id.make, carFixes = quirks?.builtInFixes == true)
+            runtime.refreshApps()
         }
         val channels = ArrayList<ServiceChannel>()
         // Input services are resolved after the loop, once the main display id is known: a car with
         // a cluster/second screen lists one input service per display, several of them empty.
         val inputServices = ArrayList<Service>()
         var mainDisplayId = 0
-        val quirks = vehicleOverride
+        session.sensorChannelFirst = quirks?.sensorChannelFirst == true
         for (s in response.channelsList) {
             val kind = AapSession.serviceKind(s)
             if (quirks?.skips(kind) == true) {
@@ -250,9 +334,9 @@ class CarSession(
                         0 -> if (video == null) {
                             mainDisplayId = s.mediaSinkService.displayId
                             videoCodec = pickVideoCodec(s.mediaSinkService.videoConfigsList)
-                            video = VideoChannel(s, videoListener(rhd), videoType(videoCodec)).also { channels += it }
+                            video = VideoChannel(s, videoListener(rhd), videoType(videoCodec), allowDropOverflow = quirks?.dropOverflow == true).also { channels += it }
                         }
-                        1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s) }
+                        1 -> if (cluster == null) cluster = ClusterDisplay(context, runtime).also { channels += it.open(s, allowDropOverflow = quirks?.dropOverflow == true) }
                     }
                 }
                 s.hasMediaSinkService() -> {
@@ -260,15 +344,17 @@ class CarSession(
                     when {
                         // The official phone never uses telephony audio (calls stay on Bluetooth HFP).
                         sink.audioType == AudioStreamType.AUDIO_STREAM_TELEPHONY -> Unit
-                        // We only encode PCM. A few head units advertise an AAC sink (sometimes
-                        // alongside a PCM one, sometimes before it) and feeding PCM to it gives
-                        // silence, so skip it: a PCM sink of the same stream, if the car lists one,
-                        // becomes the primary instead. Codecs default to PCM, so cars that don't
-                        // advertise one are unaffected.
-                        sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM ->
-                            Log.i(TAG, "skipping ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
-                                "needs ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, we only send PCM")
-                        else -> AudioChannel(s, audioListener).also { audio += it; channels += it }
+                        // An AAC sink is left closed only when a PCM one plays the stream (AudioSinks).
+                        AudioSinks.skip(s, response.channelsList) ->
+                            DiagLog.add("not using ${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id}: " +
+                                "it asks for ${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")}, the PCM one plays it")
+                        else -> {
+                            if (sink.availableType != MediaCodecType.MEDIA_CODEC_AUDIO_PCM) {
+                                DiagLog.add("${sink.audioType.name.removePrefix("AUDIO_STREAM_")} sink #${s.id} asks for " +
+                                    "${sink.availableType.name.removePrefix("MEDIA_CODEC_AUDIO_")} and is the only one: sending it PCM")
+                            }
+                            AudioChannel(s, audioListener, allowDropOverflow = quirks?.dropOverflow == true).also { audio += it; channels += it }
+                        }
                     }
                 }
                 s.hasMediaSourceService() -> mic = MicrophoneChannel(s, micListener, sendSetup = quirks?.micSetup ?: true).also { channels += it }
@@ -278,11 +364,16 @@ class CarSession(
                 s.hasMediaPlaybackService() -> playback = MediaPlaybackChannel(s).also { channels += it }
                 s.hasPhoneStatusService() -> phoneStatus = net.prototux.aare.aap.channels.PhoneStatusChannel(s) { phoneBridge?.onInput(it) }.also { channels += it }
                 s.hasWifiProjectionService() -> channels += WifiProjectionChannel(s)
-                s.hasBluetoothService() -> channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
-                    override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
-                        DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
-                    }
-                })
+                s.hasBluetoothService() -> {
+                    val carAddress = s.bluetoothService.carAddress.trim().uppercase()
+                    channels += BluetoothChannel(s, phoneBtAddress(), object : BluetoothChannel.Listener {
+                        override fun onPairingResponse(alreadyPaired: Boolean, ok: Boolean) {
+                            DiagLog.add("car bluetooth: pairing ${if (ok) "accepted" else "refused"}${if (alreadyPaired) " (already paired)" else ""}")
+                            main.post { maybeAutoPair(carAddress, alreadyPaired) }
+                        }
+                        override fun onAuthenticationData(authData: String) { btPairing?.onAuthenticationData(authData) }
+                    }).also { bluetooth = it; btPairing = BluetoothPairing(context, it, main).apply { start() } }
+                }
             }
         }
         // The input service for the projected (main) display: match its display id, require a real
@@ -296,8 +387,9 @@ class CarSession(
         mainInput?.let { s ->
             InputChannel(s, inputListener).also { ch ->
                 ch.touchScreen?.let { touchSize = it.width to it.height }
+                setUpInput(ch)
                 channels += ch
-                Log.i(TAG, "input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
+                DiagLog.add("input: display ${s.inputSourceService.displayId} panel ${ch.touchScreen?.let { "${it.width}x${it.height}" } ?: "none"} of ${inputServices.size} service(s)")
             }
         }
         // Services the head unit lists that AARE doesn't speak, opened because a rule says this car wants them open.
@@ -321,10 +413,12 @@ class CarSession(
     }
 
     override fun onRunning(session: AapSession) {
+        if (vehicleOverride?.pairAgainWhenRunning == true && bluetooth?.announceAgain() == true)
+            DiagLog.add("car bluetooth: announcing the phone again, session running (vehicles.json)")
         main.post {
             if (closed) return@post
             listener.onStatus(this, context.getString(R.string.notif_status_projecting_to, headUnitName))
-            navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png) }
+            navStatus?.let { navBridge = NavStatusBridge(it, { m, w, h -> turnImage(m, w, h) }, ::png, turnIcons::png) }
             navBridge?.updatePhone(runtime.ui.phoneGuidance)
             // A route that started before the session was running still gets the focus.
             requestNavFocus()
@@ -332,8 +426,9 @@ class CarSession(
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (!m.group || settings.groupMessages) {
-                    runtime.remember(m.title, m.text, m.icon, m.actions)
-                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
+                    val open = runtime.opener(m.packageName)
+                    runtime.remember(m.title, m.text, m.icon, m.actions, open)
+                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
                     if (settings.readMessagesAloud) m.readAloud()
                 }
             }
@@ -341,6 +436,28 @@ class CarSession(
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
+            applyPhoneAppsMic()
+            settings.registerListener(phoneAppsMicSetting)
+        }
+    }
+
+    /** Turned on or off in the settings while connected: applies straight away, not at the next connection. */
+    private val phoneAppsMicSetting = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "car_mic_for_phone_apps") main.post { applyPhoneAppsMic() }
+    }
+
+    /** Starts or stops the car's mic for phone apps to match the setting (main thread). */
+    private fun applyPhoneAppsMic() {
+        if (closed) return
+        val on = settings.carMicForPhoneApps
+        // Once made, the same instance stays for the session: its one thread orders every on/off.
+        val existing = phoneAppsMic
+        when {
+            existing != null -> existing.setEnabled(on)
+            on -> mic?.let { m ->
+                val cfg = m.config
+                phoneAppsMic = CarMicForApps(context, micRouter, cfg?.samplingRate ?: 16_000, cfg?.numberOfChannels ?: 1).also { it.start() }
+            }
         }
     }
 
@@ -355,33 +472,51 @@ class CarSession(
             guidanceAnswered = state != AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT
             DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
-        // Ducking keeps the music going: the head unit lowers it itself.
-        mediaFocus = state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY ||
-            state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK
-        guidanceFocusState = state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY ||
-            state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK
+        val quirks = vehicleOverride
+        mediaFocus = mediaAllowed(state, gainTransientIsMedia(answersGuidance = !notification.unsolicited && guidancePlaying,
+            quirk = quirks?.mediaOnGainTransient == true))
+        guidanceFocusState = guidanceAllowed(state)
         when {
+            // The car keeps only navigation voice for now: pause the phone's music, unless a
+            // vehicles.json rule says not to, and play it again on the next gain, like the other
+            // pauses the car causes.
+            notification.unsolicited && state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY &&
+                quirks?.pauseOnGuidanceOnly != false -> main.post {
+                if (media.playback.value?.playing == true) { pausedByCar = true; pausedForGuidance = true }
+                media.pause()
+            }
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
             // does, and play again when a transient loss ends.
             notification.unsolicited && (state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT) -> main.post {
                 pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && media.playback.value?.playing == true
+                pausedForGuidance = false
                 media.pause()
             }
             // Only the car handing focus back resumes: a gain answering our own request means
-            // something else is playing now, and the old music must stay paused.
+            // something else is playing now, and the old music must stay paused. Except after a
+            // pause for navigation voice: the car often hands the sound back by answering the
+            // prompt's own requests, and the music would stay paused for the rest of the drive.
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY -> main.post {
                 if (pausedByCar) {
+                    val resume = resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
                     pausedByCar = false
-                    if (notification.unsolicited && media.playback.value?.playing != true) media.playPause()
+                    pausedForGuidance = false
+                    if (resume && media.playback.value?.playing != true) media.playPause()
                 }
             }
         }
     }
 
-    /** Media paused by an unsolicited transient focus loss, to resume on the next gain (main thread). */
+    /**
+     * Media paused by the car (an unsolicited transient loss, or the car keeping only navigation
+     * voice), to resume on the car's next gain (main thread).
+     */
     private var pausedByCar = false
+    /** [pausedByCar] by the car keeping only navigation voice (main thread). */
+    private var pausedForGuidance = false
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
+        closeError = error
         val rejected = session.certificateRefusal
         val refusal = session.pinRefusal
         main.post {
@@ -404,9 +539,11 @@ class CarSession(
     }
 
     private fun videoListener(rightHandDrive: Boolean) = object : VideoChannel.Listener {
-        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int =
-            chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
-                vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec))
+        override fun chooseConfiguration(configs: List<VideoConfiguration>, preferred: List<Int>): Int {
+            offeredVideo = configs
+            return chooseVideo(configs, preferred, vehicleOverride?.maxHeight ?: settings.maxVideoHeight,
+                vehicleOverride?.prefer60fps ?: settings.prefer60fps, videoType(videoCodec), vehicleOverride?.videoResolutions)
+        }
 
         override fun onVideoStart(index: Int, config: VideoConfiguration) {
             main.post {
@@ -426,12 +563,14 @@ class CarSession(
         }
 
         override fun onVideoFocus(projected: Boolean) {
-            Log.i(TAG, "video focus: ${if (projected) "projected" else "native"}")
+            DiagLog.add("video focus: ${if (projected) "projected" else "native"}")
             main.post {
+                if (projected) logNextKeyFrame = true
                 encoder?.setSuspended(!projected)
                 // The encoder was paused while the car showed its own screen: time the stall check from here.
                 lastFrameMs = SystemClock.elapsedRealtime()
                 if (projected) {
+                    startVideoReports()
                     encoder?.requestKeyFrame()
                     display?.invalidate()
                 }
@@ -443,41 +582,111 @@ class CarSession(
             display?.invalidate()
         }
 
-        override fun onUiConfig(config: UiConfig) {
-            // New insets or margins: lay the projection out again with them.
+        override fun onUiConfig(config: UiConfig, applied: () -> Unit) {
+            // New insets or margins: lay the running projection out again with them. The video
+            // size, frame rate and codec stay, so the encoder carries on with its stream (no new
+            // codec config mid-session), keeping its running encoder.
             main.post {
                 if (closed) return@post
-                val last = videoConfig ?: return@post
-                Log.i(TAG, "UI config update from the head unit")
-                try {
-                    startProjection(last.toBuilder().setUiConfig(config).build(), rightHandDrive)
-                } catch (e: Exception) {
-                    Log.e(TAG, "can't apply the new UI config, keeping the old one", e)
-                    try {
-                        startProjection(last, rightHandDrive)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "can't restart the projection", e)
-                        aap.stop()
-                    }
-                }
+                val updated = (videoConfig ?: return@post).toBuilder().setUiConfig(config).build()
+                videoConfig = updated
+                val (w, h) = resolution(updated.codecResolution)
+                Log.i(TAG, "UI config update from the head unit:" + layoutOf(updated, w, h).describe())
+                // Not projecting: the next start lays out with it.
+                relayOut(updated, rightHandDrive)
+                applied()
             }
         }
     }
 
     /** The configuration the projection runs with (main thread), for UI config updates. */
     private var videoConfig: VideoConfiguration? = null
-    private var lastRightHandDrive = false
-    /** The running projection, for the calibration tool (main thread). */
-    private var calibrationFrame: CalibrationController.Projection? = null
+    /** Every resolution the car offered: touch maps against its largest, not the one chosen (#269). */
+    @Volatile private var offeredVideo: List<VideoConfiguration> = emptyList()
+
+    /** Where the UI goes in the frame (main thread). Compose state: a UI config update re-lays it out in place. */
+    private val projectionLayout = mutableStateOf<ProjectionLayout?>(null)
+
+    private fun densityOf(config: VideoConfiguration, w: Int, h: Int) =
+        vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
+
+    /** Where the UI goes: the car's area, or the visible area of the touch calibration saved for it. */
+    private fun layoutOf(config: VideoConfiguration, w: Int, h: Int) = carLayoutOf(config, w, h).let { car ->
+        touchCalibration?.margins(w, h)?.let { m -> car.withMargins(m[0], m[1], m[2], m[3]) } ?: car
+    }
+
+    /** The car's own area: its reported margins, or vehicles.json's. */
+    private fun carLayoutOf(config: VideoConfiguration, w: Int, h: Int) = ProjectionLayout.of(config, w, h).let { base ->
+        val o = vehicleOverride
+        if (o?.widthMargin == null && o?.heightMargin == null) base
+        else {
+            // vehicles.json overrides the car's reported margins (split evenly, like the official phone).
+            val fw = (o.widthMargin ?: (base.marginLeft + base.marginRight)).coerceIn(0, w - 1)
+            val fh = (o.heightMargin ?: (base.marginTop + base.marginBottom)).coerceIn(0, h - 1)
+            base.copy(marginLeft = fw / 2, marginRight = fw - fw / 2, marginTop = fh / 2, marginBottom = fh - fh / 2)
+        }
+    }
+
+    /** Size, frame rate and density of the running projection, for [videoDescription]. */
+    private var videoFormat = ""
+    /** The running projection's pixel aspect (PixelAspect), for [showLayout]. */
+    private var pixelAspect = 1f
+
+    /** What the head unit draws itself (clock, signal, battery), so the car UI leaves it out. */
+    private fun applyChrome(config: VideoConfiguration) {
+        // Here, not at discovery: a UI config update can change what the head unit draws.
+        val chrome = CarChrome.drawnByHeadUnit(aap.headUnitAtLeast(4, 3), aap.uiChrome?.bits ?: 0, config.uiConfig.uiElementsList)
+        if (chrome != runtime.headUnitChrome) Log.i(TAG, "the head unit draws its own: $chrome")
+        runtime.headUnitChrome = chrome
+    }
+
+    /** Lays the car UI out in the frame: its size and density, and where touches land. */
+    private fun showLayout(layout: ProjectionLayout, dpi: Int, rightHandDrive: Boolean) {
+        runtime.densityDpi = dpi
+        // Non-square car pixels: laid out on the logical screen the car's pixels stretch back (PixelAspect).
+        val (logicalWidth, logicalHeight) = PixelAspect.logicalSize(layout.contentWidth, layout.contentHeight, pixelAspect)
+        runtime.screenWidthDp = logicalWidth * 160 / dpi
+        runtime.screenHeightDp = logicalHeight * 160 / dpi
+        runtime.rightHandDrive = rightHandDrive
+        projectionLayout.value = layout
+        // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
+        // the source resolution, including 0x0, visible-pixel and under-declared panels.
+        val inputCh = touchSize
+        val native = offeredVideo.map(::visibleSize).maxByOrNull { it.first.toLong() * it.second }
+        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout,
+            native?.first ?: layout.visibleWidth, native?.second ?: layout.visibleHeight, calibration = touchCalibration)
+        // The calibration tool works on the frame with the car's own area (a run in progress ends).
+        videoConfig?.let { c -> calibration.onProjection(CalibrationController.Projection(layout.width, layout.height, carLayoutOf(c, layout.width, layout.height), touchCalibration)) }
+    }
+
+    /** Lays the running projection out again in place (same size, codec and encoder); nothing when not projecting. Main thread. */
+    private fun relayOut(config: VideoConfiguration, rightHandDrive: Boolean) {
+        if (display == null) return
+        val (w, h) = resolution(config.codecResolution)
+        val layout = layoutOf(config, w, h)
+        showLayout(layout, densityOf(config, w, h), rightHandDrive)
+        applyChrome(config)
+        videoDescription = videoFormat + layout.describe()
+        display?.invalidate() // a frame with the new layout, which a UI config reply waits for
+    }
+
+    // ------------------------------------------------------------------ touch calibration
+
+    /** The head unit's key (carKey) and the car list's name for it, set at discovery. */
+    @Volatile private var calibrationKey = ""
+    @Volatile private var calibrationCarName = ""
+    /** The touch calibration saved for this head unit, or null for the automatic mapping. */
+    @Volatile private var touchCalibration: TouchCalibration? = null
 
     private val calibration = CalibrationController(object : CalibrationController.Host {
         override val car get() = runtime.ui.headUnitName.ifBlank { headUnitName }
         override val driving get() = runtime.ui.drivingRestricted
-        override val projection get() = calibrationFrame
-        override fun apply(c: net.prototux.aare.car.calibration.TouchCalibration?) {
-            settings.setTouchCalibration(car, c)
-            // Lay out again: the saved visible area moves the UI, the mapper takes the calibration.
-            videoConfig?.let { if (!closed) startProjection(it, lastRightHandDrive) }
+        override fun apply(c: TouchCalibration?) {
+            runCatching { KnownHeadUnits(context).setCalibration(calibrationKey, c, calibrationCarName) }
+                .onFailure { Log.w(TAG, "can't save the touch calibration", it) }
+            touchCalibration = c
+            // In place: the saved area moves the UI, the mapper takes the calibration.
+            videoConfig?.let { if (!closed) relayOut(it, runtime.rightHandDrive) }
         }
     }, CalibrationController.Scheduler.of(main))
 
@@ -486,48 +695,44 @@ class CarSession(
         videoConfig = config
         val (w, h) = resolution(config.codecResolution)
         val fps = if (config.frameRate == VideoFrameRateType.VIDEO_FPS_60) 60 else 30
-        val dpi = vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
-        val carLayout = ProjectionLayout.of(config, w, h).let { base ->
-            val o = vehicleOverride
-            if (o?.widthMargin == null && o?.heightMargin == null) base
-            else {
-                // vehicles.json overrides the car's reported margins (split evenly, like the official phone).
-                val fw = (o.widthMargin ?: (base.marginLeft + base.marginRight)).coerceIn(0, w - 1)
-                val fh = (o.heightMargin ?: (base.marginTop + base.marginBottom)).coerceIn(0, h - 1)
-                base.copy(marginLeft = fw / 2, marginRight = fw - fw / 2, marginTop = fh / 2, marginBottom = fh - fh / 2)
-            }
-        }
-        lastRightHandDrive = rightHandDrive
-        // A calibration the user saved for this car brings its own visible area.
-        val calCar = runtime.ui.headUnitName.ifBlank { headUnitName }
-        val saved = settings.touchCalibration(calCar)
-        val layout = saved?.margins(w, h)?.let { m -> carLayout.withMargins(m[0], m[1], m[2], m[3]) } ?: carLayout
-        if (saved != null) DiagLog.add("calibration: using the one saved for $calCar: ${saved.describe()}")
-        videoDescription = "${w}x$h@$fps ${dpi}dpi" + layout.describe()
-        Log.i(TAG, "projection $videoDescription")
+        val dpi = densityOf(config, w, h)
+        val layout = layoutOf(config, w, h)
+        // Non-square car pixels: the UI is laid out on a logical screen that the car's pixels
+        // stretch back to the right shape (PixelAspect).
+        val aspect = PixelAspect.factor(vehicleOverride?.pixelAspect, config.pixelAspectRatioE4.takeIf { config.hasPixelAspectRatioE4() },
+            aap.headUnitVersion, headUnit?.make.orEmpty(), useReported = vehicleOverride?.reportedPixelAspect == true)
+        pixelAspect = aspect
+        videoFormat = "${w}x$h@$fps ${dpi}dpi" + (if (aspect != 1f) " pixel aspect $aspect" else "")
+        videoDescription = videoFormat + layout.describe()
+        net.prototux.aare.SessionAapLog.i("projection $videoDescription")
+        touchCalibration?.let { DiagLog.add("calibration: using the one saved for ${calibrationCarName}: ${it.describe()}") }
 
         val ch = video ?: return
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
-        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo, sink = object : VideoEncoder.Sink {
+        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo,
+            headersOnce = vehicleOverride?.videoHeadersOnce == true, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
             override fun onCodecConfig(data: ByteArray, offset: Int, length: Int) {
-                Log.i(TAG, "codec config: $length bytes")
+                // The stream's profile, level and size (SPS, PPS): what a car's decoder may refuse.
+                net.prototux.aare.SessionAapLog.i("video codec config, $length bytes: " + hex(data, offset, minOf(length, 64)))
                 ch.sendCodecConfig(data, offset, length)
             }
             override fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean) {
                 frames++
                 lastFrameMs = SystemClock.elapsedRealtime()
-                if (frames == 1 || keyFrame && frames < 100 || frames % 600 == 0) {
-                    Log.i(TAG, "video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
+                if (frames == 1 || keyFrame && (frames < 100 || logNextKeyFrame) || frames % 600 == 0) {
+                    // In the verbose log: whether frames flow, and whether the car had given focus (a black screen).
+                    if (keyFrame) logNextKeyFrame = false
+                    net.prototux.aare.SessionAapLog.i("video frame $frames (${if (keyFrame) "key, " else ""}$length bytes), focused=${ch.focused}, dropped=${ch.droppedFrames}")
                 }
                 ch.sendFrame(data, offset, length, ptsUs, keyFrame) { encoder?.recycle(it) }
                 abr.onFrame(ch)
             }
             override fun onError(e: Exception) {
-                Log.e(TAG, "encoder failed, restarting", e)
+                net.prototux.aare.SessionAapLog.e("video encoder failed, restarting", e)
                 main.post {
                     // The session ended, or this encoder was already replaced: nothing to restart.
                     if (closed || encoder !== enc) return@post
@@ -546,16 +751,16 @@ class CarSession(
         enc.start()
         encoder = enc
 
-        runtime.densityDpi = dpi
-        runtime.screenWidthDp = layout.contentWidth * 160 / dpi
-        runtime.screenHeightDp = layout.contentHeight * 160 / dpi
-        runtime.rightHandDrive = rightHandDrive
+        showLayout(layout, dpi, rightHandDrive)
+        applyChrome(config)
         // Assigned before show(), so that a failing show() still has teardownVideo() release the display.
         val pd = ProjectionDisplay(context, w, h, dpi, enc.inputSurface) {
             val d = LocalDensity.current
+            val l = projectionLayout.value ?: layout
             Box(Modifier.fillMaxSize().background(Color.Black)) {
                 with(d) {
-                    runtime.Root(Modifier.padding(start = layout.padLeft.toDp(), top = layout.padTop.toDp(), end = layout.padRight.toDp(), bottom = layout.padBottom.toDp()))
+                    runtime.Root(Modifier.padding(start = l.padLeft.toDp(), top = l.padTop.toDp(), end = l.padRight.toDp(), bottom = l.padBottom.toDp())
+                        .pixelAspect(aspect))
                 }
                 // Over the whole frame, margins included: its first step moves them.
                 CalibrationOverlay(Modifier.fillMaxSize())
@@ -566,11 +771,8 @@ class CarSession(
         lastFrameMs = SystemClock.elapsedRealtime()
         main.removeCallbacks(stallCheck)
         main.postDelayed(stallCheck, STALL_CHECK_MS)
-        // Pass the declared panel as-is (0 when the head unit declares none); the mapper resolves
-        // the source resolution, including 0x0, visible-pixel and under-declared panels.
-        val inputCh = touchSize
-        touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout, saved)
-        calibrationFrame = CalibrationController.Projection(w, h, carLayout, saved).also { calibration.onProjection(it) }
+        // A restarted stream (encoder error, new layout) while the car shows it.
+        if (ch.focused) startVideoReports()
     }
 
     /** An encoder that fails again and again ends the session rather than restart forever. */
@@ -602,8 +804,34 @@ class CarSession(
         }
     }
 
+    /** The next key frame goes to the log: the one sent because the car gave its screen (again). */
+    @Volatile private var logNextKeyFrame = false
+    private var videoReports = 0
+    @Volatile private var touches = 0
+
+    /** Verbose log: how the car takes the video, more often right after it gave its screen. Main thread. */
+    private val videoReport = object : Runnable {
+        override fun run() {
+            if (closed || display == null) return
+            logVideo()
+            main.postDelayed(this, videoReportDelayMs(++videoReports))
+        }
+    }
+
+    private fun startVideoReports() {
+        videoReports = 0
+        main.removeCallbacks(videoReport)
+        main.postDelayed(videoReport, videoReportDelayMs(0))
+    }
+
+    private fun logVideo() {
+        video?.let { net.prototux.aare.SessionAapLog.i("video: ${it.closingReport ?: it.report()}, $touches touches from the car") }
+    }
+
     private fun teardownVideo() {
         main.removeCallbacks(stallCheck)
+        main.removeCallbacks(videoReport)
+        if (display != null) logVideo()
         display?.release(); display = null
         encoder?.stop(); encoder = null
     }
@@ -612,19 +840,75 @@ class CarSession(
 
     @Volatile private var touchSize: Pair<Int, Int>? = null
 
+    /** The car's input channel, for input feedback. */
+    @Volatile private var input: InputChannel? = null
+    /** Focus navigation by the car's touchpad, when the car says its touchpad is for that. */
+    @Volatile private var touchpad: TouchpadNavigator? = null
+
+    /** Keeps the car's input channel and sets up its touchpad, if it has one. */
+    private fun setUpInput(ch: InputChannel) {
+        input = ch
+        val pad = ch.touchPad ?: return
+        // A touchpad is used only to move the focus, and only one the car marks for
+        // UI navigation; another pad's events go to apps that read touchpads, which AARE has none of.
+        val line = if (pad.uiNavigation) {
+            val thresholds = TouchpadThresholds.of(pad)
+            touchpad = TouchpadNavigator(thresholds) { code -> display?.moveFocus(code) == true }
+            "focus navigation, step ${thresholds.move}/${thresholds.multiMove}"
+        } else "not for UI navigation: ignored"
+        val physical = if (pad.physicalWidth != 0 && pad.physicalHeight != 0) " (${pad.physicalWidth}x${pad.physicalHeight} mm)" else ""
+        Log.i(TAG, "input: touchpad ${pad.width}x${pad.height}$physical sensitivity ${pad.sensitivity}: $line")
+        DiagLog.add("car touchpad ${pad.width}x${pad.height}$physical: $line")
+    }
+
+    /**
+     * The car changed its touchpad's sensitivity during the session (reader thread). The navigator
+     * is kept, so a swipe under way goes on; its steps change on the main thread, where it runs.
+     */
+    private fun onTouchpadUpdate(pad: TouchPad) {
+        if (!pad.uiNavigation || touchpad == null) return
+        val thresholds = TouchpadThresholds.of(pad)
+        main.post { touchpad?.thresholds = thresholds }
+        DiagLog.add("car touchpad sensitivity ${pad.sensitivity}: step ${thresholds.move}/${thresholds.multiMove}")
+    }
+
+    /** A touchpad report (reader thread). */
+    private fun onTouchpad(ev: TouchEvent) {
+        val nav = touchpad ?: return
+        // Drop a report without pointers or naming a pointer it doesn't carry.
+        if (ev.pointerDataCount == 0 || ev.actionIndex >= ev.pointerDataCount) return
+        val p = ev.getPointerData(0)
+        val action = ev.action.number
+        main.post {
+            if (closed || display == null) return@post
+            // The car can click or buzz on each step.
+            if (nav.onEvent(action, p.x.toFloat(), p.y.toFloat())) input?.sendFeedback(FeedbackEvent.FEEDBACK_FOCUS_CHANGE)
+        }
+    }
+
+    /** The car's keys, with metastate and long presses injected on the main thread. */
+    private val keys = KeyInjector(ViewConfiguration.getLongPressTimeout().toLong(), object : KeyInjector.Scheduler {
+        override fun postDelayed(task: Runnable, delayMs: Long) { main.postDelayed(task, delayMs) }
+        override fun cancel(task: Runnable) = main.removeCallbacks(task)
+        override fun uptimeMillis() = SystemClock.uptimeMillis()
+    }, carLongPressOnly = setOf(KeyEvent.KEYCODE_HOME), emit = ::onKey)
+
     private val inputListener = object : InputChannel.Listener {
+        override fun onTouchPadUpdate(pad: TouchPad) = onTouchpadUpdate(pad)
+
         override fun onInput(report: InputReport) {
             if (report.hasTouchEvent() && calibration.capturing) {
                 // The calibration tool takes the raw touches; the car UI gets none meanwhile.
                 calibration.onTouchFromReader(report.touchEvent)
             } else if (report.hasTouchEvent()) {
+                if (touches++ == 0) net.prototux.aare.SessionAapLog.i("first touch from the car")
                 val ev = touch?.map(report.touchEvent) ?: return
                 display?.dispatchTouch(ev)
             }
             if (report.hasKeyEvent()) {
                 for (k in report.keyEvent.keysList) {
-                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} long=${k.longpress}")
-                    main.post { onKey(k.keycode, k.down, k.longpress) }
+                    Log.d(TAG, "input key: code=${k.keycode} down=${k.down} meta=${k.metastate} long=${k.longpress}")
+                    main.post { if (!closed) keys.onKey(k.keycode, k.down, k.metastate, k.longpress) }
                 }
             }
             if (report.hasRelativeEvent()) {
@@ -643,13 +927,36 @@ class CarSession(
                     }
                 }
             }
+            if (report.hasTouchpadEvent()) onTouchpad(report.touchpadEvent)
         }
     }
 
     /** HOME goes to the dashboard; held, it hands the screen back to the car. */
     private val homeKey = LongPressKey(onPress = { runtime.actions.goHome() }, onLongPress = ::exitToCar)
 
-    private fun onKey(code: Int, down: Boolean, longPress: Boolean) {
+    /**
+     * `Settings.carKeyMap` and the codes of `Settings.carKeysSeen`, kept here: [onKey] runs on
+     * every press and every release, and decoding both string sets each time is waste. Refreshed
+     * when the "Car buttons" chooser changes them (main thread only).
+     */
+    private var carKeyMap: Map<Int, String> = settings.carKeyMap
+    private var carKeysSeen: Set<Int> = settings.carKeysSeen.keys
+    private val carKeyPrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        when (key) {
+            "car_key_map" -> main.post { carKeyMap = settings.carKeyMap }
+            "car_keys_seen" -> main.post { carKeysSeen = settings.carKeysSeen.keys }
+        }
+    }
+
+    private fun onKey(key: CarKey) {
+        val code = key.code
+        val down = key.down
+        val longPress = key.longPress
+        // For the "Car buttons" chooser: every key the car has ever sent, by a readable name.
+        if (code !in carKeysSeen) {
+            carKeysSeen = carKeysSeen + code
+            settings.rememberCarKey(code, KeyEvent.keyCodeToString(code))
+        }
         // Some head units send a media key while they set up, before AARE has a car screen (a
         // play as the session starts): acting on it would start the music the driver didn't ask
         // for, and over whatever the car was playing. The driver's own presses come once the
@@ -658,8 +965,18 @@ class CarSession(
             if (!down) DiagLog.add("ignoring ${KeyEvent.keyCodeToString(code)} from the car: no car screen yet")
             return
         }
+        // The car's buttons, in the connection log: which ones reach the phone at all (the voice
+        // button on some cars only on a long press, or not during projection). Not the rotary
+        // knob's steps or the touchpad's moves, which come by the dozen.
+        if (!down && logsCarKey(code)) DiagLog.add("car key ${KeyEvent.keyCodeToString(code)}${if (longPress) ", held" else ""}")
+        // A user remap wins over the key's normal behaviour below (never over the guard above:
+        // that's about not acting before there's a screen at all, remapped or not).
+        resolveCarKeyAction(carKeyMap, code)?.let { action ->
+            if (!down) performCarKeyAction(action)
+            return
+        }
         when (code) {
-            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, longPress)
+            KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
@@ -675,7 +992,34 @@ class CarSession(
             KeyEvent.KEYCODE_ENDCALL -> if (!down) runtime.actions.endCall()
             // The Radio button hands the screen back to the car's own source (radio, media…), like "exit".
             KEYCODE_RADIO -> if (!down) exitToCar()
-            else -> display?.dispatchKey(KeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code))
+            else -> dispatchCarKey(key)
+        }
+    }
+
+    /** A key for the car screen itself: the D-pad, Enter, letters... */
+    private fun dispatchCarKey(key: CarKey) {
+        val d = display ?: return
+        val flags = if (key.down && key.longPress) KeyEvent.FLAG_LONG_PRESS else 0
+        d.dispatchKey(KeyEvent(key.downTime, SystemClock.uptimeMillis(),
+            if (key.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, key.code,
+            key.repeat, key.metaState, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, flags))
+        // With a touchpad for navigation, the car is asked for its select feedback.
+        if (key.code == KeyEvent.KEYCODE_DPAD_CENTER && !key.down && touchpad != null) input?.sendFeedback(FeedbackEvent.FEEDBACK_SELECT)
+    }
+
+    /** A remapped key's action (see [resolveCarKeyAction]), the same ones the keys above reach by default. */
+    private fun performCarKeyAction(action: CarKeyAction) {
+        when (action) {
+            CarKeyAction.HOME -> runtime.actions.goHome()
+            CarKeyAction.BACK -> back()
+            CarKeyAction.ASSISTANT -> runtime.assistant()
+            CarKeyAction.PLAY_PAUSE -> media.playPause()
+            CarKeyAction.NEXT -> media.next()
+            CarKeyAction.PREVIOUS -> media.previous()
+            CarKeyAction.OPEN_NAVIGATION -> runtime.ui.app(runtime.ui.activeNavAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_MEDIA -> runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
+            CarKeyAction.OPEN_PHONE -> runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
+            CarKeyAction.NOTHING -> Unit
         }
     }
 
@@ -754,21 +1098,28 @@ class CarSession(
         if (closed) return
         val cfg = channel.config ?: return
         val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
+        // Some head units want navigation voice mixed into the music (marked in
+        // vehicles.json): their guidance channel stays unused.
+        val singleChannel = vehicleOverride?.singleChannelCapture == true
+        if (guidance && singleChannel) return
         val p = projection()
         val method = CaptureMethods.best(context, p, failedCapture)
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
-            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY -> {
+            CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY, CaptureMethod.ROOT_POLICY -> {
                 // Without a guidance channel in the car, navigation voice goes with the music.
-                val hasGuidance = audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
+                val hasGuidance = !singleChannel && audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
                 val usages = when {
                     guidance -> CaptureMethods.GUIDANCE_USAGES
                     hasGuidance -> CaptureMethods.MEDIA_USAGES
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
-                if (method == CaptureMethod.AUDIO_POLICY) AudioPolicySource(context, usages, rate, ch)
-                else ShizukuPolicySource(context, usages, rate, ch)
+                when (method) {
+                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch)
+                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch)
+                    else -> SuPolicySource(context, usages, rate, ch)
+                }
             }
             CaptureMethod.SHIZUKU -> when {
                 guidance -> return
@@ -784,7 +1135,9 @@ class CarSession(
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")
         audioOuts.remove(channel.streamType)?.stop()
         lateinit var out: CarAudioOut
-        out = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, onFailed = {
+        val silence = StartSilence.configured(wireless, guidance, aap.headUnitVersion?.first,
+            vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
+        out = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, silence, onFailed = {
             main.post {
                 // Only if it's still this stream's output: a late failure (a slow Shizuku bind
                 // giving up after teardown, or after a replacement) must not start a capture
@@ -795,7 +1148,7 @@ class CarSession(
                 startAudio(channel)
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
-                if (method == CaptureMethod.SHIZUKU_POLICY) {
+                if (method == CaptureMethod.SHIZUKU_POLICY || method == CaptureMethod.ROOT_POLICY) {
                     audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
                         startAudio(other)
@@ -841,11 +1194,11 @@ class CarSession(
             val ch = video ?: return
             if (closed || ch.focusHeard) return
             if (videoFocusAsks >= VIDEO_FOCUS_RETRIES) {
-                Log.w(TAG, "video focus: the car never answered")
+                DiagLog.add("video focus: the car never answered")
                 return
             }
             videoFocusAsks++
-            Log.i(TAG, "video focus: no answer from the car, asking again ($videoFocusAsks/$VIDEO_FOCUS_RETRIES)")
+            DiagLog.add("video focus: no answer from the car, asking again ($videoFocusAsks/$VIDEO_FOCUS_RETRIES)")
             ch.requestProjectedFocus()
             main.postDelayed(this, VIDEO_FOCUS_RETRY_MS)
         }
@@ -912,6 +1265,7 @@ class CarSession(
     // ------------------------------------------------------------------ status to the head unit
 
     private var navBridge: NavStatusBridge? = null
+    private val turnIcons = TurnIcons()
     // Guarded by navLock: trips, phone guidance and onRunning come from different threads.
     private val navLock = Any()
     private var hostedGuiding = false
@@ -922,16 +1276,24 @@ class CarSession(
      * but the next route asks again.
      */
     private var navFocusPending = false
+    /** The car was asked for projected nav focus and hasn't been given it back yet. */
+    private var navFocusProjected = false
 
     /** A hosted app's trip or a phone app's guidance started, changed or ended. */
     private fun guidanceChanged(hosted: Boolean, guiding: Boolean) {
+        val handBack: Boolean
         synchronized(navLock) {
             val was = hostedGuiding || phoneGuiding
             if (hosted) hostedGuiding = guiding else phoneGuiding = guiding
             val now = hostedGuiding || phoneGuiding
             if (now && !was) navFocusPending = true
             else if (!now) navFocusPending = false
+            // When projected navigation stops, give nav focus back to the
+            // car, or its own navigation may stay suppressed after the route.
+            handBack = !now && navFocusProjected
+            if (handBack) navFocusProjected = false
         }
+        if (handBack && aap.state == AapSession.State.RUNNING) aap.requestNavFocus(NavFocusType.NAV_FOCUS_NATIVE)
         requestNavFocus()
     }
 
@@ -939,6 +1301,7 @@ class CarSession(
         synchronized(navLock) {
             if (!navFocusPending || aap.state != AapSession.State.RUNNING) return
             navFocusPending = false
+            navFocusProjected = true
         }
         aap.requestNavFocus(NavFocusType.NAV_FOCUS_PROJECTED)
     }
@@ -965,16 +1328,14 @@ class CarSession(
                 // Not just the title: the art (often loaded after the rest), the artist or the
                 // duration can come in a later update of the same track. The art compares by
                 // content: a platform session hands out a new Bitmap on every update, and the
-                // JPEG must be made once per cover, not on every play, pause or seek.
+                // PNG must be made once per cover, not on every play, pause or seek (it's slower
+                // to encode than JPEG, which is no longer accepted here).
                 val track = listOf(p.title, p.artist, p.album, p.durationMs)
                 if (track != lastTrack || !sameArt(lastArt, p.art)) {
                     lastTrack = track
                     lastArt = p.art
                     val meta = fillMediaMetadata(MediaPlaybackMetadata.newBuilder(), p)
-                    p.art?.let { art ->
-                        val small = Bitmap.createScaledBitmap(art, 256, 256 * art.height / maxOf(1, art.width), true)
-                        meta.setAlbumArt(ByteString.copyFrom(ByteArrayOutputStream().also { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()))
-                    }
+                    p.art?.let { art -> meta.setAlbumArt(ByteString.copyFrom(CarImage.toCarPng(art))) }
                     ch.metadata(meta.build())
                 }
                 ch.status(MediaPlaybackStatus.newBuilder()
@@ -994,19 +1355,56 @@ class CarSession(
     /** The session ended (main thread): work posted before that and run after must not start anything. */
     private var closed = false
 
+    /** Opt-in automatic pairing with this car's Bluetooth (main thread), see [maybeAutoPair]. */
+    private var autoPair: BluetoothAutoPair? = null
+
+    /**
+     * The car answered our pairing request: if the phone isn't paired with it yet and the user
+     * opted in, pair through Shizuku instead of Android's dialog ([BluetoothAutoPair]). Only the
+     * address the car announced on its Bluetooth channel.
+     */
+    @android.annotation.SuppressLint("MissingPermission") // wrapped: without BLUETOOTH_CONNECT the bond state reads as unknown
+    private fun maybeAutoPair(carAddress: String, alreadyPaired: Boolean) {
+        if (closed || autoPair != null) return
+        val bonded = runCatching {
+            context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.bondedDevices.orEmpty()
+                .any { it.address.equals(carAddress, ignoreCase = true) }
+        }.getOrDefault(false)
+        val shizuku = CaptureMethods.shizukuAvailable()
+        if (!AutoPairing.shouldStart(settings.autoPairCarBluetooth, shizuku, carAddress, alreadyPaired, bonded)) {
+            if (settings.autoPairCarBluetooth && !alreadyPaired && !bonded) {
+                DiagLog.add("car bluetooth: not pairing automatically (${AutoPairing.whyNot(Build.VERSION.SDK_INT, shizuku)})")
+            }
+            return
+        }
+        DiagLog.add("car bluetooth: not paired with $carAddress yet; pairing through Shizuku")
+        // The checks stay BluetoothPairing's (#229): this only answers, through Shizuku, what they accepted.
+        autoPair = BluetoothAutoPair(context, carAddress).also { p ->
+            btPairing?.privileged = p
+            p.start()
+        }
+    }
+
     private fun teardown() {
         closed = true
+        btPairing?.privileged = null
+        autoPair?.stop(); autoPair = null
+        settings.unregisterListener(carKeyPrefsListener)
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
         main.removeCallbacks(focusCheck)
         main.removeCallbacks(videoFocusCheck)
+        keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null
+        btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
         locationFeed.stop()
         drivingMode.stop()
         cluster?.stop()
+        settings.unregisterListener(phoneAppsMicSetting)
+        phoneAppsMic?.stop(); phoneAppsMic = null
         micRouter.shutdown()
         calibration.close()
         teardownVideo()
@@ -1019,6 +1417,9 @@ class CarSession(
         val m = Build.MODEL
         return if (m.startsWith(Build.MANUFACTURER, ignoreCase = true)) m else "${Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} $m"
     }
+
+    /** The car's Bluetooth service, to announce the phone again once the session runs (vehicles.json `pairAgainWhenRunning`). */
+    private var bluetooth: BluetoothChannel? = null
 
     /**
      * The phone's own Bluetooth MAC for the car's pairing handshake, or null if unknown. Prefer the
@@ -1101,6 +1502,38 @@ class CarSession(
         }
 
         /**
+         * Whether the car's focus [state] lets music play. Ducking keeps it going: the head unit
+         * lowers it itself. GAIN_TRANSIENT does when [gainTransientIsMedia].
+         */
+        fun mediaAllowed(state: AudioFocusStateType, gainTransientIsMedia: Boolean): Boolean = when (state) {
+            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK -> true
+            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT -> gainTransientIsMedia
+            else -> false
+        }
+
+        /**
+         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request, or said by
+         * the car on its own, it does, as before. Answering a navigation prompt's request it is for
+         * navigation voice: the music waits until the prompt is over, unless a vehicles.json rule
+         * ([quirk]) says the head unit means music too.
+         */
+        fun gainTransientIsMedia(answersGuidance: Boolean, quirk: Boolean): Boolean = quirk || !answersGuidance
+
+        /**
+         * Whether a gain plays the music the car paused again: the car handing the sound back on
+         * its own does; a gain answering a request only after a pause for navigation voice.
+         */
+        fun resumesAfterCarPause(unsolicited: Boolean, pausedForGuidance: Boolean): Boolean = unsolicited || pausedForGuidance
+
+        /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
+        fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {
+            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT,
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK -> true
+            else -> false
+        }
+
+        /**
          * Picks the best configuration the phone can encode comfortably: the largest one within
          * [maxHeight] (short side), preferring 60 fps when asked, among the head unit's preferred
          * indices when it gave any.
@@ -1108,12 +1541,20 @@ class CarSession(
          * Sizes are what the car shows: the configuration's resolution less its margins. A wide
          * screen can offer 1920x1080 with 360 rows of margin for a 1920x720 picture, which is
          * within a 720 limit, while its 1280x720 configuration gets stretched across that width.
+         *
+         * [resolutions] ("800x480"…, from vehicles.json) leaves only those, when the head unit
+         * offers any of them: some head units only get 800x480.
          */
-        fun chooseVideo(configs: List<VideoConfiguration>, preferred: List<Int>, maxHeight: Int, prefer60: Boolean, codec: MediaCodecType): Int {
+        fun chooseVideo(configs: List<VideoConfiguration>, preferred: List<Int>, maxHeight: Int, prefer60: Boolean, codec: MediaCodecType,
+                        resolutions: Set<String>? = null): Int {
             fun portrait(i: Int) = resolution(configs[i].codecResolution).let { it.second > it.first }
+            val wanted = resolutions.orEmpty()
+            fun allowed(i: Int) = resolution(configs[i].codecResolution).let { (w, h) -> wanted.any { it.equals("${w}x$h", ignoreCase = true) } }
             // A screen has one shape: when a head unit offers both, the shape of its first preferred
             // configuration is the screen's (the other one would be letterboxed or squeezed).
             val candidates = videoCandidates(configs, preferred, codec, TAG).let { all ->
+                if (wanted.isEmpty()) all else all.filter(::allowed).ifEmpty { all }
+            }.let { all ->
                 val shape = portrait(preferred.firstOrNull { it in all } ?: all.firstOrNull() ?: return 0)
                 all.filter { portrait(it) == shape }
             }
@@ -1172,3 +1613,20 @@ class CarSession(
 }
 
 private fun androidx.compose.ui.graphics.ImageBitmap.asAndroidBitmapCompat(): Bitmap = asAndroidBitmap()
+
+/** The rotary knob and touchpad keys, left out of the connection log. */
+private val NAV_KEYS = setOf(
+    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_NAVIGATE_NEXT,
+    KeyEvent.KEYCODE_NAVIGATE_PREVIOUS, KeyEvent.KEYCODE_NAVIGATE_IN, KeyEvent.KEYCODE_NAVIGATE_OUT,
+)
+
+/** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
+internal fun logsCarKey(code: Int) = code !in NAV_KEYS
+
+/** How long until video report [n] (0: the first) after the car gave its screen: soon at first, then one in 30 s. */
+internal fun videoReportDelayMs(n: Int): Long = longArrayOf(1_000, 2_000, 7_000, 10_000).getOrElse(n) { 30_000 }
+
+/** [length] bytes of [data] from [offset] in hex. */
+internal fun hex(data: ByteArray, offset: Int, length: Int): String =
+    (offset until offset + length).joinToString("") { "%02x".format(data[it]) }

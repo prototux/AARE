@@ -30,8 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.R
-import net.prototux.aare.Settings
 import net.prototux.aare.car.calibration.CalState
 import net.prototux.aare.car.calibration.CalibrationHub
 
@@ -40,11 +41,13 @@ import net.prototux.aare.car.calibration.CalibrationHub
  * touches can't be trusted until the tool is done.
  */
 @Composable
-fun TouchCalibrationCard(settings: Settings) {
+fun TouchCalibrationCard() {
     val state by CalibrationHub.state.collectAsState()
     // Saved calibrations change when one is saved or forgotten: re-read on each state change.
     var forgotten by remember { mutableIntStateOf(0) }
-    val saved = remember(state, forgotten) { settings.calibratedCars }
+    val context = LocalContext.current
+    val known = remember(context) { KnownHeadUnits(context) }
+    val saved = remember(state, forgotten) { known.calibrated().entries.sortedBy { it.value } }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer).padding(20.dp)) {
         Text(stringResource(R.string.calibration_title), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
@@ -53,10 +56,10 @@ fun TouchCalibrationCard(settings: Settings) {
                 Hint(stringResource(R.string.calibration_intro))
                 Hint(stringResource(R.string.calibration_not_connected))
                 // Offline, a saved calibration can still be forgotten (the car's own values come back next time).
-                saved.forEach { car ->
+                saved.forEach { (address, car) ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(R.string.calibration_saved_for, car), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = { settings.setTouchCalibration(car, null); forgotten++ }) { Text(stringResource(R.string.calibration_forget)) }
+                        TextButton(onClick = { known.setCalibration(address, null, car); forgotten++ }) { Text(stringResource(R.string.calibration_forget)) }
                     }
                 }
             }

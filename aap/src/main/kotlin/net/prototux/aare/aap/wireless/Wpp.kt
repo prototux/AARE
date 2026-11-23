@@ -105,6 +105,12 @@ object WppSecurityMode {
 /** The kinds of networks the phone can join for wireless projection. */
 enum class WifiSecurity { OPEN, WPA2_PERSONAL, WPA3_PERSONAL, WPA2_WPA3_PERSONAL, UNSUPPORTED }
 
+/**
+ * Longest payload a well-behaved head unit sends: real WPP messages are a few hundred bytes. A
+ * longer one is only logged (see WirelessBootstrap), not refused.
+ */
+const val WPP_MAX_PAYLOAD = 1024
+
 /** One WPP message: `[u16 BE payload length][u16 BE message id][protobuf payload]`. */
 class WppFrame(val id: Int, val payload: ByteArray) {
     override fun toString() = "${WppMessageId.name(id)} (${payload.size} B)"

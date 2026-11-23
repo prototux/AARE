@@ -26,7 +26,10 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Reply
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.RecordVoiceOver
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.prototux.aare.R
+import net.prototux.aare.Settings
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
@@ -65,7 +70,8 @@ import net.prototux.aare.ui.theme.LocalCarDimens
 /**
  * A messaging app on the car screen, as Android Auto shows it: the conversations of its
  * notifications, read aloud, marked as read, or answered with the car keyboard when parked.
- * Message text is hidden while driving; it is read aloud instead.
+ * Message text is hidden while driving; it is read aloud instead. With Settings.voiceReply, a
+ * reply can also be dictated, while driving too: it is read back and sent only on Send.
  */
 @Composable
 internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRuntime, modifier: Modifier) {
@@ -78,27 +84,37 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
     }
     var openKey by remember(app.id) { mutableStateOf<String?>(null) }
     var replying by remember(app.id) { mutableStateOf(false) }
+    var voiceReplying by remember(app.id) { mutableStateOf(false) }
+    val voiceReply = remember { Settings(context).voiceReply }
     val open = conversations?.firstOrNull { it.key == openKey }
 
     // The car keyboard is for parked use only.
     LaunchedEffect(driving) { if (driving) replying = false }
     // The open conversation went away (read on the phone, or marked as read): back to the list.
-    LaunchedEffect(conversations, openKey) { if (openKey != null && conversations != null && open == null) { openKey = null; replying = false } }
+    LaunchedEffect(conversations, openKey) { if (openKey != null && conversations != null && open == null) { openKey = null; replying = false; voiceReplying = false } }
     DisposableEffect(app.id) {
         val back: () -> Boolean = {
             when {
                 replying -> { replying = false; true }
+                voiceReplying -> { voiceReplying = false; true }
                 openKey != null -> { openKey = null; true }
                 else -> false
             }
         }
-        runtime.screenBack = back
-        // The next screen installs its own handler before this one fades out: leave that one alone.
-        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
+        runtime.registerScreenBack(app.id, back)
+        // A new composition for the same app installs its own handler before this one fades out:
+        // unregister leaves that one alone (it only removes a handler still exactly this one).
+        onDispose { runtime.unregisterScreenBack(app.id, back) }
     }
 
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
-        TopBar(app, open?.title, onBack = if (open != null) ({ if (replying) replying = false else openKey = null }) else null)
+        TopBar(app, open?.title, onBack = if (open != null) ({
+            when {
+                replying -> replying = false
+                voiceReplying -> voiceReplying = false
+                else -> openKey = null
+            }
+        }) else null)
         Box(Modifier.weight(1f).fillMaxWidth()) {
             when {
                 !CarNotificationListener.accessGranted(context) ->
@@ -110,7 +126,12 @@ internal fun MessagingScreen(app: CarAppEntry, driving: Boolean, runtime: CarRun
                     replying = false
                     runtime.notice(open.title, if (ok) context.getString(R.string.msg_reply_sent) else context.getString(R.string.msg_reply_rejected, app.label))
                 }, onCancel = { replying = false })
-                open != null -> ConversationView(open, driving, onReply = { replying = true }, onMarkedRead = { openKey = null })
+                open != null && voiceReplying -> VoiceReplyView(open, driving, onSent = { ok ->
+                    voiceReplying = false
+                    runtime.notice(open.title, if (ok) context.getString(R.string.msg_reply_sent) else context.getString(R.string.msg_reply_rejected, app.label))
+                }, onCancel = { voiceReplying = false })
+                open != null -> ConversationView(open, driving, voiceReply, onReply = { replying = true },
+                    onVoiceReply = { voiceReplying = true }, onMarkedRead = { openKey = null })
                 conversations!!.isEmpty() -> Placeholder(stringResource(R.string.msg_no_new_messages, app.label), loading = false, icon = Icons.Rounded.Forum)
                 else -> ConversationList(conversations!!, app, driving) { openKey = it.key }
             }
@@ -157,7 +178,7 @@ private fun ConversationList(list: List<Conversation>, app: CarAppEntry, driving
 }
 
 @Composable
-private fun ConversationView(c: Conversation, driving: Boolean, onReply: () -> Unit, onMarkedRead: () -> Unit) {
+private fun ConversationView(c: Conversation, driving: Boolean, voiceReply: Boolean, onReply: () -> Unit, onVoiceReply: () -> Unit, onMarkedRead: () -> Unit) {
     val listener = CarNotificationListener.instance
     Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -180,6 +201,7 @@ private fun ConversationView(c: Conversation, driving: Boolean, onReply: () -> U
             Pill(stringResource(R.string.msg_action_read_aloud), selected = true, icon = Icons.Rounded.RecordVoiceOver, onClick = { listener?.readAloud(c) })
             c.markRead?.let { pi -> Pill(stringResource(R.string.msg_action_mark_read), selected = false, icon = Icons.Rounded.DoneAll, onClick = { runCatching { pi.send() }; onMarkedRead() }) }
             if (c.canReply && !driving) Pill(stringResource(R.string.msg_action_reply), selected = false, icon = Icons.AutoMirrored.Rounded.Reply, onClick = onReply)
+            if (c.canReply && voiceReply) Pill(stringResource(R.string.msg_action_voice_reply), selected = false, icon = Icons.Rounded.Mic, onClick = onVoiceReply)
         }
     }
 }
@@ -202,6 +224,111 @@ private fun ReplyView(c: Conversation, onSent: (Boolean) -> Unit, onCancel: () -
         CarTextField(draft, stringResource(R.string.msg_reply_hint, c.title), editing = true, onFocus = {}, onClear = { draft = "" }, leadingIcon = null)
         Spacer(Modifier.weight(1f))
         CarKeyboard(KeyboardMode.Text, sink, Icons.AutoMirrored.Rounded.Send, Modifier.padding(bottom = 8.dp))
+    }
+}
+
+/**
+ * A dictated reply: listens, then reads back what it heard ("…, send it to Anna?") and listens
+ * for the answer: a spoken "yes" sends, a "no" cancels, anything else leaves it to the buttons.
+ * Send works throughout. While driving the text isn't shown (like messages): it is only read aloud.
+ */
+@Composable
+private fun VoiceReplyView(c: Conversation, driving: Boolean, onSent: (Boolean) -> Unit, onCancel: () -> Unit) {
+    val context = LocalContext.current
+    val sent by rememberUpdatedState(onSent)
+    val cancelled by rememberUpdatedState(onCancel)
+    var step by remember(c.key) { mutableStateOf<VoiceReplyStep>(VoiceReplyStep.Listening()) }
+    // Sent or cancelled: a late spoken answer or a second tap must not send again.
+    var finished by remember(c.key) { mutableStateOf(false) }
+    val yesWords = remember { context.getString(R.string.msg_voice_reply_yes_words).split(',') }
+    val noWords = remember { context.getString(R.string.msg_voice_reply_no_words).split(',') }
+
+    fun send(text: String) {
+        if (finished) return
+        finished = true
+        sent(CarNotificationListener.instance?.reply(c, text) == true)
+    }
+
+    fun cancel() {
+        if (finished) return
+        finished = true
+        cancelled()
+    }
+
+    val dictation = remember(c.key) { arrayOfNulls<VoiceDictation>(1) }
+    // The read-back is being spoken: leaving the screen stops it (and only then AARE's speech).
+    val readingBack = remember(c.key) { booleanArrayOf(false) }
+    fun readBack(confirm: VoiceReplyStep.Confirm) {
+        val listener = CarNotificationListener.instance ?: return
+        readingBack[0] = true
+        // The answer is listened for once the read-back is over, so it doesn't hear itself.
+        listener.say(context.getString(R.string.msg_voice_reply_read_back, confirm.text, c.title)) {
+            readingBack[0] = false
+            if (!finished && step == confirm) dictation[0]?.start()
+        }
+    }
+    if (dictation[0] == null) dictation[0] = VoiceDictation(context,
+        onPartial = { step = VoiceReplyStep.partial(step, it) },
+        onResult = { text ->
+            when (val s = step) {
+                is VoiceReplyStep.Listening -> {
+                    step = VoiceReplyStep.result(s, text)
+                    (step as? VoiceReplyStep.Confirm)?.let(::readBack)
+                }
+                is VoiceReplyStep.Confirm -> when (VoiceReplyStep.answerOf(text, yesWords, noWords)) {
+                    VoiceReplyStep.Answer.Yes -> send(s.text)
+                    VoiceReplyStep.Answer.No -> cancel()
+                    VoiceReplyStep.Answer.Unclear -> Unit
+                }
+                else -> Unit
+            }
+        },
+        // While confirming, silence or a failure just leaves the buttons.
+        onFailure = { step = VoiceReplyStep.failure(step, it) })
+
+    // Listening starts on every new Listening step (the first one and each retry).
+    val listening = step is VoiceReplyStep.Listening
+    LaunchedEffect(listening) {
+        if (!listening) return@LaunchedEffect
+        // "Again" may come in the middle of the read-back: AARE stops talking before it listens.
+        CarNotificationListener.instance?.stopSpeaking()
+        dictation[0]?.start()
+    }
+    // Back, the top bar's back or the conversation gone: the reply is over. Nothing may listen or
+    // send afterwards, and a read-back still being spoken stops.
+    DisposableEffect(c.key) {
+        onDispose {
+            finished = true
+            dictation[0]?.cancel()
+            if (readingBack[0]) {
+                readingBack[0] = false
+                CarNotificationListener.instance?.stopSpeaking()
+            }
+        }
+    }
+
+    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            when (val s = step) {
+                is VoiceReplyStep.Listening -> Placeholder(
+                    if (driving || s.heard.isEmpty()) stringResource(R.string.msg_voice_reply_listening, c.title) else s.heard,
+                    loading = false, icon = Icons.Rounded.Mic)
+                is VoiceReplyStep.Confirm -> Placeholder(
+                    if (driving) stringResource(R.string.msg_voice_reply_confirm, c.title) else s.text,
+                    loading = false, icon = Icons.AutoMirrored.Rounded.Send)
+                VoiceReplyStep.NotHeard -> Placeholder(stringResource(R.string.msg_voice_reply_not_heard), loading = false, icon = Icons.Rounded.Mic)
+                VoiceReplyStep.TryAgain -> Placeholder(stringResource(R.string.msg_voice_reply_try_again), loading = false, icon = Icons.Rounded.Mic)
+                VoiceReplyStep.Unavailable -> Placeholder(stringResource(R.string.msg_voice_reply_unavailable), loading = false, icon = Icons.Rounded.Mic)
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            val s = step
+            if (s is VoiceReplyStep.Confirm) Pill(stringResource(R.string.msg_voice_reply_send), selected = true, icon = Icons.AutoMirrored.Rounded.Send,
+                onClick = { send(s.text) })
+            if (s is VoiceReplyStep.Confirm || s == VoiceReplyStep.NotHeard || s == VoiceReplyStep.TryAgain) Pill(stringResource(R.string.msg_voice_reply_again), selected = false,
+                icon = Icons.Rounded.Refresh, onClick = { step = VoiceReplyStep.retry(step) })
+            Pill(stringResource(R.string.common_cancel), selected = false, icon = Icons.Rounded.Close, onClick = ::cancel)
+        }
     }
 }
 

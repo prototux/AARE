@@ -22,16 +22,21 @@ class CalibrationControllerTest {
     private class FakeHost : CalibrationController.Host {
         override val car = "Marelli IVI2020"
         override var driving = false
-        override var projection: CalibrationController.Projection? = null
         var applied: TouchCalibration? = null
         var applyCount = 0
-        override fun apply(c: TouchCalibration?) { applied = c; applyCount++ }
+        /** Like the session: saving lays the projection out again in place, which tells the tool. */
+        var relayOut: (TouchCalibration?) -> Unit = {}
+        override fun apply(c: TouchCalibration?) { applied = c; applyCount++; relayOut(c) }
     }
 
     private val host = FakeHost()
     private val clock = FakeScheduler()
     private val ctl = CalibrationController(host, clock)
     private val state get() = CalibrationHub.state.value
+
+    init {
+        host.relayOut = { c -> ctl.onProjection(CalibrationController.Projection(1280, 720, ProjectionLayout.of(1280, 720, 0, 0, null, null), c)) }
+    }
 
     /** A panel that reports 0..32767 over the whole frame. */
     private fun tap(fx: Double, fy: Double) = ctl.onTouchFromReader(
@@ -40,9 +45,7 @@ class CalibrationControllerTest {
     )
 
     private fun connect() {
-        val p = CalibrationController.Projection(1280, 720, ProjectionLayout.of(1280, 720, 0, 0, null, null), null)
-        host.projection = p
-        ctl.onProjection(p)
+        ctl.onProjection(CalibrationController.Projection(1280, 720, ProjectionLayout.of(1280, 720, 0, 0, null, null), null))
     }
 
     private fun tapTargets() {
@@ -143,6 +146,55 @@ class CalibrationControllerTest {
         ctl.onDrivingChanged()
         assertEquals(CalState.Result(CalState.Outcome.DRIVING), state)
         ctl.close()
+    }
+
+    @Test
+    fun carTapsDuringTheVisibleAreaStepDontReachTheCarUi() {
+        connect()
+        assertFalse(ctl.capturing)
+        ctl.start()
+        // The car UI is hidden under the tool from the first step: its taps are the tool's.
+        assertTrue(ctl.capturing)
+        tap(0.5, 0.5)
+        assertTrue(state is CalState.Area)
+        ctl.cancel()
+        assertFalse(ctl.capturing)
+    }
+
+    @Test
+    fun savingAndResettingLayOutAgainInPlace() {
+        connect()
+        ctl.start(); ctl.next(); tapTargets()
+        val centre = (state as CalState.Verify).point
+        tap(centre.first, centre.second)
+        // The relayout that saving causes doesn't end the run it came from.
+        assertEquals(CalState.Result(CalState.Outcome.SAVED), state)
+        ctl.dismiss()
+        assertEquals(true, (state as CalState.Ready).saved)
+        ctl.resetSaved()
+        assertEquals(CalState.Result(CalState.Outcome.RESET), state)
+        assertNull(host.applied)
+        ctl.dismiss()
+        assertEquals(false, (state as CalState.Ready).saved)
+    }
+
+    @Test
+    fun aUiConfigUpdateKeepsTheSavedCalibrationButEndsARun() {
+        connect()
+        ctl.start(); ctl.next(); tapTargets()
+        val centre = (state as CalState.Verify).point
+        tap(centre.first, centre.second)
+        val saved = host.applied!!
+        ctl.dismiss()
+        // A UI config update re-lays out with the saved calibration: still in use, nothing to do.
+        host.relayOut(saved)
+        assertEquals(true, (state as CalState.Ready).saved)
+        // Mid-run, the frame moved under the user: nothing is kept from that run.
+        ctl.start(); ctl.next()
+        host.relayOut(saved)
+        assertEquals(CalState.Result(CalState.Outcome.INTERRUPTED), state)
+        assertFalse(ctl.capturing)
+        assertEquals(1, host.applyCount)
     }
 
     @Test

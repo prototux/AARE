@@ -42,6 +42,8 @@ enum class CaptureMethod(val label: String, @StringRes val title: Int) {
     AUDIO_POLICY("System audio routing (like Android Auto)", R.string.audio_method_policy),
     /** The same audio policy, registered by a Shizuku (adb rights) process: the shell holds MODIFY_AUDIO_ROUTING. */
     SHIZUKU_POLICY("Shizuku, music and navigation apart (like Android Auto)", R.string.audio_method_shizuku_policy),
+    /** The same audio policy again, registered by a root helper (su) dropped to the shell uid: no Shizuku app, no Magisk module. */
+    ROOT_POLICY("Root, music and navigation apart", R.string.audio_method_root_policy),
     /** The phone's whole output through Shizuku (adb rights) or root (su): navigation voice included, mixed with music. */
     SHIZUKU("Shizuku or root", R.string.audio_method_shizuku),
     /** Screen-capture consent: media only, apps may opt out, no navigation voice. */
@@ -57,7 +59,10 @@ object CaptureMethods {
         context.checkSelfPermission("android.permission.MODIFY_AUDIO_ROUTING") == PackageManager.PERMISSION_GRANTED
 
     /** Shizuku is running and AARE may use it (Android 12+, where the shell can attribute the recording). */
-    fun shizukuAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && runCatching {
+    fun shizukuAvailable(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && shizukuReady()
+
+    /** Shizuku is running and AARE may use it, whatever the Android version (each use checks its own). */
+    fun shizukuReady(): Boolean = runCatching {
         Shizuku.pingBinder() && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false)
 
@@ -87,6 +92,8 @@ object CaptureMethods {
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
         CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
         CaptureMethod.SHIZUKU_POLICY !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU_POLICY
+        // Not while Shizuku runs: its methods come first, and its fallback stays as it was.
+        CaptureMethod.ROOT_POLICY !in exclude && !shizukuAvailable() && rootAvailable(context) -> CaptureMethod.ROOT_POLICY
         CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable(context)) -> CaptureMethod.SHIZUKU
         // Capturing other apps' sound arrived in Android 10.
         CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
@@ -94,7 +101,7 @@ object CaptureMethods {
     }
 }
 
-private fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()
+internal fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()
     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
     .setSampleRate(rate)
     .setChannelMask(
@@ -180,9 +187,10 @@ internal object AudioPolicyCapture {
         if (status != 0) throw IllegalStateException("registerAudioPolicy: $status")
         val record = try {
             val sink = if (recordContext != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // The Builder overload (newer Android) keeps our attribution; without it, fall back.
+                // The Builder overload (newer Android) keeps our attribution and a buffer of ~160 ms
+                // rather than the policy's ~60 ms, which a late reader overruns; without it, fall back.
                 val withBuilder = runCatching { p.javaClass.getMethod("createAudioRecordSink", mixClass, AudioRecord.Builder::class.java) }.getOrNull()
-                if (withBuilder != null) withBuilder.invoke(p, mix, AudioRecord.Builder().setContext(recordContext)) as AudioRecord?
+                if (withBuilder != null) withBuilder.invoke(p, mix, AudioRecord.Builder().setContext(recordContext).setBufferSizeInBytes(bufferBytes(rate, channels))) as AudioRecord?
                 else p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
             } else {
                 p.javaClass.getMethod("createAudioRecordSink", mixClass).invoke(p, mix) as AudioRecord?
@@ -249,7 +257,7 @@ internal object ShellAudio {
 
     /** The helper, bound if needed; null if Shizuku can't start it. Pair with [release]. */
     fun acquire(context: Context): IShellAudio? {
-        if (!CaptureMethods.shizukuAvailable()) return null
+        if (!CaptureMethods.shizukuReady()) return null
         val b = synchronized(lock) {
             if (users++ == 0) {
                 val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, ShellAudioService::class.java.name))
@@ -337,8 +345,8 @@ class ShizukuPolicySource(
 /**
  * The phone's whole output, recorded by [SuAudioMain] in a root process AARE starts with `su` and
  * `app_process` (the scrcpy/Shizuku way). The same capture as [ShizukuSource], for rooted phones
- * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module. PCM arrives on the
- * process's stdout.
+ * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module, when the system
+ * refuses [SuPolicySource]'s audio policy. PCM arrives on the process's stdout.
  */
 class SuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
     private var process: Process? = null

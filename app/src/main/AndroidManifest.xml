@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Shizuku's own manifest asks for API 24; every call into it is already gated well above
+         that (SDK_INT >= 24, most >= 31/33 — see ShizukuProvider below and docs/decisions.md), so
+         this only lifts a static declaration the library doesn't actually need enforced here. -->
+    <uses-sdk tools:overrideLibrary="rikka.shizuku.api" />
+
     <!--
       Car App Library apps only accept hosts they trust. Apps built with androidx.car.app up to
       1.8.0-beta01 also trust a host that holds this permission; on a phone no system package
@@ -30,6 +35,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Opt-in, granted only by the user in the app's settings ("Allow all the time"): lets the
+         location foreground type through when AARE was started in the background (#329). -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Lists AARE under Developer options > Select mock location app: the car's GPS as the
          phone's location while connected (car/PhoneLocationFeed). -->
@@ -45,6 +53,13 @@
     <!-- Do Not Disturb while driving (car/DrivingMode), once the user allows it. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!--
+      One-tap wireless (Android 13+, opt-in: the user associates a car as a companion device).
+      Presence: Android tells CarPresenceService when that car's Bluetooth connects. Foreground
+      services from the background: so that start isn't refused while the phone sits in a pocket.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!-- The car's Phone app: recent calls, contacts, placing calls (through the car's Bluetooth). -->
@@ -72,6 +87,7 @@
     <uses-feature android:name="android.hardware.usb.accessory" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.wifi" android:required="false" />
+    <uses-feature android:name="android.software.companion_device_setup" android:required="false" />
 
     <application
         android:name=".AareApp"
@@ -134,14 +150,35 @@
             android:authorities="net.prototux.aare.car"
             android:exported="true" />
 
-        <!-- Shizuku (adb rights without root): car audio including navigation voice. -->
+        <!-- aare:// links in an assistant's reply (a notification action, a link in its app): see
+             docs/assistant-links.md. Exported so the assistant can start it, but not BROWSABLE: no
+             web page (AARE's own browser included) can open it. The activity also refuses any
+             caller but the chosen assistant. -->
+        <activity
+            android:name=".host.AssistantLinkActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="aare" />
+            </intent-filter>
+        </activity>
+
+        <!-- Shizuku (adb rights without root): car audio including navigation voice. Its own
+             manifest needs API 24 (overridden above); disabled below that so the provider never
+             starts with the app there, matching what its code already needs. -->
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
-            android:enabled="true"
+            android:enabled="@bool/shizuku_provider_enabled"
             android:exported="true"
             android:multiprocess="false"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL"
+            tools:targetApi="24" />
 
         <!-- Optional: touch for the phone screen shown in the car. -->
         <service
@@ -160,6 +197,18 @@
         <!-- A paired head unit with wireless Android Auto connected over Bluetooth. No
              android:permission: both actions are protected system broadcasts, and BLUETOOTH_CONNECT
              does not exist below API 31, so requiring it of the sender blocked delivery on 8-11. -->
+        <!-- Started by Android when an associated car's Bluetooth connects (Android 13+ only). -->
+        <service
+            android:name=".transport.wireless.CarPresenceService"
+            android:enabled="@bool/companion_presence"
+            android:exported="true"
+            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE"
+            tools:targetApi="33">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".service.WirelessReceiver"
             android:exported="true">

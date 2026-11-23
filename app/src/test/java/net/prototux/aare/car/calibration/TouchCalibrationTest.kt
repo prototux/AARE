@@ -94,7 +94,7 @@ class TouchCalibrationTest {
         val plain = TouchMapper(1280, 720, layout)
         assertEquals(640f, plain.mapX(640), 0.001f)
         assertEquals(0.5, c.x(16383.5, 0.0), 1e-9)
-        TouchMapper(1280, 720, layout, c).map(ev(16383, 16383)) // must not throw
+        TouchMapper(1280, 720, layout, calibration = c).map(ev(16383, 16383)) // must not throw
     }
 
     @Test

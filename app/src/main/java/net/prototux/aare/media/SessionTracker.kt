@@ -9,6 +9,7 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -148,6 +149,7 @@ internal class SessionSource(
         override fun onPlaybackStateChanged(state: PlaybackState?) = update()
         override fun onMetadataChanged(metadata: MediaMetadata?) = update()
         override fun onQueueChanged(queue: MutableList<MediaSession.QueueItem>?) = update()
+        override fun onExtrasChanged(extras: Bundle?) = update()
         override fun onSessionDestroyed() {
             _state.value = SourceState()
         }
@@ -207,11 +209,14 @@ internal class SessionSource(
             val (actionLabel, intent) = errorAction(ps?.extras)
             MediaError(message ?: context.getString(R.string.media_error_reported, label), actionLabel, intent)
         } else null
+        val (reservePrevious, reserveNext) = reservesSkipSlots(controller.extras)
         _state.value = SourceState(
             info = info,
             showPause = st in PLAYING_STATES,
             canPrevious = actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L,
             canNext = actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
+            reservePrevious = reservePrevious,
+            reserveNext = reserveNext,
             canSeek = actions and PlaybackState.ACTION_SEEK_TO != 0L,
             actions = ps?.customActions.orEmpty().take(MAX_ACTIONS).map { a ->
                 CustomAction(a.action, a.name.toString(), IconRef(packageName, a.icon)) {
