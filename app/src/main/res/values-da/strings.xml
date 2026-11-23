@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Beskeder, ruteanvisninger fra Google Maps og Waze, afspilles nu</string>
     <string name="setup_check_audio_subtitle">Lad telefonens lyd nå bilen</string>
     <string name="setup_action_set_up">Konfigurer</string>
+    <string name="setup_old_android_title">Kører på en ældre Android</string>
+    <string name="setup_old_android_message">AARE kører også på Android 6 og 7, men Android 8 er den bedre understøttede basislinje. På Android 6 og 7 kan forbindelsesnotifikationer ikke placeres i deres egen kanal, så de kan ikke slås fra separat fra AAREs andre notifikationer i systemindstillingerne. Alt andet fungerer på samme måde, eller falder automatisk tilbage til en ældre metode.</string>
+    <string name="setup_old_android_dont_show_again">Vis ikke igen</string>
     <string name="setup_section_connecting">Forbinder</string>
     <string name="setup_toggle_wireless_title">Trådløst</string>
     <string name="setup_toggle_wireless_subtitle">Opretter forbindelse til tilkoblede biler via Wi-Fi, når de kommer inden for Bluetooth-rækkevidde</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systemlydstyring (som Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, musik og navigation separat (som Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku eller root</string>
+    <string name="audio_method_root_policy">Root, musik og navigation separat</string>
     <string name="audio_method_playback_capture">Tilladelse til skærmoptagelse</string>
     <string name="audio_policy_not_ready">Som Android Auto: musik og navigationsstemme separat, telefonhøjttaler fra. Kræver en rootet telefon: installer AARE som systemapp med Magisk-modulet (se README).</string>
     <string name="audio_shizuku_ready">Klar. Alt, hvad telefonen afspiller, går til bilen, inklusive navigationsstemme; telefonen er tavs.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Startside</string>
     <string name="browser_address_hint">Søg eller indtast en webadresse</string>
     <string name="assistant_links_title">Links fra assistenten</string>
+    <string name="assistant_stop">Stop assistenten</string>
+    <string name="assistant_stop_style_title">Sådan stoppes assistenten</string>
+    <string name="assistant_stop_style_voice_button">Stemmeknappen bliver til Stop</string>
+    <string name="assistant_stop_style_red_restart">Rød stopknap, stemmeknappen spørger igen</string>
+    <string name="assistant_stop_style_red_stop">Rød stopknap, stemmeknappen stopper også</string>
     <string name="assistant_links_subtitle">Lad aare://-links i den valgte assistents svar styre musikken eller tilbyde at navigere, åbne en app eller ringe på bilens skærm. Links fra andre apps og fra websider ignoreres.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>

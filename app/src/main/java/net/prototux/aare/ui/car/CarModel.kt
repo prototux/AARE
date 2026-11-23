@@ -145,6 +145,8 @@ class CarUiState {
     var railApps by mutableStateOf<List<String>>(emptyList())
     /** A narrower rail: smaller icons, tighter spacing (a setting). */
     var compactRail by mutableStateOf(false)
+    /** The space between the rail's apps in dp (a setting; null = the standard one, [railGapDp]). */
+    var railSpacing by mutableStateOf<Int?>(null)
     /** The dashboard's cards, in order (a setting). */
     var dashboardCards by mutableStateOf(DashCard.DEFAULT)
     /** The map keeps the big space wherever it is in [dashboardCards] (a setting). */
@@ -225,3 +227,6 @@ interface CarActions {
     /** Send a home action (its confirmation, if it has one, was already asked). */
     fun runHomeAction(id: String)
 }
+
+/** The standard space between the rail's apps, in dp: tighter on a [compact] rail, wider on a [bottom] bar. */
+fun railGapDp(compact: Boolean, bottom: Boolean): Int = (if (compact) 6 else 8) + (if (bottom) 4 else 0)
