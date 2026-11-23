@@ -86,7 +86,7 @@ internal class HeadUnitNetwork(
         pending = result
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(n: Network) {
-                log.i("wireless: \"${credentials.ssid}\" available as $n")
+                log.i("wireless: the car's Wi-Fi available as $n")
                 network = n
                 connectivity.getLinkProperties(n)?.let { if (ipv4(it) != null) result.complete(joined(it)) }
             }
@@ -104,7 +104,7 @@ internal class HeadUnitNetwork(
 
             override fun onLost(n: Network) {
                 if (n != network) return
-                log.w("wireless: lost the head unit's network \"${credentials.ssid}\"")
+                log.w("wireless: lost the head unit's network")
                 if (!result.isDone) {
                     network = null
                 } else {
@@ -115,7 +115,7 @@ internal class HeadUnitNetwork(
         callback = cb
         val approval = preApprove?.let { runCatching { it(credentials) }.onFailure { e -> log.w("wireless: pre-approval failed", e) }.getOrNull() }
         try {
-            log.i("wireless: requesting network \"${credentials.ssid}\" (${credentials.security}); Android may ask the user to approve")
+            log.i("wireless: requesting the car's Wi-Fi (${credentials.security}); Android may ask the user to approve")
             connectivity.requestNetwork(request, cb, timeoutMs.toInt())
             if (released) { // raced with release()
                 runCatching { connectivity.unregisterNetworkCallback(cb) }
@@ -174,7 +174,7 @@ internal class HeadUnitNetwork(
         val id = wm.addNetwork(conf)
         if (id == -1) return JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, "Android refused to add \"${c.ssid}\"")
         legacyNetworkId = id
-        log.i("wireless: joining \"${c.ssid}\" (Android 8/9)")
+        log.i("wireless: joining the car's Wi-Fi (Android 8/9)")
 
         val result = CompletableFuture<JoinResult>()
         pending = result
@@ -199,7 +199,7 @@ internal class HeadUnitNetwork(
 
             override fun onLost(n: Network) {
                 if (n != network) return
-                log.w("wireless: lost the head unit's network \"${c.ssid}\"")
+                log.w("wireless: lost the head unit's network")
                 if (result.isDone) onLost?.invoke() else network = null
             }
         }
@@ -274,7 +274,7 @@ internal class HeadUnitNetwork(
             return null
         }
         // Keep the listen callback for the session: it reports when that network goes away.
-        log.i("wireless: already connected to \"$ssid\", using that network")
+        log.i("wireless: already connected to the car's Wi-Fi, using that network")
         network = n
         callback = cb
         return joined(lp)
@@ -282,7 +282,7 @@ internal class HeadUnitNetwork(
 
     private fun onExistingLost(n: Network, found: CompletableFuture<Network>) {
         if (n != network || !found.isDone) return
-        log.w("wireless: lost the head unit's network \"$ssid\"")
+        log.w("wireless: lost the head unit's network")
         onLost?.invoke()
     }
 
