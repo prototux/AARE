@@ -605,6 +605,23 @@ The Xposed host-shims module (`xposed/`) stays at `minSdk 26`: unlike the app, i
 internals that are no safer to assume down to Android 6 without testing against that framework,
 and it isn't released, so there's no user-facing reason to lower it.
 
+**Overriding Shizuku's own `minSdkVersion 24` (owner's decision).** `dev.rikka.shizuku:api`
+declares `minSdkVersion 24` in its own manifest, which the manifest merger otherwise refuses
+under `minSdk 23`; `AndroidManifest.xml`'s `<uses-sdk tools:overrideLibrary="rikka.shizuku.api" />`
+lifts that check. This is safe here because the override only removes a build-time refusal, not a
+runtime guarantee, and nothing in AARE calls into Shizuku below API 24 regardless: every call site
+is either behind an explicit `SDK_INT` check at or above Shizuku's own floor (Android 12,
+`CaptureMethods.shizukuAvailable`/`shizukuNeedsPermission`'s callers in `MainActivity`, the Shizuku
+Wi-Fi approval and Bluetooth auto-pairing paths) or behind `Shizuku.pingBinder()` finding a live
+binder — which it never can below API 24, because `ShizukuProvider` (the component that would set
+that binder) is declared `android:enabled="@bool/shizuku_provider_enabled"`, false in
+`values/bools.xml` and true only from `values-v24/bools.xml`, so it never starts with the app
+there. The `AppLauncher`/`ShellBluetooth`/`ShellWifi`/`ShellAudio`/setup-helper `UserServiceArgs`
+builders (plain object construction, not a platform call) are either behind the same checks or,
+where a caller could reach them without one (`AppLauncher`, used by the root-or-Shizuku standalone-
+apps launcher), built lazily so they're never constructed unless a Shizuku bind is actually
+attempted.
+
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
