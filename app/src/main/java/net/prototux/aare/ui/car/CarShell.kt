@@ -204,6 +204,8 @@ internal fun ContentArea(
  * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
  * so a navigation or templated app stays full screen only.
  *
+ * The divider is [carAdjustable] too: a knob or D-pad steps it from rest point to rest point.
+ *
  * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
  * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
  * every drag frame, which would otherwise tear it down and rebuild it dozens of times a second).
@@ -249,6 +251,8 @@ private fun SplitPane(
             Modifier
                 .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
                 .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                // The knob path: each step moves to the next rest point, committed like a drag.
+                .carAdjustable(RoundedCornerShape(8.dp)) { step -> actions.commitSplitRatio(stepSplitRatio(restRatio, step)) }
                 .pointerInput(totalWidth) {
                     detectDragGestures(
                         onDragStart = { dragRatio = restRatio },
