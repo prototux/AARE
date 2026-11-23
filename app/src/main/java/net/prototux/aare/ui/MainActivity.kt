@@ -870,6 +870,19 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         Toggle(stringResource(R.string.msg_toggle_banners_title), stringResource(R.string.msg_toggle_banners_subtitle), banners) { banners = it; settings.messageBanners = it }
         Toggle(stringResource(R.string.msg_toggle_group_title), stringResource(R.string.msg_toggle_group_subtitle), groups) { groups = it; settings.groupMessages = it }
         Toggle(stringResource(R.string.msg_toggle_read_aloud_title), stringResource(R.string.msg_toggle_read_aloud_subtitle), aloud) { aloud = it; settings.readMessagesAloud = it }
+        // Which apps' messages show in the car: all of them until one is switched off.
+        val apps by produceState(emptyList<PhoneApp>()) { value = withContext(Dispatchers.IO) { AndroidAutoApps.messagingApps(ctx) } }
+        var muted by remember { mutableStateOf(settings.mutedMessageApps) }
+        if (apps.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.msg_apps_title), style = MaterialTheme.typography.titleSmall)
+            apps.forEach { app ->
+                Toggle(app.label, stringResource(R.string.msg_apps_subtitle), app.packageName !in muted) { on ->
+                    muted = if (on) muted - app.packageName else muted + app.packageName
+                    settings.mutedMessageApps = muted
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.msg_hint_apps),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

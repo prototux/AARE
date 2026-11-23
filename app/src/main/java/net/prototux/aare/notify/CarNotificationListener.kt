@@ -152,7 +152,7 @@ class CarNotificationListener : NotificationListenerService() {
         val app = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(sbn.packageName, 0)).toString() }.getOrDefault(sbn.packageName)
         val title = if (last.sender.isNotEmpty() && last.sender != c.title) "${c.title} · ${last.sender}" else c.title.ifEmpty { app }
         val group = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(sbn.notification)?.isGroupConversation == true
-        sink(Message(sbn.key, title, last.text, c.icon, actions, group) { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
+        sink(Message(sbn.key, title, last.text, c.icon, actions, group, sbn.packageName) { speak(if (last.sender.isNotEmpty()) "${last.sender}. ${last.text}" else last.text) })
     }
 
     /**
@@ -394,6 +394,7 @@ class CarNotificationListener : NotificationListenerService() {
         val icon: Bitmap?,
         val actions: List<Pair<String, () -> Unit>>,
         val group: Boolean,
+        val packageName: String,
         /** Reads the message aloud (through the media stream, so it reaches the car). */
         val readAloud: () -> Unit,
     )

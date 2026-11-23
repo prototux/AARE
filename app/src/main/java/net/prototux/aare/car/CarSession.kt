@@ -415,7 +415,7 @@ class CarSession(
             drivingMode.start()
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
-                if (!m.group || settings.groupMessages) {
+                if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
                     runtime.remember(m.title, m.text, m.icon, m.actions)
                     if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
                     if (settings.readMessagesAloud) m.readAloud()
@@ -1522,3 +1522,6 @@ private val NAV_KEYS = setOf(
 
 /** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
 internal fun logsCarKey(code: Int) = code !in NAV_KEYS
+
+/** Whether a message from [packageName] reaches the car screen: its app isn't [muted], and [groups] lets a [group]'s through. */
+internal fun showsMessage(packageName: String, group: Boolean, groups: Boolean, muted: Set<String>) = packageName !in muted && (!group || groups)
