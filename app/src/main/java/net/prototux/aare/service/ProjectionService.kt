@@ -46,6 +46,7 @@ import net.prototux.aare.Settings
 import net.prototux.aare.aap.CertificateRefusal
 import net.prototux.aare.aap.PinRefusal
 import net.prototux.aare.aap.Transport
+import net.prototux.aare.aap.ProtocolTrace
 import net.prototux.aare.aap.wireless.WirelessBootstrap
 import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.aap.wireless.WirelessHandshake
@@ -279,7 +280,7 @@ class ProjectionService : Service() {
             return
         }
         lastWirelessAddress = address
-        log("wireless: connecting to ${name ?: address}")
+        log("wireless: connecting to $address")
         _state.update { it.copy(status = getString(R.string.notif_status_connecting_wirelessly)) }
         wirelessJob = scope.launch {
             // Right after the Bluetooth link comes up some cars accept the connection but don't
@@ -482,7 +483,7 @@ class ProjectionService : Service() {
             scheduleIdleStop()
             return
         }
-        log("wireless: ${runCatching { device.name }.getOrNull() ?: device.address} already connected over Bluetooth, connecting")
+        log("wireless: ${device.address} already connected over Bluetooth, connecting")
         connectWireless(device.address)
     }
 
@@ -703,7 +704,7 @@ class ProjectionService : Service() {
                     certNotice(getString(R.string.notif_cert_download_title), getString(R.string.notif_cert_download_message), retry = true)
                 }
             }
-            pinRefusal?.let { log("head unit ${it.peerKey} showed certificate SHA-256 ${it.fingerprint}") }
+            pinRefusal?.let { log("head unit ${ProtocolTrace.peer(it.peerKey)} showed certificate SHA-256 ${it.fingerprint}") }
             log("disconnected: $why")
             _state.update { it.copy(connected = false, status = getString(R.string.notif_status_not_connected), video = "", lastError = why.takeIf { r -> "stopped" !in r && "ended" !in r },
                 // A later attempt that fails otherwise (USB retries every few seconds) keeps the Trust button.
