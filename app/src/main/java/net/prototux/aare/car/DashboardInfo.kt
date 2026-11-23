@@ -36,29 +36,36 @@ data class AgendaItem(val event: NextEvent, val day: AgendaDay)
 private val UTC: TimeZone = TimeZone.getTimeZone("UTC")
 
 /**
- * The epoch millis of local midnight, in [zone], for the day [epochMs] falls on: a day, as a
- * comparable and orderable instant rather than a java.time LocalDate.
+ * A calendar date, like [java.time.LocalDate]: year/month/day only, equal and ordered by those
+ * fields alone, with no zone or time-of-day of its own once computed — two [CalendarDay]s from
+ * different zones compare equal exactly when they're the same date, the same as `LocalDate`.
  */
-private fun dayStart(epochMs: Long, zone: TimeZone): Long = Calendar.getInstance(zone).apply {
+internal data class CalendarDay(val year: Int, val month: Int, val day: Int) : Comparable<CalendarDay> {
+    override fun compareTo(other: CalendarDay): Int =
+        compareValuesBy(this, other, { it.year }, { it.month }, { it.day })
+
+    /** This date advanced by one calendar day (a plain calendar-field add, like `LocalDate.plusDays(1)`). */
+    fun plusOneDay(): CalendarDay = Calendar.getInstance().run {
+        clear(); set(year, month, day); add(Calendar.DAY_OF_MONTH, 1)
+        CalendarDay(get(Calendar.YEAR), get(Calendar.MONTH), get(Calendar.DAY_OF_MONTH))
+    }
+
+    /** This date's [Calendar.DAY_OF_WEEK] (`Calendar.SUNDAY`..`Calendar.SATURDAY`); zone-independent. */
+    fun dayOfWeek(): Int = Calendar.getInstance().run { clear(); set(year, month, day); get(Calendar.DAY_OF_WEEK) }
+}
+
+/** The calendar date [epochMs] falls on for a reader in [zone]. */
+private fun calendarDay(epochMs: Long, zone: TimeZone): CalendarDay = Calendar.getInstance(zone).run {
     timeInMillis = epochMs
-    set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
-}.timeInMillis
-
-/** [this] (a [dayStart]) advanced by one calendar day in [zone], DST-correct like [dayStart] itself. */
-private fun Long.plusOneDay(zone: TimeZone): Long = Calendar.getInstance(zone).apply {
-    timeInMillis = this@plusOneDay
-    add(Calendar.DAY_OF_MONTH, 1)
-}.timeInMillis
-
-/** The [Calendar.DAY_OF_WEEK] of the day starting at [dayStartMs] (a [dayStart]) in [zone]. */
-private fun dayOfWeek(dayStartMs: Long, zone: TimeZone): Int = Calendar.getInstance(zone).apply { timeInMillis = dayStartMs }.get(Calendar.DAY_OF_WEEK)
+    CalendarDay(get(Calendar.YEAR), get(Calendar.MONTH), get(Calendar.DAY_OF_MONTH))
+}
 
 /**
- * The calendar day [this] event falls on for a reader in [zone], as its [dayStart]. All-day
- * events are stored at UTC midnight of their date (CalendarContract), so their date is read in
- * UTC: in local time they would land a day early west of UTC. Timed events are read in [zone].
+ * The calendar day [this] event falls on for a reader in [zone]. All-day events are stored at UTC
+ * midnight of their date (CalendarContract), so their date is read in UTC: in local time they
+ * would land a day early west of UTC. Timed events are read in [zone].
  */
-internal fun NextEvent.day(zone: TimeZone): Long = dayStart(startMs, if (allDay) UTC else zone)
+internal fun NextEvent.day(zone: TimeZone): CalendarDay = calendarDay(startMs, if (allDay) UTC else zone)
 
 /**
  * The events the calendar card shows, from the calendar's rows ([events], any order). One event
@@ -69,7 +76,7 @@ internal fun NextEvent.day(zone: TimeZone): Long = dayStart(startMs, if (allDay)
  */
 fun selectAgenda(events: List<NextEvent>, limit: Int, nowMs: Long, zone: TimeZone): List<NextEvent> {
     if (limit <= 0) return emptyList()
-    val today = dayStart(nowMs, zone)
+    val today = calendarDay(nowMs, zone)
     val ordered = events.filter { !it.allDay || it.day(zone) >= today }
         .sortedWith(compareBy<NextEvent>({ it.day(zone) }, { !it.allDay }, { it.startMs }))
     return if (limit == 1) listOfNotNull(ordered.firstOrNull { !it.allDay } ?: ordered.firstOrNull())
@@ -82,14 +89,14 @@ fun selectAgenda(events: List<NextEvent>, limit: Int, nowMs: Long, zone: TimeZon
  * testable. All-day events are labelled by their own (UTC) date, see [day].
  */
 fun labelAgenda(events: List<NextEvent>, nowMs: Long, zone: TimeZone): List<AgendaItem> {
-    val today = dayStart(nowMs, zone)
-    val tomorrow = today.plusOneDay(zone)
+    val today = calendarDay(nowMs, zone)
+    val tomorrow = today.plusOneDay()
     return events.map { event ->
         val day = event.day(zone)
         val label = when {
             day == today -> AgendaDay.Today
             day == tomorrow -> AgendaDay.Tomorrow
-            else -> AgendaDay.Later(dayOfWeek(day, zone))
+            else -> AgendaDay.Later(day.dayOfWeek())
         }
         AgendaItem(event, label)
     }
