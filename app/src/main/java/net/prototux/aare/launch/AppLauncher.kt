@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit
 class AppLauncher(private val context: Context) {
     @Volatile private var host: ILaunchHost? = null
 
-    // --- Shizuku path ---
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
-        .daemon(false).processNameSuffix("launch").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    // --- Shizuku path --- (only built when connectShizuku() runs, itself behind shizukuAvailable())
+    private val args by lazy {
+        Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
+            .daemon(false).processNameSuffix("launch").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    }
     private val bound = CountDownLatch(1)
     private var didBind = false
     private val connection = object : ServiceConnection {

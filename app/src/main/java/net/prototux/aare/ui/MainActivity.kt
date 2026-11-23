@@ -1137,15 +1137,19 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
     }
+    // Shizuku itself needs Android 12 (CaptureMethods.shizukuAvailable); its listener is never
+    // registered below that, so it's never live when there's no binder to answer it.
     DisposableEffect(Unit) {
-        val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
-        runCatching { Shizuku.addRequestPermissionResultListener(l) }
-        onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
+            runCatching { Shizuku.addRequestPermissionResultListener(l) }
+            onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
+        } else onDispose {}
     }
     @Suppress("UNUSED_EXPRESSION") refresh
     val policy = CaptureMethods.audioPolicyAvailable(ctx)
     val shizuku = CaptureMethods.shizukuAvailable()
-    val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
+    val shizukuAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && CaptureMethods.shizukuNeedsPermission()
     val root = CaptureMethods.rootAvailable(ctx)
     val best = when {
         policy -> CaptureMethod.AUDIO_POLICY
