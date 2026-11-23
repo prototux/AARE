@@ -9,9 +9,12 @@ class StyleSwatchTest {
     @Test
     fun everyStyleAndThemeHasItsColorsAndEveryAccentIts() {
         CarStyles.all.forEach {
-            val night = CarThemes.byId(it.themeId).night
-            assertEquals(listOf(night.background, night.primary), styleSwatch("${it.themeId}/${it.layout.id}"))
-            assertEquals(listOf(night.background, night.primary), styleSwatch(it.themeId))
+            val theme = CarThemes.byId(it.themeId)
+            val night = theme.night
+            // A glass theme's background is transparent: the dot shows its backdrop instead.
+            val background = if (night.background.alpha == 1f) night.background else theme.nightBackdrop.first()
+            assertEquals(listOf(background, night.primary), styleSwatch("${it.themeId}/${it.layout.id}"))
+            assertEquals(listOf(background, night.primary), styleSwatch(it.themeId))
         }
         CarAccents.all.forEach { assertEquals(listOf(it.dark.primary), styleSwatch(it.id)) }
     }

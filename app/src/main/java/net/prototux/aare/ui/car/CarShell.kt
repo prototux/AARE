@@ -90,6 +90,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
@@ -143,7 +144,7 @@ fun CarShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }

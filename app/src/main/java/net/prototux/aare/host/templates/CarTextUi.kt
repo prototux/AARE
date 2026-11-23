@@ -53,8 +53,12 @@ import net.prototux.aare.ui.theme.LocalCarColors
 
 // ---------------------------------------------------------------- colours
 
-/** True when the current theme is the night (dark) one: picks CarColor dark variants. */
-internal val ColorScheme.isNight: Boolean get() = background.luminance() < 0.5f
+/**
+ * True when the current theme is the night (dark) one: picks CarColor dark variants. A glass theme
+ * leaves the background transparent: then its text decides (light text, dark theme).
+ */
+internal val ColorScheme.isNight: Boolean
+    get() = if (background.alpha == 1f) background.luminance() < 0.5f else onBackground.luminance() > 0.5f
 
 /**
  * Maps a CarColor to the theme. PRIMARY/SECONDARY are the app's own accent colours, from its car

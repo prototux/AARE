@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarFormat
 import net.prototux.aare.ui.theme.carBackdrop
@@ -70,7 +71,7 @@ internal fun ClassicShell(
                 BottomBar(state, actions)
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }

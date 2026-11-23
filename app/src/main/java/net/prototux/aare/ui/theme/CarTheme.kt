@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -186,6 +187,35 @@ fun CarTheme(night: Boolean, theme: CarThemeSpec = LocalCarTheme.current, conten
             content = content,
         )
     }
+}
+
+/**
+ * [content] over a live map (a navigation app's map, the dashboard's map card): every translucent
+ * surface and container color of the scheme laid over the theme's backdrop, so a glass theme's
+ * cards, banners and buttons stay readable over a day map. Themes without a backdrop are opaque
+ * already and stay as they are.
+ */
+@Composable
+fun OverMap(content: @Composable () -> Unit) {
+    val theme = LocalCarTheme.current
+    val scheme = MaterialTheme.colorScheme
+    val backdrop = (if (scheme == theme.night) theme.nightBackdrop else theme.dayBackdrop).firstOrNull()
+    if (backdrop == null) { content(); return }
+    MaterialTheme(colorScheme = scheme.opaqueOver(backdrop), typography = MaterialTheme.typography, shapes = MaterialTheme.shapes, content = content)
+}
+
+/** [ColorScheme] with its translucent surfaces and containers solid over [base]; fully transparent ones stay so. */
+fun ColorScheme.opaqueOver(base: Color): ColorScheme {
+    fun solid(c: Color) = if (c.alpha > 0f && c.alpha < 1f) c.compositeOver(base) else c
+    return copy(
+        primaryContainer = solid(primaryContainer), secondaryContainer = solid(secondaryContainer),
+        tertiaryContainer = solid(tertiaryContainer), errorContainer = solid(errorContainer),
+        surface = solid(surface), surfaceVariant = solid(surfaceVariant), surfaceTint = solid(surfaceTint),
+        inverseSurface = solid(inverseSurface), surfaceBright = solid(surfaceBright), surfaceDim = solid(surfaceDim),
+        surfaceContainerLowest = solid(surfaceContainerLowest), surfaceContainerLow = solid(surfaceContainerLow),
+        surfaceContainer = solid(surfaceContainer), surfaceContainerHigh = solid(surfaceContainerHigh),
+        surfaceContainerHighest = solid(surfaceContainerHighest),
+    )
 }
 
 /** Phone UI theme: AARE's palette, normal phone type scale. */

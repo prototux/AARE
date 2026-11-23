@@ -1,5 +1,6 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.rounded.Stop
@@ -89,7 +90,7 @@ internal fun DockShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
