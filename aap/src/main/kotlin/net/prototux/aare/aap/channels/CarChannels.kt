@@ -6,6 +6,7 @@ import aap_protobuf.service.bluetooth.message.BluetoothAuthenticationResultOuter
 import aap_protobuf.service.bluetooth.message.BluetoothPairingMethodOuterClass.BluetoothPairingMethod
 import aap_protobuf.service.bluetooth.message.BluetoothPairingRequestOuterClass.BluetoothPairingRequest
 import aap_protobuf.service.bluetooth.message.BluetoothPairingResponseOuterClass.BluetoothPairingResponse
+import aap_protobuf.service.inputsource.InputSourceServiceOuterClass.InputSourceService.TouchPad
 import aap_protobuf.service.inputsource.message.FeedbackEventOuterClass.FeedbackEvent
 import aap_protobuf.service.inputsource.message.InputFeedbackOuterClass.InputFeedback
 import aap_protobuf.service.inputsource.message.InputReportOuterClass.InputReport
@@ -37,6 +38,9 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     interface Listener {
         /** Called on the session's reader thread. */
         fun onInput(report: InputReport)
+
+        /** The car changed its touchpad's sensitivity; [pad] is the new [touchPad] (reader thread). */
+        fun onTouchPadUpdate(pad: TouchPad) {}
     }
 
     val keycodes: List<Int> = service.inputSourceService.keycodesSupportedList
@@ -66,7 +70,10 @@ class InputChannel(service: Service, private val listener: Listener) : ServiceCh
     override fun onServiceUpdate(update: Service) {
         val pad = touchPad ?: return
         val updated = update.inputSourceService.touchpadList.firstOrNull() ?: return
-        if (updated.hasSensitivity()) touchPad = pad.toBuilder().setSensitivity(updated.sensitivity).build()
+        if (!updated.hasSensitivity()) return
+        val changed = pad.toBuilder().setSensitivity(updated.sensitivity).build()
+        touchPad = changed
+        listener.onTouchPadUpdate(changed)
     }
 
     override fun onMessage(msg: AapMessage) {

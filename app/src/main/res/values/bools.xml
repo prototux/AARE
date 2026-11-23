@@ -2,4 +2,7 @@
 <resources>
     <!-- CarPresenceService: the companion presence callbacks it relies on arrived in Android 13. -->
     <bool name="companion_presence">false</bool>
+    <!-- ShizukuProvider: its own manifest needs API 24 (overridden in AndroidManifest.xml); keep
+         it from starting with the app below that, since nothing here calls into it there either. -->
+    <bool name="shizuku_provider_enabled">false</bool>
 </resources>

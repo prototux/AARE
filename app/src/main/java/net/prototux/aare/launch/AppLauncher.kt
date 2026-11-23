@@ -26,11 +26,13 @@ import java.util.concurrent.TimeUnit
 class AppLauncher(private val context: Context, key: String = "launch") {
     @Volatile private var host: ILaunchHost? = null
 
-    // --- Shizuku path ---
+    // --- Shizuku path --- (only built when connectShizuku() runs, itself behind shizukuAvailable())
     // One helper per [key]: Shizuku tells user services apart by their tag only, so two launchers
     // with the same key would share one helper, its display, and its end when one releases it.
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
-        .daemon(false).tag(key).processNameSuffix(helperName(key)).debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    private val args by lazy {
+        Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
+            .daemon(false).tag(key).processNameSuffix(helperName(key)).debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    }
     private val bound = CountDownLatch(1)
     private var didBind = false
     private val connection = object : ServiceConnection {

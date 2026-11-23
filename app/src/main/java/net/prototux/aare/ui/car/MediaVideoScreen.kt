@@ -82,7 +82,8 @@ internal fun MediaVideoScreen(runtime: CarRuntime, app: MediaApp, driving: Boole
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Stays composed while driving, so the app (and its sound) keeps running under the art.
-            StandaloneAppScreen(runtime, driving, app.packageName, Modifier.fillMaxSize(), onBack = { open = false; true }, resumeAfterDrive = true)
+            StandaloneAppScreen(runtime, driving, app.packageName, Modifier.fillMaxSize(), onBack = { open = false; true }, resumeAfterDrive = true,
+                appId = CarRuntime.mediaId(app.packageName))
             if (view == MediaVideoView.ART) {
                 CoverArt(np, app, Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
             } else if (fullScreen) {

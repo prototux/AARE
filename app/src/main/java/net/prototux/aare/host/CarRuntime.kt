@@ -93,7 +93,6 @@ import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarControlScale
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
-import java.time.ZonedDateTime
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -396,6 +395,7 @@ class CarRuntime(
     /** Applies the theme and bar position settings (also when they change during a drive). */
     private fun applyScreenSettings() {
         updateLightSensor()
+        ui.assistantStopStyle = settings.assistantStopStyle
         val night = when (settings.carTheme) {
             Settings.THEME_DARK -> true
             Settings.THEME_LIGHT -> false
@@ -424,6 +424,7 @@ class CarRuntime(
         ui.railWidgets = RailWidget.parse(settings.railWidgets)
         ui.railApps = settings.railApps
         ui.compactRail = settings.compactRail
+        ui.railSpacing = settings.railSpacing
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -469,10 +470,11 @@ class CarRuntime(
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "car_chrome", "ignore_driving",
-            "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
+            "car_text_size", "car_control_size", "night_source", "assistant_stop", "rail_apps", "compact_rail", "rail_spacing", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
-            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules" -> main.post { refreshApps() }
+            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules",
+            "standalone_apps", "standalone_app_pkgs", "browser", "car_data_app" -> main.post { refreshApps() }
         }
     }
 
@@ -497,7 +499,7 @@ class CarRuntime(
         midnightRefresh?.cancel()
         midnightRefresh = scope.launch {
             while (true) {
-                delay(msUntilNextDay(ZonedDateTime.now()))
+                delay(msUntilNextDay(System.currentTimeMillis()))
                 refreshApps()
             }
         }
@@ -978,6 +980,12 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
+        // A press while the assistant is on stops it, like Back (unless the chosen style is the red
+        // stop with the voice button asking again): the assistant opened on the car screen closes, the
+        // assistant bar closes and its app loses the car's microphone.
+        val stops = settings.assistantStopStyle != Settings.ASSISTANT_STOP_RED_RESTART
+        if (stops && ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
+        if (stops && ui.assistantAppId != null) { stopAssistant(); return }
         val pkg = assistantPackage()
         if (pkg == null) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_choose_text))
@@ -985,6 +993,11 @@ class CarRuntime(
         }
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
+        // The assistant's own app open full screen and listening: the press stops the listening.
+        if (stops && entry != null && conn != null && conn.listening && (ui.screen as? CarScreen.App)?.appId == entry.id) {
+            conn.stopMicrophone()
+            return
+        }
         if (entry != null && conn != null) {
             // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen. Set before
             // the intent goes out: the app may open the microphone before the bar is drawn (see openMicrophone).
@@ -1031,10 +1044,23 @@ class CarRuntime(
         if (screenBacks[appId] === handler) screenBacks.remove(appId)
     }
 
+    /**
+     * The driver closed the assistant bar (its stop button, the back key, or the voice button again): the assistant gets
+     * back, which Lapin takes as "stop" (it stops listening or speaking), then the bar closes.
+     * Back goes first, while the app is still started: hiding the bar stops it.
+     */
+    fun stopAssistant() {
+        val conn = ui.assistantAppId?.let { connections[it] }
+        if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back()
+        // An app that doesn't take back as "stop" still loses the car's microphone.
+        conn?.stopMicrophone()
+        ui.assistantAppId = null
+    }
+
     /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
-        if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
+        if (ui.assistantAppId != null) { stopAssistant(); return }
         val secondaryId = ui.secondaryAppId
         if (secondaryId != null && ui.focusedPane == CarPane.SECONDARY) {
             // The secondary pane has no screen stack of the dashboard's own (it's not a CarScreen):
@@ -1111,6 +1137,8 @@ class CarRuntime(
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
+                                onStop = ::stopAssistant,
+                                bigStop = ui.assistantStopStyle != Settings.ASSISTANT_STOP_VOICE_BUTTON,
                                 onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })

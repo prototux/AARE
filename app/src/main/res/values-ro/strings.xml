@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Mesaje, indicații de la Google Maps și Waze, melodia curentă</string>
     <string name="setup_check_audio_subtitle">Permite ca sunetul telefonului să ajungă în mașină</string>
     <string name="setup_action_set_up">Configurează</string>
+    <string name="setup_old_android_title">Rulează pe un Android mai vechi</string>
+    <string name="setup_old_android_message">AARE funcționează și pe Android 6 și 7, dar Android 8 este baza cu suport mai bun. Pe Android 6 și 7, notificările de conectare nu pot fi puse în propriul canal, așa că nu pot fi dezactivate separat de celelalte notificări ale AARE din setările sistemului. Restul funcționează la fel sau trece automat la o metodă mai veche.</string>
+    <string name="setup_old_android_dont_show_again">Nu mai arăta</string>
     <string name="setup_section_connecting">Conectare</string>
     <string name="setup_toggle_wireless_title">Wireless</string>
     <string name="setup_toggle_wireless_subtitle">Se conectează prin Wi-Fi la mașinile asociate când ajung în raza Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Direcționarea audio a sistemului (ca Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, muzică și navigație separat (ca Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku sau root</string>
+    <string name="audio_method_root_policy">Root, muzică și navigație separat</string>
     <string name="audio_method_playback_capture">Permisiunea de captură a ecranului</string>
     <string name="audio_policy_not_ready">Ca Android Auto: muzica și vocea de navigație separat, difuzorul telefonului dezactivat. Necesită un telefon cu root: instalează AARE ca aplicație de sistem cu modulul Magisk (vezi README).</string>
     <string name="audio_shizuku_ready">Pregătit. Tot ce redă telefonul ajunge în mașină, inclusiv vocea de navigație; telefonul rămâne silențios.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Pagina de pornire</string>
     <string name="browser_address_hint">Caută sau introdu o adresă web</string>
     <string name="assistant_links_title">Linkuri de la asistent</string>
+    <string name="assistant_stop">Oprește asistentul</string>
+    <string name="assistant_stop_style_title">Oprirea asistentului</string>
+    <string name="assistant_stop_style_voice_button">Butonul vocal se transformă în Oprește</string>
+    <string name="assistant_stop_style_red_restart">Buton roșu de stop, butonul vocal întreabă din nou</string>
+    <string name="assistant_stop_style_red_stop">Buton roșu de stop, butonul vocal se oprește și el</string>
     <string name="assistant_links_subtitle">Permite linkurilor aare:// din răspunsurile asistentului ales să controleze muzica sau să propună pe ecranul mașinii navigarea, deschiderea unei aplicații sau un apel. Linkurile din alte aplicații și din pagini web sunt ignorate.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Date despre mașină</string>

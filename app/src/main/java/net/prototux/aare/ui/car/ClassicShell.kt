@@ -90,7 +90,7 @@ private fun BottomBar(state: CarUiState, actions: CarActions) {
         }
         Box(Modifier.weight(1f)) { ActivityPill(state, actions) }
         NotificationBell(state) { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
-        MicButton(state.listening) { actions.assistant() }
+        MicButton(state.listening, stop = state.voiceButtonIsStop) { actions.assistant() }
     }
 }
 

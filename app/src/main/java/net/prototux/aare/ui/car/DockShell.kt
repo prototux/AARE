@@ -1,5 +1,8 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -98,9 +101,11 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
         val scheme = MaterialTheme.colorScheme
-        Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) scheme.primary else scheme.secondaryContainer)
+        val stop = state.voiceButtonIsStop
+        Box(Modifier.size(52.dp).clip(CircleShape).background(when { stop -> scheme.error; state.listening -> scheme.primary; else -> scheme.secondaryContainer })
             .carClickable(CircleShape) { actions.assistant() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
+            if (stop) Icon(Icons.Rounded.Stop, stringResource(R.string.assistant_stop), tint = scheme.onError)
+            else Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
         }
     }
     // The home button: the app grid, or the dashboard when already on it.

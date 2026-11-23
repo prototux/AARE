@@ -1,7 +1,6 @@
 package net.prototux.aare.cert
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -119,9 +118,8 @@ object CertificateUpdates {
 
     private fun notify(context: Context, title: String, text: String, download: Boolean) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
-        nm.createNotificationChannel(NotificationChannel(ProjectionService.CHANNEL,
-            context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
-        val builder = Notification.Builder(context, ProjectionService.CHANNEL)
+        ProjectionService.ensureChannel(context)
+        val builder = ProjectionService.notificationBuilder(context)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)

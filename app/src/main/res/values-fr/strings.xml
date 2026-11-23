@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Messages, itinéraires de Google Maps et Waze, lecture en cours</string>
     <string name="setup_check_audio_subtitle">Laisser le son du téléphone atteindre la voiture</string>
     <string name="setup_action_set_up">Configurer</string>
+    <string name="setup_old_android_title">Fonctionne sur un Android plus ancien</string>
+    <string name="setup_old_android_message">AARE fonctionne aussi sur Android 6 et 7, mais Android 8 est la base la mieux prise en charge. Sur Android 6 et 7, les notifications de connexion ne peuvent pas être placées dans leur propre canal, donc elles ne peuvent pas être mises en sourdine séparément des autres notifications d\'AARE dans les paramètres système. Tout le reste fonctionne de la même façon, ou revient automatiquement à une méthode plus ancienne.</string>
+    <string name="setup_old_android_dont_show_again">Ne plus afficher</string>
     <string name="setup_section_connecting">Connexion</string>
     <string name="setup_toggle_wireless_title">Sans fil</string>
     <string name="setup_toggle_wireless_subtitle">Se connecter aux voitures associées en Wi-Fi lorsqu\'elles entrent dans la portée Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Routage audio système (comme Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, musique et navigation séparées (comme Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku ou root</string>
+    <string name="audio_method_root_policy">Root, musique et navigation séparées</string>
     <string name="audio_method_playback_capture">Autorisation de capture d\'écran</string>
     <string name="audio_policy_not_ready">Comme Android Auto : musique et voix de navigation séparées, haut-parleur du téléphone coupé. Nécessite un téléphone rooté : installez AARE comme application système avec le module Magisk (voir le README).</string>
     <string name="audio_shizuku_ready">Prêt. Tout ce que joue le téléphone va à la voiture, voix de navigation incluse ; le téléphone reste silencieux.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Page d\'accueil</string>
     <string name="browser_address_hint">Rechercher ou saisir une adresse web</string>
     <string name="assistant_links_title">Liens de l\'assistant</string>
+    <string name="assistant_stop">Arrêter l\'assistant</string>
+    <string name="assistant_stop_style_title">Arrêt de l\'assistant</string>
+    <string name="assistant_stop_style_voice_button">Le bouton vocal devient Arrêter</string>
+    <string name="assistant_stop_style_red_restart">Bouton d\'arrêt rouge, le bouton vocal redemande</string>
+    <string name="assistant_stop_style_red_stop">Bouton d\'arrêt rouge, le bouton vocal arrête aussi</string>
     <string name="assistant_links_subtitle">Permet aux liens aare:// des réponses de l\'assistant choisi de piloter la musique, ou de proposer sur l\'écran de la voiture de naviguer, d\'ouvrir une application ou d\'appeler. Les liens venant d\'autres applications et de pages web sont ignorés.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Données du véhicule</string>
