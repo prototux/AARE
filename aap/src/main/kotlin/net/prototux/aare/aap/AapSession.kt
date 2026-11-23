@@ -404,6 +404,7 @@ class AapSession(
             when (msg.id) {
                 ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
+                    log.w("the car closed channel ${ch.id} (${ch.name})")
                     ch.opened = false
                     shutChannels.add(ch.id)
                     runHandler(ch) { ch.onClosed() }
