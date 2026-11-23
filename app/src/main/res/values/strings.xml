@@ -154,6 +154,8 @@
     <string name="quirks_exit_to_car_subtitle">On: show the app list\'s Exit to car entry for this car. Off: hide it.</string>
     <string name="quirks_mic_setup_title">Microphone SETUP message</string>
     <string name="quirks_mic_setup_subtitle">On: send SETUP when the microphone channel opens. Off: never send it.</string>
+    <string name="quirks_video_headers_once_title">Video headers only once</string>
+    <string name="quirks_video_headers_once_subtitle">Try On when the car plays the sound but shows no picture. On: the video\'s SPS/PPS goes out only at the start. Off: before every key frame, as usual. Some head units can\'t decode that.</string>
     <string name="vehicles_malformed_at">vehicles.json has an error at line %1$d, column %2$d (%3$s): its rules are ignored.</string>
     <string name="vehicles_malformed">vehicles.json can\'t be used (%1$s): its rules are ignored.</string>
     <string name="setup_tagline">Open-source car projection</string>

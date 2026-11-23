@@ -2015,6 +2015,9 @@ private fun CarQuirkRows(car: String, known: KnownHeadUnits) {
     QuirkRow(stringResource(R.string.quirks_mic_setup_title), stringResource(R.string.quirks_mic_setup_subtitle), q.micSetup, on, off) {
         set(q.copy(micSetup = it))
     }
+    QuirkRow(stringResource(R.string.quirks_video_headers_once_title), stringResource(R.string.quirks_video_headers_once_subtitle), q.videoHeadersOnce, on, off) {
+        set(q.copy(videoHeadersOnce = it))
+    }
 }
 
 @Composable

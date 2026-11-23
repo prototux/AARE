@@ -296,6 +296,15 @@ class VehicleOverridesTest {
         assertEquals(false, VehicleOverrides.effective(rule, QuirkSettings())?.micSetup)
     }
 
+    @Test fun videoHeadersOnceFromARuleOrTheSetting() {
+        val rule = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"videoHeadersOnce":true}}]}""").single().override
+        assertEquals(true, rule.videoHeadersOnce)
+        assertEquals(true, VehicleOverrides.effective(rule, QuirkSettings())?.videoHeadersOnce)
+        assertEquals(false, VehicleOverrides.effective(rule, QuirkSettings(videoHeadersOnce = QuirkChoice.OFF))?.videoHeadersOnce)
+        assertEquals(true, VehicleOverrides.effective(null, QuirkSettings(videoHeadersOnce = QuirkChoice.ON))?.videoHeadersOnce)
+        assertEquals(null, VehicleOverrides.effective(null, QuirkSettings()))
+    }
+
     @Test fun offForcesTheNeutralValueForAMagnitudeQuirk() {
         // No single "on" value for a count or a list: Off disables it (no silence, no resolution
         // limit); On behaves like Automatic, passing the rule (or nothing) through.
@@ -359,7 +368,7 @@ class VehicleOverridesTest {
     @Test fun quirkChoicesRoundTripByName() {
         val q = QuirkSettings(pixelAspect = QuirkChoice.ON, wireless = QuirkChoice.OFF, micSetup = QuirkChoice.OFF)
         val stored = q.byName().mapValues { it.value.pref }
-        assertEquals(11, stored.size)
+        assertEquals(12, stored.size)
         assertEquals(q, QuirkSettings.of { QuirkChoice.of(stored[it]) })
         assertEquals(QuirkSettings(), QuirkSettings.of { QuirkChoice.of(null) })
     }
