@@ -895,7 +895,8 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
     }
     Row(
         modifier.padding(16.dp).fillMaxWidth(0.6f).clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .carClickable(MaterialTheme.shapes.large, onClick = notice.open?.let { open -> { open(); actions.dismissNotice(notice) } }).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (notice.icon != null) {

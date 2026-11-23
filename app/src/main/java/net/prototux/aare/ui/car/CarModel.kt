@@ -65,6 +65,8 @@ class CarNotice(
     val timeMs: Long = System.currentTimeMillis(),
     /** A message from a contact: its text is hidden while driving, like in the messaging screens. */
     val message: Boolean = false,
+    /** A tap on it: its app on the car screen, if there is one. */
+    val open: (() -> Unit)? = null,
 )
 
 /** Head-unit geometry: the drawable area inside the video margins, and the rail side. */
@@ -225,3 +227,7 @@ interface CarActions {
     /** Send a home action (its confirmation, if it has one, was already asked). */
     fun runHomeAction(id: String)
 }
+
+/** The app a message from [packageName] opens: its conversations where the car screen has them, else any app of it. */
+fun messageApp(apps: List<CarAppEntry>, packageName: String): CarAppEntry? =
+    apps.filter { it.packageName == packageName }.let { own -> own.firstOrNull { it.kind == CarAppKind.MESSAGING } ?: own.firstOrNull() }
