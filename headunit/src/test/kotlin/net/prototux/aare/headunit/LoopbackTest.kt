@@ -176,6 +176,8 @@ class LoopbackTest {
         assertNull("an orderly end", l.closeError)
         l.awaitTrue("head unit closed") { l.huClosed != null }
         assertEquals("disconnected", l.huClosed)
+        // Once closed, another bye-bye has nothing to do.
+        hu.byeBye()
     }
 
     // ------------------------------------------------------------------ harness
