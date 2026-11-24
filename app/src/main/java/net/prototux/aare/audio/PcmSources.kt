@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioPlaybackCaptureConfiguration
@@ -149,10 +150,11 @@ internal object AudioPolicyCapture {
     private const val RULE_MATCH_ATTRIBUTE_USAGE = 0x1
     private const val ROUTE_FLAG_LOOP_BACK = 0x2
 
-    class Handle(private val audioManager: AudioManager, private val policy: Any, val record: AudioRecord) {
+    class Handle(private val audioManager: AudioManager, private val policy: Any, val record: AudioRecord, private val fullVolume: Boolean = false) {
         fun close() {
             runCatching { record.stop() }
             record.release()
+            if (fullVolume) releaseFullVolume(audioManager)
             runCatching {
                 AudioManager::class.java.getMethod("unregisterAudioPolicy", policy.javaClass).invoke(audioManager, policy)
             }.onFailure { Log.w(TAG, "unregisterAudioPolicy", it) }
@@ -164,7 +166,7 @@ internal object AudioPolicyCapture {
      * attributes the recording (the shell's helper must say "the shell", or AudioFlinger refuses
      * a record for a package that isn't its uid's); null uses the process's own identity.
      */
-    fun open(context: Context, audioManager: AudioManager, usages: IntArray, rate: Int, channels: Int, looper: Looper, recordContext: Context? = null): Handle {
+    fun open(context: Context, audioManager: AudioManager, usages: IntArray, rate: Int, channels: Int, looper: Looper, recordContext: Context? = null, volume: Int = VOLUME_AS_IS): Handle {
         // Hidden-API restrictions arrived in Android 9.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) HiddenApiBypass.addHiddenApiExemptions("Landroid/media/audiopolicy/", "Landroid/media/AudioManager;")
         val ruleBuilder = Class.forName("android.media.audiopolicy.AudioMixingRule\$Builder").getConstructor().newInstance()
@@ -185,6 +187,10 @@ internal object AudioPolicyCapture {
 
         val status = AudioManager::class.java.getMethod("registerAudioPolicy", p.javaClass).invoke(audioManager, p) as Int
         if (status != 0) throw IllegalStateException("registerAudioPolicy: $status")
+        when (volume) {
+            VOLUME_FULL -> fullVolume(audioManager)
+            VOLUME_REPAIR -> repairFullVolume(audioManager)
+        }
         val record = try {
             val sink = if (recordContext != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // The Builder overload (newer Android) keeps our attribution and a buffer of ~160 ms
@@ -198,10 +204,64 @@ internal object AudioPolicyCapture {
             (sink ?: throw IllegalStateException("createAudioRecordSink refused")).also { it.startRecording() }
         } catch (e: Throwable) {
             runCatching { AudioManager::class.java.getMethod("unregisterAudioPolicy", p.javaClass).invoke(audioManager, p) }
+            if (volume == VOLUME_FULL) releaseFullVolume(audioManager)
             throw e
         }
-        return Handle(audioManager, p, record)
+        return Handle(audioManager, p, record, fullVolume = volume == VOLUME_FULL)
     }
+
+    /** [open]'s volume: the loop back's volume as it is, at full volume while recording (Settings.carAudioFullVolume), or full volume left by a killed session put back first. */
+    const val VOLUME_AS_IS = 0
+    const val VOLUME_FULL = 1
+    const val VOLUME_REPAIR = 2
+
+    /**
+     * The phone puts its own media volume on the loop back, as on any output: at its default index
+     * (8 of 25 on a Pixel) some 30 dB below full, so the car played it faintly at a normal volume.
+     * Android Auto sends at full volume and the car sets the level, so with Settings.carAudioFullVolume
+     * the loop back's output gets full volume while AARE records it, then the behavior it had
+     * (Android keeps the setting, and other recorders of that output would get full volume too).
+     *
+     * Sets the loop back's volume behavior to [behavior] (null: only reads it); returns the one it had, or null if it couldn't.
+     */
+    private fun volumeBehavior(audioManager: AudioManager, behavior: Int?): Int? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+        return runCatching {
+            HiddenApiBypass.addHiddenApiExemptions("Landroid/media/AudioDeviceAttributes;")
+            val attrs = Class.forName("android.media.AudioDeviceAttributes")
+                .getConstructor(Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java)
+                .newInstance(ROLE_OUTPUT, AudioDeviceInfo.TYPE_REMOTE_SUBMIX, "")
+            val before = AudioManager::class.java.getMethod("getDeviceVolumeBehavior", attrs.javaClass).invoke(audioManager, attrs) as Int
+            if (behavior != null) AudioManager::class.java.getMethod("setDeviceVolumeBehavior", attrs.javaClass, Int::class.javaPrimitiveType)
+                .invoke(audioManager, attrs, behavior)
+            before
+        }.onFailure { Log.w(TAG, "loop back volume behavior", it) }.getOrNull()
+    }
+
+    /** Captures open on the loop back at full volume (media and guidance each have one), and its behavior from before the first. */
+    private var fullVolumeUsers = 0
+    private var savedBehavior: Int? = null
+
+    /** Full volume while any capture asking for it runs: the first saves the behavior to put back. */
+    @Synchronized private fun fullVolume(audioManager: AudioManager) {
+        if (fullVolumeUsers++ == 0) savedBehavior = volumeBehavior(audioManager, DEVICE_VOLUME_BEHAVIOR_FULL)?.let(::behaviorToRestore)
+    }
+
+    /** The last such capture closed: the loop back's volume as it was, so other recorders of it (screen recorders) aren't left at full volume. */
+    @Synchronized private fun releaseFullVolume(audioManager: AudioManager) {
+        if (fullVolumeUsers == 0 || --fullVolumeUsers > 0) return
+        savedBehavior?.let { volumeBehavior(audioManager, it) }
+        savedBehavior = null
+    }
+
+    /** Full volume a killed session left on the loop back: put back to the output's default (see [behaviorToRestore]). */
+    @Synchronized private fun repairFullVolume(audioManager: AudioManager) {
+        if (fullVolumeUsers > 0) return
+        val now = volumeBehavior(audioManager, null) ?: return
+        if (now != behaviorToRestore(now)) volumeBehavior(audioManager, behaviorToRestore(now))
+    }
+
+    private const val ROLE_OUTPUT = 2
 }
 
 /** [AudioPolicyCapture] in AARE itself: needs AARE installed in /system/priv-app (tools/magisk). */
@@ -210,11 +270,12 @@ class AudioPolicySource(
     private val usages: IntArray,
     private val rate: Int,
     private val channels: Int,
+    private val volume: Int = AudioPolicyCapture.VOLUME_AS_IS,
 ) : PcmSource {
     private var handle: AudioPolicyCapture.Handle? = null
 
     override fun start(): Boolean = try {
-        handle = AudioPolicyCapture.open(context, context.getSystemService(AudioManager::class.java), usages, rate, channels, Looper.getMainLooper())
+        handle = AudioPolicyCapture.open(context, context.getSystemService(AudioManager::class.java), usages, rate, channels, Looper.getMainLooper(), volume = volume)
         true
     } catch (e: Throwable) {
         Log.w(TAG, "audio policy capture unavailable", e)
@@ -335,10 +396,11 @@ class ShizukuPolicySource(
     private val usages: IntArray,
     private val rate: Int,
     private val channels: Int,
+    private val volume: Int = AudioPolicyCapture.VOLUME_AS_IS,
 ) : ShellPipeSource(context) {
     // One stream per car channel in the helper, told apart by their usages.
     private val key = usages.sorted().hashCode()
-    override fun open(service: IShellAudio): ParcelFileDescriptor? = service.startPolicy(key, rate, channels, usages)
+    override fun open(service: IShellAudio): ParcelFileDescriptor? = service.startPolicy(key, rate, channels, usages, volume)
     override fun close(service: IShellAudio) = service.stopPolicy(key)
 }
 
@@ -382,3 +444,12 @@ class SuSource(private val context: Context, private val rate: Int, private val 
 }
 
 private const val TAG = "AareCapture"
+
+/**
+ * The loop back's volume behavior to put back, given the one it had: full is AARE's own, left behind
+ * when AARE was stopped while recording, so it becomes variable, the output's default.
+ */
+internal fun behaviorToRestore(before: Int): Int = if (before == DEVICE_VOLUME_BEHAVIOR_FULL) DEVICE_VOLUME_BEHAVIOR_VARIABLE else before
+
+private const val DEVICE_VOLUME_BEHAVIOR_VARIABLE = 0
+private const val DEVICE_VOLUME_BEHAVIOR_FULL = 1

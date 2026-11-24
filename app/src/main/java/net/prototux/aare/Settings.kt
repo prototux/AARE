@@ -300,6 +300,23 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
     /**
+     * Car audio at full volume: the loop back AARE records from gets full volume while it records,
+     * as Android Auto sends, and the car sets the level. Off: the phone's media volume applies
+     * (at its default, some 30 dB below full). Audio policy capture only. Off by default.
+     */
+    var carAudioFullVolume: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume", v) }
+
+    /**
+     * A session recorded at full volume and hasn't closed cleanly since: the loop back may still be
+     * at full volume (AARE or its helper killed while recording), so the next capture puts it back.
+     */
+    var carAudioFullVolumeLeft: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume_left", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume_left", v) }
+
+    /**
      * The phone's own Bluetooth MAC, for the car's in-session pairing handshake. Android hides it
      * from apps on most devices, and some head units withhold the projected screen until they know
      * which phone is connected, so the user can set it (Settings > About phone > Status). Empty: try

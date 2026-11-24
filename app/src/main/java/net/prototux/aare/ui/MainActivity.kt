@@ -1185,6 +1185,12 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
             Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {
                 enabled = it; settings.carAudio = it
             }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                var fullVolume by remember { mutableStateOf(settings.carAudioFullVolume) }
+                Toggle(stringResource(R.string.audio_toggle_full_volume_title), stringResource(R.string.audio_toggle_full_volume_subtitle), fullVolume) {
+                    fullVolume = it; settings.carAudioFullVolume = it
+                }
+            }
             Spacer(Modifier.height(4.dp))
             Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
                 style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
