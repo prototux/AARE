@@ -1,7 +1,9 @@
 package net.prototux.aare.audio
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.AttributionSource
+import android.content.pm.ApplicationInfo
 import android.content.Context
 import android.content.ContextWrapper
 import android.media.AudioFormat
@@ -272,6 +274,30 @@ private const val SHELL_UID = 2000
  */
 internal fun dropRootToShell() {
     if (Process.myUid() == 0) { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
+}
+
+/**
+ * Makes this app_process (the root helper, run as the shell) report `com.android.shell` as its
+ * application, the way scrcpy does: what Android builds without a context of ours (the audio
+ * policy's recorder, AttributionSource.myAttributionSource) takes the process's package, otherwise
+ * the system context's "android", which Android 16's audio server refuses for the shell uid
+ * ("invalid attr ... uid: 2000 ... packageName: android"). Shizuku's process is the shell's already.
+ */
+@SuppressLint("PrivateApi", "DiscouragedPrivateApi")
+internal fun actAsShellApp(systemContext: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+        HiddenApiBypass.addHiddenApiExemptions("Landroid/app/ActivityThread", "Landroid/content/ContextWrapper;")
+    val at = Class.forName("android.app.ActivityThread")
+    val thread = at.getMethod("currentActivityThread").invoke(null) ?: return
+    val bindData = Class.forName("android.app.ActivityThread\$AppBindData")
+    val data = bindData.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+    bindData.getDeclaredField("appInfo").apply { isAccessible = true }
+        .set(data, ApplicationInfo().apply { packageName = SHELL_PACKAGE; uid = SHELL_UID })
+    at.getDeclaredField("mBoundApplication").apply { isAccessible = true }.set(thread, data)
+    val app = Application()
+    ContextWrapper::class.java.getDeclaredMethod("attachBaseContext", Context::class.java).apply { isAccessible = true }
+        .invoke(app, ShellContext(systemContext))
+    at.getDeclaredField("mInitialApplication").apply { isAccessible = true }.set(thread, app)
 }
 
 /** A context that says "the shell", so what the helper records or plays is attributed to the uid running it. */
