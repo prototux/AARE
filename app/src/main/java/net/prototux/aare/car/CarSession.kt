@@ -1193,7 +1193,7 @@ class CarSession(
                     else -> PolicySource(context, RootAudio, usages, rate, ch, captureVolume())
                 }
             }
-            CaptureMethod.SHIZUKU -> OutputSource(context, if (CaptureMethods.shizukuAvailable()) ShellAudio else RootAudio, rate, ch)
+            CaptureMethod.SHIZUKU -> OutputSource(context, if (CaptureMethods.rootAvailable(context)) RootAudio else ShellAudio, rate, ch)
             CaptureMethod.PLAYBACK_CAPTURE -> PlaybackCaptureSource(p ?: return, rate, ch)
         }
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")

@@ -1239,7 +1239,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val root = CaptureMethods.rootAvailable(ctx)
     // The session's order (CaptureOrder), before any failure in a drive.
     val best = CaptureOrder.best(CaptureOrder.Env(policy, shizuku, root,
-        playbackCapture = state.audioCapture && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q))
+        playbackCapture = state.audioCapture && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q), forced = settings.forcedCaptureMethod)
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.audio_settings_title)) {
             Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {

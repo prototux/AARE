@@ -3,6 +3,7 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.launch.StandaloneDrivingRule
 import net.prototux.aare.launch.formatDrivingRules
 import net.prototux.aare.launch.parseDrivingRules
@@ -360,6 +361,10 @@ class Settings(context: Context) {
     var rootAllowed: Boolean
         get() = prefs.getBoolean("root_allowed", prefs.getBoolean("root_audio", false))
         set(v) = prefs.edit { putBoolean("root_allowed", v); remove("root_audio") }
+    /** The car audio capture method the user forced (it never falls back), or null for automatic. */
+    var forcedCaptureMethod: CaptureMethod?
+        get() = prefs.getString("capture_method", null)?.let { name -> CaptureMethod.entries.firstOrNull { it.name == name } }
+        set(v) = prefs.edit { if (v == null) remove("capture_method") else putString("capture_method", v.name) }
 
     /**
      * Package of the assistant the steering-wheel voice button opens (a car app such as Lapin, or a

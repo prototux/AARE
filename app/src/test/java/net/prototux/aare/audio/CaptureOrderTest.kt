@@ -21,13 +21,13 @@ class CaptureOrderTest {
         while (true) failed += CaptureOrder.best(env, failed) ?: return failed.toList()
     }
 
-    @Test fun thePrivilegedInstallComesFirst() {
-        assertEquals(listOf(AUDIO_POLICY, SHIZUKU_POLICY, SHIZUKU, PLAYBACK_CAPTURE),
+    @Test fun thePrivilegedInstallComesFirstThenRootThenShizuku() {
+        assertEquals(listOf(AUDIO_POLICY, ROOT_POLICY, SHIZUKU_POLICY, SHIZUKU, PLAYBACK_CAPTURE),
             ladder(env(privileged = true, shizuku = true, root = true, playback = true)))
     }
 
-    @Test fun whileShizukuRunsTheRootSplitIsSkipped() {
-        assertEquals(listOf(SHIZUKU_POLICY, SHIZUKU, PLAYBACK_CAPTURE), ladder(env(shizuku = true, root = true, playback = true)))
+    @Test fun shizukuAloneSplitsThenMixes() {
+        assertEquals(listOf(SHIZUKU_POLICY, SHIZUKU, PLAYBACK_CAPTURE), ladder(env(shizuku = true, playback = true)))
     }
 
     @Test fun rootAloneSplitsThenMixes() {
@@ -37,6 +37,14 @@ class CaptureOrderTest {
     @Test fun screenCaptureOnlyWithAConsent() {
         assertEquals(listOf(PLAYBACK_CAPTURE), ladder(env(playback = true)))
         assertNull(CaptureOrder.best(env()))
+    }
+
+    @Test fun aForcedMethodIsTheOnlyOneTried() {
+        val all = env(privileged = true, shizuku = true, root = true, playback = true)
+        assertEquals(SHIZUKU, CaptureOrder.best(all, forced = SHIZUKU))
+        // Failed, or not offered: no fallback.
+        assertNull(CaptureOrder.best(all, exclude = setOf(SHIZUKU), forced = SHIZUKU))
+        assertNull(CaptureOrder.best(env(shizuku = true, playback = true), forced = ROOT_POLICY))
     }
 
     @Test fun theGuidanceChannelOnlyTakesTheSplitMethods() {
