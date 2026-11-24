@@ -934,6 +934,34 @@ the active method. Below it the method selector, *Tried in this order* (names an
    release tag.
 5. The Magisk module removed: tools, release workflow, README.
 
+## F-Droid groundwork: no built-in certificate, an update-check switch
+
+Owner's decisions, 2026-11-24, ahead of a possible F-Droid submission (discussion #169).
+
+- **The built-in phone certificate is gone.** Release builds carried a self-signed certificate from
+  the `AARE_PHONE_CERT` / `AARE_PHONE_KEY` secrets, kept for a vendor or CA to sign one day. It was
+  never signed, head units that accept it accept the generated one too, and a secret baked into
+  the APK rules out building it from source alone (F-Droid) or reproducibly. It can come back if a
+  signed certificate ever exists. A car that last worked with it is offered the next certificate.
+- **`-Paare.updateCheck=false`** builds without the GitHub release check (`BuildConfig.UPDATE_CHECK`)
+  and without its settings section, for stores that update the app themselves. A Gradle property,
+  not a product flavour, so CI, the test commands and the release workflow stay as they are.
+- **The certificate download stays** for now: the owner will ask F-Droid whether they accept it.
+
+## F-Droid: store listing in the repository, the version in the build file
+
+Owner's decisions, 2026-11-24: AARE is ready to be submitted (the owner consents to anyone doing
+it), the certificate download stays (nothing in F-Droid's rules forbids it), and the repository
+carries what F-Droid reads. See [fdroid.md](fdroid.md).
+
+- **Store listing** under `fastlane/metadata/android/en-US/`, from the README; a changelog per
+  version code from now on.
+- **The released version lives in `app/build.gradle.kts`**, raised in each release commit: F-Droid
+  builds the tag from source and reads it there, while the release workflow passed it as
+  `-PversionName`/`-PversionCode` only (the file said 1.0.0). The workflow still passes them, and
+  now refuses a tag the file doesn't match. Rejected: computing the version from the tag in
+  F-Droid's recipe (a second formula to keep in step, in someone else's repository).
+
 ## Root helpers hand their binder back behind a one-time token
 
 Owner's decision, 2026-11-24 (option A of three). A root helper (`su` + `app_process`) can't pass a
