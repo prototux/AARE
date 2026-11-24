@@ -82,6 +82,7 @@ import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.audio.CaptureOrder
 import net.prototux.aare.audio.CarAudioOut
 import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.audio.PcmSource
@@ -1193,39 +1194,30 @@ class CarSession(
         if (closed) return
         val cfg = channel.config ?: return
         val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
-        // Some head units want navigation voice mixed into the music (marked in
-        // vehicles.json): their guidance channel stays unused.
         val singleChannel = vehicleOverride?.singleChannelCapture == true
-        if (guidance && singleChannel) return
         val p = projection()
-        val method = CaptureMethods.best(context, p, failedCapture)
+        val method = when (val plan = CaptureOrder.plan(CaptureMethods.best(context, p, failedCapture), guidance, singleChannel)) {
+            CaptureOrder.Plan.Skip -> return
+            CaptureOrder.Plan.NoMethod -> {
+                runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))
+                return
+            }
+            is CaptureOrder.Plan.Capture -> plan.method
+        }
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
             CaptureMethod.AUDIO_POLICY, CaptureMethod.SHIZUKU_POLICY, CaptureMethod.ROOT_POLICY -> {
-                // Without a guidance channel in the car, navigation voice goes with the music.
-                val hasGuidance = !singleChannel && audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE }
-                val usages = when {
-                    guidance -> CaptureMethods.GUIDANCE_USAGES
-                    hasGuidance -> CaptureMethods.MEDIA_USAGES
-                    else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
-                }
+                val usages = CaptureOrder.policyUsages(guidance, singleChannel,
+                    carHasGuidance = audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE })
                 when (method) {
                     CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch, captureVolume())
                     CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch, captureVolume())
                     else -> SuPolicySource(context, usages, rate, ch, captureVolume())
                 }
             }
-            CaptureMethod.SHIZUKU -> when {
-                guidance -> return
-                CaptureMethods.shizukuAvailable() -> ShizukuSource(context, rate, ch)
-                else -> SuSource(context, rate, ch)
-            }
-            CaptureMethod.PLAYBACK_CAPTURE -> if (guidance || p == null) return else PlaybackCaptureSource(p, rate, ch)
-            null -> {
-                if (!guidance) runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))
-                return
-            }
+            CaptureMethod.SHIZUKU -> if (CaptureMethods.shizukuAvailable()) ShizukuSource(context, rate, ch) else SuSource(context, rate, ch)
+            CaptureMethod.PLAYBACK_CAPTURE -> PlaybackCaptureSource(p ?: return, rate, ch)
         }
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")
         audioOuts.remove(channel.streamType)?.stop()
@@ -1243,7 +1235,7 @@ class CarSession(
                 startAudio(channel)
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
-                if (method == CaptureMethod.SHIZUKU_POLICY || method == CaptureMethod.ROOT_POLICY) {
+                if (method in CaptureOrder.FAILURE_MOVES_BOTH) {
                     audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
                         startAudio(other)

@@ -89,17 +89,17 @@ object CaptureMethods {
         }.apply { isDaemon = true }.start()
     }
 
+    /** What the phone offers now, for [CaptureOrder]; [playbackConsent]: a screen-capture consent is held. */
+    fun env(context: Context, playbackConsent: Boolean): CaptureOrder.Env = CaptureOrder.Env(
+        privileged = audioPolicyAvailable(context),
+        shizuku = shizukuAvailable(),
+        root = rootAvailable(context),
+        playbackCapture = playbackConsent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
+    )
+
     /** The best method available now, skipping [exclude] (methods that already failed). */
-    fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
-        CaptureMethod.AUDIO_POLICY !in exclude && audioPolicyAvailable(context) -> CaptureMethod.AUDIO_POLICY
-        CaptureMethod.SHIZUKU_POLICY !in exclude && shizukuAvailable() -> CaptureMethod.SHIZUKU_POLICY
-        // Not while Shizuku runs: its methods come first, and its fallback stays as it was.
-        CaptureMethod.ROOT_POLICY !in exclude && !shizukuAvailable() && rootAvailable(context) -> CaptureMethod.ROOT_POLICY
-        CaptureMethod.SHIZUKU !in exclude && (shizukuAvailable() || rootAvailable(context)) -> CaptureMethod.SHIZUKU
-        // Capturing other apps' sound arrived in Android 10.
-        CaptureMethod.PLAYBACK_CAPTURE !in exclude && projection != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> CaptureMethod.PLAYBACK_CAPTURE
-        else -> null
-    }
+    fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? =
+        CaptureOrder.best(env(context, projection != null), exclude)
 }
 
 internal fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()
