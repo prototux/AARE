@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Đường đua</string>
+    <string name="obd_tab_lap">Vòng</string>
+    <string name="obd_tab_dyno">Dyno</string>
+    <string name="obd_track_warning">Chỉ trên đường đua hoặc khu vực kín. Không bao giờ trên đường công cộng.</string>
+    <string name="obd_g_title">Lực G (điện thoại)</string>
+    <string name="obd_g_accel">Tăng tốc %1$s</string>
+    <string name="obd_g_brake">Phanh %1$s</string>
+    <string name="obd_g_lateral">Ngang %1$s</string>
+    <string name="obd_g_reset">Đặt lại tối đa</string>
+    <string name="obd_g_hint">Giữ điện thoại chắc trong giá đỡ. Nó học hướng phía trước khi bạn tăng tốc và phanh.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Chạm để sẵn sàng</string>
+    <string name="obd_test_stop">Sẵn sàng: dừng xe</string>
+    <string name="obd_test_below">Sẵn sàng: giữ dưới %1$d km/h</string>
+    <string name="obd_test_above">Sẵn sàng: vượt %1$d km/h</string>
+    <string name="obd_test_ready">Sẵn sàng: tăng tốc</string>
+    <string name="obd_test_ready_brake">Sẵn sàng: phanh</string>
+    <string name="obd_test_running">Đang đo…</string>
+    <string name="obd_best">Tốt nhất %1$s</string>
+    <string name="obd_lap_arm">Bắt đầu bấm giờ vòng</string>
+    <string name="obd_lap_disarm">Dừng</string>
+    <string name="obd_lap_waiting">Sẵn sàng: vạch xuất phát là nơi bạn bắt đầu chạy</string>
+    <string name="obd_lap_last">Gần nhất</string>
+    <string name="obd_lap_best">Tốt nhất</string>
+    <string name="obd_lap_delta">Chênh lệch</string>
+    <string name="obd_lap_count">Số vòng</string>
+    <string name="obd_lap_no_gps">Không có GPS từ xe</string>
+    <string name="obd_dyno_arm">Sẵn sàng</string>
+    <string name="obd_dyno_disarm">Kết thúc</string>
+    <string name="obd_dyno_off">Bật sẵn sàng, rồi đạp hết ga ở số 2 hoặc 3 từ vòng tua thấp đến gần giới hạn.</string>
+    <string name="obd_dyno_armed">Sẵn sàng: đạp hết ga</string>
+    <string name="obd_dyno_peak">%1$.0f mã lực tại %2$.0f vòng/phút</string>
+    <string name="obd_dyno_note">Công suất tại bánh, ước tính từ gia tốc và khối lượng xe (Cài đặt). Chỉ để tham khảo, không phải dyno thật.</string>
+    <string name="obd_history_records">Kỷ lục</string>
+    <string name="obd_history_lap">Vòng</string>
+    <string name="obd_history_dyno">Dyno</string>
+    <string name="obd_set_mass">Khối lượng kèm tài xế</string>
+</resources>

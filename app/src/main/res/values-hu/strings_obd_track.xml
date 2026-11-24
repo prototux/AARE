@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Pálya</string>
+    <string name="obd_tab_lap">Kör</string>
+    <string name="obd_tab_dyno">Dinamométer</string>
+    <string name="obd_track_warning">Csak pályán vagy lezárt területen. Soha közúton.</string>
+    <string name="obd_g_title">G-erő (telefon)</string>
+    <string name="obd_g_accel">Gyorsul. %1$s</string>
+    <string name="obd_g_brake">Fék %1$s</string>
+    <string name="obd_g_lateral">Oldal %1$s</string>
+    <string name="obd_g_reset">Maximumok nullázása</string>
+    <string name="obd_g_hint">Rögzítsd szilárdan a telefont a tartóban. Gyorsításkor és fékezéskor megtanulja, merre van előre.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Koppints az élesítéshez</string>
+    <string name="obd_test_stop">Élesítve: állj meg</string>
+    <string name="obd_test_below">Élesítve: maradj %1$d km/h alatt</string>
+    <string name="obd_test_above">Élesítve: menj %1$d km/h fölé</string>
+    <string name="obd_test_ready">Kész: gázt</string>
+    <string name="obd_test_ready_brake">Kész: fékezz</string>
+    <string name="obd_test_running">Mérés…</string>
+    <string name="obd_best">Legjobb %1$s</string>
+    <string name="obd_lap_arm">Köridőmérés indítása</string>
+    <string name="obd_lap_disarm">Leállítás</string>
+    <string name="obd_lap_waiting">Élesítve: a rajtvonal ott lesz, ahol elindulsz</string>
+    <string name="obd_lap_last">Utolsó</string>
+    <string name="obd_lap_best">Legjobb</string>
+    <string name="obd_lap_delta">Eltérés</string>
+    <string name="obd_lap_count">Körök</string>
+    <string name="obd_lap_no_gps">Nincs GPS az autóból</string>
+    <string name="obd_dyno_arm">Élesítés</string>
+    <string name="obd_dyno_disarm">Befejezés</string>
+    <string name="obd_dyno_off">Élesíts, majd 2. vagy 3. fokozatban adj padlógázt alacsony fordulattól a leszabályzásig.</string>
+    <string name="obd_dyno_armed">Élesítve: padlógáz</string>
+    <string name="obd_dyno_peak">%1$.0f LE %2$.0f f/percnél</string>
+    <string name="obd_dyno_note">Teljesítmény a kerekeken, a gyorsulásból és az autó tömegéből becsülve (Beállítások). Durva iránymutatás, nem valódi fékpad.</string>
+    <string name="obd_history_records">Rekordok</string>
+    <string name="obd_history_lap">Kör</string>
+    <string name="obd_history_dyno">Dinamométer</string>
+    <string name="obd_set_mass">Tömeg a sofőrrel</string>
+</resources>

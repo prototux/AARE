@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Tor</string>
+    <string name="obd_tab_lap">Okrążenie</string>
+    <string name="obd_tab_dyno">Hamownia</string>
+    <string name="obd_track_warning">Tylko na torze lub zamkniętym terenie. Nigdy na drogach publicznych.</string>
+    <string name="obd_g_title">Przeciążenie G (telefon)</string>
+    <string name="obd_g_accel">Przysp. %1$s</string>
+    <string name="obd_g_brake">Ham. %1$s</string>
+    <string name="obd_g_lateral">Boczne %1$s</string>
+    <string name="obd_g_reset">Zeruj maksima</string>
+    <string name="obd_g_hint">Zamocuj telefon pewnie w uchwycie. Uczy się, gdzie jest przód, gdy przyspieszasz i hamujesz.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Stuknij, aby uzbroić</string>
+    <string name="obd_test_stop">Uzbrojone: zatrzymaj auto</string>
+    <string name="obd_test_below">Uzbrojone: jedź poniżej %1$d km/h</string>
+    <string name="obd_test_above">Uzbrojone: przekrocz %1$d km/h</string>
+    <string name="obd_test_ready">Gotowe: gaz</string>
+    <string name="obd_test_ready_brake">Gotowe: hamuj</string>
+    <string name="obd_test_running">Pomiar…</string>
+    <string name="obd_best">Najlepszy %1$s</string>
+    <string name="obd_lap_arm">Włącz pomiar okrążeń</string>
+    <string name="obd_lap_disarm">Stop</string>
+    <string name="obd_lap_waiting">Uzbrojone: linia startu będzie tam, gdzie ruszysz</string>
+    <string name="obd_lap_last">Ostatnie</string>
+    <string name="obd_lap_best">Najlepsze</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Okrążenia</string>
+    <string name="obd_lap_no_gps">Brak GPS z auta</string>
+    <string name="obd_dyno_arm">Uzbrój</string>
+    <string name="obd_dyno_disarm">Zakończ</string>
+    <string name="obd_dyno_off">Uzbrój i wciśnij gaz do podłogi na 2. lub 3. biegu, od niskich obrotów prawie do odcięcia.</string>
+    <string name="obd_dyno_armed">Uzbrojone: gaz do podłogi</string>
+    <string name="obd_dyno_peak">%1$.0f KM przy %2$.0f obr/min</string>
+    <string name="obd_dyno_note">Moc na kołach, szacowana z przyspieszenia i masy auta (Ustawienia). Orientacyjnie, to nie prawdziwa hamownia.</string>
+    <string name="obd_history_records">Rekordy</string>
+    <string name="obd_history_lap">Okrążenie</string>
+    <string name="obd_history_dyno">Hamownia</string>
+    <string name="obd_set_mass">Masa z kierowcą</string>
+</resources>

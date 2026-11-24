@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Circuit</string>
+    <string name="obd_tab_lap">Tour</string>
+    <string name="obd_tab_dyno">Banc</string>
+    <string name="obd_track_warning">Sur circuit ou zone fermée uniquement. Jamais sur la voie publique.</string>
+    <string name="obd_g_title">Force G (téléphone)</string>
+    <string name="obd_g_accel">Accél. %1$s</string>
+    <string name="obd_g_brake">Frein %1$s</string>
+    <string name="obd_g_lateral">Latéral %1$s</string>
+    <string name="obd_g_reset">Remettre les max à zéro</string>
+    <string name="obd_g_hint">Fixez bien le téléphone dans son support. Il apprend où est l\'avant quand vous accélérez et freinez.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Touchez pour armer</string>
+    <string name="obd_test_stop">Armé : arrêtez la voiture</string>
+    <string name="obd_test_below">Armé : restez sous %1$d km/h</string>
+    <string name="obd_test_above">Armé : dépassez %1$d km/h</string>
+    <string name="obd_test_ready">Prêt : accélérez</string>
+    <string name="obd_test_ready_brake">Prêt : freinez</string>
+    <string name="obd_test_running">Mesure…</string>
+    <string name="obd_best">Meilleur %1$s</string>
+    <string name="obd_lap_arm">Lancer le chrono au tour</string>
+    <string name="obd_lap_disarm">Arrêter</string>
+    <string name="obd_lap_waiting">Armé : la ligne de départ sera là où vous démarrez</string>
+    <string name="obd_lap_last">Dernier</string>
+    <string name="obd_lap_best">Meilleur</string>
+    <string name="obd_lap_delta">Écart</string>
+    <string name="obd_lap_count">Tours</string>
+    <string name="obd_lap_no_gps">Pas de GPS de la voiture</string>
+    <string name="obd_dyno_arm">Armer</string>
+    <string name="obd_dyno_disarm">Terminer</string>
+    <string name="obd_dyno_off">Armez, puis accélérez à fond en 2e ou 3e, des bas régimes jusqu\'au rupteur.</string>
+    <string name="obd_dyno_armed">Armé : pied au plancher</string>
+    <string name="obd_dyno_peak">%1$.0f ch à %2$.0f tr/min</string>
+    <string name="obd_dyno_note">Puissance aux roues, estimée à partir de l\'accélération et du poids de la voiture (Réglages). Un ordre d\'idée, pas un vrai banc.</string>
+    <string name="obd_history_records">Records</string>
+    <string name="obd_history_lap">Tour</string>
+    <string name="obd_history_dyno">Banc</string>
+    <string name="obd_set_mass">Poids avec le conducteur</string>
+</resources>

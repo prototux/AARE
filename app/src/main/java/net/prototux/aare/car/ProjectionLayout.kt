@@ -38,6 +38,12 @@ data class ProjectionLayout(
         return m + i
     }
 
+    /** The same frame and insets with these margins instead (clamped like the car's). */
+    fun withMargins(left: Int, top: Int, right: Int, bottom: Int): ProjectionLayout {
+        fun ins(l: Int, t: Int, r: Int, b: Int) = Insets.newBuilder().setLeft(l).setTop(t).setRight(r).setBottom(b).build()
+        return of(width, height, 0, 0, ins(left, top, right, bottom), ins(insetLeft, insetTop, insetRight, insetBottom))
+    }
+
     companion object {
         fun of(config: VideoConfiguration, width: Int, height: Int): ProjectionLayout {
             val ui = config.uiConfig.takeIf { config.hasUiConfig() }

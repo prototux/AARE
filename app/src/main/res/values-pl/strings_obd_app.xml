@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Zegary</string>
+    <string name="obd_tab_trip">Trasa</string>
+    <string name="obd_tab_history">Historia</string>
+    <string name="obd_tab_settings">Ustawienia</string>
+    <string name="obd_simulated_badge">Symulowany adapter</string>
+    <string name="obd_waiting">Czekam na adapter…</string>
+    <string name="obd_gear">Bieg</string>
+    <string name="obd_oil">Olej</string>
+    <string name="obd_fuel_use">Spalanie</string>
+    <string name="obd_pedal">Pedał</string>
+    <string name="obd_peak">szczyt %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Dystans</string>
+    <string name="obd_trip_time">Czas</string>
+    <string name="obd_trip_average">Średnia</string>
+    <string name="obd_trip_now">Teraz</string>
+    <string name="obd_trip_range">Zasięg</string>
+    <string name="obd_trip_reset">Zeruj trasę</string>
+    <string name="obd_trip_note">Trasa to to połączenie z autem; trafia do Historii, gdy auto się rozłączy lub po wyzerowaniu. Spalanie jest szacowane, chyba że auto je podaje. Zasięg = pozostałe paliwo × średnia trasy (pojemność zbiornika w Ustawieniach).</string>
+    <string name="obd_history_recent">Ostatnie</string>
+    <string name="obd_history_empty">Jeszcze nic. Trasy od 1 km są zapisywane tutaj.</string>
+    <string name="obd_history_trip">Trasa</string>
+    <string name="obd_history_clear">Wyczyść historię</string>
+    <string name="obd_history_clear_confirm">Stuknij ponownie, aby wyczyścić</string>
+    <string name="obd_set_engine">Drugi wskaźnik</string>
+    <string name="obd_set_engine_auto">Automatyczny</string>
+    <string name="obd_set_engine_turbo">Turbo (doładowanie)</string>
+    <string name="obd_set_engine_na">Wolnossący (obciążenie)</string>
+    <string name="obd_set_rpm_max">Obrotomierz do</string>
+    <string name="obd_set_redline">Czerwone pole / zmiana biegu</string>
+    <string name="obd_set_displacement">Pojemność silnika</string>
+    <string name="obd_set_tank">Zbiornik</string>
+    <string name="obd_set_fuel">Paliwo</string>
+    <string name="obd_set_fuel_petrol">Benzyna</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Etanol (bez czujnika)</string>
+    <string name="obd_set_gears">Nauczone biegi: %1$d</string>
+    <string name="obd_set_gears_forget">Zapomnij</string>
+    <string name="obd_coolant_short">Płyn chł.</string>
+    <string name="obd_dash_card">Samochód</string>
+    <string name="obd_set_card">Karta Samochód (start)</string>
+    <string name="obd_set_card_pick">Wybierz</string>
+    <string name="obd_set_card_hint">Stuknij wartości w wybranej kolejności, maksymalnie %1$d. Pojawią się na karcie Samochód.</string>
+    <string name="obd_done">Gotowe</string>
+    <string name="obd_card_gauge">Doładowanie / obciążenie</string>
+    <string name="obd_card_now">Spalanie teraz</string>
+</resources>
