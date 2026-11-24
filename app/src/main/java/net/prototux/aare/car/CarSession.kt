@@ -84,13 +84,13 @@ import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CaptureOrder
 import net.prototux.aare.audio.CarAudioOut
 import net.prototux.aare.audio.CarMicForApps
+import net.prototux.aare.audio.OutputSource
 import net.prototux.aare.audio.PcmSource
+import net.prototux.aare.audio.PolicySource
+import net.prototux.aare.audio.RootAudio
+import net.prototux.aare.audio.ShellAudio
 import net.prototux.aare.audio.PlaybackCaptureSource
-import net.prototux.aare.audio.ShizukuPolicySource
-import net.prototux.aare.audio.ShizukuSource
 import net.prototux.aare.audio.StartSilence
-import net.prototux.aare.audio.SuPolicySource
-import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.audio.MicTakeover
 import net.prototux.aare.audio.PhoneAppsMic
@@ -1189,11 +1189,11 @@ class CarSession(
                     carHasGuidance = audio.any { it.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE })
                 when (method) {
                     CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch, captureVolume())
-                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch, captureVolume())
-                    else -> SuPolicySource(context, usages, rate, ch, captureVolume())
+                    CaptureMethod.SHIZUKU_POLICY -> PolicySource(context, ShellAudio, usages, rate, ch, captureVolume())
+                    else -> PolicySource(context, RootAudio, usages, rate, ch, captureVolume())
                 }
             }
-            CaptureMethod.SHIZUKU -> if (CaptureMethods.shizukuAvailable()) ShizukuSource(context, rate, ch) else SuSource(context, rate, ch)
+            CaptureMethod.SHIZUKU -> OutputSource(context, if (CaptureMethods.shizukuAvailable()) ShellAudio else RootAudio, rate, ch)
             CaptureMethod.PLAYBACK_CAPTURE -> PlaybackCaptureSource(p ?: return, rate, ch)
         }
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")

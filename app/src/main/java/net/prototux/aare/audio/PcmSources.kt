@@ -23,8 +23,10 @@ import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import net.prototux.aare.BuildConfig
+import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.root.RootHandover
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
 
@@ -295,7 +297,22 @@ class AudioPolicySource(
  * The one binding to [ShellAudioService] for this process, shared by every Shizuku capture: the
  * music and navigation channels each have a stream in the same helper, which stops with the last.
  */
-internal object ShellAudio {
+/**
+ * A privileged audio helper ([ShellAudioService], as the shell) shared by the captures that use it:
+ * [ShellAudio] through Shizuku, [RootAudio] through su. [acquire] pairs with [release].
+ */
+internal interface AudioHelper {
+    /** For the connection log. */
+    val name: String
+    /** The helper, started if needed; null if it can't be. */
+    fun acquire(context: Context): IShellAudio?
+    /** Done with [service], as [acquire] gave it: a helper started since doesn't count it. */
+    fun release(service: IShellAudio)
+}
+
+/** [ShellAudioService] as a Shizuku user service. */
+internal object ShellAudio : AudioHelper {
+    override val name = "Shizuku"
     private val lock = Any()
     private var users = 0
     @Volatile private var service: IShellAudio? = null
@@ -317,7 +334,7 @@ internal object ShellAudio {
     }
 
     /** The helper, bound if needed; null if Shizuku can't start it. Pair with [release]. */
-    fun acquire(context: Context): IShellAudio? {
+    override fun acquire(context: Context): IShellAudio? {
         if (!CaptureMethods.shizukuReady()) return null
         val b = synchronized(lock) {
             if (users++ == 0) {
@@ -341,6 +358,8 @@ internal object ShellAudio {
         return service ?: run { release(); null }
     }
 
+    override fun release(service: IShellAudio) = release()
+
     fun release() = synchronized(lock) {
         if (users == 0 || --users > 0) return@synchronized
         // Leave the helper running (it ends with AARE's process): removing it and binding again
@@ -351,8 +370,50 @@ internal object ShellAudio {
     }
 }
 
-/** A PCM pipe from [ShellAudioService]; [open] asks the helper for the stream. */
-abstract class ShellPipeSource(private val context: Context) : PcmSource {
+/**
+ * [ShellAudioService] run as root ([SuAudioMain], started with su), for rooted phones without the
+ * Shizuku app. The music and navigation channels share one helper; it stops with the last.
+ */
+internal object RootAudio : AudioHelper {
+    override val name = "root"
+    private val lock = Any()
+    private var users = 0
+    private var helper: RootHandover.Helper? = null
+    private var service: IShellAudio? = null
+
+    /** Starts the helper if none runs (blocks up to a few seconds: the capture thread's start()). */
+    override fun acquire(context: Context): IShellAudio? = synchronized(lock) {
+        if (!CaptureMethods.rootAvailable(context)) return null
+        val running = service?.takeIf { it.asBinder().isBinderAlive }
+        val s = running ?: run {
+            // Gone (it died, or never started): its captures fail over, and their releases no
+            // longer count (see release).
+            helper?.stop()
+            helper = null
+            users = 0
+            val h = RootHandover.start(context, SuAudioMain::class.java.name, SuAudioMain.ACTION, listOf(context.packageName))
+            if (h == null) {
+                DiagLog.add("car audio: the root helper could not be started")
+                return null
+            }
+            helper = h
+            IShellAudio.Stub.asInterface(h.binder).also { service = it }
+        }
+        users++
+        s
+    }
+
+    override fun release(service: IShellAudio) = synchronized(lock) {
+        if (service !== this.service || users == 0 || --users > 0) return@synchronized
+        // Its stdin closes: it stops every capture and exits.
+        helper?.stop()
+        helper = null
+        this.service = null
+    }
+}
+
+/** A PCM pipe from [ShellAudioService] in [helper]; [open] asks it for the stream. */
+abstract class ShellPipeSource internal constructor(private val context: Context, private val helper: AudioHelper) : PcmSource {
     private var service: IShellAudio? = null
     private var stream: InputStream? = null
 
@@ -360,10 +421,15 @@ abstract class ShellPipeSource(private val context: Context) : PcmSource {
     protected abstract fun close(service: IShellAudio)
 
     override fun start(): Boolean {
-        val s = ShellAudio.acquire(context) ?: return false
+        val s = helper.acquire(context) ?: return false
         service = s
-        val pfd = runCatching { open(s) }.onFailure { Log.w(TAG, "Shizuku capture", it) }.getOrNull()
-        if (pfd == null) { release(); return false }
+        val pfd = runCatching { open(s) }.onFailure { Log.w(TAG, "${helper.name} capture", it) }.getOrNull()
+        if (pfd == null) {
+            val why = runCatching { s.lastFailure() }.getOrNull()
+            DiagLog.add("car audio: ${helper.name} capture refused${why?.let { " ($it)" }.orEmpty()}")
+            release()
+            return false
+        }
         stream = ParcelFileDescriptor.AutoCloseInputStream(pfd)
         return true
     }
@@ -380,67 +446,30 @@ abstract class ShellPipeSource(private val context: Context) : PcmSource {
         runCatching { close(s) }
         runCatching { stream?.close() }
         stream = null
-        ShellAudio.release()
+        helper.release(s)
     }
 }
 
-/** The phone's whole output, recorded by [ShellAudioService] in a Shizuku (adb rights) process. */
-class ShizukuSource(context: Context, private val rate: Int, private val channels: Int) : ShellPipeSource(context) {
+/** The phone's whole output, recorded by [ShellAudioService] in [helper]: navigation voice mixed into the music. */
+class OutputSource internal constructor(context: Context, helper: AudioHelper, private val rate: Int, private val channels: Int) :
+    ShellPipeSource(context, helper) {
     override fun open(service: IShellAudio): ParcelFileDescriptor? = service.start(rate, channels)
     override fun close(service: IShellAudio) = service.stop()
 }
 
-/** [usages] only, through an audio policy that [ShellAudioService] registers as the shell. */
-class ShizukuPolicySource(
+/** [usages] only, through an audio policy that [ShellAudioService] registers as the shell, in [helper]. */
+class PolicySource internal constructor(
     context: Context,
+    helper: AudioHelper,
     private val usages: IntArray,
     private val rate: Int,
     private val channels: Int,
     private val volume: Int = AudioPolicyCapture.VOLUME_AS_IS,
-) : ShellPipeSource(context) {
+) : ShellPipeSource(context, helper) {
     // One stream per car channel in the helper, told apart by their usages.
     private val key = usages.sorted().hashCode()
     override fun open(service: IShellAudio): ParcelFileDescriptor? = service.startPolicy(key, rate, channels, usages, volume)
     override fun close(service: IShellAudio) = service.stopPolicy(key)
-}
-
-/**
- * The phone's whole output, recorded by [SuAudioMain] in a root process AARE starts with `su` and
- * `app_process` (the scrcpy/Shizuku way). The same capture as [ShizukuSource], for rooted phones
- * (KernelSU, Magisk, APatch…) without the Shizuku app or the Magisk module, when the system
- * refuses [SuPolicySource]'s audio policy. PCM arrives on the process's stdout.
- */
-class SuSource(private val context: Context, private val rate: Int, private val channels: Int) : PcmSource {
-    private var process: Process? = null
-    private var stream: InputStream? = null
-
-    override fun start(): Boolean {
-        val apk = context.applicationInfo.sourceDir
-        val cmd = "CLASSPATH='$apk' app_process / ${SuAudioMain::class.java.name} $rate $channels"
-        val p = runCatching { ProcessBuilder("su", "-c", cmd).start() }
-            .onFailure { Log.w(TAG, "su launch", it) }.getOrNull() ?: return false
-        process = p
-        stream = p.inputStream
-        // Drain stderr so a chatty app_process can't fill its pipe and stall the capture.
-        Thread {
-            runCatching { p.errorStream.bufferedReader().forEachLine { if (BuildConfig.DEBUG) Log.d(TAG, "su: $it") } }
-        }.apply { isDaemon = true }.start()
-        return true
-    }
-
-    override fun read(buf: ByteArray, offset: Int, length: Int): Int = try {
-        stream?.read(buf, offset, length) ?: -1
-    } catch (_: IOException) {
-        -1
-    }
-
-    override fun release() {
-        // Closing our end breaks the helper's stdout pipe, so it stops; destroy() kills the su shell.
-        runCatching { stream?.close() }
-        runCatching { process?.destroy() }
-        stream = null
-        process = null
-    }
 }
 
 private const val TAG = "AareCapture"

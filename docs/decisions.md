@@ -955,3 +955,20 @@ The audio overhaul's step "share the policy reflection, one microphone lease" (1
 `MicTakeover` (when phone apps' recordings open and close the car's microphone) and `MicRouter`
 (who shares the one car microphone) aren't duplicates, and the two policy builders share about 15
 lines of reflection that only run on a device, where no test reaches them.
+
+## Root car audio over the helper's binder
+
+Replaces the stdin/stdout framing (`SuAudioWire`, `SuAudio`, `SuSource`) of "Root car audio: music
+and navigation voice apart, through one su helper" above; the rest of it (dropping to the shell uid,
+the prepared Looper, falling back to the whole output) holds. Owner's decision for the overhaul.
+
+- **One helper, the same binder as Shizuku's:** `SuAudioMain` drops to the shell uid and serves
+  `ShellAudioService` itself, handed back through `RootHandover`. `RootAudio` and `ShellAudio` (the
+  Shizuku one) are both an `AudioHelper`, and the captures (`PolicySource`, `OutputSource`) take
+  either: root and Shizuku run the same code, so the car microphone for phone apps can use root too.
+- **Why a capture was refused** still reaches the connection log: `IShellAudio.lastFailure()`
+  (the root cause of the system's refusal), which the framing used to carry.
+- **The helper stops with the last capture** (its stdin closes) and with AARE; a capture of a helper
+  that died and was started again doesn't release the new one.
+- Rejected: extending the framing with a way back for the microphone and its callbacks, a second
+  protocol to keep in step with the Shizuku one.

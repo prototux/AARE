@@ -93,14 +93,16 @@ class ShellAudioService : IShellAudio.Stub {
             openPolicy(key, sampleRate, channels, usages, volume)
         } catch (e: Throwable) {
             Log.w(TAG, "audio policy as the shell failed", e)
+            lastFailure = describeFailure(e)
             null
         }
     }
 
-    /**
-     * [startPolicy], throwing when the system refuses: the root helper ([SuAudioMain]) calls it
-     * directly, to tell AARE why. Run as the process itself (see [asShell]).
-     */
+    @Volatile private var lastFailure: String? = null
+
+    override fun lastFailure(): String? = lastFailure
+
+    /** [startPolicy], throwing when the system refuses. Run as the process itself (see [asShell]). */
     internal fun openPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray, volume: Int = AudioPolicyCapture.VOLUME_AS_IS): ParcelFileDescriptor = synchronized(policies) {
         stopPolicyLocked(key)
         val ctx = ShellContext(context ?: systemContext())
@@ -240,7 +242,7 @@ class ShellAudioService : IShellAudio.Stub {
 
     /** The system context of this (app_process) process. */
     @SuppressLint("PrivateApi")
-    private fun systemContext(): Context {
+    internal fun systemContext(): Context {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) HiddenApiBypass.addHiddenApiExemptions("Landroid/app/ActivityThread;")
         val at = Class.forName("android.app.ActivityThread")
         val thread = at.getMethod("currentActivityThread").invoke(null) ?: at.getMethod("systemMain").invoke(null)
@@ -250,6 +252,12 @@ class ShellAudioService : IShellAudio.Stub {
     private companion object {
         const val TAG = "AareShellAudio"
     }
+}
+
+/** The root cause of [e], for the connection log: reflection wraps the system's refusal. */
+internal fun describeFailure(e: Throwable): String {
+    val root = generateSequence(e) { it.cause }.last()
+    return "${root.javaClass.simpleName}: ${root.message}"
 }
 
 private const val SHELL_PACKAGE = "com.android.shell"
