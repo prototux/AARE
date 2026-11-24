@@ -8,20 +8,20 @@ import org.junit.Test
 /** What the car's audio focus lets play. */
 class AudioFocusQuirksTest {
     @Test fun gainTransientIsForNavigationVoiceOnly() {
-        assertFalse(CarSession.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = false))
-        assertTrue(CarSession.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT))
+        assertFalse(CarAudioFocus.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = false))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT))
     }
 
     @Test fun aGainTransientAnsweringTheMusicsRequestLetsItPlay() {
         // The music's own request, or the car on its own: music, as before.
-        assertTrue(CarSession.gainTransientIsMedia(answersGuidance = false, quirk = false))
+        assertTrue(CarAudioFocus.gainTransientIsMedia(answersGuidance = false, quirk = false))
         // A navigation prompt's request: voice only, unless a rule says the head unit means music too.
-        assertFalse(CarSession.gainTransientIsMedia(answersGuidance = true, quirk = false))
-        assertTrue(CarSession.gainTransientIsMedia(answersGuidance = true, quirk = true))
+        assertFalse(CarAudioFocus.gainTransientIsMedia(answersGuidance = true, quirk = false))
+        assertTrue(CarAudioFocus.gainTransientIsMedia(answersGuidance = true, quirk = true))
     }
 
     @Test fun exceptForHeadUnitsWhoseGainTransientMeansMusicToo() =
-        assertTrue(CarSession.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = true))
+        assertTrue(CarAudioFocus.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = true))
 
     /** Music the car paused plays again on its own gain; on an answered request only after a pause for navigation voice. */
     @Test fun aPauseForNavigationVoiceEndsOnAnyGain() {
@@ -32,11 +32,11 @@ class AudioFocusQuirksTest {
 
     @Test fun theOtherStatesAreUnchanged() {
         for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
-            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK)) assertTrue(s.name, CarSession.mediaAllowed(s, false))
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK)) assertTrue(s.name, CarAudioFocus.mediaAllowed(s, false))
         for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY, AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS,
-            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT)) assertFalse(s.name, CarSession.mediaAllowed(s, true))
-        assertTrue(CarSession.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY))
-        assertTrue(CarSession.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK))
-        assertFalse(CarSession.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS))
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT)) assertFalse(s.name, CarAudioFocus.mediaAllowed(s, true))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK))
+        assertFalse(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS))
     }
 }
