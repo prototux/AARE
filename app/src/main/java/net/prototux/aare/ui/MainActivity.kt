@@ -1295,7 +1295,7 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                 carMic = it; settings.carMicForPhoneApps = it
             }
             if (carMic) {
-                val ready = CarMicForApps.available()
+                val ready = CarMicForApps.available(ctx)
                 Text(stringResource(when {
                     ready -> R.string.audio_car_mic_ready
                     Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> R.string.audio_car_mic_needs_android10
