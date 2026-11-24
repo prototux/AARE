@@ -154,6 +154,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("calls_on_phone_speaker", false)
         set(v) = prefs.edit { putBoolean("calls_on_phone_speaker", v) }
 
+    /**
+     * After a call on the phone, or an assistant listening over Bluetooth, ask the car for the media
+     * focus again and play on what its focus loss paused: some cars keep it until asked. Off by default.
+     */
+    var resumeAfterCall: Boolean
+        get() = prefs.getBoolean("resume_after_call", false)
+        set(v) = prefs.edit { putBoolean("resume_after_call", v) }
+
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
         get() = prefs.getString("rail_position", null)
