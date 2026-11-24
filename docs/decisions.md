@@ -947,3 +947,17 @@ Owner's decisions, 2026-11-24, ahead of a possible F-Droid submission (discussio
   and without its settings section, for stores that update the app themselves. A Gradle property,
   not a product flavour, so CI, the test commands and the release workflow stay as they are.
 - **The certificate download stays** for now: the owner will ask F-Droid whether they accept it.
+
+## F-Droid: store listing in the repository, the version in the build file
+
+Owner's decisions, 2026-11-24: AARE is ready to be submitted (the owner consents to anyone doing
+it), the certificate download stays (nothing in F-Droid's rules forbids it), and the repository
+carries what F-Droid reads. See [fdroid.md](fdroid.md).
+
+- **Store listing** under `fastlane/metadata/android/en-US/`, from the README; a changelog per
+  version code from now on.
+- **The released version lives in `app/build.gradle.kts`**, raised in each release commit: F-Droid
+  builds the tag from source and reads it there, while the release workflow passed it as
+  `-PversionName`/`-PversionCode` only (the file said 1.0.0). The workflow still passes them, and
+  now refuses a tag the file doesn't match. Rejected: computing the version from the tag in
+  F-Droid's recipe (a second formula to keep in step, in someone else's repository).

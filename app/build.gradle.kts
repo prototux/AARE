@@ -22,9 +22,13 @@ android {
         // (MainActivity) lists what's limited there.
         minSdk = 23
         targetSdk = 37
-        // The release workflow passes the tag's version (-PversionName=1.2.3 -PversionCode=10203).
-        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 10000
-        versionName = providers.gradleProperty("versionName").orNull ?: "1.0.0"
+        // The released version, raised in the release commit (the release workflow checks that the
+        // tag matches): F-Droid builds the tag and reads it from here. versionCode is
+        // major * 10000 + minor * 100 + patch. -PversionName / -PversionCode still override it.
+        versionCode = 10600
+        versionName = "1.6.0"
+        providers.gradleProperty("versionCode").orNull?.let { versionCode = it.toInt() }
+        providers.gradleProperty("versionName").orNull?.let { versionName = it }
         // The check for a newer release on GitHub (UpdateChecker): off with -Paare.updateCheck=false,
         // for stores that update the app themselves (F-Droid).
         buildConfigField("boolean", "UPDATE_CHECK", (providers.gradleProperty("aare.updateCheck").orNull != "false").toString())
