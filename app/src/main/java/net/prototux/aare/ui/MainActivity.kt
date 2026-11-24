@@ -617,7 +617,7 @@ private fun appDetails(ctx: Context) =
  * or have no browser: then [fallback] opens instead, or a short message, rather than a crash. No
  * resolveActivity() check first: package visibility hides browsers from it without a <queries> entry.
  */
-private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
+internal fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
     val opened = listOfNotNull(intent, fallback).any { runCatching { startActivity(it) }.isSuccess }
     if (!opened) Toast.makeText(this, R.string.setup_nothing_to_open, Toast.LENGTH_SHORT).show()
 }
@@ -1213,108 +1213,17 @@ private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: I
     return out
 }
 
-/** Car audio: the capture methods, best first, and what each needs. */
-@Composable
-private fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
-    val ctx = LocalContext.current
-    var enabled by remember { mutableStateOf(settings.carAudio) }
-    var carMic by remember { mutableStateOf(settings.carMicForPhoneApps) }
-    val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
-        recheck()
-    }
-    // Shizuku itself needs Android 12 (CaptureMethods.shizukuAvailable); its listener is never
-    // registered below that, so it's never live when there's no binder to answer it.
-    DisposableEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
-            runCatching { Shizuku.addRequestPermissionResultListener(l) }
-            onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
-        } else onDispose {}
-    }
-    @Suppress("UNUSED_EXPRESSION") refresh
-    val policy = CaptureMethods.audioPolicyAvailable(ctx)
-    val shizuku = CaptureMethods.shizukuAvailable()
-    val shizukuAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && CaptureMethods.shizukuNeedsPermission()
-    val root = CaptureMethods.rootAvailable(ctx)
-    // The session's order (CaptureOrder), before any failure in a drive.
-    val best = CaptureOrder.best(CaptureOrder.Env(policy, shizuku, root,
-        playbackCapture = state.audioCapture && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q), forced = settings.forcedCaptureMethod)
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Section(stringResource(R.string.audio_settings_title)) {
-            Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {
-                enabled = it; settings.carAudio = it
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                var fullVolume by remember { mutableStateOf(settings.carAudioFullVolume) }
-                Toggle(stringResource(R.string.audio_toggle_full_volume_title), stringResource(R.string.audio_toggle_full_volume_subtitle), fullVolume) {
-                    fullVolume = it; settings.carAudioFullVolume = it
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
-                style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-        }
-        Section(stringResource(R.string.audio_section_methods)) {
-            Check(stringResource(CaptureMethod.AUDIO_POLICY.title),
-                if (policy) stringResource(R.string.audio_policy_ready)
-                else stringResource(R.string.audio_policy_not_ready),
-                policy) {
-                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
-            }
-            Check(stringResource(CaptureMethod.SHIZUKU.title),
-                when {
-                    shizuku -> stringResource(R.string.audio_shizuku_ready)
-                    root -> stringResource(R.string.audio_root_ready)
-                    Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> stringResource(R.string.audio_shizuku_needs_android12)
-                    shizukuAsk -> stringResource(R.string.audio_shizuku_tap_allow)
-                    else -> stringResource(R.string.audio_shizuku_or_root_hint)
-                },
-                shizuku || root) {
-                when {
-                    shizukuAsk -> runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
-                    shizuku || root -> Unit
-                    // Check for root (prompts su on a rooted phone); otherwise point to Shizuku.
-                    else -> Root.ask(ctx) { granted ->
-                        if (granted) recheck()
-                        else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
-                    }
-                }
-            }
-            Check(stringResource(CaptureMethod.PLAYBACK_CAPTURE.title),
-                if (state.audioCapture) stringResource(R.string.audio_playback_ready)
-                else stringResource(R.string.audio_playback_not_ready),
-                state.audioCapture) {
-                val mpm = ctx.getSystemService(MediaProjectionManager::class.java)
-                consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
-                    else mpm.createScreenCaptureIntent())
-            }
-        }
-        Section(stringResource(R.string.audio_section_car_mic)) {
-            Toggle(stringResource(R.string.audio_toggle_car_mic_title), stringResource(R.string.audio_toggle_car_mic_subtitle), carMic) {
-                carMic = it; settings.carMicForPhoneApps = it
-            }
-            if (carMic) {
-                val ready = CarMicForApps.available(ctx)
-                Text(stringResource(when {
-                    ready -> R.string.audio_car_mic_ready
-                    Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> R.string.audio_car_mic_needs_android10
-                    else -> R.string.audio_car_mic_needs_shizuku
-                }), style = MaterialTheme.typography.bodyMedium, color = if (ready) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
-private const val SHIZUKU_REQUEST = 42
+internal const val SHIZUKU_REQUEST = 42
 
 /** A labelled drop-down of mutually exclusive options, for lists too long for a row of [Choices]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Select(title: String, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
+internal fun Select(title: String?, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Text(title, style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(6.dp))
+    if (title != null) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(6.dp))
+    }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
             value = options.firstOrNull { it.first == selected }?.second.orEmpty(),

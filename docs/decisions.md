@@ -1000,3 +1000,19 @@ the prepared Looper, falling back to the whole output) holds. Owner's decision f
   that died and was started again doesn't release the new one.
 - Rejected: extending the framing with a way back for the microphone and its callbacks, a second
   protocol to keep in step with the Shizuku one.
+
+## The car audio page (proposal D)
+
+Built as decided in "Car audio overhaul" above, from `CaptureStatus.report()`: a status card (audio
+working, music and navigation apart, phone speaker quiet, the active method), the method selector
+under a warning, the methods in the order tried with one word each, then "Why not the others?" and
+"What the methods are", folded. The system-app method shows only where AARE is one. Screen capture's
+authorization is offered only when no other method can work.
+
+- **Forced, and refused at the last drive:** the card expects no sound (red, "none (forced)"): a forced
+  method never falls back, and it was refused last time. AARE still tries it at the next drive.
+- **Defaults** (`Settings.settleDefaults`, once, before anything else writes a setting): full volume to
+  the car on for a new install, unchanged for an update; the car microphone for phone apps on unless
+  the user turned it off.
+- **The car's notice** when only screen capture is left and it isn't authorized: open AARE on the
+  phone, where Android asks.

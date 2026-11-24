@@ -343,7 +343,8 @@ class Settings(context: Context) {
      * on Android 10+; calls keep their own microphone. Off: they record from the phone's mic.
      */
     var carMicForPhoneApps: Boolean
-        get() = prefs.getBoolean("car_mic_for_phone_apps", false)
+        // On unless the user turned it off: it only works where root or Shizuku does (owner's choice, 2.0).
+        get() = prefs.getBoolean("car_mic_for_phone_apps", true)
         set(v) = prefs.edit { putBoolean("car_mic_for_phone_apps", v) }
 
     /**
@@ -361,6 +362,20 @@ class Settings(context: Context) {
     var rootAllowed: Boolean
         get() = prefs.getBoolean("root_allowed", prefs.getBoolean("root_audio", false))
         set(v) = prefs.edit { putBoolean("root_allowed", v); remove("root_audio") }
+    /**
+     * Settles, once, the defaults that differ between a new install and an update (AareApp). Full
+     * volume to the car is on for a new install only: an update that suddenly played much louder at
+     * the next drive would be a hazard, so an existing install keeps what it had.
+     */
+    fun settleDefaults() {
+        if (prefs.contains("defaults_settled")) return
+        val fresh = prefs.all.isEmpty()
+        prefs.edit {
+            if (!prefs.contains("car_audio_full_volume")) putBoolean("car_audio_full_volume", fresh)
+            putBoolean("defaults_settled", true)
+        }
+    }
+
     /** Car audio methods this phone refused at drives, and why (CaptureStatus): cleared when one works again. */
     var captureRefusals: Map<CaptureMethod, net.prototux.aare.audio.CaptureStatus.Refusal>
         get() = net.prototux.aare.audio.CaptureStatus.decode(prefs.getString("capture_refusals", null))
