@@ -514,6 +514,12 @@ traffic into the VPN and the connection times out. Then change the VPN's range, 
 unit's network from the VPN (most VPN apps have a setting for local network access). USB isn't
 affected.
 
+Some VPN apps (WireGuard by default) don't let apps use any other network than the VPN at all.
+Then Android refuses AARE the car's Wi-Fi, whatever the address ranges, and the connection log says
+the phone's VPN doesn't let AARE use the car's Wi-Fi. Excluding the head unit's range doesn't help
+there: exclude AARE itself in the VPN app instead (its excluded or split-tunnel apps; in WireGuard,
+edit the tunnel and pick AARE under *Excluded applications*), or turn the VPN off.
+
 ### Coexisting with Google's Android Auto
 
 - **USB:** both apps answer the same USB accessory, so Android asks which one to use. Choose

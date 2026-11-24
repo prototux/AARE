@@ -72,6 +72,7 @@ import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.transport.wireless.WirelessConnector
 import net.prototux.aare.transport.wireless.WirelessReconnect
 import net.prototux.aare.transport.wireless.WirelessException
+import net.prototux.aare.transport.wireless.WirelessVpnBlockedException
 import net.prototux.aare.ui.MainActivity
 import kotlin.concurrent.thread
 
@@ -313,7 +314,10 @@ class ProjectionService : Service() {
                         if (session == null) continue
                         return@launch
                     }
-                    _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = e.message) }
+                    // The VPN case has its own words: the raw reason (a refused bind) says nothing to the driver.
+                    val vpnBlocked = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessVpnBlockedException }
+                    val why = if (vpnBlocked) getString(R.string.wireless_error_vpn_blocks_car_wifi) else e.message
+                    _state.update { it.copy(status = getString(R.string.notif_status_not_connected), lastError = why) }
                     return@launch
                 }
             }
