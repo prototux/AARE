@@ -878,7 +878,7 @@ or why another doesn't.
 1. *Audio routing (root)*: the audio policy, registered by the root helper.
 2. *Audio routing (Shizuku)*: the same policy, registered by the Shizuku helper.
 3. *Output recording*: the phone's whole output, through root or Shizuku, for phones that refuse the
-   policy. Navigation voice plays inside the music, notification sounds come too.
+   policy. Navigation voice and music are mixed together, notification sounds come too.
 4. *Screen capture*: the user's screen-capture authorization; music only.
 
 Root now comes before Shizuku (owner's choice): a phone with both moves from the Shizuku helper to
