@@ -1178,7 +1178,10 @@ class CarSession(
             CaptureOrder.Plan.Skip -> return
             CaptureOrder.Plan.NoMethod -> {
                 publishCapture(active = null)
-                runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))
+                // Screen capture is all that's left, and Android only asks for it on the phone.
+                val onlyCapture = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && p == null && !CaptureMethods.env(context, false).let { it.root || it.shizuku || it.privileged }
+                runtime.notice(context.getString(R.string.audio_settings_title),
+                    context.getString(if (onlyCapture) R.string.audio_notice_allow_capture else R.string.audio_notice_setup_hint))
                 return
             }
             is CaptureOrder.Plan.Capture -> plan.method
