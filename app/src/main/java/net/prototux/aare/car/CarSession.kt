@@ -79,6 +79,7 @@ import net.prototux.aare.car.calibration.CalibrationController
 import net.prototux.aare.car.calibration.TouchCalibration
 import net.prototux.aare.ui.car.CalibrationOverlay
 import net.prototux.aare.PinnedHeadUnits
+import net.prototux.aare.audio.AudioChannelSink
 import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
@@ -1224,7 +1225,7 @@ class CarSession(
         lateinit var out: CarAudioOut
         val silence = StartSilence.configured(wireless, guidance, aap.headUnitVersion?.first,
             vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
-        out = CarAudioOut(source, channel, if (guidance) guidanceFocus else mediaFocusRequests, silence, onFailed = {
+        out = CarAudioOut(source, AudioChannelSink(channel), if (guidance) guidanceFocus else mediaFocusRequests, silence, onFailed = {
             main.post {
                 // Only if it's still this stream's output: a late failure (a slow Shizuku bind
                 // giving up after teardown, or after a replacement) must not start a capture
