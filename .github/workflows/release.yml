@@ -37,6 +37,17 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$(( ${MAJOR:-0} * 10000 + ${MINOR:-0} * 100 + ${PATCH:-0} ))" >> "$GITHUB_ENV"
 
+      # F-Droid builds the tag from source and reads the version from the build file, not from
+      # this workflow: a tag whose commit didn't raise it would give F-Droid the old version.
+      - name: The tag matches the build file's version
+        run: |
+          FILE_NAME=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          FILE_CODE=$(sed -n 's/^ *versionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)
+          if [ "$FILE_NAME" != "$VERSION" ] || [ "$FILE_CODE" != "$VERSION_CODE" ]; then
+            echo "::error::app/build.gradle.kts says $FILE_NAME ($FILE_CODE) but the tag is $VERSION ($VERSION_CODE): raise versionName and versionCode in the release commit"
+            exit 1
+          fi
+
       - name: Protocol and head unit tests
         run: ./gradlew --no-daemon :aap:test :headunit:test
 
