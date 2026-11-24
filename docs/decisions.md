@@ -813,3 +813,23 @@ same audio policy as the Shizuku path, so music and navigation voice go to their
   path falls back to Shizuku's whole output.
 - **Shizuku and the privileged install don't change:** the new method (`ROOT_POLICY`) comes after
   both, and only when Shizuku isn't running.
+
+## Wireless: a head unit that restarts its setup while the phone dials it
+
+A wireless adapter that reset mid-drive rejoined, announced a new AAP server, then, while the phone
+was still dialling it (and timing out), sent a new WifiVersionRequest over Bluetooth: it had started
+its setup over. AARE ignored it ("during the session") and spent its three TCP attempts on the old
+port, every time.
+
+- **Only before the TCP connection is up:** `WirelessBootstrap.hold` treats a new WifiVersionRequest,
+  or a WifiStartRequest for another port, as a restart only until the connector calls
+  `sessionConnected()`. From then on both are ignored, as before. A head unit that never sends a
+  second request sees no change on the wire.
+- **End the attempt, redial at once:** the bootstrap fails with `setupRestarted` ("the head unit
+  restarted its wireless setup"), the connector closes the TCP attempt under way, and
+  `ProjectionService` dials again at once (two such redials per connection), so the new attempt
+  reads the new server from a fresh handshake. Rejected: answering the new request on the same
+  RFCOMM link, which would mean running the negotiation a second time inside `hold`; a fresh
+  attempt reuses the tested path.
+- **No race with the connect:** `sessionConnected()` and the restart check share a lock; a connect
+  that completes after a restart is dropped, not used against the old setup.

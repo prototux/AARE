@@ -21,6 +21,7 @@ import net.prototux.aare.aap.wireless.AA_WIRELESS_UUID
 import net.prototux.aare.aap.wireless.JoinResult
 import net.prototux.aare.aap.wireless.WifiCredentials
 import net.prototux.aare.aap.wireless.WirelessBootstrap
+import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -159,6 +160,8 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         @Volatile private var network: HeadUnitNetwork? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
+        /** The head unit started its setup over while the TCP connect ran (see [bootstrap]). */
+        @Volatile private var setupRestart: WirelessBootstrapException? = null
         /** This attempt is an adapter's quick first try (see [bootstrapOptions]). */
         private var quickTry = false
 
@@ -177,6 +180,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 val (ip, port) = bootstrap(socket, net)
                 val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
                 val tcpSocket = connectTcp(headUnitNetwork, ip, port)
+                // From here a new request from the head unit is ignored again, unless it came first.
+                if (bootstrap?.sessionConnected() == false) {
+                    runCatching { tcpSocket.close() }
+                    throw setupRestarted()
+                }
                 val name = "wifi \"${net.ssid}\" $ip:$port (${runCatching { device.name }.getOrNull() ?: device.address})"
                 val t = WirelessTransport(SocketTransport(tcpSocket, name), ::abort)
                 transport = t
@@ -260,6 +268,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                     log.i("wireless: Bluetooth bootstrap link ended")
                 } catch (e: Throwable) {
                     ready.completeExceptionally(e)
+                    // The AAP server it announced is gone: don't let the TCP attempts run out on it.
+                    if (e is WirelessBootstrapException && e.setupRestarted) {
+                        setupRestart = e
+                        tcp?.let { runCatching { it.close() } }
+                    }
                 }
                 if (!ready.isDone) ready.completeExceptionally(WirelessException("bootstrap ended without result"))
             }
@@ -268,7 +281,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs + options.bootstrap.phoneStartRetryLimitMs, TimeUnit.MILLISECONDS)
             } catch (e: ExecutionException) {
                 val cause = e.cause ?: e
-                if (cause is net.prototux.aare.aap.wireless.WirelessBootstrapException && cause.noStartRequest && waitingForPhone.add(device.address)) {
+                if (cause is WirelessBootstrapException && cause.noStartRequest && waitingForPhone.add(device.address)) {
                     log.i("wireless: the head unit waited for the phone to ask it to start; the next attempt will ask")
                 }
                 throw if (cause is IOException) cause else WirelessException(cause.message ?: "wireless bootstrap failed", cause)
@@ -288,15 +301,20 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             var last: IOException? = null
             for (attempt in 1..options.tcpAttempts) {
                 checkNotAborted()
+                checkSetupNotRestarted()
                 // Bound to the head unit's network: it is not the default network (no internet).
                 val socket = network.socketFactory.createSocket()
                 tcp = socket
                 try {
+                    // Again after publishing the socket: a restart seen just before missed it.
+                    checkSetupNotRestarted()
                     socket.connect(InetSocketAddress(address, port), options.tcpConnectTimeoutMs)
                     return socket
                 } catch (e: IOException) {
                     last = e
                     runCatching { socket.close() }
+                    // Closed by the restart: say so rather than "Socket closed".
+                    checkSetupNotRestarted()
                     log.w("wireless: TCP attempt $attempt/${options.tcpAttempts} to $ip:$port failed: ${e.message}")
                     if (attempt < options.tcpAttempts) Thread.sleep(1_000)
                 }
@@ -307,6 +325,14 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         private fun checkNotAborted() {
             if (aborted.get()) throw WirelessException("cancelled")
         }
+
+        private fun checkSetupNotRestarted() {
+            if (setupRestart != null) throw setupRestarted()
+        }
+
+        /** Carries the bootstrap's failure, or one like it when [sessionConnected][WirelessBootstrap.sessionConnected] saw the restart first. */
+        private fun setupRestarted() = WirelessException(WirelessBootstrap.SETUP_RESTARTED,
+            setupRestart ?: WirelessBootstrapException(WirelessBootstrap.SETUP_RESTARTED, setupRestarted = true))
 
         /**
          * The bootstrap options for this attempt. A wireless adapter gets only a short wait for its

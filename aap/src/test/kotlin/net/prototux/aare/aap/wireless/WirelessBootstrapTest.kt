@@ -157,6 +157,77 @@ class WirelessBootstrapTest {
         assertEquals(WirelessBootstrap.State.DONE, b.state)
     }
 
+    /** Version and start request, credentials, join: up to [WirelessBootstrap.Listener.onReady] with the server at [port]. */
+    private fun untilReady(phone: Phone, port: Int = 5000) {
+        hu.send(WppMessageId.VERSION_REQUEST to WifiVersionRequest.newBuilder().setMajor(4).setMinor(2).build(),
+            WppMessageId.START_REQUEST to startRequest(port = port))
+        hu.expect(WppMessageId.VERSION_RESPONSE)
+        hu.expect(WppMessageId.INFO_REQUEST)
+        hu.send(WppMessageId.INFO_RESPONSE, infoResponse())
+        hu.expect(WppMessageId.START_RESPONSE)
+        hu.expect(WppMessageId.CONNECTION_STATUS)
+        assertEquals("10.0.0.1" to port, phone.ready.poll(2, TimeUnit.SECONDS))
+    }
+
+    private fun assertSetupRestarted() {
+        // Promptly: not after a message timeout (3 s here) or the TCP attempts.
+        assertTrue("bootstrap did not end on the restart", finished.await(1, TimeUnit.SECONDS))
+        val e = failure as? WirelessBootstrapException ?: throw AssertionError("expected a WirelessBootstrapException, got $failure")
+        assertTrue(e.setupRestarted)
+        assertFalse(e.whileNegotiating)
+        assertEquals(WirelessBootstrap.SETUP_RESTARTED, e.message)
+    }
+
+    @Test(timeout = 10_000)
+    fun aNewVersionRequestWhileConnectingIsASetupRestart() {
+        val phone = Phone { JoinResult.Joined(localAddress = "10.0.0.23", gateway = "10.0.0.1") }
+        val b = start(phone)
+        untilReady(phone)
+
+        // The phone is still dialling 10.0.0.1:5000 when the head unit starts over.
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        assertSetupRestarted()
+        assertEquals(WirelessBootstrap.State.FAILED, b.state)
+        // A TCP connect that comes through now goes to the old setup: the caller drops it.
+        assertFalse(b.sessionConnected())
+    }
+
+    @Test(timeout = 10_000)
+    fun aStartRequestForAnotherPortWhileConnectingIsASetupRestart() {
+        val phone = Phone { JoinResult.Joined(localAddress = "10.0.0.23", gateway = "10.0.0.1") }
+        start(phone)
+        untilReady(phone, port = 5000)
+
+        // The same server again changes nothing...
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 5000))
+        assertFalse("the same server again ended the attempt", finished.await(300, TimeUnit.MILLISECONDS))
+        // ...another one is a new setup.
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 5001))
+        assertSetupRestarted()
+    }
+
+    @Test(timeout = 10_000)
+    fun newRequestsOnceTheSessionIsUpAreIgnored() {
+        val phone = Phone { JoinResult.Joined(localAddress = "10.0.0.23", gateway = "10.0.0.1") }
+        val b = start(phone)
+        untilReady(phone)
+        assertTrue(b.sessionConnected())
+
+        hu.send(WppMessageId.VERSION_REQUEST, versionRequest())
+        hu.send(WppMessageId.START_REQUEST, startRequest(port = 5001))
+        assertFalse("a request during the session ended it", finished.await(300, TimeUnit.MILLISECONDS))
+        // Nothing answered, the link still held: the next frame is the answer to this ping.
+        val ping = WifiPingRequest.newBuilder().setTimestamp(2).build()
+        hu.send(WppMessageId.PING_REQUEST, ping)
+        assertArrayEquals(ping.toByteArray(), hu.expect(WppMessageId.PING_RESPONSE).payload)
+        assertEquals(WirelessBootstrap.State.READY, b.state)
+
+        hu.hangUp()
+        awaitEnd()
+        assertNull(failure)
+        assertEquals(WirelessBootstrap.State.DONE, b.state)
+    }
+
     @Test(timeout = 10_000)
     fun bareStartRequestLikeTheDongle() {
         val joinStarted = CountDownLatch(1)

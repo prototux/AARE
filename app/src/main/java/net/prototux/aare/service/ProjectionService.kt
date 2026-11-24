@@ -290,6 +290,7 @@ class ProjectionService : Service() {
             // start Android Auto yet (the Mach-E hangs up after a few silent seconds, #74); a
             // little later they do. The retries run in this job, so the service stays up meanwhile.
             var retries = 0
+            var restartRedials = 0
             while (true) {
                 try {
                     val transport = connector.connect(device)
@@ -303,6 +304,14 @@ class ProjectionService : Service() {
                     // An adapter's quick first try is there to be redialled: at once, and not as one of the retries.
                     if (carNotReady && e is WirelessException && e.quickTry && session == null) {
                         log("wireless: redialling the adapter after its quick first try")
+                        continue
+                    }
+                    // The head unit started its setup over while we dialled the server it had
+                    // announced: dial again at once, to its new one, rather than after a reconnect wait.
+                    val setupRestarted = generateSequence<Throwable>(e) { it.cause }.any { it is WirelessBootstrapException && it.setupRestarted }
+                    if (setupRestarted && restartRedials < WIRELESS_RESTART_REDIALS && session == null) {
+                        restartRedials++
+                        log("wireless: redialling at once ($restartRedials/$WIRELESS_RESTART_REDIALS)")
                         continue
                     }
                     if (carNotReady && retryWhenNotReady && retries < WIRELESS_RETRIES && session == null) {
@@ -1011,6 +1020,8 @@ class ProjectionService : Service() {
         /** LAN sessions kept listening after dropping before the version exchange, before giving up on it. */
         private const val LAN_VERSION_DROP_RETRIES = 2
         private const val WIRELESS_RETRY_DELAY_MS = 10_000L
+        /** Immediate redials after a head unit restarted its wireless setup mid-attempt, per connection. */
+        private const val WIRELESS_RESTART_REDIALS = 2
         const val ACTION_USB = "net.prototux.aare.USB"
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
