@@ -7,8 +7,6 @@
 # The APK is signed with the key in these repository secrets:
 # AARE_KEYSTORE_BASE64 (base64 of the .jks file), AARE_KEYSTORE_PASSWORD, AARE_KEY_ALIAS,
 # AARE_KEY_PASSWORD. Without them it publishes a debug-signed APK instead (and says so).
-# AARE_PHONE_CERT and AARE_PHONE_KEY (PEM certificate, PEM PKCS#8 key), if set, become AARE's
-# built-in phone certificate (see app/build.gradle.kts).
 name: Release
 
 on:
@@ -49,8 +47,6 @@ jobs:
           AARE_KEYSTORE_PASSWORD: ${{ secrets.AARE_KEYSTORE_PASSWORD }}
           AARE_KEY_ALIAS: ${{ secrets.AARE_KEY_ALIAS }}
           AARE_KEY_PASSWORD: ${{ secrets.AARE_KEY_PASSWORD }}
-          AARE_PHONE_CERT: ${{ secrets.AARE_PHONE_CERT }}
-          AARE_PHONE_KEY: ${{ secrets.AARE_PHONE_KEY }}
         run: |
           export AARE_KEYSTORE="$RUNNER_TEMP/release.jks"
           echo "$KEYSTORE_BASE64" | base64 -d > "$AARE_KEYSTORE"
@@ -61,9 +57,6 @@ jobs:
 
       - name: Debug APK (no signing key in the secrets)
         if: env.HAS_KEY != 'true'
-        env:
-          AARE_PHONE_CERT: ${{ secrets.AARE_PHONE_CERT }}
-          AARE_PHONE_KEY: ${{ secrets.AARE_PHONE_KEY }}
         run: |
           echo "::warning::AARE_KEYSTORE_BASE64 is not set: publishing a debug-signed APK"
           ./gradlew --no-daemon :app:assembleDebug -PversionName="$VERSION" -PversionCode="$VERSION_CODE"

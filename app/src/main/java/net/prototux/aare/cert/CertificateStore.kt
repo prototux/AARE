@@ -18,9 +18,8 @@ import java.util.Date
  * The phone certificates offered to head units, in order.
  *
  * Head units built on Google's receiver library only accept a phone certificate issued by
- * Google; open-source and some OEM head units accept any. Release builds carry AARE's own built-in
- * certificate, we always have a generated self-signed one, and the user may import others (PEM
- * certificate chain + PKCS#8 key, or a PKCS#12 file).
+ * Google; open-source and some OEM head units accept any. We always have a generated self-signed
+ * one, and the user may import others (PEM certificate chain + PKCS#8 key, or a PKCS#12 file).
  * When a head unit rejects the certificate during the handshake, the next connection offers the
  * next one, the way a TLS server can't know in advance what a client trusts.
  */
@@ -37,28 +36,18 @@ class CertificateStore(private val context: Context) {
     private val dir = File(context.filesDir, "certs").apply { mkdirs() }
 
     /**
-     * All usable identities: imported ones first (they're the reason to import), then the one built
-     * into this build of AARE (release builds), then the generated one, which always works.
+     * All usable identities: imported ones first (they're the reason to import), then the generated
+     * one, which always works.
      */
     fun entries(): List<Entry> {
         val imported = dir.listFiles { f -> f.isDirectory && f.name != "_generated" }.orEmpty().sortedBy { it.name }.mapNotNull { load(it) }
-        return imported + listOfNotNull(builtIn) + Entry(GENERATED, generated(), removable = false)
+        return imported + Entry(GENERATED, generated(), removable = false)
     }
 
     /** Whether a Google-issued certificate (downloaded or imported) is available to offer. */
     fun hasGoogleCertificate(): Boolean = entries().any { it.isGoogleIssued }
 
     /** AARE's own certificate, from the release build's assets; null in builds made without it. */
-    private val builtIn: Entry? by lazy {
-        runCatching {
-            val chain = context.assets.open("$BUILT_IN_DIR/cert.pem").use { input ->
-                CertificateFactory.getInstance("X.509").generateCertificates(input).map { it as X509Certificate }
-            }
-            val key = parsePkcs8(context.assets.open("$BUILT_IN_DIR/key.pem").bufferedReader().use { it.readText() })
-            Entry(BUILT_IN, PhoneIdentity(chain.first(), key, chain.drop(1)), removable = false)
-        }.getOrNull()
-    }
-
     /** Identity to offer for attempt [index] (wraps around). */
     fun pick(index: Int, now: Date = Date()): Entry {
         val usable = offerable(now)
@@ -155,8 +144,6 @@ class CertificateStore(private val context: Context) {
 
     companion object {
         private const val GENERATED = "Generated (self-signed)"
-        private const val BUILT_IN = "AARE (built in)"
-        private const val BUILT_IN_DIR = "phone_identity"
         /** Marks a certificate directory written by [importDownloaded]. */
         private const val DOWNLOADED_MARKER = "downloaded"
         private const val DOWNLOADED_PREFIX = "Android Auto "

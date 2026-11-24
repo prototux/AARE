@@ -933,3 +933,17 @@ the active method. Below it the method selector, *Tried in this order* (names an
 4. The new screen, the car's screen-capture notice and the new defaults; translations before the
    release tag.
 5. The Magisk module removed: tools, release workflow, README.
+
+## F-Droid groundwork: no built-in certificate, an update-check switch
+
+Owner's decisions, 2026-11-24, ahead of a possible F-Droid submission (discussion #169).
+
+- **The built-in phone certificate is gone.** Release builds carried a self-signed certificate from
+  the `AARE_PHONE_CERT` / `AARE_PHONE_KEY` secrets, kept for a vendor or CA to sign one day. It was
+  never signed, head units that accept it accept the generated one too, and a secret baked into
+  the APK rules out building it from source alone (F-Droid) or reproducibly. It can come back if a
+  signed certificate ever exists. A car that last worked with it is offered the next certificate.
+- **`-Paare.updateCheck=false`** builds without the GitHub release check (`BuildConfig.UPDATE_CHECK`)
+  and without its settings section, for stores that update the app themselves. A Gradle property,
+  not a product flavour, so CI, the test commands and the release workflow stay as they are.
+- **The certificate download stays** for now: the owner will ask F-Droid whether they accept it.

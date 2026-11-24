@@ -688,7 +688,8 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         }
         if (wireless && CarCompanion.supported(ctx)) CompanionCars(settings, pins.keys)
         AndroidAutoCard(refresh)
-        Section(stringResource(R.string.setup_section_updates)) {
+        // Builds without the check (stores that update the app themselves) have nothing to set here.
+        if (BuildConfig.UPDATE_CHECK) Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
                 checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx, force = it)
                 updateStatus = null
