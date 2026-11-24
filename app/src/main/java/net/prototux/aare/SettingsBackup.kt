@@ -92,6 +92,12 @@ object SettingsBackup {
         "dashboard_map_big" to Type.BOOLEAN,
         "calendar_agenda_count" to Type.INT,
         "car_key_map" to Type.STRING_SET,
+        "rail_spacing" to Type.INT,
+        "map_card_bottom_inset" to Type.INT,
+        "builtin_car_fixes" to Type.BOOLEAN,
+        "wireless_compatibility" to Type.STRING,
+        "obd_adapter" to Type.BOOLEAN,
+        "developer_log_privacy" to Type.BOOLEAN,
     )
 
     /**
@@ -122,6 +128,32 @@ object SettingsBackup {
         "companion_wifi_shizuku",
         "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate
+    )
+
+    /**
+     * Keys Settings.kt keeps that aren't settings to carry to another phone: this phone's or this
+     * car's own state, bookkeeping, and anything personal or secret. Neither exported nor
+     * reported on import (a file carrying one is just skipped). Every key Settings.kt uses is in
+     * exactly one of [ALLOWED], [BLOCKED] or this set: a test fails on a new key that isn't, so
+     * each new setting gets a decision about the backup.
+     */
+    val NOT_BACKED_UP: Set<String> = setOf(
+        "defaults_settled", // whether this install's defaults were set up
+        "instance_id", // this install's identity
+        "requested_permissions", // what this phone was already asked for
+        "phone_bt_address", // this phone's own Bluetooth address
+        "known_cars", // cars this phone connected to, with times
+        "last_head_unit", // the last car connected
+        "car_keys_seen", // the keys this phone's cars sent
+        "wireless_handshakes", // what worked with each car's adapter, by Bluetooth address
+        "car_audio_full_volume_left", // recovery state for an interrupted capture
+        "obd_adapter_address", // a Bluetooth device paired with this phone
+        "obd_simulated", // debug builds only
+        "developer_mode", // writes log files on this phone
+        "home_actions", // home-automation entities: personal, and tied to the servers that stay out
+        "update_latest_version", "update_latest_url", "update_last_check_ms", "update_dismissed_version",
+        "cert_index", "cert_update_last_check_ms", "cert_expiry_notified", "cert_expiry_dismissed",
+        "old_android_notice_dismissed",
     )
 
     /** [all]: a `SharedPreferences.getAll()` map. The file to export: [ALLOWED] keys only. */
