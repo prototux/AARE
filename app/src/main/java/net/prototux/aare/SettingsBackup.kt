@@ -40,6 +40,7 @@ object SettingsBackup {
         "force_h264" to Type.BOOLEAN,
         "constant_bitrate_video" to Type.BOOLEAN,
         "calls_on_phone_speaker" to Type.BOOLEAN,
+        "resume_after_call" to Type.BOOLEAN,
         "rail_position" to Type.STRING,
         "rail_right" to Type.BOOLEAN, // before rail_position; Settings still reads it when that's unset
         "style_theme" to Type.STRING,
@@ -54,6 +55,7 @@ object SettingsBackup {
         "show_calendar" to Type.BOOLEAN, // before dashboard_cards, same
         "car_theme" to Type.STRING,
         "car_audio" to Type.BOOLEAN,
+        "car_audio_full_volume" to Type.BOOLEAN,
         "assistant_pkg" to Type.STRING,
         "assistant_stop" to Type.STRING,
         "phone_screen" to Type.BOOLEAN,
@@ -66,8 +68,10 @@ object SettingsBackup {
         "call_bar_y" to Type.FLOAT,
         "car_gps" to Type.BOOLEAN,
         "resume_media" to Type.BOOLEAN,
+        "pause_while_recording" to Type.BOOLEAN,
         "message_banners" to Type.BOOLEAN,
         "group_messages" to Type.BOOLEAN,
+        "muted_message_apps" to Type.STRING_SET,
         "dnd_driving" to Type.BOOLEAN,
         "auto_reply" to Type.BOOLEAN,
         "auto_reply_text" to Type.STRING,
@@ -110,6 +114,8 @@ object SettingsBackup {
         "media_video",
         "car_mic_for_phone_apps",
         "auto_pair_car_bluetooth",
+        "location_on_in_car", // switches the phone's location through Shizuku or root
+        "location_off_after_car", // same
         "companion_wifi_shizuku",
         "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate

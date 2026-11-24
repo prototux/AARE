@@ -26,6 +26,7 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import android.location.Location
+import android.media.AudioManager
 import android.media.projection.MediaProjection
 import android.os.Build
 import android.os.Handler
@@ -71,6 +72,7 @@ import net.prototux.aare.aap.channels.PassiveChannel
 import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.channels.WifiProjectionChannel
+import net.prototux.aare.BuildConfig
 import net.prototux.aare.DiagLog
 import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.car.calibration.CalibrationController
@@ -90,6 +92,9 @@ import net.prototux.aare.audio.StartSilence
 import net.prototux.aare.audio.SuPolicySource
 import net.prototux.aare.audio.SuSource
 import net.prototux.aare.audio.MicRouter
+import net.prototux.aare.audio.MicTakeover
+import net.prototux.aare.audio.PhoneAppsMic
+import net.prototux.aare.audio.PhoneRecording
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
@@ -423,9 +428,13 @@ class CarSession(
             // A route that started before the session was running still gets the focus.
             requestNavFocus()
             drivingMode.start()
+            locationSwitch.start(settings.locationOnInCar)
+            // Opt-in: engine data from an OBD2 adapter for the Car data viewers (held only while connected).
+            if (settings.obdAdapter) net.prototux.aare.obdapp.ObdApp.attach(context)
+            if (settings.obdAdapter) net.prototux.aare.obd.ObdReader.start(context, simulated = settings.obdSimulated && BuildConfig.DEBUG, owner = this)
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
-                if (!m.group || settings.groupMessages) {
+                if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
                     val open = runtime.opener(m.packageName)
                     runtime.remember(m.title, m.text, m.icon, m.actions, open)
                     if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
@@ -435,7 +444,11 @@ class CarSession(
             if (settings.resumeMedia) runtime.resumeMedia()
             startPlaybackStatus()
             phoneBridge = PhoneStatusBridge(context, aap, phoneStatus).also { it.start() }
+            if (settings.pauseWhileRecording) context.getSystemService(android.media.AudioManager::class.java)?.registerAudioRecordingCallback(recordings, main)
             if (settings.callsOnPhoneSpeaker) callSpeaker = CallSpeaker(context).also { it.start() }
+            if (settings.resumeAfterCall && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                context.getSystemService(AudioManager::class.java)?.addOnModeChangedListener(context.mainExecutor, modeChanged)
+            }
             applyPhoneAppsMic()
             settings.registerListener(phoneAppsMicSetting)
         }
@@ -459,6 +472,55 @@ class CarSession(
                 phoneAppsMic = CarMicForApps(context, micRouter, cfg?.samplingRate ?: 16_000, cfg?.numberOfChannels ?: 1).also { it.start() }
             }
         }
+    }
+
+    /** Music or a video AARE paused because a phone app records: it plays on once the app is done. */
+    private var pausedForRecording = false
+    /** When a phone app records and when it is done, a moment's break (a recording moving to the car's mic) not counted. */
+    private val recordingPause = MicTakeover()
+    private val recordingDone = Runnable {
+        if (closed) return@Runnable
+        if (recordingPause.onTick(SystemClock.uptimeMillis()) == MicTakeover.Action.CLOSE) main.post(resumeAfterRecording)
+        scheduleRecordingDone()
+    }
+
+    /** Plays on what a recording paused, once no call or assistant answer runs on the phone. */
+    private val resumeAfterRecording: Runnable = Runnable {
+        if (closed || !pausedForRecording) return@Runnable
+        // An assistant's spoken answer or a call still going: music now would talk over it.
+        val mode = context.getSystemService(android.media.AudioManager::class.java)?.mode
+        if (mode != null && mode != android.media.AudioManager.MODE_NORMAL) { main.postDelayed(resumeAfterRecording, CALL_CHECK_MS); return@Runnable }
+        pausedForRecording = false
+        // Already playing (the driver pressed play), or the car's focus loss paused it and its focus answer brings it back.
+        if (!pausedByCar && media.playback.value?.playing != true) media.playPause()
+    }
+
+    /**
+     * A phone app records (a voice message, an assistant listening): what plays would talk over it,
+     * so it pauses, and plays on once the app is done (Settings.pauseWhileRecording). Android tells
+     * every app about recordings, without their apps' names, so this needs no Shizuku. AARE's own
+     * phone microphone (the car app's voice input) counts too: the music pauses for it as well.
+     */
+    private val recordings = object : android.media.AudioManager.AudioRecordingCallback() {
+        override fun onRecordingConfigChanged(configs: MutableList<android.media.AudioRecordingConfiguration>) {
+            if (closed) return
+            val recording = PhoneAppsMic.anyTakesOver(
+                configs.map { PhoneRecording(-1, it.clientAudioSource, Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && it.isClientSilenced) },
+                emptySet(),
+            )
+            if (recordingPause.onRecording(recording, SystemClock.uptimeMillis()) == MicTakeover.Action.OPEN) {
+                main.removeCallbacks(resumeAfterRecording)
+                pausedForRecording = pausedForRecording || media.playback.value?.playing == true
+                if (pausedForRecording) media.pause()
+            }
+            scheduleRecordingDone()
+        }
+    }
+
+    private fun scheduleRecordingDone() {
+        main.removeCallbacks(recordingDone)
+        val at = recordingPause.nextTick()
+        if (at >= 0) main.postAtTime(recordingDone, at)
     }
 
     override fun onAudioFocus(session: AapSession, notification: AudioFocusNotification) {
@@ -488,18 +550,24 @@ class CarSession(
             // The car took the audio (radio, a call...): pause the phone's media like Android Auto
             // does, and play again when a transient loss ends.
             notification.unsolicited && (state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT) -> main.post {
-                pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && media.playback.value?.playing == true
+                val playing = media.playback.value?.playing == true
+                pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && playing
+                // A call on the phone, or an assistant listening over Bluetooth, which the car takes
+                // for one: it plays on once that ends (see modeChanged), if chosen.
+                pausedForCall = settings.resumeAfterCall && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && playing && phoneInCall()
                 pausedForGuidance = false
                 media.pause()
             }
             // Only the car handing focus back resumes: a gain answering our own request means
-            // something else is playing now, and the old music must stay paused. Except after a
-            // pause for navigation voice: the car often hands the sound back by answering the
-            // prompt's own requests, and the music would stay paused for the rest of the drive.
+            // something else is playing now, and the old music must stay paused. Unless it answers
+            // the request made when the phone's call ended, or came after a pause for navigation
+            // voice: the car often hands the sound back by answering the prompt's own requests, and
+            // the music would stay paused for the rest of the drive.
             state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN || state == AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY -> main.post {
-                if (pausedByCar) {
-                    val resume = resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
+                if (pausedByCar || pausedForCall) {
+                    val resume = pausedForCall || resumesAfterCarPause(notification.unsolicited, pausedForGuidance)
                     pausedByCar = false
+                    pausedForCall = false
                     pausedForGuidance = false
                     if (resume && media.playback.value?.playing != true) media.playPause()
                 }
@@ -514,6 +582,30 @@ class CarSession(
     private var pausedByCar = false
     /** [pausedByCar] by the car keeping only navigation voice (main thread). */
     private var pausedForGuidance = false
+    /** Media paused by a focus loss during a call on the phone, to resume once it ends (main thread, Settings.resumeAfterCall). */
+    private var pausedForCall = false
+
+    private fun phoneInCall() = context.getSystemService(AudioManager::class.java)?.mode.let { it != null && it != AudioManager.MODE_NORMAL }
+
+    /**
+     * The phone's call ended (an assistant listening over Bluetooth counts as one): the car took
+     * the media focus for it and doesn't hand it back by itself, so it is asked again. Releasing
+     * first makes it switch back from the call, as a retry does. Only with Settings.resumeAfterCall.
+     */
+    // Lazy: the listener type is Android 12+, and it is only used there.
+    private val modeChanged by lazy { AudioManager.OnModeChangedListener { mode ->
+        // Only what the car's loss paused: music merely playing on may have lost the car to its radio.
+        if (closed || mode != AudioManager.MODE_NORMAL || mediaFocus || !(pausedForCall || pausedByCar)) return@OnModeChangedListener
+        // The call may have begun just after the car's loss: what it paused plays on with the answer.
+        pausedForCall = pausedForCall || pausedByCar
+        synchronized(focusLock) {
+            DiagLog.add("audio focus: asking again after the phone's call")
+            mediaFocusRetry.onRequested(SystemClock.uptimeMillis())
+            scheduleFocusCheck()
+            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
+            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
+        }
+    } }
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
         closeError = error
@@ -981,7 +1073,7 @@ class CarSession(
             KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
-            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) media.pause()
+            KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) { pausedForRecording = false; media.pause() }
             KeyEvent.KEYCODE_MEDIA_NEXT -> if (!down) media.next()
             KeyEvent.KEYCODE_MEDIA_PREVIOUS -> if (!down) media.previous()
             KEYCODE_MEDIA -> if (!down) runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
@@ -1040,6 +1132,9 @@ class CarSession(
 
     /** The car's GPS as the phone's location, so apps don't mix two positions. */
     private val locationFeed = PhoneLocationFeed(context)
+
+    /** The phone's location on when connected and off afterwards, each if chosen. */
+    private val locationSwitch = PhoneLocationSwitch(context)
 
     private val sensorListener = object : SensorChannel.Listener {
         override fun onSensors(batch: SensorBatch) {
@@ -1116,9 +1211,9 @@ class CarSession(
                     else -> CaptureMethods.MEDIA_USAGES + CaptureMethods.GUIDANCE_USAGES
                 }
                 when (method) {
-                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch)
-                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch)
-                    else -> SuPolicySource(context, usages, rate, ch)
+                    CaptureMethod.AUDIO_POLICY -> AudioPolicySource(context, usages, rate, ch, captureVolume())
+                    CaptureMethod.SHIZUKU_POLICY -> ShizukuPolicySource(context, usages, rate, ch, captureVolume())
+                    else -> SuPolicySource(context, usages, rate, ch, captureVolume())
                 }
             }
             CaptureMethod.SHIZUKU -> when {
@@ -1385,6 +1480,19 @@ class CarSession(
         }
     }
 
+    /**
+     * The loop back's volume for a capture (Settings.carAudioFullVolume). Full volume a killed
+     * session left behind is put back when the setting is off, so off has no lasting effect.
+     */
+    private fun captureVolume(): Int = when {
+        settings.carAudioFullVolume && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            settings.carAudioFullVolumeLeft = true
+            net.prototux.aare.audio.AudioPolicyCapture.VOLUME_FULL
+        }
+        settings.carAudioFullVolumeLeft -> net.prototux.aare.audio.AudioPolicyCapture.VOLUME_REPAIR
+        else -> net.prototux.aare.audio.AudioPolicyCapture.VOLUME_AS_IS
+    }
+
     private fun teardown() {
         closed = true
         btPairing?.privileged = null
@@ -1400,15 +1508,24 @@ class CarSession(
         phoneBridge?.stop(); phoneBridge = null
         btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
-        locationFeed.stop()
+        locationFeed.close()
+        if (settings.locationOffAfterCar) locationSwitch.stop()
         drivingMode.stop()
         cluster?.stop()
+        context.getSystemService(android.media.AudioManager::class.java)?.unregisterAudioRecordingCallback(recordings)
+        main.removeCallbacks(recordingDone)
+        main.removeCallbacks(resumeAfterRecording)
         settings.unregisterListener(phoneAppsMicSetting)
         phoneAppsMic?.stop(); phoneAppsMic = null
+        // Throws when never added: a session that closed before it got that far, or with the setting off.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) runCatching { context.getSystemService(AudioManager::class.java)?.removeOnModeChangedListener(modeChanged) }
         micRouter.shutdown()
+        // The captures closed with the session (above): the loop back's volume is as it was.
+        settings.carAudioFullVolumeLeft = false
         calibration.close()
         teardownVideo()
         runtime.stop()
+        net.prototux.aare.obd.ObdReader.stop(owner = this)
         CarData.reset(owner = this)
         scope.cancel()
     }
@@ -1468,6 +1585,8 @@ class CarSession(
         /** A projected screen with no new frame for this long gets redrawn (see stallCheck). */
         private const val STALL_MS = 1_000L
         private const val STALL_CHECK_MS = 500L
+        /** How often a paused resume looks again whether the phone's call or assistant answer ended. */
+        private const val CALL_CHECK_MS = 1_000L
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
@@ -1623,6 +1742,9 @@ private val NAV_KEYS = setOf(
 
 /** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
 internal fun logsCarKey(code: Int) = code !in NAV_KEYS
+
+/** Whether a message from [packageName] reaches the car screen: its app isn't [muted], and [groups] lets a [group]'s through. */
+internal fun showsMessage(packageName: String, group: Boolean, groups: Boolean, muted: Set<String>) = packageName !in muted && (!group || groups)
 
 /** How long until video report [n] (0: the first) after the car gave its screen: soon at first, then one in 30 s. */
 internal fun videoReportDelayMs(n: Int): Long = longArrayOf(1_000, 2_000, 7_000, 10_000).getOrElse(n) { 30_000 }

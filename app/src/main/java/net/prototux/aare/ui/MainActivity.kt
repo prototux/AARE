@@ -27,6 +27,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -156,6 +157,7 @@ import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
+import net.prototux.aare.devlog.DevLog
 import net.prototux.aare.home.HomeStore
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
@@ -312,6 +314,7 @@ private fun Home() {
                             item { VehicleOverridesCard() }
                             item { CarQuirksCard(settings) }
                             item { LogCard() }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) item { DeveloperLogCard() }
                             item { SettingsBackupCard(settings) { settingsGeneration++ } }
                             item { CarButtonsCard(settings) }
                         }
@@ -631,7 +634,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var pauseWhileRecording by remember { mutableStateOf(settings.pauseWhileRecording) }
     var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
+    var resumeAfterCall by remember { mutableStateOf(settings.resumeAfterCall) }
     var autoPair by remember { mutableStateOf(settings.autoPairCarBluetooth) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
@@ -660,8 +665,16 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 Spacer(Modifier.height(8.dp))
             }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_pause_while_recording_title), stringResource(R.string.setup_toggle_pause_while_recording_subtitle), pauseWhileRecording) {
+                pauseWhileRecording = it; settings.pauseWhileRecording = it
+            }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Toggle(stringResource(R.string.setup_toggle_resume_after_call_title), stringResource(R.string.setup_toggle_resume_after_call_subtitle), resumeAfterCall) {
+                    resumeAfterCall = it; settings.resumeAfterCall = it
+                }
             }
             Toggle(stringResource(R.string.setup_toggle_auto_pair_title), stringResource(R.string.setup_toggle_auto_pair_subtitle), autoPair) {
                 autoPair = it; settings.autoPairCarBluetooth = it
@@ -696,6 +709,16 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
         }
         Section(stringResource(R.string.setup_section_location)) {
+            if (remember { AppLauncher.available(ctx) }) {
+                var locationOn by remember { mutableStateOf(settings.locationOnInCar) }
+                Toggle(stringResource(R.string.setup_toggle_location_on_title), stringResource(R.string.setup_toggle_location_on_subtitle), locationOn) {
+                    locationOn = it; settings.locationOnInCar = it
+                }
+                var locationOff by remember { mutableStateOf(settings.locationOffAfterCar) }
+                Toggle(stringResource(R.string.setup_toggle_location_off_title), stringResource(R.string.setup_toggle_location_off_subtitle), locationOff) {
+                    locationOff = it; settings.locationOffAfterCar = it
+                }
+            }
             Toggle(stringResource(R.string.setup_toggle_car_gps_title), stringResource(R.string.setup_toggle_car_gps_subtitle), carGps) {
                 carGps = it; settings.carGpsForPhone = it
             }
@@ -913,6 +936,19 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         Toggle(stringResource(R.string.msg_toggle_banners_title), stringResource(R.string.msg_toggle_banners_subtitle), banners) { banners = it; settings.messageBanners = it }
         Toggle(stringResource(R.string.msg_toggle_group_title), stringResource(R.string.msg_toggle_group_subtitle), groups) { groups = it; settings.groupMessages = it }
         Toggle(stringResource(R.string.msg_toggle_read_aloud_title), stringResource(R.string.msg_toggle_read_aloud_subtitle), aloud) { aloud = it; settings.readMessagesAloud = it }
+        // Which apps' messages show in the car: all of them until one is switched off.
+        val apps by produceState(emptyList<PhoneApp>()) { value = withContext(Dispatchers.IO) { AndroidAutoApps.messagingApps(ctx) } }
+        var muted by remember { mutableStateOf(settings.mutedMessageApps) }
+        if (apps.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.msg_apps_title), style = MaterialTheme.typography.titleSmall)
+            apps.forEach { app ->
+                Toggle(app.label, stringResource(R.string.msg_apps_subtitle), app.packageName !in muted) { on ->
+                    muted = if (on) muted - app.packageName else muted + app.packageName
+                    settings.mutedMessageApps = muted
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.msg_hint_apps),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1177,6 +1213,12 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
         Section(stringResource(R.string.audio_settings_title)) {
             Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {
                 enabled = it; settings.carAudio = it
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                var fullVolume by remember { mutableStateOf(settings.carAudioFullVolume) }
+                Toggle(stringResource(R.string.audio_toggle_full_volume_title), stringResource(R.string.audio_toggle_full_volume_subtitle), fullVolume) {
+                    fullVolume = it; settings.carAudioFullVolume = it
+                }
             }
             Spacer(Modifier.height(4.dp))
             Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
@@ -1814,8 +1856,26 @@ private fun CarDataCard() {
     val ctx = LocalContext.current
     val settings = remember { Settings(ctx) }
     var inCar by remember { mutableStateOf(settings.carDataApp) }
+    var obdOn by remember { mutableStateOf(settings.obdAdapter) }
+    var obdFake by remember { mutableStateOf(settings.obdSimulated) }
+    val obdStatus by net.prototux.aare.obd.ObdReader.status.collectAsState()
+    val obd by net.prototux.aare.obd.ObdReader.readings.collectAsState()
     Section(stringResource(R.string.setup_page_car_data_title)) {
         Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
+        // Takes effect at the next connection (the reader runs with the car session).
+        Toggle(stringResource(R.string.obd_adapter_title), stringResource(R.string.obd_adapter_subtitle), obdOn) { obdOn = it; settings.obdAdapter = it }
+        if (obdOn) {
+            // Which paired device to read: by default any clearly named adapter, or the one picked here.
+            val paired = remember { net.prototux.aare.obd.BluetoothObdLink.pairedDevices(ctx) }
+            var chosen by remember { mutableStateOf(settings.obdAdapterAddress.orEmpty()) }
+            val options = listOf("" to stringResource(R.string.obd_adapter_auto)) + paired +
+                listOfNotNull(chosen.takeIf { c -> c.isNotEmpty() && paired.none { it.first == c } }?.let { it to it })
+            Spacer(Modifier.height(8.dp))
+            Select(stringResource(R.string.obd_adapter_pick), options, chosen) { chosen = it; settings.obdAdapterAddress = it.ifEmpty { null } }
+        }
+        if (obdOn && net.prototux.aare.BuildConfig.DEBUG) {
+            Toggle(stringResource(R.string.obd_simulated_title), stringResource(R.string.obd_simulated_subtitle), obdFake) { obdFake = it; settings.obdSimulated = it }
+        }
         if (!car.connected) {
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1880,6 +1940,12 @@ private fun CarDataCard() {
         DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
         DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
         DataRow(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
+    }
+    if (obdOn) {
+        Spacer(Modifier.height(16.dp))
+        Section(stringResource(R.string.obd_section)) {
+            net.prototux.aare.ui.car.obdDataLines(obdStatus, obd).forEach { (label, value) -> DataRow(label, value) }
+        }
     }
 }
 
@@ -2148,6 +2214,40 @@ private fun CarButtonsCard(settings: Settings) {
                 settings.carKeyMap = map
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun DeveloperLogCard() {
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    val scope = rememberCoroutineScope()
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                runCatching {
+                    ctx.contentResolver.openOutputStream(uri)?.use { DevLog.export(ctx, it) } ?: false
+                }
+            }
+            saved.onSuccess { if (!it) Toast.makeText(ctx, R.string.setup_dev_log_empty, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        }
+    }
+    Section(stringResource(R.string.setup_section_developer_log)) {
+        var enabled by remember { mutableStateOf(settings.developerMode) }
+        val path = remember { DevLog.folderPath(ctx) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_title), stringResource(R.string.setup_toggle_dev_log_subtitle, path), enabled) {
+            enabled = it; settings.developerMode = it
+            if (it) DevLog.start(ctx) else DevLog.stop(ctx)
+        }
+        var privacy by remember { mutableStateOf(settings.developerLogPrivacy) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_privacy_title), stringResource(R.string.setup_toggle_dev_log_privacy_subtitle), privacy) {
+            privacy = it; settings.developerLogPrivacy = it
+            if (settings.developerMode) DevLog.restart(ctx)
+        }
+        TextButton(onClick = { save.launch("aare-developer-log.txt") }) { Text(stringResource(R.string.setup_dev_log_save)) }
     }
 }
 

@@ -58,6 +58,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -93,12 +94,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
@@ -127,7 +132,7 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
@@ -145,7 +150,7 @@ fun CarShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -292,7 +297,8 @@ private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Uni
 private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, area: DpSize) {
     // The "dark bar" setting: night colors for the rail even when the rest is in day colors.
     if (state.darkBar && !state.night) {
-        CarTheme(night = true) { RailContent(state, actions, horizontal, area) }
+        // carBackdrop: a glass theme's rail is transparent, over its night backdrop here, not the day one.
+        CarTheme(night = true) { Box(Modifier.carBackdrop()) { RailContent(state, actions, horizontal, area) } }
     } else {
         RailContent(state, actions, horizontal, area)
     }
@@ -532,6 +538,8 @@ internal fun Dashboard(
     modifier: Modifier,
 ) {
     val gutter = LocalCarDimens.current.gutter
+    // Whether the OBD2 adapter is reading (the car card), without redrawing the dashboard on every reading.
+    val obdReading by remember { net.prototux.aare.obdapp.ObdApp.snapshot.map { it.readings != null }.distinctUntilChanged() }.collectAsState(false)
     // The map and the music always have something to show (a "where to?", "nothing playing").
     val shown: (DashCard) -> Boolean = { card ->
         when (card) {
@@ -540,6 +548,7 @@ internal fun Dashboard(
             DashCard.NOTIFICATION -> state.history.isNotEmpty()
             DashCard.WEATHER -> state.weather != null
             DashCard.HOME -> !state.home.isEmpty
+            DashCard.CAR -> obdReading
         }
     }
     // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
@@ -618,6 +627,12 @@ private fun DashSlot(
         DashCard.WEATHER -> state.weather?.let { weather -> Card(modifier) { WeatherCard(weather) } }
         DashCard.HOME -> if (!state.home.isEmpty) Card(modifier) {
             HomeCard(state.home, actions, compact, onOpen = { state.apps.firstOrNull { it.kind == CarAppKind.HOME }?.let(actions::openApp) })
+        }
+        DashCard.CAR -> {
+            val obd by net.prototux.aare.obdapp.ObdApp.snapshot.collectAsState()
+            if (obd.readings != null) Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.OBD }?.let(actions::openApp) }) {
+                net.prototux.aare.ui.car.obd.ObdDashCard(obd, compact)
+            }
         }
     }
 }

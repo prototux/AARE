@@ -11,7 +11,10 @@ enum class DashCard(
     NOTIFICATION("notification"),
     WEATHER("weather"),
     /** Smart-home values and buttons; shown only once some are set up. */
-    HOME("home");
+    HOME("home"),
+
+    /** The car from the OBD2 adapter (the Cockpit app): only with that setting on, and while it reads. */
+    CAR("car");
 
     companion object {
         /** The cards of a saved list of ids, in order: unknown ids dropped, each card once. */

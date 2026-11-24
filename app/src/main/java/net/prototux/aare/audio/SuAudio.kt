@@ -111,6 +111,7 @@ class SuPolicySource(
     private val usages: IntArray,
     private val rate: Int,
     private val channels: Int,
+    private val volume: Int = AudioPolicyCapture.VOLUME_AS_IS,
 ) : PcmSource {
     private var helper: SuAudio.Helper? = null
     private var stream: SuStreams.Stream? = null
@@ -125,7 +126,7 @@ class SuPolicySource(
         val s = h.streams.open(frameBytes = channels * 2, capacityBytes = rate * channels * 2)
         if (s == null) { release(); return false }
         stream = s
-        val why = if (h.send(Command.Policy(s.id, rate, channels, usages.toList()))) s.awaitStart(START_TIMEOUT_MS)
+        val why = if (h.send(Command.Policy(s.id, rate, channels, usages.toList(), volume))) s.awaitStart(START_TIMEOUT_MS)
             else "the root helper is gone"
         if (why != null) {
             DiagLog.add("car audio: root audio routing refused ($why)")

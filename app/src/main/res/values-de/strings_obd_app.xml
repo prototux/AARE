@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Armaturen</string>
+    <string name="obd_tab_trip">Fahrt</string>
+    <string name="obd_tab_history">Verlauf</string>
+    <string name="obd_tab_settings">Einstellungen</string>
+    <string name="obd_simulated_badge">Simulierter Adapter</string>
+    <string name="obd_waiting">Warte auf den Adapter…</string>
+    <string name="obd_gear">Gang</string>
+    <string name="obd_oil">Öl</string>
+    <string name="obd_fuel_use">Verbrauch</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">Spitze %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Strecke</string>
+    <string name="obd_trip_time">Zeit</string>
+    <string name="obd_trip_average">Schnitt</string>
+    <string name="obd_trip_now">Jetzt</string>
+    <string name="obd_trip_range">Reichweite</string>
+    <string name="obd_trip_reset">Fahrt zurücksetzen</string>
+    <string name="obd_trip_note">Die Fahrt ist diese Verbindung zum Auto; sie kommt in den Verlauf, wenn das Auto trennt oder beim Zurücksetzen. Der Verbrauch ist geschätzt, außer das Auto meldet ihn. Reichweite = restlicher Kraftstoff × Schnitt der Fahrt (Tankgröße in den Einstellungen).</string>
+    <string name="obd_history_recent">Letzte</string>
+    <string name="obd_history_empty">Noch nichts. Fahrten ab 1 km werden hier gespeichert.</string>
+    <string name="obd_history_trip">Fahrt</string>
+    <string name="obd_history_clear">Verlauf löschen</string>
+    <string name="obd_history_clear_confirm">Zum Löschen erneut tippen</string>
+    <string name="obd_set_engine">Zweite Anzeige</string>
+    <string name="obd_set_engine_auto">Automatisch</string>
+    <string name="obd_set_engine_turbo">Turbo (Ladedruck)</string>
+    <string name="obd_set_engine_na">Sauger (Last)</string>
+    <string name="obd_set_rpm_max">Drehzahlmesser bis</string>
+    <string name="obd_set_redline">Roter Bereich / Schaltlicht</string>
+    <string name="obd_set_displacement">Hubraum</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Kraftstoff</string>
+    <string name="obd_set_fuel_petrol">Benzin</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Ethanol (ohne Sensor)</string>
+    <string name="obd_set_gears">Gelernte Gänge: %1$d</string>
+    <string name="obd_set_gears_forget">Vergessen</string>
+    <string name="obd_coolant_short">Wasser</string>
+    <string name="obd_dash_card">Auto</string>
+    <string name="obd_set_card">Auto-Karte (Startseite)</string>
+    <string name="obd_set_card_pick">Auswählen</string>
+    <string name="obd_set_card_hint">Tippe die Werte in der gewünschten Reihenfolge an, bis zu %1$d. Sie erscheinen auf der Auto-Karte.</string>
+    <string name="obd_done">Fertig</string>
+    <string name="obd_card_gauge">Ladedruck / Last</string>
+    <string name="obd_card_now">Verbrauch jetzt</string>
+</resources>

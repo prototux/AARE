@@ -94,6 +94,28 @@
     <string name="car_data_app_label">Car data</string>
     <string name="car_data_show_in_car_title">Show on the car screen</string>
     <string name="car_data_show_in_car_subtitle">Add a diagnostics app in the car for this live data</string>
+    <string name="obd_adapter_title">Read an OBD2 adapter</string>
+    <string name="obd_adapter_subtitle">An ELM327 adapter paired over Bluetooth, read while the car is connected: engine data the car doesn\'t send to AARE. Read only: AARE never writes to the car.</string>
+    <string name="obd_adapter_pick">Adapter</string>
+    <string name="obd_adapter_auto">Automatic: a paired device named like an adapter (OBD, ELM327, V-LINK…)</string>
+    <string name="obd_simulated_title">Pretend OBD2 adapter (debug)</string>
+    <string name="obd_simulated_subtitle">A simulated car instead of a real adapter, to try this page</string>
+    <string name="obd_section">OBD2 adapter</string>
+    <string name="obd_status_off">Off</string>
+    <string name="obd_status_searching">Looking for a paired adapter (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: the car doesn\'t answer (ignition off?)</string>
+    <string name="obd_status_gave_up">No adapter found: pair one in the phone\'s Bluetooth settings</string>
+    <string name="obd_rpm">Revs</string>
+    <string name="obd_speed">Speed</string>
+    <string name="obd_coolant">Coolant</string>
+    <string name="obd_intake_air">Intake air</string>
+    <string name="obd_outside">Outside air</string>
+    <string name="obd_boost">Boost</string>
+    <string name="obd_load">Engine load</string>
+    <string name="obd_battery">Battery</string>
+    <string name="obd_fuel">Fuel</string>
+    <string name="obd_ethanol">Ethanol</string>
 
     <!-- about: the About page -->
     <string name="about_section_what_title">What AARE is</string>
@@ -215,8 +237,12 @@
     <string name="setup_toggle_companion_shizuku_subtitle">For associated cars, Shizuku answers Android\'s \"connect to device\" question, so it isn\'t asked again. The car\'s network stays AARE\'s own, never the phone\'s internet connection. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_toggle_pause_while_recording_title">Pause while an app records</string>
+    <string name="setup_toggle_pause_while_recording_subtitle">Music or a video pauses while a phone app records (a voice message, an assistant listening), and plays on once it is done. Takes effect at the next connection.</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>
     <string name="setup_toggle_calls_speaker_subtitle">While connected to a car, calls use the phone\'s loudspeaker and microphone instead of the car\'s hands-free link. For wireless adapters or head units whose microphone doesn\'t work. Takes effect from the next connection.</string>
+    <string name="setup_toggle_resume_after_call_title">Music back after a call</string>
+    <string name="setup_toggle_resume_after_call_subtitle">After a call on the phone, or an assistant listening, ask the car for the sound again and play on what it paused. For cars that keep the call\'s sound until asked. Android 12 and later. Takes effect at the next connection.</string>
     <string name="setup_toggle_auto_pair_title">Pair the car\'s Bluetooth automatically</string>
     <string name="setup_toggle_auto_pair_subtitle">For calls: when a car the phone isn\'t paired with asks to pair over Android Auto, pair with that car through Shizuku instead of Android\'s dialog, if the code matches the one the car sent. Never any other device. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_bt_address_label">Phone Bluetooth address (optional)</string>
@@ -234,6 +260,10 @@
     <string name="setup_section_location">Location</string>
     <string name="setup_toggle_car_gps_title">Use the car\'s GPS</string>
     <string name="setup_toggle_car_gps_subtitle">While connected, apps on the phone see the car\'s position instead of the phone\'s own, so navigation apps don\'t mix the two</string>
+    <string name="setup_toggle_location_on_title">Location on when connected</string>
+    <string name="setup_toggle_location_on_subtitle">Turns the phone\'s location on when a car connects, as navigation and speed camera apps need it. With Shizuku or root.</string>
+    <string name="setup_toggle_location_off_title">Location off when disconnected</string>
+    <string name="setup_toggle_location_off_subtitle">Turns the phone\'s location off once the car is no longer connected. With Shizuku or root.</string>
     <string name="setup_check_mock_location_title">Allow AARE to set the location</string>
     <string name="setup_check_mock_location_subtitle">Developer options &gt; Select mock location app &gt; AARE</string>
     <string name="setup_check_background_location_title">Navigation with the phone locked</string>
@@ -360,6 +390,13 @@
     <string name="setup_car_action_open_phone">Open phone app</string>
     <string name="setup_car_action_nothing">Nothing</string>
     <string name="setup_log_save">Save</string>
+    <string name="setup_section_developer_log">Developer log</string>
+    <string name="setup_toggle_dev_log_title">Developer mode</string>
+    <string name="setup_toggle_dev_log_subtitle">Write everything AARE logs to text files in %1$s (up to 50 MB). Turning it off deletes them: save them first.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Hide personal data</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Mask the addresses, network and device names and other personal data it recognises. Read the file before you share it.</string>
+    <string name="setup_dev_log_save">Save developer log</string>
+    <string name="setup_dev_log_empty">No developer log yet</string>
     <string name="setup_toggle_verbose_log_title">Verbose protocol log</string>
     <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
     <string name="setup_section_backup">Settings backup</string>
@@ -384,6 +421,8 @@
     <string name="setup_style_custom">Custom</string>
     <string name="theme_high_contrast">High contrast</string>
     <string name="theme_night">Night</string>
+    <string name="theme_frosted_glass">Frosted glass</string>
+    <string name="theme_dark_glass">Dark glass</string>
     <string name="theme_retro">Retro</string>
     <string name="setup_choice_accent">Accent color</string>
     <string name="accent_theme">Theme\'s</string>
@@ -441,6 +480,8 @@
     <string name="msg_toggle_banners_subtitle">A banner on the car screen for each new message</string>
     <string name="msg_toggle_group_title">Group messages</string>
     <string name="msg_toggle_group_subtitle">Also show messages from group conversations</string>
+    <string name="msg_apps_title">Apps shown in the car</string>
+    <string name="msg_apps_subtitle">Its messages as banners and in the notification center</string>
     <string name="msg_toggle_read_aloud_title">Read messages aloud</string>
     <string name="msg_toggle_read_aloud_subtitle">Read each new message aloud as it arrives</string>
     <string name="msg_hint_apps">Messaging apps (WhatsApp, Signal, SMS…) also have their own page in the car\'s app list.</string>
@@ -460,6 +501,8 @@
     <string name="audio_page_subtitle">How the phone\'s sound reaches the car</string>
     <string name="audio_toggle_enable_title">Phone audio in the car</string>
     <string name="audio_toggle_enable_subtitle">Music, podcasts, the assistant and, depending on the method, navigation voice</string>
+    <string name="audio_toggle_full_volume_title">Full volume to the car</string>
+    <string name="audio_toggle_full_volume_subtitle">Sends the sound at full volume, as Android Auto does, and the car sets the level. Turn the car\'s volume down before the first drive with it: it plays much louder than before. Off: the phone\'s media volume applies. Audio policy capture (AARE as a system app, Shizuku or root), Android 12 and later. Takes effect at the next connection.</string>
     <string name="audio_using_method">Using: %1$s</string>
     <string name="audio_no_method">No method is set up yet: choose one below.</string>
     <string name="audio_section_methods">Methods, best first</string>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The track pages of the Cockpit app: Track, Lap and Dyno (net.prototux.aare.obdapp.track). -->
+<resources>
+    <string name="obd_tab_track">Track</string>
+    <string name="obd_tab_lap">Lap</string>
+    <string name="obd_tab_dyno">Dyno</string>
+    <string name="obd_track_warning">Track or closed area only. Never on public roads.</string>
+    <string name="obd_g_title">G force (phone)</string>
+    <string name="obd_g_accel">Accel %1$s</string>
+    <string name="obd_g_brake">Brake %1$s</string>
+    <string name="obd_g_lateral">Lateral %1$s</string>
+    <string name="obd_g_reset">Reset max</string>
+    <string name="obd_g_hint">Keep the phone firmly in its mount. It learns which way is forward as you speed up and brake.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Tap to arm</string>
+    <string name="obd_test_stop">Armed: stop the car</string>
+    <string name="obd_test_below">Armed: stay below %1$d km/h</string>
+    <string name="obd_test_above">Armed: go past %1$d km/h</string>
+    <string name="obd_test_ready">Ready: go</string>
+    <string name="obd_test_ready_brake">Ready: brake</string>
+    <string name="obd_test_running">Measuring…</string>
+    <string name="obd_best">Best %1$s</string>
+    <string name="obd_lap_arm">Start lap timer</string>
+    <string name="obd_lap_disarm">Stop</string>
+    <string name="obd_lap_waiting">Armed: the start line is set where you start moving</string>
+    <string name="obd_lap_last">Last</string>
+    <string name="obd_lap_best">Best</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Laps</string>
+    <string name="obd_lap_no_gps">No GPS from the car</string>
+    <string name="obd_dyno_arm">Arm</string>
+    <string name="obd_dyno_disarm">Finish</string>
+    <string name="obd_dyno_off">Arm, then floor it in 2nd or 3rd gear from low revs to near the limiter.</string>
+    <string name="obd_dyno_armed">Armed: full throttle</string>
+    <string name="obd_dyno_peak">%1$.0f hp at %2$.0f rpm</string>
+    <string name="obd_dyno_note">Power at the wheels, estimated from the acceleration and the car\'s weight (Settings). A rough guide, not a real dyno.</string>
+    <string name="obd_history_records">Best</string>
+    <string name="obd_history_lap">Lap</string>
+    <string name="obd_history_dyno">Dyno</string>
+    <string name="obd_set_mass">Weight with the driver</string>
+</resources>

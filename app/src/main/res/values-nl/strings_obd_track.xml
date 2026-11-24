@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Circuit</string>
+    <string name="obd_tab_lap">Ronde</string>
+    <string name="obd_tab_dyno">Rollenbank</string>
+    <string name="obd_track_warning">Alleen op een circuit of afgesloten terrein. Nooit op de openbare weg.</string>
+    <string name="obd_g_title">G-kracht (telefoon)</string>
+    <string name="obd_g_accel">Accel. %1$s</string>
+    <string name="obd_g_brake">Remmen %1$s</string>
+    <string name="obd_g_lateral">Zijwaarts %1$s</string>
+    <string name="obd_g_reset">Max wissen</string>
+    <string name="obd_g_hint">Zet de telefoon stevig in de houder. Hij leert waar voren is als je optrekt en remt.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Tik om te activeren</string>
+    <string name="obd_test_stop">Actief: stop de auto</string>
+    <string name="obd_test_below">Actief: blijf onder %1$d km/h</string>
+    <string name="obd_test_above">Actief: ga boven %1$d km/h</string>
+    <string name="obd_test_ready">Klaar: gas</string>
+    <string name="obd_test_ready_brake">Klaar: remmen</string>
+    <string name="obd_test_running">Meten…</string>
+    <string name="obd_best">Beste %1$s</string>
+    <string name="obd_lap_arm">Rondetimer starten</string>
+    <string name="obd_lap_disarm">Stop</string>
+    <string name="obd_lap_waiting">Actief: de startlijn komt waar je begint te rijden</string>
+    <string name="obd_lap_last">Laatste</string>
+    <string name="obd_lap_best">Beste</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Rondes</string>
+    <string name="obd_lap_no_gps">Geen gps van de auto</string>
+    <string name="obd_dyno_arm">Activeren</string>
+    <string name="obd_dyno_disarm">Klaar</string>
+    <string name="obd_dyno_off">Activeer en geef vol gas in de 2e of 3e versnelling, van lage toeren tot vlak voor de begrenzer.</string>
+    <string name="obd_dyno_armed">Actief: vol gas</string>
+    <string name="obd_dyno_peak">%1$.0f pk bij %2$.0f tpm</string>
+    <string name="obd_dyno_note">Vermogen aan de wielen, geschat uit de acceleratie en het gewicht van de auto (Instellingen). Een ruwe schatting, geen echte rollenbank.</string>
+    <string name="obd_history_records">Records</string>
+    <string name="obd_history_lap">Ronde</string>
+    <string name="obd_history_dyno">Rollenbank</string>
+    <string name="obd_set_mass">Gewicht met bestuurder</string>
+</resources>

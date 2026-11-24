@@ -142,12 +142,17 @@ class MicRouter(
             }
             val buf = ByteArray(640) // 20 ms
             rec.startRecording()
+            var failed = false
             while (phoneRunning) {
                 val n = rec.read(buf, 0, buf.size)
+                // An error (recording didn't start, the audio server went away) comes back at once, every time:
+                // looping on it would spin at audio priority while the car app waits for sound.
+                if (n < 0) { Log.w(TAG, "phone microphone read failed: $n"); failed = true; break }
                 if (n > 0) client?.sink?.invoke(buf, 0, n)
             }
             rec.stop()
             rec.release()
+            if (failed) phoneMicFailed(c)
         }, "aare-phone-mic").apply { start() }
     }
 
