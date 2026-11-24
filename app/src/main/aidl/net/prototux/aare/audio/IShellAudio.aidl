@@ -35,6 +35,12 @@ interface IShellAudio {
 
     void stopMicInjection() = 7;
 
+    /**
+     * Why the last startPolicy() returned null (the system's refusal, as the root cause's class and
+     * message), for the connection log; null if none failed.
+     */
+    String lastFailure() = 8;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }
