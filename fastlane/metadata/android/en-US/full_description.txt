@@ -1,0 +1,26 @@
+<p>AARE is an open-source replacement for the phone side of Android Auto. Plug your phone into the car, or connect wirelessly, and get your navigation, music, messages and voice assistant on the car's screen, with the apps you choose. No Google Play Services, no account.</p>
+
+<p><b>Your apps on the car screen</b></p>
+<ul>
+<li>Open navigation apps: CoMaps, Organic Maps, OsmAnd and any app built with the AndroidX Car App Library, F-Droid builds included.</li>
+<li>Any music app with a media library: podcasts, radio, Subsonic/Navidrome clients, local players. Browse, search, see what's playing.</li>
+<li>Messages, hands-free: messaging apps read aloud, marked as read, answered with the car keyboard when parked.</li>
+<li>Your voice assistant on the steering-wheel button, with the car's microphone.</li>
+<li>Calls over the car's Bluetooth: incoming calls, recent calls, favourites and a keypad.</li>
+<li>When parked: the phone's own screen in the car, a web browser, ordinary phone apps (with root or Shizuku) and the car's live data.</li>
+</ul>
+
+<p><b>Looks the way you want</b></p>
+<ul>
+<li>Eight styles with an accent colour of your choice, and a dashboard you arrange yourself.</li>
+<li>Wide, ultra-wide and portrait head units, day and night colours from the car, video on the instrument cluster.</li>
+</ul>
+
+<p><b>Car audio</b></p>
+<p>The phone's sound goes to the car's speakers. With root or Shizuku, music and navigation voice go to their own car channels, as with Android Auto; without them, the screen-capture permission carries the music.</p>
+
+<p><b>Good to know</b></p>
+<ul>
+<li>Many factory head units only accept a certificate issued by Google. AARE can download the one extracted from the Android Auto app, from a third-party repository, only when you tap it; head units that don't check work without it. See the README for the list of tested cars.</li>
+<li>Some features need a recent Android version, root or Shizuku: the app says which.</li>
+</ul>

@@ -1,6 +1,7 @@
 # AARE
 
 [<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/prototux/AARE)
+[<img src="https://img.shields.io/badge/Discord-join%20the%20server-5865F2?logo=discord&logoColor=white&style=for-the-badge" alt="Join the Discord server" height="40">](https://discord.gg/FHVPUWHU6E)
 
 **Android Auto, without Google.** AARE is an open-source replacement for the phone side of
 Android Auto. Plug your phone into the car, or connect wirelessly, and get your navigation, music,
@@ -503,6 +504,9 @@ here, whether it worked or not.
 - **Black screen with some head units:** if the car shows the Android Auto icon but no picture
   until you touch the screen, a *Phone Bluetooth address* under *Connecting* helps some units;
   otherwise see [#96](https://github.com/prototux/AARE/issues/96).
+- **Questions and help:** ask on the [Discord server](https://discord.gg/FHVPUWHU6E) or in
+  [GitHub Discussions](https://github.com/prototux/AARE/discussions); bugs and car reports go to
+  the [issues](https://github.com/prototux/AARE/issues), where they're tracked.
 - **Reporting a problem:** AARE keeps a connection log under *Advanced*: turn on *Verbose
   protocol log*, reproduce, then copy or save it and attach it to the issue, with the car (make,
   model, year), USB or wireless.
@@ -752,7 +756,8 @@ in Android Studio works too.
 
 ### Contributing
 
-Bug reports and pull requests are welcome. Reports from real cars are the most useful: say which
+Bug reports and pull requests are welcome; development is also discussed on the
+[Discord server](https://discord.gg/FHVPUWHU6E). Reports from real cars are the most useful: say which
 head unit (make, model, year, or the open-source software it runs), USB or wireless, and attach
 AARE's connection log (*Advanced > Verbose protocol log*), or `adb logcat` output around the
 connection (`adb logcat | grep -i aare`).
