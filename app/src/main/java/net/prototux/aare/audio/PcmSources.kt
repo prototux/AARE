@@ -26,6 +26,7 @@ import net.prototux.aare.BuildConfig
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.root.Root
 import net.prototux.aare.root.RootHandover
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import rikka.shizuku.Shizuku
@@ -74,22 +75,9 @@ object CaptureMethods {
         Shizuku.pingBinder() && !Shizuku.isPreV11() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED
     }.getOrDefault(false)
 
-    /** The user allowed capturing car audio through su (a rooted phone), confirmed by [checkRoot]. */
+    /** Root is allowed (see Root), on Android 12+, where the helper can record as the shell. */
     fun rootAvailable(context: Context): Boolean =
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Settings(context).rootAudio
-
-    /** Runs `su -c id` off the main thread; [onResult] gets true if root is granted (uid 0). */
-    fun checkRoot(onResult: (Boolean) -> Unit) {
-        Thread {
-            val granted = runCatching {
-                val p = ProcessBuilder("su", "-c", "id").redirectErrorStream(true).start()
-                val out = p.inputStream.bufferedReader().use { it.readText() }
-                if (!p.waitFor(10, TimeUnit.SECONDS)) p.destroy()
-                out.contains("uid=0")
-            }.getOrDefault(false)
-            onResult(granted)
-        }.apply { isDaemon = true }.start()
-    }
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Root.allowed(context)
 
     /** What the phone offers now, for [CaptureOrder]; [playbackConsent]: a screen-capture consent is held. */
     fun env(context: Context, playbackConsent: Boolean): CaptureOrder.Env = CaptureOrder.Env(

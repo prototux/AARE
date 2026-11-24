@@ -12,7 +12,7 @@ object CaptureOrder {
         val privileged: Boolean,
         /** Shizuku runs and AARE may use it, on Android 12+ ([CaptureMethods.shizukuAvailable]). */
         val shizuku: Boolean,
-        /** The user allowed root for car audio, on Android 12+ ([CaptureMethods.rootAvailable]). */
+        /** The user allowed root, on Android 12+ ([CaptureMethods.rootAvailable]). */
         val root: Boolean,
         /** A screen-capture consent is held, on Android 10+ (capturing other apps' sound came then). */
         val playbackCapture: Boolean,

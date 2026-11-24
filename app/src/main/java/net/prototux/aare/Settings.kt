@@ -353,10 +353,13 @@ class Settings(context: Context) {
     var autoPairCarBluetooth: Boolean
         get() = prefs.getBoolean("auto_pair_car_bluetooth", false)
         set(v) = prefs.edit { putBoolean("auto_pair_car_bluetooth", v) }
-    /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
-    var rootAudio: Boolean
-        get() = prefs.getBoolean("root_audio", false)
-        set(v) = prefs.edit { putBoolean("root_audio", v) }
+    /**
+     * The user allowed root, for the whole app (see Root). It was root_audio, which only the car
+     * audio screen set: still read until the first write, which drops it.
+     */
+    var rootAllowed: Boolean
+        get() = prefs.getBoolean("root_allowed", prefs.getBoolean("root_audio", false))
+        set(v) = prefs.edit { putBoolean("root_allowed", v); remove("root_audio") }
 
     /**
      * Package of the assistant the steering-wheel voice button opens (a car app such as Lapin, or a

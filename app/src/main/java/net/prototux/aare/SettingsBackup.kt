@@ -107,7 +107,8 @@ object SettingsBackup {
         "head_unit_server_mirror", // the phone's screen to an unauthenticated server peer
         "hu_server_localhost", // the server to any app on the phone
         "ignore_driving", // passenger mode: lifts the driving restrictions
-        "root_audio", // capture through su, granted in the audio settings
+        "root_allowed", // root for the whole app, granted by su on this phone
+        "root_audio", // the same, before 2.0 (granted in the audio settings)
         "standalone_apps", // phone apps on the car screen through root or Shizuku, behind a warning
         "assistant_links", // lets another app act on the car
         "assistant_on_car_screen", // the next five work through root or Shizuku

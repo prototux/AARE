@@ -95,7 +95,7 @@ class SettingsBackupTest {
 
     @Test
     fun theSafetyAndNetworkKeysAreBlockedAndNoneIsAllowed() {
-        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_audio", "assistant_links",
+        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_allowed", "root_audio", "assistant_links",
             "assistant_on_car_screen", "media_video", "car_mic_for_phone_apps", "auto_pair_car_bluetooth", "companion_wifi_shizuku", "standalone_driving_rules")) {
             assertTrue(key, key in SettingsBackup.BLOCKED)
         }
