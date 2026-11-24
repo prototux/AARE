@@ -96,7 +96,8 @@ Download `aare-<version>.apk` from the [releases](https://github.com/prototux/AA
 open it on the phone (or `adb install -r aare-<version>.apk`), or get it with
 [Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/prototux/AARE)
 to stay up to date. AARE also tells you on its home screen when a new release is out. Each release
-also has the Magisk module (rooted phones, see [Car audio](#car-audio)) and the desktop head unit.
+also has the Magisk module (rooted phones, see [Car audio](#car-audio); deprecated, removed in the
+next release) and the desktop head unit.
 
 Releases are signed with AARE's release key, SHA-256
 `63:EF:0D:E1:DB:2C:09:BB:7F:B2:5C:E7:EA:4A:DC:35:38:AF:42:3B:88:52:78:B5:9D:F2:88:9C:7F:18:28:6F`.
@@ -363,7 +364,8 @@ AARE uses the best way to send the phone's sound to the car that the phone allow
 | **Root** | a rooted phone (KernelSU, Magisk, APatch…), Android 12+: the normal APK, nothing else to install | yes, on the car's navigation channel | off |
 | **Screen-capture permission** | one consent (choose *Entire screen*) | no | still plays |
 
-- **Privileged install (root):** `tools/magisk/build-module.sh` makes `build/aare-magisk.zip`
+- **Privileged install (root), deprecated:** removed in the next release, since root alone now does
+  the same (below). `tools/magisk/build-module.sh` makes `build/aare-magisk.zip`
   (each release has it too). Install it from Magisk (*Modules > Install from storage*) and reboot.
   AARE is then in `/system/priv-app` with `MODIFY_AUDIO_ROUTING`. Later updates install normally
   if they are signed with the same key.
