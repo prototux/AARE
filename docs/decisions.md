@@ -865,3 +865,71 @@ port, every time.
   attempt reuses the tested path.
 - **No race with the connect:** `sessionConnected()` and the restart check share a lock; a connect
   that completes after a restart is dropped, not used against the old setup.
+
+## Car audio overhaul: capture methods and their settings (plan)
+
+Owner's decisions, 2026-11-24. The car audio screen guesses which capture method runs (its own copy
+of the fallback order, `AudioSettings` in `ui/MainActivity.kt`), never shows a fallback or a failure,
+puts root and Shizuku in one row, and counts root only after a tap on that row (`root_audio`), a flag
+the app launcher reads too (#396). Reports (#128, #159, #325) show users can't tell which method runs,
+or why another doesn't.
+
+**Methods, in the automatic order.** Names say how each works; what the user gets is shown apart.
+1. *Audio routing (root)*: the audio policy, registered by the root helper.
+2. *Audio routing (Shizuku)*: the same policy, registered by the Shizuku helper.
+3. *Output recording*: the phone's whole output, through root or Shizuku, for phones that refuse the
+   policy. Navigation voice plays inside the music, notification sounds come too.
+4. *Screen capture*: the user's screen-capture authorization; music only.
+
+Root now comes before Shizuku (owner's choice): a phone with both moves from the Shizuku helper to
+the root one, to note in the release. Shizuku methods are only tried when Shizuku is installed and
+running. Nothing changes on the wire.
+
+- **The root helper hands AARE a binder**, the same `IShellAudio` the Shizuku helper offers, as
+  `LaunchMain` already does for the launcher. It replaces the stdin/stdout framing (`SuAudioWire`) of
+  "Root car audio" above; the helper still drops to the shell uid. One code path for root and
+  Shizuku, so the car microphone for phone apps works on root too. The handover must reach AARE
+  only: check it against `LaunchMain`'s. Rejected: extending the framing with a way back for the
+  microphone and its callbacks, a second protocol to keep in step with the Shizuku one.
+- **Root is one app-wide permission.** AARE looks for `su` without running it; "Root found: tap to
+  allow" runs it once; a visible switch replaces the hidden `root_audio`, and the launcher and every
+  other root user read it. Migration: `root_audio` on means allowed.
+- **Magisk module (privileged install): deprecated** in the 1.6.0 notes, removed in the next release,
+  and not shown on the new screen. Removing it breaks existing setups, a major version under the
+  release rules: open, the owner decides that release's number.
+- **Xposed plays no part in audio**: audioserver checks the permission natively (see "Xposed
+  host-shims module").
+- **Forcing a method**: *Automatic* by default; a forced method never falls back. The selector
+  carries a warning instead of a label.
+- **The screen shows the session's state, not its own guess**: `CarSession` publishes each method's
+  result (in use, backup, failed with the reason, needs setup, not available).
+- **Refusals are remembered per phone**: which method the phone refused at the last drive. Before a
+  drive the screen says "expected" and counts it; AARE still tries that method first, in case it was
+  a one-off.
+- **Screen capture is only offered when nothing else can work**, so nobody grants a right AARE won't
+  use. If it becomes the only way during a drive, the car says to open AARE on the phone, where
+  Android's dialog appears.
+- **No links that push other apps** (no "Get Shizuku"): requirements are only stated. "Open
+  Shizuku" stays for a Shizuku that is installed but stopped.
+- **Defaults**: full volume to the car on for new installs only (existing ones keep theirs, so no one
+  gets much louder sound at the first drive after an update); the car microphone for phone apps on
+  when root or Shizuku works, where the user never set it.
+
+**The screen.** A status card: *Audio working*, *Music and navigation apart* (a neutral "partly"
+mark for output recording, red only when navigation voice is missing), *Phone speaker quiet*, then
+the active method. Below it the method selector, *Tried in this order* (names and one status word),
+*Why not the others?* (folded: requirement tags, the reason, the action), *What the methods are*
+(folded, one plain line each), then the car microphone and sound settings.
+
+**Order of work**, one PR each:
+1. Extraction, no behaviour change: one capture-method registry holding the order and each method's
+   result (today `CaptureMethods.best`, `CarSession.startAudio` and the screen each have a copy), a
+   focus controller out of `CarSession`, the hidden-API policy code shared by `AudioPolicyCapture`
+   and `ShellMicInjector`, one microphone lease for `MicRouter` and `MicTakeover`. Tests for
+   `CarAudioOut` and the order.
+2. The root helper over a binder; the car microphone for phone apps on root; root as an app-wide
+   permission (with its migration).
+3. Root before Shizuku, the published per-method state, remembered refusals, forcing.
+4. The new screen, the car's screen-capture notice and the new defaults; translations before the
+   release tag.
+5. The Magisk module removed: tools, release workflow, README.
