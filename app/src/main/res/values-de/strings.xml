@@ -76,6 +76,8 @@
     <string name="setup_toggle_location_on_subtitle">Schaltet den Standort des Handys ein, sobald ein Auto verbunden ist, weil Navi- und Blitzer-Apps ihn brauchen. Mit Shizuku oder Root.</string>
     <string name="setup_toggle_location_off_title">Standort aus, wenn getrennt</string>
     <string name="setup_toggle_location_off_subtitle">Schaltet den Standort des Handys aus, sobald das Auto nicht mehr verbunden ist. Mit Shizuku oder Root.</string>
+    <string name="setup_toggle_location_off_always_title">Auch wenn er vorher an war</string>
+    <string name="setup_toggle_location_off_always_subtitle">Schaltet den Standort auch aus, wenn er beim Verbinden schon an war. Sonst geht nur ein Standort aus, den AARE eingeschaltet hat.</string>
     <string name="setup_check_mock_location_title">AARE erlauben, den Standort festzulegen</string>
     <string name="setup_check_mock_location_subtitle">Entwickleroptionen &gt; App für simulierten Standort auswählen &gt; AARE</string>
     <string name="setup_check_background_location_title">Navigation bei gesperrtem Telefon</string>

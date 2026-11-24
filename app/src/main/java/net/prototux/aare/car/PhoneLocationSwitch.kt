@@ -23,21 +23,22 @@ class PhoneLocationSwitch(private val context: Context) {
 
     /**
      * Only after [start]: a session that ended before it ran (a failed connect) leaves the location
-     * as it is. Off only if AARE turned it on: one the driver had on stays on.
+     * as it is. Off only if AARE turned it on, one the driver had on stays on; [always]: off either way.
      */
-    fun stop() { if (started) switch(false) }
+    fun stop(always: Boolean = false) { if (started) switch(false, always = always) }
 
     /** One after the other, each checking when it runs: an off, then an on right after (a quick reconnect) ends on. */
-    private fun switch(on: Boolean, wanted: () -> Boolean = { true }) {
+    private fun switch(on: Boolean, always: Boolean = false, wanted: () -> Boolean = { true }) {
         if (!AppLauncher.available(context)) return
         worker.execute {
-            // Decided here, after the last session's off ran.
-            if (!wanted()) return@execute
             val lm = context.getSystemService(LocationManager::class.java) ?: return@execute
             val enabled = lm.isLocationEnabled
-            // Already on as the session starts: the driver's, whatever an earlier session did.
-            if (on && enabled) ours = false
-            if (!locationSwitches(on, enabled, ours) || !set(on)) return@execute
+            // A session start: AARE's only if this start turns it on below. Found on, or left alone
+            // (not chosen), it is the driver's, whatever an earlier session did.
+            ours = stillOurs(on, ours)
+            // Decided here, after the last session's off ran.
+            if (!wanted()) return@execute
+            if (!locationSwitches(on, enabled, ours, always) || !set(on)) return@execute
             ours = on
             offAt = if (on) 0L else SystemClock.elapsedRealtime()
         }
@@ -74,6 +75,10 @@ internal fun turnsOn(on: Boolean, offAt: Long, now: Long): Boolean = on || (offA
 
 /**
  * Whether the switch changes the location: [on] turns it on when it's off; off turns it off only
- * when it's on and AARE ([ours]) turned it on.
+ * when it's on and AARE ([ours]) turned it on, or [always] (Settings.locationOffAlways).
  */
-internal fun locationSwitches(on: Boolean, enabled: Boolean, ours: Boolean): Boolean = if (on) !enabled else enabled && ours
+internal fun locationSwitches(on: Boolean, enabled: Boolean, ours: Boolean, always: Boolean = false): Boolean =
+    if (on) !enabled else enabled && (ours || always)
+
+/** Whether AARE still counts the location as turned on by it: not once a session starts (it decides anew). */
+internal fun stillOurs(on: Boolean, ours: Boolean): Boolean = ours && !on

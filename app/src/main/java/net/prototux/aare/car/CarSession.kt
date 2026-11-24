@@ -1428,7 +1428,7 @@ class CarSession(
         btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
         locationFeed.close()
-        if (settings.locationOffAfterCar) locationSwitch.stop()
+        if (settings.locationOffAfterCar) locationSwitch.stop(always = settings.locationOffAlways)
         drivingMode.stop()
         cluster?.stop()
         context.getSystemService(android.media.AudioManager::class.java)?.unregisterAudioRecordingCallback(recordings)

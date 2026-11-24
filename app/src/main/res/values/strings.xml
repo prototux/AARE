@@ -264,6 +264,8 @@
     <string name="setup_toggle_location_on_subtitle">Turns the phone\'s location on when a car connects, as navigation and speed camera apps need it. With Shizuku or root.</string>
     <string name="setup_toggle_location_off_title">Location off when disconnected</string>
     <string name="setup_toggle_location_off_subtitle">Turns the phone\'s location off once the car is no longer connected. With Shizuku or root.</string>
+    <string name="setup_toggle_location_off_always_title">Also when it was on before</string>
+    <string name="setup_toggle_location_off_always_subtitle">Turns the location off even if it was already on when the car connected. Otherwise only a location AARE turned on goes off.</string>
     <string name="setup_check_mock_location_title">Allow AARE to set the location</string>
     <string name="setup_check_mock_location_subtitle">Developer options &gt; Select mock location app &gt; AARE</string>
     <string name="setup_check_background_location_title">Navigation with the phone locked</string>
