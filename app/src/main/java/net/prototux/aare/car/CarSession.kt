@@ -1,7 +1,6 @@
 package net.prototux.aare.car
 
 import aap_protobuf.service.control.message.AudioFocusNotificationOuterClass.AudioFocusNotification
-import aap_protobuf.service.control.message.AudioFocusRequestTypeOuterClass.AudioFocusRequestType
 import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
 import aap_protobuf.service.control.message.NavFocusTypeOuterClass.NavFocusType
 import aap_protobuf.service.control.message.ServiceDiscoveryResponseOuterClass.ServiceDiscoveryResponse
@@ -58,7 +57,6 @@ import net.prototux.aare.aap.CertificateRefusal
 import net.prototux.aare.aap.PhoneDescription
 import net.prototux.aare.aap.PhoneIdentity
 import net.prototux.aare.aap.PinRefusal
-import net.prototux.aare.aap.Priority
 import net.prototux.aare.aap.ServiceChannel
 import net.prototux.aare.aap.SessionOptions
 import net.prototux.aare.aap.Transport
@@ -186,15 +184,12 @@ class CarSession(
     private val micRouter = MicRouter({ mic }, { active -> if (aap.state == AapSession.State.RUNNING) aap.voiceSession(active) })
     /** The car's mic for the phone's own apps (Settings.carMicForPhoneApps); null when off or the car has none. */
     private var phoneAppsMic: CarMicForApps? = null
-    @Volatile private var mediaFocus = false
-    /** The car lets navigation voice play (but not music). */
-    @Volatile private var guidanceFocusState = false
-    /**
-     * The car answered our own guidance request. Some head units (Ford SYNC) answer the transient
-     * may-duck request with a plain LOSS: the music lost focus so the prompt can play. Taken as
-     * a grant for the guidance channel, or the prompt waits for a GAIN that never comes.
-     */
-    @Volatile private var guidanceAnswered = false
+    /** The car's audio focus for the music and navigation voice streams. */
+    private val audioFocus = CarAudioFocus({ type, priority -> aap.requestAudioFocus(type, priority) },
+        object : CarAudioFocus.Scheduler {
+            override fun at(timeMs: Long, task: Runnable) { main.postAtTime(task, timeMs) }
+            override fun cancel(task: Runnable) = main.removeCallbacks(task)
+        }, SystemClock::uptimeMillis)
     @Volatile var headUnitName: String = ""
         private set
     /** The head unit has answered at all (its version response): this link reaches it. */
@@ -526,20 +521,9 @@ class CarSession(
     }
 
     override fun onAudioFocus(session: AapSession, notification: AudioFocusNotification) {
-        // Any word from the car on focus, an answer or its own decision (radio, a call), ends the
-        // asking. Before mediaFocus changes, which a check reads.
-        val asked = synchronized(focusLock) { mediaFocusRetry.onAnswered().also { scheduleFocusCheck() } }
-        if (asked != null) DiagLog.add("audio focus: the car answered after $asked asks")
-        val state = notification.focusState
-        if (!notification.unsolicited && guidancePlaying) {
-            // A call or the car's own source taking over arrives as LOSS_TRANSIENT: not a grant.
-            guidanceAnswered = state != AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT
-            DiagLog.add("guidance focus: car answered ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
-        } else DiagLog.add("audio focus: car ${if (notification.unsolicited) "says" else "answered"} ${state.name.removePrefix("AUDIO_FOCUS_STATE_")}")
         val quirks = vehicleOverride
-        mediaFocus = mediaAllowed(state, gainTransientIsMedia(answersGuidance = !notification.unsolicited && guidancePlaying,
-            quirk = quirks?.mediaOnGainTransient == true))
-        guidanceFocusState = guidanceAllowed(state)
+        audioFocus.onCarFocus(notification, mediaOnGainTransient = quirks?.mediaOnGainTransient == true)
+        val state = notification.focusState
         when {
             // The car keeps only navigation voice for now: pause the phone's music, unless a
             // vehicles.json rule says not to, and play it again on the next gain, like the other
@@ -597,16 +581,10 @@ class CarSession(
     // Lazy: the listener type is Android 12+, and it is only used there.
     private val modeChanged by lazy { AudioManager.OnModeChangedListener { mode ->
         // Only what the car's loss paused: music merely playing on may have lost the car to its radio.
-        if (closed || mode != AudioManager.MODE_NORMAL || mediaFocus || !(pausedForCall || pausedByCar)) return@OnModeChangedListener
+        if (closed || mode != AudioManager.MODE_NORMAL || audioFocus.mediaFocus || !(pausedForCall || pausedByCar)) return@OnModeChangedListener
         // The call may have begun just after the car's loss: what it paused plays on with the answer.
         pausedForCall = pausedForCall || pausedByCar
-        synchronized(focusLock) {
-            DiagLog.add("audio focus: asking again after the phone's call")
-            mediaFocusRetry.onRequested(SystemClock.uptimeMillis())
-            scheduleFocusCheck()
-            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
-            aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
-        }
+        audioFocus.askAgainAfterCall()
     } }
 
     override fun onClosed(session: AapSession, reason: String, error: Throwable?) {
@@ -1183,8 +1161,6 @@ class CarSession(
 
     /** Capture methods that failed in this session: the next best one is used instead. */
     private val failedCapture = HashSet<CaptureMethod>()
-    @Volatile private var mediaPlaying = false
-    @Volatile private var guidancePlaying = false
 
     /**
      * Phone audio to one car channel, with the best capture method available. Android Auto's own
@@ -1225,7 +1201,7 @@ class CarSession(
         lateinit var out: CarAudioOut
         val silence = StartSilence.configured(wireless, guidance, aap.headUnitVersion?.first,
             vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
-        out = CarAudioOut(source, AudioChannelSink(channel), if (guidance) guidanceFocus else mediaFocusRequests, silence, onFailed = {
+        out = CarAudioOut(source, AudioChannelSink(channel), if (guidance) audioFocus.guidance else audioFocus.media, silence, onFailed = {
             main.post {
                 // Only if it's still this stream's output: a late failure (a slow Shizuku bind
                 // giving up after teardown, or after a replacement) must not start a capture
@@ -1247,32 +1223,6 @@ class CarSession(
         audioOuts[channel.streamType] = out.also { it.start() }
     }
 
-    /** Music: full focus while it plays. */
-    private val mediaFocusRequests = object : CarAudioOut.Focus {
-        override fun request(playing: Boolean) {
-            mediaPlaying = playing
-            synchronized(focusLock) {
-                if (playing) mediaFocusRetry.onRequested(SystemClock.uptimeMillis()) else mediaFocusRetry.onWithdrawn()
-                scheduleFocusCheck()
-                if (playing) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN)
-                // Comes right after the stream's STOP: keep it behind STOP and the last data.
-                else if (!guidancePlaying) aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
-            }
-        }
-        override val granted: Boolean get() = mediaFocus
-    }
-
-    /**
-     * Without an answer, ask again: once the same way, like Android Auto (which asks again after
-     * 500 ms, up to 3 times), then releasing first. Some head units (a Jancar one) drop the answer
-     * to a request made before their session is ready, and never answer a request that doesn't
-     * change their state.
-     */
-    private val mediaFocusRetry = FocusRetry()
-    // Guards mediaFocusRetry: requests come from the capture thread, answers from the AAP reader, checks on main.
-    private val focusLock = Any()
-    private val focusCheck = Runnable { checkMediaFocus() }
-
     // The head unit normally answers the focus request sent with START. Some setups (Mazda with an
     // AAWireless dongle) sometimes never do, and the car screen stays black until the driver
     // switches to the car's own screen and back: ask again a few times while it has said nothing.
@@ -1290,57 +1240,6 @@ class CarSession(
             ch.requestProjectedFocus()
             main.postDelayed(this, VIDEO_FOCUS_RETRY_MS)
         }
-    }
-
-    /** With focusLock held. Times are uptimeMillis, the handler's clock. */
-    private fun scheduleFocusCheck() {
-        main.removeCallbacks(focusCheck)
-        mediaFocusRetry.nextCheckAtMs()?.let { main.postAtTime(focusCheck, it) }
-    }
-
-    private fun checkMediaFocus() {
-        if (closed) return
-        val action = synchronized(focusLock) {
-            val now = SystemClock.uptimeMillis()
-            // Kept from before: the request changed nothing, so the car may not answer it.
-            if (mediaFocus) mediaFocusRetry.onAnswered()
-            // Not over a prompt: when it ends, guidance asks for the music's focus again itself.
-            val step = if (guidancePlaying) {
-                mediaFocusRetry.postpone(now)
-                FocusRetry.Action.None
-            } else mediaFocusRetry.due(now)
-            // Gains at the release's priority: the send queue is ordered by priority, and one at the
-            // default could overtake a release still queued.
-            when (step) {
-                FocusRetry.Action.Ask -> aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
-                FocusRetry.Action.Rearm -> {
-                    aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_RELEASE, Priority.AUDIO)
-                    aap.requestAudioFocus(AudioFocusRequestType.AUDIO_FOCUS_GAIN, Priority.AUDIO)
-                }
-                else -> {}
-            }
-            scheduleFocusCheck()
-            step
-        }
-        if (action is FocusRetry.Action.GiveUp) {
-            val line = "audio focus: the car never answered (asked ${action.asked} times)"
-            Log.w(TAG, line)
-            DiagLog.add(line)
-        }
-    }
-
-    /** Navigation voice: transient focus that ducks the car's other sound, then back to the music if it plays. */
-    private val guidanceFocus = object : CarAudioOut.Focus {
-        override fun request(playing: Boolean) {
-            guidanceAnswered = false
-            guidancePlaying = playing
-            aap.requestAudioFocus(when {
-                playing -> AudioFocusRequestType.AUDIO_FOCUS_GAIN_TRANSIENT_MAY_DUCK
-                mediaPlaying -> AudioFocusRequestType.AUDIO_FOCUS_GAIN
-                else -> AudioFocusRequestType.AUDIO_FOCUS_RELEASE
-            }, if (playing) Priority.CONTROL else Priority.AUDIO)
-        }
-        override val granted: Boolean get() = mediaFocus || guidanceFocusState || guidanceAnswered
     }
 
     // ------------------------------------------------------------------ microphone
@@ -1493,7 +1392,7 @@ class CarSession(
         settings.unregisterListener(carKeyPrefsListener)
         // Session ending while music fed the car: pause it, so it doesn't jump to the phone speaker.
         pauseIfFeedingCar(media, feedingCar = audioOuts.containsKey(AudioStreamType.AUDIO_STREAM_MEDIA))
-        main.removeCallbacks(focusCheck)
+        audioFocus.close()
         main.removeCallbacks(videoFocusCheck)
         keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
@@ -1614,36 +1513,10 @@ class CarSession(
         }
 
         /**
-         * Whether the car's focus [state] lets music play. Ducking keeps it going: the head unit
-         * lowers it itself. GAIN_TRANSIENT does when [gainTransientIsMedia].
-         */
-        fun mediaAllowed(state: AudioFocusStateType, gainTransientIsMedia: Boolean): Boolean = when (state) {
-            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
-            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK -> true
-            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT -> gainTransientIsMedia
-            else -> false
-        }
-
-        /**
-         * Whether a GAIN_TRANSIENT lets music play. Answering our music's own request, or said by
-         * the car on its own, it does, as before. Answering a navigation prompt's request it is for
-         * navigation voice: the music waits until the prompt is over, unless a vehicles.json rule
-         * ([quirk]) says the head unit means music too.
-         */
-        fun gainTransientIsMedia(answersGuidance: Boolean, quirk: Boolean): Boolean = quirk || !answersGuidance
-
-        /**
          * Whether a gain plays the music the car paused again: the car handing the sound back on
          * its own does; a gain answering a request only after a pause for navigation voice.
          */
         fun resumesAfterCarPause(unsolicited: Boolean, pausedForGuidance: Boolean): Boolean = unsolicited || pausedForGuidance
-
-        /** Whether the car's focus [state] lets navigation voice play (besides [mediaAllowed]). */
-        fun guidanceAllowed(state: AudioFocusStateType): Boolean = when (state) {
-            AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT,
-            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK -> true
-            else -> false
-        }
 
         /**
          * Picks the best configuration the phone can encode comfortably: the largest one within
