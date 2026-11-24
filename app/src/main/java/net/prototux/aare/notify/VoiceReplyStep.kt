@@ -7,7 +7,7 @@ package net.prototux.aare.notify
 internal sealed interface VoiceReplyStep {
     /** Listening; [heard] is the recognizer's partial text so far. */
     data class Listening(val heard: String = "") : VoiceReplyStep
-    /** [text] was heard: read back, sent only on Send. */
+    /** [text] was heard: read back, sent on Send or a spoken "yes". */
     data class Confirm(val text: String) : VoiceReplyStep
     /** Nothing understood: the user may try again. */
     data object NotHeard : VoiceReplyStep
