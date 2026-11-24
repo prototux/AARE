@@ -148,6 +148,7 @@ import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CaptureOrder
+import net.prototux.aare.root.Root
 import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.car.CarData
 import net.prototux.aare.car.CarKeyAction
@@ -310,6 +311,7 @@ private fun Home() {
                         Page.CAR_DATA -> item { CarDataCard() }
                         Page.HOME_ACTIONS -> item { HomeActionsSettings() }
                         Page.ADVANCED -> {
+                            item { RootCard(settings) }
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
@@ -882,6 +884,37 @@ private fun headUnitLabel(ctx: android.content.Context, key: String): String = w
     else -> runCatching { ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.getRemoteDevice(key)?.name }.getOrNull() ?: key
 }
 
+/**
+ * Root for the whole app (see Root): off until the user turns it on, which asks the root manager
+ * once. Before that AARE only looks for su, to say whether there is any.
+ */
+@Composable
+private fun RootCard(settings: Settings) {
+    val ctx = LocalContext.current
+    var allowed by remember { mutableStateOf(settings.rootAllowed) }
+    var asking by remember { mutableStateOf(false) }
+    var refused by remember { mutableStateOf(false) }
+    val found = remember { Root.found() }
+    Section(stringResource(R.string.root_title)) {
+        Toggle(stringResource(R.string.root_toggle_title), stringResource(when {
+            asking -> R.string.root_asking
+            allowed -> R.string.root_allowed
+            refused -> R.string.root_refused
+            found -> R.string.root_found
+            else -> R.string.root_not_found
+        }), allowed) { on ->
+            if (!on) {
+                Root.forbid(ctx)
+                allowed = false
+            } else if (!asking) {
+                asking = true
+                refused = false
+                Root.ask(ctx) { granted -> asking = false; allowed = granted; refused = !granted }
+            }
+        }
+    }
+}
+
 /** Android Auto's developer "head unit server": for the desktop head unit and other test tools. */
 @Composable
 private fun HeadUnitServerSettings(settings: Settings) {
@@ -1242,11 +1275,9 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
                     shizukuAsk -> runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
                     shizuku || root -> Unit
                     // Check for root (prompts su on a rooted phone); otherwise point to Shizuku.
-                    else -> CaptureMethods.checkRoot { granted ->
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            if (granted) { settings.rootAudio = true; recheck() }
-                            else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
-                        }
+                    else -> Root.ask(ctx) { granted ->
+                        if (granted) recheck()
+                        else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
                     }
                 }
             }

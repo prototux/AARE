@@ -497,6 +497,13 @@
     <string name="msg_autoreply_default">I\'m driving right now, I\'ll answer later.</string>
 
     <!-- audio: car audio settings -->
+    <string name="root_title">Root</string>
+    <string name="root_toggle_title">Use root</string>
+    <string name="root_found">Root found on this phone. Turn on to let AARE use it, for car audio and phone apps on the car screen: your root manager asks you to confirm.</string>
+    <string name="root_not_found">No root found. If this phone is rooted, turn on to try: your root manager asks you to confirm.</string>
+    <string name="root_asking">Asking your root manager…</string>
+    <string name="root_allowed">Allowed: car audio, phone apps on the car screen and the other features that need root use it.</string>
+    <string name="root_refused">Refused. Allow AARE in your root manager, then try again.</string>
     <string name="audio_settings_title">Car audio</string>
     <string name="audio_page_subtitle">How the phone\'s sound reaches the car</string>
     <string name="audio_toggle_enable_title">Phone audio in the car</string>
