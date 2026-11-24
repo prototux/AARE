@@ -75,6 +75,9 @@ import net.prototux.aare.aap.channels.WifiProjectionChannel
 import net.prototux.aare.BuildConfig
 import net.prototux.aare.DiagLog
 import net.prototux.aare.KnownHeadUnits
+import net.prototux.aare.car.calibration.CalibrationController
+import net.prototux.aare.car.calibration.TouchCalibration
+import net.prototux.aare.ui.car.CalibrationOverlay
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
@@ -203,6 +206,7 @@ class CarSession(
         runtime.microphone = { sink, stopped -> micRouter.open(sink, stopped) }
         runtime.projection = projection
         runtime.exitToCar = ::exitToCar
+        runtime.onDrivingRestricted = { calibration.onDrivingChanged() }
         runtime.onTrip = { _, trip ->
             guidanceChanged(hosted = true, guiding = trip != null)
             navBridge?.update(trip)
@@ -300,6 +304,10 @@ class CarSession(
             runCatching { KnownHeadUnits(context).quirks(carKey(response)) }.getOrDefault(QuirkSettings()))
         vehicleOverride?.let { DiagLog.add("vehicles.json override for \"$headUnitName\": $it") }
         rememberHeadUnit(response, id)
+        calibrationKey = carKey(response)
+        calibrationCarName = response.displayName.ifBlank { headUnitName }
+        touchCalibration = runCatching { KnownHeadUnits(context).calibration(calibrationKey) }
+            .onFailure { Log.w(TAG, "can't read the touch calibration", it) }.getOrNull()
         CarData.discovered(response, owner = this, forceElectric = vehicleOverride?.forceElectric == true)
         val rhd = response.driverPosition == DriverPosition.DRIVER_POSITION_RIGHT
         val quirks = vehicleOverride
@@ -675,15 +683,9 @@ class CarSession(
                 val updated = (videoConfig ?: return@post).toBuilder().setUiConfig(config).build()
                 videoConfig = updated
                 val (w, h) = resolution(updated.codecResolution)
-                val layout = layoutOf(updated, w, h)
-                Log.i(TAG, "UI config update from the head unit:" + layout.describe())
+                Log.i(TAG, "UI config update from the head unit:" + layoutOf(updated, w, h).describe())
                 // Not projecting: the next start lays out with it.
-                if (display != null) {
-                    showLayout(layout, densityOf(updated, w, h), rightHandDrive)
-                    applyChrome(updated)
-                    videoDescription = videoFormat + layout.describe()
-                    display?.invalidate() // a frame with the new layout, which the reply waits for
-                }
+                relayOut(updated, rightHandDrive)
                 applied()
             }
         }
@@ -700,7 +702,13 @@ class CarSession(
     private fun densityOf(config: VideoConfiguration, w: Int, h: Int) =
         vehicleOverride?.dpi ?: if (config.density > 0) config.density else defaultDensity(minOf(w, h))
 
-    private fun layoutOf(config: VideoConfiguration, w: Int, h: Int) = ProjectionLayout.of(config, w, h).let { base ->
+    /** Where the UI goes: the car's area, or the visible area of the touch calibration saved for it. */
+    private fun layoutOf(config: VideoConfiguration, w: Int, h: Int) = carLayoutOf(config, w, h).let { car ->
+        touchCalibration?.margins(w, h)?.let { m -> car.withMargins(m[0], m[1], m[2], m[3]) } ?: car
+    }
+
+    /** The car's own area: its reported margins, or vehicles.json's. */
+    private fun carLayoutOf(config: VideoConfiguration, w: Int, h: Int) = ProjectionLayout.of(config, w, h).let { base ->
         val o = vehicleOverride
         if (o?.widthMargin == null && o?.heightMargin == null) base
         else {
@@ -738,8 +746,41 @@ class CarSession(
         val inputCh = touchSize
         val native = offeredVideo.map(::visibleSize).maxByOrNull { it.first.toLong() * it.second }
         touch = TouchMapper(inputCh?.first ?: 0, inputCh?.second ?: 0, layout,
-            native?.first ?: layout.visibleWidth, native?.second ?: layout.visibleHeight)
+            native?.first ?: layout.visibleWidth, native?.second ?: layout.visibleHeight, calibration = touchCalibration)
+        // The calibration tool works on the frame with the car's own area (a run in progress ends).
+        videoConfig?.let { c -> calibration.onProjection(CalibrationController.Projection(layout.width, layout.height, carLayoutOf(c, layout.width, layout.height), touchCalibration)) }
     }
+
+    /** Lays the running projection out again in place (same size, codec and encoder); nothing when not projecting. Main thread. */
+    private fun relayOut(config: VideoConfiguration, rightHandDrive: Boolean) {
+        if (display == null) return
+        val (w, h) = resolution(config.codecResolution)
+        val layout = layoutOf(config, w, h)
+        showLayout(layout, densityOf(config, w, h), rightHandDrive)
+        applyChrome(config)
+        videoDescription = videoFormat + layout.describe()
+        display?.invalidate() // a frame with the new layout, which a UI config reply waits for
+    }
+
+    // ------------------------------------------------------------------ touch calibration
+
+    /** The head unit's key (carKey) and the car list's name for it, set at discovery. */
+    @Volatile private var calibrationKey = ""
+    @Volatile private var calibrationCarName = ""
+    /** The touch calibration saved for this head unit, or null for the automatic mapping. */
+    @Volatile private var touchCalibration: TouchCalibration? = null
+
+    private val calibration = CalibrationController(object : CalibrationController.Host {
+        override val car get() = runtime.ui.headUnitName.ifBlank { headUnitName }
+        override val driving get() = runtime.ui.drivingRestricted
+        override fun apply(c: TouchCalibration?) {
+            runCatching { KnownHeadUnits(context).setCalibration(calibrationKey, c, calibrationCarName) }
+                .onFailure { Log.w(TAG, "can't save the touch calibration", it) }
+            touchCalibration = c
+            // In place: the saved area moves the UI, the mapper takes the calibration.
+            videoConfig?.let { if (!closed) relayOut(it, runtime.rightHandDrive) }
+        }
+    }, CalibrationController.Scheduler.of(main))
 
     private fun startProjection(config: VideoConfiguration, rightHandDrive: Boolean) {
         teardownVideo()
@@ -756,6 +797,7 @@ class CarSession(
         videoFormat = "${w}x$h@$fps ${dpi}dpi" + (if (aspect != 1f) " pixel aspect $aspect" else "")
         videoDescription = videoFormat + layout.describe()
         net.prototux.aare.SessionAapLog.i("projection $videoDescription")
+        touchCalibration?.let { DiagLog.add("calibration: using the one saved for ${calibrationCarName}: ${it.describe()}") }
 
         val ch = video ?: return
         // lateinit: the sink below needs to know whether its encoder is still the current one.
@@ -812,6 +854,8 @@ class CarSession(
                     runtime.Root(Modifier.padding(start = l.padLeft.toDp(), top = l.padTop.toDp(), end = l.padRight.toDp(), bottom = l.padBottom.toDp())
                         .pixelAspect(aspect))
                 }
+                // Over the whole frame, margins included: its first step moves them.
+                CalibrationOverlay(Modifier.fillMaxSize())
             }
         }
         display = pd
@@ -945,7 +989,10 @@ class CarSession(
         override fun onTouchPadUpdate(pad: TouchPad) = onTouchpadUpdate(pad)
 
         override fun onInput(report: InputReport) {
-            if (report.hasTouchEvent()) {
+            if (report.hasTouchEvent() && calibration.capturing) {
+                // The calibration tool takes the raw touches; the car UI gets none meanwhile.
+                calibration.onTouchFromReader(report.touchEvent)
+            } else if (report.hasTouchEvent()) {
                 if (touches++ == 0) net.prototux.aare.SessionAapLog.i("first touch from the car")
                 val ev = touch?.map(report.touchEvent) ?: return
                 display?.dispatchTouch(ev)
@@ -1475,6 +1522,7 @@ class CarSession(
         micRouter.shutdown()
         // The captures closed with the session (above): the loop back's volume is as it was.
         settings.carAudioFullVolumeLeft = false
+        calibration.close()
         teardownVideo()
         runtime.stop()
         net.prototux.aare.obd.ObdReader.stop(owner = this)

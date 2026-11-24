@@ -142,6 +142,9 @@ class CarRuntime(
     /** The "Exit to car" entry's label after the car (see ExitLabel), or null for the generic one. Main thread, then [refreshApps]. */
     var exitLabel: String? = null
 
+    /** The driving restrictions came on or went off (the car's signal, or the passenger-mode setting). */
+    var onDrivingRestricted: (() -> Unit)? = null
+
     // ------------------------------------------------------------------ HostEnvironment
 
     override val driving: Boolean get() = ui.drivingRestricted
@@ -416,11 +419,14 @@ class CarRuntime(
         }
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
-        ui.drivingRestricted = carDriving && !settings.ignoreDriving
+        val restricted = carDriving && !settings.ignoreDriving
+        val changed = ui.drivingRestricted != restricted
+        ui.drivingRestricted = restricted
         // A phone assistant shown through the launcher is parked only, like other launched apps.
         if (ui.drivingRestricted) ui.assistantStandalonePkg = null
         // The Cockpit's track pages (timed runs, lap timer, dyno) are parked only too.
         net.prototux.aare.obdapp.ObdApp.trackAllowed = !ui.drivingRestricted
+        if (changed) onDrivingRestricted?.invoke()
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.textScale = CarTextSize.byId(settings.carTextSize).fontScale

@@ -813,3 +813,29 @@ same audio policy as the Shizuku path, so music and navigation voice go to their
   path falls back to Shizuku's whole output.
 - **Shizuku and the privileged install don't change:** the new method (`ROOT_POLICY`) comes after
   both, and only when Shizuku isn't running.
+
+## Touchscreen calibration
+
+For head units whose touches still land in the wrong place after the automatic mapping
+(`TouchMapper`), *Car screen > Touchscreen calibration* lets the user measure the car: set the
+visible area from the phone (an L marks each corner on the car screen), touch 4 targets, then a
+centre target to confirm. The 4 raw touch-downs give a least-squares affine map from raw panel
+coordinates to the frame, which covers a wrong range or offset, swapped or mirrored axes and a
+slight tilt.
+
+Design choices:
+- **The phone drives every step.** The car's touches can't be trusted before calibrating, so from
+  the visible-area step on they go to the tool only, never to the car UI hidden under it.
+- **Parked only.** It can't be started while the driving restrictions are on, and a run in progress
+  ends with nothing saved when they come on (`CarRuntime.onDrivingRestricted`).
+- **Nothing is kept without a confirming touch.** The new map must put the centre tap on the
+  centre target within 15 s; a miss, a timeout, a cancel or a video restart keeps the mapping in use
+  before. A tap that doesn't fit the other 3 is asked again.
+- **Saved per head unit.** In `KnownHeadUnits`, by the head unit's key (`carKey()`, like its "Car
+  quirks" choices), not its display name, which two cars can share; forgetting the car forgets it.
+  The map and the margins are fractions of the frame, not pixels, so it holds at any resolution.
+- **Part of the layout.** `layoutOf()` applies its visible area and `showLayout()` gives the map to
+  `TouchMapper`, so a UI config update from the car keeps it, and saving or resetting lays the
+  projection out again in place, with no new encoder.
+- **It wins over the automatic mapping and `vehicles.json` margins.** It is what the user measured
+  on that car; *Reset to the car's values* removes it.

@@ -7,13 +7,14 @@ import net.prototux.aare.car.HeadUnitIdentity
 import net.prototux.aare.car.QuirkChoice
 import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.car.VehicleMatch
+import net.prototux.aare.car.calibration.TouchCalibration
 import org.json.JSONObject
 
 /**
  * Who each head unit said it was in its last session, by Bluetooth address, on this phone only.
  * Some quirks are needed before a session tells us who the car is: projection doesn't start
  * wireless projection with head units known not to support it, looked up the same way (vehicles.json
- * `wireless: false`). Also each head unit's "Car quirks" page choices. Forgetting a car or its
+ * `wireless: false`). Also each head unit's "Car quirks" page choices and touch calibration. Forgetting a car or its
  * certificate forgets it here too, and only the [MAX] most recently seen head units are kept.
  */
 class KnownHeadUnits(context: Context) {
@@ -50,6 +51,23 @@ class KnownHeadUnits(context: Context) {
             }
         }
     }
+
+    /** The touch calibration the user measured on [address], or null for the automatic mapping. */
+    fun calibration(address: String): TouchCalibration? = TouchCalibration.decode(prefs.getString(key(address) + CALIBRATION, null))
+
+    /** Saves (or with null, removes) [address]'s touch calibration. [carName]: see [put]. */
+    fun setCalibration(address: String, c: TouchCalibration?, carName: String) {
+        if (address.isBlank()) return
+        prefs.edit {
+            if (c == null) remove(key(address) + CALIBRATION) else putString(key(address) + CALIBRATION, c.encode())
+            putString(key(address) + CAR, carName); seen(address)
+        }
+        trim()
+    }
+
+    /** Head units with a saved touch calibration: address to the car list's name for it. */
+    fun calibrated(): Map<String, String> = prefs.all.keys.filter { it.endsWith(CALIBRATION) }
+        .map { it.removeSuffix(CALIBRATION) }.associateWith { carName(it) ?: it }
 
     /** A wireless session to [address] got as far as service discovery once: it does work wirelessly. [carName]: see [put]. */
     fun markWirelessWorked(address: String, carName: String) {
@@ -96,6 +114,7 @@ class KnownHeadUnits(context: Context) {
         private const val CAR = "#car"
         private const val SEEN = "#seen"
         private const val QUIRK = "#quirk_"
+        private const val CALIBRATION = "#touch_calibration"
         /** Head units kept: more than a phone meets, few enough to stay a small file. */
         const val MAX = 32
 
