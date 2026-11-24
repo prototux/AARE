@@ -87,9 +87,9 @@ object CaptureMethods {
         playbackCapture = playbackConsent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q,
     )
 
-    /** The best method available now, skipping [exclude] (methods that already failed). */
+    /** The method to use now (see [CaptureOrder.best]), skipping [exclude] (methods that already failed). */
     fun best(context: Context, projection: MediaProjection?, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? =
-        CaptureOrder.best(env(context, projection != null), exclude)
+        CaptureOrder.best(env(context, projection != null), exclude, Settings(context).forcedCaptureMethod)
 }
 
 internal fun pcmFormat(rate: Int, channels: Int, out: Boolean): AudioFormat = AudioFormat.Builder()

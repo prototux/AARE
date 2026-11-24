@@ -37,16 +37,30 @@ object CaptureOrder {
      */
     val FAILURE_MOVES_BOTH = setOf(CaptureMethod.SHIZUKU_POLICY, CaptureMethod.ROOT_POLICY)
 
-    /** The best method [env] offers, skipping [exclude] (methods that already failed). */
-    fun best(env: Env, exclude: Set<CaptureMethod> = emptySet()): CaptureMethod? = when {
-        CaptureMethod.AUDIO_POLICY !in exclude && env.privileged -> CaptureMethod.AUDIO_POLICY
-        CaptureMethod.SHIZUKU_POLICY !in exclude && env.shizuku -> CaptureMethod.SHIZUKU_POLICY
-        // Not while Shizuku runs: its methods come first, and its fallback stays as it was.
-        CaptureMethod.ROOT_POLICY !in exclude && !env.shizuku && env.root -> CaptureMethod.ROOT_POLICY
-        CaptureMethod.SHIZUKU !in exclude && (env.shizuku || env.root) -> CaptureMethod.SHIZUKU
-        CaptureMethod.PLAYBACK_CAPTURE !in exclude && env.playbackCapture -> CaptureMethod.PLAYBACK_CAPTURE
-        else -> null
+    /** The order automatic tries: root ahead of Shizuku (owner's choice), each splitting before mixing. */
+    val ORDER = listOf(
+        CaptureMethod.AUDIO_POLICY,
+        CaptureMethod.ROOT_POLICY,
+        CaptureMethod.SHIZUKU_POLICY,
+        CaptureMethod.SHIZUKU,
+        CaptureMethod.PLAYBACK_CAPTURE,
+    )
+
+    /** Whether [env] has what [method] needs. */
+    fun offers(env: Env, method: CaptureMethod): Boolean = when (method) {
+        CaptureMethod.AUDIO_POLICY -> env.privileged
+        CaptureMethod.ROOT_POLICY -> env.root
+        CaptureMethod.SHIZUKU_POLICY -> env.shizuku
+        CaptureMethod.SHIZUKU -> env.root || env.shizuku
+        CaptureMethod.PLAYBACK_CAPTURE -> env.playbackCapture
     }
+
+    /**
+     * The method to use: the first [env] offers in [ORDER], skipping [exclude] (methods that already
+     * failed). With [forced], that method or none: a forced method never falls back.
+     */
+    fun best(env: Env, exclude: Set<CaptureMethod> = emptySet(), forced: CaptureMethod? = null): CaptureMethod? =
+        (if (forced != null) listOf(forced) else ORDER).firstOrNull { it !in exclude && offers(env, it) }
 
     /**
      * What the media or the guidance channel does with [method]. [singleChannel]: the head unit
