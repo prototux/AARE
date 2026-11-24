@@ -147,6 +147,7 @@ import net.prototux.aare.SettingsBackup
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.audio.CaptureOrder
 import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.car.CarData
 import net.prototux.aare.car.CarKeyAction
@@ -1202,13 +1203,9 @@ private fun AudioSettings(settings: Settings, state: ProjectionService.State, re
     val shizuku = CaptureMethods.shizukuAvailable()
     val shizukuAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && CaptureMethods.shizukuNeedsPermission()
     val root = CaptureMethods.rootAvailable(ctx)
-    val best = when {
-        policy -> CaptureMethod.AUDIO_POLICY
-        shizuku -> CaptureMethod.SHIZUKU_POLICY
-        root -> CaptureMethod.ROOT_POLICY
-        state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
-        else -> null
-    }
+    // The session's order (CaptureOrder), before any failure in a drive.
+    val best = CaptureOrder.best(CaptureOrder.Env(policy, shizuku, root,
+        playbackCapture = state.audioCapture && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q))
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Section(stringResource(R.string.audio_settings_title)) {
             Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {
