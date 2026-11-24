@@ -96,8 +96,9 @@ internal sealed class Command {
     abstract val id: Int
     abstract fun line(): String
 
-    data class Policy(override val id: Int, val rate: Int, val channels: Int, val usages: List<Int>) : Command() {
-        override fun line() = "policy $id $rate $channels ${usages.joinToString(",")}"
+    /** [volume]: AudioPolicyCapture's VOLUME_* other than as is, sent as a trailing field. */
+    data class Policy(override val id: Int, val rate: Int, val channels: Int, val usages: List<Int>, val volume: Int = AudioPolicyCapture.VOLUME_AS_IS) : Command() {
+        override fun line() = "policy $id $rate $channels ${usages.joinToString(",")}" + if (volume != AudioPolicyCapture.VOLUME_AS_IS) " $volume" else ""
     }
 
     data class Stop(override val id: Int) : Command() {
@@ -111,11 +112,13 @@ internal sealed class Command {
             val id = f.getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..SuAudioWire.MAX_ID } ?: return null
             return when (f[0]) {
                 "policy" -> {
-                    if (f.size != 5) return null
+                    if (f.size != 5 && f.size != 6) return null
+                    val volume = if (f.size == 6) f[5].toIntOrNull()?.takeIf { it == AudioPolicyCapture.VOLUME_FULL || it == AudioPolicyCapture.VOLUME_REPAIR } ?: return null
+                        else AudioPolicyCapture.VOLUME_AS_IS
                     val rate = f[2].toIntOrNull()?.takeIf { it in 8_000..192_000 } ?: return null
                     val channels = f[3].toIntOrNull()?.takeIf { it == 1 || it == 2 } ?: return null
                     val usages = f[4].split(',').map { it.toIntOrNull() ?: return null }
-                    Policy(id, rate, channels, usages)
+                    Policy(id, rate, channels, usages, volume)
                 }
                 "stop" -> if (f.size == 2) Stop(id) else null
                 else -> null

@@ -57,6 +57,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -76,6 +77,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -90,12 +93,14 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
@@ -124,7 +129,7 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
@@ -142,7 +147,7 @@ fun CarShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -199,10 +204,8 @@ internal fun ContentArea(
 // ---------------------------------------------------------------- split screen
 
 /**
- * [primary] and [secondary] side by side with a draggable divider. Only a built-in or non-hosted
- * app ([canOpenBeside]) ever reaches here as [secondary]: a Car App Library connection owns one
- * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
- * so a navigation or templated app stays full screen only.
+ * [primary] and [secondary] side by side with a draggable divider, [secondary] one of the kinds
+ * [canOpenBeside] allows there. The pane touched last, or holding the knob's focus, gets Back.
  *
  * The divider is [carAdjustable] too: a knob or D-pad steps it from rest point to rest point.
  *
@@ -234,15 +237,17 @@ private fun SplitPane(
         Row(Modifier.fillMaxSize()) {
             Box(
                 Modifier.weight(restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) },
-            ) { appContent(primary, Modifier.fillMaxSize()) }
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) }
+                    .onTouched { actions.focusPane(CarPane.PRIMARY) },
+            ) { CompositionLocalProvider(LocalInSplitPane provides true) { appContent(primary, Modifier.fillMaxSize()) } }
             Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
             Box(
                 Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) },
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) }
+                    .onTouched { actions.focusPane(CarPane.SECONDARY) },
             ) {
-                appContent(secondary, Modifier.fillMaxSize())
-                Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                CompositionLocalProvider(LocalInSplitPane provides true) { appContent(secondary, Modifier.fillMaxSize()) }
+                if (hasCloseButton(secondary.kind)) Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                     RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
                 }
             }
@@ -271,6 +276,13 @@ private fun SplitPane(
     }
 }
 
+/** Calls [onTouch] for every finger put down here, before the content gets it and without taking it. */
+private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) if (awaitPointerEvent(PointerEventPass.Initial).changes.any { it.changedToDown() }) onTouch()
+    }
+}
+
 // ---------------------------------------------------------------- rail
 
 /**
@@ -282,7 +294,8 @@ private fun SplitPane(
 private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, area: DpSize) {
     // The "dark bar" setting: night colors for the rail even when the rest is in day colors.
     if (state.darkBar && !state.night) {
-        CarTheme(night = true) { RailContent(state, actions, horizontal, area) }
+        // carBackdrop: a glass theme's rail is transparent, over its night backdrop here, not the day one.
+        CarTheme(night = true) { Box(Modifier.carBackdrop()) { RailContent(state, actions, horizontal, area) } }
     } else {
         RailContent(state, actions, horizontal, area)
     }
@@ -900,7 +913,8 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
     }
     Row(
         modifier.padding(16.dp).fillMaxWidth(0.6f).clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .carClickable(MaterialTheme.shapes.large, onClick = notice.open?.let { open -> { open(); actions.dismissNotice(notice) } }).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (notice.icon != null) {

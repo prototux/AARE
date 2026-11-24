@@ -52,6 +52,7 @@ import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import net.prototux.aare.aap.wireless.WirelessHandshake
 import net.prototux.aare.car.CarSession
 import net.prototux.aare.car.DrivingMode
+import net.prototux.aare.car.PhoneLocationFeed
 import net.prototux.aare.car.QuirkChoice
 import net.prototux.aare.car.VehicleOverrides
 import net.prototux.aare.cert.CertificateDownload
@@ -159,6 +160,8 @@ class ProjectionService : Service() {
         media = MediaHub(this, scope)
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
+        // And the car's position left on the phone's location providers.
+        PhoneLocationFeed.recover(this)
         // Likewise a Wi-Fi approval a join killed mid-way left on (it covers every AARE request).
         // Off the main thread: binding Shizuku's helper waits for an answer that comes there.
         thread(name = "wifi-approval-recover", isDaemon = true) { ShellWifi.recover(this, DiagAapLog) }

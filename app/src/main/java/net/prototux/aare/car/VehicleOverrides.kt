@@ -62,6 +62,8 @@ data class VehicleOverride(
     val pairAgainWhenRunning: Boolean? = null,
     /** Open the sensor channel first and the others once the car has answered it (AARE's default: all at once). */
     val sensorChannelFirst: Boolean? = null,
+    /** Send the video's SPS/PPS only in the codec config, not again before every key frame (AARE's default: every key frame). */
+    val videoHeadersOnce: Boolean? = null,
 ) {
     /** These overrides, with [base]'s for every field left unset: a user rule over a built-in one. */
     fun over(base: VehicleOverride?): VehicleOverride = if (base == null) this else VehicleOverride(
@@ -89,6 +91,7 @@ data class VehicleOverride(
         dropOverflow = dropOverflow ?: base.dropOverflow,
         pairAgainWhenRunning = pairAgainWhenRunning ?: base.pairAgainWhenRunning,
         sensorChannelFirst = sensorChannelFirst ?: base.sensorChannelFirst,
+        videoHeadersOnce = videoHeadersOnce ?: base.videoHeadersOnce,
     )
 
     fun skips(kind: String): Boolean = skipServices.orEmpty().any { matchesKind(it, kind) }
@@ -103,7 +106,7 @@ data class VehicleOverride(
         "forceElectric" to forceElectric, "wifiMediaStartSilence" to wifiMediaStartSilence,
         "wifiGuidanceStartSilence" to wifiGuidanceStartSilence, "mediaOnGainTransient" to mediaOnGainTransient,
         "pauseOnGuidanceOnly" to pauseOnGuidanceOnly, "wireless" to wireless, "exitToCar" to exitToCar, "exitLabel" to exitLabel,
-        "builtInFixes" to builtInFixes,
+        "builtInFixes" to builtInFixes, "videoHeadersOnce" to videoHeadersOnce,
     ).filter { it.second != null }.joinToString(prefix = "{", postfix = "}") { (k, v) -> "$k=$v" }
 
     companion object {
@@ -265,6 +268,7 @@ data class QuirkSettings(
     val forceElectric: QuirkChoice = QuirkChoice.AUTOMATIC,
     val exitToCar: QuirkChoice = QuirkChoice.AUTOMATIC,
     val micSetup: QuirkChoice = QuirkChoice.AUTOMATIC,
+    val videoHeadersOnce: QuirkChoice = QuirkChoice.AUTOMATIC,
 ) {
     /** Every choice by its stored name (see [of]). */
     fun byName(): Map<String, QuirkChoice> = mapOf(
@@ -272,6 +276,7 @@ data class QuirkSettings(
         "wifi_media_start_silence" to wifiMediaStartSilence, "wifi_guidance_start_silence" to wifiGuidanceStartSilence,
         "media_on_gain_transient" to mediaOnGainTransient, "pause_on_guidance_only" to pauseOnGuidanceOnly, "wireless" to wireless,
         "force_electric" to forceElectric, "exit_to_car" to exitToCar, "mic_setup" to micSetup,
+        "video_headers_once" to videoHeadersOnce,
     )
 
     companion object {
@@ -282,6 +287,7 @@ data class QuirkSettings(
             wifiGuidanceStartSilence = choice("wifi_guidance_start_silence"), mediaOnGainTransient = choice("media_on_gain_transient"),
             pauseOnGuidanceOnly = choice("pause_on_guidance_only"), wireless = choice("wireless"), forceElectric = choice("force_electric"),
             exitToCar = choice("exit_to_car"), micSetup = choice("mic_setup"),
+            videoHeadersOnce = choice("video_headers_once"),
         )
     }
 }
@@ -370,6 +376,7 @@ object VehicleOverrides {
             forceElectric = forced(quirks.forceElectric, base.forceElectric),
             exitToCar = forced(quirks.exitToCar, base.exitToCar),
             micSetup = forced(quirks.micSetup, base.micSetup),
+            videoHeadersOnce = forced(quirks.videoHeadersOnce, base.videoHeadersOnce),
             // Nothing matched and no setting forced a field: stay null, like no vehicles.json rule at all.
         ).takeUnless { it == VehicleOverride() }
     }
@@ -469,6 +476,7 @@ object VehicleOverrides {
                 wifiGuidanceStartSilence = int(a, "wifiGuidanceStartSilence"), mediaOnGainTransient = bool(a, "mediaOnGainTransient"),
                 pauseOnGuidanceOnly = bool(a, "pauseOnGuidanceOnly"), wireless = bool(a, "wireless"),
                 exitToCar = bool(a, "exitToCar"), exitLabel = str(a, "exitLabel"), builtInFixes = bool(a, "builtInFixes"),
+                videoHeadersOnce = bool(a, "videoHeadersOnce"),
             ),
             optIn = r.optBoolean("optIn", false),
         )
@@ -485,7 +493,7 @@ object VehicleOverrides {
               "apply": {
                 "dpi": 160, "widthMargin": 0, "heightMargin": 0, "maxHeight": 1080, "prefer60fps": true,
                 "skipServices": [], "openServices": [], "micSetup": true, "dropOverflow": false,
-                "pairAgainWhenRunning": false, "sensorChannelFirst": false
+                "pairAgainWhenRunning": false, "sensorChannelFirst": false, "videoHeadersOnce": false
               }
             }
           ]

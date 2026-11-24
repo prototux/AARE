@@ -8,11 +8,16 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -136,7 +141,21 @@ data class CarThemeSpec(
     val tintIcons: Boolean = false,
     /** The clock on a seven-segment display ([SegmentFont]), its unlit segments faintly behind. */
     val segmentClock: Boolean = false,
+    /**
+     * A gradient behind the whole screen, for themes whose surfaces are translucent (glass); empty:
+     * the background color alone.
+     */
+    val dayBackdrop: List<Color> = emptyList(),
+    val nightBackdrop: List<Color> = emptyList(),
 )
+
+/** The theme's backdrop gradient behind a whole screen, in the colors now applied; none when it has none. */
+@Composable
+fun Modifier.carBackdrop(): Modifier {
+    val theme = LocalCarTheme.current
+    val stops = if (MaterialTheme.colorScheme == theme.night) theme.nightBackdrop else theme.dayBackdrop
+    return if (stops.size < 2) this else background(Brush.linearGradient(stops))
+}
 
 /**
  * DSEG7 Classic, a seven-segment display font (SIL Open Font License 1.1, bundled with its licence
@@ -169,6 +188,36 @@ fun CarTheme(night: Boolean, theme: CarThemeSpec = LocalCarTheme.current, conten
             content = content,
         )
     }
+}
+
+/**
+ * [content] over a live map (a navigation app's map, the dashboard's map card): every translucent
+ * surface and container color of the scheme laid over the theme's backdrop, so a glass theme's
+ * cards, banners and buttons stay readable over a day map. Themes without a backdrop are opaque
+ * already and stay as they are.
+ */
+@Composable
+fun OverMap(content: @Composable () -> Unit) {
+    val theme = LocalCarTheme.current
+    val scheme = MaterialTheme.colorScheme
+    val backdrop = (if (scheme == theme.night) theme.nightBackdrop else theme.dayBackdrop).firstOrNull()
+    if (backdrop == null) { content(); return }
+    val solid = remember(scheme, backdrop) { scheme.opaqueOver(backdrop) }
+    MaterialTheme(colorScheme = solid, typography = MaterialTheme.typography, shapes = MaterialTheme.shapes, content = content)
+}
+
+/** [ColorScheme] with its translucent surfaces and containers solid over [base]; fully transparent ones stay so. */
+fun ColorScheme.opaqueOver(base: Color): ColorScheme {
+    fun solid(c: Color) = if (c.alpha > 0f && c.alpha < 1f) c.compositeOver(base) else c
+    return copy(
+        primaryContainer = solid(primaryContainer), secondaryContainer = solid(secondaryContainer),
+        tertiaryContainer = solid(tertiaryContainer), errorContainer = solid(errorContainer),
+        surface = solid(surface), surfaceVariant = solid(surfaceVariant), surfaceTint = solid(surfaceTint),
+        inverseSurface = solid(inverseSurface), surfaceBright = solid(surfaceBright), surfaceDim = solid(surfaceDim),
+        surfaceContainerLowest = solid(surfaceContainerLowest), surfaceContainerLow = solid(surfaceContainerLow),
+        surfaceContainer = solid(surfaceContainer), surfaceContainerHigh = solid(surfaceContainerHigh),
+        surfaceContainerHighest = solid(surfaceContainerHighest),
+    )
 }
 
 /** Phone UI theme: AARE's palette, normal phone type scale. */

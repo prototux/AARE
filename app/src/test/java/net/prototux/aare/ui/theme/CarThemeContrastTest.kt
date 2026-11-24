@@ -2,6 +2,7 @@ package net.prototux.aare.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -20,11 +21,16 @@ class CarThemeContrastTest {
     }
 
     private fun failures(theme: CarThemeSpec, label: String = theme.id): List<String> = buildList {
+        // A translucent (glass) color is seen over the backdrop: check it over each of its colours.
+        var behind = listOf(Color.Black)
         fun check(mode: String, what: String, fg: Color, bg: Color, min: Double) {
-            val c = contrast(fg, bg)
-            if (c < min) add("$label $mode: $what %.2f < $min".format(c))
+            for (b in behind) {
+                val c = contrast(fg.compositeOver(bg.compositeOver(b)), bg.compositeOver(b))
+                if (c < min) add("$label $mode: $what %.2f < $min".format(c))
+            }
         }
         fun scheme(mode: String, s: ColorScheme, x: CarColors) {
+            behind = (if (s == theme.night) theme.nightBackdrop else theme.dayBackdrop).ifEmpty { listOf(Color.Black) }
             for ((name, bg) in listOf("background" to s.background, "surfaceContainer" to s.surfaceContainer,
                 "surfaceContainerHighest" to s.surfaceContainerHighest)) {
                 check(mode, "onSurface on $name", s.onSurface, bg, 4.5)

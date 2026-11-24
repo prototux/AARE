@@ -176,6 +176,8 @@
     <string name="quirks_exit_to_car_subtitle">On: show the app list\'s Exit to car entry for this car. Off: hide it.</string>
     <string name="quirks_mic_setup_title">Microphone SETUP message</string>
     <string name="quirks_mic_setup_subtitle">On: send SETUP when the microphone channel opens. Off: never send it.</string>
+    <string name="quirks_video_headers_once_title">Video headers only once</string>
+    <string name="quirks_video_headers_once_subtitle">Try On when the car plays the sound but shows no picture. On: the video\'s SPS/PPS goes out only at the start. Off: before every key frame, as usual. Some head units can\'t decode that.</string>
     <string name="vehicles_malformed_at">vehicles.json has an error at line %1$d, column %2$d (%3$s): its rules are ignored.</string>
     <string name="vehicles_malformed">vehicles.json can\'t be used (%1$s): its rules are ignored.</string>
     <string name="setup_tagline">Open-source car projection</string>
@@ -235,8 +237,12 @@
     <string name="setup_toggle_companion_shizuku_subtitle">For associated cars, Shizuku answers Android\'s \"connect to device\" question, so it isn\'t asked again. The car\'s network stays AARE\'s own, never the phone\'s internet connection. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_toggle_resume_music_title">Resume music</string>
     <string name="setup_toggle_resume_music_subtitle">Start the last music app playing when the car connects</string>
+    <string name="setup_toggle_pause_while_recording_title">Pause while an app records</string>
+    <string name="setup_toggle_pause_while_recording_subtitle">Music or a video pauses while a phone app records (a voice message, an assistant listening), and plays on once it is done. Takes effect at the next connection.</string>
     <string name="setup_toggle_calls_speaker_title">Calls on the phone\'s speaker</string>
     <string name="setup_toggle_calls_speaker_subtitle">While connected to a car, calls use the phone\'s loudspeaker and microphone instead of the car\'s hands-free link. For wireless adapters or head units whose microphone doesn\'t work. Takes effect from the next connection.</string>
+    <string name="setup_toggle_resume_after_call_title">Music back after a call</string>
+    <string name="setup_toggle_resume_after_call_subtitle">After a call on the phone, or an assistant listening, ask the car for the sound again and play on what it paused. For cars that keep the call\'s sound until asked. Android 12 and later. Takes effect at the next connection.</string>
     <string name="setup_toggle_auto_pair_title">Pair the car\'s Bluetooth automatically</string>
     <string name="setup_toggle_auto_pair_subtitle">For calls: when a car the phone isn\'t paired with asks to pair over Android Auto, pair with that car through Shizuku instead of Android\'s dialog, if the code matches the one the car sent. Never any other device. Needs Shizuku running and AARE allowed in it.</string>
     <string name="setup_bt_address_label">Phone Bluetooth address (optional)</string>
@@ -254,6 +260,10 @@
     <string name="setup_section_location">Location</string>
     <string name="setup_toggle_car_gps_title">Use the car\'s GPS</string>
     <string name="setup_toggle_car_gps_subtitle">While connected, apps on the phone see the car\'s position instead of the phone\'s own, so navigation apps don\'t mix the two</string>
+    <string name="setup_toggle_location_on_title">Location on when connected</string>
+    <string name="setup_toggle_location_on_subtitle">Turns the phone\'s location on when a car connects, as navigation and speed camera apps need it. With Shizuku or root.</string>
+    <string name="setup_toggle_location_off_title">Location off when disconnected</string>
+    <string name="setup_toggle_location_off_subtitle">Turns the phone\'s location off once the car is no longer connected. With Shizuku or root.</string>
     <string name="setup_check_mock_location_title">Allow AARE to set the location</string>
     <string name="setup_check_mock_location_subtitle">Developer options &gt; Select mock location app &gt; AARE</string>
     <string name="setup_check_background_location_title">Navigation with the phone locked</string>
@@ -380,6 +390,13 @@
     <string name="setup_car_action_open_phone">Open phone app</string>
     <string name="setup_car_action_nothing">Nothing</string>
     <string name="setup_log_save">Save</string>
+    <string name="setup_section_developer_log">Developer log</string>
+    <string name="setup_toggle_dev_log_title">Developer mode</string>
+    <string name="setup_toggle_dev_log_subtitle">Write everything AARE logs to text files in %1$s (up to 50 MB). Turning it off deletes them: save them first.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Hide personal data</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Mask the addresses, network and device names and other personal data it recognises. Read the file before you share it.</string>
+    <string name="setup_dev_log_save">Save developer log</string>
+    <string name="setup_dev_log_empty">No developer log yet</string>
     <string name="setup_toggle_verbose_log_title">Verbose protocol log</string>
     <string name="setup_toggle_verbose_log_subtitle">Record the full head-unit protocol trace in this log, to attach to a bug report. Logs a lot; leave it off otherwise.</string>
     <string name="setup_section_backup">Settings backup</string>
@@ -404,6 +421,8 @@
     <string name="setup_style_custom">Custom</string>
     <string name="theme_high_contrast">High contrast</string>
     <string name="theme_night">Night</string>
+    <string name="theme_frosted_glass">Frosted glass</string>
+    <string name="theme_dark_glass">Dark glass</string>
     <string name="theme_retro">Retro</string>
     <string name="setup_choice_accent">Accent color</string>
     <string name="accent_theme">Theme\'s</string>
@@ -461,6 +480,8 @@
     <string name="msg_toggle_banners_subtitle">A banner on the car screen for each new message</string>
     <string name="msg_toggle_group_title">Group messages</string>
     <string name="msg_toggle_group_subtitle">Also show messages from group conversations</string>
+    <string name="msg_apps_title">Apps shown in the car</string>
+    <string name="msg_apps_subtitle">Its messages as banners and in the notification center</string>
     <string name="msg_toggle_read_aloud_title">Read messages aloud</string>
     <string name="msg_toggle_read_aloud_subtitle">Read each new message aloud as it arrives</string>
     <string name="msg_hint_apps">Messaging apps (WhatsApp, Signal, SMS…) also have their own page in the car\'s app list.</string>
@@ -480,6 +501,8 @@
     <string name="audio_page_subtitle">How the phone\'s sound reaches the car</string>
     <string name="audio_toggle_enable_title">Phone audio in the car</string>
     <string name="audio_toggle_enable_subtitle">Music, podcasts, the assistant and, depending on the method, navigation voice</string>
+    <string name="audio_toggle_full_volume_title">Full volume to the car</string>
+    <string name="audio_toggle_full_volume_subtitle">Sends the sound at full volume, as Android Auto does, and the car sets the level. Turn the car\'s volume down before the first drive with it: it plays much louder than before. Off: the phone\'s media volume applies. Audio policy capture (AARE as a system app, Shizuku or root), Android 12 and later. Takes effect at the next connection.</string>
     <string name="audio_using_method">Using: %1$s</string>
     <string name="audio_no_method">No method is set up yet: choose one below.</string>
     <string name="audio_section_methods">Methods, best first</string>
@@ -705,6 +728,20 @@
     <string name="msg_action_read_aloud">Read aloud</string>
     <string name="msg_action_mark_read">Mark as read</string>
     <string name="msg_action_reply">Reply</string>
+    <string name="msg_action_voice_reply">Reply by voice</string>
+    <string name="msg_voice_reply_listening">Say your reply to %1$s</string>
+    <string name="msg_voice_reply_confirm">Send your reply to %1$s?</string>
+    <string name="msg_voice_reply_read_back">%1$s. Send it to %2$s?</string>
+    <string name="msg_voice_reply_not_heard">Didn\'t catch that</string>
+    <string name="msg_voice_reply_try_again">Couldn\'t listen just now. Try again</string>
+    <string name="msg_voice_reply_unavailable">Speech recognition isn\'t available on this phone</string>
+    <string name="msg_voice_reply_send">Send</string>
+    <!-- Comma-separated words that answer the read-back aloud; English ones always count too. -->
+    <string name="msg_voice_reply_yes_words">yes,yeah,send,send it,ok,okay,sure</string>
+    <string name="msg_voice_reply_no_words">no,cancel,don\'t,stop</string>
+    <string name="msg_voice_reply_again">Again</string>
+    <string name="msg_toggle_voice_reply_title">Reply by voice</string>
+    <string name="msg_toggle_voice_reply_subtitle">Dictate a reply from the car screen, also while driving. It\'s read back and sent only when you say yes or tap Send. With Car microphone for phone apps on, the car\'s microphone listens</string>
     <string name="msg_reply_hint">Message to %1$s</string>
     <string name="msg_message_count_one">1 message</string>
     <string name="msg_message_count_many">%1$d messages</string>

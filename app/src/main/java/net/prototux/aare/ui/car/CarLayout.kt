@@ -54,6 +54,8 @@ object CarStyles {
         CarStyle("high_contrast", CarLayout.TASKBAR),
         CarStyle("night", CarLayout.TASKBAR),
         CarStyle("retro", CarLayout.TASKBAR),
+        CarStyle("frosted_glass", CarLayout.TASKBAR),
+        CarStyle("dark_glass", CarLayout.TASKBAR),
     )
 
     /** The styles this phone can show (Material You needs Android 12). */
@@ -72,7 +74,9 @@ object CarStyles {
 internal fun styleSwatch(value: String): List<Color> {
     CarAccents.all.firstOrNull { it.id == value }?.let { return listOf(it.dark.primary) }
     val theme = CarThemes.all.firstOrNull { it.id == value.substringBefore('/') } ?: return emptyList()
-    return listOf(theme.night.background, theme.night.primary)
+    // A glass theme's background is transparent: its backdrop shows its color instead.
+    val background = theme.night.background.takeIf { it.alpha == 1f } ?: theme.nightBackdrop.firstOrNull() ?: theme.night.background
+    return listOf(background, theme.night.primary)
 }
 
 /** A dot in [colors] (see [styleSwatch]). */
