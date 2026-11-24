@@ -38,6 +38,8 @@ interface PcmSource {
     /** Blocking read, like AudioRecord.read; -1 once the source is gone. */
     fun read(buf: ByteArray, offset: Int, length: Int): Int
     fun release()
+    /** Why [start] returned false, for the car audio screen (the root cause, short); null if unknown. */
+    val failure: String? get() = null
 }
 
 /** How AARE captures the phone's audio, best first. [label] is for the log, [title] for the screen. */
@@ -79,6 +81,20 @@ object CaptureMethods {
     fun rootAvailable(context: Context): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Root.allowed(context)
 
+    /** What the phone offers now, in detail, for the car audio screen ([CaptureStatus]). */
+    fun setup(context: Context, playbackConsent: Boolean): CaptureStatus.Setup = CaptureStatus.Setup(
+        sdk = Build.VERSION.SDK_INT,
+        privileged = audioPolicyAvailable(context),
+        rootFound = Root.found(),
+        rootAllowed = Root.allowed(context),
+        shizukuInstalled = runCatching { context.packageManager.getPackageInfo(SHIZUKU_PACKAGE, 0) }.isSuccess,
+        shizukuRunning = runCatching { Shizuku.pingBinder() && !Shizuku.isPreV11() }.getOrDefault(false),
+        shizukuAllowed = shizukuReady(),
+        consent = playbackConsent,
+    )
+
+    private const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
+
     /** What the phone offers now, for [CaptureOrder]; [playbackConsent]: a screen-capture consent is held. */
     fun env(context: Context, playbackConsent: Boolean): CaptureOrder.Env = CaptureOrder.Env(
         privileged = audioPolicyAvailable(context),
@@ -109,6 +125,8 @@ private fun bufferBytes(rate: Int, channels: Int): Int {
 /** Screen-capture consent (AudioPlaybackCapture): media, games and unknown usages only. */
 class PlaybackCaptureSource(private val projection: MediaProjection, private val rate: Int, private val channels: Int) : PcmSource {
     private var record: AudioRecord? = null
+    override var failure: String? = null
+        private set
 
     @SuppressLint("MissingPermission")
     override fun start(): Boolean {
@@ -119,7 +137,7 @@ class PlaybackCaptureSource(private val projection: MediaProjection, private val
         record = runCatching {
             AudioRecord.Builder().setAudioFormat(pcmFormat(rate, channels, out = false)).setAudioPlaybackCaptureConfig(capture)
                 .setBufferSizeInBytes(bufferBytes(rate, channels)).build().also { it.startRecording() }
-        }.onFailure { Log.w(TAG, "playback capture unavailable", it) }.getOrNull()
+        }.onFailure { Log.w(TAG, "playback capture unavailable", it); failure = describeFailure(it) }.getOrNull()
         return record != null
     }
 
@@ -263,12 +281,15 @@ class AudioPolicySource(
     private val volume: Int = AudioPolicyCapture.VOLUME_AS_IS,
 ) : PcmSource {
     private var handle: AudioPolicyCapture.Handle? = null
+    override var failure: String? = null
+        private set
 
     override fun start(): Boolean = try {
         handle = AudioPolicyCapture.open(context, context.getSystemService(AudioManager::class.java), usages, rate, channels, Looper.getMainLooper(), volume = volume)
         true
     } catch (e: Throwable) {
         Log.w(TAG, "audio policy capture unavailable", e)
+        failure = describeFailure(e)
         release()
         false
     }
@@ -407,14 +428,17 @@ abstract class ShellPipeSource internal constructor(private val context: Context
 
     protected abstract fun open(service: IShellAudio): ParcelFileDescriptor?
     protected abstract fun close(service: IShellAudio)
+    final override var failure: String? = null
+        private set
 
     override fun start(): Boolean {
-        val s = helper.acquire(context) ?: return false
+        val s = helper.acquire(context) ?: run { failure = "the ${helper.name} helper could not be started"; return false }
         service = s
         val pfd = runCatching { open(s) }.onFailure { Log.w(TAG, "${helper.name} capture", it) }.getOrNull()
         if (pfd == null) {
             val why = runCatching { s.lastFailure() }.getOrNull()
             DiagLog.add("car audio: ${helper.name} capture refused${why?.let { " ($it)" }.orEmpty()}")
+            failure = why
             release()
             return false
         }

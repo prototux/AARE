@@ -24,6 +24,8 @@ class CarAudioOut(
     /** Silent messages sent ahead of each stream, at most (see [StartSilence]). */
     private val startSilence: Int = 0,
     private val onFailed: () -> Unit = {},
+    /** The source started (on the audio thread): its method works on this phone. */
+    private val onStarted: () -> Unit = {},
     /** elapsedRealtime, and its nanoseconds for the stream's timestamps: replaced in tests. */
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val nanoClock: () -> Long = SystemClock::elapsedRealtimeNanos,
@@ -87,6 +89,7 @@ class CarAudioOut(
             if (wanted) onFailed()
             return
         }
+        onStarted()
         // Android Auto's chunk size (see [chunkBytes]): head units may be tuned to exactly that.
         val chunk = chunkBytes(rate, channels)
         val buf = ByteArray(10 + chunk)
