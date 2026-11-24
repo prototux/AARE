@@ -90,10 +90,11 @@ object RootHandover {
                 p.destroy()
                 return null
             }
-            val handed = binder.takeIf { got.await(timeoutS, TimeUnit.SECONDS) }?.get()
+            val handed = if (got.await(timeoutS, TimeUnit.SECONDS)) binder.get() else null
             if (handed == null) {
                 Log.w(TAG, "no binder from $mainClass")
-                Helper(p, android.os.Binder()).stop()
+                runCatching { p.outputStream.close() }
+                p.destroy()
                 return null
             }
             return Helper(p, handed)
