@@ -12,4 +12,10 @@ class ShowsMessageTest {
         assertFalse(showsMessage("chat", group = true, groups = false, muted = setOf("other")))
         assertTrue(showsMessage("chat", group = true, groups = true, muted = setOf("other")))
     }
+
+    @Test
+    fun aMutedAppGetsNoAutoReply() {
+        assertFalse(autoReplies("com.whatsapp", setOf("com.whatsapp")))
+        assertTrue(autoReplies("com.whatsapp", setOf("org.telegram.messenger")))
+    }
 }

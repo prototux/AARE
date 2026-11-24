@@ -431,7 +431,8 @@ class CarSession(
             if (settings.obdAdapter) net.prototux.aare.obdapp.ObdApp.attach(context)
             if (settings.obdAdapter) net.prototux.aare.obd.ObdReader.start(context, simulated = settings.obdSimulated && BuildConfig.DEBUG, owner = this)
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
-                drivingMode.onMessage(m.key, m.group)
+                // An app muted for the car doesn't answer in the driver's name either.
+                if (autoReplies(m.packageName, settings.mutedMessageApps)) drivingMode.onMessage(m.key, m.group)
                 if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
                     val open = runtime.opener(m.packageName)
                     runtime.remember(m.title, m.text, m.icon, m.actions, open)
@@ -1635,6 +1636,9 @@ private val NAV_KEYS = setOf(
 
 /** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
 internal fun logsCarKey(code: Int) = code !in NAV_KEYS
+
+/** Whether a message from [packageName] gets the driving auto-reply: not from an app [muted] for the car. */
+internal fun autoReplies(packageName: String, muted: Set<String>) = packageName !in muted
 
 /** Whether a message from [packageName] reaches the car screen: its app isn't [muted], and [groups] lets a [group]'s through. */
 internal fun showsMessage(packageName: String, group: Boolean, groups: Boolean, muted: Set<String>) = packageName !in muted && (!group || groups)
