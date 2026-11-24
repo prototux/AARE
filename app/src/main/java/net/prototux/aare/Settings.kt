@@ -361,6 +361,10 @@ class Settings(context: Context) {
     var rootAllowed: Boolean
         get() = prefs.getBoolean("root_allowed", prefs.getBoolean("root_audio", false))
         set(v) = prefs.edit { putBoolean("root_allowed", v); remove("root_audio") }
+    /** Car audio methods this phone refused at drives, and why (CaptureStatus): cleared when one works again. */
+    var captureRefusals: Map<CaptureMethod, net.prototux.aare.audio.CaptureStatus.Refusal>
+        get() = net.prototux.aare.audio.CaptureStatus.decode(prefs.getString("capture_refusals", null))
+        set(v) = prefs.edit { if (v.isEmpty()) remove("capture_refusals") else putString("capture_refusals", net.prototux.aare.audio.CaptureStatus.encode(v)) }
     /** The car audio capture method the user forced (it never falls back), or null for automatic. */
     var forcedCaptureMethod: CaptureMethod?
         get() = prefs.getString("capture_method", null)?.let { name -> CaptureMethod.entries.firstOrNull { it.name == name } }

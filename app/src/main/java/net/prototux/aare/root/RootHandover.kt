@@ -90,7 +90,7 @@ object RootHandover {
                 p.destroy()
                 return null
             }
-            val handed = if (got.await(timeoutS, TimeUnit.SECONDS)) binder.get() else null
+            val handed = if (awaitWhileAlive(got, p, timeoutS)) binder.get() else null
             if (handed == null) {
                 Log.w(TAG, "no binder from $mainClass")
                 runCatching { p.outputStream.close() }
@@ -101,6 +101,20 @@ object RootHandover {
         } finally {
             runCatching { context.unregisterReceiver(receiver) }
         }
+    }
+
+    /**
+     * Waits for [got] up to [timeoutS] seconds, but no longer than [p] lives: su refused, or the
+     * helper died, ends the wait at once rather than after the whole timeout.
+     */
+    private fun awaitWhileAlive(got: CountDownLatch, p: Process, timeoutS: Long): Boolean {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutS)
+        while (System.nanoTime() < deadline) {
+            if (got.await(100, TimeUnit.MILLISECONDS)) return true
+            // One more look: the broadcast may have come just as it ended.
+            if (!p.isAlive) return got.await(100, TimeUnit.MILLISECONDS)
+        }
+        return false
     }
 
     // ------------------------------------------------------------------ in the helper

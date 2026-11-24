@@ -82,6 +82,7 @@ import net.prototux.aare.audio.AudioPolicySource
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
 import net.prototux.aare.audio.CaptureOrder
+import net.prototux.aare.audio.CaptureStatus
 import net.prototux.aare.audio.CarAudioOut
 import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.audio.OutputSource
@@ -1176,11 +1177,14 @@ class CarSession(
         val method = when (val plan = CaptureOrder.plan(CaptureMethods.best(context, p, failedCapture), guidance, singleChannel)) {
             CaptureOrder.Plan.Skip -> return
             CaptureOrder.Plan.NoMethod -> {
+                publishCapture(active = null)
                 runtime.notice(context.getString(R.string.audio_settings_title), context.getString(R.string.audio_notice_setup_hint))
                 return
             }
             is CaptureOrder.Plan.Capture -> plan.method
         }
+        // The music channel's method is the one the car audio screen shows.
+        if (!guidance) publishCapture(active = method)
         val rate = cfg.samplingRate
         val ch = cfg.numberOfChannels
         val source: PcmSource = when (method) {
@@ -1209,6 +1213,7 @@ class CarSession(
                 if (!audioOuts.remove(channel.streamType, out)) return@post
                 DiagLog.add("car audio: ${method.label} failed, trying the next method")
                 failedCapture += method
+                captureFailed(method, source.failure)
                 startAudio(channel)
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
@@ -1219,8 +1224,26 @@ class CarSession(
                     }
                 }
             }
-        })
+        }, onStarted = { main.post { captureWorks(method) } })
         audioOuts[channel.streamType] = out.also { it.start() }
+    }
+
+    /** The car audio screen's view of this session (CaptureStatus.live), main thread. */
+    private fun publishCapture(active: CaptureMethod?) {
+        if (closed) return
+        CaptureStatus.live.value = (CaptureStatus.live.value ?: CaptureStatus.Live(null)).copy(active = active)
+    }
+
+    /** [method] failed for [why]: shown now, and remembered for this phone (main thread). */
+    private fun captureFailed(method: CaptureMethod, why: String?) {
+        CaptureStatus.live.value = (CaptureStatus.live.value ?: CaptureStatus.Live(null)).let { it.copy(failed = it.failed + (method to why)) }
+        settings.captureRefusals = settings.captureRefusals + (method to CaptureStatus.Refusal(why, System.currentTimeMillis()))
+    }
+
+    /** [method] started: whatever this phone refused before, it works now (main thread). */
+    private fun captureWorks(method: CaptureMethod) {
+        val refused = settings.captureRefusals
+        if (method in refused) settings.captureRefusals = refused - method
     }
 
     // The head unit normally answers the focus request sent with START. Some setups (Mazda with an
@@ -1387,6 +1410,7 @@ class CarSession(
 
     private fun teardown() {
         closed = true
+        CaptureStatus.live.value = null
         btPairing?.privileged = null
         autoPair?.stop(); autoPair = null
         settings.unregisterListener(carKeyPrefsListener)
