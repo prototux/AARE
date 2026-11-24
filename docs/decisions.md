@@ -895,8 +895,8 @@ running. Nothing changes on the wire.
   allow" runs it once; a visible switch replaces the hidden `root_audio`, and the launcher and every
   other root user read it. Migration: `root_audio` on means allowed.
 - **Magisk module (privileged install): deprecated** in the 1.6.0 notes, removed in the next release,
-  and not shown on the new screen. Removing it breaks existing setups, a major version under the
-  release rules: open, the owner decides that release's number.
+  and not shown on the new screen. Removing it breaks existing setups, so that release is 2.0.0
+  (owner).
 - **Xposed plays no part in audio**: audioserver checks the permission natively (see "Xposed
   host-shims module").
 - **Forcing a method**: *Automatic* by default; a forced method never falls back. The selector
