@@ -88,9 +88,9 @@ class ShellAudioService : IShellAudio.Stub {
     private val policies = HashMap<Int, PolicyStream>()
     private val policyLooper: Looper by lazy { HandlerThread("aare-shell-policy").apply { start() }.looper }
 
-    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor? = asShell {
+    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray, volume: Int): ParcelFileDescriptor? = asShell {
         try {
-            openPolicy(key, sampleRate, channels, usages)
+            openPolicy(key, sampleRate, channels, usages, volume)
         } catch (e: Throwable) {
             Log.w(TAG, "audio policy as the shell failed", e)
             null
@@ -101,10 +101,10 @@ class ShellAudioService : IShellAudio.Stub {
      * [startPolicy], throwing when the system refuses: the root helper ([SuAudioMain]) calls it
      * directly, to tell AARE why. Run as the process itself (see [asShell]).
      */
-    internal fun openPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor = synchronized(policies) {
+    internal fun openPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray, volume: Int = AudioPolicyCapture.VOLUME_AS_IS): ParcelFileDescriptor = synchronized(policies) {
         stopPolicyLocked(key)
         val ctx = ShellContext(context ?: systemContext())
-        val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx)
+        val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx, volume = volume)
         val stream = PolicyStream(handle)
         val (read, write) = ParcelFileDescriptor.createPipe()
         val chunk = sampleRate / 50 * channels * 2

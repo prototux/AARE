@@ -96,12 +96,14 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
@@ -130,7 +132,7 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
@@ -148,7 +150,7 @@ fun CarShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -295,7 +297,8 @@ private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Uni
 private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, area: DpSize) {
     // The "dark bar" setting: night colors for the rail even when the rest is in day colors.
     if (state.darkBar && !state.night) {
-        CarTheme(night = true) { RailContent(state, actions, horizontal, area) }
+        // carBackdrop: a glass theme's rail is transparent, over its night backdrop here, not the day one.
+        CarTheme(night = true) { Box(Modifier.carBackdrop()) { RailContent(state, actions, horizontal, area) } }
     } else {
         RailContent(state, actions, horizontal, area)
     }

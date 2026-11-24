@@ -46,6 +46,9 @@ interface ILaunchHost {
      */
     void keyboardInCar(boolean inCar) = 8;
 
+    /** Turns the phone's location on or off, as the shell may. False if it can't. */
+    boolean setLocationEnabled(boolean on) = 15;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }

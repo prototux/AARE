@@ -27,6 +27,16 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("verbose_protocol_log", false)
         set(v) = prefs.edit { putBoolean("verbose_protocol_log", v) }
 
+    /** Copy everything AARE logs to text files (see [net.prototux.aare.devlog.DevLog]); off deletes them. */
+    var developerMode: Boolean
+        get() = prefs.getBoolean("developer_mode", false)
+        set(v) = prefs.edit { putBoolean("developer_mode", v) }
+
+    /** Mask personal data in the developer log's files. */
+    var developerLogPrivacy: Boolean
+        get() = prefs.getBoolean("developer_log_privacy", true)
+        set(v) = prefs.edit { putBoolean("developer_log_privacy", v) }
+
     /** Also accept head units from the network (TCP 5277, no authentication). Switched off again after one session if [headUnitServerLanOnce]. */
     var headUnitServerLan: Boolean
         get() = prefs.getBoolean("hu_server_lan", false)
@@ -153,6 +163,14 @@ class Settings(context: Context) {
     var callsOnPhoneSpeaker: Boolean
         get() = prefs.getBoolean("calls_on_phone_speaker", false)
         set(v) = prefs.edit { putBoolean("calls_on_phone_speaker", v) }
+
+    /**
+     * After a call on the phone, or an assistant listening over Bluetooth, ask the car for the media
+     * focus again and play on what its focus loss paused: some cars keep it until asked. Off by default.
+     */
+    var resumeAfterCall: Boolean
+        get() = prefs.getBoolean("resume_after_call", false)
+        set(v) = prefs.edit { putBoolean("resume_after_call", v) }
 
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
@@ -290,6 +308,23 @@ class Settings(context: Context) {
     var carAudio: Boolean
         get() = prefs.getBoolean("car_audio", true)
         set(v) = prefs.edit { putBoolean("car_audio", v) }
+
+    /**
+     * Car audio at full volume: the loop back AARE records from gets full volume while it records,
+     * as Android Auto sends, and the car sets the level. Off: the phone's media volume applies
+     * (at its default, some 30 dB below full). Audio policy capture only. Off by default.
+     */
+    var carAudioFullVolume: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume", v) }
+
+    /**
+     * A session recorded at full volume and hasn't closed cleanly since: the loop back may still be
+     * at full volume (AARE or its helper killed while recording), so the next capture puts it back.
+     */
+    var carAudioFullVolumeLeft: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume_left", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume_left", v) }
 
     /**
      * The phone's own Bluetooth MAC, for the car's in-session pairing handshake. Android hides it
@@ -434,6 +469,16 @@ class Settings(context: Context) {
         get() = prefs.getFloat("call_bar_y", 0f)
         set(v) = prefs.edit { putFloat("call_bar_y", v) }
 
+    /** When a car connects, the phone's location goes on (with Shizuku or root). */
+    var locationOnInCar: Boolean
+        get() = prefs.getBoolean("location_on_in_car", false)
+        set(v) = prefs.edit { putBoolean("location_on_in_car", v) }
+
+    /** When the car goes, the phone's location goes off (with Shizuku or root). */
+    var locationOffAfterCar: Boolean
+        get() = prefs.getBoolean("location_off_after_car", false)
+        set(v) = prefs.edit { putBoolean("location_off_after_car", v) }
+
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
         get() = prefs.getBoolean("car_gps", true)
@@ -444,6 +489,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("resume_media", false)
         set(v) = prefs.edit { putBoolean("resume_media", v) }
 
+    /**
+     * Pause what plays while a phone app records (a voice message, an assistant listening), and
+     * play it on once the app is done. Off by default.
+     */
+    var pauseWhileRecording: Boolean
+        get() = prefs.getBoolean("pause_while_recording", false)
+        set(v) = prefs.edit { putBoolean("pause_while_recording", v) }
+
     /** Show incoming messages as banners on the car screen. */
     var messageBanners: Boolean
         get() = prefs.getBoolean("message_banners", true)
@@ -453,6 +506,11 @@ class Settings(context: Context) {
     var groupMessages: Boolean
         get() = prefs.getBoolean("group_messages", true)
         set(v) = prefs.edit { putBoolean("group_messages", v) }
+
+    /** Messaging apps (packages) whose messages don't show in the car. */
+    var mutedMessageApps: Set<String>
+        get() = prefs.getStringSet("muted_message_apps", emptySet()).orEmpty()
+        set(v) = prefs.edit { putStringSet("muted_message_apps", HashSet(v)) }
 
     /** Do Not Disturb (priority only) while connected to the car. */
     var dndWhileDriving: Boolean
