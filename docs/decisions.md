@@ -807,6 +807,12 @@ same audio policy as the Shizuku path, so music and navigation voice go to their
 - **No orphan root process:** end of stdin (AARE closed it, or died) stops every stream and ends the
   helper; so does any failed write to AARE, as before. AARE closes the helper's stdin first when
   the last stream stops, since killing the su process alone may not reach the helper.
+- **A main Looper, prepared, not looped:** `SuAudioMain.main` calls `Looper.prepareMainLooper()`
+  first, as scrcpy's server does: the system context (`ActivityThread.systemMain`) creates a Handler
+  on the calling thread, and a bare app_process main thread has no Looper (every root session
+  failed with "Can't create handler inside thread ..."; Shizuku's process has one). It isn't
+  looped: the helper's callbacks go to its own policy HandlerThread, so the stdin loop stays on
+  the main thread with its exit paths unchanged.
 - **Fallback:** a refused policy comes back as `failed <reason>`, written to the connection log
   ("root audio routing refused (…)"); the method is then marked failed for the session and AARE
   uses today's whole-output capture through su (`SuSource`, unchanged), as the Shizuku policy

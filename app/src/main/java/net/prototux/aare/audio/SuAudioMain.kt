@@ -1,5 +1,6 @@
 package net.prototux.aare.audio
 
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import java.io.FileDescriptor
@@ -24,6 +25,12 @@ object SuAudioMain {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        // A bare app_process main thread has no Looper, and the system context (ActivityThread's
+        // systemMain, behind ShellAudioService's context and AudioManager) creates a Handler on
+        // the calling thread: without this, both modes fail with "Can't create handler inside
+        // thread ... that has not called Looper.prepare()". Shizuku's process has one already.
+        // Nothing has to run on it: the helper's own callbacks go to its policy HandlerThread.
+        Looper.prepareMainLooper()
         if (args.firstOrNull() == MUX) mux() else wholeOutput(args)
     }
 
