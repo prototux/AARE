@@ -580,6 +580,26 @@
     <string name="about_oss_libraries_title">Bibliotheken</string>
     <string name="about_oss_protocol_title">Protocoldefinities</string>
 
+    <string name="obd_adapter_title">Een OBD2-adapter uitlezen</string>
+    <string name="obd_adapter_subtitle">Een via Bluetooth gekoppelde ELM327-adapter, uitgelezen terwijl de auto verbonden is: motorgegevens die de auto niet naar AARE stuurt. Alleen lezen: AARE schrijft nooit naar de auto.</string>
+    <string name="obd_simulated_title">Gesimuleerde OBD2-adapter (debug)</string>
+    <string name="obd_simulated_subtitle">Een gesimuleerde auto in plaats van een echte adapter, om deze pagina te proberen</string>
+    <string name="obd_section">OBD2-adapter</string>
+    <string name="obd_status_off">Uit</string>
+    <string name="obd_status_searching">Zoeken naar een gekoppelde adapter (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: de auto antwoordt niet (contact uit?)</string>
+    <string name="obd_status_gave_up">Geen adapter gevonden: koppel er een in de Bluetooth-instellingen van de telefoon</string>
+    <string name="obd_rpm">Toerental</string>
+    <string name="obd_speed">Snelheid</string>
+    <string name="obd_coolant">Koelvloeistof</string>
+    <string name="obd_intake_air">Inlaatlucht</string>
+    <string name="obd_outside">Buitenlucht</string>
+    <string name="obd_boost">Turbodruk</string>
+    <string name="obd_load">Motorbelasting</string>
+    <string name="obd_battery">Accu</string>
+    <string name="obd_fuel">Brandstof</string>
+    <string name="obd_ethanol">Ethanol</string>
     <string name="vehicles_section_title">Uitzonderingen per voertuig</string>
     <string name="vehicles_hint">Pas de dichtheid of de marges van het zichtbare gebied aan voor een specifieke auto, zonder nieuwe build. Bewerk vehicles.json met een bestandsbeheerder en match de auto op merk/model/naam.</string>
     <string name="vehicles_rule_count">Regels geladen: %1$d</string>

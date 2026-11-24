@@ -446,6 +446,21 @@ class Settings(context: Context) {
     var homeActions: String?
         get() = prefs.getString(HOME_ACTIONS_KEY, null)
         set(v) = prefs.edit { putString(HOME_ACTIONS_KEY, v) }
+    /**
+     * Read an OBD2 adapter (ELM327 over Bluetooth, paired in the phone's settings) while the car is
+     * connected, for engine data the head unit doesn't send. Read only. Off by default.
+     */
+    var obdAdapter: Boolean
+        get() = prefs.getBoolean("obd_adapter", false)
+        set(v) = prefs.edit { putBoolean("obd_adapter", v) }
+    /** The adapter the user picked (Bluetooth address); null: any paired device clearly named as one. */
+    var obdAdapterAddress: String?
+        get() = prefs.getString("obd_adapter_address", null)
+        set(v) = prefs.edit { if (v == null) remove("obd_adapter_address") else putString("obd_adapter_address", v) }
+    /** Debug builds: a pretend adapter instead of a real one, to try the Car data page without a car. */
+    var obdSimulated: Boolean
+        get() = prefs.getBoolean("obd_simulated", false)
+        set(v) = prefs.edit { putBoolean("obd_simulated", v) }
     /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
     var callBarOffsetX: Float
         get() = prefs.getFloat("call_bar_x", 0f)

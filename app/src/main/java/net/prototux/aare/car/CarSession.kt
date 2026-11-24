@@ -72,6 +72,7 @@ import net.prototux.aare.aap.channels.PassiveChannel
 import net.prototux.aare.aap.channels.SensorChannel
 import net.prototux.aare.aap.channels.VideoChannel
 import net.prototux.aare.aap.channels.WifiProjectionChannel
+import net.prototux.aare.BuildConfig
 import net.prototux.aare.DiagLog
 import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.PinnedHeadUnits
@@ -420,6 +421,8 @@ class CarSession(
             requestNavFocus()
             drivingMode.start()
             locationSwitch.start(settings.locationOnInCar)
+            // Opt-in: engine data from an OBD2 adapter for the Car data viewers (held only while connected).
+            if (settings.obdAdapter) net.prototux.aare.obd.ObdReader.start(context, simulated = settings.obdSimulated && BuildConfig.DEBUG, owner = this)
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
@@ -1473,6 +1476,7 @@ class CarSession(
         settings.carAudioFullVolumeLeft = false
         teardownVideo()
         runtime.stop()
+        net.prototux.aare.obd.ObdReader.stop(owner = this)
         CarData.reset(owner = this)
         scope.cancel()
     }

@@ -1853,8 +1853,26 @@ private fun CarDataCard() {
     val ctx = LocalContext.current
     val settings = remember { Settings(ctx) }
     var inCar by remember { mutableStateOf(settings.carDataApp) }
+    var obdOn by remember { mutableStateOf(settings.obdAdapter) }
+    var obdFake by remember { mutableStateOf(settings.obdSimulated) }
+    val obdStatus by net.prototux.aare.obd.ObdReader.status.collectAsState()
+    val obd by net.prototux.aare.obd.ObdReader.readings.collectAsState()
     Section(stringResource(R.string.setup_page_car_data_title)) {
         Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
+        // Takes effect at the next connection (the reader runs with the car session).
+        Toggle(stringResource(R.string.obd_adapter_title), stringResource(R.string.obd_adapter_subtitle), obdOn) { obdOn = it; settings.obdAdapter = it }
+        if (obdOn) {
+            // Which paired device to read: by default any clearly named adapter, or the one picked here.
+            val paired = remember { net.prototux.aare.obd.BluetoothObdLink.pairedDevices(ctx) }
+            var chosen by remember { mutableStateOf(settings.obdAdapterAddress.orEmpty()) }
+            val options = listOf("" to stringResource(R.string.obd_adapter_auto)) + paired +
+                listOfNotNull(chosen.takeIf { c -> c.isNotEmpty() && paired.none { it.first == c } }?.let { it to it })
+            Spacer(Modifier.height(8.dp))
+            Select(stringResource(R.string.obd_adapter_pick), options, chosen) { chosen = it; settings.obdAdapterAddress = it.ifEmpty { null } }
+        }
+        if (obdOn && net.prototux.aare.BuildConfig.DEBUG) {
+            Toggle(stringResource(R.string.obd_simulated_title), stringResource(R.string.obd_simulated_subtitle), obdFake) { obdFake = it; settings.obdSimulated = it }
+        }
         if (!car.connected) {
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1919,6 +1937,12 @@ private fun CarDataCard() {
         DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
         DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
         DataRow(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
+    }
+    if (obdOn) {
+        Spacer(Modifier.height(16.dp))
+        Section(stringResource(R.string.obd_section)) {
+            net.prototux.aare.ui.car.obdDataLines(obdStatus, obd).forEach { (label, value) -> DataRow(label, value) }
+        }
     }
 }
 
