@@ -1,10 +1,7 @@
 package net.prototux.aare.launch
 
-import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.IBinder
@@ -12,6 +9,7 @@ import android.util.Log
 import android.view.Surface
 import net.prototux.aare.BuildConfig
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.root.RootHandover
 import rikka.shizuku.Shizuku
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -19,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * App-side connector to the privileged [LaunchHostService]: over Shizuku (a bound UserService) when
  * it's available, else root (the [LaunchMain] app_process helper, which hands its binder back by
- * broadcast). Mirrors ShizukuSource / SuSource in the audio code. One instance per launched app.
+ * a broadcast only this start's token opens, see [RootHandover]). One instance per launched app.
  *
  * [connect] blocks and must run off the main thread.
  */
@@ -44,8 +42,7 @@ class AppLauncher(private val context: Context, key: String = "launch") {
     }
 
     // --- root path ---
-    private var suProcess: Process? = null
-    private var receiver: BroadcastReceiver? = null
+    private var rootHelper: RootHandover.Helper? = null
 
     /** Connects via Shizuku if available, else root. Blocks up to a few seconds; false if neither works. */
     fun connect(): Boolean {
@@ -60,28 +57,10 @@ class AppLauncher(private val context: Context, key: String = "launch") {
     }
 
     private fun connectRoot(): Boolean {
-        val got = CountDownLatch(1)
-        val rec = object : BroadcastReceiver() {
-            override fun onReceive(c: Context?, intent: Intent?) {
-                host = intent?.getBundleExtra(LaunchMain.EXTRA_BUNDLE)?.getBinder(LaunchMain.EXTRA_BINDER)
-                    ?.let(ILaunchHost.Stub::asInterface)
-                got.countDown()
-            }
-        }
-        receiver = rec
-        val filter = IntentFilter(LaunchMain.ACTION_HOST)
-        // The broadcast comes from the root process (another uid), so it must be exported.
-        if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(rec, filter, Context.RECEIVER_EXPORTED)
-        else @Suppress("UnspecifiedRegisterReceiverFlag") context.registerReceiver(rec, filter)
-        val apk = context.applicationInfo.sourceDir
-        val cmd = "CLASSPATH='$apk' app_process / ${LaunchMain::class.java.name} ${context.packageName}"
-        suProcess = runCatching { ProcessBuilder("su", "-c", cmd).start() }
-            .onFailure { Log.w(TAG, "su launch failed", it) }.getOrNull() ?: return false
-        suProcess?.let { p ->
-            Thread { runCatching { p.errorStream.bufferedReader().forEachLine { if (BuildConfig.DEBUG) Log.d(TAG, "su: $it") } } }
-                .apply { isDaemon = true }.start()
-        }
-        return got.await(8, TimeUnit.SECONDS) && host != null
+        val helper = RootHandover.start(context, LaunchMain::class.java.name, LaunchMain.ACTION_HOST, listOf(context.packageName)) ?: return false
+        rootHelper = helper
+        host = ILaunchHost.Stub.asInterface(helper.binder)
+        return true
     }
 
     val connected: Boolean get() = host != null
@@ -116,10 +95,8 @@ class AppLauncher(private val context: Context, key: String = "launch") {
     fun release() {
         runCatching { host?.stop() }
         if (didBind) runCatching { Shizuku.unbindUserService(args, connection, true) }
-        receiver?.let { runCatching { context.unregisterReceiver(it) } }
-        receiver = null
-        runCatching { suProcess?.destroy() }
-        suProcess = null
+        rootHelper?.stop()
+        rootHelper = null
         host = null
     }
 

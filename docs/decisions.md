@@ -933,3 +933,25 @@ the active method. Below it the method selector, *Tried in this order* (names an
 4. The new screen, the car's screen-capture notice and the new defaults; translations before the
    release tag.
 5. The Magisk module removed: tools, release workflow, README.
+
+## Root helpers hand their binder back behind a one-time token
+
+Owner's decision, 2026-11-24 (option A of three). A root helper (`su` + `app_process`) can't pass a
+live binder over a pipe, so it broadcasts it to AARE. That receiver has to be exported (the helper
+is another uid), and it checked nothing: any installed app could hand AARE a binder of its own
+during the connection window, and get the car screen's surface and touches (the launcher), or the
+car's microphone and the sound sent to the car (the audio helper, once it hands a binder too).
+
+- **`RootHandover`**: each start makes a random 256-bit token and writes it to the helper's stdin;
+  the helper puts it in its broadcast, and AARE drops any broadcast without it (compared in constant
+  time). Only AARE and the helper see it: not on the command line, not in the root manager's log.
+- **The helper ends with its stdin** (AARE closes it, or dies), so no root process outlives AARE;
+  killing the su process alone may not reach it.
+- Rejected: a callback through which AARE checks the helper's uid (`Binder.getCallingUid`): no
+  shared secret, but another round trip and more code at every start; a permission on the receiver:
+  depends on how each root manager runs su, which can't be tested here.
+
+The audio overhaul's step "share the policy reflection, one microphone lease" (1d) was dropped:
+`MicTakeover` (when phone apps' recordings open and close the car's microphone) and `MicRouter`
+(who shares the one car microphone) aren't duplicates, and the two policy builders share about 15
+lines of reflection that only run on a device, where no test reaches them.
