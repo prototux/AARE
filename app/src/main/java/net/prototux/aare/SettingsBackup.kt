@@ -71,6 +71,7 @@ object SettingsBackup {
         "pause_while_recording" to Type.BOOLEAN,
         "message_banners" to Type.BOOLEAN,
         "group_messages" to Type.BOOLEAN,
+        "muted_message_apps" to Type.STRING_SET,
         "dnd_driving" to Type.BOOLEAN,
         "auto_reply" to Type.BOOLEAN,
         "auto_reply_text" to Type.STRING,

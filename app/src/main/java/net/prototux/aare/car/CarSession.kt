@@ -421,7 +421,7 @@ class CarSession(
             drivingMode.start()
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
-                if (!m.group || settings.groupMessages) {
+                if (showsMessage(m.packageName, m.group, settings.groupMessages, settings.mutedMessageApps)) {
                     val open = runtime.opener(m.packageName)
                     runtime.remember(m.title, m.text, m.icon, m.actions, open)
                     if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
@@ -1684,6 +1684,9 @@ private val NAV_KEYS = setOf(
 
 /** Whether a key from the car goes into the connection log: every button, not the knob's or touchpad's moves. */
 internal fun logsCarKey(code: Int) = code !in NAV_KEYS
+
+/** Whether a message from [packageName] reaches the car screen: its app isn't [muted], and [groups] lets a [group]'s through. */
+internal fun showsMessage(packageName: String, group: Boolean, groups: Boolean, muted: Set<String>) = packageName !in muted && (!group || groups)
 
 /** How long until video report [n] (0: the first) after the car gave its screen: soon at first, then one in 30 s. */
 internal fun videoReportDelayMs(n: Int): Long = longArrayOf(1_000, 2_000, 7_000, 10_000).getOrElse(n) { 30_000 }

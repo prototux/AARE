@@ -445,6 +445,8 @@
     <string name="msg_toggle_banners_subtitle">A banner on the car screen for each new message</string>
     <string name="msg_toggle_group_title">Group messages</string>
     <string name="msg_toggle_group_subtitle">Also show messages from group conversations</string>
+    <string name="msg_apps_title">Apps shown in the car</string>
+    <string name="msg_apps_subtitle">Its messages as banners and in the notification center</string>
     <string name="msg_toggle_read_aloud_title">Read messages aloud</string>
     <string name="msg_toggle_read_aloud_subtitle">Read each new message aloud as it arrives</string>
     <string name="msg_hint_apps">Messaging apps (WhatsApp, Signal, SMS…) also have their own page in the car\'s app list.</string>

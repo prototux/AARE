@@ -257,6 +257,8 @@
     <string name="msg_toggle_banners_subtitle">Ein Banner auf dem Autobildschirm für jede neue Nachricht</string>
     <string name="msg_toggle_group_title">Gruppennachrichten</string>
     <string name="msg_toggle_group_subtitle">Auch Nachrichten aus Gruppenunterhaltungen anzeigen</string>
+    <string name="msg_apps_title">Apps im Auto</string>
+    <string name="msg_apps_subtitle">Nachrichten als Banner und in den Benachrichtigungen</string>
     <string name="msg_toggle_read_aloud_title">Nachrichten vorlesen</string>
     <string name="msg_toggle_read_aloud_subtitle">Jede neue Nachricht beim Eintreffen vorlesen</string>
     <string name="msg_hint_apps">Messaging-Apps (WhatsApp, Signal, SMS…) haben auch ihre eigene Seite in der App-Liste des Autos.</string>

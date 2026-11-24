@@ -472,6 +472,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("group_messages", true)
         set(v) = prefs.edit { putBoolean("group_messages", v) }
 
+    /** Messaging apps (packages) whose messages don't show in the car. */
+    var mutedMessageApps: Set<String>
+        get() = prefs.getStringSet("muted_message_apps", emptySet()).orEmpty()
+        set(v) = prefs.edit { putStringSet("muted_message_apps", HashSet(v)) }
+
     /** Do Not Disturb (priority only) while connected to the car. */
     var dndWhileDriving: Boolean
         get() = prefs.getBoolean("dnd_driving", false)
