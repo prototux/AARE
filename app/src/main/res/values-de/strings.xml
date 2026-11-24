@@ -61,6 +61,8 @@
     <string name="setup_hint_wireless_compat">Eingebaute Head Units und nachgerüstete kabellose Adapter (am USB-Anschluss des Autos) erwarten die Antworten des Telefons in unterschiedlicher Reihenfolge. Automatisch nutzt die Standardreihenfolge oder die Adapter-Reihenfolge für ein Auto, das sich zuletzt damit verbunden hat. Wählen Sie Adapter, wenn sich Ihr kabelloser Adapter nicht verbindet; Eingebaut kehrt für alle Autos zur Standardreihenfolge zurück.</string>
     <string name="setup_toggle_resume_music_title">Musik fortsetzen</string>
     <string name="setup_toggle_resume_music_subtitle">Startet die zuletzt verwendete Musik-App, wenn sich das Auto verbindet</string>
+    <string name="setup_toggle_pause_while_recording_title">Pausieren, während eine App aufnimmt</string>
+    <string name="setup_toggle_pause_while_recording_subtitle">Musik oder ein Video pausiert, während eine Handy-App aufnimmt (eine Sprachnachricht, ein zuhörender Assistent), und läuft danach weiter. Gilt ab der nächsten Verbindung.</string>
     <string name="setup_toggle_calls_speaker_title">Anrufe über den Lautsprecher des Telefons</string>
     <string name="setup_toggle_calls_speaker_subtitle">Bei Verbindung mit einem Auto nutzen Anrufe den Lautsprecher und das Mikrofon des Telefons statt der Freisprecheinrichtung des Autos. Für kabellose Adapter oder Head-Units, deren Mikrofon nicht funktioniert. Wird ab der nächsten Verbindung wirksam.</string>
     <string name="setup_toggle_resume_after_call_title">Musik nach einem Anruf weiter</string>

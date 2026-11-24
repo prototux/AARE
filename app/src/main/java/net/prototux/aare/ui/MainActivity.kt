@@ -628,6 +628,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var pauseWhileRecording by remember { mutableStateOf(settings.pauseWhileRecording) }
     var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
     var resumeAfterCall by remember { mutableStateOf(settings.resumeAfterCall) }
     var autoPair by remember { mutableStateOf(settings.autoPairCarBluetooth) }
@@ -658,6 +659,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 Spacer(Modifier.height(8.dp))
             }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_pause_while_recording_title), stringResource(R.string.setup_toggle_pause_while_recording_subtitle), pauseWhileRecording) {
+                pauseWhileRecording = it; settings.pauseWhileRecording = it
+            }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
             }

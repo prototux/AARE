@@ -67,6 +67,7 @@ object SettingsBackup {
         "call_bar_y" to Type.FLOAT,
         "car_gps" to Type.BOOLEAN,
         "resume_media" to Type.BOOLEAN,
+        "pause_while_recording" to Type.BOOLEAN,
         "message_banners" to Type.BOOLEAN,
         "group_messages" to Type.BOOLEAN,
         "dnd_driving" to Type.BOOLEAN,
