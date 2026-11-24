@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Pista</string>
+    <string name="obd_tab_lap">Vuelta</string>
+    <string name="obd_tab_dyno">Dinamómetro</string>
+    <string name="obd_track_warning">Solo en pista o zona cerrada. Nunca en vías públicas.</string>
+    <string name="obd_g_title">Fuerza G (móvil)</string>
+    <string name="obd_g_accel">Acel. %1$s</string>
+    <string name="obd_g_brake">Freno %1$s</string>
+    <string name="obd_g_lateral">Lateral %1$s</string>
+    <string name="obd_g_reset">Reiniciar máximos</string>
+    <string name="obd_g_hint">Deja el móvil firme en el soporte. Aprende dónde está el frente al acelerar y frenar.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Toca para armar</string>
+    <string name="obd_test_stop">Armado: detén el coche</string>
+    <string name="obd_test_below">Armado: mantente bajo %1$d km/h</string>
+    <string name="obd_test_above">Armado: supera %1$d km/h</string>
+    <string name="obd_test_ready">Listo: acelera</string>
+    <string name="obd_test_ready_brake">Listo: frena</string>
+    <string name="obd_test_running">Midiendo…</string>
+    <string name="obd_best">Mejor %1$s</string>
+    <string name="obd_lap_arm">Iniciar cronómetro de vuelta</string>
+    <string name="obd_lap_disarm">Detener</string>
+    <string name="obd_lap_waiting">Armado: la línea de salida queda donde empieces a moverte</string>
+    <string name="obd_lap_last">Última</string>
+    <string name="obd_lap_best">Mejor</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Vueltas</string>
+    <string name="obd_lap_no_gps">Sin GPS del coche</string>
+    <string name="obd_dyno_arm">Armar</string>
+    <string name="obd_dyno_disarm">Terminar</string>
+    <string name="obd_dyno_off">Arma y acelera a fondo en 2.ª o 3.ª, desde pocas vueltas hasta cerca del corte.</string>
+    <string name="obd_dyno_armed">Armado: a fondo</string>
+    <string name="obd_dyno_peak">%1$.0f CV a %2$.0f rpm</string>
+    <string name="obd_dyno_note">Potencia en rueda, estimada por la aceleración y el peso del coche (Ajustes). Una referencia, no un dinamómetro real.</string>
+    <string name="obd_history_records">Récords</string>
+    <string name="obd_history_lap">Vuelta</string>
+    <string name="obd_history_dyno">Dinamómetro</string>
+    <string name="obd_set_mass">Peso con el conductor</string>
+</resources>

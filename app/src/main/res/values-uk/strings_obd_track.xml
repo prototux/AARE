@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Трек</string>
+    <string name="obd_tab_lap">Коло</string>
+    <string name="obd_tab_dyno">Стенд</string>
+    <string name="obd_track_warning">Лише на треку або закритому майданчику. Ніколи на дорогах загального користування.</string>
+    <string name="obd_g_title">Перевантаження G (телефон)</string>
+    <string name="obd_g_accel">Розгін %1$s</string>
+    <string name="obd_g_brake">Гальм. %1$s</string>
+    <string name="obd_g_lateral">Бік %1$s</string>
+    <string name="obd_g_reset">Скинути максимуми</string>
+    <string name="obd_g_hint">Надійно закріпіть телефон у тримачі. Він дізнається, де перед, коли ви розганяєтеся й гальмуєте.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Торкніться, щоб звести</string>
+    <string name="obd_test_stop">Зведено: зупиніть авто</string>
+    <string name="obd_test_below">Зведено: тримайтеся нижче %1$d км/год</string>
+    <string name="obd_test_above">Зведено: розженіться понад %1$d км/год</string>
+    <string name="obd_test_ready">Готово: газ</string>
+    <string name="obd_test_ready_brake">Готово: гальмуйте</string>
+    <string name="obd_test_running">Вимірювання…</string>
+    <string name="obd_best">Найкраще %1$s</string>
+    <string name="obd_lap_arm">Запустити хронометраж кола</string>
+    <string name="obd_lap_disarm">Стоп</string>
+    <string name="obd_lap_waiting">Зведено: лінія старту буде там, де ви рушите</string>
+    <string name="obd_lap_last">Останнє</string>
+    <string name="obd_lap_best">Найкраще</string>
+    <string name="obd_lap_delta">Різниця</string>
+    <string name="obd_lap_count">Кола</string>
+    <string name="obd_lap_no_gps">Немає GPS від авто</string>
+    <string name="obd_dyno_arm">Звести</string>
+    <string name="obd_dyno_disarm">Завершити</string>
+    <string name="obd_dyno_off">Зведіть і натисніть газ до підлоги на 2-й або 3-й передачі, від низьких обертів майже до відсічки.</string>
+    <string name="obd_dyno_armed">Зведено: газ до підлоги</string>
+    <string name="obd_dyno_peak">%1$.0f к.с. при %2$.0f об/хв</string>
+    <string name="obd_dyno_note">Потужність на колесах, оцінена за прискоренням і масою авто (Налаштування). Приблизно, не справжній стенд.</string>
+    <string name="obd_history_records">Рекорди</string>
+    <string name="obd_history_lap">Коло</string>
+    <string name="obd_history_dyno">Стенд</string>
+    <string name="obd_set_mass">Маса з водієм</string>
+</resources>

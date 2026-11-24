@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Кокпіт</string>
+    <string name="obd_tab_dash">Прилади</string>
+    <string name="obd_tab_trip">Поїздка</string>
+    <string name="obd_tab_history">Історія</string>
+    <string name="obd_tab_settings">Налаштування</string>
+    <string name="obd_simulated_badge">Імітація адаптера</string>
+    <string name="obd_waiting">Очікування адаптера…</string>
+    <string name="obd_gear">Передача</string>
+    <string name="obd_oil">Олива</string>
+    <string name="obd_fuel_use">Витрата</string>
+    <string name="obd_pedal">Педаль</string>
+    <string name="obd_peak">пік %1$s</string>
+    <string name="obd_unit_kmpl">км/л</string>
+    <string name="obd_trip_distance">Відстань</string>
+    <string name="obd_trip_time">Час</string>
+    <string name="obd_trip_average">Середня</string>
+    <string name="obd_trip_now">Зараз</string>
+    <string name="obd_trip_range">Запас ходу</string>
+    <string name="obd_trip_reset">Скинути поїздку</string>
+    <string name="obd_trip_note">Поїздка — це поточне підключення до авто; вона потрапляє в Історію, коли авто відключається, або під час скидання. Витрата оцінна, якщо авто її не повідомляє. Запас ходу = залишок пального × середня витрата поїздки (об’єм бака в Налаштуваннях).</string>
+    <string name="obd_history_recent">Нещодавні</string>
+    <string name="obd_history_empty">Поки порожньо. Тут зберігаються поїздки від 1 км.</string>
+    <string name="obd_history_trip">Поїздка</string>
+    <string name="obd_history_clear">Очистити історію</string>
+    <string name="obd_history_clear_confirm">Торкніться ще раз, щоб очистити</string>
+    <string name="obd_set_engine">Другий прилад</string>
+    <string name="obd_set_engine_auto">Авто</string>
+    <string name="obd_set_engine_turbo">Турбо (наддув)</string>
+    <string name="obd_set_engine_na">Атмосферний (навантаження)</string>
+    <string name="obd_set_rpm_max">Тахометр до</string>
+    <string name="obd_set_redline">Червона зона / сигнал перемикання</string>
+    <string name="obd_set_displacement">Об’єм двигуна</string>
+    <string name="obd_set_tank">Бак</string>
+    <string name="obd_set_fuel">Пальне</string>
+    <string name="obd_set_fuel_petrol">Бензин</string>
+    <string name="obd_set_fuel_diesel">Дизель</string>
+    <string name="obd_set_ethanol">Етанол (без датчика)</string>
+    <string name="obd_set_gears">Вивчено передач: %1$d</string>
+    <string name="obd_set_gears_forget">Забути</string>
+    <string name="obd_coolant_short">ОР</string>
+    <string name="obd_dash_card">Авто</string>
+    <string name="obd_set_card">Картка «Авто» (головний екран)</string>
+    <string name="obd_set_card_pick">Вибрати</string>
+    <string name="obd_set_card_hint">Торкайтеся значень у потрібному порядку, до %1$d. Вони з’являться на картці «Авто».</string>
+    <string name="obd_done">Готово</string>
+    <string name="obd_card_gauge">Наддув / навантаження</string>
+    <string name="obd_card_now">Витрата зараз</string>
+</resources>

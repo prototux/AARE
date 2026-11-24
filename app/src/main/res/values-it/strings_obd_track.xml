@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Pista</string>
+    <string name="obd_tab_lap">Giro</string>
+    <string name="obd_tab_dyno">Banco</string>
+    <string name="obd_track_warning">Solo in pista o in area chiusa. Mai su strade pubbliche.</string>
+    <string name="obd_g_title">Forza G (telefono)</string>
+    <string name="obd_g_accel">Accel. %1$s</string>
+    <string name="obd_g_brake">Freno %1$s</string>
+    <string name="obd_g_lateral">Laterale %1$s</string>
+    <string name="obd_g_reset">Azzera massimi</string>
+    <string name="obd_g_hint">Tieni il telefono ben fisso nel supporto. Impara dov\'è il davanti quando acceleri e freni.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Tocca per armare</string>
+    <string name="obd_test_stop">Armato: ferma l\'auto</string>
+    <string name="obd_test_below">Armato: resta sotto %1$d km/h</string>
+    <string name="obd_test_above">Armato: supera %1$d km/h</string>
+    <string name="obd_test_ready">Pronto: accelera</string>
+    <string name="obd_test_ready_brake">Pronto: frena</string>
+    <string name="obd_test_running">Misurazione…</string>
+    <string name="obd_best">Migliore %1$s</string>
+    <string name="obd_lap_arm">Avvia cronometro giro</string>
+    <string name="obd_lap_disarm">Ferma</string>
+    <string name="obd_lap_waiting">Armato: la linea di partenza è dove inizi a muoverti</string>
+    <string name="obd_lap_last">Ultimo</string>
+    <string name="obd_lap_best">Migliore</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Giri</string>
+    <string name="obd_lap_no_gps">Nessun GPS dall\'auto</string>
+    <string name="obd_dyno_arm">Arma</string>
+    <string name="obd_dyno_disarm">Termina</string>
+    <string name="obd_dyno_off">Arma, poi accelera a fondo in 2ª o 3ª, dai bassi giri fin quasi al limitatore.</string>
+    <string name="obd_dyno_armed">Armato: gas a fondo</string>
+    <string name="obd_dyno_peak">%1$.0f CV a %2$.0f giri</string>
+    <string name="obd_dyno_note">Potenza alle ruote, stimata da accelerazione e peso dell\'auto (Impostazioni). Un\'indicazione, non un vero banco.</string>
+    <string name="obd_history_records">Record</string>
+    <string name="obd_history_lap">Giro</string>
+    <string name="obd_history_dyno">Banco</string>
+    <string name="obd_set_mass">Peso con il conducente</string>
+</resources>

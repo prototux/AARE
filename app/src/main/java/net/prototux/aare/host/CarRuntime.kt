@@ -419,6 +419,8 @@ class CarRuntime(
         ui.drivingRestricted = carDriving && !settings.ignoreDriving
         // A phone assistant shown through the launcher is parked only, like other launched apps.
         if (ui.drivingRestricted) ui.assistantStandalonePkg = null
+        // The Cockpit's track pages (timed runs, lap timer, dyno) are parked only too.
+        net.prototux.aare.obdapp.ObdApp.trackAllowed = !ui.drivingRestricted
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.textScale = CarTextSize.byId(settings.carTextSize).fontScale
@@ -652,6 +654,10 @@ class CarRuntime(
         }
         if (HomeHub.config.value.hasContent) {
             entries += CarAppEntry(HOME_ID, context.packageName, context.getString(R.string.home_app_label), builtinIcon(R.drawable.ic_car_home), CarAppKind.HOME)
+        }
+        // The OBD2 app: only with the adapter setting on, so turning that off removes it all.
+        if (settings.obdAdapter) {
+            entries += CarAppEntry(OBD_ID, context.packageName, context.getString(R.string.obd_app_label), builtinIcon(R.drawable.ic_car_obd), CarAppKind.OBD)
         }
         if (settings.carDataApp) {
             entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
@@ -1143,6 +1149,7 @@ class CarRuntime(
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
+                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, ui.drivingRestricted, location = { carLocation })
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
@@ -1190,6 +1197,7 @@ class CarRuntime(
         const val BROWSER_ID = "browser"
         const val CAR_DATA_ID = "car-data"
         const val HOME_ID = "home"
+        const val OBD_ID = "obd"
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"

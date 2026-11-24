@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Instrumenter</string>
+    <string name="obd_tab_trip">Tur</string>
+    <string name="obd_tab_history">Historik</string>
+    <string name="obd_tab_settings">Indstillinger</string>
+    <string name="obd_simulated_badge">Simuleret adapter</string>
+    <string name="obd_waiting">Venter på adapteren…</string>
+    <string name="obd_gear">Gear</string>
+    <string name="obd_oil">Olie</string>
+    <string name="obd_fuel_use">Forbrug</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">top %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Distance</string>
+    <string name="obd_trip_time">Tid</string>
+    <string name="obd_trip_average">Gennemsnit</string>
+    <string name="obd_trip_now">Nu</string>
+    <string name="obd_trip_range">Rækkevidde</string>
+    <string name="obd_trip_reset">Nulstil tur</string>
+    <string name="obd_trip_note">Turen er denne forbindelse til bilen; den gemmes i Historik, når bilen afbryder, eller ved nulstilling. Forbruget er et skøn, medmindre bilen oplyser det. Rækkevidde = resterende brændstof × turens gennemsnit (tankstørrelse i Indstillinger).</string>
+    <string name="obd_history_recent">Seneste</string>
+    <string name="obd_history_empty">Intet endnu. Ture på 1 km eller mere gemmes her.</string>
+    <string name="obd_history_trip">Tur</string>
+    <string name="obd_history_clear">Ryd historik</string>
+    <string name="obd_history_clear_confirm">Tryk igen for at rydde</string>
+    <string name="obd_set_engine">Anden måler</string>
+    <string name="obd_set_engine_auto">Automatisk</string>
+    <string name="obd_set_engine_turbo">Turbo (ladetryk)</string>
+    <string name="obd_set_engine_na">Sugemotor (belastning)</string>
+    <string name="obd_set_rpm_max">Omdrejningstæller op til</string>
+    <string name="obd_set_redline">Rødt felt / skiftelys</string>
+    <string name="obd_set_displacement">Slagvolumen</string>
+    <string name="obd_set_tank">Tank</string>
+    <string name="obd_set_fuel">Brændstof</string>
+    <string name="obd_set_fuel_petrol">Benzin</string>
+    <string name="obd_set_fuel_diesel">Diesel</string>
+    <string name="obd_set_ethanol">Ethanol (ingen sensor)</string>
+    <string name="obd_set_gears">Lærte gear: %1$d</string>
+    <string name="obd_set_gears_forget">Glem</string>
+    <string name="obd_coolant_short">Kølevæske</string>
+    <string name="obd_dash_card">Bil</string>
+    <string name="obd_set_card">Bilkort (start)</string>
+    <string name="obd_set_card_pick">Vælg</string>
+    <string name="obd_set_card_hint">Tryk på værdierne i den rækkefølge, du vil, op til %1$d. De vises på bilkortet.</string>
+    <string name="obd_done">Færdig</string>
+    <string name="obd_card_gauge">Ladetryk / belastning</string>
+    <string name="obd_card_now">Forbrug nu</string>
+</resources>

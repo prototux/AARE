@@ -87,7 +87,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             RailWidgetsEditor(railWidgets, LocalCarDimens.current.touchTarget) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
         }
         item {
-            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget, available = DashCard.entries.filter { it != DashCard.CAR || settings.obdAdapter }) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }
         item { SwitchRow(stringResource(R.string.dash_map_big_title), mapBig) { mapBig = it; settings.dashboardMapBig = it } }
         item {
