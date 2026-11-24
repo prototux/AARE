@@ -469,6 +469,15 @@ class Settings(context: Context) {
         get() = prefs.getString("auto_reply_text", null)?.takeIf { it.isNotBlank() } ?: appContext.getString(R.string.msg_autoreply_default)
         set(v) = prefs.edit { putString("auto_reply_text", v) }
 
+    /**
+     * Reply to a message by voice from the car screen, while driving too (notify/VoiceDictation):
+     * the phone's speech recognizer listens (the car's microphone with [carMicForPhoneApps] on),
+     * the text is read back and sent on Send or a spoken "yes". Off by default.
+     */
+    var voiceReply: Boolean
+        get() = prefs.getBoolean("voice_reply", false)
+        set(v) = prefs.edit { putBoolean("voice_reply", v) }
+
     /** Read incoming messages aloud as they arrive. */
     var readMessagesAloud: Boolean
         get() = prefs.getBoolean("read_messages", false)

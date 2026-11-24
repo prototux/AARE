@@ -642,6 +642,8 @@
     <string name="quirks_exit_to_car_subtitle">Ein: zeigt den Eintrag Zurück zum Auto in der App-Liste für dieses Auto. Aus: blendet ihn aus.</string>
     <string name="quirks_mic_setup_title">SETUP-Nachricht für Mikrofon</string>
     <string name="quirks_mic_setup_subtitle">Ein: sendet SETUP, wenn der Mikrofonkanal öffnet. Aus: sendet es nie.</string>
+    <string name="quirks_video_headers_once_title">Video-Kopfdaten nur einmal</string>
+    <string name="quirks_video_headers_once_subtitle">Auf Ein stellen, wenn das Auto den Ton abspielt, aber kein Bild zeigt. Ein: SPS/PPS des Videos nur am Anfang. Aus: vor jedem Schlüsselbild, wie üblich. Manche Autoradios können das nicht dekodieren.</string>
     <string name="vehicles_malformed_at">vehicles.json hat einen Fehler in Zeile %1$d, Spalte %2$d (%3$s): Die Regeln darin werden ignoriert.</string>
     <string name="vehicles_malformed">vehicles.json kann nicht verwendet werden (%1$s): Die Regeln darin werden ignoriert.</string>
     <string name="setup_toggle_force_h264_title">H.264-Video erzwingen</string>

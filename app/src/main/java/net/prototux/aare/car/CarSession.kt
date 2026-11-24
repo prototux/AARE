@@ -422,8 +422,9 @@ class CarSession(
             net.prototux.aare.notify.CarNotificationListener.sink = { m ->
                 drivingMode.onMessage(m.key, m.group)
                 if (!m.group || settings.groupMessages) {
-                    runtime.remember(m.title, m.text, m.icon, m.actions)
-                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true)
+                    val open = runtime.opener(m.packageName)
+                    runtime.remember(m.title, m.text, m.icon, m.actions, open)
+                    if (settings.messageBanners) runtime.notice(m.title, m.text, m.icon, 10_000, m.actions, message = true, open = open)
                     if (settings.readMessagesAloud) m.readAloud()
                 }
             }
@@ -671,7 +672,8 @@ class CarSession(
         val ch = video ?: return
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
-        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo, sink = object : VideoEncoder.Sink {
+        enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo,
+            headersOnce = vehicleOverride?.videoHeadersOnce == true, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }
