@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
@@ -1156,7 +1157,8 @@ class CarRuntime(
                             shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) }
                         }
                     },
-                    overlay = { mod ->
+                    // The assistant bar can sit over a navigation app's map: solid in a glass theme.
+                    overlay = { mod -> OverMap {
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
                         val standalonePkg = ui.assistantStandalonePkg
@@ -1169,7 +1171,7 @@ class CarRuntime(
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
                         }
-                    },
+                    } },
                     modifier = modifier,
                 )
             }
