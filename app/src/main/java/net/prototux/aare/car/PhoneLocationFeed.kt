@@ -20,18 +20,16 @@ import android.util.Log
  */
 class PhoneLocationFeed(context: Context) {
     private val lm = context.getSystemService(LocationManager::class.java)
-    private val providers = buildList {
-        add(LocationManager.GPS_PROVIDER)
-        add(LocationManager.NETWORK_PROVIDER)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
-    }
+    private val providers = PROVIDERS
     private val active = HashSet<String>()
     @Volatile private var failed = false
+    /** The session ended ([close]): a fix still on its way from the car mustn't add the providers again. */
+    @Volatile private var closed = false
 
     /** A new car fix (any thread). */
     @Synchronized
     fun push(car: Location) {
-        if (failed) return
+        if (failed || closed) return
         if (active.isEmpty()) start()
         for (p in active) {
             val l = Location(car).apply {
@@ -67,8 +65,32 @@ class PhoneLocationFeed(context: Context) {
         failed = false
     }
 
+    /** The session is over: [stop], and later fixes are ignored. */
+    @Synchronized
+    fun close() {
+        closed = true
+        stop()
+    }
+
     companion object {
         private const val TAG = "AareLocation"
+
+        /**
+         * Removes the car's position left on the phone's providers by a session that crashed: a test
+         * provider outlives AARE, and every app would see the car's last position until a reboot.
+         * Only when no session runs.
+         */
+        fun recover(context: Context) {
+            if (!allowed(context)) return
+            val lm = context.getSystemService(LocationManager::class.java) ?: return
+            for (p in PROVIDERS) runCatching { lm.removeTestProvider(p) }
+        }
+
+        private val PROVIDERS = buildList {
+            add(LocationManager.GPS_PROVIDER)
+            add(LocationManager.NETWORK_PROVIDER)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) add(LocationManager.FUSED_PROVIDER)
+        }
 
         /** AARE is the phone's mock location app (Developer options > Select mock location app). */
         fun allowed(context: Context): Boolean = runCatching {

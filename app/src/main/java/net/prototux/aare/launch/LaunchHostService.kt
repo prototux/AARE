@@ -240,6 +240,14 @@ class LaunchHostService : ILaunchHost.Stub {
         return null
     }
 
+    override fun setLocationEnabled(on: Boolean): Boolean = runCatching {
+        val cmd = ProcessBuilder("cmd", "location", "set-location-enabled", on.toString()).redirectErrorStream(true).start()
+        // Bounded: a hanging command would hold every later switch, which wait on one thread.
+        if (!cmd.waitFor(LOCATION_TIMEOUT_S, java.util.concurrent.TimeUnit.SECONDS)) { cmd.destroy(); Log.w(TAG, "location not switched: timed out"); return@runCatching false }
+        val out = cmd.inputStream.bufferedReader().readText()
+        (cmd.exitValue() == 0).also { if (!it) Log.w(TAG, "location not switched: $out") }
+    }.onFailure { Log.w(TAG, "location not switched: ${it.message}") }.getOrDefault(false)
+
     /** Launch [pkg]'s main activity onto [onDisplay]. */
     @SuppressLint("QueryPermissionsNeeded")
     private fun launch(ctx: Context, pkg: String, onDisplay: Int): Boolean = runCatching {
@@ -375,6 +383,8 @@ class LaunchHostService : ILaunchHost.Stub {
         const val USER_CURRENT = -2
 
         // VirtualDisplay flags (public + hidden bits). Hidden ones let a foreign app run and take focus.
+        /** How long `cmd location` may take before the switch gives up. */
+        const val LOCATION_TIMEOUT_S = 10L
         const val FLAG_PUBLIC = 1 shl 0
         const val FLAG_PRESENTATION = 1 shl 1
         const val FLAG_OWN_CONTENT_ONLY = 1 shl 3 // without it an empty public display mirrors the phone's screen
