@@ -57,7 +57,7 @@ Services, no account.
 ## Will it work in my car?
 
 > [!NOTE]
-> **AARE has been tried in 50 cars so far** ([the list](#tested-on-real-head-units)): 24 work, 16
+> **AARE has been tried in 58 cars so far** ([the list](#tested-on-real-head-units)): 25 work, 18
 > work with issues and a few don't work yet. Most factory head units only accept Android Auto's
 > own certificate: AARE downloads it with one tap ([AA key extraction](#aa-key-extraction)).
 > Every car is a bit different, so try it **parked** first, and please
@@ -477,6 +477,14 @@ certificate ([one tap](#aa-key-extraction)).
 | Renault Easylink Bosch CM RNAIVI, the factory unit of a 2023 Renault Twingo 3 E-Tech | Huawei P30, Android 10, not rooted | USB | 1.6.0 | **Works** ([#382](https://github.com/prototux/AARE/issues/382)): Coyote and the car screen display correctly (not tested at length yet). |
 | WebAA 4.6 on the screen of a 2026 Tesla Model Y | Motorola ThinkPhone | Wireless | 1.6.0 | **Works with issues** ([#383](https://github.com/prototux/AARE/issues/383)): the picture is fine, but touch only lands right after calibrating it with [#172](https://github.com/prototux/AARE/pull/172) (touchscreen calibration, not in a release yet). |
 | PAATH 1.2.1 on the screen of a 2026 Tesla Model Y | Motorola ThinkPhone | Wireless | 1.6.0 | **Works** ([#384](https://github.com/prototux/AARE/issues/384)) with PAATH's default settings; with its *Fill screen* option, touch needs calibrating ([#172](https://github.com/prototux/AARE/pull/172)). |
+| Factory unit of a 2021 Chevrolet Bolt EV (head unit model not given) | Fairphone 6+, /e/OS 4.4.2, Shizuku, microG (also tried a Samsung Galaxy S22+, Android 16, One UI 8, with Google services) | USB | 1.6.0 | **Doesn't work** ([#392](https://github.com/prototux/AARE/issues/392)): the phone trusts the car's certificate and AARE appears to start streaming, but the car's screen never shows anything, on either phone; a different certificate gave the same result. On the S22+, Google's Android Auto grabbed the USB link first and had to be disabled to let AARE through. |
+| AIVI2 B (ISH.25.40.02.S0M1), the factory unit of a 2026 Nissan Rogue | Samsung Galaxy Note9, Android 10, not rooted | USB | 1.6.0 | **Doesn't work** ([#407](https://github.com/prototux/AARE/issues/407)): every attempt times out after 15 s with "no version request from head unit", looping without ever connecting. |
+| Sony XAV-9500ES aftermarket unit | OnePlus 7 Pro, crDroid, Android 16 | Wireless | 1.6.0 | **Doesn't work** ([#418](https://github.com/prototux/AARE/issues/418)): wireless connects and TLS comes up, then the head unit says "Follow steps on phone to finish setup" while the session fails with "no service discovery response" — the unit sends that response in the clear right after TLS, which AARE was dropping. Fixed by [#428](https://github.com/prototux/AARE/pull/428), not in a release yet; not yet confirmed by the reporter. |
+| Continental NAC W3 (build 31.09.46.62, protocol 1.3), the factory unit of a 2019 Citroën C5 Aircross | Pixel 9 Pro XL, GrapheneOS, Android 17, with Google services, Shizuku, not rooted | USB and wireless | 1.6.0 | **Doesn't work** ([#420](https://github.com/prototux/AARE/issues/420)): wireless RFCOMM fails outright; over USB, AARE briefly starts projecting after [AA key extraction](#aa-key-extraction) but the session drops with "read failed" and the head unit never shows more than a black screen, as on other NAC units ([#96](https://github.com/prototux/AARE/issues/96)). A different NAC variant from [#81](https://github.com/prototux/AARE/issues/81) above. |
+| Harman FCA R1 (Uconnect), the factory unit of several work vans | Redmi Turbo 5 Max, HyperOS 4 | Wireless | 1.6.0 | **Works with issues** ([#421](https://github.com/prototux/AARE/issues/421)): connects and projects reliably over wireless across several vans, but apps that need to show something on screen — navigation apps in particular — never start. Open issue. |
+| GWM factory unit (AAP protocol 1.5), the factory unit of a 2024 GWM Haval Jolion Ultra (wired Android Auto / CarPlay only) | Oppo Find X9 Pro (CPH2791), Android 17 (ColorOS), not rooted, Shevery (a Shizuku fork), Google Play Services and Android Auto installed | USB | 1.6.0 | **Works after [AA key extraction](#aa-key-extraction)**, once Google's Android Auto is disabled ([#422](https://github.com/prototux/AARE/issues/422)): with it enabled, Android 17 hands the USB accessory to Google's Android Auto within ~0.2 s of the handshake, before AARE can open it, so every attempt fails with EIO or "encrypted before TLS is up"; disabling Android Auto (the same effect as *Stop Android Auto taking the car*) fixes it. Video and touch work; Waze and Spotify run through Shevery's app rules. |
+| Panasonic CMU8, the factory unit of a 2024 Mazda MX-5 Miata | Samsung Galaxy S24+, Android 17, One UI 9, not rooted, Shizuku | USB and wireless | 1.6.0 | **Works with issues** ([#423](https://github.com/prototux/AARE/issues/423)): media, the centre knob and Shizuku car audio all work, but the steering-wheel voice button's long press never sends a key-up, so AARE never opens the assistant (a short press opens the car's own phone screen instead). Fixed by [#429](https://github.com/prototux/AARE/pull/429), not in a release yet. |
+| Ford SYNC 3, the factory unit of a 2022 Ford Mustang Premium | OnePlus 15, Shizuku | USB and wireless (dongle) | 1.5.0 | **Rejected** ([#425](https://github.com/prototux/AARE/issues/425)): both the direct USB cable and a wireless dongle end with "no version request from head unit". |
 
 **Open-source head units:** openauto/Crankshaft, Open Headunit (formerly Headunit Revived), LIVI
 and aa-proxy-rs accept AARE's own certificate. A user reports AARE working well with Open
@@ -809,7 +817,8 @@ desktop head unit's test options, and vehicles.json errors that say where withou
 calls through the car on the VW Play), [@jhahvhi](https://github.com/jhahvhi) (the bar that
 vanished behind a full-screen map, the margin under the map card),
 [@PCCV](https://github.com/PCCV) (one frame per USB transfer, for head units that reset the link
-otherwise), [@Charlie284](https://github.com/Charlie284) (the Xposed module that actually loads)
+otherwise), [@Charlie284](https://github.com/Charlie284) (the Xposed module that actually loads),
+[@nightlys](https://github.com/nightlys) (touchscreen calibration, per head unit, #172)
 and [@HyperCriSiS](https://github.com/HyperCriSiS), whose fork's fixes were ported into 1.5.0 (the
 certificate kept and the Trust button that stays after a dropped link, car apps' permission
 prompts, navigation apps out of the messaging list, the map card clear of its buttons, and white
@@ -842,8 +851,11 @@ Head-unit reports from [@Shane11r](https://github.com/Shane11r),
 [@taage](https://github.com/taage), [@cinaeco](https://github.com/cinaeco),
 [@carelinus](https://github.com/carelinus), [@jackburton79](https://github.com/jackburton79),
 [@Captainyamez](https://github.com/Captainyamez), [@ThomasHawaii](https://github.com/ThomasHawaii),
-[@Lenrock67](https://github.com/Lenrock67), [@NitpickyPrick](https://github.com/NitpickyPrick)
-and [@henkv1](https://github.com/henkv1)
+[@Lenrock67](https://github.com/Lenrock67), [@NitpickyPrick](https://github.com/NitpickyPrick),
+[@c1fr1](https://github.com/c1fr1), [@wisemonkey](https://github.com/wisemonkey),
+[@spawnedc](https://github.com/spawnedc), [@linuxdoggo](https://github.com/linuxdoggo),
+[@rgvxsthi](https://github.com/rgvxsthi), [@masterjuggler](https://github.com/masterjuggler)
+and [@fazlee712](https://github.com/fazlee712)
 — see [Tested on real head units](#tested-on-real-head-units) for the cars. Reports and ideas that
 led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops acknowledging audio,
 #82), [@henkv1](https://github.com/henkv1) (connections from the phone itself, #131),
@@ -851,8 +863,13 @@ led to changes from [@sadorowo](https://github.com/sadorowo) (a car that stops a
 (the Audi A3's authentication answer, #43), [@pollio2008](https://github.com/pollio2008) (more
 navigation apps on the phone screen, discussion #150), [@Delgrey](https://github.com/Delgrey)
 (Open Headunit, discussion #47), [@Pirrotto](https://github.com/Pirrotto) (navigation with the phone
-locked, #329), [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320) and
-[@burtshulman](https://github.com/burtshulman) (Android 6 and 7, discussion #314). And tips from
+locked, #329), [@JVKeller](https://github.com/JVKeller) (the knob/D-pad check, #320),
+[@burtshulman](https://github.com/burtshulman) (Android 6 and 7, discussion #314),
+[@Josvanhout](https://github.com/Josvanhout) and [@5kat3R](https://github.com/5kat3R) (TomTom GO
+and OsmAnd not resizing to full width after leaving the dashboard, #413),
+[@wisemonkey](https://github.com/wisemonkey) (a plaintext service discovery response dropped after
+TLS, #418) and [@masterjuggler](https://github.com/masterjuggler) (the steering-wheel voice
+button's long press with no key-up, #423). And tips from
 [@teccheck](https://github.com/teccheck) (the `adb root` audio grant) and
 [@JVKeller](https://github.com/JVKeller) (the screen-capture appops grant).
 
