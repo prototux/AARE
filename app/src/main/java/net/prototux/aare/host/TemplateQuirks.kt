@@ -23,6 +23,18 @@ internal object TemplateQuirks {
     fun timedActionParams(packageName: String): Boolean = packageName in TIMED_ACTION_APPS
 
     /**
+     * Apps that size their map renderer once per car session, from the first surface they get: a
+     * later surface of another size (the dashboard's map card going full screen) is drawn at the old
+     * size, with an empty strip beside it (#413). Their session is restarted on a new size instead.
+     */
+    private val MAP_SIZED_ONCE_APPS = setOf(
+        "net.osmand", "net.osmand.plus", "net.osmand.dev", // SurfaceRenderer.setupOffscreenRenderer
+        "com.tomtom.gplay.navapp",
+    )
+
+    fun mapSizedOnce(packageName: String): Boolean = packageName in MAP_SIZED_ONCE_APPS
+
+    /**
      * Whether a MapTemplate from [packageName] with a new header title is a new screen rather than a
      * refresh of the current one. An app whose version can't be read doesn't get it.
      */
