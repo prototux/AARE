@@ -58,6 +58,16 @@ class SettingsBackupTest {
     }
 
     @Test
+    fun theDeveloperLogsSwitchesStayOutOfFiles() {
+        // A file must not turn the developer log's privacy filter off on another phone.
+        val all = mapOf("developer_mode" to true, "developer_log_privacy" to false, "wireless" to true)
+        assertEquals(listOf("wireless"), SettingsBackup.export(all).getJSONObject("settings").keys().asSequence().toList())
+        val restored = SettingsBackup.import(file(JSONObject().put("developer_log_privacy", entry("b", false)).put("wireless", entry("b", true))))
+        assertEquals(mapOf("wireless" to true), restored.values)
+        assertTrue(restored.blocked.isEmpty())
+    }
+
+    @Test
     fun blockedKeysAreNeverExportedNorImported() {
         val blocked = SettingsBackup.BLOCKED.associateWith { true }
         assertEquals(0, SettingsBackup.export(blocked).getJSONObject("settings").length())

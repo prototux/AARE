@@ -137,6 +137,20 @@ class LogRedactorTest {
         assertEquals("from <email>", redact("from a.b@example.org"))
     }
 
+    @Test fun webConsoleMessage() {
+        // WebView logs a page's console in AARE's process when the car browser's client doesn't take it.
+        assertEquals(
+            "chromium: [INFO:CONSOLE(12)] \"<console>\", source: <url> (12)",
+            redact("chromium: [INFO:CONSOLE(12)] \"Signed in as Mario, cart: 3 items\", source: https://shop.example.org/app.js (12)"),
+        )
+        assertEquals(
+            "chromium: [INFO:CONSOLE:12] \"<console>\", source: <url> (12)",
+            redact("chromium: [INFO:CONSOLE:12] \"Signed in as Mario\", source: https://shop.example.org/app.js (12)"),
+        )
+        // A message logcat cut at its size limit has no source: the rest of the line goes.
+        assertEquals("chromium: [INFO:CONSOLE(12)] \"<console>", redact("chromium: [INFO:CONSOLE(12)] \"Signed in as Mario, cart: 3 ite"))
+    }
+
     @Test fun telUri() {
         assertEquals("dial tel:<phone>", redact("dial tel:0612345678"))
         assertEquals("Intent { act=android.intent.action.CALL dat=tel:<phone> }", redact("Intent { act=android.intent.action.CALL dat=tel:+39%20333%201234567 }"))

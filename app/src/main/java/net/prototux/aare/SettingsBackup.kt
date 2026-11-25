@@ -97,7 +97,6 @@ object SettingsBackup {
         "builtin_car_fixes" to Type.BOOLEAN,
         "wireless_compatibility" to Type.STRING,
         "obd_adapter" to Type.BOOLEAN,
-        "developer_log_privacy" to Type.BOOLEAN,
     )
 
     /**
@@ -151,6 +150,7 @@ object SettingsBackup {
         "obd_adapter_address", // a Bluetooth device paired with this phone
         "obd_simulated", // debug builds only
         "developer_mode", // writes log files on this phone
+        "developer_log_privacy", // the developer log's privacy filter: switched off by hand only, like developer_mode on
         "home_actions", // home-automation entities: personal, and tied to the servers that stay out
         "update_latest_version", "update_latest_url", "update_last_check_ms", "update_dismissed_version",
         "cert_index", "cert_update_last_check_ms", "cert_expiry_notified", "cert_expiry_dismissed",
