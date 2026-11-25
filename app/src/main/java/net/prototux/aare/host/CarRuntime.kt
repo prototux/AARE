@@ -44,6 +44,9 @@ import net.prototux.aare.Settings
 import net.prototux.aare.car.Calls
 import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.DashboardInfo
+import net.prototux.aare.car.agendaSoon
+import net.prototux.aare.faces.FaceNeed
+import net.prototux.aare.faces.FaceStore
 import net.prototux.aare.home.HomeAction
 import net.prototux.aare.home.HomeHub
 import net.prototux.aare.car.LightSensorFeed
@@ -72,6 +75,7 @@ import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
 import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.FaceCard
 import net.prototux.aare.ui.car.HomeButton
 import net.prototux.aare.ui.car.HomeScreen
 import net.prototux.aare.ui.car.HomeTileUi
@@ -434,6 +438,12 @@ class CarRuntime(
         ui.darkBar = settings.darkBar
         ui.dashboardCards = DashCard.parse(settings.dashboardCards)
         ui.dashboardMapBig = settings.dashboardMapBig
+        ui.dashRotateSeconds = settings.dashboardRotateSeconds
+        ui.calendarCardAuto = settings.calendarCardAuto
+        applyClockFace(settings.clockFace)
+        // A card just shown may need the weather or the calendar: don't wait for the next round.
+        val info = weatherWanted to calendarWanted
+        if (info != infoWanted) { infoWanted = info; infoRefresh.trySend(Unit) }
         ui.weatherInBar = settings.showWeather
         ui.chrome = CarChrome.shown(settings.carChrome, headUnitChrome)
         ui.railWidgets = RailWidget.parse(settings.railWidgets)
@@ -463,6 +473,34 @@ class CarRuntime(
         if (!ui.splitScreenSetting || ui.layout != CarLayout.TASKBAR) ui.secondaryAppId = null
     }
 
+    private var clockFaceId: String? = null
+    private var clockFaceJob: Job? = null
+
+    /** The clock card's design, read off the main thread the first time. */
+    private fun applyClockFace(id: String) {
+        if (id == clockFaceId) return
+        clockFaceId = id
+        clockFaceJob?.cancel()
+        clockFaceJob = scope.launch {
+            ui.clockFace = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { FaceStore.clock(context, id) }
+            applyScreenSettings()
+        }
+    }
+
+    /** What the dashboard's clock and own cards read, of those it shows. */
+    private val faceNeeds: Set<FaceNeed>
+        get() = ui.dashboardCards.flatMapTo(HashSet()) { card ->
+            when (card) {
+                DashCard.CLOCK -> ui.clockFace?.needs.orEmpty()
+                is FaceCard -> ui.faces[card.faceId]?.needs.orEmpty()
+                else -> emptySet()
+            }
+        }
+    private val weatherWanted get() = settings.showWeather || DashCard.WEATHER in ui.dashboardCards || FaceNeed.WEATHER in faceNeeds
+    private val calendarWanted get() = DashCard.CALENDAR in ui.dashboardCards || FaceNeed.CALENDAR in faceNeeds
+    private var infoWanted: Pair<Boolean, Boolean>? = null
+    private val infoRefresh = kotlinx.coroutines.channels.Channel<Unit>(kotlinx.coroutines.channels.Channel.CONFLATED)
+
     /**
      * Starts or stops the phone's light sensor: on only while the colours follow day/night
      * ([Settings.THEME_AUTO]) and [Settings.nightSource] is the light sensor, so a fixed dark or
@@ -484,7 +522,7 @@ class CarRuntime(
 
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
-            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "car_chrome", "ignore_driving",
+            "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "dashboard_rotate_seconds", "calendar_card_auto", "clock_face", "show_weather", "car_chrome", "ignore_driving",
             "car_text_size", "car_control_size", "night_source", "assistant_stop", "rail_apps", "compact_rail", "rail_spacing", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
@@ -543,6 +581,13 @@ class CarRuntime(
                 .collect { playbackGuard.keepPaused(it) }
         }
         scope.launch { watchDashboardInfo() }
+        scope.launch {
+            FaceStore.load(context)
+            FaceStore.own.collect { all ->
+                ui.faces = all.mapNotNull { f -> f.spec?.let { f.id to it } }.toMap()
+                applyScreenSettings()
+            }
+        }
         startHome()
         scope.launch {
             CarNotificationListener.guidance.collect { g ->
@@ -709,17 +754,18 @@ class CarRuntime(
         var lastWeather = 0L
         while (true) {
             val now = System.currentTimeMillis()
-            // For the bar's clock or the dashboard's weather card.
-            if (!settings.showWeather && DashCard.WEATHER !in ui.dashboardCards) ui.weather = null
+            // For the bar's clock, the dashboard's weather card, or a clock or own card with the weather on it.
+            if (!weatherWanted) { ui.weather = null; lastWeather = 0L }
             else if (now - lastWeather > 30 * 60_000) {
                 val where = carLocation ?: DashboardInfo.phoneLocation(context)
                 if (where != null) {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.weather(where) }?.let { ui.weather = it; lastWeather = now }
                 }
             }
-            ui.nextEvents = if (DashCard.CALENDAR in ui.dashboardCards)
+            ui.nextEvents = if (calendarWanted)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { DashboardInfo.nextEvents(context, settings.calendarAgendaCount) } else emptyList()
-            kotlinx.coroutines.delay(5 * 60_000)
+            ui.eventSoon = agendaSoon(ui.nextEvents, now, java.util.TimeZone.getDefault())
+            kotlinx.coroutines.withTimeoutOrNull(5 * 60_000L) { infoRefresh.receive() }
         }
     }
 

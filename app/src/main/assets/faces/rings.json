@@ -1,0 +1,14 @@
+{
+  "aareCard": 1,
+  "name": "Rings",
+  "size": [400, 240],
+  "layers": [
+    { "type": "arc", "x": 122, "r": 100, "stroke": 12, "value": "second", "color": "primary", "track": "primary/20" },
+    { "type": "arc", "x": 122, "r": 83, "stroke": 12, "value": "minute", "color": "tertiary", "track": "tertiary/20" },
+    { "type": "arc", "x": 122, "r": 66, "stroke": 12, "value": "hour24", "color": "secondary", "track": "secondary/20" },
+    { "type": "text", "text": "{time}", "x": 122, "size": 40, "weight": "bold", "width": 112 },
+    { "type": "text", "text": "{shortDate}", "x": 246, "y": 86, "size": 24, "align": "start", "width": 138 },
+    { "type": "icon", "icon": "weather", "x": 266, "y": 150, "size": 34, "color": "primary", "show": "weather" },
+    { "type": "text", "text": "{temp}", "x": 292, "y": 150, "size": 34, "align": "start", "weight": "medium", "show": "weather" }
+  ]
+}

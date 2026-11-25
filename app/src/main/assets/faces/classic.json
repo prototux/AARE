@@ -1,0 +1,15 @@
+{
+  "aareCard": 1,
+  "name": "Classic",
+  "size": [256, 256],
+  "layers": [
+    { "type": "circle", "r": 110, "color": "surfaceContainerHighest" },
+    { "type": "ticks", "count": 60, "skip": 5, "r": 102, "length": 5, "stroke": 1.5, "color": "onSurfaceVariant" },
+    { "type": "ticks", "count": 12, "r": 102, "length": 12, "stroke": 4 },
+    { "type": "numbers", "values": "12", "r": 76, "size": 24, "weight": "medium" },
+    { "type": "hand", "value": "hour", "length": 54, "tail": 12, "stroke": 8 },
+    { "type": "hand", "value": "minute", "length": 84, "tail": 14, "stroke": 5 },
+    { "type": "hand", "value": "second", "length": 92, "tail": 22, "stroke": 2, "color": "primary" },
+    { "type": "circle", "r": 6, "color": "primary" }
+  ]
+}

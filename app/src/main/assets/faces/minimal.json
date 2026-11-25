@@ -1,0 +1,33 @@
+{
+  "aareCard": 1,
+  "name": "Minimal",
+  "size": [400, 240],
+  "layers": [
+    { "type": "ticks", "count": 12, "x": 120, "r": 92, "stroke": 6, "dots": true, "color": "outline" },
+    { "type": "hand", "value": "hour", "x": 120, "length": 52, "stroke": 12 },
+    { "type": "hand", "value": "minute", "x": 120, "length": 80, "stroke": 12, "color": "primary" },
+    { "type": "circle", "x": 120, "r": 11, "color": "surfaceContainerHighest" },
+    { "type": "text", "text": "{weekday}", "x": 246, "y": 76, "size": 26, "align": "start", "width": 142, "color": "onSurfaceVariant" },
+    { "type": "text", "text": "{day}", "x": 246, "y": 124, "size": 64, "align": "start", "weight": "light" },
+    { "type": "text", "text": "{month}", "x": 246, "y": 172, "size": 26, "align": "start", "width": 142, "color": "onSurfaceVariant" }
+  ],
+  "strip": {
+    "size": [520, 110],
+    "layers": [
+      { "type": "ticks", "count": 12, "x": 70, "r": 46, "stroke": 4, "dots": true, "color": "outline" },
+      { "type": "hand", "value": "hour", "x": 70, "length": 24, "stroke": 7 },
+      { "type": "hand", "value": "minute", "x": 70, "length": 38, "stroke": 7, "color": "primary" },
+      { "type": "text", "text": "{date}", "x": 150, "size": 32, "align": "start", "width": 350 }
+    ]
+  },
+  "tall": {
+    "size": [300, 400],
+    "layers": [
+      { "type": "ticks", "count": 12, "y": 160, "r": 128, "stroke": 8, "dots": true, "color": "outline" },
+      { "type": "hand", "value": "hour", "y": 160, "length": 72, "stroke": 16 },
+      { "type": "hand", "value": "minute", "y": 160, "length": 110, "stroke": 16, "color": "primary" },
+      { "type": "circle", "y": 160, "r": 14, "color": "surfaceContainerHighest" },
+      { "type": "text", "text": "{shortDate}", "y": 350, "size": 32, "width": 270 }
+    ]
+  }
+}

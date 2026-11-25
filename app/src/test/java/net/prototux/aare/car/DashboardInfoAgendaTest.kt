@@ -99,4 +99,19 @@ class DashboardInfoAgendaTest {
         assertEquals(listOf("Today"), selectAgenda(rows, 5, nowTokyo, tokyo).map { it.title })
         assertEquals(AgendaDay.Today, labelAgenda(selectAgenda(rows, 5, nowTokyo, tokyo), nowTokyo, tokyo).single().day)
     }
+
+    @Test
+    fun aSingleEventLooksAtTheFirstDayThatHasOne() {
+        assertEquals(listOf("Thu 9h"), selectAgenda(listOf(timed("Fri 8h", 12, 8), allDay("Thu all day", 11), timed("Thu 9h", 11, 9)), 1, now, zone).map { it.title })
+        // An event far off doesn't hide today's all-day one.
+        assertEquals(listOf("Wed all day"), selectAgenda(listOf(timed("Sun 8h", 14, 8), allDay("Wed all day", 10)), 1, now, zone).map { it.title })
+    }
+
+    @Test
+    fun soonIsTodayAndTheNextThreeDays() {
+        assertEquals(false, agendaSoon(emptyList(), now, zone))
+        assertEquals(true, agendaSoon(listOf(allDay("Wed all day", 10)), now, zone))
+        assertEquals(true, agendaSoon(listOf(timed("Sat 23h", 13, 23)), now, zone))
+        assertEquals(false, agendaSoon(listOf(timed("Sun 0h", 14, 0)), now, zone))
+    }
 }

@@ -35,8 +35,10 @@ Services, no account.
 
 - **Eight styles:** AARE, Android Auto, Android Auto (2019), CarPlay, Material You, High contrast,
   Night and Retro, with an accent colour of your choice ([see them below](#styles)).
-- **Your dashboard:** map, music, next calendar event, latest notification and weather, shown,
-  hidden and ordered as you like, over a wallpaper or your own photo.
+- **Your dashboard:** map, music, next calendar event, latest notification, weather and a clock,
+  shown, hidden and ordered as you like, over a wallpaper or your own photo.
+- **Your own cards:** clocks and gauges drawn like smartwatch faces, from
+  [JSON files](docs/custom-cards.md).
 - **Every screen:** wide, ultra-wide (1920x720 and up) and portrait head units, day and night
   colours from the car, and video on the instrument cluster.
 
@@ -192,9 +194,13 @@ The **bar** is laid out like Android Auto's: on a side next to the driver, or al
   bell.
 
 The **dashboard** shows the map (or directions from Google Maps or Waze), what's playing, the next
-calendar event, the latest notification and the weather, over a wallpaper if you pick one. Show,
-hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room, or the
-map wherever it is with *Map always big*. If a navigation app draws something of its own over its
+calendar event, the latest notification, the weather and a clock, over a wallpaper if you pick one.
+Show, hide and reorder its cards under *Car screen > Dashboard*: the first gets the most room, or the
+map wherever it is with *Map always big*, the second always shows, and the rest, under the line, share
+the last place: swipe to see them (or, with a knob, select the dots and turn), round and round, or
+let them *change automatically*. The calendar's box has three states: off, always, and A,
+only with an event in the next 3 days. *Clock and custom cards* has the clock's designs, and imports
+[cards of your own](docs/custom-cards.md). If a navigation app draws something of its own over its
 logo at the bottom of the map card (HERE WeGo's speed), *Margin under the map card* there lifts it.
 On very wide screens (1920x720 and up) the cards sit side by side. The weather comes from
 [Open-Meteo](https://open-meteo.com/) (no account, no Google), asked for an approximate position
@@ -748,11 +754,12 @@ in Android Studio works too.
 | `app/.../audio/` | car audio: capture methods (audio policy, Shizuku, screen capture), microphone |
 | `app/.../notify/` | notifications: messaging apps, and directions from navigation apps on the phone |
 | `app/.../transport/` | USB accessory, TCP server, wireless (Bluetooth + Wi-Fi) |
+| `app/.../faces/` | the dashboard's clocks and custom cards: their file format and storage |
 | `app/.../ui/` | phone UI, car shell (rail, dashboard, launcher), theme |
 | `headunit/` | the desktop head unit (`./headunit.sh`) |
 | `tools/magisk/` | Magisk module that installs AARE as a privileged app |
 | `xposed/` | the optional host-shims module for rooted phones |
-| `docs/` | certificates, per-vehicle overrides, decisions; `docs/research/`: protocol notes |
+| `docs/` | certificates, per-vehicle overrides, custom cards, decisions; `docs/research/`: protocol notes |
 
 ### Contributing
 

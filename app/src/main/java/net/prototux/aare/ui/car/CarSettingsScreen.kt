@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.prototux.aare.R
 import net.prototux.aare.Settings
+import net.prototux.aare.faces.FaceStore
 import net.prototux.aare.media.Pill
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -54,6 +56,9 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
     var darkBar by remember { mutableStateOf(settings.darkBar) }
     var railWidgets by remember { mutableStateOf(RailWidget.parse(settings.railWidgets)) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
+    val faces by FaceStore.own.collectAsState()
+    var calendarAuto by remember { mutableStateOf(settings.calendarCardAuto) }
+    var rotate by remember { mutableStateOf(settings.dashboardRotateSeconds) }
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var agendaCount by remember { mutableStateOf(settings.calendarAgendaCount) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
@@ -87,10 +92,12 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             RailWidgetsEditor(railWidgets, LocalCarDimens.current.touchTarget) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
         }
         item {
-            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget, available = DashCard.entries.filter { it != DashCard.CAR || settings.obdAdapter }) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget, available = DashCard.entries.filter { it != DashCard.CAR || settings.obdAdapter }, faces = faces.filter { it.spec != null },
+                mapBig = mapBig, calendarAuto = calendarAuto, onCalendarAuto = { calendarAuto = it; settings.calendarCardAuto = it }) { cards = it; settings.dashboardCards = it.map(DashItem::id) }
         }
+        item { CarSelect(stringResource(R.string.dash_rotate_title), rotateOptions(rotate), rotate.toString()) { rotate = it.toInt(); settings.dashboardRotateSeconds = rotate } }
         item { SwitchRow(stringResource(R.string.dash_map_big_title), mapBig) { mapBig = it; settings.dashboardMapBig = it } }
-        item {
+        if (DashCard.CALENDAR in cards) item {
             Choice(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
                 agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
             }

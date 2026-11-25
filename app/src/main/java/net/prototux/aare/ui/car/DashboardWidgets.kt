@@ -57,7 +57,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 /** WMO weather codes (Open-Meteo) to an icon. */
-private fun weatherIcon(w: Weather): ImageVector = when (w.code) {
+internal fun weatherIcon(w: Weather): ImageVector = when (w.code) {
     0, 1 -> if (w.day) Icons.Rounded.WbSunny else Icons.Rounded.NightsStay
     in 51..67, in 80..82 -> Icons.Rounded.Umbrella
     in 71..77, 85, 86 -> Icons.Rounded.AcUnit
@@ -134,15 +134,30 @@ private fun AgendaRows(items: List<AgendaItem>, rowHeight: Dp, context: Context,
     }
 }
 
-/** "Today", "Tomorrow · 3:00 PM"...: the agenda row's day and (for a timed event) its time. */
-private fun agendaWhen(item: AgendaItem, context: Context): String {
-    val day = when (val d = item.day) {
+/** "Today", "Tomorrow", or the weekday: the day of an event. */
+internal fun agendaDay(item: AgendaItem, context: Context): String =
+    when (val d = item.day) {
         AgendaDay.Today -> context.getString(R.string.dash_event_today)
         AgendaDay.Tomorrow -> context.getString(R.string.dash_agenda_tomorrow)
         is AgendaDay.Later -> Calendar.getInstance(Locale.getDefault()).apply { set(Calendar.DAY_OF_WEEK, d.dayOfWeek) }
             .getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()) ?: ""
     }
+
+/** "Today", "Tomorrow · 3:00 PM"...: the agenda row's day and (for a timed event) its time. */
+private fun agendaWhen(item: AgendaItem, context: Context): String {
+    val day = agendaDay(item, context)
     return if (item.event.allDay) day else "$day · " + DateFormat.getTimeFormat(context).format(item.event.startMs)
+}
+
+/** The calendar card set to show always, with nothing coming up. */
+@Composable
+internal fun NoEventsCard() {
+    Row(Modifier.fillMaxSize().padding(24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+        Icon(Icons.Rounded.Event, null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(Modifier.width(12.dp))
+        Text(stringResource(R.string.dash_no_events), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
 }
 
 /** The next calendar event, with a shortcut to navigate to its place. */

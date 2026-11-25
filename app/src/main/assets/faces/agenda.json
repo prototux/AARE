@@ -1,0 +1,16 @@
+{
+  "aareCard": 1,
+  "name": "Agenda",
+  "size": [400, 240],
+  "layers": [
+    { "type": "text", "text": "{time}", "x": 28, "y": 76, "size": 76, "weight": "medium", "align": "start" },
+    { "type": "icon", "icon": "weather", "x": 298, "y": 56, "size": 36, "color": "primary", "show": "weather" },
+    { "type": "text", "text": "{temp}", "x": 374, "y": 56, "size": 32, "align": "end", "weight": "medium", "show": "weather" },
+    { "type": "text", "text": "{shortDate}", "x": 374, "y": 98, "size": 22, "align": "end", "color": "onSurfaceVariant", "width": 150 },
+    { "type": "line", "x": 28, "y": 134, "x2": 372, "y2": 134, "stroke": 2, "color": "outlineVariant" },
+    { "type": "icon", "icon": "calendar", "x": 44, "y": 180, "size": 36, "color": "primary" },
+    { "type": "text", "text": "{event}", "x": 76, "y": 166, "size": 28, "align": "start", "weight": "medium", "width": 296, "show": "event" },
+    { "type": "text", "text": "{eventDay} {eventTime}", "x": 76, "y": 198, "size": 24, "align": "start", "width": 296, "color": "primary", "show": "event" },
+    { "type": "text", "text": "{event}", "x": 76, "y": 180, "size": 28, "align": "start", "width": 296, "color": "onSurfaceVariant", "show": "!event" }
+  ]
+}

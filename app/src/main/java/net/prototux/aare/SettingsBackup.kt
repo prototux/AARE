@@ -92,6 +92,9 @@ object SettingsBackup {
         "dashboard_map_big" to Type.BOOLEAN,
         "calendar_agenda_count" to Type.INT,
         "car_key_map" to Type.STRING_SET,
+        "dashboard_rotate_seconds" to Type.INT,
+        "calendar_card_auto" to Type.BOOLEAN,
+        "clock_face" to Type.STRING,
     )
 
     /**

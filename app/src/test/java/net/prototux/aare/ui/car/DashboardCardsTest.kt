@@ -1,6 +1,7 @@
 package net.prototux.aare.ui.car
 
 import net.prototux.aare.ui.car.DashCard.CALENDAR
+import net.prototux.aare.ui.car.DashCard.CLOCK
 import net.prototux.aare.ui.car.DashCard.MAP
 import net.prototux.aare.ui.car.DashCard.MEDIA
 import net.prototux.aare.ui.car.DashCard.NOTIFICATION
@@ -102,5 +103,84 @@ class DashboardCardsTest {
         val order = listOf(CALENDAR, MAP, MEDIA)
         assertEquals(DashSlots(listOf(CALENDAR, MAP, MEDIA), 1, bigFirst = false), dashboardLayout(order, 3, mapBig = true) { true })
         assertEquals(DashSlots(listOf(MAP, MEDIA), 0, bigFirst = false), dashboardLayout(order, 3, mapBig = true) { it != CALENDAR })
+    }
+
+    @Test
+    fun theUsersOwnCardsAreKeptInTheOrder() {
+        val order = DashCard.parse(listOf("map", "face:ab12", "clock", "face:ab12"))
+        assertEquals(listOf(MAP, FaceCard("ab12"), CLOCK), order)
+        assertEquals(listOf("map", "face:ab12", "clock"), order.map(DashItem::id))
+    }
+
+    private fun stack(order: List<DashItem>, slots: Int = 3, mapBig: Boolean = false, shown: (DashItem) -> Boolean = { true }) =
+        dashboardStack(order, dashboardLayout(order, slots, mapBig, shown), shown)
+
+    @Test
+    fun theCardsWithoutAPlaceShareTheLastOne() {
+        assertEquals(listOf(WEATHER, CLOCK, FaceCard("a")), stack(listOf(MAP, MEDIA, WEATHER, CLOCK, FaceCard("a"))))
+        assertEquals(listOf(WEATHER, FaceCard("a")), stack(listOf(MAP, MEDIA, WEATHER, CLOCK, FaceCard("a"))) { it != CLOCK })
+        // On a small screen the music's strip is the last place.
+        assertEquals(listOf(MEDIA, WEATHER), stack(listOf(MAP, MEDIA, WEATHER), slots = 2))
+        assertEquals(listOf(MEDIA), stack(listOf(MAP, MEDIA)))
+        assertEquals(emptyList<DashItem>(), stack(listOf(MAP)))
+    }
+
+    @Test
+    fun theMapNeverSharesItsPlace() {
+        assertEquals(listOf(WEATHER, CLOCK), stack(listOf(MEDIA, WEATHER, MAP, CLOCK)))
+        assertEquals(listOf(WEATHER, CLOCK), stack(listOf(MEDIA, WEATHER, CLOCK, MAP), mapBig = true))
+        assertEquals(listOf(CLOCK), stack(listOf(MEDIA, WEATHER, CLOCK, MAP)))
+    }
+
+    @Test
+    fun theCardsTakeTurnsRoundAndRound() {
+        val turning = listOf(WEATHER, MEDIA, CLOCK)
+        assertEquals(MEDIA, nextInTurn(turning, WEATHER))
+        assertEquals(WEATHER, nextInTurn(turning, CLOCK))
+        assertEquals(null, nextInTurn(listOf(CLOCK), CLOCK))
+        // One that takes no turns (the small screens' strip) stays.
+        assertEquals(null, nextInTurn(listOf(WEATHER, CLOCK), MEDIA))
+    }
+
+    @Test
+    fun swipesGoRoundBothWays() {
+        val cards = listOf(WEATHER, MEDIA, CLOCK)
+        assertEquals(WEATHER, stackNeighbour(cards, CLOCK, 1))
+        assertEquals(CLOCK, stackNeighbour(cards, WEATHER, -1))
+        assertEquals(CLOCK, stackNeighbour(cards, CLOCK, 0))
+        // The one shown is gone: from the first.
+        assertEquals(MEDIA, stackNeighbour(cards, CALENDAR, 1))
+    }
+
+    @Test
+    fun aSwipeGoesAllTheWayOrBack() {
+        fun step(dragged: Float, furthest: Float = dragged) = swipeStep(dragged, furthest, enough = 24f)
+        assertEquals(1, step(-100f))
+        assertEquals(-1, step(100f))
+        assertEquals(1, step(-25f)) // short, but a swipe
+        assertEquals(0, step(-20f)) // not one
+        assertEquals(0, step(-60f, furthest = -150f)) // drawn back
+        assertEquals(1, step(-120f, furthest = -150f)) // a finger that slips a little as it lifts
+        assertEquals(0, step(0f))
+    }
+
+    @Test
+    fun theListIsPartedIntoTheBigTheFixedAndTheTurningCards() {
+        fun zones(vararg order: DashItem, mapBig: Boolean = false) = dashboardZones(order.toList(), mapBig).values.joinToString("") { it.name.take(1) }
+        assertEquals("BFTT", zones(MAP, MEDIA, WEATHER, CLOCK))
+        assertEquals("FBTT", zones(MEDIA, MAP, WEATHER, CLOCK, mapBig = true))
+        assertEquals("BFT", zones(MEDIA, WEATHER, CLOCK))
+        assertEquals("BF", zones(MAP, MEDIA))
+        assertEquals("B", zones(MAP))
+        // The map can't take turns: what it would share its place with shares the one before.
+        assertEquals("BTFT", zones(MEDIA, WEATHER, MAP, CLOCK))
+    }
+
+    @Test
+    fun theCalendarsBoxGoesRoundThreeStates() {
+        assertEquals(CalendarCardMode.ALWAYS, CalendarCardMode.OFF.next(true))
+        assertEquals(CalendarCardMode.AUTO, CalendarCardMode.ALWAYS.next(true))
+        assertEquals(CalendarCardMode.OFF, CalendarCardMode.AUTO.next(true))
+        assertEquals(CalendarCardMode.ALWAYS, CalendarCardMode.AUTO.next(false))
     }
 }
