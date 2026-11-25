@@ -785,7 +785,8 @@ class CarSession(
         // lateinit: the sink below needs to know whether its encoder is still the current one.
         lateinit var enc: VideoEncoder
         enc = VideoEncoder(w, h, fps, kind = videoCodec, constantBitrate = settings.constantBitrateVideo,
-            headersOnce = vehicleOverride?.videoHeadersOnce == true, sink = object : VideoEncoder.Sink {
+            headersOnce = vehicleOverride?.videoHeadersOnce == true,
+            softwareH264 = settings.forceH264 && settings.softwareH264Encoder, sink = object : VideoEncoder.Sink {
             private var frames = 0
             // Per stream: a restart (new config, encoder error) starts again from the full bitrate.
             private val abr = BitrateController(VideoEncoder.defaultBitrate(w, h, fps)) { encoder?.setBitrate(it) }

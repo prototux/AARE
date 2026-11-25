@@ -53,6 +53,7 @@ class VideoEncoder(
     private val constantBitrate: Boolean = false,
     /** SPS/PPS only in the codec config, not repeated before key frames (vehicles.json `videoHeadersOnce`). */
     private val headersOnce: Boolean = false,
+    private val softwareH264: Boolean = false,
     private val sink: Sink,
 ) {
     interface Sink {
@@ -75,7 +76,9 @@ class VideoEncoder(
 
     private val pool = ArrayDeque<ByteArray>()
 
-    fun start() {
+    fun start() = startCodec(if (kind == VideoCodecKind.H264 && softwareH264) "c2.android.avc.encoder" else null)
+
+    private fun startCodec(preferredName: String?) {
         val t = HandlerThread("aare-video-enc", android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY).also { it.start() }
         thread = t
         var bitrateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR
@@ -104,7 +107,7 @@ class VideoEncoder(
         var surface: Surface? = null
         try {
             var format = format(emptySet())
-            val name = MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
+            val name = preferredName ?: MediaCodecList(MediaCodecList.REGULAR_CODECS).findEncoderForFormat(format)
             c = if (name != null) MediaCodec.createByCodecName(name) else MediaCodec.createEncoderByType(kind.mime)
             if (constantBitrate) {
                 val cbr = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR

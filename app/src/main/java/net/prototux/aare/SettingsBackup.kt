@@ -139,6 +139,7 @@ object SettingsBackup {
      * each new setting gets a decision about the backup.
      */
     val NOT_BACKED_UP: Set<String> = setOf(
+        "software_h264_encoder", // device video encoder preference
         "defaults_settled", // whether this install's defaults were set up
         "instance_id", // this install's identity
         "requested_permissions", // what this phone was already asked for
