@@ -23,6 +23,7 @@
     <string name="common_unsupported_screen">This screen isn\'t supported yet</string>
     <string name="common_loading">Loading</string>
     <string name="common_ok">OK</string>
+    <string name="common_details">Details</string>
     <string name="common_try_again">Try again</string>
     <string name="common_something_went_wrong">Something went wrong</string>
 
@@ -511,7 +512,8 @@
     <string name="audio_status_working">Audio working</string>
     <string name="audio_status_apart">Music and navigation apart</string>
     <string name="audio_status_apart_mixed">Navigation voice and music are mixed together.</string>
-    <string name="audio_status_apart_none">No navigation voice: music only.</string>
+    <string name="audio_status_apart_voice">Navigation voice goes through Navigation voice below (apps using the phone\'s voice engine).</string>
+    <string name="audio_status_apart_none">No navigation voice yet: set up Navigation voice below.</string>
     <string name="audio_status_quiet">Phone speaker quiet</string>
     <string name="audio_status_quiet_not">The phone keeps playing too.</string>
     <string name="audio_status_active">Active method: %1$s</string>
@@ -529,7 +531,18 @@
     <string name="audio_about_recording_title">Output recording</string>
     <string name="audio_about_recording">Records everything the phone plays, as one stream, through root or Shizuku. A backup for phones that block audio routing. Directions play over the music, and notification sounds come too.</string>
     <string name="audio_about_capture_title">Screen capture</string>
-    <string name="audio_about_capture">Works on any phone once you allow it. Music only: no directions, and the phone keeps playing too.</string>
+    <string name="audio_about_capture">Works on any phone once you allow it. Music and other media; navigation voice goes through Navigation voice below. Some apps opt out, and the phone keeps playing too.</string>
+    <string name="audio_playback_details_title">Screen-capture audio</string>
+    <string name="audio_playback_details">Android lets AARE copy what the phone\'s media apps play and send it to the car. No root or Shizuku needed.\n\n• Navigation voice: apps that speak with the phone\'s voice engine (CoMaps, Organic Maps, OsmAnd…) reach the car through Navigation voice below, on the car\'s navigation channel, which lowers the music around them. Turn it on there and choose AARE as the phone\'s voice engine. Apps that play their own recorded voice aren\'t covered.\n\n• Some apps don\'t allow their sound to be copied, and stay on the phone.\n\n• The copy doesn\'t stop the phone playing too.\n\n• Android calls this screen sharing. AARE only takes the sound.</string>
+    <string name="tts_engine_label">AARE car voice</string>
+    <string name="voice_section_title">Navigation voice</string>
+    <string name="voice_toggle_title">Navigation voice in the car</string>
+    <string name="voice_toggle_subtitle">Prompts from apps that speak with the phone\'s voice engine (CoMaps, Organic Maps, OsmAnd…) go to the car\'s navigation channel, which lowers the music around them. No screen capture needed.</string>
+    <string name="voice_default_title">AARE is the phone\'s voice engine</string>
+    <string name="voice_default_ready">Ready. AARE speaks with the engine below; with no car connected, prompts play on the phone as usual.</string>
+    <string name="voice_default_not_ready">Tap, then choose \"AARE car voice\" as the preferred engine. AARE still speaks with your usual engine.</string>
+    <string name="voice_speaks_with">Speaks with: %1$s</string>
+    <string name="voice_no_engine">No other voice engine installed: install one (Speech Recognition and Synthesis from Google, Samsung text-to-speech…).</string>
     <string name="audio_sound_title">Sound</string>
     <string name="audio_state_in_use">In use</string>
     <string name="audio_state_expected">Expected</string>

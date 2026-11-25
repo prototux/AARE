@@ -26,13 +26,17 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.RadioButtonChecked
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -62,18 +66,23 @@ import net.prototux.aare.audio.CaptureStatus.State
 import net.prototux.aare.audio.CarMicForApps
 import net.prototux.aare.root.Root
 import net.prototux.aare.service.ProjectionService
+import net.prototux.aare.tts.VoiceEngines
 import rikka.shizuku.Shizuku
 
 /**
  * The car audio page (the design chosen in docs/decisions.md): what you hear in the car and through
  * which method, the method selector, the methods in the order AARE tries them, why the others aren't
- * used, then the car microphone and the sound settings. Everything comes from CaptureStatus.
+ * used, navigation voice, then the car microphone and the sound settings. Everything comes from
+ * CaptureStatus.
  */
 @Composable
 internal fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
     val ctx = LocalContext.current
     val live by CaptureStatus.live.collectAsState()
     var forced by remember { mutableStateOf(settings.forcedCaptureMethod) }
+    var voiceEnabled by remember { mutableStateOf(settings.carVoice) }
+    var captureDetails by remember { mutableStateOf(false) }
+    if (captureDetails) PlaybackCaptureDetails { captureDetails = false }
     val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
         recheck()
@@ -88,6 +97,9 @@ internal fun AudioSettings(settings: Settings, state: ProjectionService.State, r
         } else onDispose {}
     }
     @Suppress("UNUSED_EXPRESSION") refresh
+    val voiceDefault = VoiceEngines.aareIsDefault(ctx)
+    val voiceSpeaker = VoiceEngines.delegate(ctx, settings.voiceEngine)
+    val voiceReady = voiceEnabled && voiceDefault && voiceSpeaker != null
     val setup = CaptureMethods.setup(ctx, state.audioCapture)
     val report = CaptureStatus.report(setup, live, settings.captureRefusals, forced)
     // The system app (Magisk module) is on its way out: shown only where it is installed.
@@ -103,9 +115,10 @@ internal fun AudioSettings(settings: Settings, state: ProjectionService.State, r
             consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
                 else mpm.createScreenCaptureIntent())
         },
+        captureInfo = { captureDetails = true },
     )
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StatusCard(report)
+        StatusCard(report, voiceReady = voiceReady)
         Section(stringResource(R.string.audio_how_title)) {
             Row(verticalAlignment = Alignment.Top) {
                 Icon(Icons.Rounded.Warning, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.tertiary)
@@ -120,7 +133,10 @@ internal fun AudioSettings(settings: Settings, state: ProjectionService.State, r
             }
         }
         Section(stringResource(R.string.audio_tried_title)) {
-            for (e in shown) TriedRow(e, report.connected, offerCapture = !othersWork, allowCapture = act.allowCapture)
+            for (e in shown) TriedRow(
+                e, report.connected, offerCapture = !othersWork, allowCapture = act.allowCapture,
+                onInfo = if (e.method == CaptureMethod.PLAYBACK_CAPTURE) act.captureInfo else null,
+            )
         }
         Folded(stringResource(if (report.active != null) R.string.audio_why_not_title else R.string.audio_what_needs_title)) {
             for (e in shown.filter { it.method != report.active }) WhyNotRow(e, act, offerCapture = !othersWork)
@@ -135,16 +151,34 @@ internal fun AudioSettings(settings: Settings, state: ProjectionService.State, r
                 Text(stringResource(b), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        CarVoiceSection(voiceEnabled, { voiceEnabled = it; settings.carVoice = it }, voiceDefault, voiceSpeaker)
         CarMicSection(settings)
         SoundSection(settings)
     }
 }
 
-private class Actions(val allowRoot: () -> Unit, val openShizuku: () -> Unit, val allowShizuku: () -> Unit, val allowCapture: () -> Unit)
+private class Actions(
+    val allowRoot: () -> Unit,
+    val openShizuku: () -> Unit,
+    val allowShizuku: () -> Unit,
+    val allowCapture: () -> Unit,
+    val captureInfo: () -> Unit,
+)
+
+/** What screen-capture audio covers and what it doesn't, opened from the info button on its row. */
+@Composable
+private fun PlaybackCaptureDetails(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.audio_playback_details_title)) },
+        text = { Text(stringResource(R.string.audio_playback_details), style = MaterialTheme.typography.bodyMedium) },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_ok)) } },
+    )
+}
 
 /** What you hear in the car: three plain answers, then the method in use. */
 @Composable
-private fun StatusCard(report: CaptureStatus.Report) {
+private fun StatusCard(report: CaptureStatus.Report, voiceReady: Boolean) {
     val active = report.active
     val ok = active != null
     val bg = if (ok) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
@@ -155,15 +189,25 @@ private fun StatusCard(report: CaptureStatus.Report) {
         Spacer(Modifier.height(8.dp))
         val split = active in CaptureOrder.POLICY
         val mixed = active == CaptureMethod.SHIZUKU
+        val capture = active == CaptureMethod.PLAYBACK_CAPTURE
         Answer(stringResource(R.string.audio_status_working), if (ok) Mark.YES else Mark.NO, null, fg)
-        Answer(stringResource(R.string.audio_status_apart), if (split) Mark.YES else if (mixed) Mark.PARTLY else Mark.NO,
+        Answer(
+            stringResource(R.string.audio_status_apart),
+            when {
+                split -> Mark.YES
+                mixed || (capture && voiceReady) -> Mark.PARTLY
+                else -> Mark.NO
+            },
             when {
                 mixed -> stringResource(R.string.audio_status_apart_mixed)
-                active == CaptureMethod.PLAYBACK_CAPTURE -> stringResource(R.string.audio_status_apart_none)
+                capture && voiceReady -> stringResource(R.string.audio_status_apart_voice)
+                capture -> stringResource(R.string.audio_status_apart_none)
                 else -> null
-            }, fg)
+            },
+            fg,
+        )
         Answer(stringResource(R.string.audio_status_quiet), if (split || mixed) Mark.YES else Mark.NO,
-            if (active == CaptureMethod.PLAYBACK_CAPTURE) stringResource(R.string.audio_status_quiet_not) else null, fg)
+            if (capture) stringResource(R.string.audio_status_quiet_not) else null, fg)
         Spacer(Modifier.height(8.dp))
         val name = active?.let { stringResource(it.title) } ?: stringResource(R.string.audio_status_none)
         Text(stringResource(R.string.audio_status_active, name) + if (report.forced != null) " " + stringResource(R.string.audio_status_forced) else "",
@@ -193,12 +237,23 @@ private fun Answer(text: String, mark: Mark, note: String?, fg: Color) {
 
 /** One method in the order tried: its name and one status word (or the screen-capture authorization). */
 @Composable
-private fun TriedRow(e: CaptureStatus.Entry, connected: Boolean, offerCapture: Boolean, allowCapture: () -> Unit) {
+private fun TriedRow(
+    e: CaptureStatus.Entry,
+    connected: Boolean,
+    offerCapture: Boolean,
+    allowCapture: () -> Unit,
+    onInfo: (() -> Unit)? = null,
+) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         val (icon, tint) = stateIcon(e.state)
         Icon(icon, null, tint = tint)
         Spacer(Modifier.width(12.dp))
         Text(stringResource(e.method.title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        if (onInfo != null) {
+            IconButton(onClick = onInfo) {
+                Icon(Icons.Rounded.Info, stringResource(R.string.common_details), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
         if (e.method == CaptureMethod.PLAYBACK_CAPTURE && offerCapture && e.state == State.NEEDS_SETUP) {
             OutlinedButton(onClick = allowCapture) { Text(stringResource(R.string.audio_action_allow_capture)) }
         } else {
@@ -216,7 +271,14 @@ private fun WhyNotRow(e: CaptureStatus.Entry, act: Actions, offerCapture: Boolea
         Icon(icon, null, tint = tint)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(stringResource(e.method.title), style = MaterialTheme.typography.bodyLarge)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(e.method.title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                if (e.method == CaptureMethod.PLAYBACK_CAPTURE) {
+                    IconButton(onClick = act.captureInfo) {
+                        Icon(Icons.Rounded.Info, stringResource(R.string.common_details), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.padding(vertical = 4.dp)) {
                 for (t in tags(e.method)) Text(stringResource(t), style = MaterialTheme.typography.labelSmall,
@@ -234,6 +296,38 @@ private fun WhyNotRow(e: CaptureStatus.Entry, act: Actions, offerCapture: Boolea
             }
             action?.let { (label, run) -> OutlinedButton(onClick = run, modifier = Modifier.padding(top = 4.dp)) { Text(stringResource(label)) } }
         }
+    }
+}
+
+/**
+ * Navigation voice through AARE's voice engine: whether it's on, whether AARE is the phone's voice
+ * engine (the one step only the user can do, in the system settings), and which engine speaks.
+ */
+@Composable
+private fun CarVoiceSection(
+    enabled: Boolean,
+    onEnabled: (Boolean) -> Unit,
+    isDefault: Boolean,
+    speaker: VoiceEngines.Engine?,
+) {
+    val ctx = LocalContext.current
+    Section(stringResource(R.string.voice_section_title)) {
+        Toggle(stringResource(R.string.voice_toggle_title), stringResource(R.string.voice_toggle_subtitle), enabled, onEnabled)
+        if (!enabled) return@Section
+        Spacer(Modifier.height(4.dp))
+        Check(
+            stringResource(R.string.voice_default_title),
+            if (isDefault) stringResource(R.string.voice_default_ready) else stringResource(R.string.voice_default_not_ready),
+            isDefault,
+        ) {
+            runCatching { ctx.startActivity(VoiceEngines.settingsIntent()) }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            speaker?.let { stringResource(R.string.voice_speaks_with, it.label) } ?: stringResource(R.string.voice_no_engine),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (speaker == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
