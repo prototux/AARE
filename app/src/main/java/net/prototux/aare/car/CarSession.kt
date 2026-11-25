@@ -96,6 +96,8 @@ import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.audio.MicTakeover
 import net.prototux.aare.audio.PhoneAppsMic
 import net.prototux.aare.audio.PhoneRecording
+import net.prototux.aare.aap.pcm.PcmFormat
+import net.prototux.aare.player.CarPlayerAudio
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
@@ -992,12 +994,18 @@ class CarSession(
                 // Rotary controller: each detent moves focus to the next/previous element in layout
                 // order, like Android Auto. Compose maps Tab to "focus next" and Shift+Tab to
                 // "focus previous" (not D-pad up/down, which is 2D spatial and wrong for a knob).
+                // A screen intercepting the knob (the video player waking hidden controls) gets it first.
                 for (r in report.relativeEvent.dataList) {
-                    val meta = if (r.delta < 0) KeyEvent.META_SHIFT_ON else 0
-                    repeat(kotlin.math.abs(r.delta)) {
-                        val t = SystemClock.uptimeMillis()
-                        display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB, 0, meta))
-                        display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_TAB, 0, meta))
+                    val delta = r.delta
+                    main.post {
+                        if (closed) return@post
+                        if (runtime.screenInput?.onRotary(delta) == true) return@post
+                        val meta = if (delta < 0) KeyEvent.META_SHIFT_ON else 0
+                        repeat(kotlin.math.abs(delta)) {
+                            val t = SystemClock.uptimeMillis()
+                            display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB, 0, meta))
+                            display?.dispatchKey(KeyEvent(t, t, KeyEvent.ACTION_UP, KeyEvent.KEYCODE_TAB, 0, meta))
+                        }
                     }
                 }
             }
@@ -1049,6 +1057,8 @@ class CarSession(
             if (!down) performCarKeyAction(action)
             return
         }
+        // A screen taking car keys itself (the video player) gets them before the default actions; Home and Back always stay with the shell.
+        if (code != KeyEvent.KEYCODE_HOME && code != KeyEvent.KEYCODE_BACK && runtime.screenInput?.onKey(code, down, longPress) == true) return
         when (code) {
             KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
@@ -1153,10 +1163,21 @@ class CarSession(
 
     private val audioListener = object : AudioChannel.Listener {
         override fun onAudioReady(channel: AudioChannel, config: aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration) {
-            if (!settings.carAudio) return
-            if (channel.streamType != AudioStreamType.AUDIO_STREAM_MEDIA && channel.streamType != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
+            val type = channel.streamType
+            if (type != AudioStreamType.AUDIO_STREAM_MEDIA && type != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
             if (!isPrimary(channel)) return
-            main.post { startAudio(channel) }
+            main.post {
+                if (closed) return@post
+                // AARE's own video player needs no capture: its sound takes the media channel while it's playing.
+                if (type == AudioStreamType.AUDIO_STREAM_MEDIA) {
+                    mediaChannel = channel
+                    CarPlayerAudio.mediaFormat = PcmFormat(config.samplingRate, config.numberOfChannels)
+                    CarPlayerAudio.listener = playerAudioListener
+                    if (CarPlayerAudio.wantsChannel) { startPlayerAudio(channel); return@post }
+                }
+                if (!settings.carAudio) return@post
+                startAudio(channel)
+            }
         }
         override fun onUnderflow(channel: AudioChannel) { if (isPrimary(channel)) audioOuts[channel.streamType]?.onUnderflow() }
     }
@@ -1222,13 +1243,61 @@ class CarSession(
                 // Split capture gone: the other channel goes to the next method too (the mixed
                 // stream needs the media channel alone, or nav voice would play twice).
                 if (method in CaptureOrder.FAILURE_MOVES_BOTH) {
-                    audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
+                    audio.filter {
+                        it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) &&
+                            !(it.streamType == AudioStreamType.AUDIO_STREAM_MEDIA && playerHasMedia)
+                    }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
                         startAudio(other)
                     }
                 }
             }
         }, onStarted = { main.post { captureWorks(method) } })
+        audioOuts[channel.streamType] = out.also { it.start() }
+        if (channel.streamType == AudioStreamType.AUDIO_STREAM_MEDIA) playerHasMedia = false
+    }
+
+    /** The car's media channel, once set up (main thread). */
+    private var mediaChannel: AudioChannel? = null
+    /** True while [audioOuts] holds the video player's own stream on the media channel (main thread). */
+    private var playerHasMedia = false
+
+    /** AARE's video player started or stopped playing: its sound takes the media channel, or the capture comes back. */
+    private val playerAudioListener: () -> Unit = {
+        main.post {
+            val ch = mediaChannel
+            if (!closed && ch != null) {
+                // Only switch when the owner changes: a repeat call mustn't restart the stream.
+                if (CarPlayerAudio.wantsChannel) {
+                    if (!playerHasMedia) startPlayerAudio(ch)
+                } else if (playerHasMedia) {
+                    audioOuts.remove(AudioStreamType.AUDIO_STREAM_MEDIA)?.stop()
+                    playerHasMedia = false
+                    if (settings.carAudio) {
+                        DiagLog.add("car video: ${if (CarPlayerAudio.active) "not playing" else "closed"}, the capture has the media channel")
+                        startAudio(ch)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun startPlayerAudio(channel: AudioChannel) {
+        val cfg = channel.config ?: return
+        audioOuts.remove(channel.streamType)?.stop()
+        playerHasMedia = true
+        DiagLog.add("car video: the player's sound goes to the car's media channel (${cfg.samplingRate} Hz x ${cfg.numberOfChannels})")
+        val silence = StartSilence.configured(wireless, guidance = false, aap.headUnitVersion?.first,
+            vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
+        lateinit var out: CarAudioOut
+        out = CarAudioOut(CarPlayerAudio.Source(PcmFormat(cfg.samplingRate, cfg.numberOfChannels)), AudioChannelSink(channel), audioFocus.media, silence, onFailed = {
+            main.post {
+                if (audioOuts.remove(channel.streamType, out)) {
+                    playerHasMedia = false
+                    DiagLog.add("car video: the player's sound stream stopped")
+                }
+            }
+        })
         audioOuts[channel.streamType] = out.also { it.start() }
     }
 
@@ -1425,6 +1494,9 @@ class CarSession(
         keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
+        playerHasMedia = false
+        if (CarPlayerAudio.listener === playerAudioListener) { CarPlayerAudio.listener = null; CarPlayerAudio.mediaFormat = null }
+        mediaChannel = null
         phoneBridge?.stop(); phoneBridge = null
         btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null

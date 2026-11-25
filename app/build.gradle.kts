@@ -94,6 +94,10 @@ dependencies {
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)
     implementation(libs.media3.session)
+    // The car screen's own video player (local videos, Jellyfin).
+    implementation(libs.media3.exoplayer)
+    // Jellyfin re-encodes heavy files for the car as HLS.
+    implementation(libs.media3.exoplayer.hls)
     implementation(libs.kotlinx.coroutines.android)
     // Car audio without the screen-capture consent: through Shizuku (adb rights), or Android's
     // audio-policy interface when installed as a privileged app (tools/magisk).
@@ -101,7 +105,7 @@ dependencies {
     implementation(libs.shizuku.provider)
     implementation(libs.hiddenapibypass)
     testImplementation(libs.junit)
-    // vehicles.json is parsed with the platform's org.json, which unit tests only see as a stub.
+    // vehicles.json and Jellyfin answers are parsed with the platform's org.json, which unit tests only see as a stub.
     testImplementation(libs.org.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -1073,6 +1073,20 @@ class CarRuntime(
      */
     private val screenBacks = HashMap<String, () -> Boolean>()
 
+    /**
+     * Set by a screen that intercepts car keys before normal routing (the video player: waking
+     * hidden controls on the first knob press or turn, and taking the car's media keys). Main
+     * thread.
+     */
+    var screenInput: CarScreenInput? = null
+
+    interface CarScreenInput {
+        /** A car key went down or up; true if handled (the car screen's focus doesn't see it). */
+        fun onKey(code: Int, down: Boolean, longPress: Boolean): Boolean
+        /** The knob turned [delta] detents (positive: clockwise); true if handled. */
+        fun onRotary(delta: Int): Boolean
+    }
+
     fun registerScreenBack(appId: String, handler: () -> Boolean) { screenBacks[appId] = handler }
 
     fun unregisterScreenBack(appId: String, handler: () -> Boolean) {
