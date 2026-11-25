@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Wiadomości, wskazówki z Google Maps i Waze, odtwarzany utwór</string>
     <string name="setup_check_audio_subtitle">Pozwól, aby dźwięk telefonu dotarł do samochodu</string>
     <string name="setup_action_set_up">Skonfiguruj</string>
+    <string name="setup_old_android_title">Działa na starszym Androidzie</string>
+    <string name="setup_old_android_message">AARE działa też na Androidzie 6 i 7, ale Android 8 to lepiej wspierana podstawa. Na Androidzie 6 i 7 powiadomień o połączeniu nie można umieścić w ich własnym kanale, więc nie można ich wyciszyć niezależnie od innych powiadomień AARE w ustawieniach systemu. Wszystko inne działa tak samo lub automatycznie wraca do starszej metody.</string>
+    <string name="setup_old_android_dont_show_again">Nie pokazuj ponownie</string>
     <string name="setup_section_connecting">Łączenie</string>
     <string name="setup_toggle_wireless_title">Bezprzewodowo</string>
     <string name="setup_toggle_wireless_subtitle">Łącz się ze sparowanymi samochodami przez Wi-Fi, gdy znajdą się w zasięgu Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systemowe przekierowanie audio (jak Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, muzyka i nawigacja osobno (jak Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku lub root</string>
+    <string name="audio_method_root_policy">Root, muzyka i nawigacja osobno</string>
     <string name="audio_method_playback_capture">Uprawnienie do przechwytywania ekranu</string>
     <string name="audio_policy_not_ready">Jak Android Auto: muzyka i głos nawigacji osobno, głośnik telefonu wyłączony. Wymaga telefonu z rootem: zainstaluj AARE jako aplikację systemową za pomocą modułu Magisk (zobacz README).</string>
     <string name="audio_shizuku_ready">Gotowe. Wszystko, co odtwarza telefon, idzie do samochodu, włącznie z głosem nawigacji; telefon pozostaje wyciszony.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Strona główna</string>
     <string name="browser_address_hint">Szukaj lub wpisz adres internetowy</string>
     <string name="assistant_links_title">Linki od asystenta</string>
+    <string name="assistant_stop">Zatrzymaj asystenta</string>
+    <string name="assistant_stop_style_title">Zatrzymywanie asystenta</string>
+    <string name="assistant_stop_style_voice_button">Przycisk głosowy zmienia się w Zatrzymaj</string>
+    <string name="assistant_stop_style_red_restart">Czerwony przycisk stop, przycisk głosowy pyta ponownie</string>
+    <string name="assistant_stop_style_red_stop">Czerwony przycisk stop, przycisk głosowy też zatrzymuje</string>
     <string name="assistant_links_subtitle">Pozwala linkom aare:// w odpowiedziach wybranego asystenta sterować muzyką albo proponować na ekranie samochodu nawigację, otwarcie aplikacji lub połączenie. Linki z innych aplikacji i ze stron internetowych są ignorowane.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dane samochodu</string>
@@ -571,6 +580,26 @@
     <string name="about_oss_libraries_title">Biblioteki</string>
     <string name="about_oss_protocol_title">Definicje protokołu</string>
 
+    <string name="obd_adapter_title">Odczytuj adapter OBD2</string>
+    <string name="obd_adapter_subtitle">Adapter ELM327 sparowany przez Bluetooth, odczytywany, gdy samochód jest połączony: dane silnika, których samochód nie wysyła do AARE. Tylko odczyt: AARE nigdy nic nie zapisuje w samochodzie.</string>
+    <string name="obd_simulated_title">Symulowany adapter OBD2 (debugowanie)</string>
+    <string name="obd_simulated_subtitle">Symulowany samochód zamiast prawdziwego adaptera, aby wypróbować tę stronę</string>
+    <string name="obd_section">Adapter OBD2</string>
+    <string name="obd_status_off">Wyłączony</string>
+    <string name="obd_status_searching">Szukanie sparowanego adaptera (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: samochód nie odpowiada (zapłon wyłączony?)</string>
+    <string name="obd_status_gave_up">Nie znaleziono adaptera: sparuj go w ustawieniach Bluetooth telefonu</string>
+    <string name="obd_rpm">Obroty</string>
+    <string name="obd_speed">Prędkość</string>
+    <string name="obd_coolant">Płyn chłodzący</string>
+    <string name="obd_intake_air">Powietrze dolotowe</string>
+    <string name="obd_outside">Powietrze zewnętrzne</string>
+    <string name="obd_boost">Ciśnienie doładowania</string>
+    <string name="obd_load">Obciążenie silnika</string>
+    <string name="obd_battery">Akumulator</string>
+    <string name="obd_fuel">Paliwo</string>
+    <string name="obd_ethanol">Etanol</string>
     <string name="vehicles_section_title">Wyjątki dla poszczególnych pojazdów</string>
     <string name="vehicles_hint">Dostosuj gęstość ekranu lub marginesy widocznego obszaru dla konkretnego samochodu, bez nowej kompilacji. Edytuj plik vehicles.json za pomocą menedżera plików, dopasowując samochód według marki/modelu/nazwy.</string>
     <string name="vehicles_rule_count">Wczytane reguły: %1$d</string>
@@ -631,6 +660,13 @@
     <string name="update_available_title">Dostępna aktualizacja — %1$s</string>
     <string name="update_available_subtitle">Masz %1$s. Dotknij, aby zobaczyć wydanie.</string>
     <string name="setup_log_save">Zapisz</string>
+    <string name="setup_section_developer_log">Dziennik programisty</string>
+    <string name="setup_toggle_dev_log_title">Tryb programisty</string>
+    <string name="setup_toggle_dev_log_subtitle">Zapisuje wszystko, co rejestruje AARE, w plikach tekstowych w %1$s (do 50 MB). Wyłączenie trybu usuwa je: najpierw je zapisz.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ukryj dane osobowe</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskuje adresy, nazwy sieci i urządzeń oraz inne rozpoznawane dane osobowe. Przeczytaj plik przed udostępnieniem.</string>
+    <string name="setup_dev_log_save">Zapisz dziennik programisty</string>
+    <string name="setup_dev_log_empty">Brak dziennika programisty</string>
     <string name="setup_toggle_verbose_log_title">Szczegółowy dziennik protokołu</string>
     <string name="setup_toggle_verbose_log_subtitle">Zapisuj w tym dzienniku pełny zapis protokołu jednostki centralnej, by dołączyć go do zgłoszenia błędu. Zapisuje dużo danych; w innym wypadku pozostaw wyłączone.</string>
     <string name="setup_section_backup">Kopia zapasowa ustawień</string>
@@ -845,4 +881,38 @@
 
     <string name="setup_toggle_auto_pair_title">Automatycznie paruj Bluetooth samochodu</string>
     <string name="setup_toggle_auto_pair_subtitle">Przy połączeniach: gdy samochód, z którym telefon nie jest sparowany, prosi o parowanie przez Android Auto, AARE paruje się z nim za pomocą Shizuku zamiast okna dialogowego Androida, jeśli kod zgadza się z tym, który wysłał samochód. Nigdy z żadnym innym urządzeniem. Wymaga działającego Shizuku zezwalającego AARE.</string>
+
+    <string name="calibration_title">Kalibracja ekranu dotykowego</string>
+    <string name="calibration_intro">Jeśli dotknięcia trafiają w złe miejsce na ekranie samochodu, zmierz ekran dotykowy tego samochodu: ustawiasz widoczny obszar na telefonie, a potem dotykasz 4 celów na ekranie samochodu. Rób to na postoju.</string>
+    <string name="calibration_not_connected">Połącz się z samochodem, aby skalibrować jego ekran dotykowy.</string>
+    <string name="calibration_saved_for">Skalibrowano: %1$s</string>
+    <string name="calibration_using_saved">Ten samochód używa zapisanej kalibracji.</string>
+    <string name="calibration_driving">Zatrzymaj samochód, aby skalibrować.</string>
+    <string name="calibration_start">Rozpocznij kalibrację</string>
+    <string name="calibration_reset">Przywróć wartości samochodu</string>
+    <string name="calibration_forget">Zapomnij</string>
+    <string name="calibration_area_help">Krok 1 z 3. Na ekranie samochodu żółte L oznacza każdy róg obszaru, w którym rysuje AARE. Przesuń każdą krawędź, aż jej L znajdzie się dokładnie przy krawędzi ekranu i będzie w pełni widoczne.</string>
+    <string name="calibration_area_value">%1$s: %2$d px</string>
+    <string name="calibration_edge_left">Lewo</string>
+    <string name="calibration_edge_top">Góra</string>
+    <string name="calibration_edge_right">Prawo</string>
+    <string name="calibration_edge_bottom">Dół</string>
+    <string name="calibration_area_car_values">Wartości samochodu</string>
+    <string name="calibration_next">Dalej</string>
+    <string name="calibration_cancel">Anuluj</string>
+    <string name="calibration_target_help">Krok 2 z 3. Na ekranie samochodu dotknij środka celu %1$d.</string>
+    <string name="calibration_target_retry_help">Krok 2 z 3. To dotknięcie nie pasuje do pozostałych: dotknij ponownie celu %1$d.</string>
+    <string name="calibration_verify_help">Krok 3 z 3. Dotknij zielonego celu na środku ekranu samochodu, aby zachować kalibrację (pozostało %1$d s). W przeciwnym razie nic się nie zmieni.</string>
+    <string name="calibration_result_saved">Kalibracja zapisana dla tego samochodu.</string>
+    <string name="calibration_result_missed">Dotknięcie kontrolne nie trafiło w cel: nic nie zapisano. Spróbuj ponownie, dotykając środka każdego celu.</string>
+    <string name="calibration_result_timeout">Brak dotknięcia kontrolnego na czas: nic nie zapisano.</string>
+    <string name="calibration_result_cancelled">Kalibracja anulowana: nic nie zapisano.</string>
+    <string name="calibration_result_no_spread">4 dotknięcia trafiły w to samo miejsce lub na jedną linię: samochód może nie podawać, gdzie dotknięto ekranu. Nic nie zapisano; szczegóły są w dzienniku połączenia.</string>
+    <string name="calibration_result_interrupted">Samochód zmienił lub ponownie uruchomił ekran podczas kalibracji: nic nie zapisano. Zacznij od nowa.</string>
+    <string name="calibration_result_driving">Samochód ruszył: nic nie zapisano.</string>
+    <string name="calibration_result_reset">Przywrócono własne wartości samochodu.</string>
+    <string name="calibration_car_area">Kalibracja ekranu dotykowego. Za pomocą telefonu przesuń każdy żółty róg do krawędzi tego ekranu.</string>
+    <string name="calibration_car_target">Dotknij środka celu %1$d</string>
+    <string name="calibration_car_target_retry">Dotknij ponownie celu %1$d</string>
+    <string name="calibration_car_verify">Dotknij zielonego celu, aby zachować tę kalibrację (%1$d s)</string>
 </resources>

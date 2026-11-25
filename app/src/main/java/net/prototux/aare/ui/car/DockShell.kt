@@ -1,5 +1,9 @@
 package net.prototux.aare.ui.car
 
+import net.prototux.aare.ui.theme.OverMap
+import net.prototux.aare.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarTheme
 import net.prototux.aare.ui.theme.appIconFilter
@@ -60,7 +65,7 @@ internal fun DockShell(
 ) {
     // A Surface, not a background: it also sets the content colour, which text without its own
     // colour (song titles, events) takes. Without it that text is black, unreadable at night.
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val content: @Composable (Modifier) -> Unit = { modifier ->
                 Box(modifier) {
@@ -85,7 +90,7 @@ internal fun DockShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -98,9 +103,11 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     val phone = state.apps.firstOrNull { it.kind == CarAppKind.PHONE }
     val voice: @Composable () -> Unit = {
         val scheme = MaterialTheme.colorScheme
-        Box(Modifier.size(52.dp).clip(CircleShape).background(if (state.listening) scheme.primary else scheme.secondaryContainer)
+        val stop = state.voiceButtonIsStop
+        Box(Modifier.size(52.dp).clip(CircleShape).background(when { stop -> scheme.error; state.listening -> scheme.primary; else -> scheme.secondaryContainer })
             .carClickable(CircleShape) { actions.assistant() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
+            if (stop) Icon(Icons.Rounded.Stop, stringResource(R.string.assistant_stop), tint = scheme.onError)
+            else Icon(Icons.Rounded.Mic, "Voice", tint = if (state.listening) scheme.onPrimary else scheme.onSecondaryContainer)
         }
     }
     // The home button: the app grid, or the dashboard when already on it.
@@ -114,7 +121,8 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
     }
     if (horizontal) {
         Row(
-            Modifier.fillMaxWidth().height(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
+            // carBackdrop: a glass theme's dock is transparent, over its night backdrop (the dock is always night).
+            Modifier.fillMaxWidth().height(96.dp).carBackdrop().background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) { if (state.chrome.clock) Clock(); PhoneStatusIcons(state.chrome) }
@@ -128,7 +136,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
         return@CarTheme
     }
     Column(
-        Modifier.fillMaxHeight().width(96.dp).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
+        Modifier.fillMaxHeight().width(96.dp).carBackdrop().background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (state.chrome.clock) Clock()
@@ -155,7 +163,7 @@ private fun Dock(state: CarUiState, actions: CarActions, horizontal: Boolean = f
 private fun Home(state: CarUiState, actions: CarActions) = CarTheme(night = true) {
     val scheme = MaterialTheme.colorScheme
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerLowest, scheme.background))),
+        Modifier.fillMaxSize().carBackdrop().background(Brush.verticalGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerLowest, scheme.background))),
     ) {
         val columns = maxOf(3, (maxWidth / 150.dp).toInt())
         // Two rows in landscape; a portrait screen has room for more.

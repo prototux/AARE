@@ -17,7 +17,8 @@ interface IShellAudio {
      * takes only [usages] off the phone's speaker. One stream per [key], so music and navigation
      * voice can go to their own car channels. Returns a PCM pipe like start(), or null.
      */
-    ParcelFileDescriptor startPolicy(int key, int sampleRate, int channels, in int[] usages) = 3;
+    /** [volume]: AudioPolicyCapture.VOLUME_AS_IS, VOLUME_FULL or VOLUME_REPAIR. */
+    ParcelFileDescriptor startPolicy(int key, int sampleRate, int channels, in int[] usages, int volume) = 3;
 
     void stopPolicy(int key) = 4;
 
@@ -33,6 +34,12 @@ interface IShellAudio {
     void setMicInjecting(boolean on) = 6;
 
     void stopMicInjection() = 7;
+
+    /**
+     * Why the last startPolicy() returned null (the system's refusal, as the root cause's class and
+     * message), for the connection log; null if none failed.
+     */
+    String lastFailure() = 8;
 
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;

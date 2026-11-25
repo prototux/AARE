@@ -3,6 +3,7 @@ package net.prototux.aare
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.launch.StandaloneDrivingRule
 import net.prototux.aare.launch.formatDrivingRules
 import net.prototux.aare.launch.parseDrivingRules
@@ -26,6 +27,16 @@ class Settings(context: Context) {
     var verboseProtocolLog: Boolean
         get() = prefs.getBoolean("verbose_protocol_log", false)
         set(v) = prefs.edit { putBoolean("verbose_protocol_log", v) }
+
+    /** Copy everything AARE logs to text files (see [net.prototux.aare.devlog.DevLog]); off deletes them. */
+    var developerMode: Boolean
+        get() = prefs.getBoolean("developer_mode", false)
+        set(v) = prefs.edit { putBoolean("developer_mode", v) }
+
+    /** Mask personal data in the developer log's files. */
+    var developerLogPrivacy: Boolean
+        get() = prefs.getBoolean("developer_log_privacy", true)
+        set(v) = prefs.edit { putBoolean("developer_log_privacy", v) }
 
     /** Also accept head units from the network (TCP 5277, no authentication). Switched off again after one session if [headUnitServerLanOnce]. */
     var headUnitServerLan: Boolean
@@ -153,6 +164,14 @@ class Settings(context: Context) {
     var callsOnPhoneSpeaker: Boolean
         get() = prefs.getBoolean("calls_on_phone_speaker", false)
         set(v) = prefs.edit { putBoolean("calls_on_phone_speaker", v) }
+
+    /**
+     * After a call on the phone, or an assistant listening over Bluetooth, ask the car for the media
+     * focus again and play on what its focus loss paused: some cars keep it until asked. Off by default.
+     */
+    var resumeAfterCall: Boolean
+        get() = prefs.getBoolean("resume_after_call", false)
+        set(v) = prefs.edit { putBoolean("resume_after_call", v) }
 
     /** Where the car screen's bar goes: next to the driver ([RAIL_AUTO]), [RAIL_LEFT], [RAIL_RIGHT] or [RAIL_BOTTOM]. */
     var railPosition: String
@@ -292,6 +311,23 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
     /**
+     * Car audio at full volume: the loop back AARE records from gets full volume while it records,
+     * as Android Auto sends, and the car sets the level. Off: the phone's media volume applies
+     * (at its default, some 30 dB below full). Audio policy capture only. Off by default.
+     */
+    var carAudioFullVolume: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume", v) }
+
+    /**
+     * A session recorded at full volume and hasn't closed cleanly since: the loop back may still be
+     * at full volume (AARE or its helper killed while recording), so the next capture puts it back.
+     */
+    var carAudioFullVolumeLeft: Boolean
+        get() = prefs.getBoolean("car_audio_full_volume_left", false)
+        set(v) = prefs.edit { putBoolean("car_audio_full_volume_left", v) }
+
+    /**
      * The phone's own Bluetooth MAC, for the car's in-session pairing handshake. Android hides it
      * from apps on most devices, and some head units withhold the projected screen until they know
      * which phone is connected, so the user can set it (Settings > About phone > Status). Empty: try
@@ -307,7 +343,8 @@ class Settings(context: Context) {
      * on Android 10+; calls keep their own microphone. Off: they record from the phone's mic.
      */
     var carMicForPhoneApps: Boolean
-        get() = prefs.getBoolean("car_mic_for_phone_apps", false)
+        // On unless the user turned it off: it only works where root or Shizuku does (owner's choice, 2.0).
+        get() = prefs.getBoolean("car_mic_for_phone_apps", true)
         set(v) = prefs.edit { putBoolean("car_mic_for_phone_apps", v) }
 
     /**
@@ -318,10 +355,35 @@ class Settings(context: Context) {
     var autoPairCarBluetooth: Boolean
         get() = prefs.getBoolean("auto_pair_car_bluetooth", false)
         set(v) = prefs.edit { putBoolean("auto_pair_car_bluetooth", v) }
-    /** Capture car audio through su (a rooted phone), once the user has allowed it in the audio settings. */
-    var rootAudio: Boolean
-        get() = prefs.getBoolean("root_audio", false)
-        set(v) = prefs.edit { putBoolean("root_audio", v) }
+    /**
+     * The user allowed root, for the whole app (see Root). It was root_audio, which only the car
+     * audio screen set: still read until the first write, which drops it.
+     */
+    var rootAllowed: Boolean
+        get() = prefs.getBoolean("root_allowed", prefs.getBoolean("root_audio", false))
+        set(v) = prefs.edit { putBoolean("root_allowed", v); remove("root_audio") }
+    /**
+     * Settles, once, the defaults that differ between a new install and an update (AareApp). Full
+     * volume to the car is on for a new install only: an update that suddenly played much louder at
+     * the next drive would be a hazard, so an existing install keeps what it had.
+     */
+    fun settleDefaults() {
+        if (prefs.contains("defaults_settled")) return
+        val fresh = prefs.all.isEmpty()
+        prefs.edit {
+            if (!prefs.contains("car_audio_full_volume")) putBoolean("car_audio_full_volume", fresh)
+            putBoolean("defaults_settled", true)
+        }
+    }
+
+    /** Car audio methods this phone refused at drives, and why (CaptureStatus): cleared when one works again. */
+    var captureRefusals: Map<CaptureMethod, net.prototux.aare.audio.CaptureStatus.Refusal>
+        get() = net.prototux.aare.audio.CaptureStatus.decode(prefs.getString("capture_refusals", null))
+        set(v) = prefs.edit { if (v.isEmpty()) remove("capture_refusals") else putString("capture_refusals", net.prototux.aare.audio.CaptureStatus.encode(v)) }
+    /** The car audio capture method the user forced (it never falls back), or null for automatic. */
+    var forcedCaptureMethod: CaptureMethod?
+        get() = prefs.getString("capture_method", null)?.let { name -> CaptureMethod.entries.firstOrNull { it.name == name } }
+        set(v) = prefs.edit { if (v == null) remove("capture_method") else putString("capture_method", v.name) }
 
     /**
      * Package of the assistant the steering-wheel voice button opens (a car app such as Lapin, or a
@@ -340,6 +402,16 @@ class Settings(context: Context) {
     var assistantOnCarScreen: Boolean
         get() = prefs.getBoolean("assistant_on_car_screen", false)
         set(v) = prefs.edit { putBoolean("assistant_on_car_screen", v) }
+
+    /**
+     * How the driver stops the assistant ([ASSISTANT_STOP_VOICE_BUTTON], the default: the voice button
+     * turns into a stop button while the assistant is on; [ASSISTANT_STOP_RED_RESTART]: a big red stop
+     * on the assistant bar, the voice button asks again; [ASSISTANT_STOP_RED_STOP]: the red stop, and
+     * the voice button stops too). The steering wheel's voice key does what the voice button does.
+     */
+    var assistantStopStyle: String
+        get() = prefs.getString("assistant_stop", ASSISTANT_STOP_VOICE_BUTTON) ?: ASSISTANT_STOP_VOICE_BUTTON
+        set(v) = prefs.edit { putString("assistant_stop", v) }
 
     /** Offer "Phone screen" in the car: the phone's own screen, for apps AARE can't host (Google Maps, Waze). */
     var phoneScreen: Boolean
@@ -401,6 +473,21 @@ class Settings(context: Context) {
     var homeActions: String?
         get() = prefs.getString(HOME_ACTIONS_KEY, null)
         set(v) = prefs.edit { putString(HOME_ACTIONS_KEY, v) }
+    /**
+     * Read an OBD2 adapter (ELM327 over Bluetooth, paired in the phone's settings) while the car is
+     * connected, for engine data the head unit doesn't send. Read only. Off by default.
+     */
+    var obdAdapter: Boolean
+        get() = prefs.getBoolean("obd_adapter", false)
+        set(v) = prefs.edit { putBoolean("obd_adapter", v) }
+    /** The adapter the user picked (Bluetooth address); null: any paired device clearly named as one. */
+    var obdAdapterAddress: String?
+        get() = prefs.getString("obd_adapter_address", null)
+        set(v) = prefs.edit { if (v == null) remove("obd_adapter_address") else putString("obd_adapter_address", v) }
+    /** Debug builds: a pretend adapter instead of a real one, to try the Car data page without a car. */
+    var obdSimulated: Boolean
+        get() = prefs.getBoolean("obd_simulated", false)
+        set(v) = prefs.edit { putBoolean("obd_simulated", v) }
     /** Where the user dragged the in-call bar on the car screen (px offset from the top centre). */
     var callBarOffsetX: Float
         get() = prefs.getFloat("call_bar_x", 0f)
@@ -408,6 +495,21 @@ class Settings(context: Context) {
     var callBarOffsetY: Float
         get() = prefs.getFloat("call_bar_y", 0f)
         set(v) = prefs.edit { putFloat("call_bar_y", v) }
+
+    /** When a car connects, the phone's location goes on (with Shizuku or root). */
+    var locationOnInCar: Boolean
+        get() = prefs.getBoolean("location_on_in_car", false)
+        set(v) = prefs.edit { putBoolean("location_on_in_car", v) }
+
+    /** When the car goes, the phone's location goes off (with Shizuku or root). */
+    var locationOffAfterCar: Boolean
+        get() = prefs.getBoolean("location_off_after_car", false)
+        set(v) = prefs.edit { putBoolean("location_off_after_car", v) }
+
+    /** With [locationOffAfterCar]: off even when it was already on as the car connected. */
+    var locationOffAlways: Boolean
+        get() = prefs.getBoolean("location_off_always", false)
+        set(v) = prefs.edit { putBoolean("location_off_always", v) }
 
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
@@ -419,6 +521,14 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("resume_media", false)
         set(v) = prefs.edit { putBoolean("resume_media", v) }
 
+    /**
+     * Pause what plays while a phone app records (a voice message, an assistant listening), and
+     * play it on once the app is done. Off by default.
+     */
+    var pauseWhileRecording: Boolean
+        get() = prefs.getBoolean("pause_while_recording", false)
+        set(v) = prefs.edit { putBoolean("pause_while_recording", v) }
+
     /** Show incoming messages as banners on the car screen. */
     var messageBanners: Boolean
         get() = prefs.getBoolean("message_banners", true)
@@ -428,6 +538,11 @@ class Settings(context: Context) {
     var groupMessages: Boolean
         get() = prefs.getBoolean("group_messages", true)
         set(v) = prefs.edit { putBoolean("group_messages", v) }
+
+    /** Messaging apps (packages) whose messages don't show in the car. */
+    var mutedMessageApps: Set<String>
+        get() = prefs.getStringSet("muted_message_apps", emptySet()).orEmpty()
+        set(v) = prefs.edit { putStringSet("muted_message_apps", HashSet(v)) }
 
     /** Do Not Disturb (priority only) while connected to the car. */
     var dndWhileDriving: Boolean
@@ -443,6 +558,15 @@ class Settings(context: Context) {
     var autoReplyText: String
         get() = prefs.getString("auto_reply_text", null)?.takeIf { it.isNotBlank() } ?: appContext.getString(R.string.msg_autoreply_default)
         set(v) = prefs.edit { putString("auto_reply_text", v) }
+
+    /**
+     * Reply to a message by voice from the car screen, while driving too (notify/VoiceDictation):
+     * the phone's speech recognizer listens (the car's microphone with [carMicForPhoneApps] on),
+     * the text is read back and sent on Send or a spoken "yes". Off by default.
+     */
+    var voiceReply: Boolean
+        get() = prefs.getBoolean("voice_reply", false)
+        set(v) = prefs.edit { putBoolean("voice_reply", v) }
 
     /** Read incoming messages aloud as they arrive. */
     var readMessagesAloud: Boolean
@@ -499,6 +623,11 @@ class Settings(context: Context) {
     var compactRail: Boolean
         get() = prefs.getBoolean("compact_rail", false)
         set(v) = prefs.edit { putBoolean("compact_rail", v) }
+
+    /** The space between the rail's apps in dp, or null for the standard one. */
+    var railSpacing: Int?
+        get() = if (prefs.contains("rail_spacing")) prefs.getInt("rail_spacing", 0) else null
+        set(v) = prefs.edit { if (v == null) remove("rail_spacing") else putInt("rail_spacing", v) }
 
     /** Runtime permissions setup has asked for at least once, to tell a dismissed dialog from a refusal for good. */
     var requestedPermissions: Set<String>
@@ -567,6 +696,11 @@ class Settings(context: Context) {
         get() = prefs.getString("last_head_unit", null)
         set(v) = prefs.edit { putString("last_head_unit", v) }
 
+    /** "Don't show again" on the Android 6/7 notice (MainActivity). OK alone shows it again next launch. */
+    var oldAndroidNoticeDismissed: Boolean
+        get() = prefs.getBoolean("old_android_notice_dismissed", false)
+        set(v) = prefs.edit { putBoolean("old_android_notice_dismissed", v) }
+
     companion object {
         const val BROWSER_DEFAULT_URL = "https://duckduckgo.com/"
         const val HOME_ACTIONS_KEY = "home_actions"
@@ -574,6 +708,9 @@ class Settings(context: Context) {
         const val RAIL_LEFT = "left"
         const val RAIL_RIGHT = "right"
         const val RAIL_BOTTOM = "bottom"
+        const val ASSISTANT_STOP_VOICE_BUTTON = "voice_button"
+        const val ASSISTANT_STOP_RED_RESTART = "red_restart"
+        const val ASSISTANT_STOP_RED_STOP = "red_stop"
         const val THEME_AUTO = "auto"
         const val THEME_DARK = "dark"
         const val THEME_LIGHT = "light"

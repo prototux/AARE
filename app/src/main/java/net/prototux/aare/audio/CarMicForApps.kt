@@ -16,8 +16,8 @@ import net.prototux.aare.DiagLog
  * The car's microphone for the phone's other apps while connected (Settings.carMicForPhoneApps):
  * voice typing, voice recorders and voice-message buttons hear the car instead of the phone.
  *
- * The audio side runs as the shell in the Shizuku helper ([ShellAudioService], [ShellMicInjector]),
- * which also says when such an app records. This class opens the car's mic then (through
+ * The audio side runs as the shell in the Shizuku or root helper ([ShellAudioService],
+ * [ShellMicInjector]), which also says when such an app records. This class opens the car's mic then (through
  * [router], which shares it with car apps), pipes its PCM to the helper, and closes it once they
  * stop ([MicTakeover]). [rate] and [channels] are the car mic's format.
  */
@@ -32,6 +32,8 @@ class CarMicForApps(
     private val handler = Handler(thread.looper)
     private val takeover = MicTakeover()
     private var service: IShellAudio? = null
+    /** The helper [service] came from, to give it back to. */
+    private var helper: AudioHelper? = null
     /** Car PCM on its way to the helper: the car's reader thread must never wait on the pipe. */
     private val queue = ArrayBlockingQueue<ByteArray>(QUEUE_CHUNKS)
     private var out: ParcelFileDescriptor.AutoCloseOutputStream? = null
@@ -42,7 +44,7 @@ class CarMicForApps(
     private val listener = object : IShellMicListener.Stub() {
         override fun onPhoneAppsRecording(recording: Boolean) { handler.post { onRecording(recording) } }
     }
-    private val death = IBinder.DeathRecipient { handler.post { if (service != null) { DiagLog.add("car mic for phone apps: the Shizuku helper went away"); unbind() } } }
+    private val death = IBinder.DeathRecipient { handler.post { if (service != null) { DiagLog.add("car mic for phone apps: the ${helper?.name} helper went away"); unbind() } } }
     private val tick = Runnable { act(takeover.onTick(SystemClock.uptimeMillis())); scheduleTick() }
 
     fun start() { handler.post(::bind) }
@@ -70,20 +72,21 @@ class CarMicForApps(
 
     private fun bind() {
         if (service != null) return
-        if (!available()) { DiagLog.add("car mic for phone apps: needs Shizuku, allowed for AARE, and Android 10 or newer"); return }
-        val s = ShellAudio.acquire(context) ?: run { DiagLog.add("car mic for phone apps: the Shizuku helper didn't start"); return }
+        val h = helper(context) ?: run { DiagLog.add("car mic for phone apps: needs Shizuku or root, allowed for AARE, and Android 10 or newer"); return }
+        val s = h.acquire(context) ?: run { DiagLog.add("car mic for phone apps: the ${h.name} helper didn't start"); return }
         val (read, write) = ParcelFileDescriptor.createPipe()
         val ok = runCatching { s.startMicInjection(read, rate, channels, listener) }.onFailure { Log.w(TAG, "startMicInjection", it) }.getOrDefault(false)
         // The helper got its own copy of the read end.
         read.close()
         if (!ok) {
             write.close()
-            ShellAudio.release()
+            h.release(s)
             DiagLog.add("car mic for phone apps: the system refused the audio policy, so phone apps keep the phone's mic")
             return
         }
         runCatching { s.asBinder().linkToDeath(death, 0) }
         service = s
+        helper = h
         val o = ParcelFileDescriptor.AutoCloseOutputStream(write)
         out = o
         writer = Thread({
@@ -163,7 +166,8 @@ class CarMicForApps(
         runCatching { out?.close() }
         out = null
         queue.clear()
-        ShellAudio.release()
+        helper?.release(s)
+        helper = null
     }
 
     companion object {
@@ -171,7 +175,16 @@ class CarMicForApps(
         /** About a second of the car's mic in its usual chunks. */
         private const val QUEUE_CHUNKS = 50
 
-        /** Shizuku is running and allowed, on Android 10+ (the recording details the shell needs). */
-        fun available(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && CaptureMethods.shizukuReady()
+        /**
+         * The helper to use: Shizuku when it runs and is allowed, on Android 10+ (the recording
+         * details the shell needs), else root when allowed (Android 12+, see RootAudio); null if none.
+         */
+        internal fun helper(context: Context): AudioHelper? = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && CaptureMethods.shizukuReady() -> ShellAudio
+            CaptureMethods.rootAvailable(context) -> RootAudio
+            else -> null
+        }
+
+        fun available(context: Context): Boolean = helper(context) != null
     }
 }

@@ -44,7 +44,7 @@ object UpdateChecker {
      */
     fun refresh(context: Context, force: Boolean = false) {
         val settings = Settings(context.applicationContext)
-        if (!settings.checkUpdates || BuildConfig.DEBUG) { _available.value = null; return }
+        if (!BuildConfig.UPDATE_CHECK || !settings.checkUpdates || BuildConfig.DEBUG) { _available.value = null; return }
         _available.value = cached(settings)
         // Don't add traffic while a car session is up; the cached warning is enough.
         if (ProjectionService.state.value.connected) return
@@ -65,7 +65,7 @@ object UpdateChecker {
      */
     fun checkNow(context: Context, done: (CheckResult) -> Unit) {
         val settings = Settings(context.applicationContext)
-        if (!settings.checkUpdates) return
+        if (!BuildConfig.UPDATE_CHECK || !settings.checkUpdates) return
         thread(isDaemon = true, name = "aare-update-check-now") {
             val latest = fetchLatest()
             if (latest != null) {

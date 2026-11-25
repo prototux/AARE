@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import net.prototux.aare.aap.PinStore
+import net.prototux.aare.aap.ProtocolTrace
 
 /**
  * Head unit certificates the user trusts, in a private preferences file of their own: a set of
@@ -18,7 +19,7 @@ class PinnedHeadUnits(context: Context) : PinStore {
 
     override fun add(peerKey: String, sha256: String) {
         prefs.edit(commit = true) { putStringSet(peerKey, get(peerKey) + sha256) }
-        DiagLog.add("trusted head unit certificate for $peerKey: SHA-256 $sha256")
+        DiagLog.add("trusted head unit certificate for ${ProtocolTrace.peer(peerKey)}: SHA-256 $sha256")
     }
 
     /** Every trusted head unit: key to fingerprints. */

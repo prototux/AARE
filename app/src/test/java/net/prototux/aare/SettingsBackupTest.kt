@@ -1,6 +1,7 @@
 package net.prototux.aare
 
 import java.io.ByteArrayInputStream
+import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertArrayEquals
@@ -95,10 +96,20 @@ class SettingsBackupTest {
 
     @Test
     fun theSafetyAndNetworkKeysAreBlockedAndNoneIsAllowed() {
-        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_audio")) {
+        for (key in listOf("hu_server", "hu_server_lan", "hu_server_lan_once", "head_unit_server_mirror", "ignore_driving", "root_allowed", "root_audio", "assistant_links",
+            "assistant_on_car_screen", "media_video", "car_mic_for_phone_apps", "auto_pair_car_bluetooth", "companion_wifi_shizuku", "standalone_driving_rules")) {
             assertTrue(key, key in SettingsBackup.BLOCKED)
         }
         assertTrue(SettingsBackup.BLOCKED.intersect(SettingsBackup.ALLOWED.keys).isEmpty())
+    }
+
+    @Test
+    fun theRailAndScreenSettingsMove() {
+        val all = mapOf<String, Any?>("rail_apps" to "phone\nmaps", "compact_rail" to true, "split_screen" to true, "calendar_agenda_count" to 3,
+            "car_key_map" to setOf("5=home"))
+        val restored = SettingsBackup.import(JSONObject(SettingsBackup.export(all).toString()))
+        assertEquals(all, restored.values)
+        assertTrue(restored.skipped.isEmpty())
     }
 
     @Test
@@ -154,5 +165,38 @@ class SettingsBackupTest {
         val small = ByteArray(100) { it.toByte() }
         assertArrayEquals(small, SettingsBackup.readLimited(ByteArrayInputStream(small), limit = 100))
         assertThrows(IllegalArgumentException::class.java) { SettingsBackup.readLimited(ByteArrayInputStream(ByteArray(101)), limit = 100) }
+    }
+
+    /**
+     * Every key Settings.kt reads or writes has a backup decision: [SettingsBackup.ALLOWED],
+     * [SettingsBackup.BLOCKED] or [SettingsBackup.NOT_BACKED_UP]. A new setting fails here until
+     * it's put in one, so it can't be left out of the backup by accident. Reads the source text
+     * (relative to the app module), so a key built at runtime isn't seen.
+     */
+    @Test
+    fun everySettingsKeyHasABackupDecision() {
+        val source = File("src/main/java/net/prototux/aare/Settings.kt").readText()
+        val literal = Regex("""\b(?:get|put)(?:Boolean|String|Int|Long|Float|StringSet)\(\s*"([a-z0-9_]+)"|\b(?:remove|contains)\(\s*"([a-z0-9_]+)"|const val \w+_KEY = "([a-z0-9_]+)"""")
+        val keys = literal.findAll(source).map { m -> m.groupValues.drop(1).first { it.isNotEmpty() } }.toSet()
+        assertTrue("found no keys: has Settings.kt moved?", keys.size > 50)
+        val decided = SettingsBackup.ALLOWED.keys + SettingsBackup.BLOCKED + SettingsBackup.NOT_BACKED_UP
+        assertEquals("keys with no backup decision: add each to ALLOWED, BLOCKED or NOT_BACKED_UP in SettingsBackup.kt",
+            emptySet<String>(), keys - decided)
+    }
+
+    @Test
+    fun theThreeBackupListsNeverOverlap() {
+        val allowed = SettingsBackup.ALLOWED.keys
+        assertEquals(emptySet<String>(), allowed intersect SettingsBackup.NOT_BACKED_UP)
+        assertEquals(emptySet<String>(), SettingsBackup.BLOCKED intersect SettingsBackup.NOT_BACKED_UP)
+    }
+
+    @Test
+    fun aKeyThatIsNotBackedUpIsNeitherExportedNorApplied() {
+        val all = SettingsBackup.NOT_BACKED_UP.associateWith { "x" }
+        assertEquals(0, SettingsBackup.export(all).getJSONObject("settings").length())
+        val tampered = JSONObject()
+        for (key in SettingsBackup.NOT_BACKED_UP) tampered.put(key, entry("s", "x"))
+        assertTrue(SettingsBackup.import(file(tampered)).values.isEmpty())
     }
 }

@@ -1,42 +1,65 @@
 package net.prototux.aare.audio
 
-import android.os.ParcelFileDescriptor
-import java.io.FileDescriptor
-import java.io.FileOutputStream
-import kotlin.system.exitProcess
+import android.os.Looper
+import android.os.Process
+import android.system.Os
+import net.prototux.aare.root.RootHandover
 
 /**
- * Entry point run as root by [SuSource], the way scrcpy and Shizuku run a helper: AARE launches
- *   `su -c "CLASSPATH=<apk> app_process / net.prototux.aare.audio.SuAudioMain <rate> <channels>"`
- * and reads the phone's audio as raw 16-bit PCM from this process's stdout.
+ * The root audio helper, run by [RootAudio] the way scrcpy and Shizuku run a helper:
+ * `su -c "CLASSPATH=<apk> app_process / net.prototux.aare.audio.SuAudioMain <appPackage>"`.
  *
- * It reuses [ShellAudioService] (the remote-submix capture, which drops the root process to the
- * shell uid so CAPTURE_AUDIO_OUTPUT is granted), so there is no separate root capture to maintain.
+ * It serves the very [ShellAudioService] the Shizuku helper does, as the shell uid (see
+ * [asShellFromTheStart]): the same binder, so root gets everything Shizuku does. The binder goes
+ * back to AARE by a broadcast only this start's token opens ([RootHandover]). The helper ends when
+ * AARE closes its stdin, or dies, after stopping every capture (the phone gets its sound back).
  * No minification in release (optimization disabled), so the class survives under this exact name.
  */
 object SuAudioMain {
+    const val ACTION = "net.prototux.aare.AUDIO_HELPER"
+
     @JvmStatic
     fun main(args: Array<String>) {
-        val rate = args.getOrNull(0)?.toIntOrNull() ?: 48_000
-        val channels = args.getOrNull(1)?.toIntOrNull() ?: 2
+        if (Process.myUid() == 0) return asShellFromTheStart(args)
+        val appPackage = args.getOrNull(0) ?: return
+        val token = RootHandover.readToken() ?: return
+        // A bare app_process main thread has no Looper, and the system context (ActivityThread's
+        // systemMain, behind ShellAudioService's context and AudioManager) creates a Handler on
+        // the calling thread: without this it fails with "Can't create handler inside thread ...
+        // that has not called Looper.prepare()". Shizuku's process has one already.
+        Looper.prepareMainLooper()
         val service = ShellAudioService(null)
-        val pfd = service.start(rate, channels) ?: exitProcess(1)
-        try {
-            ParcelFileDescriptor.AutoCloseInputStream(pfd).use { input ->
-                val out = FileOutputStream(FileDescriptor.out)
-                val buf = ByteArray(16 * 1024)
-                while (true) {
-                    val n = input.read(buf)
-                    if (n < 0) break
-                    out.write(buf, 0, n)
-                    out.flush()
-                }
-            }
-        } catch (_: Exception) {
-            // AARE stopped reading (closed its end of the pipe): we're done.
-        } finally {
-            service.stop()
-        }
-        exitProcess(0)
+        val system = service.systemContext()
+        runCatching { actAsShellApp(system) }.onFailure { System.err.println("could not act as the shell app: ${describeFailure(it)}") }
+        // Sent as the shell, which the process is: a package of another uid would be refused.
+        val ctx = ShellContext(system)
+        if (!RootHandover.handBack(ctx, ACTION, appPackage, token, service)) service.destroy()
+        Thread {
+            runCatching { while (System.`in`.read() >= 0) Unit }
+            service.destroy() // stops every capture, then exits
+        }.apply { isDaemon = true }.start()
+        Looper.loop()
     }
+
+    /**
+     * Starts this helper again as the shell, in this process (exec): the policy's recorder needs the
+     * shell's CAPTURE_AUDIO_OUTPUT, and every thread has to be the shell. Changing the uid in place
+     * isn't enough: it changes only the calling thread, and app_process started its binder threads,
+     * which serve AARE's calls, before main; the policy then failed with "Calling uid: 2000 doesn't
+     * match source uid: 0". AARE's token is still unread on stdin, which the new image keeps.
+     */
+    private fun asShellFromTheStart(args: Array<String>) {
+        try {
+            Os.setgid(SHELL_UID)
+            Os.setuid(SHELL_UID)
+            // CLASSPATH (AARE's APK) comes with the environment.
+            val env = System.getenv().map { (k, v) -> "$k=$v" }.toTypedArray()
+            Os.execve(APP_PROCESS, arrayOf(APP_PROCESS, "/", SuAudioMain::class.java.name) + args, env)
+        } catch (e: Exception) {
+            System.err.println("could not start again as the shell: ${describeFailure(e)}")
+        }
+    }
+
+    private const val SHELL_UID = 2000
+    private const val APP_PROCESS = "/system/bin/app_process"
 }

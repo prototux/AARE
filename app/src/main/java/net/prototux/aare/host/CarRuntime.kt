@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.DiagLog
 import net.prototux.aare.R
 import net.prototux.aare.Settings
@@ -83,7 +84,10 @@ import net.prototux.aare.ui.car.CarDataScreen
 import net.prototux.aare.ui.car.MediaVideoScreen
 import net.prototux.aare.ui.car.PhoneScreen
 import net.prototux.aare.ui.car.StandaloneAppScreen
+import net.prototux.aare.ui.car.backClosesPane
 import net.prototux.aare.ui.car.canOpenBeside
+import net.prototux.aare.ui.car.leftAlone
+import net.prototux.aare.ui.car.messageApp
 import net.prototux.aare.ui.car.openInPanes
 import net.prototux.aare.ui.car.snapSplitRatio
 import net.prototux.aare.ui.theme.CarControlSize
@@ -93,7 +97,6 @@ import net.prototux.aare.ui.theme.CarThemes
 import net.prototux.aare.ui.theme.LocalCarControlScale
 import net.prototux.aare.ui.theme.forPhone
 import net.prototux.aare.ui.theme.withAccent
-import java.time.ZonedDateTime
 
 /**
  * Everything on the car screen that doesn't depend on how it reaches the car: the app list,
@@ -139,6 +142,9 @@ class CarRuntime(
     /** The "Exit to car" entry's label after the car (see ExitLabel), or null for the generic one. Main thread, then [refreshApps]. */
     var exitLabel: String? = null
 
+    /** The driving restrictions came on or went off (the car's signal, or the passenger-mode setting). */
+    var onDrivingRestricted: (() -> Unit)? = null
+
     // ------------------------------------------------------------------ HostEnvironment
 
     override val driving: Boolean get() = ui.drivingRestricted
@@ -182,7 +188,7 @@ class CarRuntime(
             val id = idOf(from)
             // Car apps stay connected in the background, and AARE hosts any car app (not only Play-approved
             // ones): only the app on screen, or in the assistant bar, calls straight away; any other is asked.
-            val onScreen = id != null && ((ui.screen as? CarScreen.App)?.appId == id || ui.assistantAppId == id)
+            val onScreen = id != null && (shows(id) || ui.assistantAppId == id)
             when {
                 code -> {
                     notice(context.getString(R.string.notif_not_calling_title), context.getString(R.string.notif_not_calling_text, from.info.label))
@@ -272,7 +278,10 @@ class CarRuntime(
 
     override fun finish(app: CarAppConnection) {
         val id = idOf(app) ?: return
-        if ((ui.screen as? CarScreen.App)?.appId == id) ui.screen = CarScreen.Dashboard
+        if (shows(id)) {
+            ui.screen = leftAlone(id, (ui.screen as? CarScreen.App)?.appId, ui.secondaryAppId)?.let { CarScreen.App(it) } ?: CarScreen.Dashboard
+            actions.closeSplit()
+        }
         if (ui.assistantAppId == id) ui.assistantAppId = null
         // The dashboard's map card would start it again at once. Don't start another one in its
         // place either: two apps that both finish on start would take turns forever.
@@ -323,7 +332,7 @@ class CarRuntime(
         // These apps' alerts ("Accept new route?") also reach a driver who
         // isn't looking at the app (its dashboard card, another app): on its screen, its own card shows it.
         val id = idOf(app) ?: return
-        if ((ui.screen as? CarScreen.App)?.appId == id) return
+        if (shows(id)) return
         val duration = alert.durationMillis.takeIf { it > 0 } ?: ALERT_NOTICE_MS
         val actions = alert.actions.take(2).map { action ->
             (action.title?.toString() ?: context.getString(R.string.common_ok)) to { app.alertAction(alert, action) }
@@ -396,6 +405,7 @@ class CarRuntime(
     /** Applies the theme and bar position settings (also when they change during a drive). */
     private fun applyScreenSettings() {
         updateLightSensor()
+        ui.assistantStopStyle = settings.assistantStopStyle
         val night = when (settings.carTheme) {
             Settings.THEME_DARK -> true
             Settings.THEME_LIGHT -> false
@@ -409,9 +419,14 @@ class CarRuntime(
         }
         val position = settings.railPosition
         // Passenger mode lifts the driving restrictions (keyboard, list lengths, phone screen).
-        ui.drivingRestricted = carDriving && !settings.ignoreDriving
+        val restricted = carDriving && !settings.ignoreDriving
+        val changed = ui.drivingRestricted != restricted
+        ui.drivingRestricted = restricted
         // A phone assistant shown through the launcher is parked only, like other launched apps.
         if (ui.drivingRestricted) ui.assistantStandalonePkg = null
+        // The Cockpit's track pages (timed runs, lap timer, dyno) are parked only too.
+        net.prototux.aare.obdapp.ObdApp.trackAllowed = !ui.drivingRestricted
+        if (changed) onDrivingRestricted?.invoke()
         ui.theme = CarThemes.byId(settings.carThemeId).forPhone(context).withAccent(settings.carAccent, context)
         ui.layout = CarLayout.byId(settings.carLayoutId)
         ui.textScale = CarTextSize.byId(settings.carTextSize).fontScale
@@ -424,6 +439,7 @@ class CarRuntime(
         ui.railWidgets = RailWidget.parse(settings.railWidgets)
         ui.railApps = settings.railApps
         ui.compactRail = settings.compactRail
+        ui.railSpacing = settings.railSpacing
         val wallpaper = settings.wallpaper
         if (wallpaper != ui.wallpaper || (wallpaper == Settings.WALLPAPER_CUSTOM && ui.wallpaperImage == null)) {
             ui.wallpaper = wallpaper
@@ -469,10 +485,11 @@ class CarRuntime(
     private val settingsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         when (key) {
             "car_theme", "rail_position", "style_theme", "style_layout", "style_accent", "dark_bar", "dashboard_cards", "dashboard_map_big", "show_weather", "car_chrome", "ignore_driving",
-            "car_text_size", "car_control_size", "night_source", "rail_apps", "compact_rail", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
+            "car_text_size", "car_control_size", "night_source", "assistant_stop", "rail_apps", "compact_rail", "rail_spacing", "rail_widgets", "split_screen" -> main.post { applyScreenSettings() }
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
-            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules" -> main.post { refreshApps() }
+            "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules",
+            "standalone_apps", "standalone_app_pkgs", "browser", "car_data_app" -> main.post { refreshApps() }
         }
     }
 
@@ -497,7 +514,7 @@ class CarRuntime(
         midnightRefresh?.cancel()
         midnightRefresh = scope.launch {
             while (true) {
-                delay(msUntilNextDay(ZonedDateTime.now()))
+                delay(msUntilNextDay(System.currentTimeMillis()))
                 refreshApps()
             }
         }
@@ -644,6 +661,10 @@ class CarRuntime(
         if (HomeHub.config.value.hasContent) {
             entries += CarAppEntry(HOME_ID, context.packageName, context.getString(R.string.home_app_label), builtinIcon(R.drawable.ic_car_home), CarAppKind.HOME)
         }
+        // The OBD2 app: only with the adapter setting on, so turning that off removes it all.
+        if (settings.obdAdapter) {
+            entries += CarAppEntry(OBD_ID, context.packageName, context.getString(R.string.obd_app_label), builtinIcon(R.drawable.ic_car_obd), CarAppKind.OBD)
+        }
         if (settings.carDataApp) {
             entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
         }
@@ -748,7 +769,7 @@ class CarRuntime(
         val conn = connection(nav.id) ?: return false
         conn.connect(Intent(CarContext.ACTION_NAVIGATE).setData(android.net.Uri.parse(uri)))
         ui.activeNavAppId = nav.id
-        ui.screen = CarScreen.App(nav.id)
+        showApp(nav.id)
         return true
     }
 
@@ -830,7 +851,7 @@ class CarRuntime(
     private fun idOf(conn: CarAppConnection): String? = connections.entries.firstOrNull { it.value === conn }?.key
 
     private fun show(conn: CarAppConnection) {
-        idOf(conn)?.let { ui.screen = CarScreen.App(it) }
+        idOf(conn)?.let(::showApp)
     }
 
     fun acquireVisible(conn: CarAppConnection) {
@@ -862,15 +883,22 @@ class CarRuntime(
     /** Notice keys (LazyColumn keys): two notices in the same millisecond must not collide. */
     private var noticeSeq = 0L
 
+    /** Opens [packageName]'s app on the car screen, as a tap on its message does; null if the car screen has none. */
+    fun opener(packageName: String): (() -> Unit)? {
+        val id = messageApp(ui.apps, packageName)?.id ?: return null
+        // Looked up again at the tap: the message outlives a refresh of the app list.
+        return { ui.app(id)?.let(actions::openApp) }
+    }
+
     /** Keeps a notification (a message) for the notification centre. */
-    fun remember(title: String, text: String, icon: Bitmap?, actions: List<Pair<String, () -> Unit>>) {
-        ui.history.add(0, CarNotice("h${++noticeSeq}", title, text, icon, actions))
+    fun remember(title: String, text: String, icon: Bitmap?, actions: List<Pair<String, () -> Unit>>, open: (() -> Unit)? = null) {
+        ui.history.add(0, CarNotice("h${++noticeSeq}", title, text, icon, actions, open = open))
         while (ui.history.size > 30) ui.history.removeAt(ui.history.lastIndex)
         if ((ui.screen as? CarScreen.App)?.appId != NOTIFICATIONS_ID) ui.unseen++
     }
 
-    fun notice(title: String, text: String, icon: Bitmap? = null, durationMs: Long = 4_000, actions: List<Pair<String, () -> Unit>> = emptyList(), message: Boolean = false) {
-        val n = CarNotice("n${++noticeSeq}", title, text, icon, actions, message = message)
+    fun notice(title: String, text: String, icon: Bitmap? = null, durationMs: Long = 4_000, actions: List<Pair<String, () -> Unit>> = emptyList(), message: Boolean = false, open: (() -> Unit)? = null) {
+        val n = CarNotice("n${++noticeSeq}", title, text, icon, actions, message = message, open = open)
         ui.notices.add(n)
         main.postDelayed({ ui.notices.remove(n) }, durationMs)
     }
@@ -888,27 +916,43 @@ class CarRuntime(
         ui.focusedPane = panes.focused
     }
 
+    private fun CarAppEntry.isNavigationLike() = kind == CarAppKind.NAVIGATION || (kind == CarAppKind.STANDALONE && isNavigation)
+
+    /** Whether [appId] is on screen, alone or in one of the panes. */
+    private fun shows(appId: String): Boolean =
+        (ui.screen as? CarScreen.App)?.let { it.appId == appId || ui.secondaryAppId == appId } == true
+
+    /**
+     * Gets [app] ready to be shown: connected, or chosen as the active media or navigation app. A
+     * navigation app opened [beside] another stays connected only: the dashboard and the cluster
+     * keep following the active one.
+     */
+    private fun start(app: CarAppEntry, beside: Boolean = false) {
+        if (beside && app.isNavigationLike()) { connection(app.id)?.connect(); return }
+        when (app.kind) {
+            CarAppKind.MEDIA -> {
+                ui.activeMediaAppId = app.id
+                settings.lastMediaApp = app.packageName
+                media.apps.value.firstOrNull { it.packageName == app.packageName }?.let { media.select(it) }
+            }
+            CarAppKind.NAVIGATION -> {
+                ui.activeNavAppId = app.id
+                settings.lastNavApp = app.packageName
+                connection(app.id)?.connect()
+            }
+            CarAppKind.STANDALONE -> if (app.isNavigation) {
+                ui.activeNavAppId = app.id
+                settings.lastNavApp = app.packageName
+            }
+            else -> connection(app.id)?.connect()
+        }
+    }
+
     val actions = object : CarActions {
         override fun openApp(app: CarAppEntry) {
             // No screen of its own and not a recent app: the projection stays as it is until the car takes focus.
             if (app.kind == CarAppKind.EXIT) { exitToCar?.invoke(); return }
-            when (app.kind) {
-                CarAppKind.MEDIA -> {
-                    ui.activeMediaAppId = app.id
-                    settings.lastMediaApp = app.packageName
-                    media.apps.value.firstOrNull { it.packageName == app.packageName }?.let { media.select(it) }
-                }
-                CarAppKind.NAVIGATION -> {
-                    ui.activeNavAppId = app.id
-                    settings.lastNavApp = app.packageName
-                    connection(app.id)?.connect()
-                }
-                CarAppKind.STANDALONE -> if (app.isNavigation) {
-                    ui.activeNavAppId = app.id
-                    settings.lastNavApp = app.packageName
-                }
-                else -> connection(app.id)?.connect()
-            }
+            start(app)
             showApp(app.id)
             ui.recentAppIds.remove(app.id)
             ui.recentAppIds.add(0, app.id)
@@ -931,14 +975,7 @@ class CarRuntime(
         override fun openBeside(app: CarAppEntry) {
             val primaryId = (ui.screen as? CarScreen.App)?.appId
             if (primaryId == null || app.id == primaryId || !ui.splitScreenSetting || !canOpenBeside(app.kind)) return
-            when (app.kind) {
-                CarAppKind.MEDIA -> {
-                    ui.activeMediaAppId = app.id
-                    settings.lastMediaApp = app.packageName
-                    media.apps.value.firstOrNull { it.packageName == app.packageName }?.let { media.select(it) }
-                }
-                else -> connection(app.id)?.connect()
-            }
+            start(app, beside = true)
             // The ratio isn't reset here: reopening a split during the same session resumes at the
             // width the driver last chose, rather than snapping back to an even half every time.
             ui.secondaryAppId = app.id
@@ -978,6 +1015,12 @@ class CarRuntime(
      */
     fun assistant() {
         onAssistant?.invoke()
+        // A press while the assistant is on stops it, like Back (unless the chosen style is the red
+        // stop with the voice button asking again): the assistant opened on the car screen closes, the
+        // assistant bar closes and its app loses the car's microphone.
+        val stops = settings.assistantStopStyle != Settings.ASSISTANT_STOP_RED_RESTART
+        if (stops && ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
+        if (stops && ui.assistantAppId != null) { stopAssistant(); return }
         val pkg = assistantPackage()
         if (pkg == null) {
             notice(context.getString(R.string.notif_assistant_title), context.getString(R.string.notif_assistant_choose_text))
@@ -985,10 +1028,15 @@ class CarRuntime(
         }
         val entry = ui.apps.firstOrNull { it.packageName == pkg && it.kind != CarAppKind.MEDIA && it.kind != CarAppKind.NAVIGATION }
         val conn = entry?.let { connection(it.id) }
+        // The assistant's own app open full screen and listening: the press stops the listening.
+        if (stops && entry != null && conn != null && conn.listening && shows(entry.id)) {
+            conn.stopMicrophone()
+            return
+        }
         if (entry != null && conn != null) {
             // Like Android Auto's assistant: a bar over whatever is on screen, not the app full screen. Set before
             // the intent goes out: the app may open the microphone before the bar is drawn (see openMicrophone).
-            if ((ui.screen as? CarScreen.App)?.appId != entry.id) ui.assistantAppId = entry.id
+            if (!shows(entry.id)) ui.assistantAppId = entry.id
             conn.connect(Intent(Intent.ACTION_VOICE_COMMAND).setComponent(conn.info.service))
             return
         }
@@ -1031,15 +1079,32 @@ class CarRuntime(
         if (screenBacks[appId] === handler) screenBacks.remove(appId)
     }
 
+    /**
+     * The driver closed the assistant bar (its stop button, the back key, or the voice button again): the assistant gets
+     * back, which Lapin takes as "stop" (it stops listening or speaking), then the bar closes.
+     * Back goes first, while the app is still started: hiding the bar stops it.
+     */
+    fun stopAssistant() {
+        val conn = ui.assistantAppId?.let { connections[it] }
+        if (conn != null && conn.status == CarAppConnection.Status.READY) conn.back()
+        // An app that doesn't take back as "stop" still loses the car's microphone.
+        conn?.stopMicrophone()
+        ui.assistantAppId = null
+    }
+
     /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
-        if (ui.assistantAppId != null) { ui.assistantAppId = null; return }
+        if (ui.assistantAppId != null) { stopAssistant(); return }
         val secondaryId = ui.secondaryAppId
         if (secondaryId != null && ui.focusedPane == CarPane.SECONDARY) {
             // The secondary pane has no screen stack of the dashboard's own (it's not a CarScreen):
             // its own back stack (if any) first, otherwise back simply closes that pane.
-            if (screenBacks[secondaryId]?.invoke() != true) { ui.secondaryAppId = null; ui.focusedPane = CarPane.PRIMARY }
+            if (screenBacks[secondaryId]?.invoke() == true) return
+            val conn = connections[secondaryId]
+            // A car app goes back itself, as full screen; on its first screen, or still connecting,
+            // Back closes the pane instead (with a knob, the way to close just that pane).
+            if (conn == null || backClosesPane(conn.status == CarAppConnection.Status.READY, conn.screens)) actions.closeSplit() else conn.back()
             return
         }
         when (val s = ui.screen) {
@@ -1090,6 +1155,7 @@ class CarRuntime(
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
                             CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
+                            CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, ui.drivingRestricted, location = { carLocation })
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
                             CarAppKind.SETTINGS -> CarSettingsScreen(settings, mod)
                             CarAppKind.NOTIFICATIONS -> NotificationsScreen(ui, mod)
@@ -1104,18 +1170,21 @@ class CarRuntime(
                             shownConnection(app.id)?.let { CarAppScreen(it, this, mod, compact = true, onOpen = { actions.openApp(app) }) }
                         }
                     },
-                    overlay = { mod ->
+                    // The assistant bar can sit over a navigation app's map: solid in a glass theme.
+                    overlay = { mod -> OverMap {
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
                         val standalonePkg = ui.assistantStandalonePkg
                         if (entry != null && conn != null) {
                             AssistantBar(entry, conn, this, mod,
                                 onClose = { ui.assistantAppId = null },
-                                onExpand = { ui.assistantAppId = null; ui.screen = CarScreen.App(entry.id) })
+                                onStop = ::stopAssistant,
+                                bigStop = ui.assistantStopStyle != Settings.ASSISTANT_STOP_VOICE_BUTTON,
+                                onExpand = { ui.assistantAppId = null; showApp(entry.id) })
                         } else if (standalonePkg != null) {
                             StandaloneAssistantBar(standalonePkg, this, mod, onClose = { ui.assistantStandalonePkg = null })
                         }
-                    },
+                    } },
                     modifier = modifier,
                 )
             }
@@ -1134,6 +1203,7 @@ class CarRuntime(
         const val BROWSER_ID = "browser"
         const val CAR_DATA_ID = "car-data"
         const val HOME_ID = "home"
+        const val OBD_ID = "obd"
         const val PHONE_ID = "phone"
         const val SETTINGS_ID = "car-settings"
         const val NOTIFICATIONS_ID = "notifications"

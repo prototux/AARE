@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.launch.AppLauncher
@@ -82,9 +83,11 @@ internal fun MediaVideoScreen(runtime: CarRuntime, app: MediaApp, driving: Boole
     Column(modifier.background(MaterialTheme.colorScheme.background)) {
         Box(Modifier.weight(1f).fillMaxWidth()) {
             // Stays composed while driving, so the app (and its sound) keeps running under the art.
-            StandaloneAppScreen(runtime, driving, app.packageName, Modifier.fillMaxSize(), onBack = { open = false; true }, resumeAfterDrive = true)
+            StandaloneAppScreen(runtime, driving, app.packageName, Modifier.fillMaxSize(), onBack = { open = false; true }, resumeAfterDrive = true,
+                appId = CarRuntime.mediaId(app.packageName))
             if (view == MediaVideoView.ART) {
-                CoverArt(np, app, Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+                // carBackdrop: a glass theme's background is transparent, and the paused app's screen is under it.
+                CoverArt(np, app, Modifier.fillMaxSize().carBackdrop().background(MaterialTheme.colorScheme.background))
             } else if (fullScreen) {
                 Box(Modifier.align(Alignment.TopEnd).padding(12.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.5f))) {
                     RoundIcon(Icons.Rounded.FullscreenExit, stringResource(R.string.media_video_exit_full_screen), filled = false) { fullScreen = false }

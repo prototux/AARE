@@ -44,12 +44,12 @@ object AboutThanks {
                 "mirchisait", "filipeniquini", "MattMaaaan", "cfercl", "6600024d", "rtdtwo",
                 "AlexDalas", "Murilesco", "PCCV", "cadecomposer", "Gh61", "PuffinDro", "Mcheimech",
                 "Pouch11", "taage", "cinaeco", "carelinus", "jackburton79", "Captainyamez",
-                "ThomasHawaii", "Lenrock67",
+                "ThomasHawaii", "Lenrock67", "NitpickyPrick", "henkv1",
             ),
         ),
         ThanksGroup(
             R.string.about_thanks_reports,
-            listOf("sadorowo", "henkv1", "kveld9", "Ronsone", "pollio2008", "Delgrey", "Pirrotto", "JVKeller"),
+            listOf("sadorowo", "henkv1", "kveld9", "Ronsone", "pollio2008", "Delgrey", "Pirrotto", "JVKeller", "burtshulman"),
         ),
         ThanksGroup(
             R.string.about_thanks_tips,

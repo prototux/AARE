@@ -69,6 +69,8 @@ internal fun StandaloneAppScreen(
      * apps keep the relaunch they always had on parking again ("audio only" ones resume too, see below).
      */
     resumeAfterDrive: Boolean = false,
+    /** The car app this is the screen of, which Back is looked up by: a media app's video is its media app's. */
+    appId: String = CarRuntime.standaloneId(packageName),
 ) {
     val context = LocalContext.current
     val launcher = remember(packageName) { AppLauncher(context) }
@@ -85,10 +87,9 @@ internal fun StandaloneAppScreen(
                 launcher.connected
             }
         }
-        val id = CarRuntime.standaloneId(packageName)
-        runtime.registerScreenBack(id, back)
+        runtime.registerScreenBack(appId, back)
         onDispose {
-            runtime.unregisterScreenBack(id, back)
+            runtime.unregisterScreenBack(appId, back)
             // A place that never made it (no launcher) mustn't come back on the next, unrelated open.
             runtime.standaloneViews.remove(packageName)
             launcher.release()
@@ -103,10 +104,17 @@ internal fun StandaloneAppScreen(
         withContext(Dispatchers.IO) { launcher.view(pendingView, packageName) }
     }
 
+    // An app allowed while driving (a navigation app) stays on its display: its keyboard goes back
+    // to the phone once driving starts, and to the car screen when parked again.
+    val keyboardInCar = !runtime.ui.drivingRestricted
+    LaunchedEffect(started, keyboardInCar) {
+        if (started) withContext(Dispatchers.IO) { launcher.keyboardInCar(keyboardInCar) }
+    }
+
     Box(modifier.background(Color.Black)) {
         if (!driving) {
             LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
-                start = { surface, w, h -> launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
+                start = { surface, w, h -> launcher.keyboardInCar(!runtime.ui.drivingRestricted); launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
                 onStarted = { started = it },
                 // Back from a drive: the app kept running on its display, so it gets the new
                 // surface rather than a restart (start() relaunches it, which would end a video, or

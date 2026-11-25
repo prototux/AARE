@@ -79,6 +79,13 @@ class WirelessBootstrapException(
      * timeout: one that waits for the phone to ask, see [WirelessBootstrap.Options.phoneStartDelayMs].
      */
     val noStartRequest: Boolean = false,
+    /**
+     * The head unit started its setup over (a new WifiVersionRequest, or a WifiStartRequest for
+     * another port) while the phone was still connecting to the AAP server it had announced: that
+     * server is gone, so the attempt is over and a fresh one should start at once. See
+     * [WirelessBootstrap.sessionConnected].
+     */
+    val setupRestarted: Boolean = false,
 ) : Exception(message, cause)
 
 /**
@@ -215,6 +222,12 @@ class WirelessBootstrap(
     /** The link pinger runs (see [Options.pingIntervalMs]). */
     private var linkPinging = false
     private val adapterOrder = options.handshake == WirelessHandshake.ADAPTER
+    /** Guards [sessionUp] and [setupRestarted]: the TCP connect and a head unit's restart can come together. */
+    private val sessionLock = Any()
+    /** The phone's TCP connection to the AAP server is up ([sessionConnected]). */
+    private var sessionUp = false
+    /** The head unit restarted its setup before [sessionUp] (see [restartsSetup]). */
+    private var setupRestarted = false
     /** WPP version (major, minor) from the head unit's WifiVersionRequest; null before one (or if unparsable). */
     @Volatile private var headUnitVersion: Pair<Int, Int>? = null
 
@@ -250,7 +263,7 @@ class WirelessBootstrap(
             state = State.READY
             log.i("wireless: on the head unit's network, AAP server at $ip:${endpoint.port}")
             listener.onReady(ip, endpoint.port)
-            if (options.holdLink) hold()
+            if (options.holdLink) hold(endpoint.port)
             state = State.DONE
         } catch (e: Throwable) {
             state = State.FAILED
@@ -258,6 +271,18 @@ class WirelessBootstrap(
             if (e is WirelessBootstrapException) throw e
             throw WirelessBootstrapException("wireless bootstrap failed: ${e.message}", cause = e)
         }
+    }
+
+    /**
+     * Tells the bootstrap that the phone's TCP connection to the AAP server (from [Listener.onReady])
+     * is up. Until then, the head unit starting its setup over (a new WifiVersionRequest, or a
+     * WifiStartRequest for another port) ends [run] with [WirelessBootstrapException.setupRestarted];
+     * from then on such requests are ignored. Returns false when the restart came first: the
+     * connection then goes to a setup the head unit has left, and the caller should drop it.
+     */
+    fun sessionConnected(): Boolean = synchronized(sessionLock) {
+        if (!setupRestarted) sessionUp = true
+        sessionUp
     }
 
     /** Ends the bootstrap or the held link: closes both streams, which unblocks [run]. Idempotent. */
@@ -468,7 +493,7 @@ class WirelessBootstrap(
     private fun parseCredentials(payload: ByteArray): WifiCredentials {
         val info = parse("WifiInfoResponse") { WifiInfoResponse.parseFrom(payload) }
         val bssid = info.bssid.trim().takeIf { MAC.matches(it) && it != "00:00:00:00:00:00" }
-        if (info.bssid.isNotBlank() && bssid == null) log.w("wireless: ignoring malformed BSSID \"${info.bssid}\"")
+        if (info.bssid.isNotBlank() && bssid == null) log.w("wireless: ignoring a malformed BSSID (${info.bssid.length} characters)")
         // One pair of surrounding double quotes is dropped from both for head units
         // below WPP 4.5 (or without a version request): some send them in Android's quoted form.
         val unquote = !headUnitAtLeast(4, 5)
@@ -518,7 +543,7 @@ class WirelessBootstrap(
         ensureOpen()
         return when (result) {
             is JoinResult.Joined -> {
-                log.i("wireless: joined \"${credentials.ssid}\" as ${result.localAddress ?: "?"} (gateway ${result.gateway ?: "?"})")
+                log.i("wireless: joined the car's network as ${result.localAddress ?: "?"} (gateway ${result.gateway ?: "?"})")
                 result
             }
             is JoinResult.Failed -> {
@@ -535,7 +560,7 @@ class WirelessBootstrap(
         try {
             listener.connectWifi(credentials)
         } catch (e: Exception) {
-            log.w("wireless: joining \"${credentials.ssid}\" threw", e)
+            log.w("wireless: joining the car's network threw", e)
             JoinResult.Failed(WppStatus.WIFI_NETWORK_UNAVAILABLE, e.message ?: e.toString())
         }
 
@@ -558,18 +583,42 @@ class WirelessBootstrap(
 
     // ---- phase 3: keep the link while the session runs ----
 
-    private fun hold() {
+    /** Holds the link to the AAP server at [port] (on the head unit's network) until it ends. */
+    private fun hold(port: Int) {
         while (true) {
             when (val event = inbox.take()) {
                 is Inbound.End -> {
                     if (!closed.get()) log.i("wireless: head unit closed the Bluetooth link" + (event.error?.let { " ($it)" } ?: ""))
                     return
                 }
-                is Inbound.Message -> when (event.frame.id) {
-                    WppMessageId.INFO_RESPONSE -> log.d("wireless: late ${event.frame}")
+                is Inbound.Message -> when {
+                    event.frame.id == WppMessageId.INFO_RESPONSE -> log.d("wireless: late ${event.frame}")
+                    restartsSetup(event.frame, port) -> {
+                        log.w("wireless: the head unit sent ${WppMessageId.name(event.frame.id)} again before the TCP connection was up")
+                        throw WirelessBootstrapException(SETUP_RESTARTED, WppStatus.WIFI_NETWORK_UNAVAILABLE, setupRestarted = true)
+                    }
                     else -> onOtherMessage(event.frame)
                 }
             }
+        }
+    }
+
+    /**
+     * Whether [frame] starts the head unit's setup over while the phone is still connecting to the
+     * AAP server at [port]: a WifiVersionRequest, or a WifiStartRequest for another port (the same
+     * one again changes nothing). Once [sessionConnected], never: the session runs, and both are
+     * ignored as before.
+     */
+    private fun restartsSetup(frame: WppFrame, port: Int): Boolean {
+        val newSetup = when (frame.id) {
+            WppMessageId.VERSION_REQUEST -> true
+            WppMessageId.START_REQUEST -> runCatching { WifiStartRequest.parseFrom(frame.payload).port }.getOrNull()?.let { it != port } == true
+            else -> false
+        }
+        if (!newSetup) return false
+        return synchronized(sessionLock) {
+            if (!sessionUp) setupRestarted = true
+            setupRestarted
         }
     }
 
@@ -680,6 +729,9 @@ class WirelessBootstrap(
     companion object {
         private val MAC = Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
         private const val FAIL_LINGER_MS = 300L
+
+        /** The reason of a [WirelessBootstrapException.setupRestarted] failure. */
+        const val SETUP_RESTARTED = "the head unit restarted its wireless setup"
 
         /** First-message timeout on the first try with an adapter (see [isDongle]). */
         const val DONGLE_FIRST_MESSAGE_TIMEOUT_MS = 3_700L

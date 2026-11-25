@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Berichten, routebeschrijvingen van Google Maps en Waze, nu afspelend</string>
     <string name="setup_check_audio_subtitle">Laat het geluid van de telefoon naar de auto gaan</string>
     <string name="setup_action_set_up">Instellen</string>
+    <string name="setup_old_android_title">Draait op een oudere Android</string>
+    <string name="setup_old_android_message">AARE draait ook op Android 6 en 7, maar Android 8 is de beter ondersteunde basis. Op Android 6 en 7 kunnen verbindingsmeldingen niet in hun eigen kanaal worden geplaatst, dus ze kunnen niet los van AAREs andere meldingen worden gedempt in de systeeminstellingen. Al het andere werkt op dezelfde manier, of valt automatisch terug op een oudere methode.</string>
+    <string name="setup_old_android_dont_show_again">Niet meer weergeven</string>
     <string name="setup_section_connecting">Verbinden</string>
     <string name="setup_toggle_wireless_title">Draadloos</string>
     <string name="setup_toggle_wireless_subtitle">Maakt verbinding met gekoppelde auto\'s via Wi-Fi zodra ze binnen Bluetooth-bereik komen</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systeemaudiorouting (zoals Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, muziek en navigatie apart (zoals Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku of root</string>
+    <string name="audio_method_root_policy">Root, muziek en navigatie apart</string>
     <string name="audio_method_playback_capture">Schermopname-machtiging</string>
     <string name="audio_policy_not_ready">Zoals Android Auto: muziek en navigatiestem apart, telefoonluidspreker uit. Vereist een geroote telefoon: installeer AARE als systeemapp met de Magisk-module (zie de README).</string>
     <string name="audio_shizuku_ready">Gereed. Alles wat de telefoon afspeelt gaat naar de auto, inclusief navigatiestem; de telefoon blijft stil.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Startpagina</string>
     <string name="browser_address_hint">Zoeken of een webadres invoeren</string>
     <string name="assistant_links_title">Links van de assistent</string>
+    <string name="assistant_stop">Assistent stoppen</string>
+    <string name="assistant_stop_style_title">Assistent stoppen</string>
+    <string name="assistant_stop_style_voice_button">De spraakknop wordt Stoppen</string>
+    <string name="assistant_stop_style_red_restart">Rode stopknop, de spraakknop vraagt opnieuw</string>
+    <string name="assistant_stop_style_red_stop">Rode stopknop, de spraakknop stopt ook</string>
     <string name="assistant_links_subtitle">Laat aare://-links in de antwoorden van de gekozen assistent de muziek bedienen, of op het autoscherm aanbieden om te navigeren, een app te openen of te bellen. Links uit andere apps en van webpagina\'s worden genegeerd.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Auto-gegevens</string>
@@ -571,6 +580,26 @@
     <string name="about_oss_libraries_title">Bibliotheken</string>
     <string name="about_oss_protocol_title">Protocoldefinities</string>
 
+    <string name="obd_adapter_title">Een OBD2-adapter uitlezen</string>
+    <string name="obd_adapter_subtitle">Een via Bluetooth gekoppelde ELM327-adapter, uitgelezen terwijl de auto verbonden is: motorgegevens die de auto niet naar AARE stuurt. Alleen lezen: AARE schrijft nooit naar de auto.</string>
+    <string name="obd_simulated_title">Gesimuleerde OBD2-adapter (debug)</string>
+    <string name="obd_simulated_subtitle">Een gesimuleerde auto in plaats van een echte adapter, om deze pagina te proberen</string>
+    <string name="obd_section">OBD2-adapter</string>
+    <string name="obd_status_off">Uit</string>
+    <string name="obd_status_searching">Zoeken naar een gekoppelde adapter (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: de auto antwoordt niet (contact uit?)</string>
+    <string name="obd_status_gave_up">Geen adapter gevonden: koppel er een in de Bluetooth-instellingen van de telefoon</string>
+    <string name="obd_rpm">Toerental</string>
+    <string name="obd_speed">Snelheid</string>
+    <string name="obd_coolant">Koelvloeistof</string>
+    <string name="obd_intake_air">Inlaatlucht</string>
+    <string name="obd_outside">Buitenlucht</string>
+    <string name="obd_boost">Turbodruk</string>
+    <string name="obd_load">Motorbelasting</string>
+    <string name="obd_battery">Accu</string>
+    <string name="obd_fuel">Brandstof</string>
+    <string name="obd_ethanol">Ethanol</string>
     <string name="vehicles_section_title">Uitzonderingen per voertuig</string>
     <string name="vehicles_hint">Pas de dichtheid of de marges van het zichtbare gebied aan voor een specifieke auto, zonder nieuwe build. Bewerk vehicles.json met een bestandsbeheerder en match de auto op merk/model/naam.</string>
     <string name="vehicles_rule_count">Regels geladen: %1$d</string>
@@ -631,6 +660,13 @@
     <string name="update_available_title">Update beschikbaar — %1$s</string>
     <string name="update_available_subtitle">U hebt %1$s. Tik om de release te bekijken.</string>
     <string name="setup_log_save">Opslaan</string>
+    <string name="setup_section_developer_log">Ontwikkelaarslogboek</string>
+    <string name="setup_toggle_dev_log_title">Ontwikkelaarsmodus</string>
+    <string name="setup_toggle_dev_log_subtitle">Schrijft alles wat AARE logt naar tekstbestanden in %1$s (tot 50 MB). Uitschakelen verwijdert ze: sla ze eerst op.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Persoonlijke gegevens verbergen</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskeert de adressen, de namen van netwerken en apparaten en andere persoonlijke gegevens die het herkent. Lees het bestand voordat u het deelt.</string>
+    <string name="setup_dev_log_save">Ontwikkelaarslogboek opslaan</string>
+    <string name="setup_dev_log_empty">Nog geen ontwikkelaarslogboek</string>
     <string name="setup_toggle_verbose_log_title">Uitgebreid protocollogboek</string>
     <string name="setup_toggle_verbose_log_subtitle">Legt het volledige head-unit-protocolverloop vast in dit logboek, om bij een bugrapport te voegen. Logt veel; laat dit anders uit.</string>
     <string name="setup_section_backup">Back-up van instellingen</string>
@@ -843,4 +879,38 @@
 
     <string name="setup_toggle_auto_pair_title">Koppel de Bluetooth van de auto automatisch</string>
     <string name="setup_toggle_auto_pair_subtitle">Voor gesprekken: wanneer een auto waarmee de telefoon niet is gekoppeld om koppeling via Android Auto vraagt, koppelt AARE met die auto via Shizuku in plaats van Androids dialoogvenster, als de code overeenkomt met die de auto verzond. Nooit met een ander apparaat. Vereist dat Shizuku draait en AARE toestaat.</string>
+
+    <string name="calibration_title">Touchscreen kalibreren</string>
+    <string name="calibration_intro">Komen aanrakingen op de verkeerde plek op het autoscherm terecht? Meet dan het touchscreen van deze auto: u stelt het zichtbare gebied in op de telefoon en raakt daarna 4 doelen aan op het autoscherm. Doe dit terwijl u stilstaat.</string>
+    <string name="calibration_not_connected">Maak verbinding met de auto om het touchscreen te kalibreren.</string>
+    <string name="calibration_saved_for">Gekalibreerd: %1$s</string>
+    <string name="calibration_using_saved">Deze auto gebruikt een opgeslagen kalibratie.</string>
+    <string name="calibration_driving">Zet de auto stil om te kalibreren.</string>
+    <string name="calibration_start">Kalibratie starten</string>
+    <string name="calibration_reset">Terug naar de waarden van de auto</string>
+    <string name="calibration_forget">Vergeten</string>
+    <string name="calibration_area_help">Stap 1 van 3. Op het autoscherm markeert een gele L elke hoek van het gebied waarin AARE tekent. Verschuif elke rand tot de L precies aan de rand van het scherm staat, volledig zichtbaar.</string>
+    <string name="calibration_area_value">%1$s: %2$d px</string>
+    <string name="calibration_edge_left">Links</string>
+    <string name="calibration_edge_top">Boven</string>
+    <string name="calibration_edge_right">Rechts</string>
+    <string name="calibration_edge_bottom">Onder</string>
+    <string name="calibration_area_car_values">Waarden van de auto</string>
+    <string name="calibration_next">Volgende</string>
+    <string name="calibration_cancel">Annuleren</string>
+    <string name="calibration_target_help">Stap 2 van 3. Raak op het autoscherm het midden van doel %1$d aan.</string>
+    <string name="calibration_target_retry_help">Stap 2 van 3. Die aanraking past niet bij de andere: raak doel %1$d opnieuw aan.</string>
+    <string name="calibration_verify_help">Stap 3 van 3. Raak het groene doel in het midden van het autoscherm aan om de kalibratie te houden (nog %1$d s). Anders verandert er niets.</string>
+    <string name="calibration_result_saved">Kalibratie opgeslagen voor deze auto.</string>
+    <string name="calibration_result_missed">De controleaanraking miste het doel: er is niets opgeslagen. Probeer het opnieuw en raak telkens het midden van het doel aan.</string>
+    <string name="calibration_result_timeout">Geen controleaanraking op tijd: er is niets opgeslagen.</string>
+    <string name="calibration_result_cancelled">Kalibratie geannuleerd: er is niets opgeslagen.</string>
+    <string name="calibration_result_no_spread">De 4 aanrakingen kwamen op dezelfde plek of op één lijn binnen: de auto meldt misschien niet waar het scherm wordt aangeraakt. Er is niets opgeslagen; het verbindingslogboek bevat de details.</string>
+    <string name="calibration_result_interrupted">De auto heeft het scherm tijdens het kalibreren gewijzigd of opnieuw gestart: er is niets opgeslagen. Begin opnieuw.</string>
+    <string name="calibration_result_driving">De auto begon te rijden: er is niets opgeslagen.</string>
+    <string name="calibration_result_reset">Terug naar de eigen waarden van de auto.</string>
+    <string name="calibration_car_area">Touchscreen wordt gekalibreerd. Gebruik de telefoon om elke gele hoek naar de rand van dit scherm te verplaatsen.</string>
+    <string name="calibration_car_target">Raak het midden van doel %1$d aan</string>
+    <string name="calibration_car_target_retry">Raak doel %1$d opnieuw aan</string>
+    <string name="calibration_car_verify">Raak het groene doel aan om deze kalibratie te houden (%1$d s)</string>
 </resources>

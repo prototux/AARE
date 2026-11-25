@@ -40,6 +40,7 @@ object SettingsBackup {
         "force_h264" to Type.BOOLEAN,
         "constant_bitrate_video" to Type.BOOLEAN,
         "calls_on_phone_speaker" to Type.BOOLEAN,
+        "resume_after_call" to Type.BOOLEAN,
         "rail_position" to Type.STRING,
         "rail_right" to Type.BOOLEAN, // before rail_position; Settings still reads it when that's unset
         "style_theme" to Type.STRING,
@@ -54,7 +55,9 @@ object SettingsBackup {
         "show_calendar" to Type.BOOLEAN, // before dashboard_cards, same
         "car_theme" to Type.STRING,
         "car_audio" to Type.BOOLEAN,
+        "car_audio_full_volume" to Type.BOOLEAN,
         "assistant_pkg" to Type.STRING,
+        "assistant_stop" to Type.STRING,
         "phone_screen" to Type.BOOLEAN,
         "standalone_keep_screen_awake" to Type.BOOLEAN,
         "standalone_app_pkgs" to Type.STRING_SET,
@@ -65,16 +68,36 @@ object SettingsBackup {
         "call_bar_y" to Type.FLOAT,
         "car_gps" to Type.BOOLEAN,
         "resume_media" to Type.BOOLEAN,
+        "pause_while_recording" to Type.BOOLEAN,
         "message_banners" to Type.BOOLEAN,
         "group_messages" to Type.BOOLEAN,
+        "muted_message_apps" to Type.STRING_SET,
         "dnd_driving" to Type.BOOLEAN,
         "auto_reply" to Type.BOOLEAN,
         "auto_reply_text" to Type.STRING,
         "read_messages" to Type.BOOLEAN,
+        "voice_reply" to Type.BOOLEAN,
         "last_nav" to Type.STRING,
         "last_media" to Type.STRING,
         "app_order" to Type.STRING,
         "hidden_apps" to Type.STRING_SET,
+        "rail_apps" to Type.STRING,
+        "compact_rail" to Type.BOOLEAN,
+        "rail_widgets" to Type.STRING,
+        "split_screen" to Type.BOOLEAN,
+        "car_text_size" to Type.STRING,
+        "car_control_size" to Type.STRING,
+        "car_chrome" to Type.STRING,
+        "night_source" to Type.STRING,
+        "dashboard_map_big" to Type.BOOLEAN,
+        "calendar_agenda_count" to Type.INT,
+        "car_key_map" to Type.STRING_SET,
+        "rail_spacing" to Type.INT,
+        "map_card_bottom_inset" to Type.INT,
+        "builtin_car_fixes" to Type.BOOLEAN,
+        "wireless_compatibility" to Type.STRING,
+        "obd_adapter" to Type.BOOLEAN,
+        "developer_log_privacy" to Type.BOOLEAN,
     )
 
     /**
@@ -90,9 +113,48 @@ object SettingsBackup {
         "head_unit_server_mirror", // the phone's screen to an unauthenticated server peer
         "hu_server_localhost", // the server to any app on the phone
         "ignore_driving", // passenger mode: lifts the driving restrictions
-        "root_audio", // capture through su, granted in the audio settings
+        "root_allowed", // root for the whole app, granted by su on this phone
+        "root_audio", // the same, before 2.0 (granted in the audio settings)
+        "capture_method", // a forced car audio method: what works depends on this phone
+        "capture_refusals", // what this phone refused at drives
         "standalone_apps", // phone apps on the car screen through root or Shizuku, behind a warning
+        "assistant_links", // lets another app act on the car
+        "assistant_on_car_screen", // the next five work through root or Shizuku
+        "media_video",
+        "car_mic_for_phone_apps",
+        "auto_pair_car_bluetooth",
+        "location_on_in_car", // switches the phone's location through Shizuku or root
+        "location_off_after_car", // same
+        "location_off_always",
+        "companion_wifi_shizuku",
+        "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate
+    )
+
+    /**
+     * Keys Settings.kt keeps that aren't settings to carry to another phone: this phone's or this
+     * car's own state, bookkeeping, and anything personal or secret. Neither exported nor
+     * reported on import (a file carrying one is just skipped). Every key Settings.kt uses is in
+     * exactly one of [ALLOWED], [BLOCKED] or this set: a test fails on a new key that isn't, so
+     * each new setting gets a decision about the backup.
+     */
+    val NOT_BACKED_UP: Set<String> = setOf(
+        "defaults_settled", // whether this install's defaults were set up
+        "instance_id", // this install's identity
+        "requested_permissions", // what this phone was already asked for
+        "phone_bt_address", // this phone's own Bluetooth address
+        "known_cars", // cars this phone connected to, with times
+        "last_head_unit", // the last car connected
+        "car_keys_seen", // the keys this phone's cars sent
+        "wireless_handshakes", // what worked with each car's adapter, by Bluetooth address
+        "car_audio_full_volume_left", // recovery state for an interrupted capture
+        "obd_adapter_address", // a Bluetooth device paired with this phone
+        "obd_simulated", // debug builds only
+        "developer_mode", // writes log files on this phone
+        "home_actions", // home-automation entities: personal, and tied to the servers that stay out
+        "update_latest_version", "update_latest_url", "update_last_check_ms", "update_dismissed_version",
+        "cert_index", "cert_update_last_check_ms", "cert_expiry_notified", "cert_expiry_dismissed",
+        "old_android_notice_dismissed",
     )
 
     /** [all]: a `SharedPreferences.getAll()` map. The file to export: [ALLOWED] keys only. */

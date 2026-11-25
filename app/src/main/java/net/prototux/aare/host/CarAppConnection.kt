@@ -135,6 +135,8 @@ class CarAppConnection(
     private var readyAt = 0L
     /** Screen stack of the last template applied, top first (as ScreenManager lists it). */
     private var screenStack: List<TemplateInfo> = emptyList()
+    /** How many screens the app has stacked: 1 on its first, where its Back does nothing. */
+    val screens: Int get() = screenStack.size
     /** getTemplate calls started / the newest one applied: replies can come back out of order. */
     private var fetchSeq = 0
     private var appliedSeq = 0
@@ -143,6 +145,9 @@ class CarAppConnection(
     private var surface: SurfaceContainer? = null
     private var visibleArea: Rect? = null
     private var stableArea: Rect? = null
+    /** The size of the first surface this session of the app got ([TemplateQuirks.mapSizedOnce]). */
+    private var sessionSurfaceSize: SurfaceSize? = null
+    private val restartForSize = Runnable { restartIfResized() }
 
     private val hardwareSubscriptions = HashMap<Int, ICarHardwareResult>()
     /** The microphone the app has open, closed by [cleanup] so a released app doesn't keep the car's. */
@@ -268,6 +273,29 @@ class CarAppConnection(
         surfaceOwner = owner
         surface = SurfaceContainer(s, width, height, dpi)
         sendSurface()
+        // Once the size settles (a divider dragged sends many): a split pane resized live would restart it at every step.
+        if (TemplateQuirks.mapSizedOnce(info.packageName)) {
+            main.removeCallbacks(restartForSize)
+            main.postDelayed(restartForSize, RESIZE_SETTLE_MS)
+        }
+    }
+
+    /**
+     * An app that sizes its map once per session ([TemplateQuirks.mapSizedOnce]) got a surface of
+     * another size: a new session builds its map at the new size. Its screens start over.
+     */
+    private fun restartIfResized() {
+        val now = surface ?: return
+        val first = sessionSurfaceSize ?: return
+        if (status != Status.READY || !mapNeedsNewSession(first, SurfaceSize(now.width, now.height, now.dpi))) return
+        Log.i(TAG, "${info.packageName}: map surface now ${now.width}x${now.height}, was ${first.width}x${first.height}: restarting its session")
+        if (navigating) { navigating = false; trip = null; env.navigationEnded(this) }
+        surfaceCallback?.let { cb -> call("onSurfaceDestroyed") { cb.onSurfaceDestroyed(Bundleable.create(now), it) } }
+        cleanup()
+        unbind()
+        status = Status.IDLE
+        // The surface stays: the new session gets it as soon as it asks for one.
+        connect()
     }
 
     fun surfaceDestroyed(owner: Any) {
@@ -307,6 +335,7 @@ class CarAppConnection(
         val cb = surfaceCallback ?: return
         val container = surface ?: return
         call("onSurfaceAvailable") { cb.onSurfaceAvailable(Bundleable.create(container), it) }
+        if (sessionSurfaceSize == null) sessionSurfaceSize = SurfaceSize(container.width, container.height, container.dpi)
         visibleArea?.let { r -> call("onVisibleAreaChanged") { cb.onVisibleAreaChanged(r, it) } }
         stableArea?.let { r -> call("onStableAreaChanged") { cb.onStableAreaChanged(r, it) } }
     }
@@ -456,6 +485,8 @@ class CarAppConnection(
     }
 
     private fun cleanup() {
+        main.removeCallbacks(restartForSize)
+        sessionSurfaceSize = null
         carApp = null
         appManager = null
         navManager = null
@@ -688,8 +719,10 @@ class CarAppConnection(
         val request = runCatching { requestBundle.get() as OpenMicrophoneRequest }.getOrNull()
         val pipe = ParcelFileDescriptor.createReliablePipe()
         val p = MicPipe(ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]))
+        val tellApp = { runCatching { request?.carAudioCallbackDelegate?.onStopRecording() }; Unit }
+        p.onHostStop = tellApp
         val handle = env.openMicrophone(this, sink = p::write, onStopped = {
-            runCatching { request?.carAudioCallbackDelegate?.onStopRecording() }
+            tellApp()
             p.stop()
         })
         if (handle == null) {
@@ -715,6 +748,8 @@ class CarAppConnection(
         private val queue = ArrayBlockingQueue<ByteArray>(MIC_QUEUE_CHUNKS)
         private val stopped = AtomicBoolean()
         @Volatile private var handle: MicHandle? = null
+        /** Tells the app that AARE, not the app, ended the recording (see [stopMicrophone]). */
+        @Volatile var onHostStop: (() -> Unit)? = null
         private val writer = Thread({
             try {
                 while (true) out.write(queue.take())
@@ -744,6 +779,16 @@ class CarAppConnection(
         }
     }
 
+    /** Ends the app's open microphone, if any, and tells the app so (the voice button pressed again). */
+    fun stopMicrophone() {
+        val p = mic ?: return
+        p.onHostStop?.invoke()
+        p.stop()
+    }
+
+    /** Whether the app has the car's microphone open right now. */
+    val listening: Boolean get() = mic != null
+
     private fun hasPermission(permission: String): Boolean =
         context.packageManager.checkPermission(permission, info.packageName) == PackageManager.PERMISSION_GRANTED
 
@@ -764,6 +809,8 @@ class CarAppConnection(
         private const val CONNECT_TIMEOUT_MS = 10_000L
         /** How long a map surface waits for its app to let go of it before it goes anyway. */
         private const val SURFACE_RELEASE_WAIT_MS = 500L
+        /** How long a new map size has to hold before an app that sizes its map once is restarted. */
+        private const val RESIZE_SETTLE_MS = 400L
         /** Microphone chunks queued for an app that reads slowly: about a second of 20 ms chunks. */
         private const val MIC_QUEUE_CHUNKS = 50
 
@@ -794,3 +841,9 @@ internal fun keepsMapHeader(old: Template?, new: Template?): Boolean =
 /** Same title, or both without a header (a header and none differ, whatever its title). */
 internal fun sameHeaderTitle(a: Header?, b: Header?): Boolean =
     if (a == null || b == null) a == null && b == null else a.title == b.title
+
+/** A map surface's size, as the app is told it. */
+internal data class SurfaceSize(val width: Int, val height: Int, val dpi: Int)
+
+/** Whether an app that sizes its map once, from its session's first surface ([first]), needs a new session for [now]. */
+internal fun mapNeedsNewSession(first: SurfaceSize, now: SurfaceSize): Boolean = first != now

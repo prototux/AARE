@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Повідомлення, маршрути з Google Maps і Waze, те, що відтворюється зараз</string>
     <string name="setup_check_audio_subtitle">Дозволити звуку телефону доходити до автомобіля</string>
     <string name="setup_action_set_up">Налаштувати</string>
+    <string name="setup_old_android_title">Працює на старішому Android</string>
+    <string name="setup_old_android_message">AARE також працює на Android 6 і 7, але Android 8 — краще підтримувана база. На Android 6 і 7 сповіщення про з\'єднання не можна розмістити у власному каналі, тому їх не можна вимкнути окремо від інших сповіщень AARE в налаштуваннях системи. Усе інше працює так само або автоматично переходить на старіший метод.</string>
+    <string name="setup_old_android_dont_show_again">Не показувати знову</string>
     <string name="setup_section_connecting">З\'єднання</string>
     <string name="setup_toggle_wireless_title">Бездротово</string>
     <string name="setup_toggle_wireless_subtitle">З\'єднуватися з парними автомобілями через Wi-Fi, коли вони опиняються в зоні дії Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Системна маршрутизація звуку (як Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, музика і навігація окремо (як Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku або root</string>
+    <string name="audio_method_root_policy">Root, музика і навігація окремо</string>
     <string name="audio_method_playback_capture">Дозвіл на захоплення екрана</string>
     <string name="audio_policy_not_ready">Як Android Auto: музика і голос навігації окремо, динамік телефону вимкнено. Потрібен телефон з root-правами: установіть AARE як системний застосунок за допомогою модуля Magisk (див. README).</string>
     <string name="audio_shizuku_ready">Готово. Усе, що відтворює телефон, йде до автомобіля, включно з голосом навігації; телефон залишається тихим.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Домашня сторінка</string>
     <string name="browser_address_hint">Пошук або введіть веб-адресу</string>
     <string name="assistant_links_title">Посилання від асистента</string>
+    <string name="assistant_stop">Зупинити асистента</string>
+    <string name="assistant_stop_style_title">Зупинка асистента</string>
+    <string name="assistant_stop_style_voice_button">Голосова кнопка перетворюється на Зупинити</string>
+    <string name="assistant_stop_style_red_restart">Червона кнопка стоп, голосова кнопка запитує знову</string>
+    <string name="assistant_stop_style_red_stop">Червона кнопка стоп, голосова кнопка також зупиняє</string>
     <string name="assistant_links_subtitle">Посилання aare:// у відповідях вибраного асистента можуть керувати музикою або пропонувати на екрані автомобіля прокласти маршрут, відкрити застосунок чи подзвонити. Посилання з інших застосунків і з вебсторінок ігноруються.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Дані автомобіля</string>
@@ -571,6 +580,26 @@
     <string name="about_oss_libraries_title">Бібліотеки</string>
     <string name="about_oss_protocol_title">Визначення протоколу</string>
 
+    <string name="obd_adapter_title">Читати адаптер OBD2</string>
+    <string name="obd_adapter_subtitle">Адаптер ELM327, з’єднаний через Bluetooth, читається, поки авто підключене: дані двигуна, які авто не передає AARE. Лише читання: AARE ніколи нічого не записує в авто.</string>
+    <string name="obd_simulated_title">Імітований адаптер OBD2 (налагодження)</string>
+    <string name="obd_simulated_subtitle">Імітоване авто замість справжнього адаптера, щоб спробувати цю сторінку</string>
+    <string name="obd_section">Адаптер OBD2</string>
+    <string name="obd_status_off">Вимк.</string>
+    <string name="obd_status_searching">Пошук з’єднаного адаптера (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: авто не відповідає (запалювання вимкнене?)</string>
+    <string name="obd_status_gave_up">Адаптер не знайдено: з’єднайте його в налаштуваннях Bluetooth телефона</string>
+    <string name="obd_rpm">Оберти</string>
+    <string name="obd_speed">Швидкість</string>
+    <string name="obd_coolant">Охолоджувальна рідина</string>
+    <string name="obd_intake_air">Повітря на впуску</string>
+    <string name="obd_outside">Зовнішнє повітря</string>
+    <string name="obd_boost">Тиск наддуву</string>
+    <string name="obd_load">Навантаження двигуна</string>
+    <string name="obd_battery">Акумулятор</string>
+    <string name="obd_fuel">Пальне</string>
+    <string name="obd_ethanol">Етанол</string>
     <string name="vehicles_section_title">Перевизначення для окремих автомобілів</string>
     <string name="vehicles_hint">Налаштуйте щільність екрана або відступи видимої області для конкретного автомобіля без нової збірки. Редагуйте vehicles.json за допомогою файлового менеджера, зіставляючи автомобіль за маркою/моделлю/назвою.</string>
     <string name="vehicles_rule_count">Завантажено правил: %1$d</string>
@@ -630,6 +659,13 @@
     <string name="update_available_title">Доступне оновлення — %1$s</string>
     <string name="update_available_subtitle">У вас %1$s. Натисніть, щоб переглянути випуск.</string>
     <string name="setup_log_save">Зберегти</string>
+    <string name="setup_section_developer_log">Журнал розробника</string>
+    <string name="setup_toggle_dev_log_title">Режим розробника</string>
+    <string name="setup_toggle_dev_log_subtitle">Записує все, що реєструє AARE, у текстові файли в %1$s (до 50 MB). Після вимкнення вони видаляються: спершу збережіть їх.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Приховувати особисті дані</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Маскує адреси, назви мереж і пристроїв та інші розпізнані особисті дані. Прочитайте файл, перш ніж ділитися ним.</string>
+    <string name="setup_dev_log_save">Зберегти журнал розробника</string>
+    <string name="setup_dev_log_empty">Журналу розробника ще немає</string>
     <string name="setup_toggle_verbose_log_title">Детальний журнал протоколу</string>
     <string name="setup_toggle_verbose_log_subtitle">Записувати повний слід протоколу головного пристрою в цей журнал, щоб додати до звіту про помилку. Записує багато даних; в інших випадках залишайте вимкненим.</string>
     <string name="setup_section_backup">Резервна копія налаштувань</string>
@@ -844,4 +880,38 @@
 
     <string name="setup_toggle_auto_pair_title">Автоматично з\'єднувати Bluetooth автомобіля</string>
     <string name="setup_toggle_auto_pair_subtitle">Для дзвінків: коли автомобіль, з яким телефон не з\'єднано, просить з\'єднання через Android Auto, AARE з\'єднується з цим автомобілем через Shizuku замість діалогу Android, якщо код збігається з тим, що надіслав автомобіль. Ніколи з жодним іншим пристроєм. Потребує, щоб Shizuku працював і дозволяв AARE.</string>
+
+    <string name="calibration_title">Калібрування сенсорного екрана</string>
+    <string name="calibration_intro">Якщо дотики на екрані автомобіля потрапляють не туди, виміряйте сенсорний екран цього автомобіля: задайте видиму область на телефоні, потім торкніться 4 цілей на екрані автомобіля. Робіть це на стоянці.</string>
+    <string name="calibration_not_connected">Підключіться до автомобіля, щоб відкалібрувати його сенсорний екран.</string>
+    <string name="calibration_saved_for">Відкалібровано: %1$s</string>
+    <string name="calibration_using_saved">Цей автомобіль використовує збережене калібрування.</string>
+    <string name="calibration_driving">Зупиніть автомобіль, щоб виконати калібрування.</string>
+    <string name="calibration_start">Почати калібрування</string>
+    <string name="calibration_reset">Повернути значення автомобіля</string>
+    <string name="calibration_forget">Забути</string>
+    <string name="calibration_area_help">Крок 1 з 3. На екрані автомобіля жовта літера L позначає кожен кут області, у якій малює AARE. Зсувайте кожен край, доки його L не опиниться точно біля краю екрана й не буде видно повністю.</string>
+    <string name="calibration_area_value">%1$s: %2$d пікс.</string>
+    <string name="calibration_edge_left">Ліворуч</string>
+    <string name="calibration_edge_top">Угорі</string>
+    <string name="calibration_edge_right">Праворуч</string>
+    <string name="calibration_edge_bottom">Унизу</string>
+    <string name="calibration_area_car_values">Значення автомобіля</string>
+    <string name="calibration_next">Далі</string>
+    <string name="calibration_cancel">Скасувати</string>
+    <string name="calibration_target_help">Крок 2 з 3. На екрані автомобіля торкніться центру цілі %1$d.</string>
+    <string name="calibration_target_retry_help">Крок 2 з 3. Цей дотик не збігається з іншими: торкніться цілі %1$d ще раз.</string>
+    <string name="calibration_verify_help">Крок 3 з 3. Торкніться зеленої цілі в центрі екрана автомобіля, щоб зберегти калібрування (залишилось %1$d с). Інакше нічого не зміниться.</string>
+    <string name="calibration_result_saved">Калібрування збережено для цього автомобіля.</string>
+    <string name="calibration_result_missed">Перевірний дотик не влучив у ціль: нічого не збережено. Спробуйте ще раз, торкаючись центру кожної цілі.</string>
+    <string name="calibration_result_timeout">Перевірного дотику не було вчасно: нічого не збережено.</string>
+    <string name="calibration_result_cancelled">Калібрування скасовано: нічого не збережено.</string>
+    <string name="calibration_result_no_spread">Усі 4 дотики надійшли в одне місце або на одну лінію: можливо, автомобіль не повідомляє, де торкнулися екрана. Нічого не збережено; подробиці в журналі підключення.</string>
+    <string name="calibration_result_interrupted">Автомобіль змінив або перезапустив екран під час калібрування: нічого не збережено. Почніть знову.</string>
+    <string name="calibration_result_driving">Автомобіль почав рух: нічого не збережено.</string>
+    <string name="calibration_result_reset">Повернуто власні значення автомобіля.</string>
+    <string name="calibration_car_area">Калібрування сенсорного екрана. За допомогою телефона пересуньте кожен жовтий кут до краю цього екрана.</string>
+    <string name="calibration_car_target">Торкніться центру цілі %1$d</string>
+    <string name="calibration_car_target_retry">Торкніться цілі %1$d ще раз</string>
+    <string name="calibration_car_verify">Торкніться зеленої цілі, щоб зберегти калібрування (%1$d с)</string>
 </resources>

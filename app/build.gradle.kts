@@ -16,13 +16,22 @@ android {
 
     defaultConfig {
         applicationId = "net.prototux.aare"
-        // Android 8. Newer features need newer Android: car audio by screen capture and the
-        // modern Wi-Fi join (10), Shizuku capture (12); older phones fall back or go without.
-        minSdk = 26
+        // Android 6. Newer features need newer Android: notification channels and foreground-
+        // service start (8), car audio by screen capture and the modern Wi-Fi join (10), Shizuku
+        // capture (12); older phones fall back or go without. A one-time notice on Android 6 and 7
+        // (MainActivity) lists what's limited there.
+        minSdk = 23
         targetSdk = 37
-        // The release workflow passes the tag's version (-PversionName=1.2.3 -PversionCode=10203).
-        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 10000
-        versionName = providers.gradleProperty("versionName").orNull ?: "1.0.0"
+        // The released version, raised in the release commit (the release workflow checks that the
+        // tag matches): F-Droid builds the tag and reads it from here. versionCode is
+        // major * 10000 + minor * 100 + patch. -PversionName / -PversionCode still override it.
+        versionCode = 10600
+        versionName = "1.6.0"
+        providers.gradleProperty("versionCode").orNull?.let { versionCode = it.toInt() }
+        providers.gradleProperty("versionName").orNull?.let { versionName = it }
+        // The check for a newer release on GitHub (UpdateChecker): off with -Paare.updateCheck=false,
+        // for stores that update the app themselves (F-Droid).
+        buildConfigField("boolean", "UPDATE_CHECK", (providers.gradleProperty("aare.updateCheck").orNull != "false").toString())
     }
 
     signingConfigs {
@@ -67,42 +76,6 @@ android {
         // a sideloaded app: no Play Store policy checks
         disable += setOf("ProtectedPermissions", "QueryAllPackagesPermission")
         disable += setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion")
-    }
-}
-
-// AARE's built-in phone certificate, offered to head units after any imported one and before the
-// runtime-generated one. Release builds get it from the AARE_PHONE_CERT / AARE_PHONE_KEY secrets
-// (PEM certificate chain, PEM PKCS#8 key); other builds simply go without. It ships in the APK, so
-// it isn't secret from users: it's a stable identity a head-unit vendor or CA could sign one day.
-abstract class PhoneIdentityAssets : DefaultTask() {
-    @get:Input @get:Optional abstract val cert: Property<String>
-    @get:Input @get:Optional abstract val key: Property<String>
-    @get:OutputDirectory abstract val outputDir: DirectoryProperty
-
-    @TaskAction
-    fun write() {
-        val dir = outputDir.get().asFile.resolve("phone_identity")
-        dir.deleteRecursively()
-        val c = cert.orNull?.takeIf { it.isNotBlank() }
-        val k = key.orNull?.takeIf { it.isNotBlank() }
-        if (c == null || k == null) {
-            if (c != null || k != null) logger.warn("AARE_PHONE_CERT and AARE_PHONE_KEY go together: no built-in certificate")
-            return
-        }
-        dir.mkdirs()
-        dir.resolve("cert.pem").writeText(c)
-        dir.resolve("key.pem").writeText(k)
-    }
-}
-
-val phoneIdentityAssets = tasks.register<PhoneIdentityAssets>("phoneIdentityAssets") {
-    cert.set(providers.environmentVariable("AARE_PHONE_CERT"))
-    key.set(providers.environmentVariable("AARE_PHONE_KEY"))
-}
-
-androidComponents {
-    onVariants { variant ->
-        variant.sources.assets?.addGeneratedSourceDirectory(phoneIdentityAssets, PhoneIdentityAssets::outputDir)
     }
 }
 

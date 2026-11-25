@@ -1,10 +1,7 @@
 package net.prototux.aare.launch
 
-import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.IBinder
@@ -12,6 +9,7 @@ import android.util.Log
 import android.view.Surface
 import net.prototux.aare.BuildConfig
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.root.RootHandover
 import rikka.shizuku.Shizuku
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -19,16 +17,20 @@ import java.util.concurrent.TimeUnit
 /**
  * App-side connector to the privileged [LaunchHostService]: over Shizuku (a bound UserService) when
  * it's available, else root (the [LaunchMain] app_process helper, which hands its binder back by
- * broadcast). Mirrors ShizukuSource / SuSource in the audio code. One instance per launched app.
+ * a broadcast only this start's token opens, see [RootHandover]). One instance per launched app.
  *
  * [connect] blocks and must run off the main thread.
  */
-class AppLauncher(private val context: Context) {
+class AppLauncher(private val context: Context, key: String = "launch") {
     @Volatile private var host: ILaunchHost? = null
 
-    // --- Shizuku path ---
-    private val args = Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
-        .daemon(false).processNameSuffix("launch").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    // --- Shizuku path --- (only built when connectShizuku() runs, itself behind shizukuAvailable())
+    // One helper per [key]: Shizuku tells user services apart by their tag only, so two launchers
+    // with the same key would share one helper, its display, and its end when one releases it.
+    private val args by lazy {
+        Shizuku.UserServiceArgs(ComponentName(context.packageName, LaunchHostService::class.java.name))
+            .daemon(false).tag(key).processNameSuffix(helperName(key)).debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
+    }
     private val bound = CountDownLatch(1)
     private var didBind = false
     private val connection = object : ServiceConnection {
@@ -40,8 +42,7 @@ class AppLauncher(private val context: Context) {
     }
 
     // --- root path ---
-    private var suProcess: Process? = null
-    private var receiver: BroadcastReceiver? = null
+    private var rootHelper: RootHandover.Helper? = null
 
     /** Connects via Shizuku if available, else root. Blocks up to a few seconds; false if neither works. */
     fun connect(): Boolean {
@@ -56,31 +57,17 @@ class AppLauncher(private val context: Context) {
     }
 
     private fun connectRoot(): Boolean {
-        val got = CountDownLatch(1)
-        val rec = object : BroadcastReceiver() {
-            override fun onReceive(c: Context?, intent: Intent?) {
-                host = intent?.getBundleExtra(LaunchMain.EXTRA_BUNDLE)?.getBinder(LaunchMain.EXTRA_BINDER)
-                    ?.let(ILaunchHost.Stub::asInterface)
-                got.countDown()
-            }
-        }
-        receiver = rec
-        val filter = IntentFilter(LaunchMain.ACTION_HOST)
-        // The broadcast comes from the root process (another uid), so it must be exported.
-        if (Build.VERSION.SDK_INT >= 33) context.registerReceiver(rec, filter, Context.RECEIVER_EXPORTED)
-        else @Suppress("UnspecifiedRegisterReceiverFlag") context.registerReceiver(rec, filter)
-        val apk = context.applicationInfo.sourceDir
-        val cmd = "CLASSPATH='$apk' app_process / ${LaunchMain::class.java.name} ${context.packageName}"
-        suProcess = runCatching { ProcessBuilder("su", "-c", cmd).start() }
-            .onFailure { Log.w(TAG, "su launch failed", it) }.getOrNull() ?: return false
-        suProcess?.let { p ->
-            Thread { runCatching { p.errorStream.bufferedReader().forEachLine { if (BuildConfig.DEBUG) Log.d(TAG, "su: $it") } } }
-                .apply { isDaemon = true }.start()
-        }
-        return got.await(8, TimeUnit.SECONDS) && host != null
+        val helper = RootHandover.start(context, LaunchMain::class.java.name, LaunchMain.ACTION_HOST, listOf(context.packageName)) ?: return false
+        rootHelper = helper
+        host = ILaunchHost.Stub.asInterface(helper.binder)
+        return true
     }
 
     val connected: Boolean get() = host != null
+
+    /** Turn the phone's location on or off through the helper; false if it can't. */
+    fun setLocationEnabled(on: Boolean): Boolean =
+        runCatching { host?.setLocationEnabled(on) ?: false }.onFailure { Log.w(TAG, "setLocationEnabled", it) }.getOrDefault(false)
 
     /** Create the display into [surface] and launch [pkg] on it. Returns the display id, or -1. */
     fun start(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String, keepDisplayAwake: Boolean): Int =
@@ -91,6 +78,9 @@ class AppLauncher(private val context: Context) {
     fun startAssistant(surface: Surface, width: Int, height: Int, dpi: Int, pkg: String): Int =
         runCatching { host?.startAssistant(surface, width, height, dpi, pkg) ?: -1 }
             .onFailure { Log.w(TAG, "startAssistant", it) }.getOrDefault(-1)
+
+    /** Keyboard on the car screen (parked) or on the phone (driving): see [ILaunchHost.keyboardInCar]. */
+    fun keyboardInCar(inCar: Boolean) { runCatching { host?.keyboardInCar(inCar) } }
 
     fun resize(surface: Surface, width: Int, height: Int, dpi: Int) { runCatching { host?.resize(surface, width, height, dpi) } }
     fun touch(downTime: Long, eventTime: Long, action: Int, x: Float, y: Float, pointerId: Int) {
@@ -105,15 +95,15 @@ class AppLauncher(private val context: Context) {
     fun release() {
         runCatching { host?.stop() }
         if (didBind) runCatching { Shizuku.unbindUserService(args, connection, true) }
-        receiver?.let { runCatching { context.unregisterReceiver(it) } }
-        receiver = null
-        runCatching { suProcess?.destroy() }
-        suProcess = null
+        rootHelper?.stop()
+        rootHelper = null
         host = null
     }
 
     companion object {
         private const val TAG = "AareAppLauncher"
+        /** A process name suffix for the helper of [key]: letters, digits and underscores only. */
+        internal fun helperName(key: String) = key.map { if (it.isLetterOrDigit()) it else '_' }.joinToString("")
         /** Whether a privileged backend (Shizuku or allowed root) is available to run the launcher. */
         fun available(context: Context): Boolean =
             CaptureMethods.shizukuAvailable() || CaptureMethods.rootAvailable(context)

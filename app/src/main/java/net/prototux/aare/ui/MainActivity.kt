@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -26,6 +27,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -40,12 +42,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -53,8 +55,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -91,6 +93,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -116,6 +119,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -127,20 +131,26 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import java.text.DateFormat
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.prototux.aare.BuildConfig
 import net.prototux.aare.DiagLog
 import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.R
 import net.prototux.aare.SessionAapLog
 import net.prototux.aare.Settings
 import net.prototux.aare.SettingsBackup
-import net.prototux.aare.BuildConfig
 import net.prototux.aare.UpdateChecker
 import net.prototux.aare.audio.CaptureMethod
 import net.prototux.aare.audio.CaptureMethods
+import net.prototux.aare.audio.CaptureOrder
+import net.prototux.aare.root.Root
 import net.prototux.aare.audio.CarMicForApps
+import net.prototux.aare.car.CarData
 import net.prototux.aare.car.CarKeyAction
 import net.prototux.aare.car.DrivingMode
 import net.prototux.aare.car.PhoneLocationFeed
@@ -149,6 +159,8 @@ import net.prototux.aare.car.QuirkSettings
 import net.prototux.aare.cert.CertificateDownload
 import net.prototux.aare.cert.CertificateStore
 import net.prototux.aare.cert.CertificateUpdates
+import net.prototux.aare.devlog.DevLog
+import net.prototux.aare.home.HomeStore
 import net.prototux.aare.host.AndroidAutoApps
 import net.prototux.aare.host.AssistantApp
 import net.prototux.aare.host.Assistants
@@ -157,34 +169,34 @@ import net.prototux.aare.host.CarAppInfo
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.host.PhoneApp
 import net.prototux.aare.host.UnsupportedCarApp
-import net.prototux.aare.mirror.MirrorTouchService
-import androidx.core.graphics.drawable.toBitmap
 import net.prototux.aare.launch.AppLauncher
 import net.prototux.aare.launch.StandaloneDrivingRule
 import net.prototux.aare.launch.effectiveDrivingRule
 import net.prototux.aare.launch.isNavigationApp
-import net.prototux.aare.car.CarData
+import net.prototux.aare.mirror.MirrorTouchService
 import net.prototux.aare.service.ProjectionService
-import net.prototux.aare.home.HomeStore
-import net.prototux.aare.transport.wireless.CarCompanion
-import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.setup.SetupPermissions
 import net.prototux.aare.setup.ShizukuSetup
 import net.prototux.aare.setup.ShizukuSetupClient
+import net.prototux.aare.transport.wireless.CarCompanion
+import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.ui.car.DashCard
-import net.prototux.aare.ui.car.dtcText
 import net.prototux.aare.ui.car.DashboardCardsEditor
 import net.prototux.aare.ui.car.RailWidget
 import net.prototux.aare.ui.car.RailWidgetsEditor
 import net.prototux.aare.ui.car.StyleChoices
+import net.prototux.aare.ui.car.Swatch
 import net.prototux.aare.ui.car.WALLPAPER_NAMES
+import net.prototux.aare.ui.car.dtcText
+import net.prototux.aare.ui.car.launchedCandidates
+import net.prototux.aare.ui.car.movedAmong
 import net.prototux.aare.ui.car.movedBy
+import net.prototux.aare.ui.car.railGapDp
+import net.prototux.aare.ui.car.styleSwatch
 import net.prototux.aare.ui.car.withKey
 import net.prototux.aare.ui.theme.CarTextSize
 import net.prototux.aare.ui.theme.PhoneTheme
 import rikka.shizuku.Shizuku
-import java.text.DateFormat
-import kotlin.math.roundToInt
 
 /** The phone side: what's connected, what's set up, and the settings. */
 class MainActivity : ComponentActivity() {
@@ -254,6 +266,7 @@ private fun Home() {
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
     BackHandler(enabled = page != null) { page = null }
+    OldAndroidNotice(settings)
 
     key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
         if (p == null) {
@@ -286,7 +299,10 @@ private fun Home() {
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     when (p) {
-                        Page.CAR_SCREEN -> item { CarScreenSettings(settings, refresh) }
+                        Page.CAR_SCREEN -> {
+                            item { CarScreenSettings(settings, refresh) }
+                            item { TouchCalibrationCard() }
+                        }
                         Page.APPS -> item { AppsCard(settings) }
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
@@ -295,11 +311,13 @@ private fun Home() {
                         Page.CAR_DATA -> item { CarDataCard() }
                         Page.HOME_ACTIONS -> item { HomeActionsSettings() }
                         Page.ADVANCED -> {
+                            item { RootCard(settings) }
                             item { HeadUnitServerSettings(settings) }
                             item { CertificatesCard(certs, state) }
                             item { VehicleOverridesCard() }
                             item { CarQuirksCard(settings) }
                             item { LogCard() }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) item { DeveloperLogCard() }
                             item { SettingsBackupCard(settings) { settingsGeneration++ } }
                             item { CarButtonsCard(settings) }
                         }
@@ -400,6 +418,36 @@ private fun CertificateExpiryBanner() {
             }
         }
     }
+}
+
+/**
+ * Once per launch on Android 6 and 7 (minSdk 23; Android 8 is otherwise the baseline): what falls
+ * back to an older, more limited method there. "Don't show again" persists in [Settings]; OK
+ * alone shows it again next launch.
+ */
+@Composable
+private fun OldAndroidNotice(settings: Settings) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || settings.oldAndroidNoticeDismissed) return
+    var open by remember { mutableStateOf(true) }
+    if (!open) return
+    var dontShowAgain by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(stringResource(R.string.setup_old_android_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.setup_old_android_message), style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(12.dp))
+                Toggle(stringResource(R.string.setup_old_android_dont_show_again), "", dontShowAgain) { dontShowAgain = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (dontShowAgain) settings.oldAndroidNoticeDismissed = true
+                open = false
+            }) { Text(stringResource(R.string.common_ok)) }
+        },
+    )
 }
 
 @Composable
@@ -569,7 +617,7 @@ private fun appDetails(ctx: Context) =
  * or have no browser: then [fallback] opens instead, or a short message, rather than a crash. No
  * resolveActivity() check first: package visibility hides browsers from it without a <queries> entry.
  */
-private fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
+internal fun Context.startSafely(intent: Intent, fallback: Intent? = null) {
     val opened = listOfNotNull(intent, fallback).any { runCatching { startActivity(it) }.isSuccess }
     if (!opened) Toast.makeText(this, R.string.setup_nothing_to_open, Toast.LENGTH_SHORT).show()
 }
@@ -589,7 +637,9 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
+    var pauseWhileRecording by remember { mutableStateOf(settings.pauseWhileRecording) }
     var callsOnSpeaker by remember { mutableStateOf(settings.callsOnPhoneSpeaker) }
+    var resumeAfterCall by remember { mutableStateOf(settings.resumeAfterCall) }
     var autoPair by remember { mutableStateOf(settings.autoPairCarBluetooth) }
     var cars by remember { mutableStateOf(settings.knownCars) }
     var carGps by remember { mutableStateOf(settings.carGpsForPhone) }
@@ -618,8 +668,16 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 Spacer(Modifier.height(8.dp))
             }
             Toggle(stringResource(R.string.setup_toggle_resume_music_title), stringResource(R.string.setup_toggle_resume_music_subtitle), resume) { resume = it; settings.resumeMedia = it }
+            Toggle(stringResource(R.string.setup_toggle_pause_while_recording_title), stringResource(R.string.setup_toggle_pause_while_recording_subtitle), pauseWhileRecording) {
+                pauseWhileRecording = it; settings.pauseWhileRecording = it
+            }
             Toggle(stringResource(R.string.setup_toggle_calls_speaker_title), stringResource(R.string.setup_toggle_calls_speaker_subtitle), callsOnSpeaker) {
                 callsOnSpeaker = it; settings.callsOnPhoneSpeaker = it
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Toggle(stringResource(R.string.setup_toggle_resume_after_call_title), stringResource(R.string.setup_toggle_resume_after_call_subtitle), resumeAfterCall) {
+                    resumeAfterCall = it; settings.resumeAfterCall = it
+                }
             }
             Toggle(stringResource(R.string.setup_toggle_auto_pair_title), stringResource(R.string.setup_toggle_auto_pair_subtitle), autoPair) {
                 autoPair = it; settings.autoPairCarBluetooth = it
@@ -632,7 +690,8 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
         }
         if (wireless && CarCompanion.supported(ctx)) CompanionCars(settings, pins.keys)
         AndroidAutoCard(refresh)
-        Section(stringResource(R.string.setup_section_updates)) {
+        // Builds without the check (stores that update the app themselves) have nothing to set here.
+        if (BuildConfig.UPDATE_CHECK) Section(stringResource(R.string.setup_section_updates)) {
             Toggle(stringResource(R.string.setup_toggle_updates_title), stringResource(R.string.setup_toggle_updates_subtitle), checkUpdates) {
                 checkUpdates = it; settings.checkUpdates = it; UpdateChecker.refresh(ctx, force = it)
                 updateStatus = null
@@ -654,6 +713,22 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
         }
         Section(stringResource(R.string.setup_section_location)) {
+            if (remember { AppLauncher.available(ctx) }) {
+                var locationOn by remember { mutableStateOf(settings.locationOnInCar) }
+                Toggle(stringResource(R.string.setup_toggle_location_on_title), stringResource(R.string.setup_toggle_location_on_subtitle), locationOn) {
+                    locationOn = it; settings.locationOnInCar = it
+                }
+                var locationOff by remember { mutableStateOf(settings.locationOffAfterCar) }
+                Toggle(stringResource(R.string.setup_toggle_location_off_title), stringResource(R.string.setup_toggle_location_off_subtitle), locationOff) {
+                    locationOff = it; settings.locationOffAfterCar = it
+                }
+                if (locationOff) {
+                    var offAlways by remember { mutableStateOf(settings.locationOffAlways) }
+                    Toggle(stringResource(R.string.setup_toggle_location_off_always_title), stringResource(R.string.setup_toggle_location_off_always_subtitle), offAlways) {
+                        offAlways = it; settings.locationOffAlways = it
+                    }
+                }
+            }
             Toggle(stringResource(R.string.setup_toggle_car_gps_title), stringResource(R.string.setup_toggle_car_gps_subtitle), carGps) {
                 carGps = it; settings.carGpsForPhone = it
             }
@@ -815,6 +890,37 @@ private fun headUnitLabel(ctx: android.content.Context, key: String): String = w
     else -> runCatching { ctx.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.getRemoteDevice(key)?.name }.getOrNull() ?: key
 }
 
+/**
+ * Root for the whole app (see Root): off until the user turns it on, which asks the root manager
+ * once. Before that AARE only looks for su, to say whether there is any.
+ */
+@Composable
+private fun RootCard(settings: Settings) {
+    val ctx = LocalContext.current
+    var allowed by remember { mutableStateOf(settings.rootAllowed) }
+    var asking by remember { mutableStateOf(false) }
+    var refused by remember { mutableStateOf(false) }
+    val found = remember { Root.found() }
+    Section(stringResource(R.string.root_title)) {
+        Toggle(stringResource(R.string.root_toggle_title), stringResource(when {
+            asking -> R.string.root_asking
+            allowed -> R.string.root_allowed
+            refused -> R.string.root_refused
+            found -> R.string.root_found
+            else -> R.string.root_not_found
+        }), allowed) { on ->
+            if (!on) {
+                Root.forbid(ctx)
+                allowed = false
+            } else if (!asking) {
+                asking = true
+                refused = false
+                Root.ask(ctx) { granted -> asking = false; allowed = granted; refused = !granted }
+            }
+        }
+    }
+}
+
 /** Android Auto's developer "head unit server": for the desktop head unit and other test tools. */
 @Composable
 private fun HeadUnitServerSettings(settings: Settings) {
@@ -859,6 +965,7 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
     var aloud by remember { mutableStateOf(settings.readMessagesAloud) }
     var dnd by remember { mutableStateOf(settings.dndWhileDriving) }
     var autoReply by remember { mutableStateOf(settings.autoReply) }
+    var voiceReply by remember { mutableStateOf(settings.voiceReply) }
     var replyText by remember { mutableStateOf(settings.autoReplyText) }
     @Suppress("UNUSED_EXPRESSION") refresh
     val access = NotificationManagerCompat.getEnabledListenerPackages(ctx).contains(ctx.packageName)
@@ -870,6 +977,19 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         Toggle(stringResource(R.string.msg_toggle_banners_title), stringResource(R.string.msg_toggle_banners_subtitle), banners) { banners = it; settings.messageBanners = it }
         Toggle(stringResource(R.string.msg_toggle_group_title), stringResource(R.string.msg_toggle_group_subtitle), groups) { groups = it; settings.groupMessages = it }
         Toggle(stringResource(R.string.msg_toggle_read_aloud_title), stringResource(R.string.msg_toggle_read_aloud_subtitle), aloud) { aloud = it; settings.readMessagesAloud = it }
+        // Which apps' messages show in the car: all of them until one is switched off.
+        val apps by produceState(emptyList<PhoneApp>()) { value = withContext(Dispatchers.IO) { AndroidAutoApps.messagingApps(ctx) } }
+        var muted by remember { mutableStateOf(settings.mutedMessageApps) }
+        if (apps.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(R.string.msg_apps_title), style = MaterialTheme.typography.titleSmall)
+            apps.forEach { app ->
+                Toggle(app.label, stringResource(R.string.msg_apps_subtitle), app.packageName !in muted) { on ->
+                    muted = if (on) muted - app.packageName else muted + app.packageName
+                    settings.mutedMessageApps = muted
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.msg_hint_apps),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -886,6 +1006,9 @@ private fun MessageSettings(settings: Settings, refresh: Int) {
         }
         if (autoReply) OutlinedTextField(replyText, { replyText = it; settings.autoReplyText = it }, Modifier.fillMaxWidth().padding(top = 8.dp),
             label = { Text(stringResource(R.string.msg_autoreply_field_label)) }, singleLine = true)
+        Toggle(stringResource(R.string.msg_toggle_voice_reply_title), stringResource(R.string.msg_toggle_voice_reply_subtitle), voiceReply) {
+            voiceReply = it; settings.voiceReply = it
+        }
     }
     }
 }
@@ -948,7 +1071,7 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 choice = { title, options, selected, onSelect -> Choices(title, options, selected, onSelect) },
                 onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
                 onAccent = { accent = it; settings.carAccent = it },
-                select = { title, options, selected, onSelect -> Select(title, options, selected, onSelect) },
+                select = { title, options, selected, onSelect -> Select(title, options, selected, ::styleSwatch, onSelect) },
             )
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_colors), listOf(Settings.THEME_AUTO to stringResource(R.string.setup_choice_colors_auto), Settings.THEME_DARK to stringResource(R.string.setup_choice_dark), Settings.THEME_LIGHT to stringResource(R.string.setup_choice_light)), theme) {
@@ -1096,110 +1219,24 @@ private fun decodeWallpaper(context: android.content.Context, uri: Uri, maxPx: I
     return out
 }
 
-/** Car audio: the capture methods, best first, and what each needs. */
-@Composable
-private fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
-    val ctx = LocalContext.current
-    var enabled by remember { mutableStateOf(settings.carAudio) }
-    var carMic by remember { mutableStateOf(settings.carMicForPhoneApps) }
-    val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        if (r.resultCode == android.app.Activity.RESULT_OK && r.data != null) ProjectionService.giveAudioConsent(ctx, r.resultCode, r.data!!)
-        recheck()
-    }
-    DisposableEffect(Unit) {
-        val l = Shizuku.OnRequestPermissionResultListener { _, _ -> recheck() }
-        runCatching { Shizuku.addRequestPermissionResultListener(l) }
-        onDispose { runCatching { Shizuku.removeRequestPermissionResultListener(l) } }
-    }
-    @Suppress("UNUSED_EXPRESSION") refresh
-    val policy = CaptureMethods.audioPolicyAvailable(ctx)
-    val shizuku = CaptureMethods.shizukuAvailable()
-    val shizukuAsk = CaptureMethods.shizukuNeedsPermission()
-    val root = CaptureMethods.rootAvailable(ctx)
-    val best = when {
-        policy -> CaptureMethod.AUDIO_POLICY
-        shizuku -> CaptureMethod.SHIZUKU_POLICY
-        root -> CaptureMethod.SHIZUKU
-        state.audioCapture -> CaptureMethod.PLAYBACK_CAPTURE
-        else -> null
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Section(stringResource(R.string.audio_settings_title)) {
-            Toggle(stringResource(R.string.audio_toggle_enable_title), stringResource(R.string.audio_toggle_enable_subtitle), enabled) {
-                enabled = it; settings.carAudio = it
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(best?.let { stringResource(R.string.audio_using_method, stringResource(it.title)) } ?: stringResource(R.string.audio_no_method),
-                style = MaterialTheme.typography.bodyMedium, color = if (best == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
-        }
-        Section(stringResource(R.string.audio_section_methods)) {
-            Check(stringResource(CaptureMethod.AUDIO_POLICY.title),
-                if (policy) stringResource(R.string.audio_policy_ready)
-                else stringResource(R.string.audio_policy_not_ready),
-                policy) {
-                ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/prototux/AARE#car-audio")))
-            }
-            Check(stringResource(CaptureMethod.SHIZUKU.title),
-                when {
-                    shizuku -> stringResource(R.string.audio_shizuku_ready)
-                    root -> stringResource(R.string.audio_root_ready)
-                    Build.VERSION.SDK_INT < Build.VERSION_CODES.S -> stringResource(R.string.audio_shizuku_needs_android12)
-                    shizukuAsk -> stringResource(R.string.audio_shizuku_tap_allow)
-                    else -> stringResource(R.string.audio_shizuku_or_root_hint)
-                },
-                shizuku || root) {
-                when {
-                    shizukuAsk -> runCatching { Shizuku.requestPermission(SHIZUKU_REQUEST) }
-                    shizuku || root -> Unit
-                    // Check for root (prompts su on a rooted phone); otherwise point to Shizuku.
-                    else -> CaptureMethods.checkRoot { granted ->
-                        android.os.Handler(android.os.Looper.getMainLooper()).post {
-                            if (granted) { settings.rootAudio = true; recheck() }
-                            else ctx.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
-                        }
-                    }
-                }
-            }
-            Check(stringResource(CaptureMethod.PLAYBACK_CAPTURE.title),
-                if (state.audioCapture) stringResource(R.string.audio_playback_ready)
-                else stringResource(R.string.audio_playback_not_ready),
-                state.audioCapture) {
-                val mpm = ctx.getSystemService(MediaProjectionManager::class.java)
-                consent.launch(if (Build.VERSION.SDK_INT >= 34) mpm.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
-                    else mpm.createScreenCaptureIntent())
-            }
-        }
-        Section(stringResource(R.string.audio_section_car_mic)) {
-            Toggle(stringResource(R.string.audio_toggle_car_mic_title), stringResource(R.string.audio_toggle_car_mic_subtitle), carMic) {
-                carMic = it; settings.carMicForPhoneApps = it
-            }
-            if (carMic) {
-                val ready = CarMicForApps.available()
-                Text(stringResource(when {
-                    ready -> R.string.audio_car_mic_ready
-                    Build.VERSION.SDK_INT < Build.VERSION_CODES.Q -> R.string.audio_car_mic_needs_android10
-                    else -> R.string.audio_car_mic_needs_shizuku
-                }), style = MaterialTheme.typography.bodyMedium, color = if (ready) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
-private const val SHIZUKU_REQUEST = 42
+internal const val SHIZUKU_REQUEST = 42
 
 /** A labelled drop-down of mutually exclusive options, for lists too long for a row of [Choices]. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Select(title: String, options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit) {
+internal fun Select(title: String?, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    Text(title, style = MaterialTheme.typography.bodyLarge)
-    Spacer(Modifier.height(6.dp))
+    if (title != null) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(6.dp))
+    }
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         OutlinedTextField(
             value = options.firstOrNull { it.first == selected }?.second.orEmpty(),
             onValueChange = {},
             readOnly = true,
             singleLine = true,
+            leadingIcon = swatch(selected).takeIf { it.isNotEmpty() }?.let { { Swatch(it, 20.dp) } },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
         )
@@ -1208,6 +1245,7 @@ private fun Select(title: String, options: List<Pair<String, String>>, selected:
                 DropdownMenuItem(
                     text = { Text(label) },
                     onClick = { expanded = false; onSelect(value) },
+                    leadingIcon = swatch(value).takeIf { it.isNotEmpty() }?.let { { Swatch(it, 20.dp) } },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
             }
@@ -1235,7 +1273,7 @@ internal fun Choices(title: String, options: List<Pair<String, String>>, selecte
 // ---------------------------------------------------------------- apps
 
 /** Everything the car's launcher lists, as it groups it. */
-private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>)
+private class LauncherLists(val carApps: List<CarAppInfo>, val media: List<PhoneApp>, val messaging: List<PhoneApp>, val launched: List<LaunchableApp>)
 
 @Composable
 private fun AppsCard(settings: Settings) {
@@ -1245,7 +1283,14 @@ private fun AppsCard(settings: Settings) {
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
-    val lists by produceState<LauncherLists?>(null) {
+    // The launched phone apps are picked further down the page: loaded again when that changes.
+    var picks by remember { mutableIntStateOf(0) }
+    DisposableEffect(Unit) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key == "standalone_apps" || key == "standalone_app_pkgs") picks++ }
+        settings.registerListener(listener)
+        onDispose { settings.unregisterListener(listener) }
+    }
+    val lists by produceState<LauncherLists?>(null, picks) {
         value = withContext(Dispatchers.IO) {
             val car = CarAppCatalog.query(ctx)
             val carPkgs = car.mapTo(HashSet()) { it.packageName }
@@ -1253,7 +1298,10 @@ private fun AppsCard(settings: Settings) {
             val messagingOnly = AndroidAutoApps.messagingOnly(messaging)
             val media = AndroidAutoApps.mediaApps(ctx).filter { it.packageName !in carPkgs && it.packageName !in messagingOnly }
             val shown = carPkgs + media.map { it.packageName }
-            LauncherLists(car, media, messaging.filter { it.packageName !in shown })
+            val messages = messaging.filter { it.packageName !in shown }
+            val launched = launchedCandidates(settings.standaloneApps && AppLauncher.available(ctx), settings.standaloneAppPackages,
+                shown + messages.map { it.packageName })
+            LauncherLists(car, media, messages, if (launched.isEmpty()) emptyList() else launchableApps(ctx).filter { it.pkg in launched })
         }
     }
     fun toggle(pkg: String, visible: Boolean) {
@@ -1334,6 +1382,7 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
         l.carApps.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.media.forEach { add(Triple(it.packageName, it.label, it.icon)) }
         l.messaging.forEach { add(Triple(it.packageName, it.label, it.icon)) }
+        l.launched.forEach { add(Triple(it.pkg, it.label, it.icon)) }
     }.filter { it.first !in hidden } + listOfNotNull(
         if (CarRuntime.PHONE_ID !in hidden) Triple(CarRuntime.PHONE_ID, stringResource(R.string.setup_app_entry_phone), null) else null,
         // Settings is always in the car's list (never hidden): always in this order too.
@@ -1345,7 +1394,7 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
     )
 }
 
-/** The order of the car's app list: the visible apps, with up and down buttons. */
+/** The order of the car's app list: the visible apps, sorted by dragging. */
 @Composable
 private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     val all = launcherCandidates(l, hidden, phoneScreen, browser)
@@ -1353,39 +1402,32 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
     val index = order.withIndex().associate { (i, k) -> k to i }
     val sorted = all.sortedWith(compareBy({ index[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
     fun move(i: Int, by: Int) {
-        val keys = sorted.map { it.first }.toMutableList()
-        val j = (i + by).coerceIn(0, keys.lastIndex)
-        keys.add(j, keys.removeAt(i))
-        // Hidden apps keep their saved slots, so showing one again puts it back where it was:
-        // the shown keys fill their old slots in the new order, new ones go at the end.
-        val queue = ArrayDeque(keys)
-        val shown = keys.toSet()
-        val merged = order.mapNotNull { if (it in shown) queue.removeFirstOrNull() else it } + queue
+        val merged = order.movedAmong(sorted.map { it.first }, i, by)
         order = merged; settings.appOrder = merged
     }
     Section(stringResource(R.string.setup_section_app_order)) {
-        sorted.forEachIndexed { i, (_, label, icon) ->
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        val drag = remember { RowDrag() }
+        sorted.forEachIndexed { i, (key, label, icon) -> key(key) {
+            SortableRow(key, i, sorted.size, drag, Modifier.padding(vertical = 4.dp), move = { move(i, it) }) {
                 if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
                 else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
                 Spacer(Modifier.width(12.dp))
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { move(i, -1) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
-                IconButton(onClick = { move(i, 1) }, enabled = i < sorted.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
             }
-        }
+        } }
     }
 }
 
 /**
  * The rail's own, shorter app list, picked on the phone: a switch per candidate (the same ones the
- * launcher order lists) to put it on the rail, and up/down to order the chosen ones. Nothing chosen
+ * launcher order lists) to put it on the rail, and dragging to order the chosen ones. Nothing chosen
  * (the default): the rail keeps its built-in set (today's behaviour) — see CarShell.RailContent.
  */
 @Composable
 private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
     val candidates = launcherCandidates(l, hidden, phoneScreen, browser)
     var compact by remember { mutableStateOf(settings.compactRail) }
+    var spacing by remember { mutableStateOf(settings.railSpacing) }
     var chosen by remember { mutableStateOf(settings.railApps) }
     fun setChosen(keys: List<String>) { chosen = keys; settings.railApps = keys }
     val chosenIndex = chosen.withIndex().associate { (i, k) -> k to i }
@@ -1397,22 +1439,33 @@ private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<St
             compact = it; settings.compactRail = it
         }
         Spacer(Modifier.height(8.dp))
-        sorted.forEach { (key, label, icon) ->
-            val i = chosen.indexOf(key)
+        val gap = spacing ?: railGapDp(compact, bottom = settings.railPosition == Settings.RAIL_BOTTOM)
+        fun setSpacing(dp: Int?) { spacing = dp; settings.railSpacing = dp }
+        Text(stringResource(R.string.setup_rail_spacing), style = MaterialTheme.typography.bodyLarge)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(onClick = { setSpacing(gap - 1) }, enabled = gap > 0) { Text("\u2212") }
+            Text(stringResource(R.string.setup_rail_spacing_dp, gap), style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
+            OutlinedButton(onClick = { setSpacing(gap + 1) }, enabled = gap < 40) { Text("+") }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { setSpacing(null) }, enabled = spacing != null) { Text(stringResource(R.string.setup_rail_spacing_reset)) }
+        }
+        Spacer(Modifier.height(8.dp))
+        val drag = remember { RowDrag() }
+        val shownChosen = sorted.map { it.first }.filter { it in chosenIndex }
+        sorted.forEach { (key, label, icon) -> key(key) {
+            val i = shownChosen.indexOf(key)
             val on = i >= 0
-            Row(Modifier.fillMaxWidth().clickable { setChosen(chosen.withKey(key, !on)) }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            SortableRow(key, i, shownChosen.size, drag, Modifier.clickable { setChosen(chosen.withKey(key, !on)) }.padding(vertical = 4.dp),
+                sortable = on, move = { setChosen(chosen.movedAmong(shownChosen, i, it)) }) {
                 Switch(checked = on, onCheckedChange = { setChosen(chosen.withKey(key, it)) })
                 Spacer(Modifier.width(12.dp))
                 if (icon != null) Image(icon.asImageBitmap(), null, Modifier.size(32.dp).clip(CircleShape))
                 else Box(Modifier.size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer))
                 Spacer(Modifier.width(12.dp))
                 Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                if (on) {
-                    IconButton(onClick = { setChosen(chosen.movedBy(i, -1)) }, enabled = i > 0) { Icon(Icons.Rounded.KeyboardArrowUp, stringResource(R.string.common_up)) }
-                    IconButton(onClick = { setChosen(chosen.movedBy(i, 1)) }, enabled = i < chosen.lastIndex) { Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.common_down)) }
-                }
             }
-        }
+        } }
     }
 }
 
@@ -1592,6 +1645,13 @@ private fun AssistantCard(settings: Settings) {
                 onCarScreen,
             ) { onCarScreen = it; settings.assistantOnCarScreen = it }
         }
+        var stopStyle by remember { mutableStateOf(settings.assistantStopStyle) }
+        Spacer(Modifier.height(8.dp))
+        Select(stringResource(R.string.assistant_stop_style_title), listOf(
+            Settings.ASSISTANT_STOP_VOICE_BUTTON to stringResource(R.string.assistant_stop_style_voice_button),
+            Settings.ASSISTANT_STOP_RED_RESTART to stringResource(R.string.assistant_stop_style_red_restart),
+            Settings.ASSISTANT_STOP_RED_STOP to stringResource(R.string.assistant_stop_style_red_stop),
+        ), stopStyle) { stopStyle = it; settings.assistantStopStyle = it }
         var links by remember { mutableStateOf(settings.assistantLinks) }
         Spacer(Modifier.height(8.dp))
         Toggle(stringResource(R.string.assistant_links_title), stringResource(R.string.assistant_links_subtitle), links) {
@@ -1740,8 +1800,26 @@ private fun CarDataCard() {
     val ctx = LocalContext.current
     val settings = remember { Settings(ctx) }
     var inCar by remember { mutableStateOf(settings.carDataApp) }
+    var obdOn by remember { mutableStateOf(settings.obdAdapter) }
+    var obdFake by remember { mutableStateOf(settings.obdSimulated) }
+    val obdStatus by net.prototux.aare.obd.ObdReader.status.collectAsState()
+    val obd by net.prototux.aare.obd.ObdReader.readings.collectAsState()
     Section(stringResource(R.string.setup_page_car_data_title)) {
         Toggle(stringResource(R.string.car_data_show_in_car_title), stringResource(R.string.car_data_show_in_car_subtitle), inCar) { inCar = it; settings.carDataApp = it }
+        // Takes effect at the next connection (the reader runs with the car session).
+        Toggle(stringResource(R.string.obd_adapter_title), stringResource(R.string.obd_adapter_subtitle), obdOn) { obdOn = it; settings.obdAdapter = it }
+        if (obdOn) {
+            // Which paired device to read: by default any clearly named adapter, or the one picked here.
+            val paired = remember { net.prototux.aare.obd.BluetoothObdLink.pairedDevices(ctx) }
+            var chosen by remember { mutableStateOf(settings.obdAdapterAddress.orEmpty()) }
+            val options = listOf("" to stringResource(R.string.obd_adapter_auto)) + paired +
+                listOfNotNull(chosen.takeIf { c -> c.isNotEmpty() && paired.none { it.first == c } }?.let { it to it })
+            Spacer(Modifier.height(8.dp))
+            Select(stringResource(R.string.obd_adapter_pick), options, chosen) { chosen = it; settings.obdAdapterAddress = it.ifEmpty { null } }
+        }
+        if (obdOn && net.prototux.aare.BuildConfig.DEBUG) {
+            Toggle(stringResource(R.string.obd_simulated_title), stringResource(R.string.obd_simulated_subtitle), obdFake) { obdFake = it; settings.obdSimulated = it }
+        }
         if (!car.connected) {
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.car_data_not_connected), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1806,6 +1884,12 @@ private fun CarDataCard() {
         DataRow(stringResource(R.string.car_data_accelerometer), car.accelerometer?.let { a -> xyz(a.value) }?.let { "$it m/s²" })
         DataRow(stringResource(R.string.car_data_gyroscope), car.gyroscope?.let { g -> xyz(g.value) }?.let { "$it rad/s" })
         DataRow(stringResource(R.string.car_data_dtc), dtcText(car.diagnostics?.value))
+    }
+    if (obdOn) {
+        Spacer(Modifier.height(16.dp))
+        Section(stringResource(R.string.obd_section)) {
+            net.prototux.aare.ui.car.obdDataLines(obdStatus, obd).forEach { (label, value) -> DataRow(label, value) }
+        }
     }
 }
 
@@ -1940,6 +2024,9 @@ private fun CarQuirkRows(car: String, known: KnownHeadUnits) {
     QuirkRow(stringResource(R.string.quirks_mic_setup_title), stringResource(R.string.quirks_mic_setup_subtitle), q.micSetup, on, off) {
         set(q.copy(micSetup = it))
     }
+    QuirkRow(stringResource(R.string.quirks_video_headers_once_title), stringResource(R.string.quirks_video_headers_once_subtitle), q.videoHeadersOnce, on, off) {
+        set(q.copy(videoHeadersOnce = it))
+    }
 }
 
 @Composable
@@ -2071,6 +2158,40 @@ private fun CarButtonsCard(settings: Settings) {
                 settings.carKeyMap = map
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+private fun DeveloperLogCard() {
+    val ctx = LocalContext.current
+    val settings = remember { Settings(ctx) }
+    val scope = rememberCoroutineScope()
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                runCatching {
+                    ctx.contentResolver.openOutputStream(uri)?.use { DevLog.export(ctx, it) } ?: false
+                }
+            }
+            saved.onSuccess { if (!it) Toast.makeText(ctx, R.string.setup_dev_log_empty, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(ctx, it.message, Toast.LENGTH_SHORT).show() }
+        }
+    }
+    Section(stringResource(R.string.setup_section_developer_log)) {
+        var enabled by remember { mutableStateOf(settings.developerMode) }
+        val path = remember { DevLog.folderPath(ctx) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_title), stringResource(R.string.setup_toggle_dev_log_subtitle, path), enabled) {
+            enabled = it; settings.developerMode = it
+            if (it) DevLog.start(ctx) else DevLog.stop(ctx)
+        }
+        var privacy by remember { mutableStateOf(settings.developerLogPrivacy) }
+        Toggle(stringResource(R.string.setup_toggle_dev_log_privacy_title), stringResource(R.string.setup_toggle_dev_log_privacy_subtitle), privacy) {
+            privacy = it; settings.developerLogPrivacy = it
+            if (settings.developerMode) DevLog.restart(ctx)
+        }
+        TextButton(onClick = { save.launch("aare-developer-log.txt") }) { Text(stringResource(R.string.setup_dev_log_save)) }
     }
 }
 

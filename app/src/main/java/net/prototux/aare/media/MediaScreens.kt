@@ -358,6 +358,7 @@ private fun ExplicitBadge() {
         Modifier.padding(end = 8.dp).size(24.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        Text("E", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.surface)
+        // surfaceContainerHighest: opaque in every theme (a glass theme's surface is translucent).
+        Text("E", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.surfaceContainerHighest)
     }
 }

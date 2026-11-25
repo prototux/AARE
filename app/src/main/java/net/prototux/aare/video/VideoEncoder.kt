@@ -51,6 +51,8 @@ class VideoEncoder(
      * busy pictures.
      */
     private val constantBitrate: Boolean = false,
+    /** SPS/PPS only in the codec config, not repeated before key frames (vehicles.json `videoHeadersOnce`). */
+    private val headersOnce: Boolean = false,
     private val sink: Sink,
 ) {
     interface Sink {
@@ -94,7 +96,7 @@ class VideoEncoder(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) int(MediaFormat.KEY_LATENCY, 1)
             int(MediaFormat.KEY_MAX_B_FRAMES, 0)
             // SPS/PPS before every key frame, so a head unit that resets its decoder can resync.
-            int(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1)
+            if (!headersOnce) int(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1)
         }
         // Until the codec runs, a failure must release what was made so far: the caller never
         // gets an encoder to stop, and a leaked codec holds one of the few hardware instances.
@@ -134,7 +136,7 @@ class VideoEncoder(
                     break
                 } catch (e: Exception) {
                     lastError = e
-                    Log.w(TAG, "encoder ${c.name} rejected $format: ${e.message}")
+                    net.prototux.aare.SessionAapLog.w("video encoder ${c.name} rejected $format: ${e.message}")
                     runCatching { c.reset() }
                 }
             }
@@ -143,7 +145,7 @@ class VideoEncoder(
             c.start()
             inputSurface = surface
             codec = c
-            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
+            net.prototux.aare.SessionAapLog.i("video encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
         } catch (e: Throwable) {
             surface?.let { runCatching { it.release() } }
             c?.let { runCatching { it.release() } }
@@ -227,7 +229,7 @@ class VideoEncoder(
         }
 
         override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            Log.i(TAG, "encoder output format $format")
+            net.prototux.aare.SessionAapLog.i("video encoder output: $format")
         }
     }
 

@@ -18,6 +18,7 @@ import net.prototux.aare.host.CarAppClusterScreen
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.ui.car.ClusterTurnCard
 import net.prototux.aare.ui.theme.CarTheme
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.video.ProjectionDisplay
 import net.prototux.aare.video.VideoEncoder
 
@@ -97,7 +98,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         val ui = runtime.ui
         // The main screen's theme and day/night colours, so the two screens match.
         CarTheme(night = ui.night, theme = ui.theme) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            // carBackdrop: a glass theme's background is transparent, its gradient drawn behind it.
+            Box(Modifier.fillMaxSize().carBackdrop().background(MaterialTheme.colorScheme.background)) {
                 val nav = ui.app(ui.activeNavAppId)
                 val conn = nav?.takeIf { ui.trip != null }?.let { runtime.clusterConnection(it) }
                 if (conn != null) CarAppClusterScreen(conn, runtime, Modifier.fillMaxSize())

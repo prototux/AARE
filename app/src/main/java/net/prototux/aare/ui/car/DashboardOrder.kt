@@ -11,7 +11,10 @@ enum class DashCard(
     NOTIFICATION("notification"),
     WEATHER("weather"),
     /** Smart-home values and buttons; shown only once some are set up. */
-    HOME("home");
+    HOME("home"),
+
+    /** The car from the OBD2 adapter (the Cockpit app): only with that setting on, and while it reads. */
+    CAR("car");
 
     companion object {
         /** The cards of a saved list of ids, in order: unknown ids dropped, each card once. */
@@ -72,4 +75,15 @@ internal fun <T> List<T>.movedBy(index: Int, by: Int): List<T> {
     val list = toMutableList()
     list.add((index + by).coerceIn(0, lastIndex), list.removeAt(index))
     return list
+}
+
+/**
+ * This saved order with the item at [index] of the [shown] ones moved [by] places. Items not shown
+ * now (hidden, uninstalled) keep their slots, so one coming back is where it was: the shown ones
+ * fill their old slots in the new order, new ones go at the end.
+ */
+internal fun <T> List<T>.movedAmong(shown: List<T>, index: Int, by: Int): List<T> {
+    val queue = ArrayDeque(shown.movedBy(index, by))
+    val set = shown.toSet()
+    return mapNotNull { if (it in set) queue.removeFirstOrNull() else it } + queue
 }

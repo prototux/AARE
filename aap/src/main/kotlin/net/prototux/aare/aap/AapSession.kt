@@ -382,8 +382,11 @@ class AapSession(
     private fun dispatch(msg: AapMessage) {
         // Once TLS is up the head unit has no legitimate reason to send anything in the clear; drop it, don't end the session.
         if (tlsUp && !msg.encrypted) {
-            log.w("dropping plaintext frame after TLS is up: $msg")
-            return
+            if (!acceptsPlaintextDiscovery(msg, state)) {
+                log.w("dropping plaintext frame after TLS is up: $msg")
+                return
+            }
+            log.w("head unit sent its service discovery response in the clear, taking it")
         }
         if (msg.channel == 0 && !msg.control) {
             try {
@@ -404,6 +407,7 @@ class AapSession(
             when (msg.id) {
                 ControlMsg.CHANNEL_OPEN_RESPONSE -> onChannelOpenResponse(ch, msg)
                 ControlMsg.CHANNEL_CLOSE_NOTIFICATION -> {
+                    log.w("the car closed channel ${ch.id} (${ch.name})")
                     ch.opened = false
                     shutChannels.add(ch.id)
                     runHandler(ch) { ch.onClosed() }
@@ -874,6 +878,15 @@ class AapSession(
         }
     }
 }
+
+/**
+ * Whether a frame that came in the clear after TLS is still taken: only the service discovery
+ * response, on the control channel, while the session waits for it. Some older head units (a Sony
+ * XAV, protocol 1.5) send it unencrypted though everything around it is encrypted; dropping it
+ * ends the session at the discovery timeout. Once it's in the state moves on, so a second one is dropped.
+ */
+internal fun acceptsPlaintextDiscovery(msg: AapMessage, state: AapSession.State): Boolean =
+    state == AapSession.State.DISCOVERY && msg.channel == 0 && !msg.control && msg.id == ControlMsg.SERVICE_DISCOVERY_RESPONSE
 
 /**
  * A service channel the phone opened. Subclasses implement one service (video, audio, input...).

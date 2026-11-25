@@ -18,6 +18,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.LocalInSplitPane
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.host.templates.LocalCompactMap
 import net.prototux.aare.host.templates.RenderTemplate
 import net.prototux.aare.host.templates.TemplateHost
@@ -83,12 +87,16 @@ fun CarAppScreen(conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier
             conn.status == CarAppConnection.Status.FAILED -> AppMessage(conn, conn.error ?: stringResource(R.string.common_something_went_wrong), retry = { conn.connect() })
             template == null -> AppMessage(conn, null, retry = null)
             // A new screen (new template id) starts fresh; refreshes keep scroll position and input.
+            // Over the app's map, a glass theme's cards are made solid (OverMap): readable on a day map.
             else -> androidx.compose.runtime.key(conn.templateId) {
-                CompositionLocalProvider(LocalCompactMap provides compact) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+                val render: @Composable () -> Unit = {
+                    CompositionLocalProvider(LocalCompactMap provides compact) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+                }
+                if (usesMap(template)) OverMap(render) else render()
             }
         }
         if (compact && onOpen != null) Box(Modifier.fillMaxSize().carClickable(RectangleShape, onClick = onOpen))
-        conn.alert?.let { AlertCard(it, conn, host, Modifier.align(Alignment.TopCenter)) }
+        conn.alert?.let { OverMap { AlertCard(it, conn, host, Modifier.align(Alignment.TopCenter)) } }
     }
 }
 
@@ -200,6 +208,16 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
 
     @Composable
     override fun MapSurface(modifier: Modifier) {
+        // A new surface for a new size (a pane resized, or back to full screen): an app given its
+        // old surface at another size may crash or keep drawing at the old one. Each surface has
+        // its own owner, so the old one going away can't take the new one with it.
+        // Only in a split pane: elsewhere the app is told of a new size on the same surface.
+        if (!LocalInSplitPane.current) SizedMapSurface(modifier)
+        else BoxWithConstraints(modifier) { key(constraints.maxWidth, constraints.maxHeight) { SizedMapSurface(Modifier.fillMaxSize()) } }
+    }
+
+    @Composable
+    private fun SizedMapSurface(modifier: Modifier) {
         val owner = remember { Any() }
         val dpi = runtime.densityDpi
         AndroidView(

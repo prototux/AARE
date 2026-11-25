@@ -46,6 +46,9 @@
     <string name="setup_check_notification_access_subtitle">الرسائل، الاتجاهات من Google Maps و Waze، التشغيل الحالي</string>
     <string name="setup_check_audio_subtitle">السماح لصوت الهاتف بالوصول إلى السيارة</string>
     <string name="setup_action_set_up">إعداد</string>
+    <string name="setup_old_android_title">التشغيل على إصدار أقدم من Android</string>
+    <string name="setup_old_android_message">يعمل AARE أيضًا على Android 6 و7، لكن Android 8 هو الأساس الأفضل دعمًا. على Android 6 و7، لا يمكن وضع إشعارات الاتصال في قناة خاصة بها، ولذلك لا يمكن كتمها بشكل منفصل عن إشعارات AARE الأخرى في إعدادات النظام. كل شيء آخر يعمل بنفس الطريقة، أو يعود تلقائيًا إلى طريقة أقدم.</string>
+    <string name="setup_old_android_dont_show_again">عدم الإظهار مرة أخرى</string>
     <string name="setup_section_connecting">الاتصال</string>
     <string name="setup_toggle_wireless_title">الاتصال اللاسلكي</string>
     <string name="setup_toggle_wireless_subtitle">الاتصال بالسيارات المقترنة عبر Wi-Fi عند دخولها نطاق Bluetooth</string>
@@ -265,6 +268,7 @@
     <string name="audio_method_policy">توجيه صوت النظام (مثل Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku، مع فصل الموسيقى عن التنقّل (مثل Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku أو root</string>
+    <string name="audio_method_root_policy">root، مع فصل الموسيقى عن التنقّل</string>
     <string name="audio_method_playback_capture">إذن تسجيل الشاشة</string>
     <string name="audio_policy_not_ready">كما في Android Auto: الموسيقى وصوت التنقّل منفصلان، ومكبر صوت الهاتف موقوف. يتطلب هاتفًا بصلاحيات root: ثبّت AARE كتطبيق نظام باستخدام وحدة Magisk (راجع ملف README).</string>
     <string name="audio_shizuku_ready">جاهز. كل ما يشغّله الهاتف يصل إلى السيارة، بما فيه صوت التنقّل؛ ويبقى الهاتف صامتًا.</string>
@@ -476,6 +480,11 @@
     <string name="browser_home">الصفحة الرئيسية</string>
     <string name="browser_address_hint">ابحث أو اكتب عنوان ويب</string>
     <string name="assistant_links_title">روابط من المساعد</string>
+    <string name="assistant_stop">إيقاف المساعد</string>
+    <string name="assistant_stop_style_title">طريقة إيقاف المساعد</string>
+    <string name="assistant_stop_style_voice_button">يتحول زر الصوت إلى إيقاف</string>
+    <string name="assistant_stop_style_red_restart">زر إيقاف أحمر، ويطلب زر الصوت مرة أخرى</string>
+    <string name="assistant_stop_style_red_stop">زر إيقاف أحمر، ويوقف زر الصوت أيضًا</string>
     <string name="assistant_links_subtitle">السماح لروابط aare:// في ردود المساعد المختار بالتحكم في الموسيقى، أو باقتراح التنقّل أو فتح تطبيق أو الاتصال على شاشة السيارة. يتم تجاهل الروابط القادمة من تطبيقات أخرى ومن صفحات الويب.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">بيانات السيارة</string>
@@ -555,6 +564,26 @@
     <string name="about_oss_libraries_title">المكتبات</string>
     <string name="about_oss_protocol_title">تعريفات البروتوكول</string>
 
+    <string name="obd_adapter_title">قراءة محوّل OBD2</string>
+    <string name="obd_adapter_subtitle">محوّل ELM327 مقترن عبر البلوتوث، يُقرأ أثناء اتصال السيارة: بيانات المحرك التي لا ترسلها السيارة إلى AARE. قراءة فقط: لا يكتب AARE أي شيء في السيارة أبدًا.</string>
+    <string name="obd_simulated_title">محوّل OBD2 محاكى (تصحيح)</string>
+    <string name="obd_simulated_subtitle">سيارة محاكاة بدلًا من محوّل حقيقي لتجربة هذه الصفحة</string>
+    <string name="obd_section">محوّل OBD2</string>
+    <string name="obd_status_off">متوقف</string>
+    <string name="obd_status_searching">جارٍ البحث عن محوّل مقترن (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: السيارة لا تستجيب (الإشعال مطفأ؟)</string>
+    <string name="obd_status_gave_up">لم يُعثر على محوّل: اقرن محوّلًا من إعدادات البلوتوث في الهاتف</string>
+    <string name="obd_rpm">الدوران</string>
+    <string name="obd_speed">السرعة</string>
+    <string name="obd_coolant">سائل التبريد</string>
+    <string name="obd_intake_air">هواء السحب</string>
+    <string name="obd_outside">الهواء الخارجي</string>
+    <string name="obd_boost">ضغط الشاحن</string>
+    <string name="obd_load">حمل المحرك</string>
+    <string name="obd_battery">البطارية</string>
+    <string name="obd_fuel">الوقود</string>
+    <string name="obd_ethanol">الإيثانول</string>
     <string name="vehicles_section_title">تجاوزات خاصة بكل سيارة</string>
     <string name="vehicles_hint">عدّل كثافة سيارة معيّنة أو حدود منطقتها المرئية دون إصدار بناء جديد. حرّر ملف vehicles.json باستخدام مدير ملفات، مع مطابقة السيارة حسب الشركة المصنّعة/الطراز/الاسم.</string>
     <string name="vehicles_rule_count">القواعد المحمّلة: %1$d</string>
@@ -614,6 +643,13 @@
     <string name="update_available_title">يتوفر تحديث — %1$s</string>
     <string name="update_available_subtitle">لديك %1$s. اضغط لعرض الإصدار.</string>
     <string name="setup_log_save">حفظ</string>
+    <string name="setup_section_developer_log">سجل المطوّر</string>
+    <string name="setup_toggle_dev_log_title">وضع المطوّر</string>
+    <string name="setup_toggle_dev_log_subtitle">يكتب كل ما يسجّله AARE في ملفات نصية داخل %1$s (حتى 50 MB). إيقاف هذا الوضع يحذفها: احفظها أولًا.</string>
+    <string name="setup_toggle_dev_log_privacy_title">إخفاء البيانات الشخصية</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">يخفي العناوين وأسماء الشبكات والأجهزة وغيرها من البيانات الشخصية التي يتعرّف عليها. اقرأ الملف قبل مشاركته.</string>
+    <string name="setup_dev_log_save">حفظ سجل المطوّر</string>
+    <string name="setup_dev_log_empty">لا يوجد سجل مطوّر بعد</string>
     <string name="setup_toggle_verbose_log_title">سجل مفصّل للبروتوكول</string>
     <string name="setup_toggle_verbose_log_subtitle">يسجّل التتبع الكامل لبروتوكول وحدة التحكم في هذا السجل، لإرفاقه بتقرير عن خلل. يسجّل كمية كبيرة من البيانات؛ اتركه معطّلاً في غير هذه الحالة.</string>
     <string name="setup_section_backup">نسخ احتياطي للإعدادات</string>
@@ -829,4 +865,38 @@
 
     <string name="setup_toggle_auto_pair_title">اقتران Bluetooth السيارة تلقائيًا</string>
     <string name="setup_toggle_auto_pair_subtitle">للمكالمات: عندما تطلب سيارة غير مقترنة بالهاتف الاقتران عبر Android Auto، يتم الاقتران بتلك السيارة عبر Shizuku بدلًا من نافذة Android، إذا كان الرمز مطابقًا للرمز الذي أرسلته السيارة. لا يحدث ذلك مع أي جهاز آخر أبدًا. يتطلب تشغيل Shizuku والسماح لـ AARE فيه.</string>
+
+    <string name="calibration_title">معايرة شاشة اللمس</string>
+    <string name="calibration_intro">إذا كانت اللمسات تقع في المكان الخطأ على شاشة السيارة، فقِس شاشة اللمس في هذه السيارة: تضبط المنطقة المرئية من الهاتف، ثم تلمس 4 أهداف على شاشة السيارة. افعل ذلك والسيارة متوقفة.</string>
+    <string name="calibration_not_connected">اتصل بالسيارة لمعايرة شاشة اللمس فيها.</string>
+    <string name="calibration_saved_for">تمت المعايرة: %1$s</string>
+    <string name="calibration_using_saved">تستخدم هذه السيارة معايرة محفوظة.</string>
+    <string name="calibration_driving">أوقف السيارة للمعايرة.</string>
+    <string name="calibration_start">بدء المعايرة</string>
+    <string name="calibration_reset">العودة إلى قيم السيارة</string>
+    <string name="calibration_forget">نسيان</string>
+    <string name="calibration_area_help">الخطوة 1 من 3. على شاشة السيارة، يحدد حرف L أصفر كل زاوية من المنطقة التي يرسم فيها AARE. حرّك كل حافة حتى يقع حرف L الخاص بها عند حافة الشاشة تمامًا ويكون ظاهرًا بالكامل.</string>
+    <string name="calibration_area_value">%1$s: %2$d بكسل</string>
+    <string name="calibration_edge_left">اليسار</string>
+    <string name="calibration_edge_top">الأعلى</string>
+    <string name="calibration_edge_right">اليمين</string>
+    <string name="calibration_edge_bottom">الأسفل</string>
+    <string name="calibration_area_car_values">قيم السيارة</string>
+    <string name="calibration_next">التالي</string>
+    <string name="calibration_cancel">إلغاء</string>
+    <string name="calibration_target_help">الخطوة 2 من 3. على شاشة السيارة، المس مركز الهدف %1$d.</string>
+    <string name="calibration_target_retry_help">الخطوة 2 من 3. هذه اللمسة لا تتوافق مع اللمسات الأخرى: المس الهدف %1$d مرة أخرى.</string>
+    <string name="calibration_verify_help">الخطوة 3 من 3. المس الهدف الأخضر في وسط شاشة السيارة للاحتفاظ بالمعايرة (يتبقى %1$d ث). وإلا فلن يتغير شيء.</string>
+    <string name="calibration_result_saved">تم حفظ المعايرة لهذه السيارة.</string>
+    <string name="calibration_result_missed">أخطأت لمسة التحقق الهدف: لم يُحفظ شيء. حاول مرة أخرى بلمس مركز كل هدف.</string>
+    <string name="calibration_result_timeout">لم تصل لمسة التحقق في الوقت المحدد: لم يُحفظ شيء.</string>
+    <string name="calibration_result_cancelled">أُلغيت المعايرة: لم يُحفظ شيء.</string>
+    <string name="calibration_result_no_spread">وصلت اللمسات الأربع في المكان نفسه أو على خط واحد: ربما لا تُبلغ السيارة عن مكان لمس الشاشة. لم يُحفظ شيء؛ التفاصيل في سجل الاتصال.</string>
+    <string name="calibration_result_interrupted">غيّرت السيارة شاشتها أو أعادت تشغيلها أثناء المعايرة: لم يُحفظ شيء. ابدأ من جديد.</string>
+    <string name="calibration_result_driving">بدأت السيارة بالتحرك: لم يُحفظ شيء.</string>
+    <string name="calibration_result_reset">تمت العودة إلى قيم السيارة الخاصة.</string>
+    <string name="calibration_car_area">جارٍ معايرة شاشة اللمس. استخدم الهاتف لتحريك كل زاوية صفراء إلى حافة هذه الشاشة.</string>
+    <string name="calibration_car_target">المس مركز الهدف %1$d</string>
+    <string name="calibration_car_target_retry">المس الهدف %1$d مرة أخرى</string>
+    <string name="calibration_car_verify">المس الهدف الأخضر للاحتفاظ بهذه المعايرة (%1$d ث)</string>
 </resources>

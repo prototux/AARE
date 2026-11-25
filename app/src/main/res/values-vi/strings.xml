@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Tin nhắn, chỉ đường từ Google Maps và Waze, nhạc đang phát</string>
     <string name="setup_check_audio_subtitle">Cho phép âm thanh của điện thoại truyền đến xe</string>
     <string name="setup_action_set_up">Thiết lập</string>
+    <string name="setup_old_android_title">Đang chạy trên phiên bản Android cũ hơn</string>
+    <string name="setup_old_android_message">AARE cũng chạy trên Android 6 và 7, nhưng Android 8 là nền tảng được hỗ trợ tốt hơn. Trên Android 6 và 7, thông báo kết nối không thể đặt vào kênh riêng, nên không thể tắt tiếng riêng biệt với các thông báo khác của AARE trong cài đặt hệ thống. Mọi thứ khác hoạt động như bình thường, hoặc tự động chuyển về phương thức cũ hơn.</string>
+    <string name="setup_old_android_dont_show_again">Không hiển thị lại</string>
     <string name="setup_section_connecting">Đang kết nối</string>
     <string name="setup_toggle_wireless_title">Không dây</string>
     <string name="setup_toggle_wireless_subtitle">Kết nối với xe đã ghép đôi qua Wi-Fi khi xe vào phạm vi Bluetooth</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Định tuyến âm thanh hệ thống (giống Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, nhạc và điều hướng tách riêng (giống Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku hoặc root</string>
+    <string name="audio_method_root_policy">Root, nhạc và điều hướng tách riêng</string>
     <string name="audio_method_playback_capture">Quyền ghi màn hình</string>
     <string name="audio_policy_not_ready">Giống Android Auto: nhạc và giọng điều hướng tách riêng, loa điện thoại tắt. Cần điện thoại đã root: cài AARE như ứng dụng hệ thống bằng module Magisk (xem README).</string>
     <string name="audio_shizuku_ready">Đã sẵn sàng. Mọi âm thanh điện thoại phát ra đều truyền đến xe, kể cả giọng điều hướng; điện thoại vẫn im lặng.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Trang chủ</string>
     <string name="browser_address_hint">Tìm kiếm hoặc nhập địa chỉ web</string>
     <string name="assistant_links_title">Liên kết từ trợ lý</string>
+    <string name="assistant_stop">Dừng trợ lý</string>
+    <string name="assistant_stop_style_title">Cách dừng trợ lý</string>
+    <string name="assistant_stop_style_voice_button">Nút giọng nói chuyển thành Dừng</string>
+    <string name="assistant_stop_style_red_restart">Nút dừng màu đỏ, nút giọng nói hỏi lại</string>
+    <string name="assistant_stop_style_red_stop">Nút dừng màu đỏ, nút giọng nói cũng dừng</string>
     <string name="assistant_links_subtitle">Cho phép các liên kết aare:// trong câu trả lời của trợ lý đã chọn điều khiển nhạc, hoặc đề xuất điều hướng, mở ứng dụng hay gọi điện trên màn hình xe. Liên kết từ các ứng dụng khác và từ trang web sẽ bị bỏ qua.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Dữ liệu xe</string>
@@ -571,6 +580,26 @@
     <string name="about_oss_libraries_title">Thư viện</string>
     <string name="about_oss_protocol_title">Định nghĩa giao thức</string>
 
+    <string name="obd_adapter_title">Đọc bộ chuyển đổi OBD2</string>
+    <string name="obd_adapter_subtitle">Bộ chuyển đổi ELM327 ghép nối qua Bluetooth, được đọc khi xe đang kết nối: dữ liệu động cơ mà xe không gửi cho AARE. Chỉ đọc: AARE không bao giờ ghi vào xe.</string>
+    <string name="obd_simulated_title">Bộ chuyển đổi OBD2 mô phỏng (gỡ lỗi)</string>
+    <string name="obd_simulated_subtitle">Một chiếc xe mô phỏng thay cho bộ chuyển đổi thật, để thử trang này</string>
+    <string name="obd_section">Bộ chuyển đổi OBD2</string>
+    <string name="obd_status_off">Tắt</string>
+    <string name="obd_status_searching">Đang tìm bộ chuyển đổi đã ghép nối (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: xe không phản hồi (đã tắt máy?)</string>
+    <string name="obd_status_gave_up">Không tìm thấy bộ chuyển đổi: hãy ghép nối trong cài đặt Bluetooth của điện thoại</string>
+    <string name="obd_rpm">Vòng tua</string>
+    <string name="obd_speed">Tốc độ</string>
+    <string name="obd_coolant">Nước làm mát</string>
+    <string name="obd_intake_air">Khí nạp</string>
+    <string name="obd_outside">Không khí bên ngoài</string>
+    <string name="obd_boost">Áp suất tăng áp</string>
+    <string name="obd_load">Tải động cơ</string>
+    <string name="obd_battery">Ắc quy</string>
+    <string name="obd_fuel">Nhiên liệu</string>
+    <string name="obd_ethanol">Ethanol</string>
     <string name="vehicles_section_title">Ghi đè theo từng xe</string>
     <string name="vehicles_hint">Chỉnh mật độ màn hình hoặc lề vùng hiển thị cho một xe cụ thể, không cần bản dựng mới. Sửa vehicles.json bằng trình quản lý file, khớp xe theo hãng/dòng xe/tên.</string>
     <string name="vehicles_rule_count">Đã tải %1$d quy tắc</string>
@@ -630,6 +659,13 @@
     <string name="update_available_title">Có cập nhật mới — %1$s</string>
     <string name="update_available_subtitle">Bạn đang dùng %1$s. Nhấn để xem bản phát hành.</string>
     <string name="setup_log_save">Lưu</string>
+    <string name="setup_section_developer_log">Nhật ký nhà phát triển</string>
+    <string name="setup_toggle_dev_log_title">Chế độ nhà phát triển</string>
+    <string name="setup_toggle_dev_log_subtitle">Ghi mọi thứ AARE ghi nhật ký vào các tệp văn bản trong %1$s (tối đa 50 MB). Tắt chế độ này sẽ xóa các tệp: hãy lưu chúng trước.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Ẩn dữ liệu cá nhân</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Che các địa chỉ, tên mạng và thiết bị cùng các dữ liệu cá nhân khác mà nó nhận ra. Hãy đọc tệp trước khi chia sẻ.</string>
+    <string name="setup_dev_log_save">Lưu nhật ký nhà phát triển</string>
+    <string name="setup_dev_log_empty">Chưa có nhật ký nhà phát triển</string>
     <string name="setup_toggle_verbose_log_title">Nhật ký giao thức chi tiết</string>
     <string name="setup_toggle_verbose_log_subtitle">Ghi lại toàn bộ dấu vết giao thức của màn hình xe vào nhật ký này, để đính kèm vào báo cáo lỗi. Ghi rất nhiều; nếu không cần thì nên để tắt.</string>
     <string name="setup_section_backup">Sao lưu cài đặt</string>
@@ -841,4 +877,38 @@
 
     <string name="setup_toggle_auto_pair_title">Tự động ghép đôi Bluetooth của xe</string>
     <string name="setup_toggle_auto_pair_subtitle">Đối với các cuộc gọi: khi một xe mà điện thoại chưa ghép đôi yêu cầu ghép đôi qua Android Auto, AARE sẽ ghép đôi với xe đó qua Shizuku thay cho hộp thoại của Android, nếu mã khớp với mã xe đã gửi. Không bao giờ ghép với thiết bị khác. Cần Shizuku đang chạy và cho phép AARE.</string>
+
+    <string name="calibration_title">Hiệu chỉnh màn hình cảm ứng</string>
+    <string name="calibration_intro">Nếu các lần chạm rơi sai chỗ trên màn hình xe, hãy đo màn hình cảm ứng của xe này: bạn đặt vùng hiển thị từ điện thoại, rồi chạm vào 4 mục tiêu trên màn hình xe. Hãy làm khi xe đang đỗ.</string>
+    <string name="calibration_not_connected">Kết nối với xe để hiệu chỉnh màn hình cảm ứng của xe.</string>
+    <string name="calibration_saved_for">Đã hiệu chỉnh: %1$s</string>
+    <string name="calibration_using_saved">Xe này dùng một bản hiệu chỉnh đã lưu.</string>
+    <string name="calibration_driving">Hãy dừng xe để hiệu chỉnh.</string>
+    <string name="calibration_start">Bắt đầu hiệu chỉnh</string>
+    <string name="calibration_reset">Đặt lại về giá trị của xe</string>
+    <string name="calibration_forget">Quên</string>
+    <string name="calibration_area_help">Bước 1/3. Trên màn hình xe, một chữ L màu vàng đánh dấu mỗi góc của vùng mà AARE vẽ. Di chuyển từng cạnh cho đến khi chữ L của nó nằm ngay sát mép màn hình và hiện đầy đủ.</string>
+    <string name="calibration_area_value">%1$s: %2$d px</string>
+    <string name="calibration_edge_left">Trái</string>
+    <string name="calibration_edge_top">Trên</string>
+    <string name="calibration_edge_right">Phải</string>
+    <string name="calibration_edge_bottom">Dưới</string>
+    <string name="calibration_area_car_values">Giá trị của xe</string>
+    <string name="calibration_next">Tiếp</string>
+    <string name="calibration_cancel">Hủy</string>
+    <string name="calibration_target_help">Bước 2/3. Trên màn hình xe, hãy chạm vào tâm của mục tiêu %1$d.</string>
+    <string name="calibration_target_retry_help">Bước 2/3. Lần chạm đó không khớp với các lần khác: hãy chạm lại mục tiêu %1$d.</string>
+    <string name="calibration_verify_help">Bước 3/3. Chạm vào mục tiêu màu xanh ở giữa màn hình xe để giữ bản hiệu chỉnh (còn %1$d giây). Nếu không, sẽ không có gì thay đổi.</string>
+    <string name="calibration_result_saved">Đã lưu bản hiệu chỉnh cho xe này.</string>
+    <string name="calibration_result_missed">Lần chạm kiểm tra đã trượt mục tiêu: không có gì được lưu. Hãy thử lại, chạm vào tâm của từng mục tiêu.</string>
+    <string name="calibration_result_timeout">Không có lần chạm kiểm tra kịp thời: không có gì được lưu.</string>
+    <string name="calibration_result_cancelled">Đã hủy hiệu chỉnh: không có gì được lưu.</string>
+    <string name="calibration_result_no_spread">4 lần chạm đến cùng một chỗ hoặc trên một đường thẳng: có thể xe không báo vị trí màn hình được chạm. Không có gì được lưu; nhật ký kết nối có chi tiết.</string>
+    <string name="calibration_result_interrupted">Xe đã thay đổi hoặc khởi động lại màn hình trong khi hiệu chỉnh: không có gì được lưu. Hãy bắt đầu lại.</string>
+    <string name="calibration_result_driving">Xe đã bắt đầu di chuyển: không có gì được lưu.</string>
+    <string name="calibration_result_reset">Đã trở về giá trị riêng của xe.</string>
+    <string name="calibration_car_area">Đang hiệu chỉnh màn hình cảm ứng. Dùng điện thoại để đưa từng góc màu vàng tới mép màn hình này.</string>
+    <string name="calibration_car_target">Chạm vào tâm của mục tiêu %1$d</string>
+    <string name="calibration_car_target_retry">Chạm lại mục tiêu %1$d</string>
+    <string name="calibration_car_verify">Chạm vào mục tiêu màu xanh để giữ bản hiệu chỉnh này (%1$d giây)</string>
 </resources>

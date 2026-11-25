@@ -46,6 +46,9 @@
     <string name="setup_check_notification_access_subtitle">消息、Google Maps 与 Waze 的导航提示、正在播放信息</string>
     <string name="setup_check_audio_subtitle">让手机的声音传到车机</string>
     <string name="setup_action_set_up">设置</string>
+    <string name="setup_old_android_title">运行在较旧版本的 Android 上</string>
+    <string name="setup_old_android_message">AARE 在 Android 6 和 7 上也能运行，但 Android 8 是支持更完善的基准版本。在 Android 6 和 7 上，连接通知无法放入专属通道，因此无法在系统设置中与 AARE 的其他通知分开静音。其余功能均照常工作，或自动回退到较旧的方式。</string>
+    <string name="setup_old_android_dont_show_again">不再显示</string>
     <string name="setup_section_connecting">连接</string>
     <string name="setup_toggle_wireless_title">无线连接</string>
     <string name="setup_toggle_wireless_subtitle">已配对车辆进入蓝牙范围时，通过 Wi-Fi 自动连接</string>
@@ -265,6 +268,7 @@
     <string name="audio_method_policy">系统音频路由（类似 Android Auto）</string>
     <string name="audio_method_shizuku_policy">Shizuku，音乐与导航分开（类似 Android Auto）</string>
     <string name="audio_method_shizuku">Shizuku 或 root</string>
+    <string name="audio_method_root_policy">Root，音乐与导航分开</string>
     <string name="audio_method_playback_capture">屏幕录制权限</string>
     <string name="audio_policy_not_ready">效果类似 Android Auto：音乐与导航语音分开，手机扬声器关闭。需要已获取 root 权限的手机：通过 Magisk 模块将 AARE 安装为系统应用（详见 README）。</string>
     <string name="audio_shizuku_ready">已就绪。手机播放的所有声音（包括导航语音）都会传到车机，手机保持静音。</string>
@@ -476,6 +480,11 @@
     <string name="browser_home">主页</string>
     <string name="browser_address_hint">搜索或输入网址</string>
     <string name="assistant_links_title">来自助手的链接</string>
+    <string name="assistant_stop">停止助手</string>
+    <string name="assistant_stop_style_title">停止助手的方式</string>
+    <string name="assistant_stop_style_voice_button">语音按钮会变为停止</string>
+    <string name="assistant_stop_style_red_restart">红色停止按钮，语音按钮会再次询问</string>
+    <string name="assistant_stop_style_red_stop">红色停止按钮，语音按钮也会停止</string>
     <string name="assistant_links_subtitle">允许所选助手回复中的 aare:// 链接控制音乐，或在车机屏幕上提议导航、打开应用或拨打电话。来自其他应用和网页的链接会被忽略。</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">车辆数据</string>
@@ -555,6 +564,26 @@
     <string name="about_oss_libraries_title">库</string>
     <string name="about_oss_protocol_title">协议定义</string>
 
+    <string name="obd_adapter_title">读取 OBD2 适配器</string>
+    <string name="obd_adapter_subtitle">通过蓝牙配对的 ELM327 适配器，在汽车连接时读取：汽车不会发送给 AARE 的发动机数据。只读：AARE 从不向汽车写入任何内容。</string>
+    <string name="obd_simulated_title">模拟 OBD2 适配器（调试）</string>
+    <string name="obd_simulated_subtitle">用模拟汽车代替真实适配器，以试用此页面</string>
+    <string name="obd_section">OBD2 适配器</string>
+    <string name="obd_status_off">关闭</string>
+    <string name="obd_status_searching">正在查找已配对的适配器（%1$s）</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s：汽车没有响应（是否已熄火？）</string>
+    <string name="obd_status_gave_up">未找到适配器：请在手机的蓝牙设置中配对一个</string>
+    <string name="obd_rpm">转速</string>
+    <string name="obd_speed">车速</string>
+    <string name="obd_coolant">冷却液</string>
+    <string name="obd_intake_air">进气</string>
+    <string name="obd_outside">车外空气</string>
+    <string name="obd_boost">增压压力</string>
+    <string name="obd_load">发动机负荷</string>
+    <string name="obd_battery">蓄电池</string>
+    <string name="obd_fuel">燃油</string>
+    <string name="obd_ethanol">乙醇</string>
     <string name="vehicles_section_title">车辆覆盖设置</string>
     <string name="vehicles_hint">无需重新构建应用，即可调整特定车辆的屏幕密度或可视区域边距。使用文件管理器编辑 vehicles.json，按品牌/型号/名称匹配车辆。</string>
     <string name="vehicles_rule_count">已加载 %1$d 条规则</string>
@@ -614,6 +643,13 @@
     <string name="update_available_title">有可用更新 — %1$s</string>
     <string name="update_available_subtitle">当前版本为 %1$s。点按查看该版本。</string>
     <string name="setup_log_save">保存</string>
+    <string name="setup_section_developer_log">开发者日志</string>
+    <string name="setup_toggle_dev_log_title">开发者模式</string>
+    <string name="setup_toggle_dev_log_subtitle">将 AARE 记录的所有内容写入 %1$s 中的文本文件（最多 50 MB）。关闭后这些文件会被删除：请先保存。</string>
+    <string name="setup_toggle_dev_log_privacy_title">隐藏个人数据</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">遮盖其识别出的地址、网络和设备名称以及其他个人数据。分享前请先查看该文件。</string>
+    <string name="setup_dev_log_save">保存开发者日志</string>
+    <string name="setup_dev_log_empty">暂无开发者日志</string>
     <string name="setup_toggle_verbose_log_title">详细协议日志</string>
     <string name="setup_toggle_verbose_log_subtitle">在此日志中记录完整的车机协议跟踪，用于附加到错误报告。会产生大量日志；平时请保持关闭。</string>
     <string name="setup_section_backup">设置备份</string>
@@ -825,4 +861,38 @@
 
     <string name="setup_toggle_auto_pair_title">自动配对车辆的蓝牙</string>
     <string name="setup_toggle_auto_pair_subtitle">用于通话：当手机尚未配对的车辆通过 Android Auto 请求配对时，若配对码与车辆发送的一致，AARE 会通过 Shizuku 与该车辆配对，而不弹出 Android 的配对对话框。绝不会用于其他任何设备。需要 Shizuku 正在运行并允许 AARE。</string>
+
+    <string name="calibration_title">触摸屏校准</string>
+    <string name="calibration_intro">如果在车机屏幕上的触摸落在错误的位置，请测量这辆车的触摸屏：先在手机上设置可见区域，再触摸车机屏幕上的 4 个目标。请在停车时操作。</string>
+    <string name="calibration_not_connected">连接到车辆后才能校准其触摸屏。</string>
+    <string name="calibration_saved_for">已校准：%1$s</string>
+    <string name="calibration_using_saved">这辆车正在使用已保存的校准。</string>
+    <string name="calibration_driving">请停车后再校准。</string>
+    <string name="calibration_start">开始校准</string>
+    <string name="calibration_reset">恢复为车辆的值</string>
+    <string name="calibration_forget">删除</string>
+    <string name="calibration_area_help">第 1 步，共 3 步。车机屏幕上的黄色 L 标出 AARE 绘制区域的每个角。移动每条边，直到其 L 正好位于屏幕边缘且完全可见。</string>
+    <string name="calibration_area_value">%1$s：%2$d 像素</string>
+    <string name="calibration_edge_left">左</string>
+    <string name="calibration_edge_top">上</string>
+    <string name="calibration_edge_right">右</string>
+    <string name="calibration_edge_bottom">下</string>
+    <string name="calibration_area_car_values">车辆的值</string>
+    <string name="calibration_next">下一步</string>
+    <string name="calibration_cancel">取消</string>
+    <string name="calibration_target_help">第 2 步，共 3 步。在车机屏幕上触摸目标 %1$d 的中心。</string>
+    <string name="calibration_target_retry_help">第 2 步，共 3 步。这次触摸与其他触摸不一致：请再次触摸目标 %1$d。</string>
+    <string name="calibration_verify_help">第 3 步，共 3 步。触摸车机屏幕中央的绿色目标以保留校准（剩余 %1$d 秒）。否则不会有任何更改。</string>
+    <string name="calibration_result_saved">已为这辆车保存校准。</string>
+    <string name="calibration_result_missed">检查触摸没有命中目标：未保存任何内容。请重试，并触摸每个目标的中心。</string>
+    <string name="calibration_result_timeout">未及时进行检查触摸：未保存任何内容。</string>
+    <string name="calibration_result_cancelled">已取消校准：未保存任何内容。</string>
+    <string name="calibration_result_no_spread">4 次触摸落在同一位置或同一条线上：车辆可能没有报告屏幕被触摸的位置。未保存任何内容；详情见连接日志。</string>
+    <string name="calibration_result_interrupted">校准期间车辆更改或重新启动了屏幕：未保存任何内容。请重新开始。</string>
+    <string name="calibration_result_driving">车辆已开始行驶：未保存任何内容。</string>
+    <string name="calibration_result_reset">已恢复为车辆自身的值。</string>
+    <string name="calibration_car_area">正在校准触摸屏。请用手机将每个黄色角移动到此屏幕的边缘。</string>
+    <string name="calibration_car_target">触摸目标 %1$d 的中心</string>
+    <string name="calibration_car_target_retry">再次触摸目标 %1$d</string>
+    <string name="calibration_car_verify">触摸绿色目标以保留此校准（%1$d 秒）</string>
 </resources>

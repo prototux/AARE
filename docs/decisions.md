@@ -489,6 +489,33 @@ car's mic closes. See `audio/PhoneAppsMic.kt`, `CarMicForApps.kt`, `ShellMicInje
 - No voice-session message to the car for phone apps (car apps send one): it announces an assistant
   session, which head units may answer with their own UI or by lowering their sound; a voice note
   in a messenger doesn't call for that. To revisit if a car only sends its mic during one.
+## Reply by voice, opt-in
+
+The messages screen answers with the car keyboard only when parked. *Reply by voice* (off by
+default) adds a button that dictates the answer, while driving too, as Android Auto does:
+
+- Listening uses the phone's own speech recognizer (`SpeechRecognizer`, the one voice typing
+  uses), so AARE handles no microphone for it: with *Car microphone for phone apps* on
+  (`CarMicForApps`) the recognizer hears the car like any app, otherwise the phone's mic. No new
+  permission (RECORD_AUDIO is already asked for in setup) and no new connection.
+- Nothing is ever sent by itself: what was heard is read back ("…, send it to Anna?") and sent
+  only on a spoken "yes" or *Send*. The answer is listened for once the read-back is over (so it
+  doesn't hear itself); a "no" anywhere cancels and wins over a "yes", so "no, don't send it"
+  never sends; anything else, or silence, leaves it to the buttons. The words are strings
+  (`msg_voice_reply_yes_words` / `_no_words`, comma-separated) so each language gets its own,
+  and the English ones always count. *Again* dictates anew, *Cancel* or back drops it. Late
+  recognizer callbacks can't change a reply waiting for its answer, and a reply is sent once
+  (`VoiceReplyStep`, unit-tested).
+- While driving the dictated text isn't shown, like messages: it is read aloud instead.
+- While listening AARE holds transient exclusive focus with the assistant usage, so the music
+  pauses and the car goes back to it; the read-back ducks it like a message read aloud. A
+  recognizer that neither answers nor fails is given up after 15 s, so the music never stays
+  paused. Before listening AARE stops its own voice (*Again* during the read-back), so the
+  recognizer can't transcribe it, least of all through the car's microphone.
+- A weak signal (tunnels, driving), a server error or a busy recognizer offers *Again*; only no
+  recognizer or no permission is final.
+- It sends through the same reply action as the keyboard reply (`CarNotificationListener.reply`).
+
 ## Car apps' own colours
 
 A Car App Library app can declare a car theme (`androidx.car.app.theme` meta-data on its service,
@@ -562,6 +589,66 @@ setPin when AARE's own setPin was refused. The helper can do nothing else.
   not aborted) and is the fallback for every failure.
 - On Android 10 and 11 the option does nothing (AARE uses Shizuku only on 12+), and the log says
   that is why.
+
+## Android 6 and 7 supported (minSdk 23)
+
+Maintainer's decision: lower `minSdk` from 26 (Android 8) to 23 (Android 6), so AARE installs on
+older phones too. Android 8 stays the better-supported baseline; a one-time notice on the home
+screen (`OldAndroidNotice`, MainActivity) tells Android 6 and 7 users what's limited there, with a
+"Don't show again" choice (`Settings.oldAndroidNoticeDismissed`); OK alone shows it again next
+launch. Behaviour on Android 8+ is unchanged — every fix here only adds a branch for `SDK_INT < 26`
+(or rewrites something to work identically everywhere, see below), never changes what already ran
+on 8+.
+
+What the lower `minSdk` touched:
+- **Notification channels (API 26) and `startForegroundService` (API 26).** `ProjectionService`
+  gained `ensureChannel`/`notificationBuilder` helpers: a channel (and its own `Notification.Builder`
+  overload) from Android 8, the deprecated single-argument builder with `PRIORITY_LOW` below that
+  (same look, but it can't be muted separately from AARE's other notices in system settings — the
+  one thing the notice calls out). `CertificateUpdates` and `VoipCalls` share the same helpers.
+  Starting the service now goes through `ContextCompat.startForegroundService`, which already picks
+  `startService` below Android 8.
+- **`AudioFocusRequest` (API 26).** `CarNotificationListener`'s read-aloud focus now falls back to
+  the deprecated `requestAudioFocus(listener, streamType, durationHint)`/`abandonAudioFocus` below
+  Android 8; same `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK` behaviour either way.
+- **`AdaptiveIconDrawable` (API 26).** `MediaDiscovery`'s Spotify icon fix (a black backing layer)
+  only runs from Android 8; below that Spotify's icon is used as shipped (no black backing, a
+  cosmetic difference only).
+- **`CompanionDeviceManager` (API 26).** Already gated well above the new floor (Android 13), so
+  behaviour doesn't change; `CarCompanion` only needed `@RequiresApi`/`@ChecksSdkIntAtLeast`
+  annotations so lint can see that its own `supported()` guard covers it.
+- **`java.time` (API 26), without core library desugaring (a new dependency, and the owner's call to
+  skip it).** `CalendarIcon.msUntilNextDay` and the calendar agenda (`DashboardInfo.selectAgenda`/
+  `labelAgenda`, `DashboardWidgets`) were rewritten on `java.util.Calendar`/`TimeZone` instead of
+  `ZonedDateTime`/`LocalDate`/`ZoneId`/`DayOfWeek`: a day is the epoch millis of its local midnight
+  (comparable and orderable), `Calendar.add(DAY_OF_MONTH, 1)` keeps DST handling (a 23- or 25-hour
+  day), and `AgendaDay.Later` carries a `Calendar.DAY_OF_WEEK` int instead of `java.time.DayOfWeek`.
+  This runs the same way on every supported Android version, not just below 26; the existing
+  timezone-edge-case unit tests were ported to the new types to check it. `NavigationUi`'s one
+  `ZoneOffset` (building a fixed-offset `TimeZone` for a head-unit-supplied UTC offset) became a
+  plain `SimpleTimeZone`, also unconditionally.
+
+The Xposed host-shims module (`xposed/`) stays at `minSdk 26`: unlike the app, it hooks framework
+internals that are no safer to assume down to Android 6 without testing against that framework,
+and it isn't released, so there's no user-facing reason to lower it.
+
+**Overriding Shizuku's own `minSdkVersion 24` (owner's decision).** `dev.rikka.shizuku:api`
+declares `minSdkVersion 24` in its own manifest, which the manifest merger otherwise refuses
+under `minSdk 23`; `AndroidManifest.xml`'s `<uses-sdk tools:overrideLibrary="rikka.shizuku.api" />`
+lifts that check. This is safe here because the override only removes a build-time refusal, not a
+runtime guarantee, and nothing in AARE calls into Shizuku below API 24 regardless: every call site
+is either behind an explicit `SDK_INT` check at or above Shizuku's own floor (Android 12,
+`CaptureMethods.shizukuAvailable`/`shizukuNeedsPermission`'s callers in `MainActivity`, the Shizuku
+Wi-Fi approval and Bluetooth auto-pairing paths) or behind `Shizuku.pingBinder()` finding a live
+binder — which it never can below API 24, because `ShizukuProvider` (the component that would set
+that binder) is declared `android:enabled="@bool/shizuku_provider_enabled"`, false in
+`values/bools.xml` and true only from `values-v24/bools.xml`, so it never starts with the app
+there. The `AppLauncher`/`ShellBluetooth`/`ShellWifi`/`ShellAudio`/setup-helper `UserServiceArgs`
+builders (plain object construction, not a platform call) are either behind the same checks or,
+where a caller could reach them without one (`AppLauncher`, used by the root-or-Shizuku standalone-
+apps launcher), built lazily so they're never constructed unless a Shizuku bind is actually
+attempted.
+
 ## Background location, opt-in (#329)
 
 A navigation app hosted by AARE keeps the position with the phone locked only if AARE's
@@ -603,6 +690,11 @@ Exports and imports go through an allow-list (`SettingsBackup.ALLOWED`): each se
 between phones, with the `SharedPreferences` type Settings.kt reads it with. A setting added later
 stays out until someone adds it there on purpose.
 
+Every key Settings.kt uses has to be in one of three lists: `ALLOWED`, `BLOCKED`, or
+`NOT_BACKED_UP` (this phone's or car's own state, bookkeeping, and anything personal or secret). A
+test scans Settings.kt and fails on a key in none of them. Without it, a new setting is silently
+left out of backups, and nobody notices until a phone is replaced.
+
 - An import file is not trusted. An entry with an unknown key, a blocked key or another type than
   the allow-list's is skipped (and counted in the "imported" message), never written: an Int where
   Settings calls `getBoolean` would throw `ClassCastException` on every launch, a crash loop the
@@ -610,7 +702,8 @@ stays out until someone adds it there on purpose.
 - `SettingsBackup.BLOCKED` is never exported or imported, though these are ordinary settings: the
   head unit server and its LAN, LAN-once, localhost and mirror options (network or other-app
   exposure), passenger mode (lifts the driving restrictions), root audio, standalone phone apps
-  (root/Shizuku, behind a warning) and certificate auto-update (a third-party download). Each must
+  (root/Shizuku, behind a warning) and their driving rules, the other root or Shizuku options, the
+  assistant's links and certificate auto-update (a third-party download). Each must
   be switched on by hand on the phone itself. A test checks the two lists never overlap.
 - A file carrying a blocked key (hand-edited, or from a version that exported one) leaves it
   unchanged on import, in particular `hu_server_localhost`, `standalone_apps` and
@@ -631,9 +724,9 @@ stays out until someone adds it there on purpose.
 
 ## Split screen: which app can take the second pane
 
-`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), which is how the dashboard's map card and an app's full screen already share one connection safely — one view at a time. Running two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) at once is a bigger change than this feature needs, and nothing in the codebase exercises it today.
+`CarAppConnection.surfaceAvailable` only ever has one surface owner per connection (an onSurfaceDestroyed before a new onSurfaceAvailable), and an app is never in both panes, so two *different* hosted Car App Library apps (two `CarAppConnection`s, two bound services, two surfaces) run side by side without sharing anything.
 
-So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) only ever puts a built-in or non-hosted screen in the second pane (media, phone, messages, notifications, settings, car data, the browser — `canOpenBeside`): all already run beside the map on the dashboard today without their own connection. A navigation, templated or assistant app, the phone mirror and a launched phone app stay full screen only. The primary pane is unrestricted (today's one-app slot).
+So split screen (`ui/car/CarSplit.kt`, `CarUiState.secondaryAppId`) puts built-in screens and hosted car apps in the second pane (`canOpenBeside`). The phone mirror and a launched phone app stay full screen only. A car app in the second pane gets Back like any other; when it finishes, the other pane's app is left alone on screen (`leftAlone`). The primary pane is unrestricted (today's one-app slot).
 
 Opened by a long-press on a rail app icon ("open beside"), not the launcher grid: the launcher is one screen away from the dashboard, not reachable without leaving the app that's already open, while the rail stays on screen the whole time.
 
@@ -664,3 +757,267 @@ targets and the dashboard settings' card rows. Proposed by @JVKeller in #320; ap
 - **Deferred:** `Modifier.carAdjustable(onStep)`, for a value a gesture changes rather than a tap
   (a seek bar, a drag-to-resize handle) — built when a real case needs it, per the issue. Until
   then those stay allowlisted.
+- **`Modifier.carAdjustable(shape, vertical, onStep)`** (`ui/car/CarFocus.kt`), built for the split
+  screen divider, its first real case. Select (knob press, D-pad centre) starts adjusting; then
+  each knob detent or D-pad press along the control steps the value by one, and select again (or a
+  D-pad press across it) stops. A mode rather than always-on, because the knob's turn and the
+  D-pad also move the focus: a control that always took them would trap the focus on it. The
+  divider steps from rest point to rest point (`stepSplitRatio`) through the same commit as a drag,
+  so stepping past two thirds closes that pane like dragging to the edge. The scan accepts a drag
+  detector with `.carAdjustable(` in the lines just before it, so the divider left the allowlist.
+
+## Stopping the assistant: the voice button, or a red stop
+
+*Stopping the assistant* (Voice assistant settings) picks how the driver stops it, the steering
+wheel's voice key included:
+- **The voice button turns into Stop** (default): while the assistant is on (listening, or its bar
+  or car-screen view showing), the voice button is red with a stop icon, and a press stops it. The
+  bar keeps a plain close button that stops it too.
+- **Red stop button, the voice button asks again**: a big red stop on the assistant bar; the voice
+  button starts a new request, as before 1.6.0.
+- **Red stop button, the voice button stops too**: the red stop, and a second press stops as well.
+Stopping closes the assistant opened on the car screen, or closes the bar and takes its app's
+microphone away (told through its stop-recording callback), or makes an assistant app open full
+screen stop listening. An assistant that only runs on the phone can't be stopped from the car, so a
+press still opens it.
+
+Stopping the assistant bar (its big red stop button, the back key, or the voice button again) sends
+back to the assistant first, while its app is still started (hiding the bar stops it): Lapin takes
+back as "stop" and ends listening, thinking or speaking. The car's microphone is then taken back
+too, for an app that doesn't. The bar closing by itself after an answer doesn't send back, so a
+reply still being spoken isn't cut.
+
+## Root car audio: music and navigation voice apart, through one su helper
+
+With root alone (the normal APK, no Magisk module, no Shizuku app), car audio used to be the
+phone's whole output, navigation voice mixed into the music. Now the root helper registers the
+same audio policy as the Shizuku path, so music and navigation voice go to their own car channels.
+
+- **Where the policy is registered:** in the su helper (`SuAudioMain mux`), which first drops from
+  root to the shell uid (`dropRootToShell`), then calls `ShellAudioService.openPolicy`: the very
+  code the Shizuku process runs (`startPolicy` now wraps it). Root itself would pass the
+  MODIFY_AUDIO_ROUTING check, but the policy's recorder is a remote-submix one, which needs
+  CAPTURE_AUDIO_OUTPUT on the recording uid: root doesn't hold it, the shell does.
+- **One helper, one stdout, framed** (`SuAudioWire`): music and navigation voice start at
+  different times, each with its own rate and channels (the guidance channel is often 16 kHz
+  mono), and either can stop and start again. So the helper takes commands on stdin
+  (`policy <id> <rate> <channels> <usages>`, `stop <id>`) and sends frames on stdout
+  (`[id: 1 byte][length: 4 bytes, big-endian][payload]`; id 0 is control text: `started`,
+  `failed <reason>`, `ended`). Rejected: one su process per channel (no framing, but two root
+  grants, toasts and app_process instances per connection, and the two would need their own
+  coordination for the fallback); two named pipes or unix sockets (paths or SELinux labels to get
+  right between an app and a root process, for nothing a framed pipe can't do).
+- **No stream holds up the other:** AARE's reader thread puts each stream's PCM in its own ring
+  (`PcmRing`, one second), which drops its oldest sound, in whole sample frames, rather than block.
+- **No orphan root process:** end of stdin (AARE closed it, or died) stops every stream and ends the
+  helper; so does any failed write to AARE, as before. AARE closes the helper's stdin first when
+  the last stream stops, since killing the su process alone may not reach the helper.
+- **A main Looper, prepared, not looped:** `SuAudioMain.main` calls `Looper.prepareMainLooper()`
+  first, as scrcpy's server does: the system context (`ActivityThread.systemMain`) creates a Handler
+  on the calling thread, and a bare app_process main thread has no Looper (every root session
+  failed with "Can't create handler inside thread ..."; Shizuku's process has one). It isn't
+  looped: the helper's callbacks go to its own policy HandlerThread, so the stdin loop stays on
+  the main thread with its exit paths unchanged.
+- **Fallback:** a refused policy comes back as `failed <reason>`, written to the connection log
+  ("root audio routing refused (…)"); the method is then marked failed for the session and AARE
+  uses today's whole-output capture through su (`SuSource`, unchanged), as the Shizuku policy
+  path falls back to Shizuku's whole output.
+- **Shizuku and the privileged install don't change:** the new method (`ROOT_POLICY`) comes after
+  both, and only when Shizuku isn't running.
+
+## Touchscreen calibration
+
+For head units whose touches still land in the wrong place after the automatic mapping
+(`TouchMapper`), *Car screen > Touchscreen calibration* lets the user measure the car: set the
+visible area from the phone (an L marks each corner on the car screen), touch 4 targets, then a
+centre target to confirm. The 4 raw touch-downs give a least-squares affine map from raw panel
+coordinates to the frame, which covers a wrong range or offset, swapped or mirrored axes and a
+slight tilt.
+
+Design choices:
+- **The phone drives every step.** The car's touches can't be trusted before calibrating, so from
+  the visible-area step on they go to the tool only, never to the car UI hidden under it.
+- **Parked only.** It can't be started while the driving restrictions are on, and a run in progress
+  ends with nothing saved when they come on (`CarRuntime.onDrivingRestricted`).
+- **Nothing is kept without a confirming touch.** The new map must put the centre tap on the
+  centre target within 15 s; a miss, a timeout, a cancel or a video restart keeps the mapping in use
+  before. A tap that doesn't fit the other 3 is asked again.
+- **Saved per head unit.** In `KnownHeadUnits`, by the head unit's key (`carKey()`, like its "Car
+  quirks" choices), not its display name, which two cars can share; forgetting the car forgets it.
+  The map and the margins are fractions of the frame, not pixels, so it holds at any resolution.
+- **Part of the layout.** `layoutOf()` applies its visible area and `showLayout()` gives the map to
+  `TouchMapper`, so a UI config update from the car keeps it, and saving or resetting lays the
+  projection out again in place, with no new encoder.
+- **It wins over the automatic mapping and `vehicles.json` margins.** It is what the user measured
+  on that car; *Reset to the car's values* removes it.
+
+## Wireless: a head unit that restarts its setup while the phone dials it
+
+A wireless adapter that reset mid-drive rejoined, announced a new AAP server, then, while the phone
+was still dialling it (and timing out), sent a new WifiVersionRequest over Bluetooth: it had started
+its setup over. AARE ignored it ("during the session") and spent its three TCP attempts on the old
+port, every time.
+
+- **Only before the TCP connection is up:** `WirelessBootstrap.hold` treats a new WifiVersionRequest,
+  or a WifiStartRequest for another port, as a restart only until the connector calls
+  `sessionConnected()`. From then on both are ignored, as before. A head unit that never sends a
+  second request sees no change on the wire.
+- **End the attempt, redial at once:** the bootstrap fails with `setupRestarted` ("the head unit
+  restarted its wireless setup"), the connector closes the TCP attempt under way, and
+  `ProjectionService` dials again at once (two such redials per connection), so the new attempt
+  reads the new server from a fresh handshake. Rejected: answering the new request on the same
+  RFCOMM link, which would mean running the negotiation a second time inside `hold`; a fresh
+  attempt reuses the tested path.
+- **No race with the connect:** `sessionConnected()` and the restart check share a lock; a connect
+  that completes after a restart is dropped, not used against the old setup.
+
+## Car audio overhaul: capture methods and their settings (plan)
+
+Owner's decisions, 2026-11-24. The car audio screen guesses which capture method runs (its own copy
+of the fallback order, `AudioSettings` in `ui/MainActivity.kt`), never shows a fallback or a failure,
+puts root and Shizuku in one row, and counts root only after a tap on that row (`root_audio`), a flag
+the app launcher reads too (#396). Reports (#128, #159, #325) show users can't tell which method runs,
+or why another doesn't.
+
+**Methods, in the automatic order.** Names say how each works; what the user gets is shown apart.
+1. *Audio routing (root)*: the audio policy, registered by the root helper.
+2. *Audio routing (Shizuku)*: the same policy, registered by the Shizuku helper.
+3. *Output recording*: the phone's whole output, through root or Shizuku, for phones that refuse the
+   policy. Navigation voice and music are mixed together, notification sounds come too.
+4. *Screen capture*: the user's screen-capture authorization; music only.
+
+Root now comes before Shizuku (owner's choice): a phone with both moves from the Shizuku helper to
+the root one, to note in the release. Shizuku methods are only tried when Shizuku is installed and
+running. Nothing changes on the wire.
+
+- **The root helper hands AARE a binder**, the same `IShellAudio` the Shizuku helper offers, as
+  `LaunchMain` already does for the launcher. It replaces the stdin/stdout framing (`SuAudioWire`) of
+  "Root car audio" above; the helper still drops to the shell uid. One code path for root and
+  Shizuku, so the car microphone for phone apps works on root too. The handover must reach AARE
+  only: check it against `LaunchMain`'s. Rejected: extending the framing with a way back for the
+  microphone and its callbacks, a second protocol to keep in step with the Shizuku one.
+- **Root is one app-wide permission.** AARE looks for `su` without running it; "Root found: tap to
+  allow" runs it once; a visible switch replaces the hidden `root_audio`, and the launcher and every
+  other root user read it. Migration: `root_audio` on means allowed.
+- **Magisk module (privileged install): deprecated** in the 1.6.0 notes, removed in the next release,
+  and not shown on the new screen. Removing it breaks existing setups, so that release is 2.0.0
+  (owner).
+- **Xposed plays no part in audio**: audioserver checks the permission natively (see "Xposed
+  host-shims module").
+- **Forcing a method**: *Automatic* by default; a forced method never falls back. The selector
+  carries a warning instead of a label.
+- **The screen shows the session's state, not its own guess**: `CarSession` publishes each method's
+  result (in use, backup, failed with the reason, needs setup, not available).
+- **Refusals are remembered per phone**: which method the phone refused at the last drive. Before a
+  drive the screen says "expected" and counts it; AARE still tries that method first, in case it was
+  a one-off.
+- **Screen capture is only offered when nothing else can work**, so nobody grants a right AARE won't
+  use. If it becomes the only way during a drive, the car says to open AARE on the phone, where
+  Android's dialog appears.
+- **No links that push other apps** (no "Get Shizuku"): requirements are only stated. "Open
+  Shizuku" stays for a Shizuku that is installed but stopped.
+- **Defaults**: full volume to the car on for new installs only (existing ones keep theirs, so no one
+  gets much louder sound at the first drive after an update); the car microphone for phone apps on
+  when root or Shizuku works, where the user never set it.
+
+**The screen.** A status card: *Audio working*, *Music and navigation apart* (a neutral "partly"
+mark for output recording, red only when navigation voice is missing), *Phone speaker quiet*, then
+the active method. Below it the method selector, *Tried in this order* (names and one status word),
+*Why not the others?* (folded: requirement tags, the reason, the action), *What the methods are*
+(folded, one plain line each), then the car microphone and sound settings.
+
+**Order of work**, one PR each:
+1. Extraction, no behaviour change: one capture-method registry holding the order and each method's
+   result (today `CaptureMethods.best`, `CarSession.startAudio` and the screen each have a copy), a
+   focus controller out of `CarSession`, the hidden-API policy code shared by `AudioPolicyCapture`
+   and `ShellMicInjector`, one microphone lease for `MicRouter` and `MicTakeover`. Tests for
+   `CarAudioOut` and the order.
+2. The root helper over a binder; the car microphone for phone apps on root; root as an app-wide
+   permission (with its migration).
+3. Root before Shizuku, the published per-method state, remembered refusals, forcing.
+4. The new screen, the car's screen-capture notice and the new defaults; translations before the
+   release tag.
+5. The Magisk module removed: tools, release workflow, README.
+
+## F-Droid groundwork: no built-in certificate, an update-check switch
+
+Owner's decisions, 2026-11-24, ahead of a possible F-Droid submission (discussion #169).
+
+- **The built-in phone certificate is gone.** Release builds carried a self-signed certificate from
+  the `AARE_PHONE_CERT` / `AARE_PHONE_KEY` secrets, kept for a vendor or CA to sign one day. It was
+  never signed, head units that accept it accept the generated one too, and a secret baked into
+  the APK rules out building it from source alone (F-Droid) or reproducibly. It can come back if a
+  signed certificate ever exists. A car that last worked with it is offered the next certificate.
+- **`-Paare.updateCheck=false`** builds without the GitHub release check (`BuildConfig.UPDATE_CHECK`)
+  and without its settings section, for stores that update the app themselves. A Gradle property,
+  not a product flavour, so CI, the test commands and the release workflow stay as they are.
+- **The certificate download stays** for now: the owner will ask F-Droid whether they accept it.
+
+## F-Droid: store listing in the repository, the version in the build file
+
+Owner's decisions, 2026-11-24: AARE is ready to be submitted (the owner consents to anyone doing
+it), the certificate download stays (nothing in F-Droid's rules forbids it), and the repository
+carries what F-Droid reads. See [fdroid.md](fdroid.md).
+
+- **Store listing** under `fastlane/metadata/android/en-US/`, from the README; a changelog per
+  version code from now on.
+- **The released version lives in `app/build.gradle.kts`**, raised in each release commit: F-Droid
+  builds the tag from source and reads it there, while the release workflow passed it as
+  `-PversionName`/`-PversionCode` only (the file said 1.0.0). The workflow still passes them, and
+  now refuses a tag the file doesn't match. Rejected: computing the version from the tag in
+  F-Droid's recipe (a second formula to keep in step, in someone else's repository).
+
+## Root helpers hand their binder back behind a one-time token
+
+Owner's decision, 2026-11-24 (option A of three). A root helper (`su` + `app_process`) can't pass a
+live binder over a pipe, so it broadcasts it to AARE. That receiver has to be exported (the helper
+is another uid), and it checked nothing: any installed app could hand AARE a binder of its own
+during the connection window, and get the car screen's surface and touches (the launcher), or the
+car's microphone and the sound sent to the car (the audio helper, once it hands a binder too).
+
+- **`RootHandover`**: each start makes a random 256-bit token and writes it to the helper's stdin;
+  the helper puts it in its broadcast, and AARE drops any broadcast without it (compared in constant
+  time). Only AARE and the helper see it: not on the command line, not in the root manager's log.
+- **The helper ends with its stdin** (AARE closes it, or dies), so no root process outlives AARE;
+  killing the su process alone may not reach it.
+- Rejected: a callback through which AARE checks the helper's uid (`Binder.getCallingUid`): no
+  shared secret, but another round trip and more code at every start; a permission on the receiver:
+  depends on how each root manager runs su, which can't be tested here.
+
+The audio overhaul's step "share the policy reflection, one microphone lease" (1d) was dropped:
+`MicTakeover` (when phone apps' recordings open and close the car's microphone) and `MicRouter`
+(who shares the one car microphone) aren't duplicates, and the two policy builders share about 15
+lines of reflection that only run on a device, where no test reaches them.
+
+## Root car audio over the helper's binder
+
+Replaces the stdin/stdout framing (`SuAudioWire`, `SuAudio`, `SuSource`) of "Root car audio: music
+and navigation voice apart, through one su helper" above; the rest of it (dropping to the shell uid,
+the prepared Looper, falling back to the whole output) holds. Owner's decision for the overhaul.
+
+- **One helper, the same binder as Shizuku's:** `SuAudioMain` drops to the shell uid and serves
+  `ShellAudioService` itself, handed back through `RootHandover`. `RootAudio` and `ShellAudio` (the
+  Shizuku one) are both an `AudioHelper`, and the captures (`PolicySource`, `OutputSource`) take
+  either: root and Shizuku run the same code, so the car microphone for phone apps can use root too.
+- **Why a capture was refused** still reaches the connection log: `IShellAudio.lastFailure()`
+  (the root cause of the system's refusal), which the framing used to carry.
+- **The helper stops with the last capture** (its stdin closes) and with AARE; a capture of a helper
+  that died and was started again doesn't release the new one.
+- Rejected: extending the framing with a way back for the microphone and its callbacks, a second
+  protocol to keep in step with the Shizuku one.
+
+## The car audio page (proposal D)
+
+Built as decided in "Car audio overhaul" above, from `CaptureStatus.report()`: a status card (audio
+working, music and navigation apart, phone speaker quiet, the active method), the method selector
+under a warning, the methods in the order tried with one word each, then "Why not the others?" and
+"What the methods are", folded. The system-app method shows only where AARE is one. Screen capture's
+authorization is offered only when no other method can work.
+
+- **Forced, and refused at the last drive:** the card expects no sound (red, "none (forced)"): a forced
+  method never falls back, and it was refused last time. AARE still tries it at the next drive.
+- **Defaults** (`Settings.settleDefaults`, once, before anything else writes a setting): full volume to
+  the car on for a new install, unchanged for an update; the car microphone for phone apps on unless
+  the user turned it off.
+- **The car's notice** when only screen capture is left and it isn't authorized: open AARE on the
+  phone, where Android asks.

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The OBD2 app in the car launcher: a rev counter with a red zone on a round tile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp" android:height="96dp"
+    android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#FF2F3A46" android:pathData="M24,0a24,24 0 1 1 0,48a24,24 0 1 1 0,-48z" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.6"
+        android:strokeLineCap="round" android:pathData="M14.1,33.9A14,14 0 1 1 33.9,33.9" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFE5484D" android:strokeWidth="2.6"
+        android:strokeLineCap="round" android:pathData="M37.5,21.2A14,14 0 0 1 33.9,33.9" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="2.4"
+        android:strokeLineCap="round" android:pathData="M24,27l7,-8" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M24,27m-2.6,0a2.6,2.6 0 1 0 5.2,0a2.6,2.6 0 1 0 -5.2,0z" />
+</vector>

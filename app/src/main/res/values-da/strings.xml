@@ -48,6 +48,9 @@
     <string name="setup_check_notification_access_subtitle">Beskeder, ruteanvisninger fra Google Maps og Waze, afspilles nu</string>
     <string name="setup_check_audio_subtitle">Lad telefonens lyd nå bilen</string>
     <string name="setup_action_set_up">Konfigurer</string>
+    <string name="setup_old_android_title">Kører på en ældre Android</string>
+    <string name="setup_old_android_message">AARE kører også på Android 6 og 7, men Android 8 er den bedre understøttede basislinje. På Android 6 og 7 kan forbindelsesnotifikationer ikke placeres i deres egen kanal, så de kan ikke slås fra separat fra AAREs andre notifikationer i systemindstillingerne. Alt andet fungerer på samme måde, eller falder automatisk tilbage til en ældre metode.</string>
+    <string name="setup_old_android_dont_show_again">Vis ikke igen</string>
     <string name="setup_section_connecting">Forbinder</string>
     <string name="setup_toggle_wireless_title">Trådløst</string>
     <string name="setup_toggle_wireless_subtitle">Opretter forbindelse til tilkoblede biler via Wi-Fi, når de kommer inden for Bluetooth-rækkevidde</string>
@@ -271,6 +274,7 @@
     <string name="audio_method_policy">Systemlydstyring (som Android Auto)</string>
     <string name="audio_method_shizuku_policy">Shizuku, musik og navigation separat (som Android Auto)</string>
     <string name="audio_method_shizuku">Shizuku eller root</string>
+    <string name="audio_method_root_policy">Root, musik og navigation separat</string>
     <string name="audio_method_playback_capture">Tilladelse til skærmoptagelse</string>
     <string name="audio_policy_not_ready">Som Android Auto: musik og navigationsstemme separat, telefonhøjttaler fra. Kræver en rootet telefon: installer AARE som systemapp med Magisk-modulet (se README).</string>
     <string name="audio_shizuku_ready">Klar. Alt, hvad telefonen afspiller, går til bilen, inklusive navigationsstemme; telefonen er tavs.</string>
@@ -492,6 +496,11 @@
     <string name="browser_home">Startside</string>
     <string name="browser_address_hint">Søg eller indtast en webadresse</string>
     <string name="assistant_links_title">Links fra assistenten</string>
+    <string name="assistant_stop">Stop assistenten</string>
+    <string name="assistant_stop_style_title">Sådan stoppes assistenten</string>
+    <string name="assistant_stop_style_voice_button">Stemmeknappen bliver til Stop</string>
+    <string name="assistant_stop_style_red_restart">Rød stopknap, stemmeknappen spørger igen</string>
+    <string name="assistant_stop_style_red_stop">Rød stopknap, stemmeknappen stopper også</string>
     <string name="assistant_links_subtitle">Lad aare://-links i den valgte assistents svar styre musikken eller tilbyde at navigere, åbne en app eller ringe på bilens skærm. Links fra andre apps og fra websider ignoreres.</string>
     <!-- setup_page: car data entry -->
     <string name="setup_page_car_data_title">Bildata</string>
@@ -571,6 +580,26 @@
     <string name="about_oss_libraries_title">Biblioteker</string>
     <string name="about_oss_protocol_title">Protokoldefinitioner</string>
 
+    <string name="obd_adapter_title">Læs en OBD2-adapter</string>
+    <string name="obd_adapter_subtitle">En ELM327-adapter parret via Bluetooth, læst mens bilen er forbundet: motordata, som bilen ikke sender til AARE. Kun læsning: AARE skriver aldrig til bilen.</string>
+    <string name="obd_simulated_title">Simuleret OBD2-adapter (fejlfinding)</string>
+    <string name="obd_simulated_subtitle">En simuleret bil i stedet for en rigtig adapter, til at prøve denne side</string>
+    <string name="obd_section">OBD2-adapter</string>
+    <string name="obd_status_off">Fra</string>
+    <string name="obd_status_searching">Søger efter en parret adapter (%1$s)</string>
+    <string name="obd_status_connected">%1$s</string>
+    <string name="obd_status_no_car">%1$s: bilen svarer ikke (tændingen slået fra?)</string>
+    <string name="obd_status_gave_up">Ingen adapter fundet: par en i telefonens Bluetooth-indstillinger</string>
+    <string name="obd_rpm">Omdrejninger</string>
+    <string name="obd_speed">Hastighed</string>
+    <string name="obd_coolant">Kølervæske</string>
+    <string name="obd_intake_air">Indsugningsluft</string>
+    <string name="obd_outside">Udeluft</string>
+    <string name="obd_boost">Ladetryk</string>
+    <string name="obd_load">Motorbelastning</string>
+    <string name="obd_battery">Batteri</string>
+    <string name="obd_fuel">Brændstof</string>
+    <string name="obd_ethanol">Ethanol</string>
     <string name="vehicles_section_title">Tilpasninger pr. bil</string>
     <string name="vehicles_hint">Ret en bestemt bils tæthed eller margener for synligt område uden en ny build. Rediger vehicles.json med en filhåndtering, og match bilen efter mærke/model/navn.</string>
     <string name="vehicles_rule_count">%1$d regel(ler) indlæst</string>
@@ -631,6 +660,13 @@
     <string name="update_available_title">Opdatering tilgængelig — %1$s</string>
     <string name="update_available_subtitle">Du har %1$s. Tryk for at se udgivelsen.</string>
     <string name="setup_log_save">Gem</string>
+    <string name="setup_section_developer_log">Udviklerlog</string>
+    <string name="setup_toggle_dev_log_title">Udviklertilstand</string>
+    <string name="setup_toggle_dev_log_subtitle">Skriver alt, hvad AARE logger, til tekstfiler i %1$s (op til 50 MB). Hvis du slår den fra, slettes de: gem dem først.</string>
+    <string name="setup_toggle_dev_log_privacy_title">Skjul personlige data</string>
+    <string name="setup_toggle_dev_log_privacy_subtitle">Maskerer adresser, navne på netværk og enheder og andre personlige data, den genkender. Læs filen, før du deler den.</string>
+    <string name="setup_dev_log_save">Gem udviklerlog</string>
+    <string name="setup_dev_log_empty">Ingen udviklerlog endnu</string>
     <string name="setup_toggle_verbose_log_title">Detaljeret protokollog</string>
     <string name="setup_toggle_verbose_log_subtitle">Optag den fulde protokolsporing for bilenheden i denne log, så den kan vedhæftes en fejlrapport. Logger meget; lad den være slået fra ellers.</string>
     <string name="setup_section_backup">Sikkerhedskopi af indstillinger</string>
@@ -842,4 +878,38 @@
 
     <string name="setup_toggle_auto_pair_title">Par bilens Bluetooth automatisk</string>
     <string name="setup_toggle_auto_pair_subtitle">Til opkald: når en bil, telefonen ikke er parret med, beder om at parre via Android Auto, parrer AARE med den bil via Shizuku i stedet for Androids dialog, hvis koden matcher den, bilen sendte. Aldrig med nogen anden enhed. Kræver, at Shizuku kører og tillader AARE.</string>
+
+    <string name="calibration_title">Kalibrering af touchskærmen</string>
+    <string name="calibration_intro">Hvis tryk lander det forkerte sted på bilens skærm, kan du måle bilens touchskærm op: du indstiller det synlige område på telefonen og trykker derefter på 4 mål på bilens skærm. Gør det, mens bilen holder stille.</string>
+    <string name="calibration_not_connected">Opret forbindelse til bilen for at kalibrere dens touchskærm.</string>
+    <string name="calibration_saved_for">Kalibreret: %1$s</string>
+    <string name="calibration_using_saved">Denne bil bruger en gemt kalibrering.</string>
+    <string name="calibration_driving">Stands bilen for at kalibrere.</string>
+    <string name="calibration_start">Start kalibrering</string>
+    <string name="calibration_reset">Gendan bilens værdier</string>
+    <string name="calibration_forget">Glem</string>
+    <string name="calibration_area_help">Trin 1 af 3. På bilens skærm markerer et gult L hvert hjørne af det område, AARE tegner i. Flyt hver kant, indtil dens L sidder lige ved skærmens kant og er helt synligt.</string>
+    <string name="calibration_area_value">%1$s: %2$d px</string>
+    <string name="calibration_edge_left">Venstre</string>
+    <string name="calibration_edge_top">Top</string>
+    <string name="calibration_edge_right">Højre</string>
+    <string name="calibration_edge_bottom">Bund</string>
+    <string name="calibration_area_car_values">Bilens værdier</string>
+    <string name="calibration_next">Næste</string>
+    <string name="calibration_cancel">Annuller</string>
+    <string name="calibration_target_help">Trin 2 af 3. Tryk midt på mål %1$d på bilens skærm.</string>
+    <string name="calibration_target_retry_help">Trin 2 af 3. Det tryk passer ikke med de andre: tryk på mål %1$d igen.</string>
+    <string name="calibration_verify_help">Trin 3 af 3. Tryk på det grønne mål midt på bilens skærm for at beholde kalibreringen (%1$d s tilbage). Ellers ændres intet.</string>
+    <string name="calibration_result_saved">Kalibreringen er gemt for denne bil.</string>
+    <string name="calibration_result_missed">Kontroltrykket ramte ikke målet: intet blev gemt. Prøv igen, og tryk midt på hvert mål.</string>
+    <string name="calibration_result_timeout">Intet kontroltryk i tide: intet blev gemt.</string>
+    <string name="calibration_result_cancelled">Kalibreringen blev annulleret: intet blev gemt.</string>
+    <string name="calibration_result_no_spread">De 4 tryk kom samme sted eller på én linje: bilen rapporterer måske ikke, hvor skærmen berøres. Intet blev gemt; forbindelsesloggen har detaljerne.</string>
+    <string name="calibration_result_interrupted">Bilen ændrede eller genstartede skærmen under kalibreringen: intet blev gemt. Start forfra.</string>
+    <string name="calibration_result_driving">Bilen begyndte at køre: intet blev gemt.</string>
+    <string name="calibration_result_reset">Tilbage til bilens egne værdier.</string>
+    <string name="calibration_car_area">Touchskærmen kalibreres. Brug telefonen til at flytte hvert gult hjørne ud til kanten af denne skærm.</string>
+    <string name="calibration_car_target">Tryk midt på mål %1$d</string>
+    <string name="calibration_car_target_retry">Tryk på mål %1$d igen</string>
+    <string name="calibration_car_verify">Tryk på det grønne mål for at beholde kalibreringen (%1$d s)</string>
 </resources>

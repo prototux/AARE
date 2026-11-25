@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -56,6 +57,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -75,6 +78,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -89,12 +94,16 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarKeyboard
 import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.CarTheme
 import net.prototux.aare.ui.theme.LocalCarDimens
 import net.prototux.aare.ui.theme.LocalCarTheme
@@ -123,7 +132,7 @@ fun CarShell(
         CarLayout.CLASSIC -> { ClassicShell(state, actions, appContent, navMap, overlay, modifier); return }
         CarLayout.TASKBAR -> Unit
     }
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         BoxWithConstraints(Modifier.fillMaxSize().then(modifier)) {
             val portrait = maxHeight > maxWidth
             // The visible area, not LocalConfiguration: that is the whole codec frame, margins included.
@@ -141,7 +150,7 @@ fun CarShell(
                 }
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -198,10 +207,10 @@ internal fun ContentArea(
 // ---------------------------------------------------------------- split screen
 
 /**
- * [primary] and [secondary] side by side with a draggable divider. Only a built-in or non-hosted
- * app ([canOpenBeside]) ever reaches here as [secondary]: a Car App Library connection owns one
- * map surface at a time ([CarAppConnection][net.prototux.aare.host.CarAppConnection].surfaceAvailable),
- * so a navigation or templated app stays full screen only.
+ * [primary] and [secondary] side by side with a draggable divider, [secondary] one of the kinds
+ * [canOpenBeside] allows there. The pane touched last, or holding the knob's focus, gets Back.
+ *
+ * The divider is [carAdjustable] too: a knob or D-pad steps it from rest point to rest point.
  *
  * Dragging the divider only moves a handle drawn over the fixed layout; the panes themselves keep
  * [CarUiState.splitRatio] until the drag ends, so a hosted app's map surface resizes once (not on
@@ -231,15 +240,17 @@ private fun SplitPane(
         Row(Modifier.fillMaxSize()) {
             Box(
                 Modifier.weight(restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) },
-            ) { appContent(primary, Modifier.fillMaxSize()) }
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.PRIMARY) }
+                    .onTouched { actions.focusPane(CarPane.PRIMARY) },
+            ) { CompositionLocalProvider(LocalInSplitPane provides true) { appContent(primary, Modifier.fillMaxSize()) } }
             Spacer(Modifier.width(SPLIT_DIVIDER_WIDTH))
             Box(
                 Modifier.weight(1f - restRatio).fillMaxHeight().focusGroup()
-                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) },
+                    .onFocusChanged { if (it.hasFocus) actions.focusPane(CarPane.SECONDARY) }
+                    .onTouched { actions.focusPane(CarPane.SECONDARY) },
             ) {
-                appContent(secondary, Modifier.fillMaxSize())
-                Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
+                CompositionLocalProvider(LocalInSplitPane provides true) { appContent(secondary, Modifier.fillMaxSize()) }
+                if (hasCloseButton(secondary.kind)) Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
                     RoundIcon(Icons.Rounded.Close, stringResource(R.string.car_split_close), filled = false) { actions.closeSplit() }
                 }
             }
@@ -248,6 +259,8 @@ private fun SplitPane(
             Modifier
                 .offset { IntOffset(((totalWidth - SPLIT_DIVIDER_WIDTH) * handleRatio).roundToPx(), 0) }
                 .width(SPLIT_DIVIDER_WIDTH).fillMaxHeight()
+                // The knob path: each step moves to the next rest point, committed like a drag.
+                .carAdjustable(RoundedCornerShape(8.dp)) { step -> actions.commitSplitRatio(stepSplitRatio(restRatio, step)) }
                 .pointerInput(totalWidth) {
                     detectDragGestures(
                         onDragStart = { dragRatio = restRatio },
@@ -266,6 +279,13 @@ private fun SplitPane(
     }
 }
 
+/** Calls [onTouch] for every finger put down here, before the content gets it and without taking it. */
+private fun Modifier.onTouched(onTouch: () -> Unit): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) if (awaitPointerEvent(PointerEventPass.Initial).changes.any { it.changedToDown() }) onTouch()
+    }
+}
+
 // ---------------------------------------------------------------- rail
 
 /**
@@ -277,7 +297,8 @@ private fun SplitPane(
 private fun Rail(state: CarUiState, actions: CarActions, horizontal: Boolean, area: DpSize) {
     // The "dark bar" setting: night colors for the rail even when the rest is in day colors.
     if (state.darkBar && !state.night) {
-        CarTheme(night = true) { RailContent(state, actions, horizontal, area) }
+        // carBackdrop: a glass theme's rail is transparent, over its night backdrop here, not the day one.
+        CarTheme(night = true) { Box(Modifier.carBackdrop()) { RailContent(state, actions, horizontal, area) } }
     } else {
         RailContent(state, actions, horizontal, area)
     }
@@ -337,6 +358,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
     val railSize = if (compact) minOf(d.railWidth, d.touchTarget + 4.dp) else d.railWidth
     val outerPadding = if (compact) 10.dp else 16.dp
     val appSpacing = if (compact) 6.dp else 8.dp
+    val appGap = (state.railSpacing ?: railGapDp(compact, horizontal)).dp
     // The apps chosen on the phone (Settings.railApps), resolved against what's installed now; empty
     // (nothing chosen, or everything chosen is gone) falls back to the rail's built-in set below.
     val selfPackage = LocalContext.current.packageName
@@ -354,7 +376,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
         if (state.screen == CarScreen.Dashboard) RailButton(Icons.Rounded.Apps, stringResource(R.string.dash_menu_apps), false, touch, iconSize) { actions.openLauncher() }
         else RailButton(Icons.Rounded.Home, stringResource(R.string.dash_menu_home), false, touch, iconSize) { actions.goHome() }
     }
-    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize) { actions.assistant() } }
+    val mic: @Composable () -> Unit = { MicButton(state.listening, touch, iconSize, stop = state.voiceButtonIsStop) { actions.assistant() } }
     val bell = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
     val container = MaterialTheme.colorScheme.surfaceContainerLowest
     // One poll of the phone's status for the whole rail: its battery widget and network icons share it.
@@ -380,7 +402,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             } }
             if (state.driverOnRight) status() else driverEnd()
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appSpacing + 4.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(appGap)) {
                     apps(if (tightBar) 0 else 2, !tighterBar, true)
                 }
             }
@@ -405,7 +427,7 @@ private fun RailContent(state: CarUiState, actions: CarActions, horizontal: Bool
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Column(
                     Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(appSpacing),
+                    verticalArrangement = Arrangement.spacedBy(appGap),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) { apps(fit.recentSlots, fit.settings, fit.phone) }
             }
@@ -490,15 +512,19 @@ private fun RailApp(
 internal fun MicButton(
     listening: Boolean,
     size: Dp = LocalCarDimens.current.touchTarget, iconSize: Dp = LocalCarDimens.current.iconSize,
+    /** The assistant is on and this button stops it (Settings.assistantStopStyle): red, with a stop icon. */
+    stop: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val bg = if (listening) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-    val fg = if (listening) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val scheme = MaterialTheme.colorScheme
+    val bg = when { stop -> scheme.error; listening -> scheme.primary; else -> scheme.surfaceContainerHigh }
+    val fg = when { stop -> scheme.onError; listening -> scheme.onPrimary; else -> scheme.primary }
     Box(
         Modifier.size(size).clip(CircleShape).background(bg).carClickable(CircleShape, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
+        if (stop) Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.assistant_stop), tint = fg, modifier = Modifier.size(iconSize))
+        else Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.assistant_mic_label), tint = fg, modifier = Modifier.size(iconSize))
     }
 }
 
@@ -512,6 +538,8 @@ internal fun Dashboard(
     modifier: Modifier,
 ) {
     val gutter = LocalCarDimens.current.gutter
+    // Whether the OBD2 adapter is reading (the car card), without redrawing the dashboard on every reading.
+    val obdReading by remember { net.prototux.aare.obdapp.ObdApp.snapshot.map { it.readings != null }.distinctUntilChanged() }.collectAsState(false)
     // The map and the music always have something to show (a "where to?", "nothing playing").
     val shown: (DashCard) -> Boolean = { card ->
         when (card) {
@@ -520,6 +548,7 @@ internal fun Dashboard(
             DashCard.NOTIFICATION -> state.history.isNotEmpty()
             DashCard.WEATHER -> state.weather != null
             DashCard.HOME -> !state.home.isEmpty
+            DashCard.CAR -> obdReading
         }
     }
     // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
@@ -598,6 +627,12 @@ private fun DashSlot(
         DashCard.WEATHER -> state.weather?.let { weather -> Card(modifier) { WeatherCard(weather) } }
         DashCard.HOME -> if (!state.home.isEmpty) Card(modifier) {
             HomeCard(state.home, actions, compact, onOpen = { state.apps.firstOrNull { it.kind == CarAppKind.HOME }?.let(actions::openApp) })
+        }
+        DashCard.CAR -> {
+            val obd by net.prototux.aare.obdapp.ObdApp.snapshot.collectAsState()
+            if (obd.readings != null) Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.OBD }?.let(actions::openApp) }) {
+                net.prototux.aare.ui.car.obd.ObdDashCard(obd, compact)
+            }
         }
     }
 }
@@ -890,7 +925,8 @@ internal fun NoticeOverlay(state: CarUiState, actions: CarActions, modifier: Mod
     }
     Row(
         modifier.padding(16.dp).fillMaxWidth(0.6f).clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest).padding(16.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .carClickable(MaterialTheme.shapes.large, onClick = notice.open?.let { open -> { open(); actions.dismissNotice(notice) } }).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (notice.icon != null) {

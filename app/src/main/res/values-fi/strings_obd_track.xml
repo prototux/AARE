@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Rata</string>
+    <string name="obd_tab_lap">Kierros</string>
+    <string name="obd_tab_dyno">Dyno</string>
+    <string name="obd_track_warning">Vain radalla tai suljetulla alueella. Ei koskaan yleisellä tiellä.</string>
+    <string name="obd_g_title">G-voima (puhelin)</string>
+    <string name="obd_g_accel">Kiihd. %1$s</string>
+    <string name="obd_g_brake">Jarru %1$s</string>
+    <string name="obd_g_lateral">Sivu %1$s</string>
+    <string name="obd_g_reset">Nollaa maksimit</string>
+    <string name="obd_g_hint">Pidä puhelin tukevasti telineessä. Se oppii, missä eteenpäin on, kun kiihdytät ja jarrutat.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Napauta virittääksesi</string>
+    <string name="obd_test_stop">Viritetty: pysäytä auto</string>
+    <string name="obd_test_below">Viritetty: pysy alle %1$d km/h</string>
+    <string name="obd_test_above">Viritetty: aja yli %1$d km/h</string>
+    <string name="obd_test_ready">Valmis: kaasua</string>
+    <string name="obd_test_ready_brake">Valmis: jarruta</string>
+    <string name="obd_test_running">Mitataan…</string>
+    <string name="obd_best">Paras %1$s</string>
+    <string name="obd_lap_arm">Käynnistä kierrosajanotto</string>
+    <string name="obd_lap_disarm">Pysäytä</string>
+    <string name="obd_lap_waiting">Viritetty: lähtöviiva on siinä, missä lähdet liikkeelle</string>
+    <string name="obd_lap_last">Viimeisin</string>
+    <string name="obd_lap_best">Paras</string>
+    <string name="obd_lap_delta">Ero</string>
+    <string name="obd_lap_count">Kierrokset</string>
+    <string name="obd_lap_no_gps">Ei GPS:ää autosta</string>
+    <string name="obd_dyno_arm">Viritä</string>
+    <string name="obd_dyno_disarm">Lopeta</string>
+    <string name="obd_dyno_off">Viritä ja anna täysi kaasu 2. tai 3. vaihteella matalista kierroksista lähelle rajoitinta.</string>
+    <string name="obd_dyno_armed">Viritetty: täysi kaasu</string>
+    <string name="obd_dyno_peak">%1$.0f hv @ %2$.0f r/min</string>
+    <string name="obd_dyno_note">Teho pyörillä, arvioitu kiihtyvyydestä ja auton painosta (Asetukset). Suuntaa-antava, ei oikea dyno.</string>
+    <string name="obd_history_records">Ennätykset</string>
+    <string name="obd_history_lap">Kierros</string>
+    <string name="obd_history_dyno">Dyno</string>
+    <string name="obd_set_mass">Paino kuljettajan kanssa</string>
+</resources>

@@ -1,5 +1,10 @@
 package net.prototux.aare.ui.car
 
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -63,7 +69,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             }
         }
         item {
-            Choice(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
+            CarSelect(stringResource(R.string.setup_choice_bar), listOf(Settings.RAIL_AUTO to stringResource(R.string.setup_choice_bar_auto), Settings.RAIL_LEFT to stringResource(R.string.setup_choice_left), Settings.RAIL_RIGHT to stringResource(R.string.setup_choice_right), Settings.RAIL_BOTTOM to stringResource(R.string.setup_choice_bottom)), rail) {
                 rail = it; settings.railPosition = it
             }
         }
@@ -71,6 +77,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             StyleChoices(
                 themeId, layoutId, accent,
                 choice = { title, options, selected, onSelect -> Choice(title, options, selected, onSelect) },
+                select = { title, options, selected, onSelect -> CarSelect(title, options, selected, ::styleSwatch, onSelect) },
                 onChange = { t, l -> themeId = t; layoutId = l; settings.carThemeId = t; settings.carLayoutId = l },
                 onAccent = { accent = it; settings.carAccent = it },
             )
@@ -80,7 +87,7 @@ internal fun CarSettingsScreen(settings: Settings, modifier: Modifier) {
             RailWidgetsEditor(railWidgets, LocalCarDimens.current.touchTarget) { railWidgets = it; settings.railWidgets = it.map(RailWidget::id) }
         }
         item {
-            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            DashboardCardsEditor(cards, LocalCarDimens.current.touchTarget, available = DashCard.entries.filter { it != DashCard.CAR || settings.obdAdapter }) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
         }
         item { SwitchRow(stringResource(R.string.dash_map_big_title), mapBig) { mapBig = it; settings.dashboardMapBig = it } }
         item {
@@ -102,6 +109,37 @@ private fun Choice(title: String, options: List<Pair<String, String>>, selected:
         Spacer(Modifier.width(8.dp))
         Row(Modifier.padding(top = 10.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             options.forEach { (value, label) -> Pill(label, selected = value == selected, onClick = { onSelect(value) }) }
+        }
+    }
+}
+
+/**
+ * A long list of choices as one row with the current value; tapping it (or the knob's press) unfolds
+ * every option below, one full-size row each, and picking one folds it again. The car screen's
+ * stand-in for a drop-down: a pop-up menu is awkward with the knob, and a row of pills can't show
+ * eleven labels at arm's length.
+ */
+@Composable
+private fun CarSelect(title: String, options: List<Pair<String, String>>, selected: String, swatch: (String) -> List<Color> = { emptyList() }, onSelect: (String) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    val rowHeight = LocalCarDimens.current.touchTarget
+    Column {
+        Row(Modifier.fillMaxWidth().heightIn(min = rowHeight).carClickable(MaterialTheme.shapes.medium) { open = !open },
+            verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(options.firstOrNull { it.first == selected }?.second.orEmpty(), style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.primary)
+            }
+            Icon(if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore, null)
+        }
+        if (open) options.forEach { (value, label) ->
+            Row(Modifier.fillMaxWidth().heightIn(min = rowHeight).carClickable(MaterialTheme.shapes.medium) { onSelect(value); open = false }
+                .padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                swatch(value).takeIf { it.isNotEmpty() }?.let { Swatch(it, 32.dp); Spacer(Modifier.width(16.dp)) }
+                Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                if (value == selected) Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">Cockpit</string>
+    <string name="obd_tab_dash">Panel</string>
+    <string name="obd_tab_trip">Viaje</string>
+    <string name="obd_tab_history">Historial</string>
+    <string name="obd_tab_settings">Ajustes</string>
+    <string name="obd_simulated_badge">Adaptador simulado</string>
+    <string name="obd_waiting">Esperando el adaptador…</string>
+    <string name="obd_gear">Marcha</string>
+    <string name="obd_oil">Aceite</string>
+    <string name="obd_fuel_use">Consumo</string>
+    <string name="obd_pedal">Pedal</string>
+    <string name="obd_peak">pico %1$s</string>
+    <string name="obd_unit_kmpl">km/l</string>
+    <string name="obd_trip_distance">Distancia</string>
+    <string name="obd_trip_time">Tiempo</string>
+    <string name="obd_trip_average">Media</string>
+    <string name="obd_trip_now">Ahora</string>
+    <string name="obd_trip_range">Autonomía</string>
+    <string name="obd_trip_reset">Reiniciar viaje</string>
+    <string name="obd_trip_note">El viaje es esta conexión con el coche; pasa al Historial cuando el coche se desconecta o al reiniciar. El consumo es una estimación, salvo que el coche lo informe. Autonomía = combustible restante × media del viaje (tamaño del depósito en Ajustes).</string>
+    <string name="obd_history_recent">Recientes</string>
+    <string name="obd_history_empty">Nada todavía. Los viajes de 1 km o más se guardan aquí.</string>
+    <string name="obd_history_trip">Viaje</string>
+    <string name="obd_history_clear">Borrar historial</string>
+    <string name="obd_history_clear_confirm">Toca otra vez para borrar</string>
+    <string name="obd_set_engine">Segundo indicador</string>
+    <string name="obd_set_engine_auto">Automático</string>
+    <string name="obd_set_engine_turbo">Turbo (presión)</string>
+    <string name="obd_set_engine_na">Atmosférico (carga)</string>
+    <string name="obd_set_rpm_max">Cuentarrevoluciones hasta</string>
+    <string name="obd_set_redline">Zona roja / cambio</string>
+    <string name="obd_set_displacement">Cilindrada</string>
+    <string name="obd_set_tank">Depósito</string>
+    <string name="obd_set_fuel">Combustible</string>
+    <string name="obd_set_fuel_petrol">Gasolina</string>
+    <string name="obd_set_fuel_diesel">Diésel</string>
+    <string name="obd_set_ethanol">Etanol (sin sensor)</string>
+    <string name="obd_set_gears">Marchas aprendidas: %1$d</string>
+    <string name="obd_set_gears_forget">Olvidar</string>
+    <string name="obd_coolant_short">Agua</string>
+    <string name="obd_dash_card">Coche</string>
+    <string name="obd_set_card">Tarjeta Coche (inicio)</string>
+    <string name="obd_set_card_pick">Elegir</string>
+    <string name="obd_set_card_hint">Toca los valores en el orden que quieras, hasta %1$d. Aparecen en la tarjeta Coche.</string>
+    <string name="obd_done">Listo</string>
+    <string name="obd_card_gauge">Turbo / carga</string>
+    <string name="obd_card_now">Consumo ahora</string>
+</resources>
