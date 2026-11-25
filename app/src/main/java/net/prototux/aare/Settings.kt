@@ -311,6 +311,23 @@ class Settings(context: Context) {
         set(v) = prefs.edit { putBoolean("car_audio", v) }
 
     /**
+     * Phone media volume at 0 while the car plays a screen-capture copy of its sound (see PhoneMute).
+     * Off by default: most users capture with root or Shizuku, which don't leave the phone playing too.
+     */
+    var mutePhoneWhileCapturing: Boolean
+        get() = prefs.getBoolean("mute_phone_capturing", false)
+        set(v) = prefs.edit { putBoolean("mute_phone_capturing", v) }
+
+    /**
+     * Let the user share "A single app" when giving the screen-capture consent for car audio, so
+     * Android doesn't mute notifications as it does while the entire screen is shared. Off by default:
+     * asks for the entire screen, which the phone screen in the car needs.
+     */
+    var keepNotificationsWhileCapturing: Boolean
+        get() = prefs.getBoolean("keep_notifications_capturing", false)
+        set(v) = prefs.edit { putBoolean("keep_notifications_capturing", v) }
+
+    /**
      * Car audio at full volume: the loop back AARE records from gets full volume while it records,
      * as Android Auto sends, and the car sets the level. Off: the phone's media volume applies
      * (at its default, some 30 dB below full). Audio policy capture only. Off by default.

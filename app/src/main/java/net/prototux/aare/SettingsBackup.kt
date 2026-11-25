@@ -56,6 +56,8 @@ object SettingsBackup {
         "car_theme" to Type.STRING,
         "car_audio" to Type.BOOLEAN,
         "car_audio_full_volume" to Type.BOOLEAN,
+        "mute_phone_capturing" to Type.BOOLEAN,
+        "keep_notifications_capturing" to Type.BOOLEAN,
         "assistant_pkg" to Type.STRING,
         "assistant_stop" to Type.STRING,
         "phone_screen" to Type.BOOLEAN,

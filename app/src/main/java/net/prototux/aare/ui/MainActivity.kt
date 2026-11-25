@@ -479,7 +479,7 @@ private fun StatusCard(state: ProjectionService.State) {
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Pill(stringResource(R.string.setup_preview_car_screen), Icons.Rounded.Tv) { ctx.startActivity(Intent(ctx, CarPreviewActivity::class.java)) }
-            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.stop(ctx) }
+            if (state.connected) Pill(stringResource(R.string.setup_disconnect), null) { ProjectionService.disconnect(ctx) }
         }
     }
 }
