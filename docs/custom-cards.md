@@ -6,8 +6,9 @@ JSON file, like a smartwatch face: a canvas and the layers drawn on it.
 
 ## Making one
 
-1. Write the card on a computer, in any text editor: start from the example below, or from one of
-   AARE's own clocks, in [`app/src/main/assets/faces`](../app/src/main/assets/faces).
+1. Draw the card on a computer with the [card editor](../tools/card-editor/README.md), a web page; or
+   write it in any text editor, starting from the example below or from one of AARE's own clocks, in
+   [`app/src/main/assets/faces`](../app/src/main/assets/faces).
 2. Copy the file to the phone (cable, e-mail, cloud…).
 3. In AARE, *Car screen > Clock and custom cards > Import cards*. The card is added to the dashboard;
    order or hide it under *Car screen > Dashboard*, like the others. A file that isn't right is
@@ -193,4 +194,5 @@ position); one with an event reads the calendar, if AARE has that permission.
 ## For developers
 
 The format is read by `faces/FaceSpec.kt` and drawn by `ui/car/FaceView.kt`; the bundled clocks are
-`app/src/main/assets/faces`.
+`app/src/main/assets/faces`. The card editor draws cards itself, so what changes in the format changes
+in `tools/card-editor/template.html` too.
