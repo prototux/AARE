@@ -115,6 +115,8 @@ class HeadUnitSimulator(
     private val moreVideoConfigs: List<Config.Status> = emptyList(),
     /** The video configuration's UI config, if any (insets, margins, theme). */
     private val videoUiConfig: UiConfig? = null,
+    /** Send the service discovery response in the clear after TLS, like an older Sony XAV (#418). */
+    private val plaintextDiscovery: Boolean = false,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -273,7 +275,8 @@ class HeadUnitSimulator(
             }
             ControlMsg.SERVICE_DISCOVERY_REQUEST -> {
                 phoneRequest = ServiceDiscoveryRequest.parseFrom(m.bodyBytes())
-                send(0, ControlMsg.SERVICE_DISCOVERY_RESPONSE, discoveryResponse())
+                if (plaintextDiscovery) sendPlain(0, ControlMsg.SERVICE_DISCOVERY_RESPONSE, discoveryResponse().toByteArray())
+                else send(0, ControlMsg.SERVICE_DISCOVERY_RESPONSE, discoveryResponse())
                 discoveryRequest.countDown()
             }
             ControlMsg.PING_REQUEST -> {
