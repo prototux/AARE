@@ -106,7 +106,7 @@ class SettingsBackupTest {
     @Test
     fun theRailAndScreenSettingsMove() {
         val all = mapOf<String, Any?>("rail_apps" to "phone\nmaps", "compact_rail" to true, "split_screen" to true, "calendar_agenda_count" to 3,
-            "car_key_map" to setOf("5=home"))
+            "car_key_map" to setOf("5=home"), "mute_phone_capturing" to false, "keep_notifications_capturing" to true)
         val restored = SettingsBackup.import(JSONObject(SettingsBackup.export(all).toString()))
         assertEquals(all, restored.values)
         assertTrue(restored.skipped.isEmpty())

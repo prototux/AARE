@@ -95,6 +95,7 @@ import net.prototux.aare.audio.StartSilence
 import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.audio.MicTakeover
 import net.prototux.aare.audio.PhoneAppsMic
+import net.prototux.aare.audio.PhoneMute
 import net.prototux.aare.audio.PhoneRecording
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
@@ -455,7 +456,10 @@ class CarSession(
 
     /** Turned on or off in the settings while connected: applies straight away, not at the next connection. */
     private val phoneAppsMicSetting = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == "car_mic_for_phone_apps") main.post { applyPhoneAppsMic() }
+        when (key) {
+            "car_mic_for_phone_apps" -> main.post { applyPhoneAppsMic() }
+            "mute_phone_capturing" -> main.post { updatePhoneMute() }
+        }
     }
 
     /** Starts or stops the car's mic for phone apps to match the setting (main thread). */
@@ -1156,13 +1160,44 @@ class CarSession(
             if (!settings.carAudio) return
             if (channel.streamType != AudioStreamType.AUDIO_STREAM_MEDIA && channel.streamType != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
             if (!isPrimary(channel)) return
-            main.post { startAudio(channel) }
+            main.post {
+                if (closed) return@post
+                readyAudio += channel
+                startAudio(channel)
+            }
         }
         override fun onUnderflow(channel: AudioChannel) { if (isPrimary(channel)) audioOuts[channel.streamType]?.onUnderflow() }
     }
 
     /** Capture methods that failed in this session: the next best one is used instead. */
     private val failedCapture = HashSet<CaptureMethod>()
+    /** Audio channels the car has set up (main thread): restarted when the capture consent changes. */
+    private val readyAudio = HashSet<AudioChannel>()
+    /** The method each running [CarAudioOut] uses (main thread). */
+    private val audioMethods = HashMap<AudioStreamType, CaptureMethod>()
+
+    /**
+     * The screen-capture consent was given or taken back (from [ProjectionService]). The car may
+     * have set up its audio channels before the user gave it: start, or restart, the media stream
+     * with what's best now, instead of staying silent until the next connection.
+     */
+    fun onCaptureConsentChanged() = main.post {
+        if (closed || !settings.carAudio) return@post
+        failedCapture -= CaptureMethod.PLAYBACK_CAPTURE
+        for (ch in readyAudio) {
+            if (ch.streamType != AudioStreamType.AUDIO_STREAM_MEDIA) continue
+            val method = audioMethods[ch.streamType]
+            // Better methods (root, Shizuku) don't need the consent: leave them running.
+            if (audioOuts[ch.streamType] != null && method != CaptureMethod.PLAYBACK_CAPTURE) continue
+            DiagLog.add("car audio: screen-capture consent ${if (projection() != null) "given" else "gone"}, restarting media")
+            // Stop the old stream first: with no method left, startAudio returns without replacing it.
+            audioOuts.remove(ch.streamType)?.stop()
+            audioMethods.remove(ch.streamType)
+            if (projection() == null) publishCapture(active = null)
+            startAudio(ch)
+        }
+        updatePhoneMute()
+    }
 
     /**
      * Phone audio to one car channel, with the best capture method available. Android Auto's own
@@ -1206,6 +1241,7 @@ class CarSession(
         }
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")
         audioOuts.remove(channel.streamType)?.stop()
+        audioMethods[channel.streamType] = method
         lateinit var out: CarAudioOut
         val silence = StartSilence.configured(wireless, guidance, aap.headUnitVersion?.first,
             vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
@@ -1214,7 +1250,9 @@ class CarSession(
                 // Only if it's still this stream's output: a late failure (a slow Shizuku bind
                 // giving up after teardown, or after a replacement) must not start a capture
                 // nothing would ever stop.
-                if (!audioOuts.remove(channel.streamType, out)) return@post
+                if (closed || !audioOuts.remove(channel.streamType, out)) return@post
+                audioMethods.remove(channel.streamType)
+                updatePhoneMute()
                 DiagLog.add("car audio: ${method.label} failed, trying the next method")
                 failedCapture += method
                 captureFailed(method, source.failure)
@@ -1224,12 +1262,26 @@ class CarSession(
                 if (method in CaptureOrder.FAILURE_MOVES_BOTH) {
                     audio.filter { it.streamType != channel.streamType && isPrimary(it) && audioOuts.containsKey(it.streamType) }.forEach { other ->
                         audioOuts.remove(other.streamType)?.stop()
+                        audioMethods.remove(other.streamType)
                         startAudio(other)
                     }
                 }
             }
         }, onStarted = { main.post { captureWorks(method) } })
         audioOuts[channel.streamType] = out.also { it.start() }
+        updatePhoneMute()
+    }
+
+    private val phoneMute = PhoneMute(context)
+
+    /**
+     * Screen-capture audio leaves the phone playing too: keep its media volume at 0 while the car
+     * gets the copy (the copy is taken before the volume). Main thread.
+     */
+    private fun updatePhoneMute() {
+        val copying = !closed && audioOuts[AudioStreamType.AUDIO_STREAM_MEDIA] != null &&
+            audioMethods[AudioStreamType.AUDIO_STREAM_MEDIA] == CaptureMethod.PLAYBACK_CAPTURE
+        phoneMute.set(copying && settings.mutePhoneWhileCapturing)
     }
 
     /** The car audio screen's view of this session (CaptureStatus.live), main thread. */
@@ -1425,6 +1477,8 @@ class CarSession(
         keys.clear()
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
+        readyAudio.clear(); audioMethods.clear()
+        phoneMute.set(false)
         phoneBridge?.stop(); phoneBridge = null
         btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null

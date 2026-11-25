@@ -23,6 +23,7 @@
     <string name="common_unsupported_screen">This screen isn\'t supported yet</string>
     <string name="common_loading">Loading</string>
     <string name="common_ok">OK</string>
+    <string name="common_details">Details</string>
     <string name="common_try_again">Try again</string>
     <string name="common_something_went_wrong">Something went wrong</string>
 
@@ -513,7 +514,8 @@
     <string name="audio_status_apart_mixed">Navigation voice and music are mixed together.</string>
     <string name="audio_status_apart_none">No navigation voice: music only.</string>
     <string name="audio_status_quiet">Phone speaker quiet</string>
-    <string name="audio_status_quiet_not">The phone keeps playing too.</string>
+    <string name="audio_status_quiet_muted">Phone media volume is silenced while connected; apps that opt out still play on the phone.</string>
+    <string name="audio_status_quiet_not">The phone keeps playing too (turn on Silence the phone below).</string>
     <string name="audio_status_active">Active method: %1$s</string>
     <string name="audio_status_none">none</string>
     <string name="audio_status_forced">(forced)</string>
@@ -529,7 +531,16 @@
     <string name="audio_about_recording_title">Output recording</string>
     <string name="audio_about_recording">Records everything the phone plays, as one stream, through root or Shizuku. A backup for phones that block audio routing. Directions play over the music, and notification sounds come too.</string>
     <string name="audio_about_capture_title">Screen capture</string>
-    <string name="audio_about_capture">Works on any phone once you allow it. Music only: no directions, and the phone keeps playing too.</string>
+    <string name="audio_about_capture">Works on any phone once you allow it. Music only: no directions, and the phone keeps playing unless Silence the phone is on.</string>
+    <string name="audio_playback_details_title">Screen-capture audio</string>
+    <string name="audio_playback_details">Android lets AARE copy what the phone\'s media apps play and send it to the car. No root or Shizuku needed.\n\n• Some apps don\'t allow their sound to be copied, and stay on the phone.\n\n• The copy doesn\'t stop the phone playing: Silence the phone turns its media volume down while the car plays.\n\n• Android calls this screen sharing. AARE only takes the sound. With Keep notifications on, choose \"A single app\" and any app, so notifications aren\'t muted.</string>
+    <string name="audio_toggle_mute_phone_title">Silence the phone while the car plays</string>
+    <string name="audio_toggle_mute_phone_subtitle">Screen capture copies the sound, so the phone would keep playing too: its media volume goes to 0 while connected and comes back after</string>
+    <string name="audio_toggle_keep_notifications_title">Keep notifications while capturing audio</string>
+    <string name="audio_toggle_keep_notifications_on">When Android asks, choose \"A single app\" and pick any app: the sound is the same, and notifications stay on. Choose \"Entire screen\" only for the phone screen in the car.</string>
+    <string name="audio_toggle_keep_notifications_off">Asks for the entire screen, which the phone screen in the car needs. Android mutes notifications for as long as the screen is shared.</string>
+    <string name="audio_capture_pick_any_app">Choose \"A single app\", then any app at all: AARE only takes the sound, so it doesn\'t matter which.</string>
+    <string name="audio_keep_notifications_next_time">Applies the next time you give screen capture: allow screen capture again below.</string>
     <string name="audio_sound_title">Sound</string>
     <string name="audio_state_in_use">In use</string>
     <string name="audio_state_expected">Expected</string>
@@ -656,7 +667,9 @@
 
     <!-- notif: notifications and in-car notices -->
     <string name="notif_channel_connection">Car connection</string>
+    <string name="notif_channel_waiting">Waiting for the car</string>
     <string name="notif_action_stop">Stop</string>
+    <string name="notif_action_disconnect">Disconnect</string>
     <string name="notif_action_trust">Trust</string>
     <string name="notif_action_download_cert">Download certificate</string>
     <string name="notif_action_navigate">Navigate</string>

@@ -161,6 +161,7 @@ class ProjectionService : Service() {
         media = MediaHub(this, scope)
         // No session runs yet: undo a Do Not Disturb left on by a drive that crashed, now rather than at the next drive.
         DrivingMode.recover(this)
+        net.prototux.aare.audio.PhoneMute.recover(this)
         // And the car's position left on the phone's location providers.
         PhoneLocationFeed.recover(this)
         // Likewise a Wi-Fi approval a join killed mid-way left on (it covers every AARE request).
@@ -180,6 +181,7 @@ class ProjectionService : Service() {
             ACTION_AUDIO_CONSENT -> acceptAudioConsent(intent)
             ACTION_DOWNLOAD_CERT -> downloadCertificate()
             ACTION_STOP -> { stopEverything(); return START_NOT_STICKY }
+            ACTION_DISCONNECT -> disconnect()
         }
         applyListeners()
         // Nothing to do: go away (USB attach and the Bluetooth receiver start us again when needed).
@@ -816,6 +818,8 @@ class ProjectionService : Service() {
                 projection = null
                 net.prototux.aare.mirror.PhoneMirror.release()
                 _state.update { it.copy(audioCapture = false) }
+                log("car audio: screen-capture consent stopped")
+                session?.onCaptureConsentChanged()
                 if (destroyed) return
                 updateNotification(_state.value.status)
                 // The consent was what kept an unconnected service alive.
@@ -824,6 +828,8 @@ class ProjectionService : Service() {
         }, main)
         _state.update { it.copy(audioCapture = projection != null) }
         log(if (projection != null) "car audio enabled" else "car audio not enabled")
+        // A car may already be connected, its audio channels set up without the consent.
+        session?.onCaptureConsentChanged()
         updateNotification(_state.value.status)
     }
 
@@ -881,15 +887,18 @@ class ProjectionService : Service() {
         // Screen-capture consent only lives as long as the service: say why it stays without a car.
         val shown = if (session == null && projection != null) getString(R.string.notif_keeping_consent_suffix, text) else text
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
-        val stop = PendingIntent.getService(this, 1, Intent(this, ProjectionService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE)
-        return notificationBuilder(this)
+        // Connected: Disconnect ends the drive but keeps the consent. Waiting with it: Stop releases it.
+        val connected = session != null
+        val action = if (connected) ACTION_DISCONNECT else ACTION_STOP
+        val stop = PendingIntent.getService(this, if (connected) 5 else 1, Intent(this, ProjectionService::class.java).setAction(action), PendingIntent.FLAG_IMMUTABLE)
+        return notificationBuilder(this, if (connected) CHANNEL else CHANNEL_WAITING)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(shown)
             .setStyle(Notification.BigTextStyle().bigText(shown))
             .setContentIntent(open)
             .setOngoing(true)
-            .addAction(Notification.Action.Builder(null, getString(R.string.notif_action_stop), stop).build())
+            .addAction(Notification.Action.Builder(null, getString(if (connected) R.string.notif_action_disconnect else R.string.notif_action_stop), stop).build())
             .build()
     }
 
@@ -995,6 +1004,23 @@ class ProjectionService : Service() {
     private fun idle() = session == null && usbPermissionPending == null && usbWait == null && tcpServer == null && wirelessJob?.isActive != true &&
         reconnectJob?.isActive != true && projection == null
 
+    /**
+     * Ends the car connection but keeps the service while it holds the screen-capture consent, so
+     * the next drive has car audio without asking again. Waiting costs next to nothing: no wakelock
+     * and no capture outside a session. Without the consent the service goes away as usual.
+     */
+    private fun disconnect() {
+        // No USB reconnect or wireless reconnect after this.
+        usbWait?.let(main::removeCallbacks); usbWait = null
+        usbAccessory = null
+        usbRetries = 0
+        userEnded = true
+        endReconnecting(null)
+        wirelessJob?.cancel()
+        if (session != null) log(if (projection != null) "disconnected by the user; keeping the screen-capture consent" else "disconnected by the user")
+        session?.stop()
+    }
+
     private fun stopEverything() {
         // No USB reconnect after this: the session's onEnded may come after the stop.
         usbWait?.let(main::removeCallbacks); usbWait = null
@@ -1014,6 +1040,7 @@ class ProjectionService : Service() {
     companion object {
         private const val TAG = "AareService"
         internal const val CHANNEL = "connection"
+        private const val CHANNEL_WAITING = "waiting"
         private const val NOTIFICATION_ID = 1
         // 2 = wireless re-connect, 3 = trust prompt (TrustReceiver); 4 = certificate download prompt.
         private const val CERT_DOWNLOAD_NOTIFICATION_ID = 4
@@ -1030,6 +1057,7 @@ class ProjectionService : Service() {
         const val ACTION_USB_PERMISSION = "net.prototux.aare.USB_PERMISSION"
         const val ACTION_IDLE = "net.prototux.aare.IDLE"
         const val ACTION_STOP = "net.prototux.aare.STOP"
+        const val ACTION_DISCONNECT = "net.prototux.aare.DISCONNECT"
         const val ACTION_DOWNLOAD_CERT = "net.prototux.aare.DOWNLOAD_CERT"
         const val ACTION_WIRELESS = "net.prototux.aare.WIRELESS"
         const val ACTION_PROBE_WIRELESS = "net.prototux.aare.PROBE_WIRELESS"
@@ -1104,26 +1132,35 @@ class ProjectionService : Service() {
                 .putExtra(EXTRA_RESULT_CODE, resultCode).putExtra(EXTRA_RESULT_DATA, data))
         }
 
+        /** Ends the car connection, keeping the screen-capture consent. */
+        fun disconnect(context: Context) {
+            context.startService(Intent(context, ProjectionService::class.java).setAction(ACTION_DISCONNECT))
+        }
+
         fun stop(context: Context) {
             context.startService(Intent(context, ProjectionService::class.java).setAction(ACTION_STOP))
         }
 
-        /** Ensures [CHANNEL] exists: a no-op below Android 8, which has no notification channels. */
+        /** Ensures [CHANNEL] and [CHANNEL_WAITING] exist: a no-op below Android 8, which has no notification channels. */
         internal fun ensureChannel(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.getSystemService(NotificationManager::class.java)
-                    .createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
+                val nm = context.getSystemService(NotificationManager::class.java)
+                nm.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.notif_channel_connection), NotificationManager.IMPORTANCE_LOW))
+                // Waiting between drives (holding the screen-capture consent): minimised, no status bar
+                // icon. Android still lists the service under Active apps, where it can be stopped.
+                nm.createNotificationChannel(NotificationChannel(CHANNEL_WAITING, context.getString(R.string.notif_channel_waiting), NotificationManager.IMPORTANCE_MIN)
+                    .apply { setShowBadge(false) })
             }
         }
 
         /**
-         * A builder for a [CHANNEL] notification: its own channel from Android 8, so the user can
+         * A builder for a notification on [channel]: its own channel from Android 8, so the user can
          * mute connection notices separately in system settings; the deprecated low-priority builder
          * below that, where there are no channels to split them out into.
          */
         @Suppress("DEPRECATION")
-        internal fun notificationBuilder(context: Context): Notification.Builder =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(context, CHANNEL)
+        internal fun notificationBuilder(context: Context, channel: String = CHANNEL): Notification.Builder =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(context, channel)
             else Notification.Builder(context).setPriority(Notification.PRIORITY_LOW)
     }
 }
