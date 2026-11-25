@@ -45,6 +45,9 @@ internal class LogRedactor(known: Map<String, String> = emptyMap()) {
         val AUTO_REPLY = Regex("""(driving: auto-replied to ).+$""")
         val HEAD_UNIT_NAME = Regex("""(head unit: [^\[]*\[).+(\] services: )""")
         val OVERRIDE_NAME = Regex("""(vehicles\.json override for ").*?(": )""")
+        // A web page's console, which WebView logs in the app's process: what the page printed, and where.
+        // Without a source (a message logcat cut at its size limit), the rest of the line goes.
+        val WEB_CONSOLE = Regex("""(\[[A-Z]+:CONSOLE(?:\(\d+\)|:\d+)\] )"(?:.*(", source: )\S*|.*)""")
         val URI = Regex("""\b((?:content|https?|file)://)([^/\s?#]*)(\S*)""")
         val CREDENTIALS = Regex(
             """(?i)(?<!<)\b(password|passphrase|psk|serial|instance_?id|android_id|imei|imsi)\b(?=["'=:#\-(/,\s])(["']?+\s*+[=:#\-(/,]?+\s*+["']?+)""" +
@@ -100,6 +103,7 @@ internal class LogRedactor(known: Map<String, String> = emptyMap()) {
             // First: the display name may hold text that a later rule would eat up to the end of the line.
             { s -> HEAD_UNIT_NAME.replace(s) { it.groupValues[1] + "<name>" + it.groupValues[2] } },
             { s -> OVERRIDE_NAME.replace(s) { it.groupValues[1] + "<name>" + it.groupValues[2] } },
+            { s -> WEB_CONSOLE.replace(s) { it.groupValues[1] + "\"<console>" + if (it.groupValues[2].isEmpty()) "" else "\", source: <url>" } },
             { s -> COLON_TOKEN.replace(s) { maskMacs(it.value) } },
             { s -> IPV4_MAPPED.replace(s, "<ipv6>") },
             { s ->
