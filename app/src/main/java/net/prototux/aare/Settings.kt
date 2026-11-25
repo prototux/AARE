@@ -506,6 +506,11 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("location_off_after_car", false)
         set(v) = prefs.edit { putBoolean("location_off_after_car", v) }
 
+    /** With [locationOffAfterCar]: off even when it was already on as the car connected. */
+    var locationOffAlways: Boolean
+        get() = prefs.getBoolean("location_off_always", false)
+        set(v) = prefs.edit { putBoolean("location_off_always", v) }
+
     /** While connected, the car's GPS becomes the phone's location (needs AARE as mock location app). */
     var carGpsForPhone: Boolean
         get() = prefs.getBoolean("car_gps", true)

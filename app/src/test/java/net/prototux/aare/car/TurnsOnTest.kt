@@ -26,4 +26,20 @@ class TurnsOnTest {
         assertFalse(locationSwitches(on = false, enabled = true, ours = false))
         assertFalse(locationSwitches(on = false, enabled = false, ours = true))
     }
+
+    @Test
+    fun alwaysTurnsOffTheDriversLocationToo() {
+        assertTrue(locationSwitches(on = false, enabled = true, ours = false, always = true))
+        assertFalse(locationSwitches(on = false, enabled = false, ours = false, always = true))
+    }
+
+    /**
+     * A session start decides anew: AARE's only once it turns the location on itself. Found on, or
+     * off and left alone, the driver's from then on, so a later off doesn't take it.
+     */
+    @Test
+    fun aSessionStartForgetsAnEarlierOn() {
+        assertFalse(stillOurs(on = true, ours = true))
+        assertTrue(stillOurs(on = false, ours = true)) // an off keeps what AARE turned on
+    }
 }

@@ -722,6 +722,12 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
                 Toggle(stringResource(R.string.setup_toggle_location_off_title), stringResource(R.string.setup_toggle_location_off_subtitle), locationOff) {
                     locationOff = it; settings.locationOffAfterCar = it
                 }
+                if (locationOff) {
+                    var offAlways by remember { mutableStateOf(settings.locationOffAlways) }
+                    Toggle(stringResource(R.string.setup_toggle_location_off_always_title), stringResource(R.string.setup_toggle_location_off_always_subtitle), offAlways) {
+                        offAlways = it; settings.locationOffAlways = it
+                    }
+                }
             }
             Toggle(stringResource(R.string.setup_toggle_car_gps_title), stringResource(R.string.setup_toggle_car_gps_subtitle), carGps) {
                 carGps = it; settings.carGpsForPhone = it
