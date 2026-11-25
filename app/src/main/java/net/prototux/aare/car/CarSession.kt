@@ -76,6 +76,7 @@ import net.prototux.aare.KnownHeadUnits
 import net.prototux.aare.car.calibration.CalibrationController
 import net.prototux.aare.car.calibration.TouchCalibration
 import net.prototux.aare.ui.car.CalibrationOverlay
+import net.prototux.aare.ui.car.CarFocusVisibility
 import net.prototux.aare.PinnedHeadUnits
 import net.prototux.aare.audio.AudioChannelSink
 import net.prototux.aare.audio.AudioPolicySource
@@ -986,6 +987,8 @@ class CarSession(
                 }
             }
             if (report.hasRelativeEvent()) {
+                // A knob is present: touch-only screens now get a cursor, see CursorPane.
+                main.post { if (!closed) CarFocusVisibility.rotary = true }
                 for (r in report.relativeEvent.dataList) {
                     Log.d(TAG, "input rotary: keycode=${r.keycode} delta=${r.delta}")
                 }
@@ -1423,6 +1426,7 @@ class CarSession(
         audioFocus.close()
         main.removeCallbacks(videoFocusCheck)
         keys.clear()
+        CarFocusVisibility.rotary = false // the next car may have no knob
         net.prototux.aare.notify.CarNotificationListener.sink = null
         audioOuts.values.forEach { it.stop() }; audioOuts.clear()
         phoneBridge?.stop(); phoneBridge = null

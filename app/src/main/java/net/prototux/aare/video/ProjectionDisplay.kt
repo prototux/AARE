@@ -30,6 +30,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import net.prototux.aare.ui.car.CarCursors
 import net.prototux.aare.ui.car.CarFocusVisibility
 
 /**
@@ -118,6 +119,8 @@ class ProjectionDisplay(
             decor.requestFocusFromTouch()
             if (!decor.isInTouchMode) return true
         }
+        // A touch-only screen's cursor (a knob car) takes its keys before the page under it can.
+        if (CarCursors.onKey(event)) return true
         return decor.dispatchKeyEvent(event)
     }
 

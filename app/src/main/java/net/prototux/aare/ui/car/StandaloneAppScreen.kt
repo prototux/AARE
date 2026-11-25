@@ -113,13 +113,16 @@ internal fun StandaloneAppScreen(
 
     Box(modifier.background(Color.Black)) {
         if (!driving) {
-            LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
-                start = { surface, w, h -> launcher.keyboardInCar(!runtime.ui.drivingRestricted); launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
-                onStarted = { started = it },
-                // Back from a drive: the app kept running on its display, so it gets the new
-                // surface rather than a restart (start() relaunches it, which would end a video, or
-                // the audio an "audio only" app kept playing through the drive).
-                resumeInstead = { started && (resumeAfterDrive || audioOnly) })
+            // On a car with a knob and no touch, a cursor stands in for the finger.
+            CursorPane(Modifier.fillMaxSize()) {
+                LaunchedAppSurface(launcher, packageName, runtime.densityDpi, Modifier.fillMaxSize(),
+                    start = { surface, w, h -> launcher.keyboardInCar(!runtime.ui.drivingRestricted); launcher.start(surface, w, h, runtime.densityDpi, packageName, runtime.settings.standaloneKeepScreenAwake) },
+                    onStarted = { started = it },
+                    // Back from a drive: the app kept running on its display, so it gets the new
+                    // surface rather than a restart (start() relaunches it, which would end a video, or
+                    // the audio an "audio only" app kept playing through the drive).
+                    resumeInstead = { started && (resumeAfterDrive || audioOnly) })
+            }
             // A quiet reminder that this isn't an Android Auto app.
             Text(
                 stringResource(R.string.standalone_not_native),

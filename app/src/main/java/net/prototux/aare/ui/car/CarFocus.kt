@@ -128,4 +128,11 @@ internal fun carAdjustKey(keyCode: Int, shift: Boolean, vertical: Boolean, adjus
  */
 object CarFocusVisibility {
     var keyInput by mutableStateOf(false)
+
+    /**
+     * Whether the car has a rotary knob (it sent a turn this session). Only then do touch-only
+     * screens get a cursor, see [CursorPane]: touch screens and D-pad-only units keep the plain
+     * focus traversal. Reset when the session ends, as the next car may have no knob.
+     */
+    var rotary by mutableStateOf(false)
 }

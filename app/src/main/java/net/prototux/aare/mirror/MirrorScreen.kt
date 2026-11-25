@@ -35,6 +35,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
+import net.prototux.aare.ui.car.CursorPane
 import net.prototux.aare.media.Placeholder
 import net.prototux.aare.notify.CarNotificationListener
 import net.prototux.aare.service.ProjectionService
@@ -72,46 +73,49 @@ internal fun MirrorScreen(runtime: CarRuntime, driving: Boolean, modifier: Modif
     Box(modifier.background(Color.Black)) {
         if (allowed) key(consent) {
             // A new view when the consent comes or goes, so the mirror starts as soon as it's given.
-            AndroidView(
-                factory = { ctx ->
-                    var surface: Surface? = null
-                    TextureView(ctx).apply {
-                        surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                            override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
-                                surface = Surface(st)
-                                mirroring = PhoneMirror.attach(runtime.projection(), surface!!, w, h, runtime.densityDpi)
+            // On a car with a knob and no touch, a cursor stands in for the finger.
+            CursorPane(Modifier.fillMaxSize()) {
+                AndroidView(
+                    factory = { ctx ->
+                        var surface: Surface? = null
+                        TextureView(ctx).apply {
+                            surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                                override fun onSurfaceTextureAvailable(st: SurfaceTexture, w: Int, h: Int) {
+                                    surface = Surface(st)
+                                    mirroring = PhoneMirror.attach(runtime.projection(), surface!!, w, h, runtime.densityDpi)
+                                }
+                                override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
+                                    surface?.let { mirroring = PhoneMirror.attach(runtime.projection(), it, w, h, runtime.densityDpi) }
+                                }
+                                override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean {
+                                    PhoneMirror.detach()
+                                    surface?.release(); surface = null
+                                    return true
+                                }
+                                override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
                             }
-                            override fun onSurfaceTextureSizeChanged(st: SurfaceTexture, w: Int, h: Int) {
-                                surface?.let { mirroring = PhoneMirror.attach(runtime.projection(), it, w, h, runtime.densityDpi) }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // Touches are caught above the mirror and replayed on the phone.
+                Box(Modifier.fillMaxSize().pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        val start = down.uptimeMillis
+                        val points = arrayListOf(down.position)
+                        while (true) {
+                            val c = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                            points += c.position
+                            c.consume()
+                            if (!c.pressed) {
+                                replay(context, size.width, size.height, points.map { it.x to it.y }, c.uptimeMillis - start, viewConfiguration.touchSlop)
+                                break
                             }
-                            override fun onSurfaceTextureDestroyed(st: SurfaceTexture): Boolean {
-                                PhoneMirror.detach()
-                                surface?.release(); surface = null
-                                return true
-                            }
-                            override fun onSurfaceTextureUpdated(st: SurfaceTexture) = Unit
                         }
                     }
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-            // Touches are caught above the mirror and replayed on the phone.
-            Box(Modifier.fillMaxSize().pointerInput(Unit) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    val start = down.uptimeMillis
-                    val points = arrayListOf(down.position)
-                    while (true) {
-                        val c = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
-                        points += c.position
-                        c.consume()
-                        if (!c.pressed) {
-                            replay(context, size.width, size.height, points.map { it.x to it.y }, c.uptimeMillis - start, viewConfiguration.touchSlop)
-                            break
-                        }
-                    }
-                }
-            })
+                })
+            }
         }
         when {
             locked -> Placeholder(stringResource(R.string.mirror_locked_placeholder),
