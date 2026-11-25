@@ -271,6 +271,8 @@
     <string name="setup_check_background_location_title">Navigation with the phone locked</string>
     <string name="setup_check_background_location_subtitle">Optional. When AARE starts by itself (the car\'s Bluetooth), navigation apps keep the position with the phone locked. Permissions &gt; Location &gt; Allow all the time</string>
     <string name="setup_section_video">Video</string>
+    <string name="encoder_software">Software H.264 encoder</string>
+    <string name="encoder_software_subtitle">Uses the software encoder for H.264 video. Takes effect on the next connection.</string>
     <string name="setup_toggle_60fps_title">Prefer 60 fps</string>
     <string name="setup_toggle_60fps_subtitle">Smoother when the car supports it</string>
     <string name="setup_choice_max_resolution">Maximum resolution</string>

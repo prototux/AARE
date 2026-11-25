@@ -635,6 +635,7 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
     var fps60 by remember { mutableStateOf(settings.prefer60fps) }
     var maxH by remember { mutableIntStateOf(settings.maxVideoHeight) }
     var forceH264 by remember { mutableStateOf(settings.forceH264) }
+    var softwareH264 by remember { mutableStateOf(settings.softwareH264Encoder) }
     var constantBitrate by remember { mutableStateOf(settings.constantBitrateVideo) }
     var resume by remember { mutableStateOf(settings.resumeMedia) }
     var pauseWhileRecording by remember { mutableStateOf(settings.pauseWhileRecording) }
@@ -747,6 +748,11 @@ private fun ConnectionSettings(settings: Settings, refresh: Int) {
             }
             Text(stringResource(R.string.setup_hint_lower_resolution), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Toggle(stringResource(R.string.setup_toggle_force_h264_title), stringResource(R.string.setup_toggle_force_h264_subtitle), forceH264) { forceH264 = it; settings.forceH264 = it }
+            if (forceH264) {
+                Toggle(stringResource(R.string.encoder_software), stringResource(R.string.encoder_software_subtitle), softwareH264) {
+                    softwareH264 = it; settings.softwareH264Encoder = it
+                }
+            }
             Toggle(stringResource(R.string.setup_toggle_constant_bitrate_title), stringResource(R.string.setup_toggle_constant_bitrate_subtitle), constantBitrate) {
                 constantBitrate = it; settings.constantBitrateVideo = it
             }

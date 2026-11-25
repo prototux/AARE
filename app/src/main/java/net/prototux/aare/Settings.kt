@@ -139,6 +139,10 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("force_h264", false)
         set(v) = prefs.edit { putBoolean("force_h264", v) }
 
+    var softwareH264Encoder: Boolean
+        get() = prefs.getBoolean("software_h264_encoder", false)
+        set(v) = prefs.edit { putBoolean("software_h264_encoder", v) }
+
     /**
      * Encode the car screen at a constant bitrate (VideoEncoder.constantBitrate): for head units
      * that drop the link when the whole picture changes, as with the phone screen. Off: variable.
