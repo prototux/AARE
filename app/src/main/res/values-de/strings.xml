@@ -742,6 +742,7 @@
     <string name="carapp_error_no_answer">%1$s hat nicht geantwortet. Es akzeptiert möglicherweise nur Googles Android Auto (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_api_level">%1$s benötigt Car-API-Level %2$d; dieser Host unterstützt %3$d</string>
     <string name="carapp_error_stopped">%1$s wurde beendet</string>
+    <string name="carapp_error_stopped_repeatedly">%1$s ist dreimal hintereinander abgestürzt und wird nicht mehr neu gestartet</string>
     <string name="carapp_error_google_only">%1$s akzeptiert nur Googles Android Auto. Es muss AARE erlauben (siehe die App-Liste auf dem Telefon).</string>
     <string name="carapp_error_cant_start">%1$s konnte nicht starten: %2$s</string>
     <string name="dash_card_home">Zuhause</string>
