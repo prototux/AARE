@@ -1051,7 +1051,10 @@ class CarSession(
         when (code) {
             KeyEvent.KEYCODE_HOME -> homeKey.onKey(down, key.longPress)
             KeyEvent.KEYCODE_BACK -> if (!down) back()
-            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down) runtime.assistant()
+            // Cars without Call keys over Android Auto (Mazda) send Search from the wheel's pick-up
+            // button: while a call rings it answers. During a call it does nothing: an assistant
+            // would take the microphone from the call. No call: the assistant, as before.
+            KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_ASSIST -> if (!down && !callKey()) runtime.assistant()
             KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_HEADSETHOOK -> if (!down) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PLAY -> if (!down && runtime.ui.nowPlaying?.playing != true) media.playPause()
             KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_STOP -> if (!down) { pausedForRecording = false; media.pause() }
@@ -1093,6 +1096,21 @@ class CarSession(
             CarKeyAction.OPEN_MEDIA -> runtime.ui.app(runtime.ui.activeMediaAppId)?.let(runtime.actions::openApp)
             CarKeyAction.OPEN_PHONE -> runtime.ui.app(CarRuntime.PHONE_ID)?.let(runtime.actions::openApp)
             CarKeyAction.NOTHING -> Unit
+        }
+    }
+
+    /** For the voice key: answers a ringing call; true (handled) while there is any call. */
+    private fun callKey(): Boolean {
+        val state = Calls.state(context)
+        val call = runtime.ui.call
+        return when {
+            state == android.telephony.TelephonyManager.CALL_STATE_RINGING || call?.ringing == true -> {
+                Log.i(TAG, "voice key: answering the ringing call"); runtime.actions.answerCall(); true
+            }
+            state == android.telephony.TelephonyManager.CALL_STATE_OFFHOOK || call != null -> {
+                Log.i(TAG, "voice key: ignored during a call"); true
+            }
+            else -> false
         }
     }
 
