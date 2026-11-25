@@ -7,8 +7,6 @@
 # The APK is signed with the key in these repository secrets:
 # AARE_KEYSTORE_BASE64 (base64 of the .jks file), AARE_KEYSTORE_PASSWORD, AARE_KEY_ALIAS,
 # AARE_KEY_PASSWORD. Without them it publishes a debug-signed APK instead (and says so).
-# AARE_PHONE_CERT and AARE_PHONE_KEY (PEM certificate, PEM PKCS#8 key), if set, become AARE's
-# built-in phone certificate (see app/build.gradle.kts).
 name: Release
 
 on:
@@ -26,7 +24,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: "21"
@@ -39,6 +37,17 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$(( ${MAJOR:-0} * 10000 + ${MINOR:-0} * 100 + ${PATCH:-0} ))" >> "$GITHUB_ENV"
 
+      # F-Droid builds the tag from source and reads the version from the build file, not from
+      # this workflow: a tag whose commit didn't raise it would give F-Droid the old version.
+      - name: The tag matches the build file's version
+        run: |
+          FILE_NAME=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          FILE_CODE=$(sed -n 's/^ *versionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)
+          if [ "$FILE_NAME" != "$VERSION" ] || [ "$FILE_CODE" != "$VERSION_CODE" ]; then
+            echo "::error::app/build.gradle.kts says $FILE_NAME ($FILE_CODE) but the tag is $VERSION ($VERSION_CODE): raise versionName and versionCode in the release commit"
+            exit 1
+          fi
+
       - name: Protocol and head unit tests
         run: ./gradlew --no-daemon :aap:test :headunit:test
 
@@ -49,8 +58,6 @@ jobs:
           AARE_KEYSTORE_PASSWORD: ${{ secrets.AARE_KEYSTORE_PASSWORD }}
           AARE_KEY_ALIAS: ${{ secrets.AARE_KEY_ALIAS }}
           AARE_KEY_PASSWORD: ${{ secrets.AARE_KEY_PASSWORD }}
-          AARE_PHONE_CERT: ${{ secrets.AARE_PHONE_CERT }}
-          AARE_PHONE_KEY: ${{ secrets.AARE_PHONE_KEY }}
         run: |
           export AARE_KEYSTORE="$RUNNER_TEMP/release.jks"
           echo "$KEYSTORE_BASE64" | base64 -d > "$AARE_KEYSTORE"
@@ -61,9 +68,6 @@ jobs:
 
       - name: Debug APK (no signing key in the secrets)
         if: env.HAS_KEY != 'true'
-        env:
-          AARE_PHONE_CERT: ${{ secrets.AARE_PHONE_CERT }}
-          AARE_PHONE_KEY: ${{ secrets.AARE_PHONE_KEY }}
         run: |
           echo "::warning::AARE_KEYSTORE_BASE64 is not set: publishing a debug-signed APK"
           ./gradlew --no-daemon :app:assembleDebug -PversionName="$VERSION" -PversionCode="$VERSION_CODE"

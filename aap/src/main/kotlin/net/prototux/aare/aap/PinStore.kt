@@ -71,7 +71,7 @@ internal class PinningTrustManager(
                     trustOnFirstUse && trusted.isEmpty() -> pending = actual
                     else -> {
                         refusal = PinRefusal(peerKey, actual, changed = trusted.isNotEmpty())
-                        throw CertificateException("head unit certificate for $peerKey not trusted (SHA-256 $actual)")
+                        throw CertificateException("head unit certificate for ${ProtocolTrace.peer(peerKey)} not trusted (SHA-256 $actual)")
                     }
                 }
             }

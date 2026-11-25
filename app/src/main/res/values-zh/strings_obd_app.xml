@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_app_label">驾驶舱</string>
+    <string name="obd_tab_dash">仪表</string>
+    <string name="obd_tab_trip">行程</string>
+    <string name="obd_tab_history">历史</string>
+    <string name="obd_tab_settings">设置</string>
+    <string name="obd_simulated_badge">模拟适配器</string>
+    <string name="obd_waiting">正在等待适配器…</string>
+    <string name="obd_gear">挡位</string>
+    <string name="obd_oil">机油</string>
+    <string name="obd_fuel_use">油耗</string>
+    <string name="obd_pedal">踏板</string>
+    <string name="obd_peak">峰值 %1$s</string>
+    <string name="obd_unit_kmpl">km/L</string>
+    <string name="obd_trip_distance">距离</string>
+    <string name="obd_trip_time">时间</string>
+    <string name="obd_trip_average">平均</string>
+    <string name="obd_trip_now">当前</string>
+    <string name="obd_trip_range">续航</string>
+    <string name="obd_trip_reset">重置行程</string>
+    <string name="obd_trip_note">行程就是这次与车辆的连接；车辆断开或重置时，它会存入历史。油耗为估算值，除非车辆自己报告。续航 = 剩余燃油 × 本次行程平均油耗（油箱容量在设置中）。</string>
+    <string name="obd_history_recent">最近</string>
+    <string name="obd_history_empty">还没有记录。1 公里以上的行程会保存在这里。</string>
+    <string name="obd_history_trip">行程</string>
+    <string name="obd_history_clear">清除历史</string>
+    <string name="obd_history_clear_confirm">再点一次以清除</string>
+    <string name="obd_set_engine">第二个仪表</string>
+    <string name="obd_set_engine_auto">自动</string>
+    <string name="obd_set_engine_turbo">涡轮（增压）</string>
+    <string name="obd_set_engine_na">自然吸气（负荷）</string>
+    <string name="obd_set_rpm_max">转速表上限</string>
+    <string name="obd_set_redline">红线 / 换挡灯</string>
+    <string name="obd_set_displacement">排量</string>
+    <string name="obd_set_tank">油箱</string>
+    <string name="obd_set_fuel">燃油</string>
+    <string name="obd_set_fuel_petrol">汽油</string>
+    <string name="obd_set_fuel_diesel">柴油</string>
+    <string name="obd_set_ethanol">乙醇（无传感器）</string>
+    <string name="obd_set_gears">已学习挡位：%1$d</string>
+    <string name="obd_set_gears_forget">忘记</string>
+    <string name="obd_coolant_short">水温</string>
+    <string name="obd_dash_card">车辆</string>
+    <string name="obd_set_card">车辆卡片（主屏幕）</string>
+    <string name="obd_set_card_pick">选择</string>
+    <string name="obd_set_card_hint">按想要的顺序点选数值，最多 %1$d 个。它们会显示在车辆卡片上。</string>
+    <string name="obd_done">完成</string>
+    <string name="obd_card_gauge">增压 / 负荷</string>
+    <string name="obd_card_now">当前油耗</string>
+</resources>

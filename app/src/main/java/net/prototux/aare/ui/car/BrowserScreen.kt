@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.Settings
 import net.prototux.aare.host.CarRuntime
@@ -57,8 +58,13 @@ import net.prototux.aare.media.Placeholder
  * AARE is not a certified Android Auto app, so this is a parked convenience: like the phone-screen
  * mirror it is paused while driving.
  */
+/** Over the page's black: a glass theme's translucent toolbar and keyboard made solid (see OverMap). */
 @Composable
-internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: String, modifier: Modifier) {
+internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: String, modifier: Modifier) =
+    OverMap { BrowserContent(runtime, driving, startUrl, modifier) }
+
+@Composable
+private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: String, modifier: Modifier) {
     val home = startUrl.ifBlank { Settings.BROWSER_DEFAULT_URL }
     var web by remember { mutableStateOf<WebView?>(null) }
     var currentUrl by remember { mutableStateOf(home) }
@@ -97,8 +103,8 @@ internal fun BrowserScreen(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                 else -> false
             }
         }
-        runtime.screenBack = back
-        onDispose { if (runtime.screenBack === back) runtime.screenBack = null }
+        runtime.registerScreenBack(CarRuntime.BROWSER_ID, back)
+        onDispose { runtime.unregisterScreenBack(CarRuntime.BROWSER_ID, back) }
     }
 
     Box(modifier.background(Color.Black)) {

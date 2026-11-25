@@ -75,7 +75,8 @@ fun CarThemeSpec.withAccent(accent: CarAccent?): CarThemeSpec {
     singleColor?.let { own -> return tinted(accent ?: CarAccents.byId(own) ?: CarAccents.AMBER) }
     if (accent == null) return this
     fun ColorScheme.accented(): ColorScheme {
-        val t = if (background.luminance() < 0.5f) accent.dark else accent.light
+        // By the text, not the background: a glass theme's background is transparent.
+        val t = if (onSurface.luminance() > 0.5f) accent.dark else accent.light
         return copy(primary = t.primary, onPrimary = t.onPrimary, primaryContainer = t.container, onPrimaryContainer = t.onContainer)
     }
     return copy(day = day.accented(), night = night.accented())

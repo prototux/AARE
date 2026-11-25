@@ -12,6 +12,8 @@ import android.net.InetAddresses
 import android.net.Network
 import android.os.Build
 import android.os.ParcelUuid
+import android.system.ErrnoException
+import android.system.OsConstants
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import net.prototux.aare.aap.AapLog
@@ -21,6 +23,7 @@ import net.prototux.aare.aap.wireless.AA_WIRELESS_UUID
 import net.prototux.aare.aap.wireless.JoinResult
 import net.prototux.aare.aap.wireless.WifiCredentials
 import net.prototux.aare.aap.wireless.WirelessBootstrap
+import net.prototux.aare.aap.wireless.WirelessBootstrapException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -35,10 +38,22 @@ import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
-/** Wireless connection setup failed; [message] says at which step. */
-class WirelessException(message: String, cause: Throwable? = null) : IOException(message, cause)
+/**
+ * Wireless connection setup failed; [message] says at which step. [quickTry]: it was an adapter's
+ * quick first try (see [WirelessBootstrap.isDongle]), which is meant to be redialled at once.
+ */
+class WirelessException(message: String, cause: Throwable? = null, val quickTry: Boolean = false) : IOException(message, cause)
 
 /** Runtime permissions the user has not granted (yet). Request [missing] and try again. */
+/**
+ * Android refused to bind AARE's socket to the head unit's Wi-Fi network: a VPN that doesn't let
+ * apps use another network than its own (no bypass) is the usual reason. Excluding the car's
+ * address range from the VPN doesn't help then; excluding AARE from the VPN app does.
+ */
+class WirelessVpnBlockedException(cause: Throwable) : IOException(
+    "the phone's VPN doesn't let AARE use the car's Wi-Fi (${cause.message}): add AARE to the VPN app's " +
+        "excluded apps (split tunnelling), or turn the VPN off", cause)
+
 class WirelessPermissionException(val missing: List<String>) :
     SecurityException("wireless Android Auto needs the permission(s): ${missing.joinToString { it.substringAfterLast('.') }}")
 
@@ -61,6 +76,11 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         /** Pin the BSSID the head unit sent: lets Android skip the approval dialog next time. */
         val matchBssid: Boolean = true,
         val bootstrap: WirelessBootstrap.Options = WirelessBootstrap.Options(),
+        /**
+         * Runs right before the Wi-Fi network request (Android 10+), e.g. to have it approved without
+         * Android's dialog; the handle it returns is closed once the request is answered.
+         */
+        val preApproveWifi: ((WifiCredentials) -> AutoCloseable?)? = null,
     )
 
     private val context = context.applicationContext
@@ -146,6 +166,16 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
     fun missingPermissions(): List<String> = requiredPermissions().filter { !granted(it) }
 
+    /** A wireless adapter got its one quick first try (see [WirelessBootstrap.isDongle]); for this connector's attempts. */
+    private val dongleQuickTryUsed = AtomicBoolean(false)
+
+    /**
+     * Head units (Bluetooth addresses) that answered our version response, then sent no
+     * WifiStartRequest before the message timeout: they wait for the phone to ask, so this
+     * connector's redials to them send one (see [WirelessBootstrap.Options.phoneStartDelayMs]).
+     */
+    private val waitingForPhone: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
     // ---- one connection attempt ----
 
     private inner class Attempt(private val device: BluetoothDevice) {
@@ -155,6 +185,10 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
         @Volatile private var network: HeadUnitNetwork? = null
         @Volatile private var tcp: Socket? = null
         @Volatile private var transport: Transport? = null
+        /** The head unit started its setup over while the TCP connect ran (see [bootstrap]). */
+        @Volatile private var setupRestart: WirelessBootstrapException? = null
+        /** This attempt is an adapter's quick first try (see [bootstrapOptions]). */
+        private var quickTry = false
 
         fun run(): Transport {
             requirePermissions(requiredPermissions())
@@ -167,10 +201,15 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             }
             try {
                 val socket = openRfcomm(adapter)
-                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid).also { network = it }
+                val net = HeadUnitNetwork(context, log, options.joinTimeoutMs, options.matchBssid, options.preApproveWifi).also { network = it }
                 val (ip, port) = bootstrap(socket, net)
                 val headUnitNetwork = net.network ?: throw WirelessException("lost the head unit's network")
                 val tcpSocket = connectTcp(headUnitNetwork, ip, port)
+                // From here a new request from the head unit is ignored again, unless it came first.
+                if (bootstrap?.sessionConnected() == false) {
+                    runCatching { tcpSocket.close() }
+                    throw setupRestarted()
+                }
                 val name = "wifi \"${net.ssid}\" $ip:$port (${runCatching { device.name }.getOrNull() ?: device.address})"
                 val t = WirelessTransport(SocketTransport(tcpSocket, name), ::abort)
                 transport = t
@@ -186,6 +225,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 // checkNotAborted() and the field write), and every such path ends here.
                 releaseAll()
                 if (wasAborted && e !is WirelessException) throw WirelessException("cancelled", e)
+                if (quickTry && !wasAborted) throw WirelessException(e.message ?: "wireless quick first try failed", e, quickTry = true)
                 throw e
             }
         }
@@ -244,7 +284,7 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                 override fun onReady(ip: String, port: Int) {
                     ready.complete(ip to port)
                 }
-            }, log, options.bootstrap)
+            }, log, bootstrapOptions())
             bootstrap = b
             thread(name = "aa-wireless-rfcomm", isDaemon = true) {
                 try {
@@ -253,14 +293,22 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
                     log.i("wireless: Bluetooth bootstrap link ended")
                 } catch (e: Throwable) {
                     ready.completeExceptionally(e)
+                    // The AAP server it announced is gone: don't let the TCP attempts run out on it.
+                    if (e is WirelessBootstrapException && e.setupRestarted) {
+                        setupRestart = e
+                        tcp?.let { runCatching { it.close() } }
+                    }
                 }
                 if (!ready.isDone) ready.completeExceptionally(WirelessException("bootstrap ended without result"))
             }
             return try {
-                // The bootstrap bounds itself (message timeouts + join timeout); this is a backstop.
-                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs, TimeUnit.MILLISECONDS)
+                // The bootstrap bounds itself (message timeouts, our own start requests, join timeout); this is a backstop.
+                ready.get(options.joinTimeoutMs + 3 * options.bootstrap.messageTimeoutMs + options.bootstrap.phoneStartRetryLimitMs, TimeUnit.MILLISECONDS)
             } catch (e: ExecutionException) {
                 val cause = e.cause ?: e
+                if (cause is WirelessBootstrapException && cause.noStartRequest && waitingForPhone.add(device.address)) {
+                    log.i("wireless: the head unit waited for the phone to ask it to start; the next attempt will ask")
+                }
                 throw if (cause is IOException) cause else WirelessException(cause.message ?: "wireless bootstrap failed", cause)
             } catch (e: TimeoutException) {
                 throw WirelessException("wireless bootstrap took too long", e)
@@ -278,15 +326,25 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
             var last: IOException? = null
             for (attempt in 1..options.tcpAttempts) {
                 checkNotAborted()
+                checkSetupNotRestarted()
                 // Bound to the head unit's network: it is not the default network (no internet).
-                val socket = network.socketFactory.createSocket()
+                val socket = try {
+                    network.socketFactory.createSocket()
+                } catch (e: IOException) {
+                    // Refused once, refused every time: no point in the remaining attempts.
+                    throw if (isNetworkBindRefused(e)) WirelessVpnBlockedException(e) else e
+                }
                 tcp = socket
                 try {
+                    // Again after publishing the socket: a restart seen just before missed it.
+                    checkSetupNotRestarted()
                     socket.connect(InetSocketAddress(address, port), options.tcpConnectTimeoutMs)
                     return socket
                 } catch (e: IOException) {
                     last = e
                     runCatching { socket.close() }
+                    // Closed by the restart: say so rather than "Socket closed".
+                    checkSetupNotRestarted()
                     log.w("wireless: TCP attempt $attempt/${options.tcpAttempts} to $ip:$port failed: ${e.message}")
                     if (attempt < options.tcpAttempts) Thread.sleep(1_000)
                 }
@@ -296,6 +354,34 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
         private fun checkNotAborted() {
             if (aborted.get()) throw WirelessException("cancelled")
+        }
+
+        private fun checkSetupNotRestarted() {
+            if (setupRestart != null) throw setupRestarted()
+        }
+
+        /** Carries the bootstrap's failure, or one like it when [sessionConnected][WirelessBootstrap.sessionConnected] saw the restart first. */
+        private fun setupRestarted() = WirelessException(WirelessBootstrap.SETUP_RESTARTED,
+            setupRestart ?: WirelessBootstrapException(WirelessBootstrap.SETUP_RESTARTED, setupRestarted = true))
+
+        /**
+         * The bootstrap options for this attempt. A wireless adapter gets only a short wait for its
+         * first message on the first attempt: a quick redial helps one that missed the connection;
+         * later attempts get the normal timeout. A head unit that waited for the phone last time
+         * ([waitingForPhone]) is asked to start.
+         */
+        private fun bootstrapOptions(): WirelessBootstrap.Options {
+            var result = options.bootstrap
+            val name = runCatching { device.name }.getOrNull()
+            if (WirelessBootstrap.isDongle(name) && dongleQuickTryUsed.compareAndSet(false, true)) {
+                log.i("wireless: \"$name\" is a wireless adapter: ${WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS} ms for its first message")
+                result = result.copy(firstMessageTimeoutMs = WirelessBootstrap.DONGLE_FIRST_MESSAGE_TIMEOUT_MS)
+                quickTry = true
+            }
+            if (device.address in waitingForPhone && result.phoneStartDelayMs <= 0) {
+                result = result.copy(phoneStartDelayMs = WirelessBootstrap.PHONE_START_DELAY_MS)
+            }
+            return result
         }
     }
 
@@ -351,5 +437,16 @@ class WirelessConnector(context: Context, private val log: AapLog, private val o
 
         internal fun hasAaUuid(uuids: Array<out ParcelUuid>?): Boolean =
             uuids.orEmpty().any { it.uuid == AA_UUID || it.uuid == AA_UUID_REVERSED }
+
+        /**
+         * Whether [e] is Android refusing to bind a socket to a network with EPERM, as it does for
+         * an app a VPN keeps from using any other network. The framework throws a SocketException
+         * whose message (and ErrnoException cause) reads "Binding socket to network N failed:
+         * EPERM (Operation not permitted)".
+         */
+        internal fun isNetworkBindRefused(e: Throwable): Boolean = generateSequence(e) { it.cause }.any { t ->
+            val bind = t.message?.startsWith("Binding socket to network") == true
+            bind && ((t is ErrnoException && t.errno == OsConstants.EPERM) || t.message?.contains("EPERM") == true)
+        }
     }
 }

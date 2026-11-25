@@ -1,0 +1,143 @@
+package net.prototux.aare.ui.car
+
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlin.math.abs
+
+/** Which side of the divider a pane is on, while two apps share the car screen. */
+enum class CarPane { PRIMARY, SECONDARY }
+
+/**
+ * Below this, two panes can't both stay usable, so split screen doesn't engage even when the
+ * setting is on (the toggle still shows: a head unit can be plugged into a wider screen later).
+ */
+val SPLIT_MIN_SCREEN_WIDTH = 900.dp
+
+/** Neither pane is ever dragged thinner than this while live-dragging the divider. */
+private val SPLIT_MIN_PANE_WIDTH = 240.dp
+
+/** The divider's touch strip; the visible line drawn inside it is thinner. */
+val SPLIT_DIVIDER_WIDTH = 32.dp
+
+/**
+ * Where the divider rests once released: a third, half or two thirds of the content width. The
+ * first and last points aren't real rest ratios — [snapSplitRatio] landing on one of them means
+ * the pane on that side closes instead, and the other becomes the single full-screen app again.
+ */
+private val SPLIT_SNAP_RATIOS = floatArrayOf(0f, 1f / 3f, 0.5f, 2f / 3f, 1f)
+
+/**
+ * Car apps that can take the second pane: built-ins, non-hosted screens (media, phone,
+ * notifications…) and hosted car apps. Each hosted app has its own CarAppConnection with its own
+ * surface, so two different ones run side by side; one connection still only has one surface
+ * owner (see CarAppConnection.surfaceAvailable), as an app is never in both panes
+ * ([openInPanes]). The phone mirror and a launched phone app are single, device-wide resources
+ * (one phone screen, one virtual display per package already used elsewhere) that aren't worth
+ * doubling up for a first version of split screen.
+ */
+private val SPLIT_SECONDARY_KINDS = setOf(
+    CarAppKind.MEDIA, CarAppKind.PHONE, CarAppKind.MESSAGING, CarAppKind.BROWSER,
+    CarAppKind.CAR_DATA, CarAppKind.SETTINGS, CarAppKind.NOTIFICATIONS,
+    CarAppKind.NAVIGATION, CarAppKind.TEMPLATED, CarAppKind.ASSISTANT,
+)
+
+/** Whether [kind] may be opened in the second pane, beside whatever is already the main app. */
+fun canOpenBeside(kind: CarAppKind): Boolean = kind in SPLIT_SECONDARY_KINDS
+
+/**
+ * Whether the second pane shows its own close button over [kind]. Not over a hosted car app, whose
+ * own buttons are in that corner: the divider dragged to the edge and the home button close its pane.
+ */
+fun hasCloseButton(kind: CarAppKind): Boolean =
+    kind != CarAppKind.NAVIGATION && kind != CarAppKind.TEMPLATED && kind != CarAppKind.ASSISTANT
+
+/** True inside a split pane, whose size changes as the divider moves. */
+val LocalInSplitPane = staticCompositionLocalOf { false }
+
+/**
+ * Whether Back in the second pane closes it rather than going to the app: when the app can't go
+ * back itself, as it isn't [ready] or is on its first screen ([screens] its stack's depth). With a
+ * knob or D-pad, Back is the way to close just that pane.
+ */
+fun backClosesPane(ready: Boolean, screens: Int): Boolean = !ready || screens <= 1
+
+/** Whether the content area is wide enough to split at all. */
+fun splitScreenFits(width: Dp): Boolean = width >= SPLIT_MIN_SCREEN_WIDTH
+
+/**
+ * Snaps a divider drag (0..1, the primary pane's share of the width) to the nearest rest point.
+ * 0f or 1f means the pane on that side closes rather than a real ratio: the caller checks for
+ * those two values before storing the result as [CarUiState.splitRatio].
+ */
+fun snapSplitRatio(raw: Float): Float {
+    val clamped = raw.coerceIn(0f, 1f)
+    return SPLIT_SNAP_RATIOS.minByOrNull { abs(it - clamped) } ?: 0.5f
+}
+
+/**
+ * Where one knob or D-pad step ([steps] of them, + toward the secondary's edge) takes a divider
+ * resting at [ratio]: to the next rest point of [snapSplitRatio], so the step goes through the same
+ * commit as a drag released there. Past the last real rest point it reaches 0f or 1f, which closes
+ * that pane like dragging to the edge; it never goes beyond.
+ */
+fun stepSplitRatio(ratio: Float, steps: Int): Float {
+    val at = SPLIT_SNAP_RATIOS.indices.minByOrNull { abs(SPLIT_SNAP_RATIOS[it] - ratio.coerceIn(0f, 1f)) } ?: 2
+    return SPLIT_SNAP_RATIOS[(at + steps).coerceIn(0, SPLIT_SNAP_RATIOS.lastIndex)]
+}
+
+/** The narrower of the two panes' width at [ratio] of [totalWidth], the divider's own width set aside. */
+fun minPaneWidth(totalWidth: Dp, ratio: Float): Dp {
+    val usable = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value).coerceAtLeast(0f)
+    return (usable * minOf(ratio, 1f - ratio).coerceIn(0f, 1f)).dp
+}
+
+/**
+ * Clamps where a live divider drag is drawn so neither pane is ever shown thinner than
+ * [SPLIT_MIN_PANE_WIDTH]. Only the drawing: the release passes the unclamped drag to
+ * [snapSplitRatio], since on a screen narrower than about 1470 dp this floor sits past the close
+ * threshold and a clamped release could never close a pane.
+ */
+fun clampDragRatio(totalWidth: Dp, raw: Float): Float {
+    val usable = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value).coerceAtLeast(1f)
+    val minFraction = (SPLIT_MIN_PANE_WIDTH.value / usable).coerceIn(0f, 0.5f)
+    return raw.coerceIn(minFraction, 1f - minFraction)
+}
+
+/**
+ * Which pane a point at [x] along [totalWidth] falls in, the divider resting at [ratio]. Compose's
+ * own layout already routes touch this way (each pane is its own box); this is the same geometry,
+ * kept as a pure function so it has a unit test independent of a composition.
+ */
+fun paneAt(x: Dp, totalWidth: Dp, ratio: Float): CarPane {
+    val dividerStart = (totalWidth.value - SPLIT_DIVIDER_WIDTH.value) * ratio.coerceIn(0f, 1f)
+    return if (x.value < dividerStart + SPLIT_DIVIDER_WIDTH.value / 2f) CarPane.PRIMARY else CarPane.SECONDARY
+}
+
+/** The apps in the two panes and which one has focus; [secondary] null for a single pane. */
+data class SplitPanes(val primary: String, val secondary: String?, val focused: CarPane)
+
+/**
+ * Where the panes end up when [appId] is opened (from the rail, the launcher, a call…) while
+ * [primary] is the main app (null: no app on screen) and [secondary] is beside it. An app is
+ * never in both panes: one already beside the main app keeps its pane and takes the focus there,
+ * instead of opening a second copy in the main pane. Any other app takes the main pane, and the
+ * one beside it stays.
+ */
+fun openInPanes(appId: String, primary: String?, secondary: String?): SplitPanes = when {
+    secondary == null -> SplitPanes(appId, null, CarPane.PRIMARY)
+    appId == secondary && primary != null -> SplitPanes(primary, secondary, CarPane.SECONDARY)
+    appId == secondary -> SplitPanes(appId, null, CarPane.PRIMARY)
+    else -> SplitPanes(appId, secondary, CarPane.PRIMARY)
+}
+
+/**
+ * The app left alone on screen once [appId] finished while [primary] and [secondary] share it: the
+ * one in the other pane. Null when none is left (the dashboard), or [appId] was in neither pane.
+ */
+fun leftAlone(appId: String, primary: String?, secondary: String?): String? = when {
+    primary == null || secondary == null -> null
+    appId == primary -> secondary
+    appId == secondary -> primary
+    else -> null
+}

@@ -1,0 +1,10 @@
+syntax="proto2";
+
+package aap_protobuf.shared;
+
+// AARE: wire-identical to google.protobuf.Duration, used in media
+// options. Kept local so the protos need no well-known-type imports.
+message Duration {
+  optional int64 seconds = 1;
+  optional int32 nanos = 2;
+}

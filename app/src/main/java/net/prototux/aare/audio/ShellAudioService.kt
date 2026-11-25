@@ -1,12 +1,15 @@
 package net.prototux.aare.audio
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.AttributionSource
+import android.content.pm.ApplicationInfo
 import android.content.Context
 import android.content.ContextWrapper
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
+import android.media.AudioTimestamp
 import android.media.MediaRecorder
 import android.os.Binder
 import android.os.Build
@@ -26,8 +29,9 @@ import kotlin.system.exitProcess
  * "remote submix": everything the phone plays, navigation voice included. While it is recorded
  * the phone itself goes quiet, as it does with Android Auto. This is how scrcpy captures audio.
  *
- * Android 12+ only (the recording must be attributed to the shell, which needs AudioRecord's
- * setContext).
+ * Capture is Android 12+ only (the recording must be attributed to the shell, which needs
+ * AudioRecord's setContext). The car's mic for the phone's apps (startMicInjection) records
+ * nothing and needs Android 10.
  */
 class ShellAudioService : IShellAudio.Stub {
     private val context: Context?
@@ -46,12 +50,8 @@ class ShellAudioService : IShellAudio.Stub {
     override fun start(sampleRate: Int, channels: Int): ParcelFileDescriptor? {
         stop()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-        // Shizuku runs this as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT; the su helper
-        // (SuAudioMain via app_process) runs as uid 0, which doesn't — the permission is checked
-        // against the recording uid, and being root isn't enough. Drop to the shell uid (gid before
-        // uid; once dropped we can't go back, which is fine: we only record audio from here on).
-        if (Process.myUid() == 0) runCatching { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
-            .onFailure { Log.w(TAG, "could not drop to the shell uid", it); return null }
+        // The su helper runs as root, which can't record the remote submix: see dropRootToShell.
+        runCatching { dropRootToShell() }.onFailure { Log.w(TAG, "could not drop to the shell uid", it); return null }
         return try {
             val format = AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -69,19 +69,7 @@ class ShellAudioService : IShellAudio.Stub {
             record = r
             val (read, write) = ParcelFileDescriptor.createPipe()
             pump = Thread({
-                val buf = ByteArray(chunk)
-                FileOutputStream(write.fileDescriptor).use { out ->
-                    try {
-                        while (record === r) {
-                            val n = r.read(buf, 0, buf.size)
-                            if (n < 0) break
-                            if (n > 0) out.write(buf, 0, n)
-                        }
-                    } catch (_: Exception) {
-                        // AARE closed its end of the pipe
-                    }
-                }
-                write.close()
+                pump(r, write, chunk) { record === r }
                 // Nobody reads any more (AARE closed the pipe without stop(), or went away): don't
                 // keep recording, or the phone stays silent with nothing playing it anywhere.
                 if (record === r) { Log.i(TAG, "capture pipe closed; stopping"); stop() }
@@ -102,43 +90,75 @@ class ShellAudioService : IShellAudio.Stub {
     private val policies = HashMap<Int, PolicyStream>()
     private val policyLooper: Looper by lazy { HandlerThread("aare-shell-policy").apply { start() }.looper }
 
-    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray): ParcelFileDescriptor? = asShell { synchronized(policies) {
-        stopPolicyLocked(key)
+    override fun startPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray, volume: Int): ParcelFileDescriptor? = asShell {
         try {
-            val ctx = ShellContext(context ?: systemContext())
-            val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx)
-            val stream = PolicyStream(handle)
-            val (read, write) = ParcelFileDescriptor.createPipe()
-            val chunk = sampleRate / 50 * channels * 2
-            stream.pump = Thread({
-                val buf = ByteArray(chunk)
-                FileOutputStream(write.fileDescriptor).use { out ->
-                    try {
-                        while (stream.open) {
-                            val n = handle.record.read(buf, 0, buf.size)
-                            if (n < 0) break
-                            if (n > 0) out.write(buf, 0, n)
-                        }
-                    } catch (_: Exception) {
-                        // AARE closed its end of the pipe
-                    }
-                }
-                write.close()
-                // As for the remote submix: a policy nobody reads keeps its sound off the phone's
-                // speaker for good, so it goes with its reader.
-                if (stream.open) synchronized(policies) {
-                    if (policies[key] === stream) { Log.i(TAG, "policy $key pipe closed; stopping"); stopPolicyLocked(key) }
-                }
-            }, "aare-shell-policy-$key").apply { start() }
-            policies[key] = stream
-            read
+            openPolicy(key, sampleRate, channels, usages, volume)
         } catch (e: Throwable) {
             Log.w(TAG, "audio policy as the shell failed", e)
+            lastFailure = describeFailure(e)
             null
         }
-    } }
+    }
+
+    @Volatile private var lastFailure: String? = null
+
+    override fun lastFailure(): String? = lastFailure
+
+    /** [startPolicy], throwing when the system refuses. Run as the process itself (see [asShell]). */
+    internal fun openPolicy(key: Int, sampleRate: Int, channels: Int, usages: IntArray, volume: Int = AudioPolicyCapture.VOLUME_AS_IS): ParcelFileDescriptor = synchronized(policies) {
+        stopPolicyLocked(key)
+        val ctx = ShellContext(context ?: systemContext())
+        val handle = AudioPolicyCapture.open(ctx, shellAudioManager(ctx), usages, sampleRate, channels, policyLooper, recordContext = ctx, volume = volume)
+        val stream = PolicyStream(handle)
+        val (read, write) = ParcelFileDescriptor.createPipe()
+        val chunk = sampleRate / 50 * channels * 2
+        stream.pump = Thread({
+            pump(handle.record, write, chunk) { stream.open }
+            // As for the remote submix: a policy nobody reads keeps its sound off the phone's
+            // speaker for good, so it goes with its reader.
+            if (stream.open) synchronized(policies) {
+                if (policies[key] === stream) { Log.i(TAG, "policy $key pipe closed; stopping"); stopPolicyLocked(key) }
+            }
+        }, "aare-shell-policy-$key").apply { start() }
+        policies[key] = stream
+        read
+    }
 
     override fun stopPolicy(key: Int) = asShell { synchronized(policies) { stopPolicyLocked(key) } }
+
+    /** The car's microphone for the phone's other apps (see [ShellMicInjector]). */
+    private var mic: ShellMicInjector? = null
+    private val micLock = Any()
+
+    override fun startMicInjection(pcm: ParcelFileDescriptor, sampleRate: Int, channels: Int, listener: IShellMicListener): Boolean {
+        // Read before clearing: the caller is AARE, whose own recordings aren't taken over.
+        val caller = Binder.getCallingUid()
+        return asShell { synchronized(micLock) {
+            stopMicLocked()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { pcm.close(); return@synchronized false }
+            try {
+                val ctx = ShellContext(context ?: systemContext())
+                mic = ShellMicInjector.open(ctx, shellAudioManager(ctx), policyLooper, pcm, sampleRate, channels,
+                    excludedUids = setOf(caller, Process.myUid()), listener = listener)
+                true
+            } catch (e: Throwable) {
+                Log.w(TAG, "car mic injection as the shell failed", e)
+                runCatching { pcm.close() }
+                false
+            }
+        } }
+    }
+
+    override fun setMicInjecting(on: Boolean) = asShell {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) synchronized(micLock) { mic?.setInjecting(on) }
+    }
+
+    override fun stopMicInjection() = asShell { synchronized(micLock) { stopMicLocked() } }
+
+    private fun stopMicLocked() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mic?.close()
+        mic = null
+    }
 
     /**
      * Runs [block] as this process (the shell), not as the AARE call that brought us here: the
@@ -156,6 +176,45 @@ class ShellAudioService : IShellAudio.Stub {
         runCatching { s.handle.record.stop() }
         s.pump?.takeIf { it !== Thread.currentThread() }?.join(500)
         s.handle.close()
+    }
+
+    /**
+     * Copies [r] into [write] while [open]. The audio server hands over sound in bursts as big as
+     * the record buffer, so a pump that wakes late loses a burst: heard as crackle in the car,
+     * with no gap on the car's side. Hence audio priority, and a log line whenever sound got lost.
+     */
+    private fun pump(r: AudioRecord, write: ParcelFileDescriptor, chunk: Int, open: () -> Boolean) {
+        runCatching { Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO) }
+            .onFailure { Log.w(TAG, "no audio priority for the capture", it) }
+        val frameBytes = r.format.frameSizeInBytes
+        val ts = AudioTimestamp()
+        var read = 0L
+        var lost = 0L
+        var checkedAt = 0L
+        val buf = ByteArray(chunk)
+        FileOutputStream(write.fileDescriptor).use { out ->
+            try {
+                while (open()) {
+                    val n = r.read(buf, 0, buf.size)
+                    if (n < 0) break
+                    if (n > 0) out.write(buf, 0, n)
+                    read += n / frameBytes
+                    // Captured by the server but never read, beyond what the buffer holds: lost.
+                    val now = System.nanoTime()
+                    if (now - checkedAt > 2_000_000_000L && r.getTimestamp(ts, AudioTimestamp.TIMEBASE_MONOTONIC) == AudioRecord.SUCCESS) {
+                        checkedAt = now
+                        val missing = ts.framePosition - read - r.bufferSizeInFrames
+                        if (missing > lost + chunk / frameBytes) {
+                            Log.w(TAG, "capture lost ${(missing - lost) * 1000 / r.sampleRate} ms of sound (buffer ${r.bufferSizeInFrames * 1000 / r.sampleRate} ms)")
+                            lost = missing
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // AARE closed its end of the pipe
+            }
+        }
+        write.close()
     }
 
     /** An AudioManager that speaks for the shell, as the uid holding MODIFY_AUDIO_ROUTING. */
@@ -179,31 +238,74 @@ class ShellAudioService : IShellAudio.Stub {
     override fun destroy() {
         stop()
         synchronized(policies) { policies.keys.toList().forEach(::stopPolicyLocked) }
+        synchronized(micLock) { stopMicLocked() }
         exitProcess(0)
     }
 
     /** The system context of this (app_process) process. */
     @SuppressLint("PrivateApi")
-    private fun systemContext(): Context {
+    internal fun systemContext(): Context {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) HiddenApiBypass.addHiddenApiExemptions("Landroid/app/ActivityThread;")
         val at = Class.forName("android.app.ActivityThread")
         val thread = at.getMethod("currentActivityThread").invoke(null) ?: at.getMethod("systemMain").invoke(null)
         return at.getMethod("getSystemContext").invoke(thread) as Context
     }
 
-    /** A context that says "the shell", so the recording is attributed to the uid running it. */
-    private class ShellContext(base: Context) : ContextWrapper(base) {
-        override fun getPackageName() = SHELL_PACKAGE
-        override fun getOpPackageName() = SHELL_PACKAGE
-        override fun getApplicationContext(): Context = this
-        @RequiresApi(Build.VERSION_CODES.S) // only used from Android 12, see start()
-        override fun getAttributionSource(): AttributionSource =
-            AttributionSource.Builder(Process.myUid()).setPackageName(SHELL_PACKAGE).build()
-    }
-
     private companion object {
         const val TAG = "AareShellAudio"
-        const val SHELL_PACKAGE = "com.android.shell"
-        const val SHELL_UID = 2000
     }
+}
+
+/** The root cause of [e], for the connection log: reflection wraps the system's refusal. */
+internal fun describeFailure(e: Throwable): String {
+    val root = generateSequence(e) { it.cause }.last()
+    return "${root.javaClass.simpleName}: ${root.message}"
+}
+
+private const val SHELL_PACKAGE = "com.android.shell"
+private const val SHELL_UID = 2000
+
+/**
+ * Drops the su helper (uid 0) to the shell uid; any other uid is left as it is. Shizuku runs this
+ * service as the shell (2000), which holds CAPTURE_AUDIO_OUTPUT and MODIFY_AUDIO_ROUTING; root
+ * doesn't hold the first: it is checked against the recording uid, and being root isn't enough
+ * (the audio policy's recorder is a remote-submix one too). Gid before uid; once dropped there's
+ * no way back, which is fine: the helper only records audio from then on. Throws if refused.
+ */
+internal fun dropRootToShell() {
+    if (Process.myUid() == 0) { Os.setgid(SHELL_UID); Os.setuid(SHELL_UID) }
+}
+
+/**
+ * Makes this app_process (the root helper, run as the shell) report `com.android.shell` as its
+ * application, the way scrcpy does: what Android builds without a context of ours (the audio
+ * policy's recorder, AttributionSource.myAttributionSource) takes the process's package, otherwise
+ * the system context's "android", which Android 16's audio server refuses for the shell uid
+ * ("invalid attr ... uid: 2000 ... packageName: android"). Shizuku's process is the shell's already.
+ */
+@SuppressLint("PrivateApi", "DiscouragedPrivateApi")
+internal fun actAsShellApp(systemContext: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+        HiddenApiBypass.addHiddenApiExemptions("Landroid/app/ActivityThread", "Landroid/content/ContextWrapper;")
+    val at = Class.forName("android.app.ActivityThread")
+    val thread = at.getMethod("currentActivityThread").invoke(null) ?: return
+    val bindData = Class.forName("android.app.ActivityThread\$AppBindData")
+    val data = bindData.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
+    bindData.getDeclaredField("appInfo").apply { isAccessible = true }
+        .set(data, ApplicationInfo().apply { packageName = SHELL_PACKAGE; uid = SHELL_UID })
+    at.getDeclaredField("mBoundApplication").apply { isAccessible = true }.set(thread, data)
+    val app = Application()
+    ContextWrapper::class.java.getDeclaredMethod("attachBaseContext", Context::class.java).apply { isAccessible = true }
+        .invoke(app, ShellContext(systemContext))
+    at.getDeclaredField("mInitialApplication").apply { isAccessible = true }.set(thread, app)
+}
+
+/** A context that says "the shell", so what the helper records or plays is attributed to the uid running it. */
+internal class ShellContext(base: Context) : ContextWrapper(base) {
+    override fun getPackageName() = SHELL_PACKAGE
+    override fun getOpPackageName() = SHELL_PACKAGE
+    override fun getApplicationContext(): Context = this
+    @RequiresApi(Build.VERSION_CODES.S) // the framework asks for it from Android 12 only
+    override fun getAttributionSource(): AttributionSource =
+        AttributionSource.Builder(Process.myUid()).setPackageName(SHELL_PACKAGE).build()
 }

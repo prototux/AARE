@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">Circuit</string>
+    <string name="obd_tab_lap">Tur</string>
+    <string name="obd_tab_dyno">Dinamometru</string>
+    <string name="obd_track_warning">Doar pe circuit sau zonă închisă. Niciodată pe drumuri publice.</string>
+    <string name="obd_g_title">Forța G (telefon)</string>
+    <string name="obd_g_accel">Accel. %1$s</string>
+    <string name="obd_g_brake">Frână %1$s</string>
+    <string name="obd_g_lateral">Lateral %1$s</string>
+    <string name="obd_g_reset">Resetează maximele</string>
+    <string name="obd_g_hint">Fixează bine telefonul în suport. Învață unde e fața când accelerezi și frânezi.</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">Atinge pentru a arma</string>
+    <string name="obd_test_stop">Armat: oprește mașina</string>
+    <string name="obd_test_below">Armat: rămâi sub %1$d km/h</string>
+    <string name="obd_test_above">Armat: depășește %1$d km/h</string>
+    <string name="obd_test_ready">Gata: accelerează</string>
+    <string name="obd_test_ready_brake">Gata: frânează</string>
+    <string name="obd_test_running">Se măsoară…</string>
+    <string name="obd_best">Cel mai bun %1$s</string>
+    <string name="obd_lap_arm">Pornește cronometrul de tur</string>
+    <string name="obd_lap_disarm">Oprește</string>
+    <string name="obd_lap_waiting">Armat: linia de start va fi unde pornești</string>
+    <string name="obd_lap_last">Ultimul</string>
+    <string name="obd_lap_best">Cel mai bun</string>
+    <string name="obd_lap_delta">Delta</string>
+    <string name="obd_lap_count">Tururi</string>
+    <string name="obd_lap_no_gps">Fără GPS de la mașină</string>
+    <string name="obd_dyno_arm">Armează</string>
+    <string name="obd_dyno_disarm">Termină</string>
+    <string name="obd_dyno_off">Armează, apoi apasă accelerația la maximum în treapta 2 sau 3, de la turații mici până aproape de limitator.</string>
+    <string name="obd_dyno_armed">Armat: accelerație maximă</string>
+    <string name="obd_dyno_peak">%1$.0f CP la %2$.0f rpm</string>
+    <string name="obd_dyno_note">Putere la roți, estimată din accelerație și masa mașinii (Setări). O orientare aproximativă, nu un dinamometru real.</string>
+    <string name="obd_history_records">Recorduri</string>
+    <string name="obd_history_lap">Tur</string>
+    <string name="obd_history_dyno">Dinamometru</string>
+    <string name="obd_set_mass">Masa cu șoferul</string>
+</resources>

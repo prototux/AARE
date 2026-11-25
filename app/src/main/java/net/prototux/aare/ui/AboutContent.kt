@@ -30,7 +30,8 @@ object AboutThanks {
             R.string.about_thanks_code_and_docs,
             listOf(
                 "s-ratashnyuk", "JVKeller", "jameswynn", "pafolol", "jooray", "KrishnaX12",
-                "freezed23", "MattMaaaan", "l0rdg3x", "akanshu-sapra", "filipeniquini",
+                "freezed23", "MattMaaaan", "l0rdg3x", "akanshu-sapra", "filipeniquini", "jhahvhi",
+                "PCCV", "Charlie284", "HyperCriSiS",
             ),
         ),
         ThanksGroup(
@@ -40,12 +41,15 @@ object AboutThanks {
                 "remyzerems", "breversa", "alkralor", "xaoc7", "matthias-hoste", "paulhiggs",
                 "F4FXL", "sheshuv", "NorwegianGoat", "rogerngks", "notsobadd", "Rikardogonc",
                 "opalek84", "l0rdg3x", "spasticmonkey55-glitch", "gitzone83", "djshag01",
-                "mirchisait", "filipeniquini", "MattMaaaan", "cfercl",
+                "mirchisait", "filipeniquini", "MattMaaaan", "cfercl", "6600024d", "rtdtwo",
+                "AlexDalas", "Murilesco", "PCCV", "cadecomposer", "Gh61", "PuffinDro", "Mcheimech",
+                "Pouch11", "taage", "cinaeco", "carelinus", "jackburton79", "Captainyamez",
+                "ThomasHawaii", "Lenrock67", "NitpickyPrick", "henkv1",
             ),
         ),
         ThanksGroup(
             R.string.about_thanks_reports,
-            listOf("sadorowo", "henkv1", "kveld9", "Ronsone", "pollio2008", "Delgrey"),
+            listOf("sadorowo", "henkv1", "kveld9", "Ronsone", "pollio2008", "Delgrey", "Pirrotto", "JVKeller", "burtshulman"),
         ),
         ThanksGroup(
             R.string.about_thanks_tips,

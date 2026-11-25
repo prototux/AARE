@@ -8,11 +8,16 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -37,6 +42,45 @@ data class CarDimens(
 )
 
 val LocalCarDimens = staticCompositionLocalOf { CarDimens() }
+
+/**
+ * [CarDimens] scaled by the control-size setting: touch targets, the rail and icons grow
+ * together; corner radii stay a theme's own (a shape choice, not a control size).
+ */
+fun CarDimens.scaled(factor: Float): CarDimens = if (factor == 1f) this else copy(
+    touchTarget = touchTarget * factor,
+    railWidth = railWidth * factor,
+    gutter = gutter * factor,
+    iconSize = iconSize * factor,
+)
+
+/**
+ * The control-size setting's current multiplier, ambient so it survives a nested [CarTheme]
+ * (the dark-bar rail calls it again for night colours) without being reset by [theme]'s own dimens.
+ */
+val LocalCarControlScale = staticCompositionLocalOf { 1f }
+
+/** The car screen's text-size setting: a font-scale multiplier on top of the car type scale. */
+enum class CarTextSize(val id: String, @StringRes val labelRes: Int, val fontScale: Float) {
+    DEFAULT("default", R.string.setup_choice_size_default, 1f),
+    LARGER("larger", R.string.setup_choice_size_larger, 1.15f),
+    LARGEST("largest", R.string.setup_choice_size_largest, 1.3f);
+
+    companion object {
+        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+/** The car screen's control-size setting: a multiplier on [CarDimens], independent of text size. */
+enum class CarControlSize(val id: String, @StringRes val labelRes: Int, val scale: Float) {
+    DEFAULT("default", R.string.setup_choice_size_default, 1f),
+    LARGER("larger", R.string.setup_choice_size_larger, 1.15f),
+    LARGEST("largest", R.string.setup_choice_size_largest, 1.3f);
+
+    companion object {
+        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
 
 /** The colours a theme needs that Material's [ColorScheme] has no slot for, for one of day or night. */
 @Immutable
@@ -97,7 +141,21 @@ data class CarThemeSpec(
     val tintIcons: Boolean = false,
     /** The clock on a seven-segment display ([SegmentFont]), its unlit segments faintly behind. */
     val segmentClock: Boolean = false,
+    /**
+     * A gradient behind the whole screen, for themes whose surfaces are translucent (glass); empty:
+     * the background color alone.
+     */
+    val dayBackdrop: List<Color> = emptyList(),
+    val nightBackdrop: List<Color> = emptyList(),
 )
+
+/** The theme's backdrop gradient behind a whole screen, in the colors now applied; none when it has none. */
+@Composable
+fun Modifier.carBackdrop(): Modifier {
+    val theme = LocalCarTheme.current
+    val stops = if (MaterialTheme.colorScheme == theme.night) theme.nightBackdrop else theme.dayBackdrop
+    return if (stops.size < 2) this else background(Brush.linearGradient(stops))
+}
 
 /**
  * DSEG7 Classic, a seven-segment display font (SIL Open Font License 1.1, bundled with its licence
@@ -126,10 +184,40 @@ fun CarTheme(night: Boolean, theme: CarThemeSpec = LocalCarTheme.current, conten
         CompositionLocalProvider(
             LocalCarTheme provides theme,
             LocalCarColors provides if (night) theme.nightColors else theme.dayColors,
-            LocalCarDimens provides theme.dimens,
+            LocalCarDimens provides theme.dimens.scaled(LocalCarControlScale.current),
             content = content,
         )
     }
+}
+
+/**
+ * [content] over a live map (a navigation app's map, the dashboard's map card): every translucent
+ * surface and container color of the scheme laid over the theme's backdrop, so a glass theme's
+ * cards, banners and buttons stay readable over a day map. Themes without a backdrop are opaque
+ * already and stay as they are.
+ */
+@Composable
+fun OverMap(content: @Composable () -> Unit) {
+    val theme = LocalCarTheme.current
+    val scheme = MaterialTheme.colorScheme
+    val backdrop = (if (scheme == theme.night) theme.nightBackdrop else theme.dayBackdrop).firstOrNull()
+    if (backdrop == null) { content(); return }
+    val solid = remember(scheme, backdrop) { scheme.opaqueOver(backdrop) }
+    MaterialTheme(colorScheme = solid, typography = MaterialTheme.typography, shapes = MaterialTheme.shapes, content = content)
+}
+
+/** [ColorScheme] with its translucent surfaces and containers solid over [base]; fully transparent ones stay so. */
+fun ColorScheme.opaqueOver(base: Color): ColorScheme {
+    fun solid(c: Color) = if (c.alpha > 0f && c.alpha < 1f) c.compositeOver(base) else c
+    return copy(
+        primaryContainer = solid(primaryContainer), secondaryContainer = solid(secondaryContainer),
+        tertiaryContainer = solid(tertiaryContainer), errorContainer = solid(errorContainer),
+        surface = solid(surface), surfaceVariant = solid(surfaceVariant), surfaceTint = solid(surfaceTint),
+        inverseSurface = solid(inverseSurface), surfaceBright = solid(surfaceBright), surfaceDim = solid(surfaceDim),
+        surfaceContainerLowest = solid(surfaceContainerLowest), surfaceContainerLow = solid(surfaceContainerLow),
+        surfaceContainer = solid(surfaceContainer), surfaceContainerHigh = solid(surfaceContainerHigh),
+        surfaceContainerHighest = solid(surfaceContainerHighest),
+    )
 }
 
 /** Phone UI theme: AARE's palette, normal phone type scale. */

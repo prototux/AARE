@@ -1,0 +1,42 @@
+package net.prototux.aare.car
+
+import aap_protobuf.service.control.message.AudioFocusStateTypeOuterClass.AudioFocusStateType
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/** What the car's audio focus lets play. */
+class AudioFocusQuirksTest {
+    @Test fun gainTransientIsForNavigationVoiceOnly() {
+        assertFalse(CarAudioFocus.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = false))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT))
+    }
+
+    @Test fun aGainTransientAnsweringTheMusicsRequestLetsItPlay() {
+        // The music's own request, or the car on its own: music, as before.
+        assertTrue(CarAudioFocus.gainTransientIsMedia(answersGuidance = false, quirk = false))
+        // A navigation prompt's request: voice only, unless a rule says the head unit means music too.
+        assertFalse(CarAudioFocus.gainTransientIsMedia(answersGuidance = true, quirk = false))
+        assertTrue(CarAudioFocus.gainTransientIsMedia(answersGuidance = true, quirk = true))
+    }
+
+    @Test fun exceptForHeadUnitsWhoseGainTransientMeansMusicToo() =
+        assertTrue(CarAudioFocus.mediaAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT, gainTransientIsMedia = true))
+
+    /** Music the car paused plays again on its own gain; on an answered request only after a pause for navigation voice. */
+    @Test fun aPauseForNavigationVoiceEndsOnAnyGain() {
+        assertTrue(CarSession.resumesAfterCarPause(unsolicited = true, pausedForGuidance = false))
+        assertTrue(CarSession.resumesAfterCarPause(unsolicited = false, pausedForGuidance = true))
+        assertFalse(CarSession.resumesAfterCarPause(unsolicited = false, pausedForGuidance = false))
+    }
+
+    @Test fun theOtherStatesAreUnchanged() {
+        for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK)) assertTrue(s.name, CarAudioFocus.mediaAllowed(s, false))
+        for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY, AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS,
+            AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT)) assertFalse(s.name, CarAudioFocus.mediaAllowed(s, true))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_TRANSIENT_GUIDANCE_ONLY))
+        assertTrue(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK))
+        assertFalse(CarAudioFocus.guidanceAllowed(AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS))
+    }
+}

@@ -1,0 +1,11 @@
+syntax="proto2";
+
+option optimize_for=SPEED;
+
+package aap_protobuf.service.carlocalmedia;
+
+// AARE: service discovery field 16; empty there too.
+message CarLocalMediaService
+{
+
+}

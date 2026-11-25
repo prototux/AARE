@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="obd_tab_track">赛道</string>
+    <string name="obd_tab_lap">圈速</string>
+    <string name="obd_tab_dyno">测功</string>
+    <string name="obd_track_warning">仅限赛道或封闭场地。切勿在公共道路上使用。</string>
+    <string name="obd_g_title">G 力（手机）</string>
+    <string name="obd_g_accel">加速 %1$s</string>
+    <string name="obd_g_brake">制动 %1$s</string>
+    <string name="obd_g_lateral">横向 %1$s</string>
+    <string name="obd_g_reset">重置最大值</string>
+    <string name="obd_g_hint">把手机牢牢固定在支架上。加速和制动时它会学会哪边是前方。</string>
+    <string name="obd_test_0_100">0-100 km/h</string>
+    <string name="obd_test_80_120">80-120 km/h</string>
+    <string name="obd_test_quarter">402 m</string>
+    <string name="obd_test_brake">100-0 km/h</string>
+    <string name="obd_test_off">点击以准备</string>
+    <string name="obd_test_stop">已准备：把车停下</string>
+    <string name="obd_test_below">已准备：保持在 %1$d km/h 以下</string>
+    <string name="obd_test_above">已准备：超过 %1$d km/h</string>
+    <string name="obd_test_ready">就绪：加速</string>
+    <string name="obd_test_ready_brake">就绪：制动</string>
+    <string name="obd_test_running">测量中…</string>
+    <string name="obd_best">最佳 %1$s</string>
+    <string name="obd_lap_arm">开始圈速计时</string>
+    <string name="obd_lap_disarm">停止</string>
+    <string name="obd_lap_waiting">已准备：起跑线设在你开始移动的位置</string>
+    <string name="obd_lap_last">上一圈</string>
+    <string name="obd_lap_best">最佳</string>
+    <string name="obd_lap_delta">差值</string>
+    <string name="obd_lap_count">圈数</string>
+    <string name="obd_lap_no_gps">没有来自车辆的 GPS</string>
+    <string name="obd_dyno_arm">准备</string>
+    <string name="obd_dyno_disarm">结束</string>
+    <string name="obd_dyno_off">准备后，用 2 挡或 3 挡从低转速全油门加速到接近断油。</string>
+    <string name="obd_dyno_armed">已准备：全油门</string>
+    <string name="obd_dyno_peak">%1$.0f 马力 @ %2$.0f rpm</string>
+    <string name="obd_dyno_note">车轮功率，由加速度和车重（设置）估算。仅供粗略参考，不是真正的测功机。</string>
+    <string name="obd_history_records">纪录</string>
+    <string name="obd_history_lap">圈速</string>
+    <string name="obd_history_dyno">测功</string>
+    <string name="obd_set_mass">含驾驶员的车重</string>
+</resources>

@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.net.Uri
@@ -18,6 +17,7 @@ import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
@@ -27,7 +27,6 @@ import com.google.protobuf.ByteString
 import net.prototux.aare.aap.AapSession
 import net.prototux.aare.aap.channels.PhoneStatusChannel
 import net.prototux.aare.aap.channels.sendBatteryStatus
-import java.io.ByteArrayOutputStream
 
 /**
  * The phone's own state for the car: the current call and the signal on the phone status channel
@@ -50,6 +49,9 @@ class PhoneStatusBridge(
 
     private var lastBattery = -1
     private var lastCritical = false
+    /** The first level heard and when (elapsedRealtime), to estimate the drain before Android 12. */
+    private var firstBattery = -1
+    private var firstBatteryAtMs = 0L
     private var lastSent: PhoneStatus? = null
 
     private var callState = TelephonyManager.CALL_STATE_IDLE
@@ -137,7 +139,24 @@ class PhoneStatusBridge(
         if (percent == lastBattery && critical == lastCritical) return
         lastBattery = percent
         lastCritical = critical
-        aap.sendBatteryStatus(percent, critical)
+        if (firstBattery < 0) { firstBattery = percent; firstBatteryAtMs = SystemClock.elapsedRealtime() }
+        aap.sendBatteryStatus(percent, critical, timeRemainingS(percent))
+    }
+
+    /**
+     * How long the battery lasts: Android's own discharge prediction on
+     * Android 12+, otherwise the level divided by the drain seen since the session started. Null
+     * when unknown (nothing drained yet, or no prediction).
+     */
+    private fun timeRemainingS(percent: Int): Int? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val left = runCatching { context.getSystemService(PowerManager::class.java)?.batteryDischargePrediction }.getOrNull()
+            return left?.takeUnless { it.isNegative }?.seconds?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt()
+        }
+        val drained = firstBattery - percent
+        val elapsedS = (SystemClock.elapsedRealtime() - firstBatteryAtMs) / 1_000
+        if (drained <= 0 || elapsedS <= 0) return null
+        return (percent.toLong() * elapsedS / drained).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
     }
 
     // ------------------------------------------------------------------ calls and signal
@@ -168,7 +187,8 @@ class PhoneStatusBridge(
         if (state == TelephonyManager.CALL_STATE_RINGING) heardNumber?.let { ringingNumber = it }
         else if (state == TelephonyManager.CALL_STATE_OFFHOOK && activeNumber == null) heardNumber?.let { activeNumber = it }
         val status = PhoneStatus.newBuilder()
-        signal()?.let { status.setSignalStrength(it) }
+        // A signal strength is always sent: no SIM (or no reading) is 0 bars.
+        status.setSignalStrength(signal() ?: 0)
         if (state != TelephonyManager.CALL_STATE_IDLE) status.addCalls(call(state, now))
         val built = status.build()
         if (built == lastSent) return
@@ -220,13 +240,17 @@ class PhoneStatusBridge(
         return found
     }
 
-    /** The contact's thumbnail (already a small JPEG); shrunk only if some app stored a big one. */
+    /**
+     * The contact's thumbnail as a PNG within [THUMB_SIZE] (well under the 256x256
+     * cap, to keep the phone-status channel light): the head unit decodes the caller thumbnail
+     * and refuses it unless it's PNG and within the bound, so the provider's JPEG always needs
+     * re-encoding, not just the rare oversized one. [lookup] already caches this per number per
+     * connection, so it isn't redone on every call status tick.
+     */
     private fun thumbnail(uri: Uri): ByteArray? = runCatching {
         val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@runCatching null
-        if (bytes.size <= MAX_THUMB_BYTES) return@runCatching bytes
         val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return@runCatching null
-        val small = Bitmap.createScaledBitmap(bmp, THUMB_SIZE, THUMB_SIZE * bmp.height / maxOf(1, bmp.width), true)
-        ByteArrayOutputStream().also { small.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+        CarImage.toCarPng(bmp, THUMB_SIZE)
     }.getOrNull()
 
     companion object {
@@ -235,7 +259,6 @@ class PhoneStatusBridge(
         private const val IDLE_TICK_MS = 10_000L
         /** Android's own low-battery "critical" level. */
         private const val CRITICAL_PERCENT = 5
-        private const val MAX_THUMB_BYTES = 16 * 1024
         private const val THUMB_SIZE = 96
     }
 }

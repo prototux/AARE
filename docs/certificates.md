@@ -80,17 +80,12 @@ check, so not every factory head unit does. Reports from real cars are welcome (
 
 ## What AARE does
 
-- **Its own certificates:**
-  - Release builds carry **AARE's built-in certificate**: one RSA-2048 certificate and key
-    (`O=AARE, CN=AARE phone`), the same in every install of a release, renewed from time to time.
-    Like Google's, its key ships inside the app, so it identifies AARE rather than
-    a phone, and it isn't secret. It's self-signed today; it exists so that, if head units ever
-    accept certificates from other apps (a vendor or CA signing AARE's), releases can carry a signed
-    one without changing anything else. Builds you make yourself get it only when `AARE_PHONE_CERT`
-    and `AARE_PHONE_KEY` (PEM certificate, PEM PKCS#8 key) are set in the environment.
-  - On first launch AARE also **generates a self-signed certificate** and key on the phone. It's the
-    last fallback, and the only one in builds without the built-in certificate.
-  - Head units that don't check the phone accept either; Google-library head units refuse both.
+- **Its own certificate:**
+  - On first launch AARE **generates a self-signed certificate** and key on the phone, and offers
+    it after any imported one. (Releases up to 1.6 also carried a built-in self-signed certificate,
+    meant for a vendor or CA to sign one day; it was dropped for 2.0, as head units that accept one
+    accept the other.)
+  - Head units that don't check the phone accept it; Google-library head units refuse it.
 - **Importing a certificate:** under *Advanced > Phone certificates* you can import a certificate
   chain and key (PEM, or a PKCS#12 file) that you are entitled to use. AARE doesn't ship Google's
   certificate or key. *Download certificate* fetches the ones extracted from the latest Android

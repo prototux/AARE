@@ -2,7 +2,6 @@ package net.prototux.aare.ui.car
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,8 +36,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.R
 import net.prototux.aare.host.templates.CarFormat
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.ui.theme.LocalCarColors
 import net.prototux.aare.ui.theme.LocalCarDimens
 
@@ -58,19 +59,19 @@ internal fun ClassicShell(
     /** Insets the UI into the head unit's visible area (the codec frame minus its margins). */
     modifier: Modifier = Modifier,
 ) {
-    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize().carBackdrop()) {
         Box(Modifier.fillMaxSize().then(modifier)) {
             Column(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Clock()
+                    if (state.chrome.clock) Clock()
                     Spacer(Modifier.weight(1f))
-                    PhoneStatusIcons()
+                    PhoneStatusIcons(state.chrome)
                 }
                 ContentArea(state, actions, appContent, navMap, Modifier.weight(1f).fillMaxWidth(), launcherHome = true)
                 BottomBar(state, actions)
             }
             overlay(Modifier.align(Alignment.BottomCenter))
-            NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter))
+            OverMap { NoticeOverlay(state, actions, Modifier.align(Alignment.TopCenter)) }
             CallOverlay(state, actions, Modifier.align(Alignment.TopCenter))
         }
     }
@@ -91,7 +92,7 @@ private fun BottomBar(state: CarUiState, actions: CarActions) {
         }
         Box(Modifier.weight(1f)) { ActivityPill(state, actions) }
         NotificationBell(state) { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }
-        MicButton(state.listening) { actions.assistant() }
+        MicButton(state.listening, stop = state.voiceButtonIsStop) { actions.assistant() }
     }
 }
 
@@ -106,11 +107,12 @@ private fun ActivityPill(state: CarUiState, actions: CarActions) {
     val np = state.nowPlaying
     val media = state.app(np?.appId ?: state.activeMediaAppId)
     val guiding = state.trip != null || state.phoneGuidance != null
-    val pill = Modifier.height(LocalCarDimens.current.touchTarget).clip(RoundedCornerShape(percent = 50))
+    val pillShape = RoundedCornerShape(percent = 50)
+    val pill = Modifier.height(LocalCarDimens.current.touchTarget).clip(pillShape)
         .background(MaterialTheme.colorScheme.surfaceContainerHighest)
     when {
         guiding && (nav == null || screen != nav.id) -> Row(
-            pill.clickable { nav?.let(actions::openApp) }.padding(start = 8.dp, end = 20.dp),
+            pill.carClickable(pillShape) { nav?.let(actions::openApp) }.padding(start = 8.dp, end = 20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TurnBadge(state)
@@ -118,7 +120,7 @@ private fun ActivityPill(state: CarUiState, actions: CarActions) {
             Text(turnText(state), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         media != null && screen != media.id -> Row(pill.padding(start = 8.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clip(CircleShape).clickable { actions.openApp(media) }) { AppIcon(media, 52) }
+            Box(Modifier.clip(CircleShape).carClickable(CircleShape) { actions.openApp(media) }) { AppIcon(media, 52) }
             RoundIcon(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), filled = false) { actions.mediaPrevious() }
             RoundIcon(if (np?.playing == true) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                 stringResource(R.string.media_action_play_pause), filled = false) { actions.mediaPlayPause() }

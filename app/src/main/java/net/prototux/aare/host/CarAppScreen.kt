@@ -16,9 +16,9 @@ import androidx.car.app.navigation.model.PlaceListNavigationTemplate
 import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,11 +38,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -50,9 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
+import net.prototux.aare.ui.car.LocalInSplitPane
+import net.prototux.aare.ui.theme.OverMap
 import net.prototux.aare.host.templates.LocalCompactMap
 import net.prototux.aare.host.templates.RenderTemplate
 import net.prototux.aare.host.templates.TemplateHost
+import net.prototux.aare.ui.car.carClickable
 
 /**
  * One hosted car app on the car screen: its current template, its alerts, and loading/error
@@ -81,12 +87,16 @@ fun CarAppScreen(conn: CarAppConnection, runtime: CarRuntime, modifier: Modifier
             conn.status == CarAppConnection.Status.FAILED -> AppMessage(conn, conn.error ?: stringResource(R.string.common_something_went_wrong), retry = { conn.connect() })
             template == null -> AppMessage(conn, null, retry = null)
             // A new screen (new template id) starts fresh; refreshes keep scroll position and input.
+            // Over the app's map, a glass theme's cards are made solid (OverMap): readable on a day map.
             else -> androidx.compose.runtime.key(conn.templateId) {
-                CompositionLocalProvider(LocalCompactMap provides compact) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+                val render: @Composable () -> Unit = {
+                    CompositionLocalProvider(LocalCompactMap provides compact) { RenderTemplate(template, host, Modifier.fillMaxSize()) }
+                }
+                if (usesMap(template)) OverMap(render) else render()
             }
         }
-        if (compact && onOpen != null) Box(Modifier.fillMaxSize().clickable(onClick = onOpen))
-        conn.alert?.let { AlertCard(it, conn, host, Modifier.align(Alignment.TopCenter)) }
+        if (compact && onOpen != null) Box(Modifier.fillMaxSize().carClickable(RectangleShape, onClick = onOpen))
+        conn.alert?.let { OverMap { AlertCard(it, conn, host, Modifier.align(Alignment.TopCenter)) } }
     }
 }
 
@@ -113,7 +123,7 @@ private fun AppMessage(conn: CarAppConnection, message: String?, retry: (() -> U
                 Text(
                     stringResource(R.string.common_try_again), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.clip(MaterialTheme.shapes.extraLarge).background(MaterialTheme.colorScheme.primary)
-                        .clickable(onClick = retry).padding(horizontal = 32.dp, vertical = 18.dp),
+                        .carClickable(MaterialTheme.shapes.extraLarge, onClick = retry).padding(horizontal = 32.dp, vertical = 18.dp),
                 )
             }
         }
@@ -148,7 +158,7 @@ private fun AlertCard(alert: Alert, conn: CarAppConnection, host: TemplateHost, 
                     Text(
                         action.title?.toString() ?: stringResource(R.string.common_ok), style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.clip(MaterialTheme.shapes.large).background(MaterialTheme.colorScheme.secondaryContainer)
-                            .clickable {
+                            .carClickable(MaterialTheme.shapes.large) {
                                 runCatching { action.onClickDelegate?.sendClick(host.done) }
                                 conn.dismissAlert()
                             }.padding(horizontal = 28.dp, vertical = 16.dp),
@@ -179,6 +189,7 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
     override val night: Boolean get() = runtime.ui.night
     override val touchscreen: Boolean get() = runtime.touchscreen
     override val appLabel: String get() = conn.info.label
+    override val forceIconTint: Boolean = AppQuirks.FORCE_ICON_TINT.matches(conn.info.packageName, conn.info.versionCode)
     override fun contentLimit(type: Int): Int = runtime.contentLimit(type)
     override val done = CarAppConnection.templateDone
     override fun back() = conn.back()
@@ -192,13 +203,28 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         return Bitmap.createScaledBitmap(b, maxOf(1, (b.width * scale).toInt()), maxOf(1, (b.height * scale).toInt()), true).asImageBitmap()
     }
     override fun showParkedOnlyMessage() = runtime.notice(runtime.context.getString(R.string.notif_parked_only_title), runtime.context.getString(R.string.notif_parked_only_text))
+    override val appColors get() = conn.themeColors
+    override val timedActionParams = TemplateQuirks.timedActionParams(conn.info.packageName)
 
     @Composable
     override fun MapSurface(modifier: Modifier) {
+        // A new surface for a new size (a pane resized, or back to full screen): an app given its
+        // old surface at another size may crash or keep drawing at the old one. Each surface has
+        // its own owner, so the old one going away can't take the new one with it.
+        // Only in a split pane: elsewhere the app is told of a new size on the same surface.
+        if (!LocalInSplitPane.current) SizedMapSurface(modifier)
+        else BoxWithConstraints(modifier) { key(constraints.maxWidth, constraints.maxHeight) { SizedMapSurface(Modifier.fillMaxSize()) } }
+    }
+
+    @Composable
+    private fun SizedMapSurface(modifier: Modifier) {
         val owner = remember { Any() }
         val dpi = runtime.densityDpi
         AndroidView(
-            modifier = modifier,
+            // Clipped: up to Android 10 a SurfaceView punches its hole by clearing the whole canvas
+            // clip, which without this erases everything drawn before it (a bar on the left, the
+            // background), leaving it black.
+            modifier = modifier.clipToBounds(),
             factory = { ctx ->
                 SurfaceView(ctx).apply {
                     holder.addCallback(object : SurfaceHolder.Callback {
@@ -214,10 +240,29 @@ private class ConnectionTemplateHost(val conn: CarAppConnection, val runtime: Ca
         DisposableEffect(owner) { onDispose { conn.surfaceDestroyed(owner) } }
     }
 
+    override val mapCardBottomInsetDp: Int get() = runtime.settings.mapCardBottomInset
     override fun setVisibleArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setVisibleArea(Rect(left, top, right, bottom))
     override fun setStableArea(left: Int, top: Int, right: Int, bottom: Int) = conn.setStableArea(Rect(left, top, right, bottom))
     override fun mapScroll(dx: Float, dy: Float) { conn.scroll(dx, dy) }
     override fun mapFling(vx: Float, vy: Float) { conn.fling(vx, vy) }
     override fun mapScale(focusX: Float, focusY: Float, factor: Float) { conn.scale(focusX, focusY, factor) }
     override fun mapClick(x: Float, y: Float) { conn.click(x, y) }
+}
+
+/**
+ * The dashboard card of a navigation app that runs full screen only: for
+ * versions older than the one it knows works on its dashboard ([AppQuirks.dashboardNavigationSupported]):
+ * the app's icon and name, and a tap opens it.
+ */
+@Composable
+fun CarAppLauncherCard(info: CarAppInfo, modifier: Modifier = Modifier, onOpen: () -> Unit) {
+    Column(
+        modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer).carClickable(RectangleShape, onClick = onOpen).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        info.icon?.let { Image(it.asImageBitmap(), null, Modifier.size(72.dp).clip(CircleShape)) }
+        Spacer(Modifier.height(16.dp))
+        Text(info.label, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    }
 }

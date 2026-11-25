@@ -5,7 +5,6 @@ import android.os.SystemClock
 import android.util.Log
 import aap_protobuf.service.media.sink.message.AudioStreamTypeOuterClass.AudioStreamType
 import net.prototux.aare.DiagLog
-import net.prototux.aare.aap.channels.AudioChannel
 import kotlin.math.abs
 
 /**
@@ -20,9 +19,16 @@ import kotlin.math.abs
  */
 class CarAudioOut(
     private val source: PcmSource,
-    private val channel: AudioChannel,
+    private val channel: CarAudioSink,
     private val focus: Focus,
+    /** Silent messages sent ahead of each stream, at most (see [StartSilence]). */
+    private val startSilence: Int = 0,
     private val onFailed: () -> Unit = {},
+    /** The source started (on the audio thread): its method works on this phone. */
+    private val onStarted: () -> Unit = {},
+    /** elapsedRealtime, and its nanoseconds for the stream's timestamps: replaced in tests. */
+    private val clock: () -> Long = SystemClock::elapsedRealtime,
+    private val nanoClock: () -> Long = SystemClock::elapsedRealtimeNanos,
 ) {
     interface Focus {
         /** About to play (true) or done (false). */
@@ -52,11 +58,11 @@ class CarAudioOut(
      * after an underflow, bigger, so a slow patch of acks doesn't turn into more gaps.
      */
     private val maxBacklog: Int
-        get() = if (SystemClock.elapsedRealtime() < underflowUntil) maxOf(baseBacklog, underflowBacklog) else baseBacklog
+        get() = if (clock() < underflowUntil) maxOf(baseBacklog, underflowBacklog) else baseBacklog
 
     /** The car ran out of sound on this stream: trim less for [UNDERFLOW_HOLD_MS]. */
     fun onUnderflow() {
-        val now = SystemClock.elapsedRealtime()
+        val now = clock()
         // Some head units report one at every stream end rather than an actual gap: ignore it
         // while we're not playing, or just after we stopped, so it doesn't lag the next stream.
         if (!playing || now - stoppedAtMs < IGNORE_UNDERFLOW_AFTER_STOP_MS) return
@@ -83,15 +89,16 @@ class CarAudioOut(
             if (wanted) onFailed()
             return
         }
+        onStarted()
         // Android Auto's chunk size (see [chunkBytes]): head units may be tuned to exactly that.
         val chunk = chunkBytes(rate, channels)
         val buf = ByteArray(10 + chunk)
         var lastSound = 0L
         playing = false
         var frames = 0L
-        // Timestamps on the video's clock (the encoder stamps System.nanoTime), as Android Auto does,
+        // Timestamps on the video's clock (elapsedRealtime, see VideoEncoder),
         // rather than starting at 0 µs.
-        val clockStartUs = System.nanoTime() / 1_000
+        val clockStartUs = nanoClock() / 1_000
         // Chunks (with their timestamp) waiting for focus or for room in the car's ack window.
         val queued = ArrayDeque<Pair<ByteArray, Long>>()
         // The source ended by itself (its service or the audio server died), not by stop(): the
@@ -114,7 +121,7 @@ class CarAudioOut(
                 }
                 if (got < chunk) continue
                 noteAckMode()
-                val now = SystemClock.elapsedRealtime()
+                val now = clock()
                 if (!isSilent(buf, 10, chunk)) lastSound = now
                 val ts = clockStartUs + frames * 1_000_000L / rate
                 frames += chunk / (2 * channels)
@@ -137,10 +144,19 @@ class CarAudioOut(
                     channel.startPlayback()
                     if (!channel.started) { queue(ts); continue }
                     startedAtMs = now; maxQueued = queued.size; focusDropped = 0; underflowsAtStart = channel.underflows
+                    // Silence ahead of the sound, stamped like the sound's start. Not
+                    // more than the stream was quiet for (stoppedAtMs is 0 before the first one).
+                    val silent = StartSilence.cap(startSilence, now - stoppedAtMs, 1000.0 / chunkMs)
                     // Prompts keep their whole start; media keeps only a little, or it would lag
                     // behind real time (video lip sync) for the whole stream. Use the base backlog,
-                    // not a raised one left over from the last stream's underflow.
-                    while (queued.size > baseBacklog) queued.removeFirst()
+                    // not a raised one left over from the last stream's underflow. The silence
+                    // counts towards it: on top, it would put the music further behind the video.
+                    val keep = StartSilence.soundKept(baseBacklog, silent, keepAll = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE)
+                    while (queued.size > keep) queued.removeFirst()
+                    if (silent > 0) {
+                        val at = queued.firstOrNull()?.second ?: ts
+                        repeat(silent) { queued.addFirst(ByteArray(10 + chunk) to at) }
+                    }
                     priming = true
                 } else if (!focus.granted) {
                     // Focus lost mid-stream (the Ford answers a nav prompt's request with LOSS):
@@ -178,7 +194,7 @@ class CarAudioOut(
         } catch (e: Exception) {
             Log.w(TAG, "audio capture stopped", e)
         } finally {
-            if (playing) { runCatching { noteStream(SystemClock.elapsedRealtime()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = SystemClock.elapsedRealtime() }
+            if (playing) { runCatching { noteStream(clock()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = clock() }
             playing = false
             queued.clear()
             source.release()
@@ -209,7 +225,11 @@ class CarAudioOut(
         val now = channel.ackless
         if (now == lastAckless) return
         lastAckless = now
-        DiagLog.add("car audio ($label): " + if (now) "no acks from the car, sending unpaced" else "acks back, paced by the car again")
+        DiagLog.add("car audio ($label): " + when {
+            now && channel.dropsOverflow -> "the car drops what it can't take (protocol 5.0 and later), sending unpaced"
+            now -> "no acks from the car, sending unpaced"
+            else -> "acks back, paced by the car again"
+        })
     }
 
     /** Connection-log line with the chunks dropped (car's window full) during the stream that just ended. */

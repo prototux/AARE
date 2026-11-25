@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
 
@@ -50,13 +51,18 @@ class VideoEncoder(
      * busy pictures.
      */
     private val constantBitrate: Boolean = false,
+    /** SPS/PPS only in the codec config, not repeated before key frames (vehicles.json `videoHeadersOnce`). */
+    private val headersOnce: Boolean = false,
     private val sink: Sink,
 ) {
     interface Sink {
         /** SPS/PPS. Sent once before the first frame, and again whenever the encoder restarts. */
         fun onCodecConfig(data: ByteArray, offset: Int, length: Int)
 
-        /** One access unit. [data] has [offset] bytes of headroom; give it back with [recycle]. */
+        /**
+         * One access unit. [data] has [offset] bytes of headroom; give it back with [recycle].
+         * [ptsUs] is on the elapsedRealtime clock, the one media is stamped with.
+         */
         fun onFrame(data: ByteArray, offset: Int, length: Int, ptsUs: Long, keyFrame: Boolean)
 
         fun onError(e: Exception)
@@ -90,7 +96,7 @@ class VideoEncoder(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) int(MediaFormat.KEY_LATENCY, 1)
             int(MediaFormat.KEY_MAX_B_FRAMES, 0)
             // SPS/PPS before every key frame, so a head unit that resets its decoder can resync.
-            int(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1)
+            if (!headersOnce) int(MediaFormat.KEY_PREPEND_HEADER_TO_SYNC_FRAMES, 1)
         }
         // Until the codec runs, a failure must release what was made so far: the caller never
         // gets an encoder to stop, and a leaked codec holds one of the few hardware instances.
@@ -130,7 +136,7 @@ class VideoEncoder(
                     break
                 } catch (e: Exception) {
                     lastError = e
-                    Log.w(TAG, "encoder ${c.name} rejected $format: ${e.message}")
+                    net.prototux.aare.SessionAapLog.w("video encoder ${c.name} rejected $format: ${e.message}")
                     runCatching { c.reset() }
                 }
             }
@@ -139,7 +145,7 @@ class VideoEncoder(
             c.start()
             inputSurface = surface
             codec = c
-            Log.i(TAG, "encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
+            net.prototux.aare.SessionAapLog.i("video encoder ${c.name} ${width}x$height@$fps ${bitrate / 1000} kb/s")
         } catch (e: Throwable) {
             surface?.let { runCatching { it.release() } }
             c?.let { runCatching { it.release() } }
@@ -207,7 +213,7 @@ class VideoEncoder(
                     } else {
                         val out = obtain(headroom + info.size)
                         buf.get(out, headroom, info.size)
-                        sink.onFrame(out, headroom, info.size, info.presentationTimeUs,
+                        sink.onFrame(out, headroom, info.size, info.presentationTimeUs + bootClockOffsetUs(),
                             info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0)
                     }
                 }
@@ -223,12 +229,19 @@ class VideoEncoder(
         }
 
         override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {
-            Log.i(TAG, "encoder output format $format")
+            net.prototux.aare.SessionAapLog.i("video encoder output: $format")
         }
     }
 
     companion object {
         private const val TAG = "AareVideoEnc"
+
+        /**
+         * From the clock the input surface stamps frames with (System.nanoTime, which stops in deep
+         * sleep) to elapsedRealtime (which doesn't): the clock media is timestamped on.
+         * Read per frame: the two drift apart each time the phone sleeps.
+         */
+        private fun bootClockOffsetUs() = SystemClock.elapsedRealtimeNanos() / 1_000 - System.nanoTime() / 1_000
 
         fun defaultBitrate(w: Int, h: Int, fps: Int): Int {
             // ~0.12 bits per pixel per frame: crisp UI text without saturating USB 2 / Wi-Fi,

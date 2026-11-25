@@ -26,6 +26,29 @@ interface ILaunchHost {
     /** Tear the display down and stop feeding the app. */
     void stop() = 5;
 
+    /**
+     * Open [uri] (an ACTION_VIEW, geo: only) in [packageName] on the display [start] created, e.g. a
+     * destination for a navigation app. False without a display or for any other URI.
+     */
+    boolean view(String uri, String packageName) = 6;
+
+    /**
+     * Like [start], but opens [packageName]'s voice UI (ACTION_VOICE_COMMAND, else ACTION_ASSIST),
+     * or its main activity if it has neither: for an assistant on the car screen. Returns the
+     * display id, or -1 (and no display) if nothing could be opened.
+     */
+    int startAssistant(in Surface surface, int width, int height, int dpi, String packageName) = 7;
+
+    /**
+     * Whether the launched app's keyboard shows on the car screen (parked) or on the phone (driving,
+     * so a navigation app allowed while driving can't be typed into from the car). For the display
+     * [start] or [startAssistant] creates next, and the current one. Default: the phone.
+     */
+    void keyboardInCar(boolean inCar) = 8;
+
+    /** Turns the phone's location on or off, as the shell may. False if it can't. */
+    boolean setLocationEnabled(boolean on) = 15;
+
     /** Shizuku's user-service teardown call. */
     void destroy() = 16777114;
 }

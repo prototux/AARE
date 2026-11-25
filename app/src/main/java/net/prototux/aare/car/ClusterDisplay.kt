@@ -18,6 +18,7 @@ import net.prototux.aare.host.CarAppClusterScreen
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.ui.car.ClusterTurnCard
 import net.prototux.aare.ui.theme.CarTheme
+import net.prototux.aare.ui.theme.carBackdrop
 import net.prototux.aare.video.ProjectionDisplay
 import net.prototux.aare.video.VideoEncoder
 
@@ -35,7 +36,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
     /** A cluster encoder that keeps failing goes dark instead of restarting forever. */
     private val restarts = RestartLimiter(CarSession.MAX_RESTARTS, CarSession.RESTART_WINDOW_MS)
 
-    fun open(service: aap_protobuf.service.ServiceOuterClass.Service): VideoChannel = VideoChannel(service, this).also { channel = it }
+    fun open(service: aap_protobuf.service.ServiceOuterClass.Service, allowDropOverflow: Boolean = false): VideoChannel =
+        VideoChannel(service, this, allowDropOverflow = allowDropOverflow).also { channel = it }
 
     // The cluster usually offers one configuration: take the smallest, it's a small screen. It stays
     // on H.264 (universally decoded, and bandwidth is a non-issue on a tiny screen); only the main
@@ -96,7 +98,8 @@ class ClusterDisplay(private val context: Context, private val runtime: CarRunti
         val ui = runtime.ui
         // The main screen's theme and day/night colours, so the two screens match.
         CarTheme(night = ui.night, theme = ui.theme) {
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            // carBackdrop: a glass theme's background is transparent, its gradient drawn behind it.
+            Box(Modifier.fillMaxSize().carBackdrop().background(MaterialTheme.colorScheme.background)) {
                 val nav = ui.app(ui.activeNavAppId)
                 val conn = nav?.takeIf { ui.trip != null }?.let { runtime.clusterConnection(it) }
                 if (conn != null) CarAppClusterScreen(conn, runtime, Modifier.fillMaxSize())
