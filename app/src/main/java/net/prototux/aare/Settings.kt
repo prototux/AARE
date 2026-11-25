@@ -458,6 +458,50 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("browser", false)
         set(v) = prefs.edit { putBoolean("browser", v) }
 
+    /** Show the Videos app on the car screen (the phone's videos, Jellyfin). Off by default; the picture is paused while driving. */
+    var videos: Boolean
+        get() = prefs.getBoolean("videos", false)
+        set(v) = prefs.edit { putBoolean("videos", v) }
+
+    /** The Videos player's sound sync, in ms: positive plays the sound later against the picture, negative earlier. */
+    var videoSyncMs: Int
+        get() = prefs.getInt("video_sync_ms", 0)
+        set(v) = prefs.edit { putInt("video_sync_ms", v) }
+
+    /** How the picture fills the car screen: a [net.prototux.aare.player.VideoFit] id. */
+    var videoFit: String
+        get() = prefs.getString("video_fit", "fit") ?: "fit"
+        set(v) = prefs.edit { putString("video_fit", v) }
+
+    /** The Videos zoom, in percent of the fitted picture; 0 for just filling the screen. */
+    var videoZoomPct: Int
+        get() = prefs.getInt("video_zoom_pct", 0)
+        set(v) = prefs.edit { putInt("video_zoom_pct", v) }
+
+    /** Jellyfin videos above this bitrate (kbps) are re-encoded by the server to fit; 0 plays every file as it is. */
+    var jellyfinMaxKbps: Int
+        get() = prefs.getInt("jellyfin_max_kbps", 4_000)
+        set(v) = prefs.edit { putInt("jellyfin_max_kbps", v) }
+
+    /** The Jellyfin server for the Videos app (an http(s) address), and the signed-in account (see JellyfinAccount). */
+    var jellyfinServer: String?
+        get() = prefs.getString("jellyfin_server", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_server") else putString("jellyfin_server", v) }
+    /** Allow plain http:// for the Jellyfin server on the home network only. Off by default. */
+    var jellyfinAllowLanHttp: Boolean
+        get() = prefs.getBoolean("jellyfin_allow_lan_http", false)
+        set(v) = prefs.edit { putBoolean("jellyfin_allow_lan_http", v) }
+    var jellyfinUserId: String?
+        get() = prefs.getString("jellyfin_user_id", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_user_id") else putString("jellyfin_user_id", v) }
+    var jellyfinUserName: String?
+        get() = prefs.getString("jellyfin_user_name", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_user_name") else putString("jellyfin_user_name", v) }
+    /** The access token Jellyfin gave at sign-in: never logged. */
+    var jellyfinToken: String?
+        get() = prefs.getString("jellyfin_token", null)
+        set(v) = prefs.edit { if (v == null) remove("jellyfin_token") else putString("jellyfin_token", v) }
+
     /** The page the car browser opens. */
     var browserUrl: String
         get() = prefs.getString("browser_url", BROWSER_DEFAULT_URL) ?: BROWSER_DEFAULT_URL

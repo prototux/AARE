@@ -1282,6 +1282,17 @@ private fun AppsCard(settings: Settings) {
     var phoneScreen by remember { mutableStateOf(settings.phoneScreen) }
     var browser by remember { mutableStateOf(settings.browser) }
     var browserUrl by remember { mutableStateOf(settings.browserUrl) }
+    var videos by remember { mutableStateOf(settings.videos) }
+    var videosAllowed by remember { mutableStateOf(net.prototux.aare.player.LocalVideos.granted(ctx)) }
+    val videoPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        videosAllowed = ok
+        // Refused for good (no rationale left after a refusal): Android won't ask again, so open
+        // AARE's settings to allow it there.
+        val activity = ctx as? android.app.Activity
+        if (!ok && activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, net.prototux.aare.player.LocalVideos.permission)) {
+            ctx.startSafely(appDetails(ctx))
+        }
+    }
     // Same rules as the car's launcher (CarRuntime.applyApps): an app with a car app shows once, as that.
     // The launched phone apps are picked further down the page: loaded again when that changes.
     var picks by remember { mutableIntStateOf(0) }
@@ -1353,9 +1364,16 @@ private fun AppsCard(settings: Settings) {
                 Text(stringResource(R.string.browser_hint_parked), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
             }
+            AppRow(null, stringResource(R.string.videos_app_label), stringResource(R.string.videos_app_row_subtitle), videos) { videos = it; settings.videos = it }
+            if (videos) {
+                Check(stringResource(R.string.videos_check_permission_title), stringResource(R.string.videos_check_permission_subtitle), videosAllowed) {
+                    videoPermission.launch(net.prototux.aare.player.LocalVideos.permission)
+                }
+                JellyfinSettings(settings)
+            }
         }
-        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser)
-        if (l != null) RailAppsSection(settings, l, hidden, phoneScreen, browser)
+        if (l != null) AppOrder(settings, l, hidden, phoneScreen, browser, videos)
+        if (l != null) RailAppsSection(settings, l, hidden, phoneScreen, browser, videos)
         StandaloneAppsSection(settings, ctx)
         val unsupported by produceState(emptyList<UnsupportedCarApp>(), l) {
             if (l != null) value = withContext(Dispatchers.IO) { AndroidAutoApps.unsupported(ctx, l.carApps.map { it.packageName }) }
@@ -1370,12 +1388,98 @@ private fun AppsCard(settings: Settings) {
     }
 }
 
+/** Signing in to a Jellyfin server for the car's Videos app. The password is sent once and not kept. */
+@Composable
+private fun JellyfinSettings(settings: Settings) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var account by remember { mutableStateOf(net.prototux.aare.player.JellyfinAccount.load(settings)) }
+    var server by remember {
+        mutableStateOf(settings.jellyfinServer?.ifBlank { null } ?: net.prototux.aare.player.JellyfinClient.DEFAULT_SERVER)
+    }
+    var allowLanHttp by remember { mutableStateOf(settings.jellyfinAllowLanHttp) }
+    var user by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(stringResource(R.string.jellyfin_title), style = MaterialTheme.typography.titleSmall)
+        val a = account
+        if (a != null) {
+            Text(stringResource(R.string.jellyfin_signed_in, a.userName, a.serverLabel), style = MaterialTheme.typography.bodyMedium)
+            androidx.compose.material3.OutlinedButton(onClick = {
+                net.prototux.aare.player.JellyfinAccount.clear(settings)
+                DiagLog.add("jellyfin: signed out")
+                account = null
+            }) { Text(stringResource(R.string.jellyfin_sign_out)) }
+            if (a.server.startsWith("http://", ignoreCase = true)) {
+                Toggle(
+                    stringResource(R.string.jellyfin_http_lan_title),
+                    stringResource(R.string.jellyfin_http_lan_subtitle),
+                    allowLanHttp,
+                ) {
+                    allowLanHttp = it
+                    settings.jellyfinAllowLanHttp = it
+                    account = net.prototux.aare.player.JellyfinAccount.load(settings)
+                }
+            }
+            var maxKbps by remember { mutableIntStateOf(settings.jellyfinMaxKbps) }
+            Choices(stringResource(R.string.jellyfin_quality_title), listOf(0, 8_000, 4_000, 2_000).map {
+                "$it" to if (it == 0) stringResource(R.string.jellyfin_quality_original) else "${it / 1000} Mbps"
+            }, "$maxKbps") { maxKbps = it.toInt(); settings.jellyfinMaxKbps = maxKbps }
+            Text(stringResource(R.string.jellyfin_quality_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            return@Column
+        }
+        Text(stringResource(R.string.jellyfin_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(value = server, onValueChange = { server = it }, label = { Text(stringResource(R.string.jellyfin_server_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Uri))
+        val refusal = net.prototux.aare.player.JellyfinClient.plainHttpRefusal(server, allowLanHttp)
+        if (refusal != null) {
+            Text(refusal.userMessage(ctx), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        Toggle(
+            stringResource(R.string.jellyfin_http_lan_title),
+            stringResource(R.string.jellyfin_http_lan_subtitle),
+            allowLanHttp,
+        ) { allowLanHttp = it; settings.jellyfinAllowLanHttp = it }
+        OutlinedTextField(value = user, onValueChange = { user = it }, label = { Text(stringResource(R.string.jellyfin_user_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text(stringResource(R.string.jellyfin_password_label)) },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password))
+        error?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error) }
+        val serverOk = net.prototux.aare.player.JellyfinClient.hasValidServer(server) && refusal == null
+        androidx.compose.material3.Button(enabled = !busy && serverOk && user.isNotBlank(), onClick = {
+            busy = true; error = null
+            val s = server; val u = user; val p = password; val lan = allowLanHttp
+            scope.launch {
+                val result = withContext(Dispatchers.IO) {
+                    runCatching { net.prototux.aare.player.JellyfinClient.signIn(s, u, p, settings.instanceId, lan) }
+                }
+                busy = false
+                result.onSuccess {
+                    it.save(settings)
+                    DiagLog.add("jellyfin: signed in to ${it.serverLabel} as ${it.userName}")
+                    password = ""
+                    account = it
+                }.onFailure {
+                    // The message never holds the password or the token (JellyfinClient).
+                    error = (it as? net.prototux.aare.player.PlainHttpRefused)?.userMessage(ctx) ?: it.message ?: it.javaClass.simpleName
+                    DiagLog.add("jellyfin: sign-in failed: $error")
+                }
+            }
+        }) { Text(stringResource(if (busy) R.string.jellyfin_signing_in else R.string.jellyfin_sign_in)) }
+    }
+}
+
 /**
  * Everything the car launcher can list, keyed as `CarRuntime.orderKey` does (packages, or the
  * built-in apps' ids): shared by the launcher's own order ([AppOrder]) and the rail's ([RailAppsSection]).
  */
 @Composable
-private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean): List<Triple<String, String, android.graphics.Bitmap?>> {
+private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean, videos: Boolean): List<Triple<String, String, android.graphics.Bitmap?>> {
     val ctx = LocalContext.current
     val homeApp = remember { HomeStore(ctx).load().hasContent }
     return buildList {
@@ -1390,14 +1494,15 @@ private fun launcherCandidates(l: LauncherLists, hidden: Set<String>, phoneScree
         if (CarRuntime.NOTIFICATIONS_ID !in hidden) Triple(CarRuntime.NOTIFICATIONS_ID, stringResource(R.string.setup_app_entry_notifications), null) else null,
         if (phoneScreen) Triple(CarRuntime.PHONE_SCREEN_ID, stringResource(R.string.phone_section_title), null) else null,
         if (browser) Triple(CarRuntime.BROWSER_ID, stringResource(R.string.browser_app_label), null) else null,
+        if (videos) Triple(CarRuntime.VIDEOS_ID, stringResource(R.string.videos_app_label), null) else null,
         if (homeApp) Triple(CarRuntime.HOME_ID, stringResource(R.string.home_app_label), null) else null,
     )
 }
 
 /** The order of the car's app list: the visible apps, sorted by dragging. */
 @Composable
-private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
-    val all = launcherCandidates(l, hidden, phoneScreen, browser)
+private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean, videos: Boolean) {
+    val all = launcherCandidates(l, hidden, phoneScreen, browser, videos)
     var order by remember { mutableStateOf(settings.appOrder) }
     val index = order.withIndex().associate { (i, k) -> k to i }
     val sorted = all.sortedWith(compareBy({ index[it.first] ?: Int.MAX_VALUE }, { it.second.lowercase() }))
@@ -1424,8 +1529,8 @@ private fun AppOrder(settings: Settings, l: LauncherLists, hidden: Set<String>, 
  * (the default): the rail keeps its built-in set (today's behaviour) — see CarShell.RailContent.
  */
 @Composable
-private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean) {
-    val candidates = launcherCandidates(l, hidden, phoneScreen, browser)
+private fun RailAppsSection(settings: Settings, l: LauncherLists, hidden: Set<String>, phoneScreen: Boolean, browser: Boolean, videos: Boolean) {
+    val candidates = launcherCandidates(l, hidden, phoneScreen, browser, videos)
     var compact by remember { mutableStateOf(settings.compactRail) }
     var spacing by remember { mutableStateOf(settings.railSpacing) }
     var chosen by remember { mutableStateOf(settings.railApps) }

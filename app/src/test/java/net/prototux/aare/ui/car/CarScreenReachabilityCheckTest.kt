@@ -26,6 +26,7 @@ class CarScreenReachabilityCheckTest {
         "src/main/java/net/prototux/aare/ui/car",
         "src/main/java/net/prototux/aare/media",
         "src/main/java/net/prototux/aare/host",
+        "src/main/java/net/prototux/aare/player",
     )
 
     /**
@@ -104,6 +105,11 @@ class CarScreenReachabilityCheckTest {
             "detectDragGestures(",
             "repositions the floating in-call strip only, a touch convenience with no knob equivalent; " +
                 "the strip's tap and its hang-up button are both carClickable.",
+        ),
+        Allowed(
+            "src/main/java/net/prototux/aare/player/VideoPlayerScreen.kt",
+            ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { pokes++ }",
+            "tapping the video surface wakes the hidden controls; a knob or D-pad wakes them through CarRuntime.screenInput.",
         ),
     )
 

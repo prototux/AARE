@@ -18,7 +18,7 @@ import net.prototux.aare.ui.theme.AareTheme
  * What kind of app an entry in the launcher is, which decides where its UI goes. [EXIT] has no UI:
  * it hands the screen back to the car's own.
  */
-enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, HOME, OBD, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
+enum class CarAppKind { NAVIGATION, MEDIA, TEMPLATED, ASSISTANT, MESSAGING, PHONE_SCREEN, BROWSER, CAR_DATA, VIDEOS, HOME, OBD, STANDALONE, PHONE, SETTINGS, NOTIFICATIONS, EXIT }
 
 /** One launchable app on the car screen. */
 @Stable
