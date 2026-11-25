@@ -585,7 +585,7 @@ private fun ShizukuGrantResult(items: List<ShizukuSetupClient.Item>, onDismiss: 
 }
 
 @Composable
-private fun Check(title: String, subtitle: String, done: Boolean, onClick: () -> Unit) {
+internal fun Check(title: String, subtitle: String, done: Boolean, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).clickable(enabled = !done, onClick = onClick).padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically) {
         Icon(if (done) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,

@@ -96,6 +96,8 @@ import net.prototux.aare.audio.MicRouter
 import net.prototux.aare.audio.MicTakeover
 import net.prototux.aare.audio.PhoneAppsMic
 import net.prototux.aare.audio.PhoneRecording
+import net.prototux.aare.aap.pcm.PcmFormat
+import net.prototux.aare.tts.CarVoice
 import net.prototux.aare.R
 import net.prototux.aare.host.CarRuntime
 import net.prototux.aare.media.MediaHub
@@ -1153,9 +1155,13 @@ class CarSession(
 
     private val audioListener = object : AudioChannel.Listener {
         override fun onAudioReady(channel: AudioChannel, config: aap_protobuf.service.media.shared.message.AudioConfigurationOuterClass.AudioConfiguration) {
-            if (!settings.carAudio) return
-            if (channel.streamType != AudioStreamType.AUDIO_STREAM_MEDIA && channel.streamType != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
+            val type = channel.streamType
+            if (type != AudioStreamType.AUDIO_STREAM_MEDIA && type != AudioStreamType.AUDIO_STREAM_GUIDANCE) return
             if (!isPrimary(channel)) return
+            // Navigation voice through AARE's voice engine doesn't depend on capturing the phone's sound.
+            val wanted = settings.carAudio || (type == AudioStreamType.AUDIO_STREAM_GUIDANCE && settings.carVoice)
+            DiagLog.add("car audio: car offers ${type.name.removePrefix("AUDIO_STREAM_").lowercase()} at ${config.samplingRate} Hz x ${config.numberOfChannels}${if (wanted) "" else " (not used: car audio is off)"}")
+            if (!wanted) return
             main.post { startAudio(channel) }
         }
         override fun onUnderflow(channel: AudioChannel) { if (isPrimary(channel)) audioOuts[channel.streamType]?.onUnderflow() }
@@ -1167,7 +1173,9 @@ class CarSession(
     /**
      * Phone audio to one car channel, with the best capture method available. Android Auto's own
      * method (audio policy) feeds music and navigation voice to their own channels; the others
-     * only have one mixed stream, which goes to the media channel.
+     * only have one mixed stream, which goes to the media channel. When no audio-policy method
+     * covers navigation guidance (and the car has its own guidance channel), AARE's voice engine
+     * takes it instead.
      */
     private fun startAudio(channel: AudioChannel) {
         if (closed) return
@@ -1175,8 +1183,14 @@ class CarSession(
         val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
         val singleChannel = vehicleOverride?.singleChannelCapture == true
         val p = projection()
-        val method = when (val plan = CaptureOrder.plan(CaptureMethods.best(context, p, failedCapture), guidance, singleChannel)) {
-            CaptureOrder.Plan.Skip -> return
+        val best = if (settings.carAudio) CaptureMethods.best(context, p, failedCapture) else null
+        val method = when (val plan = CaptureOrder.plan(best, guidance, singleChannel)) {
+            CaptureOrder.Plan.Skip -> {
+                if (guidance && settings.carVoice && !singleChannel) {
+                    startOut(channel, CarVoice.Source(PcmFormat(cfg.samplingRate, cfg.numberOfChannels)), null)
+                }
+                return
+            }
             CaptureOrder.Plan.NoMethod -> {
                 publishCapture(active = null)
                 // Screen capture is all that's left, and Android only asks for it on the phone.
@@ -1205,7 +1219,14 @@ class CarSession(
             CaptureMethod.PLAYBACK_CAPTURE -> PlaybackCaptureSource(p ?: return, rate, ch)
         }
         DiagLog.add(if (guidance) "car audio, navigation channel (${rate} Hz, $ch ch): ${method.label}" else "car audio: ${method.label}")
+        startOut(channel, source, method)
+    }
+
+    /** Runs [source] to [channel], replacing what ran there. [method] is null for AARE's voice engine. */
+    private fun startOut(channel: AudioChannel, source: PcmSource, method: CaptureMethod?) {
+        val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
         audioOuts.remove(channel.streamType)?.stop()
+        if (method == null) DiagLog.add("car voice: navigation prompts from AARE's voice engine go to the car's guidance channel")
         lateinit var out: CarAudioOut
         val silence = StartSilence.configured(wireless, guidance, aap.headUnitVersion?.first,
             vehicleOverride?.wifiMediaStartSilence, vehicleOverride?.wifiGuidanceStartSilence)
@@ -1214,7 +1235,8 @@ class CarSession(
                 // Only if it's still this stream's output: a late failure (a slow Shizuku bind
                 // giving up after teardown, or after a replacement) must not start a capture
                 // nothing would ever stop.
-                if (!audioOuts.remove(channel.streamType, out)) return@post
+                if (closed || !audioOuts.remove(channel.streamType, out)) return@post
+                if (method == null) { DiagLog.add("car voice: the guidance stream stopped"); return@post }
                 DiagLog.add("car audio: ${method.label} failed, trying the next method")
                 failedCapture += method
                 captureFailed(method, source.failure)
@@ -1228,7 +1250,7 @@ class CarSession(
                     }
                 }
             }
-        }, onStarted = { main.post { captureWorks(method) } })
+        }, onStarted = { if (method != null) main.post { captureWorks(method) } })
         audioOuts[channel.streamType] = out.also { it.start() }
     }
 

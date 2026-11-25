@@ -46,7 +46,13 @@ class CarAudioOut(
     private val queueLimit = chunksFor(MAX_QUEUED_MS)
     private val primeChunks = chunksFor(PRIME_MS)
     private val underflowBacklog = chunksFor(UNDERFLOW_BACKLOG_MS)
-    private val baseBacklog = if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) queueLimit else chunksFor(LIVE_BACKLOG_MS)
+    private val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
+    private val baseBacklog = if (guidance) queueLimit else chunksFor(LIVE_BACKLOG_MS)
+    /**
+     * Silence that closes the car's stream. Prompts give the car's sound back quickly (Android Auto
+     * waits about 130 ms on guidance); music gets longer, so a pause between tracks doesn't.
+     */
+    private val silenceMs = if (guidance) GUIDANCE_SILENCE_MS else SILENCE_MS
     /** Until when (elapsedRealtime) to keep the larger backlog after the car reported an underflow. */
     @Volatile private var underflowUntil = 0L
     /** Whether we're actually feeding the car sound right now (read from [onUnderflow], written by the capture thread). */
@@ -128,7 +134,7 @@ class CarAudioOut(
                 if (!playing && lastSound == now) {
                     focus.request(true)
                     playing = true
-                } else if (playing && now - lastSound > SILENCE_MS) {
+                } else if (playing && now - lastSound > silenceMs) {
                     noteDropped()
                     noteStream(now)
                     channel.stopPlayback()
@@ -248,6 +254,8 @@ class CarAudioOut(
     companion object {
         private const val TAG = "AareAudioOut"
         private const val SILENCE_MS = 3_000L
+        /** Long enough for the pause between two sentences of one prompt. */
+        private const val GUIDANCE_SILENCE_MS = 800L
         /** Sound kept while waiting for the car's focus grant. */
         private const val MAX_QUEUED_MS = 1_000
         /** Backlog kept once media plays. */

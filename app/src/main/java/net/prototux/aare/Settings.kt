@@ -305,6 +305,19 @@ class Settings(context: Context) {
         get() = prefs.getString("night_source", NIGHT_SOURCE_CAR) ?: NIGHT_SOURCE_CAR
         set(v) = prefs.edit { putString("night_source", v) }
 
+    /**
+     * Send navigation prompts spoken through AARE's voice engine to the car's guidance channel
+     * (needs AARE chosen as the phone's voice engine). Independent of [carAudio].
+     */
+    var carVoice: Boolean
+        get() = prefs.getBoolean("car_voice", true)
+        set(v) = prefs.edit { putBoolean("car_voice", v) }
+
+    /** The engine AARE's voice engine speaks with (package name), or null for the best installed. */
+    var voiceEngine: String?
+        get() = prefs.getString("voice_engine", null)
+        set(v) = prefs.edit { if (v == null) remove("voice_engine") else putString("voice_engine", v) }
+
     /** Stream phone audio to the car (needs the screen-capture consent for audio). */
     var carAudio: Boolean
         get() = prefs.getBoolean("car_audio", true)

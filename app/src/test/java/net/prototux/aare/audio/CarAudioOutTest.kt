@@ -145,6 +145,14 @@ class CarAudioOutTest {
         assertFalse(r.sink.started)
     }
 
+    @Test fun guidanceClosesAfterEightHundredMsOfSilence() {
+        // 15 quiet messages at 64 ms each are 960 ms (> 800 ms, well under 3 s).
+        val (r, _) = run(sounds(0..4) + List(15) { Quiet }, stream = AudioStreamType.AUDIO_STREAM_GUIDANCE)
+        assertEquals(listOf(true, false), r.focus.requests)
+        assertEquals(1, r.sink.events.count { it == "stop" })
+        assertFalse(r.sink.started)
+    }
+
     @Test fun losingFocusMidStreamClosesItAndOpensANewOneWithAFreshLead() {
         // Focus lost at message 6, back at 9.
         val (r, _) = run(sounds(0..14)) { f, i -> if (i == 6) f.granted = false; if (i == 9) f.granted = true }

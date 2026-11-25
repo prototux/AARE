@@ -54,6 +54,8 @@ object SettingsBackup {
         "dashboard_media_first" to Type.BOOLEAN, // before dashboard_cards, same
         "show_calendar" to Type.BOOLEAN, // before dashboard_cards, same
         "car_theme" to Type.STRING,
+        "car_voice" to Type.BOOLEAN,
+        "voice_engine" to Type.STRING,
         "car_audio" to Type.BOOLEAN,
         "car_audio_full_volume" to Type.BOOLEAN,
         "assistant_pkg" to Type.STRING,
