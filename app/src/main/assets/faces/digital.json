@@ -1,0 +1,24 @@
+{
+  "aareCard": 1,
+  "name": "Digital",
+  "size": [400, 240],
+  "layers": [
+    { "type": "text", "text": "{time}", "y": 100, "size": 124, "weight": "medium", "width": 370 },
+    { "type": "text", "text": "{date}", "y": 190, "size": 30, "color": "primary", "width": 360 }
+  ],
+  "strip": {
+    "size": [520, 110],
+    "layers": [
+      { "type": "text", "text": "{time}", "x": 24, "size": 72, "weight": "medium", "align": "start" },
+      { "type": "text", "text": "{shortDate}", "x": 496, "size": 32, "color": "primary", "align": "end", "width": 220 }
+    ]
+  },
+  "tall": {
+    "size": [300, 400],
+    "layers": [
+      { "type": "text", "text": "{hour}", "y": 115, "size": 150, "weight": "bold" },
+      { "type": "text", "text": "{minute}", "y": 245, "size": 150, "weight": "light", "color": "primary" },
+      { "type": "text", "text": "{shortDate}", "y": 350, "size": 30, "color": "onSurfaceVariant", "width": 270 }
+    ]
+  }
+}

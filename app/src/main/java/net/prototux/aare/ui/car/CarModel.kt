@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import net.prototux.aare.car.CarChrome
 import net.prototux.aare.car.NextEvent
 import net.prototux.aare.car.Weather
+import net.prototux.aare.faces.FaceSpec
 import net.prototux.aare.notify.PhoneGuidance
 import net.prototux.aare.ui.theme.AareTheme
 
@@ -150,9 +151,21 @@ class CarUiState {
     /** The space between the rail's apps in dp (a setting; null = the standard one, [railGapDp]). */
     var railSpacing by mutableStateOf<Int?>(null)
     /** The dashboard's cards, in order (a setting). */
-    var dashboardCards by mutableStateOf(DashCard.DEFAULT)
+    var dashboardCards by mutableStateOf<List<DashItem>>(DashCard.DEFAULT)
     /** The map keeps the big space wherever it is in [dashboardCards] (a setting). */
     var dashboardMapBig by mutableStateOf(false)
+    /** The card showing among those that share the last place; null: the first of them. */
+    var dashStackCard by mutableStateOf<DashItem?>(null)
+    /** Seconds before those cards change by themselves; 0: only with a swipe (a setting). */
+    var dashRotateSeconds by mutableStateOf(0)
+    /** The calendar card only shows with an event soon ([eventSoon]), not always (a setting). */
+    var calendarCardAuto by mutableStateOf(true)
+    /** One of [nextEvents] is within the calendar card's automatic mode's days. */
+    var eventSoon by mutableStateOf(false)
+    /** The clock card's design (a setting). */
+    var clockFace by mutableStateOf<FaceSpec?>(null)
+    /** The user's own cards, by id; one whose file can't be read isn't here. */
+    var faces by mutableStateOf<Map<String, FaceSpec>>(emptyMap())
     /** The weather next to the clock (a setting; the weather card is one of [dashboardCards]). */
     var weatherInBar by mutableStateOf(true)
     /** The clock, phone signal and battery the bar shows: not those the car draws itself (and a setting). */

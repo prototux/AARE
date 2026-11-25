@@ -291,6 +291,21 @@ class Settings(context: Context) {
         get() = prefs.getBoolean("dashboard_map_big", false)
         set(v) = prefs.edit { putBoolean("dashboard_map_big", v) }
 
+    /** Seconds before the cards that share a place on the dashboard change by themselves; 0: only with a swipe. */
+    var dashboardRotateSeconds: Int
+        get() = prefs.getInt("dashboard_rotate_seconds", 0).let { if (it <= 0) 0 else it.coerceIn(3, 600) }
+        set(v) = prefs.edit { putInt("dashboard_rotate_seconds", v) }
+
+    /** The calendar card only shows with an event in the next days; off: always, also with none. */
+    var calendarCardAuto: Boolean
+        get() = prefs.getBoolean("calendar_card_auto", true)
+        set(v) = prefs.edit { putBoolean("calendar_card_auto", v) }
+
+    /** The clock card's design, one of the bundled ones (`FaceStore.bundled`). */
+    var clockFace: String
+        get() = prefs.getString("clock_face", "digital") ?: "digital"
+        set(v) = prefs.edit { putString("clock_face", v) }
+
     /** Car screen colors: follow the car's day/night signal ([THEME_AUTO]), or always [THEME_DARK] / [THEME_LIGHT]. */
     var carTheme: String
         get() = prefs.getString("car_theme", THEME_AUTO) ?: THEME_AUTO

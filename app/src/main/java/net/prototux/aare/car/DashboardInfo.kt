@@ -69,8 +69,8 @@ internal fun NextEvent.day(zone: TimeZone): CalendarDay = calendarDay(startMs, i
 
 /**
  * The events the calendar card shows, from the calendar's rows ([events], any order). One event
- * ([limit] 1, the card as it always was): the next timed one, an all-day one only when there is
- * none. More: an agenda in calendar order, day by day, a day's all-day events heading it, then by
+ * ([limit] 1): the next timed one of the coming 12 hours, else the first day's (its first timed
+ * one, an all-day one only when there is none). More: an agenda in calendar order, day by day, a day's all-day events heading it, then by
  * start time. All-day events of a day already over are dropped: east of UTC, yesterday's one
  * still overlaps the query window until its UTC-midnight end. Pure, like [labelAgenda].
  */
@@ -79,8 +79,21 @@ fun selectAgenda(events: List<NextEvent>, limit: Int, nowMs: Long, zone: TimeZon
     val today = calendarDay(nowMs, zone)
     val ordered = events.filter { !it.allDay || it.day(zone) >= today }
         .sortedWith(compareBy<NextEvent>({ it.day(zone) }, { !it.allDay }, { it.startMs }))
-    return if (limit == 1) listOfNotNull(ordered.firstOrNull { !it.allDay } ?: ordered.firstOrNull())
-    else ordered.take(limit)
+    if (limit > 1) return ordered.take(limit)
+    ordered.firstOrNull { !it.allDay && it.startMs <= nowMs + 12 * 3_600_000L }?.let { return listOf(it) }
+    val day = ordered.firstOrNull()?.day(zone) ?: return emptyList()
+    val first = ordered.filter { it.day(zone) == day }
+    return listOf(first.firstOrNull { !it.allDay } ?: first.first())
+}
+
+/** Days ahead (today not counted) the calendar card's automatic mode looks for an event; its setting's text (dash_calendar_auto) says so too. */
+const val AGENDA_SOON_DAYS = 3
+
+/** Whether one of [events] is today or within the next [AGENDA_SOON_DAYS] days. Pure, like [labelAgenda]. */
+fun agendaSoon(events: List<NextEvent>, nowMs: Long, zone: TimeZone): Boolean {
+    var last = calendarDay(nowMs, zone)
+    repeat(AGENDA_SOON_DAYS) { last = last.plusOneDay() }
+    return events.any { it.day(zone) <= last }
 }
 
 /**
@@ -144,14 +157,12 @@ object DashboardInfo {
 
     /**
      * The next [limit] events, ordered by [selectAgenda]; empty without the calendar permission or
-     * [limit] <= 0. A single event still looks only 12 hours ahead, as before; asking
-     * for more widens the window to a week, so day labels like "tomorrow" have something to show.
-     * Blocking.
+     * [limit] <= 0. Looks a week ahead. Blocking.
      */
     fun nextEvents(context: Context, limit: Int): List<NextEvent> {
         if (limit <= 0 || context.checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) return emptyList()
         val now = System.currentTimeMillis()
-        val windowMs = if (limit <= 1) 12 * 3_600_000L else 7 * 24 * 3_600_000L
+        val windowMs = 7 * 24 * 3_600_000L
         val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
             ContentUris.appendId(it, now - 15 * 60_000)
             ContentUris.appendId(it, now + windowMs)
