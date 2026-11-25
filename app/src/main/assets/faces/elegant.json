@@ -1,0 +1,17 @@
+{
+  "aareCard": 1,
+  "name": "Elegant",
+  "size": [400, 256],
+  "background": { "gradient": [{ "day": "#f6efe2", "night": "#1d1a16" }, { "day": "#e6d8bd", "night": "#0c0a08" }], "angle": 160 },
+  "layers": [
+    { "type": "circle", "r": 112, "stroke": 3, "color": { "gradient": ["#f3dfae", "#a87f3a", "#f3dfae", "#a87f3a"], "kind": "sweep" } },
+    { "type": "circle", "r": 106, "stroke": 1, "color": "#b8934f" },
+    { "type": "ticks", "count": 60, "r": 101, "length": 4, "stroke": 1, "color": "#b8934f", "round": false },
+    { "type": "numbers", "values": "roman", "r": 82, "size": 20, "font": "serif", "upright": false, "color": { "day": "#4a3818", "night": "#e9d6a6" } },
+    { "type": "text", "text": "{day}", "y": 176, "size": 22, "font": "serif", "color": "#b8934f" },
+    { "type": "hand", "value": "hour", "length": 56, "stroke": 11, "tail": 4, "shape": "leaf", "color": { "day": "#4a3818", "night": "#f3e3b8" } },
+    { "type": "hand", "value": "minute", "length": 88, "stroke": 9, "tail": 4, "shape": "leaf", "color": { "day": "#4a3818", "night": "#f3e3b8" } },
+    { "type": "hand", "value": "second", "length": 94, "tail": 24, "stroke": 1.2, "color": "#b8934f" },
+    { "type": "circle", "r": 5, "color": "#b8934f" }
+  ]
+}

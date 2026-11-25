@@ -1,0 +1,23 @@
+{
+  "aareCard": 1,
+  "name": "Segments",
+  "size": [400, 240],
+  "background": "#0b0f0c",
+  "layers": [
+    { "type": "text", "text": "88:88", "x": 372, "y": 92, "size": 104, "font": "segment", "align": "end", "color": "#16301d" },
+    { "type": "text", "text": "{time}", "x": 372, "y": 92, "size": 104, "font": "segment", "align": "end", "color": "#5dff8f", "glow": "#5dff8f", "glowRadius": 14 },
+    { "type": "text", "text": "{weekday}", "x": 30, "y": 186, "size": 26, "font": "mono", "align": "start", "upper": true, "width": 200, "color": "#3fae64" },
+    { "type": "text", "text": "{temp}", "x": 372, "y": 186, "size": 34, "font": "mono", "align": "end", "color": "#5dff8f", "show": "weather" },
+    { "type": "text", "text": "{date:dd/MM}", "x": 372, "y": 186, "size": 34, "font": "mono", "align": "end", "color": "#5dff8f", "show": "!weather" },
+    { "type": "arc", "x": 200, "y": 4000, "r": 3782, "stroke": 3, "start": -2.6, "sweep": 5.2, "value": "second", "color": "#5dff8f", "track": "#16301d" }
+  ],
+  "strip": {
+    "size": [520, 110],
+    "background": "#0b0f0c",
+    "layers": [
+      { "type": "text", "text": "88:88", "x": 250, "size": 66, "font": "segment", "align": "end", "color": "#16301d" },
+      { "type": "text", "text": "{time}", "x": 250, "size": 66, "font": "segment", "align": "end", "color": "#5dff8f", "glow": "#5dff8f" },
+      { "type": "text", "text": "{shortDate}", "x": 496, "size": 28, "font": "mono", "align": "end", "upper": true, "width": 220, "color": "#3fae64" }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "aareCard": 1,
+  "name": "Stacked",
+  "size": [400, 240],
+  "layers": [
+    { "type": "text", "text": "{hour}", "x": 112, "y": 72, "size": 118, "weight": "black" },
+    { "type": "text", "text": "{minute}", "x": 112, "y": 168, "size": 118, "weight": "black", "color": "primary" },
+    { "type": "line", "x": 206, "y": 50, "x2": 206, "y2": 190, "stroke": 3, "color": "outlineVariant" },
+    { "type": "text", "text": "{weekday}", "x": 230, "y": 70, "size": 28, "align": "start", "width": 156, "color": "onSurfaceVariant" },
+    { "type": "text", "text": "{day}", "x": 230, "y": 120, "size": 60, "align": "start", "weight": "medium" },
+    { "type": "text", "text": "{month}", "x": 230, "y": 170, "size": 28, "align": "start", "width": 156, "color": "onSurfaceVariant" }
+  ],
+  "strip": {
+    "size": [520, 110],
+    "layers": [
+      { "type": "text", "text": "{hour}", "x": 24, "size": 84, "weight": "black", "align": "start" },
+      { "type": "text", "text": "{minute}", "x": 132, "size": 84, "weight": "black", "align": "start", "color": "primary" },
+      { "type": "text", "text": "{shortDate}", "x": 496, "size": 32, "align": "end", "width": 220, "color": "onSurfaceVariant" }
+    ]
+  }
+}

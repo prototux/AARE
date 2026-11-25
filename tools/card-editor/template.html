@@ -1,0 +1,829 @@
+<!doctype html>
+<!--
+  AARE's card editor: draws dashboard cards (docs/custom-cards.md) on a computer, in any browser,
+  with nothing to install and nothing sent anywhere. Built by build.py from template.html, words.txt
+  and the app's own designs and icons: edit those, not index.html.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AARE card editor</title>
+<style>
+/*FONT*/
+:root { color-scheme: dark; --bg:#0b0f0f; --panel:#141a19; --raised:#1d2524; --line:#2e3836; --text:#e3e9e7; --dim:#afbab7; --accent:#3ddbc6; --on-accent:#00201c; --bad:#ff8a80; }
+* { box-sizing:border-box; }
+html,body { height:100%; margin:0; }
+body { background:var(--bg); color:var(--text); font:14px/1.4 Roboto,"Noto Sans",Arial,sans-serif; display:flex; flex-direction:column; }
+button,input,select,textarea { font:inherit; color:inherit; background:var(--raised); border:1px solid var(--line); border-radius:8px; padding:6px 10px; min-width:0; }
+button { cursor:pointer; white-space:nowrap; }
+button:hover:not(:disabled) { border-color:var(--accent); }
+button:disabled { opacity:.4; cursor:default; }
+button.main { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:500; }
+button.on { border-color:var(--accent); color:var(--accent); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+header { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:10px 14px; border-bottom:1px solid var(--line); }
+header h1 { font-size:16px; font-weight:500; margin:0; margin-inline-end:auto; }
+main { flex:1; min-height:0; display:grid; grid-template-columns:250px minmax(0,1fr) 310px; }
+aside { background:var(--panel); overflow:auto; padding:14px; }
+aside:first-child { border-inline-end:1px solid var(--line); }
+aside:last-child { border-inline-start:1px solid var(--line); }
+h2 { font-size:13px; font-weight:500; color:var(--dim); margin:0 0 10px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.layer { width:100%; text-align:start; display:block; overflow:hidden; text-overflow:ellipsis; margin-bottom:6px; }
+.layer small { color:var(--dim); margin-inline-start:6px; }
+.tools { display:flex; gap:6px; margin-bottom:12px; }
+.tools button { flex:1; padding:6px 0; }
+#stage { display:flex; flex-direction:column; min-height:0; min-width:0; }
+.bar { display:flex; flex-wrap:wrap; gap:6px; padding:12px 14px; justify-content:center; }
+.bar span { width:12px; }
+#view { flex:1; min-height:120px; display:flex; align-items:center; justify-content:center; padding:10px; overflow:hidden; }
+canvas { border-radius:26px; touch-action:none; cursor:grab; }
+#version { text-align:center; padding:0 14px 10px; color:var(--dim); }
+#note { padding:0 14px 8px; text-align:center; color:var(--bad); min-height:26px; }
+details { border-top:1px solid var(--line); }
+summary { padding:10px 14px; cursor:pointer; color:var(--dim); }
+#json { width:100%; height:230px; border:0; border-radius:0; resize:vertical; font:12px/1.5 ui-monospace,monospace; direction:ltr; white-space:pre; display:block; }
+.row { display:grid; grid-template-columns:108px minmax(0,1fr); gap:8px; align-items:center; margin-bottom:8px; }
+.row > label { color:var(--dim); overflow-wrap:anywhere; }
+.row input:not([type=checkbox]):not([type=color]), .row select, .row textarea { width:100%; }
+.row textarea { resize:vertical; min-height:58px; }
+.stack { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.pair { display:flex; gap:6px; align-items:center; }
+.pair > * { flex:1; }
+.pair input[type=color] { flex:0 0 38px; height:34px; padding:2px; }
+.pair button { flex:0 0 auto; padding:6px 9px; }
+.grid4 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+input[type=number] { appearance:textfield; -moz-appearance:textfield; }
+input::-webkit-inner-spin-button { display:none; }
+.grid4 label { display:flex; gap:6px; align-items:center; color:var(--dim); }
+.chips { display:flex; flex-wrap:wrap; gap:4px; }
+.chips button { padding:2px 8px; border-radius:20px; font-size:12px; }
+.chips button.not { border-color:var(--bad); color:var(--bad); text-decoration:line-through; }
+.hint { color:var(--dim); margin-top:16px; font-size:13px; }
+@media (max-width:900px) { body { height:auto; } main { grid-template-columns:1fr; } #stage { order:-1; } #view { min-height:260px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-w="title"></h1>
+  <select id="new"></select>
+  <button id="open" data-w="open"></button>
+  <button id="undo" data-w="undo"></button>
+  <button id="redo" data-w="redo"></button>
+  <button id="save" class="main" data-w="save"></button>
+  <input type="file" id="file" accept=".json,application/json" hidden>
+  <input type="file" id="picture" accept="image/png,image/jpeg,image/webp" hidden>
+</header>
+<main>
+  <aside><h2><span data-w="layers"></span><select id="add"></select></h2><div id="layers"></div></aside>
+  <section id="stage">
+    <div class="bar" id="bar"></div>
+    <div id="view"><canvas id="canvas" tabindex="0"></canvas></div>
+    <div id="version"></div>
+    <div id="note" role="status"></div>
+    <details id="jsonPane"><summary>JSON</summary><textarea id="json" spellcheck="false"></textarea></details>
+  </section>
+  <aside id="props"></aside>
+</main>
+<datalist id="colors"></datalist>
+<script>
+'use strict';
+const DESIGNS = /*DESIGNS*/null;
+const ICONS = /*ICONS*/null;
+const WORDS = /*WORDS*/null;
+
+// ------------------------------------------------------------ words
+const LANGS = WORDS.langs;
+const lang = (() => {
+  for (const l of navigator.languages || [navigator.language]) {
+    const s = l.toLowerCase().split('-')[0].replace(/^no$/, 'nb');
+    if (LANGS.includes(s)) return s;
+  }
+  return 'en';
+})();
+const locale = (navigator.languages || []).find(l => l.toLowerCase().startsWith(lang)) || lang;
+const w = key => { const row = WORDS.rows[key]; return row ? row[LANGS.indexOf(lang)] : key; };
+document.documentElement.lang = lang;
+if (lang === 'ar') document.documentElement.dir = 'rtl';
+document.querySelectorAll('[data-w]').forEach(e => e.textContent = w(e.dataset.w));
+document.title = w('title');
+
+// ------------------------------------------------------------ the format (docs/custom-cards.md)
+const THEME = {
+  night: {primary:'#3ddbc6',onPrimary:'#00201c',primaryContainer:'#0e3b36',onPrimaryContainer:'#b9f5ea',secondary:'#b4cac5',secondaryContainer:'#263330',onSecondaryContainer:'#d0e6e1',tertiary:'#ffb86b',tertiaryContainer:'#633b48',onTertiaryContainer:'#ffd8e4',surface:'#0b0f0f',onSurface:'#e3e9e7',onSurfaceVariant:'#afbab7',surfaceContainer:'#161d1c',surfaceContainerHigh:'#1d2524',surfaceContainerHighest:'#26302e',outline:'#5e6b68',outlineVariant:'#2e3836',error:'#ff8a80'},
+  day: {primary:'#00695c',onPrimary:'#ffffff',primaryContainer:'#b9f5ea',onPrimaryContainer:'#00201c',secondary:'#4a635f',secondaryContainer:'#cce8e2',onSecondaryContainer:'#06201c',tertiary:'#8b5000',tertiaryContainer:'#ffd8e4',onTertiaryContainer:'#31111d',surface:'#f3f7f6',onSurface:'#161d1c',onSurfaceVariant:'#3f4947',surfaceContainer:'#e6ecea',surfaceContainerHigh:'#e0e7e5',surfaceContainerHighest:'#d9e1df',outline:'#6f7977',outlineVariant:'#bec9c6',error:'#b3261e'},
+};
+// Each value's range, unless the card says another.
+const VALUES = {second:[0,60],minute:[0,60],hour:[0,12],hour24:[0,24],weekday:[0,7],day:[0,31],month:[0,12],battery:[0,100],song:[0,1],temperature:[-20,50],speed:[0,200],speedMph:[0,120],rpm:[0,8000],fuel:[0,100],compass:[0,360]};
+const CONDITIONS = ['weather','event','music','playing','charging','speed','fuel','day','night','am','pm'];
+const TOKENS = ['time','time:HH:mm','time:HH:mm:ss','hour','minute','second','ampm','date','date:dd/MM/yyyy','shortDate','weekday','day','month','year','temp','outside','event','eventTime','eventDay','eventPlace','track','artist','battery','speed','speedMph','rpm','fuel','range'];
+const FONTS = ['default','sans','condensed','serif','mono','cursive','segment'];
+const WEIGHTS = {thin:100,light:300,normal:400,medium:500,bold:700,black:900};
+const NUMBERS = {'12':['12','1','2','3','4','5','6','7','8','9','10','11'],'4':['12','3','6','9'],'24':['24',...Array.from({length:23},(_,i)=>''+(i+1))],'60':['60','5','10','15','20','25','30','35','40','45','50','55'],roman:['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI']};
+
+// What each layer has: key, kind, default (none: it must be given).
+const POS = [['x','num'],['y','num']];
+const COMMON = [['color','paint','onSurface'],['alpha','num',1,0.05],['rotate','binding',0],['show','show']];
+const TYPES = {
+  text: [['text','text'],['size','num',40],['font',FONTS,'default'],['weight','weight','normal'],['italic','bool',false],['upper','bool',false],['align',['start','center','end'],'center'],['valign',['top','middle','bottom','baseline'],'middle'],['width','num',null],['lines','int',1],['letterSpacing','num',0,0.5],['lineHeight','num',null,0.1],['timeZone','zone'],['glow','color',null],['glowRadius','num',12]],
+  hand: [['value','value'],['length','num'],['tail','num',0],['stroke','num',6],['shape',['round','flat','taper','leaf'],'round']],
+  ticks: [['count','int',60],['r','num'],['length','num',8],['stroke','num',2,0.5],['skip','int',0],['start','num',0],['sweep','num',360],['dots','bool',false],['round','bool',true]],
+  numbers: [['values','numbers','12'],['r','num'],['size','num',24],['font',FONTS,'default'],['weight','weight','normal'],['start','num',0],['sweep','num',360],['upright','bool',true]],
+  arc: [['r','num'],['stroke','num',8],['value','fraction',null],['start','num',0],['sweep','num',360],['track','color',null],['round','bool',true]],
+  icon: [['icon',Object.keys(ICONS)],['size','num',40]],
+  circle: [['r','num'],['stroke','num',0]],
+  rect: [['w','num'],['h','num'],['corner','num',0],['stroke','num',0]],
+  line: [['x2','num'],['y2','num'],['stroke','num',2,0.5],['round','bool',true]],
+  image: [['data','picture'],['w','num'],['h','num']],
+  path: [['d','text'],['scale','num',1,0.1],['stroke','num',0],['round','bool',true]],
+};
+/** The keys of the format whose word here is another's. */
+const WORD = {w:'width', h:'height', r:'radius', d:'path', data:'image', values:'numbers'};
+const fresh = (type, W, H) => ({
+  text:{type,text:'{time}',size:60}, hand:{type,value:'minute',length:Math.round(H*0.35)}, ticks:{type,count:60,r:Math.round(H*0.42)},
+  numbers:{type,values:'12',r:Math.round(H*0.36)}, arc:{type,r:Math.round(H*0.4),value:'second',track:'outlineVariant',color:'primary'}, icon:{type,icon:'weather',size:60,color:'primary'},
+  circle:{type,r:Math.round(H*0.2),color:'primary'}, rect:{type,w:Math.round(W*0.4),h:Math.round(H*0.3),corner:12,color:'primaryContainer'},
+  line:{type,x:Math.round(W*0.2),y:Math.round(H/2),x2:Math.round(W*0.8),y2:Math.round(H/2),color:'outline'},
+  path:{type,d:'M0 -30 L9 -9 L30 -9 L14 5 L20 27 L0 14 L-20 27 L-14 5 L-30 -9 L-9 -9 Z',x:Math.round(W/2),y:Math.round(H/2),color:'tertiary'},
+})[type];
+
+// ------------------------------------------------------------ state
+let card, selected = -1, shape = 'card', night = true, withData = true, undo = [], redo = [], saved = '';
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const ASPECT = {card: 1.6, strip: 4.5, tall: 0.75};
+const own = () => shape === 'card' || !!card[shape];
+const layout = () => (shape !== 'card' && card[shape]) || card;
+
+/** Like the app's own files: a layer a line. */
+function text(c) {
+  const list = (a, ind) => a.length ? '[\n' + a.map(l => ind + '  ' + flat(l)).join(',\n') + '\n' + ind + ']' : '[]';
+  const flat = v => Array.isArray(v) ? '[' + v.map(flat).join(', ') + ']' : v && typeof v === 'object' ? '{ ' + Object.entries(v).map(([k, x]) => JSON.stringify(k) + ': ' + flat(x)).join(', ') + ' }' : JSON.stringify(v);
+  const block = (o, ind) => '{\n' + Object.entries(o).map(([k, v]) => ind + '  ' + JSON.stringify(k) + ': ' +
+    (k === 'layers' && Array.isArray(v) ? list(v, ind + '  ') : (k === 'strip' || k === 'tall') && v && typeof v === 'object' ? block(v, ind + '  ') : flat(v))).join(',\n') + '\n' + ind + '}';
+  return block(c, '') + '\n';
+}
+
+function load(json, isSaved) {
+  card = JSON.parse(json);
+  selected = -1; shape = 'card'; undo = []; redo = [];
+  saved = isSaved ? text(card) : '';
+  refresh();
+}
+
+let last = '';
+/** Takes note of a change: for undo, the draft kept in this browser, and the screen. */
+function changed(rebuild = true) {
+  const now = text(card);
+  if (now !== last) { undo.push(last); if (undo.length > 200) undo.shift(); redo = []; }
+  refresh(rebuild);
+}
+function refresh(rebuild = true) {
+  last = text(card);
+  try { localStorage.setItem('aare-card', last); } catch (e) { /* a private window, or full: no draft */ }
+  if (document.activeElement !== $('json')) $('json').value = last;
+  $('undo').disabled = !undo.length; $('redo').disabled = !redo.length;
+  $('note').textContent = check(card) || '';
+  if (rebuild) { bar(); layers(); props(); }
+  else layers();
+  draw();
+}
+function step(from, to) {
+  if (!from.length) return;
+  to.push(last); card = JSON.parse(from.pop());
+  if (shape !== 'card' && !card[shape]) selected = Math.min(selected, card.layers.length - 1);
+  if (selected >= layout().layers.length) selected = -1;
+  refresh();
+}
+
+// ------------------------------------------------------------ checks (the app's, for what can be typed wrong here)
+const num = v => typeof v === 'number' && isFinite(v);
+function badColor(c) {
+  if (typeof c === 'string') return !(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(c) || (/^[a-zA-Z]+(\/(100|\d{1,2}))?$/.test(c) && c.split('/')[0] in THEME.night));
+  return !(c && typeof c === 'object' && typeof c.day === 'string' && typeof c.night === 'string' && !badColor(c.day) && !badColor(c.night));
+}
+const badPaint = p => p && typeof p === 'object' && 'gradient' in p ? !(Array.isArray(p.gradient) && p.gradient.length >= 2 && p.gradient.length <= 12 && !p.gradient.some(badColor)) : badColor(p);
+function badText(t) {
+  const plain = t.replace(/\{\{|\}\}/g, '');
+  for (const m of plain.matchAll(/\{([^}]*)(\}?)/g)) {
+    if (!m[2]) return '{';
+    const [name, ...format] = m[1].split(':');
+    if (!TOKENS.includes(name)) return '{' + m[1] + '}';
+    if (m[1].includes(':') && (!['time', 'date'].includes(name) || !validPattern(format.join(':')))) return '{' + m[1] + '}';
+  }
+  return null;
+}
+// Without quoted text, every letter must be one SimpleDateFormat knows.
+const validPattern = p => p.trim() && (p.match(/'/g) || []).length % 2 === 0 && !/[^GyYMLwWDdFEuaHkKhmsSzZX\W\d_]/.test(p.replace(/'[^']*'/g, ''));
+function badBinding(v) {
+  if (num(v)) return false;
+  const name = typeof v === 'string' ? v : v && v.value;
+  if (!(name in VALUES)) return true;
+  if (typeof v === 'string') return false;
+  const [a, b] = VALUES[name];
+  return (v.min ?? a) === (v.max ?? b) || ['min','max','from','to'].some(k => k in v && !num(v[k]));
+}
+function check(c) {
+  const wrong = (where, what) => where + (what === undefined ? '' : ': ' + JSON.stringify(what));
+  if (c.aareCard !== 1) return wrong('aareCard', c.aareCard ?? null);
+  if (typeof c.name !== 'string' || !c.name.trim()) return wrong('name', c.name ?? null);
+  let count = 0;
+  for (const [at, l] of [['', c], ['strip.', c.strip], ['tall.', c.tall]]) {
+    if (!l) continue;
+    if (!Array.isArray(l.size) || l.size.length !== 2 || l.size.some(n => !num(n) || n < 1 || n > 10000)) return wrong(at + 'size', l.size);
+    if (l.background != null && badPaint(l.background)) return wrong(at + 'background', l.background);
+    if (!Array.isArray(l.layers)) return wrong(at + 'layers');
+    for (const [i, o] of l.layers.entries()) {
+      const here = at + 'layers[' + i + ']';
+      if (++count > 200) return wrong('layers', '> 200');
+      if (!o || !(o.type in TYPES)) return wrong(here + '.type', o && o.type);
+      for (const [k, kind, def] of [...POS.map(p => [...p, 0]), ...TYPES[o.type], ...COMMON]) {
+        const v = o[k];
+        if (v === undefined) { if (def === undefined && !['show', 'zone'].includes(kind)) return wrong(here + '.' + k, null); continue; }
+        const bad = kind === 'num' ? !num(v) || (['size','r','w','h','length','width','scale'].includes(k) && !(k === 'length' && o.type === 'ticks') && v <= 0) || (k === 'stroke' && v < 0)
+          : kind === 'int' ? !Number.isInteger(v) || v < (k === 'skip' ? 0 : 1) || v > (k === 'lines' ? 20 : 720)
+          : kind === 'bool' ? typeof v !== 'boolean'
+          : kind === 'text' ? typeof v !== 'string' || (k === 'text' ? badText(v) : !v.trim())
+          : kind === 'paint' ? badPaint(v) : kind === 'color' ? badColor(v)
+          : kind === 'binding' || kind === 'value' || kind === 'fraction' ? badBinding(v)
+          : kind === 'weight' ? !(v in WEIGHTS || (Number.isInteger(v) && v > 0 && v <= 1000))
+          : kind === 'numbers' ? !(v in NUMBERS || (Array.isArray(v) && v.length && v.length <= 60))
+          : kind === 'zone' ? badZone(v)
+          : kind === 'picture' ? !/^data:image\/[a-z+.-]+;base64,/.test(v)
+          : kind === 'show' ? [].concat(v).some(n => typeof n !== 'string' || !CONDITIONS.includes(n.replace('!', '')))
+          : !kind.includes(v);
+        if (bad) return wrong(here + '.' + k, kind === 'picture' ? undefined : v);
+      }
+    }
+  }
+  return last.length > 2 * 1024 * 1024 ? '> 2 MB' : null;
+}
+function badZone(z) { try { new Intl.DateTimeFormat('en', {timeZone: z}); return !/^[A-Z]/.test(z); } catch (e) { return true; } }
+
+// ------------------------------------------------------------ what a card shows
+function parts(date, zone) {
+  const p = {};
+  for (const {type, value} of new Intl.DateTimeFormat('en-US', {timeZone: zone || undefined, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'}).formatToParts(date)) p[type] = +value;
+  return p;
+}
+const hours24 = !new Intl.DateTimeFormat(locale, {hour: 'numeric'}).resolvedOptions().hour12;
+function format(pattern, date, zone) {
+  const p = parts(date, zone);
+  const say = o => new Intl.DateTimeFormat(locale, {timeZone: zone || undefined, ...o}).format(date);
+  return pattern.replace(/''|'([^']*)'|([A-Za-z])\2*/g, (m, quoted, c) => {
+    if (m === "''") return "'";
+    if (quoted !== undefined) return quoted;
+    const n = m.length, pad = v => String(v).padStart(n, '0');
+    switch (c) {
+      case 'y': case 'Y': return n === 2 ? String(p.year).slice(-2) : pad(p.year);
+      case 'M': case 'L': return n >= 4 ? say({month: 'long'}) : n === 3 ? say({month: 'short'}) : pad(p.month);
+      case 'd': return pad(p.day);
+      case 'E': return say({weekday: n >= 4 ? 'long' : 'short'});
+      case 'H': return pad(p.hour);
+      case 'k': return pad(p.hour || 24);
+      case 'K': return pad(p.hour % 12);
+      case 'h': return pad(p.hour % 12 || 12);
+      case 'm': return pad(p.minute);
+      case 's': return pad(p.second);
+      case 'a': return p.hour < 12 ? 'AM' : 'PM';
+      case 'u': return pad((new Date(p.year, p.month - 1, p.day).getDay() + 6) % 7 + 1);
+      case 'w': { const d = new Date(Date.UTC(p.year, p.month - 1, p.day)); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); return pad(Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7)); }
+      case 'S': return pad(0);
+      case 'z': case 'Z': case 'X': return new Intl.DateTimeFormat('en', {timeZone: zone || undefined, timeZoneName: 'short'}).formatToParts(date).find(x => x.type === 'timeZoneName').value;
+      default: return m;
+    }
+  });
+}
+const upFirst = s => s.charAt(0).toLocaleUpperCase(locale) + s.slice(1);
+const sample = () => withData ? {temperature: 21, event: w('sampleEvent'), track: w('sampleSong'), artist: w('sampleArtist'), playing: true, song: 0.4, battery: 72, kmh: 80, rpm: 2200, fuel: 64, range: 410, outside: 19, compass: 45} : {};
+function token(body, zone) {
+  const now = new Date(), d = sample(), f = (p, z = zone) => format(p, now, z);
+  const local = o => upFirst(new Intl.DateTimeFormat(locale, {timeZone: zone || undefined, ...o}).format(now));
+  const i = body.indexOf(':'), name = i < 0 ? body : body.slice(0, i), arg = i < 0 ? null : body.slice(i + 1);
+  const n = v => v === undefined ? '–' : String(Math.round(v));
+  switch (name) {
+    case 'time': return f(arg || (hours24 ? 'H:mm' : 'h:mm'));
+    case 'hour': return f(hours24 ? 'HH' : 'h');
+    case 'minute': return f('mm');
+    case 'second': return f('ss');
+    case 'ampm': return hours24 ? '' : f('a');
+    case 'date': return arg ? upFirst(f(arg)) : local({weekday: 'long', day: 'numeric', month: 'long'});
+    case 'shortDate': return local({weekday: 'short', day: 'numeric', month: 'short'});
+    case 'weekday': return local({weekday: 'long'});
+    case 'day': return f('d');
+    case 'month': return local({month: 'long'});
+    case 'year': return f('yyyy');
+    case 'temp': return d.temperature === undefined ? '–' : d.temperature + '°';
+    case 'outside': return d.outside === undefined ? '–' : d.outside + '°';
+    case 'event': return d.event || w('noEvents');
+    case 'eventTime': return d.event ? format(hours24 ? 'H:mm' : 'h:mm a', new Date(+now + 36e5)) : '';
+    case 'eventDay': return d.event ? w('today') : '';
+    case 'track': return d.track || '';
+    case 'artist': return d.artist || '';
+    case 'battery': return n(d.battery);
+    case 'speed': return n(d.kmh);
+    case 'speedMph': return n(d.kmh === undefined ? undefined : d.kmh / 1.609344);
+    case 'rpm': return n(d.rpm);
+    case 'fuel': return n(d.fuel);
+    case 'range': return n(d.range);
+    default: return '';
+  }
+}
+const expand = (t, zone) => t.replace(/\{\{|\}\}|\{([^}]*)\}/g, (m, body) => body === undefined ? m[0] : token(body, zone));
+function value(name) {
+  const p = parts(new Date()), d = sample(), m = p.minute + p.second / 60, h = p.hour + m / 60;
+  return {second: p.second, minute: m, hour: h % 12, hour24: h, weekday: (new Date().getDay() + 6) % 7, day: p.day - 1, month: p.month - 1, battery: d.battery, song: d.song,
+    temperature: d.temperature, speed: d.kmh, speedMph: d.kmh && d.kmh / 1.609344, rpm: d.rpm, fuel: d.fuel, compass: d.compass}[name];
+}
+/** A binding's number, or null when it isn't known. */
+function bound(b, from, to) {
+  if (typeof b === 'number') return b;
+  const o = typeof b === 'string' ? {value: b} : b, [a, z] = VALUES[o.value] || [0, 1], raw = value(o.value);
+  if (raw === undefined) return null;
+  const min = o.min ?? a, max = o.max ?? z, f = o.from ?? from;
+  return f + Math.min(1, Math.max(0, (raw - min) / (max - min))) * ((o.to ?? to) - f);
+}
+function holds(name) {
+  const d = sample(), h = new Date().getHours();
+  return {weather: d.temperature !== undefined, event: !!d.event, music: !!d.track, playing: !!d.playing, charging: false, speed: d.kmh !== undefined, fuel: d.fuel !== undefined, day: !night, night, am: h < 12, pm: h >= 12}[name];
+}
+const shows = l => l.show === undefined || [].concat(l.show).every(n => n.startsWith('!') ? !holds(n.slice(1)) : holds(n));
+
+// ------------------------------------------------------------ drawing: the same as the app's FaceView.kt
+const canvas = $('canvas'), ctx = canvas.getContext('2d');
+let frame = {s: 1, left: 0, top: 0};
+const pictures = new Map();
+function picture(src) {
+  if (!pictures.has(src)) { const i = new Image(); i.onload = draw; i.src = src; pictures.set(src, i); }
+  const i = pictures.get(src);
+  return i.complete && i.naturalWidth ? i : null;
+}
+function color(c) {
+  if (c && typeof c === 'object') return color(night ? c.night : c.day);
+  if (typeof c !== 'string') return '#f0f';
+  if (c[0] === '#') return c.length === 9 ? '#' + c.slice(3) + c.slice(1, 3) : c;
+  const [name, percent] = c.split('/'), hex = THEME[night ? 'night' : 'day'][name] || '#f0f';
+  return percent === undefined ? hex : hex + Math.round(percent * 2.55).toString(16).padStart(2, '0');
+}
+const flat = p => color(p && p.gradient ? p.gradient[0] : p);
+function brush(p, x, y, bw, bh) {
+  if (!p || !p.gradient) return color(p);
+  const cx = x + bw / 2, cy = y + bh / 2, a = (p.angle ?? 180) * Math.PI / 180;
+  let g, list = p.gradient.map(color);
+  if (p.kind === 'radial') g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, Math.max(bw, bh) / 2));
+  else if (p.kind === 'sweep') { g = ctx.createConicGradient(a - Math.PI / 2, cx, cy); list = [...list, list[0]]; }
+  else { const dx = Math.sin(a), dy = -Math.cos(a), half = (Math.abs(bw * dx) + Math.abs(bh * dy)) / 2; g = ctx.createLinearGradient(cx - dx * half, cy - dy * half, cx + dx * half, cy + dy * half); }
+  list.forEach((c, i) => g.addColorStop(i / (list.length - 1), c));
+  return g;
+}
+const FAMILY = {default: 'Roboto,"Noto Sans",Arial,sans-serif', sans: 'Roboto,"Noto Sans",Arial,sans-serif', condensed: '"Roboto Condensed","Arial Narrow",sans-serif', serif: '"Noto Serif",Georgia,serif', mono: '"Droid Sans Mono",ui-monospace,monospace', cursive: '"Dancing Script",cursive', segment: 'DSEG7,monospace'};
+const weight = l => WEIGHTS[l.weight] || l.weight || 400;
+const polar = (x, y, r, angle) => [x + r * Math.sin(angle * Math.PI / 180), y - r * Math.cos(angle * Math.PI / 180)];
+const place = (l, L) => [l.x ?? (l.type === 'path' ? 0 : L.size[0] / 2), l.y ?? (l.type === 'path' ? 0 : L.size[1] / 2)];
+const pivot = (l, L) => l.pivot || (l.type === 'path' ? [L.size[0] / 2, L.size[1] / 2] : place(l, L));
+function around(count, start, sweep, at) {
+  const step = Math.abs(sweep) >= 360 || count < 2 ? sweep / count : sweep / (count - 1);
+  for (let i = 0; i < count; i++) at(i, start + step * i);
+}
+function turn(x, y, degrees, paint) { ctx.save(); ctx.translate(x, y); ctx.rotate(degrees * Math.PI / 180); ctx.translate(-x, -y); paint(); ctx.restore(); }
+
+/** A text layer's lines, size and box in pixels. */
+function measure(l, L) {
+  const s = frame.s, size = l.size ?? 40, limit = l.width ? Math.ceil(l.width * s) : null, max = l.lines || 1;
+  let value = expand(String(l.text ?? ''), l.timeZone);
+  if (l.upper) value = value.toLocaleUpperCase(locale);
+  const set = px => { ctx.font = (l.italic ? 'italic ' : '') + weight(l) + ' ' + px + 'px ' + (FAMILY[l.font] || FAMILY.default); ctx.letterSpacing = (l.letterSpacing || 0) * px / size + 'px'; };
+  let px = size * s, lines = value.split('\n');
+  set(px);
+  if (limit && max > 1) {
+    lines = lines.flatMap(t => { const out = []; let line = ''; for (const word of t.split(' ')) { const next = line ? line + ' ' + word : word; if (line && ctx.measureText(next).width > limit) { out.push(line); line = word; } else line = next; } return [...out, line]; });
+    if (lines.length > max) lines = lines.slice(0, max);
+  } else if (limit) {
+    const wide = Math.max(...lines.map(t => ctx.measureText(t).width));
+    if (wide > limit) { px *= Math.min(0.98, Math.max(0.5, limit / wide * 0.98)); set(px); lines = lines.map(t => { if (ctx.measureText(t).width <= limit) return t; while (t && ctx.measureText(t + '…').width > limit) t = t.slice(0, -1); return t + '…'; }); }
+  }
+  const m = ctx.measureText('0'), up = m.fontBoundingBoxAscent, down = m.fontBoundingBoxDescent, natural = up + down;
+  const step = l.lineHeight ? l.lineHeight * px : natural, width = Math.max(...lines.map(t => ctx.measureText(t).width));
+  const height = natural + step * (lines.length - 1), [x, y] = place(l, L), X = frame.left + x * s, Y = frame.top + y * s;
+  const left = X - ({start: 0, end: width}[l.align] ?? width / 2);
+  const top = Y - ({top: 0, bottom: height, baseline: up}[l.valign] ?? height / 2);
+  return {lines, left, top, width, height, up, step, limit, size: size * s};
+}
+
+function paint(l, L) {
+  const s = frame.s, [lx, ly] = place(l, L), x = frame.left + lx * s, y = frame.top + ly * s;
+  ctx.globalAlpha = l.alpha ?? 1;
+  const fill = l.color ?? 'onSurface', stroke = (l.stroke ?? ({line: 2, arc: 8, ticks: 2, hand: 6}[l.type] || 0)) * s;
+  ctx.lineCap = l.round ?? !['circle', 'rect', 'path'].includes(l.type) ? 'round' : 'butt';
+  const circle = (r) => brush(fill, x - r, y - r, 2 * r, 2 * r);
+  const finish = style => { if (stroke > 0) { ctx.lineWidth = stroke; ctx.strokeStyle = style; ctx.stroke(); } else { ctx.fillStyle = style; ctx.fill(); } };
+  switch (l.type) {
+    case 'text': {
+      const m = measure(l, L);
+      ctx.fillStyle = brush(fill, m.left, m.top, m.limit || 1, m.size);
+      if (l.glow) { ctx.shadowColor = color(l.glow); ctx.shadowBlur = (l.glowRadius ?? 12) * s; }
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+      m.lines.forEach((t, i) => { const tw = ctx.measureText(t).width; ctx.fillText(t, m.left + ({start: 0, end: m.width - tw}[l.align] ?? (m.width - tw) / 2), m.top + m.up + m.step * i); });
+      break;
+    }
+    case 'circle': ctx.beginPath(); ctx.arc(x, y, l.r * s, 0, 2 * Math.PI); finish(circle(l.r * s)); break;
+    case 'rect': { const W = l.w * s, H = l.h * s; ctx.beginPath(); ctx.roundRect(x - W / 2, y - H / 2, W, H, Math.min((l.corner || 0) * s, W / 2, H / 2)); finish(brush(fill, x - W / 2, y - H / 2, W, H)); break; }
+    case 'line': { const X = frame.left + l.x2 * s, Y = frame.top + l.y2 * s; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(X, Y); ctx.lineWidth = stroke; ctx.strokeStyle = brush(fill, Math.min(x, X), Math.min(y, Y), Math.abs(X - x), Math.abs(Y - y)); ctx.stroke(); break; }
+    case 'arc': {
+      const r = l.r * s, start = ((l.start || 0) - 90) * Math.PI / 180, sweep = (l.sweep ?? 360) * Math.PI / 180;
+      const part = (f, style) => { ctx.beginPath(); ctx.arc(x, y, r, start, start + sweep * f, sweep < 0); ctx.lineWidth = stroke; ctx.strokeStyle = style; ctx.stroke(); };
+      if (l.track) part(1, color(l.track));
+      const f = l.value === undefined ? 1 : bound(l.value, 0, 1);
+      if (f > 0) part(Math.min(1, f), circle(r));
+      break;
+    }
+    case 'ticks': {
+      const r = l.r * s, style = circle(r);
+      around(l.count ?? 60, l.start || 0, l.sweep ?? 360, (i, angle) => {
+        if (l.skip && i % l.skip === 0) return;
+        ctx.beginPath();
+        if (l.dots) { ctx.arc(...polar(x, y, r, angle), stroke / 2, 0, 2 * Math.PI); ctx.fillStyle = style; ctx.fill(); }
+        else { ctx.moveTo(...polar(x, y, r, angle)); ctx.lineTo(...polar(x, y, r - (l.length ?? 8) * s, angle)); ctx.lineWidth = stroke; ctx.strokeStyle = style; ctx.stroke(); }
+      });
+      break;
+    }
+    case 'numbers': {
+      const list = Array.isArray(l.values) ? l.values : NUMBERS[l.values ?? '12'] || [], r = l.r * s;
+      ctx.font = weight(l) + ' ' + (l.size ?? 24) * s + 'px ' + (FAMILY[l.font] || FAMILY.default); ctx.letterSpacing = '0px';
+      ctx.fillStyle = circle(r); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      const m = ctx.measureText('0'), drop = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+      around(list.length, l.start || 0, l.sweep ?? 360, (i, angle) => { const [X, Y] = polar(x, y, r, angle), put = () => ctx.fillText(list[i], X, Y + drop); l.upright === false ? turn(X, Y, angle, put) : put(); });
+      break;
+    }
+    case 'hand': {
+      const angle = bound(l.value, 0, 360);
+      if (angle === null) break;
+      const len = l.length * s, tail = (l.tail || 0) * s, style = brush(fill, x - stroke / 2, y - len, stroke, len + tail);
+      turn(x, y, angle, () => {
+        ctx.beginPath();
+        if (l.shape === 'taper') { ctx.moveTo(x - stroke / 2, y + tail); ctx.lineTo(x + stroke / 2, y + tail); ctx.lineTo(x + stroke / 8, y - len); ctx.lineTo(x - stroke / 8, y - len); ctx.fillStyle = style; ctx.fill(); }
+        else if (l.shape === 'leaf') { ctx.moveTo(x, y + tail); ctx.quadraticCurveTo(x - stroke, y - len * 0.35, x, y - len); ctx.quadraticCurveTo(x + stroke, y - len * 0.35, x, y + tail); ctx.fillStyle = style; ctx.fill(); }
+        else { ctx.lineCap = l.shape === 'flat' ? 'butt' : 'round'; ctx.moveTo(x, y + tail); ctx.lineTo(x, y - len); ctx.lineWidth = stroke; ctx.strokeStyle = style; ctx.stroke(); }
+      });
+      break;
+    }
+    case 'icon': { const size = (l.size ?? 40) * s; ctx.save(); ctx.translate(x - size / 2, y - size / 2); ctx.scale(size / 24, size / 24); ctx.fillStyle = flat(fill); ctx.fill(new Path2D(ICONS[l.icon])); ctx.restore(); break; }
+    case 'image': {
+      const i = picture(l.data), W = l.w * s, H = l.h * s;
+      if (!i || !(W > 0) || !(H > 0)) break;
+      if (l.color === undefined) { ctx.drawImage(i, x - W / 2, y - H / 2, W, H); break; }
+      const c = el('canvas', {width: Math.ceil(W), height: Math.ceil(H)}), k = c.getContext('2d');
+      k.drawImage(i, 0, 0, W, H); k.globalCompositeOperation = 'source-in'; k.fillStyle = flat(fill); k.fillRect(0, 0, W, H);
+      ctx.drawImage(c, x - W / 2, y - H / 2);
+      break;
+    }
+    case 'path': {
+      const k = l.scale ?? 1, b = pathBox(l.d);
+      ctx.save(); ctx.translate(x, y); ctx.scale(s * k, s * k);
+      const style = brush(fill, b.x, b.y, b.width, b.height), p = new Path2D(l.d);
+      if (stroke > 0) { ctx.lineJoin = l.round === false ? 'miter' : 'round'; ctx.lineWidth = stroke / (s * k); ctx.strokeStyle = style; ctx.stroke(p); } else { ctx.fillStyle = style; ctx.fill(p); }
+      ctx.restore();
+    }
+  }
+}
+const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'), svgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+svg.setAttribute('style', 'position:absolute;width:0;height:0;visibility:hidden'); svg.append(svgPath); document.body.append(svg);
+const pathBox = d => { svgPath.setAttribute('d', d || ''); return svgPath.getBBox(); };
+
+function draw() {
+  if (!card) return;
+  const view = $('view'), ratio = ASPECT[shape], room = [view.clientWidth - 20, view.clientHeight - 20];
+  const W = Math.max(80, Math.min(room[0], room[1] * ratio, 760)), H = W / ratio, dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const L = layout();
+  ctx.fillStyle = THEME[night ? 'night' : 'day'].surfaceContainer; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!Array.isArray(L.size) || !Array.isArray(L.layers)) return;
+  const s = Math.min(canvas.width / L.size[0], canvas.height / L.size[1]);
+  frame = {s, left: (canvas.width - L.size[0] * s) / 2, top: (canvas.height - L.size[1] * s) / 2, dpr};
+  try {
+    if (L.background != null) { ctx.fillStyle = brush(L.background, 0, 0, canvas.width, canvas.height); ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    for (const l of L.layers) {
+      if (!shows(l)) continue;
+      const angle = l.rotate === undefined ? 0 : bound(l.rotate, 0, 360);
+      if (angle === null) continue;
+      const [px, py] = pivot(l, L);
+      ctx.save();
+      turn(frame.left + px * s, frame.top + py * s, angle, () => paint(l, L));
+      ctx.restore();
+    }
+  } catch (e) { $('note').textContent = $('note').textContent || String(e.message); }
+  if (own() && selected >= 0 && L.layers[selected]) {
+    const b = box(L.layers[selected], L);
+    if (b) { ctx.save(); ctx.strokeStyle = '#fff'; ctx.lineWidth = dpr; ctx.setLineDash([4 * dpr, 4 * dpr]); ctx.globalCompositeOperation = 'difference'; ctx.strokeRect(b[0], b[1], b[2], b[3]); ctx.restore(); }
+  }
+}
+/** A layer's box in pixels, without its turn. */
+function box(l, L) {
+  const s = frame.s, [lx, ly] = place(l, L), x = frame.left + lx * s, y = frame.top + ly * s, mid = (W, H) => [x - W / 2, y - H / 2, W, H];
+  switch (l.type) {
+    case 'text': { const m = measure(l, L); return [m.left, m.top, m.width, m.height]; }
+    case 'rect': case 'image': return mid(l.w * s, l.h * s);
+    case 'icon': return mid((l.size ?? 40) * s, (l.size ?? 40) * s);
+    case 'line': { const X = frame.left + l.x2 * s, Y = frame.top + l.y2 * s; return [Math.min(x, X) - 4, Math.min(y, Y) - 4, Math.abs(X - x) + 8, Math.abs(Y - y) + 8]; }
+    case 'path': { const b = pathBox(l.d), k = s * (l.scale ?? 1); return [x + b.x * k, y + b.y * k, b.width * k, b.height * k]; }
+    case 'hand': return mid(2 * l.length * s, 2 * l.length * s);
+    case 'numbers': return mid(2 * (l.r + (l.size ?? 24) / 2) * s, 2 * (l.r + (l.size ?? 24) / 2) * s);
+    default: return mid(2 * (l.r + (l.type === 'arc' ? (l.stroke ?? 8) / 2 : 0)) * s, 2 * (l.r + (l.type === 'arc' ? (l.stroke ?? 8) / 2 : 0)) * s);
+  }
+}
+/** Whether the pixel [px, py] is on layer l: rings and hands only where they are drawn. */
+function hit(l, L, px, py) {
+  const s = frame.s, [lx, ly] = place(l, L), x = frame.left + lx * s, y = frame.top + ly * s, near = 5 * frame.dpr;
+  const un = (a, cx, cy) => { const t = -a * Math.PI / 180, dx = px - cx, dy = py - cy; px = cx + dx * Math.cos(t) - dy * Math.sin(t); py = cy + dx * Math.sin(t) + dy * Math.cos(t); };
+  if (l.rotate !== undefined) { const [a, b] = pivot(l, L); un(bound(l.rotate, 0, 360) || 0, frame.left + a * s, frame.top + b * s); }
+  if (l.type === 'hand') { un(bound(l.value, 0, 360) || 0, x, y); return Math.abs(px - x) <= (l.stroke ?? 6) * s / 2 + near && py <= y + (l.tail || 0) * s && py >= y - l.length * s; }
+  const dist = Math.hypot(px - x, py - y);
+  if (l.type === 'arc' || (l.type === 'circle' && l.stroke)) return Math.abs(dist - l.r * s) <= (l.stroke ?? 8) * s / 2 + near;
+  if (l.type === 'circle') return dist <= l.r * s + near;
+  if (l.type === 'ticks') return dist <= l.r * s + near && dist >= (l.r - (l.dots ? 0 : l.length ?? 8)) * s - near;
+  if (l.type === 'numbers') return Math.abs(dist - l.r * s) <= (l.size ?? 24) * s * 0.7;
+  const b = box(l, L);
+  return b && px >= b[0] - near && py >= b[1] - near && px <= b[0] + b[2] + near && py <= b[1] + b[3] + near;
+}
+
+// ------------------------------------------------------------ the mouse and keys on the card
+let drag = null;
+const at = e => { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * frame.dpr, (e.clientY - r.top) * frame.dpr]; };
+canvas.onpointerdown = e => {
+  if (!own()) return;
+  const L = layout(), [x, y] = at(e);
+  const on = i => L.layers[i] && shows(L.layers[i]) && hit(L.layers[i], L, x, y);
+  // The one selected keeps the pointer where layers overlap.
+  let found = selected >= 0 && on(selected) ? selected : -1;
+  for (let i = L.layers.length - 1; found < 0 && i >= 0; i--) if (on(i)) found = i;
+  if (found !== selected) { selected = found; refresh(); }
+  if (found >= 0) { const l = L.layers[found]; drag = {x, y, l, from: place(l, L), end: [l.x2, l.y2], moved: false}; canvas.setPointerCapture(e.pointerId); }
+};
+canvas.onpointermove = e => {
+  if (!drag) return;
+  const [x, y] = at(e), dx = Math.round((x - drag.x) / frame.s), dy = Math.round((y - drag.y) / frame.s);
+  if (!drag.moved && Math.hypot(x - drag.x, y - drag.y) < 4) return;
+  drag.moved = true;
+  drag.l.x = round(drag.from[0] + dx); drag.l.y = round(drag.from[1] + dy);
+  if (drag.l.type === 'line') { drag.l.x2 = round(drag.end[0] + dx); drag.l.y2 = round(drag.end[1] + dy); }
+  draw();
+};
+canvas.onpointerup = canvas.onpointercancel = () => { if (drag && drag.moved) changed(); drag = null; };
+const round = n => Math.round(n * 10) / 10;
+canvas.onkeydown = e => {
+  const d = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key], L = layout(), l = L.layers[selected];
+  if (!own() || !l) return;
+  if (d) {
+    e.preventDefault();
+    const k = e.shiftKey ? 10 : 1, [x, y] = place(l, L);
+    l.x = round(x + d[0] * k); l.y = round(y + d[1] * k);
+    if (l.type === 'line') { l.x2 = round(l.x2 + d[0] * k); l.y2 = round(l.y2 + d[1] * k); }
+    changed();
+  } else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); remove(); }
+};
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const key = e.key.toLowerCase(), typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if (key === 's') { e.preventDefault(); save(); }
+  else if (key === 'z' && !typing) { e.preventDefault(); e.shiftKey ? step(redo, undo) : step(undo, redo); }
+  else if (key === 'y' && !typing) { e.preventDefault(); step(redo, undo); }
+});
+
+// ------------------------------------------------------------ panels
+function bar() {
+  const b = $('bar'); b.replaceChildren();
+  const button = (label, on, act) => b.append(el('button', {textContent: label, className: on ? 'on' : '', onclick: act}));
+  for (const s of ['card', 'strip', 'tall']) button(w(s), shape === s, () => { shape = s; selected = -1; refresh(); });
+  b.append(el('span'));
+  button(w('night'), night, () => { night = true; refresh(); });
+  button(w('day'), !night, () => { night = false; refresh(); });
+  b.append(el('span'));
+  button(w('data'), withData, () => { withData = !withData; refresh(); });
+  const v = $('version'); v.replaceChildren();
+  if (shape !== 'card') {
+    if (card[shape]) v.append(el('button', {textContent: w('removeVersion'), onclick: () => { delete card[shape]; selected = -1; changed(); }}));
+    else v.append(w('usesCard') + ' ', el('button', {textContent: w('makeVersion'), onclick: () => {
+      const size = {strip: [520, 110], tall: [300, 400]}[shape];
+      // The card's layers, scaled to fit and centred, as a start.
+      const k = Math.min(size[0] / card.size[0], size[1] / card.size[1]), dx = (size[0] - card.size[0] * k) / 2, dy = (size[1] - card.size[1] * k) / 2;
+      const layersOf = card.layers.map(o => {
+        const l = JSON.parse(JSON.stringify(o)), [x, y] = place(o, card);
+        l.x = round(x * k + dx); l.y = round(y * k + dy);
+        if ('x2' in l) { l.x2 = round(l.x2 * k + dx); l.y2 = round(l.y2 * k + dy); }
+        if (l.pivot) l.pivot = [round(l.pivot[0] * k + dx), round(l.pivot[1] * k + dy)];
+        // Sizes left out have the format's own default: written down to be scaled too.
+        const given = {text: ['size'], numbers: ['size'], icon: ['size'], ticks: ['length', 'stroke'], line: ['stroke'], arc: ['stroke'], hand: ['stroke']}[l.type] || [];
+        for (const key of given) l[key] ??= TYPES[l.type].find(t => t[0] === key)[2];
+        for (const key of ['size', 'r', 'w', 'h', 'length', 'tail', 'width', 'corner', 'stroke', 'letterSpacing', 'glowRadius']) if (num(l[key])) l[key] = Math.round(l[key] * k * 10) / 10 || l[key];
+        if (l.type === 'path') l.scale = Math.round((l.scale ?? 1) * k * 1000) / 1000;
+        return l;
+      });
+      card[shape] = {size, ...(card.background != null ? {background: card.background} : {}), layers: layersOf};
+      changed();
+    }}));
+  }
+}
+function label(l) {
+  const what = {text: l.text, hand: l.value && (l.value.value || l.value), arc: l.value && (l.value.value || l.value), icon: l.icon}[l.type];
+  return [w(l.type), what === undefined ? '' : String(what).slice(0, 24)];
+}
+function layers() {
+  const box = $('layers'), L = layout(); box.replaceChildren();
+  $('add').disabled = !own();
+  if (!own()) return;
+  if (selected >= 0) box.append(el('div', {className: 'tools'},
+    el('button', {textContent: '↑', title: w('forward'), ariaLabel: w('forward'), disabled: selected >= L.layers.length - 1, onclick: () => move(1)}),
+    el('button', {textContent: '↓', title: w('backward'), ariaLabel: w('backward'), disabled: selected <= 0, onclick: () => move(-1)}),
+    el('button', {textContent: '⧉', title: w('duplicate'), ariaLabel: w('duplicate'), onclick: () => { L.layers.splice(selected + 1, 0, JSON.parse(JSON.stringify(L.layers[selected]))); selected++; changed(); }}),
+    el('button', {textContent: '✕', title: w('delete'), ariaLabel: w('delete'), onclick: remove})));
+  // Topmost first, as they cover each other.
+  for (let i = L.layers.length - 1; i >= 0; i--) {
+    const [kind, what] = label(L.layers[i]);
+    box.append(el('button', {className: 'layer' + (i === selected ? ' on' : ''), onclick: () => { selected = i === selected ? -1 : i; refresh(); }}, kind, el('small', {textContent: what})));
+  }
+}
+function move(by) { const a = layout().layers; a.splice(selected + by, 0, a.splice(selected, 1)[0]); selected += by; changed(); }
+function remove() { layout().layers.splice(selected, 1); selected = -1; changed(); }
+
+function row(name, ...control) { return el('div', {className: 'row'}, el('label', {textContent: name}), ...control); }
+const choose = (options, now, act) => { const s = el('select', {onchange: () => act(s.value)}); for (const [v, t] of options) s.append(el('option', {value: v, textContent: t, selected: v === now})); return s; };
+/** A number being typed changes the card, not the fields around it. */
+function number(now, hint, stepBy, act) {
+  const i = el('input', {type: 'number', step: 'any', value: now ?? '', placeholder: hint ?? '', oninput: () => { if (i.value === '') act(undefined); else if (isFinite(i.valueAsNumber)) act(i.valueAsNumber); }});
+  if (stepBy) i.onkeydown = e => { const d = {ArrowUp: 1, ArrowDown: -1}[e.key]; if (d) { e.preventDefault(); i.value = Math.round(((i.value === '' ? +i.placeholder || 0 : +i.value) + d * stepBy) * 1000) / 1000; i.oninput(); } };
+  return i;
+}
+function colorField(now, act) {
+  const pick = el('input', {type: 'color'}), write = el('input', {value: typeof now === 'string' ? now : '', dir: 'ltr'});
+  write.setAttribute('list', 'colors');
+  const show = () => { const c = color(write.value || 'onSurface'); pick.value = /^#[0-9a-f]{6}/i.test(c) ? c.slice(0, 7) : /^#[0-9a-f]{3}$/i.test(c) ? '#' + [...c.slice(1)].map(x => x + x).join('') : '#000000'; };
+  show();
+  pick.oninput = () => { write.value = pick.value; act(pick.value); };
+  write.oninput = () => { show(); act(write.value || undefined); };
+  return el('div', {className: 'pair'}, pick, write);
+}
+/** A colour: one, one by day and another by night, or (gradients) several. */
+function paintField(now, def, gradients, act) {
+  const mode = now && typeof now === 'object' ? (now.gradient ? 'gradient' : 'dayNight') : now == null && def == null ? 'none' : 'solid';
+  const modes = [['solid', w('solid')], ['dayNight', w('dayNight')]];
+  if (gradients) modes.push(['gradient', w('gradient')]);
+  if (def == null) modes.unshift(['none', w('none')]);
+  const base = typeof now === 'string' ? now : now && now.gradient ? now.gradient[0] : now && now.night ? now.night : def || 'primary';
+  const box = el('div', {className: 'stack'}, choose(modes, mode, m => act(m === 'none' ? undefined : m === 'solid' ? base : m === 'dayNight' ? {day: base, night: base} : {gradient: [base, 'surface']}, true)));
+  if (mode === 'solid') box.append(colorField(now ?? def, v => act(v)));
+  if (mode === 'dayNight') for (const k of ['day', 'night']) box.append(colorField(now[k], v => act({...now, [k]: now[k] = v ?? base})));
+  if (mode === 'gradient') {
+    now.gradient.forEach((c, i) => { const f = colorField(c, v => { now.gradient[i] = v ?? base; act(now); }); if (now.gradient.length > 2) f.append(el('button', {textContent: '✕', ariaLabel: w('delete'), onclick: () => { now.gradient.splice(i, 1); act(now, true); }})); box.append(f); });
+    box.append(el('div', {className: 'pair'},
+      choose(['linear', 'radial', 'sweep'].map(k => [k, k]), now.kind || 'linear', v => { if (v === 'linear') delete now.kind; else now.kind = v; act(now, true); }),
+      number(now.angle, 180, 15, v => { if (v === undefined) delete now.angle; else now.angle = v; act(now); }),
+      el('button', {textContent: '+', ariaLabel: w('add'), disabled: now.gradient.length >= 12, onclick: () => { now.gradient.push(now.gradient[now.gradient.length - 1]); act(now, true); }})));
+  }
+  return box;
+}
+function bindingField(now, kind, act) {
+  const o = typeof now === 'object' && now ? now : typeof now === 'string' ? {value: now} : null;
+  const options = [...(kind === 'value' ? [] : [['', kind === 'binding' ? w('fixed') : w('none')]]), ...Object.keys(VALUES).map(v => [v, v])];
+  const box = el('div', {className: 'stack'}, choose(options, o ? o.value : '', v => act(v || undefined, true)));
+  if (!o) { if (kind === 'binding') box.append(number(now, 0, 5, v => act(v))); return box; }
+  const ends = kind === 'fraction' ? [0, 1] : [0, 360], def = {min: VALUES[o.value]?.[0], max: VALUES[o.value]?.[1], from: ends[0], to: ends[1]};
+  const grid = el('div', {className: 'grid4'});
+  const cur = {...o};
+  for (const k of ['min', 'max', 'from', 'to']) grid.append(el('label', {}, k, number(o[k], def[k], 0, v => { if (v === undefined) delete cur[k]; else cur[k] = v; act(Object.keys(cur).length === 1 ? cur.value : {...cur}); })));
+  box.append(grid);
+  return box;
+}
+function field(l, [k, kind, def, by]) {
+  const set = (v, rebuild = false) => { if (v === undefined) delete l[k]; else l[k] = v; changed(rebuild); };
+  if (k === 'rotate') def = undefined;
+  if (Array.isArray(kind)) return choose(kind.map(v => [v, v]), l[k] ?? def, v => set(v === def ? undefined : v));
+  switch (kind) {
+    case 'num': case 'int': return number(l[k], def ?? (k === 'x' ? layout().size[0] / 2 : k === 'y' ? layout().size[1] / 2 : ''), by || 1, v => set(v));
+    case 'bool': { const c = el('input', {type: 'checkbox', checked: l[k] ?? def, onchange: () => set(c.checked === def ? undefined : c.checked)}); return el('div', {}, c); }
+    case 'weight': return choose(Object.keys(WEIGHTS).map(v => [v, v]), l[k] ?? def, v => set(v === def ? undefined : v));
+    case 'numbers': { const list = Array.isArray(l[k]); return el('div', {className: 'stack'}, choose([...Object.keys(NUMBERS).sort().map(v => [v, v]), ['', w('list')]], list ? '' : l[k] ?? def, v => set(v || [...NUMBERS[l[k]] || NUMBERS['12']], true)),
+      ...(list ? [el('input', {value: l[k].join(', '), oninput: e => set(e.target.value.split(',').map(t => t.trim()))})] : [])); }
+    case 'text': {
+      const t = el('textarea', {value: l[k] ?? '', spellcheck: false, oninput: () => set(t.value)});
+      if (k !== 'text') return t;
+      const insert = choose([['', w('insert')], ...TOKENS.map(v => [v, '{' + v + '}'])], '', v => { if (!v) return; t.setRangeText('{' + v + '}', t.selectionStart, t.selectionEnd, 'end'); insert.value = ''; t.focus(); set(t.value); });
+      return el('div', {className: 'stack'}, t, insert);
+    }
+    case 'zone': return el('input', {value: l[k] ?? '', placeholder: 'Europe/Madrid', dir: 'ltr', oninput: e => set(e.target.value.trim() || undefined)});
+    case 'paint': return paintField(l[k], l.type === 'image' ? null : def, true, set);
+    case 'color': return paintField(l[k], def, false, set);
+    case 'binding': case 'value': case 'fraction': return bindingField(l[k], kind, set);
+    case 'picture': return el('button', {textContent: w('choosePicture'), onclick: () => choosePicture(l)});
+    case 'show': {
+      const now = l.show === undefined ? [] : [].concat(l.show);
+      return el('div', {className: 'chips'}, ...CONDITIONS.map(c => {
+        const state = now.includes(c) ? 'on' : now.includes('!' + c) ? 'not' : '';
+        // Each tap: only with it, only without it, either way.
+        return el('button', {textContent: c, className: state, onclick: () => { const rest = now.filter(n => n.replace('!', '') !== c), next = [...rest, ...(state === '' ? [c] : state === 'on' ? ['!' + c] : [])]; set(next.length > 1 ? next : next[0], true); }});
+      }));
+    }
+  }
+}
+function props() {
+  const box = $('props'), L = layout(); box.replaceChildren();
+  if (!own()) return;
+  const l = L.layers[selected];
+  if (l && TYPES[l.type]) {
+    box.append(el('h2', {textContent: w(l.type)}));
+    for (const f of [...TYPES[l.type], ...POS, ...COMMON]) box.append(row(w(WORD[f[0]] || f[0]), field(l, f)));
+    return;
+  }
+  box.append(el('h2', {textContent: w(shape)}));
+  if (shape === 'card') {
+    box.append(row(w('name'), el('input', {value: card.name ?? '', oninput: e => { card.name = e.target.value; changed(false); }})));
+    box.append(row(w('author'), el('input', {value: card.author ?? '', oninput: e => { if (e.target.value) card.author = e.target.value; else delete card.author; changed(false); }})));
+  }
+  ['width', 'height'].forEach((k, i) => box.append(row(w(k), number(L.size[i], '', 10, v => { if (v !== undefined) { L.size[i] = v; changed(false); } }))));
+  box.append(row(w('background'), paintField(L.background ?? undefined, null, true, (v, rebuild = false) => { if (v === undefined) delete L.background; else L.background = v; changed(rebuild); })));
+  box.append(el('p', {className: 'hint', textContent: w('help')}));
+}
+
+// ------------------------------------------------------------ files
+const dirty = () => last !== saved && undo.length > 0;
+const sure = () => !dirty() || confirm(w('discard'));
+function choosePicture(l) {
+  const f = $('picture');
+  f.onchange = async () => {
+    const file = f.files[0]; f.value = '';
+    if (!file) return;
+    const bitmap = await createImageBitmap(file).catch(() => null);
+    if (!bitmap) return;
+    // As big as a card ever shows it, so that a photo doesn't make a file of megabytes.
+    const k = Math.min(1, 800 / Math.max(bitmap.width, bitmap.height)), c = el('canvas', {width: Math.max(1, Math.round(bitmap.width * k)), height: Math.max(1, Math.round(bitmap.height * k))});
+    c.getContext('2d').drawImage(bitmap, 0, 0, c.width, c.height);
+    const data = c.toDataURL(file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.85), L = layout();
+    if (l) l.data = data;
+    else {
+      const fit = Math.min(1, L.size[0] / c.width, L.size[1] / c.height);
+      L.layers.push({type: 'image', w: Math.round(c.width * fit), h: Math.round(c.height * fit), data}); selected = L.layers.length - 1;
+    }
+    changed();
+  };
+  f.click();
+}
+function save() {
+  const name = (card.name || 'card').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || 'card';
+  const a = el('a', {href: URL.createObjectURL(new Blob([last], {type: 'application/json'})), download: name + '.json'});
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  saved = last;
+}
+$('save').onclick = save;
+$('undo').onclick = () => step(undo, redo);
+$('redo').onclick = () => step(redo, undo);
+$('open').onclick = () => { if (sure()) $('file').click(); };
+$('file').onchange = async () => {
+  const file = $('file').files[0]; $('file').value = '';
+  if (!file) return;
+  try { read((await file.text()).replace(/^﻿/, '')); } catch (e) { $('note').textContent = e.message; }
+};
+/** A card from outside: refused whole if its shape is wrong, so what follows can rely on it. */
+function read(json) {
+  const c = JSON.parse(json);
+  if (!c || typeof c !== 'object' || c.aareCard !== 1) throw new Error('aareCard');
+  for (const l of [c, c.strip, c.tall]) if (l != null && (!Array.isArray(l.size) || l.size.length !== 2 || !Array.isArray(l.layers) || l.layers.some(o => !o || typeof o !== 'object' || !(o.type in TYPES)))) throw new Error('size, layers');
+  load(json, true);
+}
+$('json').oninput = () => {
+  let c;
+  try { c = JSON.parse($('json').value); } catch (e) { $('note').textContent = e.message; return; }
+  const bad = !c || typeof c !== 'object' ? 'JSON' : check(c);
+  if (bad) { $('note').textContent = bad; return; }
+  card = c; selected = -1; if (shape !== 'card' && !card[shape]) shape = 'card';
+  changed();
+};
+$('json').onblur = () => refresh();
+window.onbeforeunload = e => { if (dirty()) e.preventDefault(); };
+window.onresize = draw;
+
+const add = $('add');
+add.append(el('option', {value: '', textContent: w('add')}), ...Object.keys(TYPES).map(t => el('option', {value: t, textContent: w(t)})));
+add.onchange = () => {
+  const type = add.value; add.value = '';
+  if (type === 'image') return choosePicture(null);
+  const L = layout();
+  L.layers.push(fresh(type, ...L.size)); selected = L.layers.length - 1; changed();
+};
+const start = $('new');
+const BLANK = {aareCard: 1, name: w('blankName'), size: [400, 240], layers: []};
+start.append(el('option', {value: '', textContent: w('new')}), el('option', {value: 'blank', textContent: w('blank')}), ...Object.keys(DESIGNS).map(d => el('option', {value: d, textContent: w('face_' + d)})));
+start.onchange = () => {
+  const id = start.value; start.value = '';
+  if (!id || !sure()) return;
+  load(JSON.stringify(id === 'blank' ? BLANK : {...DESIGNS[id], name: w('blankName')}), true);
+};
+$('colors').append(...Object.keys(THEME.night).map(c => el('option', {value: c})));
+
+let draft = null;
+try { draft = localStorage.getItem('aare-card'); } catch (e) { /* none */ }
+try { if (!draft) throw 0; read(draft); } catch (e) { load(JSON.stringify({...DESIGNS.weather, name: w('blankName')}), true); }
+setInterval(() => { if (!drag) draw(); }, 1000);
+document.fonts && document.fonts.load('20px DSEG7').then(draw);
+</script>
+</body>
+</html>

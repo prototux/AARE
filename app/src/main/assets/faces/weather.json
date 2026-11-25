@@ -1,0 +1,29 @@
+{
+  "aareCard": 1,
+  "name": "Weather",
+  "size": [400, 240],
+  "layers": [
+    { "type": "text", "text": "{time}", "y": 88, "size": 108, "weight": "medium", "width": 360 },
+    { "type": "icon", "icon": "weather", "x": 70, "y": 184, "size": 56, "color": "primary", "show": "weather" },
+    { "type": "text", "text": "{temp}", "x": 110, "y": 184, "size": 46, "align": "start", "weight": "medium", "show": "weather" },
+    { "type": "text", "text": "{shortDate}", "x": 372, "y": 184, "size": 28, "align": "end", "color": "onSurfaceVariant", "width": 160, "show": "weather" },
+    { "type": "text", "text": "{date}", "y": 184, "size": 28, "color": "onSurfaceVariant", "width": 360, "show": "!weather" }
+  ],
+  "strip": {
+    "size": [520, 110],
+    "layers": [
+      { "type": "text", "text": "{time}", "x": 24, "size": 72, "weight": "medium", "align": "start" },
+      { "type": "icon", "icon": "weather", "x": 390, "size": 48, "color": "primary", "show": "weather" },
+      { "type": "text", "text": "{temp}", "x": 496, "size": 40, "align": "end", "weight": "medium", "show": "weather" }
+    ]
+  },
+  "tall": {
+    "size": [300, 400],
+    "layers": [
+      { "type": "text", "text": "{time}", "y": 90, "size": 100, "weight": "medium", "width": 280 },
+      { "type": "text", "text": "{shortDate}", "y": 160, "size": 28, "color": "onSurfaceVariant", "width": 270 },
+      { "type": "icon", "icon": "weather", "y": 250, "size": 96, "color": "primary", "show": "weather" },
+      { "type": "text", "text": "{temp}", "y": 340, "size": 60, "weight": "medium", "show": "weather" }
+    ]
+  }
+}

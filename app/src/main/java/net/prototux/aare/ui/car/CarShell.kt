@@ -541,10 +541,11 @@ internal fun Dashboard(
     // Whether the OBD2 adapter is reading (the car card), without redrawing the dashboard on every reading.
     val obdReading by remember { net.prototux.aare.obdapp.ObdApp.snapshot.map { it.readings != null }.distinctUntilChanged() }.collectAsState(false)
     // The map and the music always have something to show (a "where to?", "nothing playing").
-    val shown: (DashCard) -> Boolean = { card ->
+    val shown: (DashItem) -> Boolean = { card ->
         when (card) {
-            DashCard.MAP, DashCard.MEDIA -> true
-            DashCard.CALENDAR -> state.nextEvents.isNotEmpty()
+            DashCard.MAP, DashCard.MEDIA, DashCard.CLOCK -> true
+            is FaceCard -> state.faces.containsKey(card.faceId)
+            DashCard.CALENDAR -> !state.calendarCardAuto || state.eventSoon
             DashCard.NOTIFICATION -> state.history.isNotEmpty()
             DashCard.WEATHER -> state.weather != null
             DashCard.HOME -> !state.home.isEmpty
@@ -553,9 +554,17 @@ internal fun Dashboard(
     }
     // Keyed by card, so reordering moves a card instead of re-creating it: the map card keeps the
     // navigation app's surface (when it stays in the same row or column).
-    val slot: @Composable (DashCard, Modifier, Boolean) -> Unit = { card, m, compact -> key(card) { DashSlot(card, state, actions, navMap, m, compact) } }
+    // The last place is shared by the cards without one of their own ([dashboardStack]), one at a time.
+    val slot: @Composable (DashSlots, DashItem, Modifier, Boolean) -> Unit = { layout, card, m, compact ->
+        val stack = dashboardStack(state.dashboardCards, layout, shown)
+        if (stack.size > 1 && card == stack.first()) key("stack") {
+            // In the small screens' strip the card that always shows shares its place: the others take turns once swiped to.
+            CardStack(stack, if (compact) stack.drop(1) else stack, { state.dashStackCard?.takeIf { it in stack } ?: card }, { state.dashStackCard = it },
+                state.dashRotateSeconds, m) { item, mod -> DashSlot(item, state, actions, navMap, mod, compact) }
+        } else key(card) { DashSlot(card, state, actions, navMap, m, compact) }
+    }
     // The user's cards in order (Settings > Dashboard), as many as the screen has room for: the
-    // first gets the big space, or the map wherever it is with Map always big.
+    // first gets the big space, or the map wherever it is with Map always big; the rest share the last place.
     BoxWithConstraints(modifier) {
         val narrow = maxWidth < 560.dp
         if (maxHeight > maxWidth * 1.2f && maxHeight >= 700.dp) {
@@ -563,7 +572,7 @@ internal fun Dashboard(
             val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                 layout.cards.forEachIndexed { i, card ->
-                    slot(card, when (layout.rank(i)) {
+                    slot(layout, card, when (layout.rank(i)) {
                         0 -> Modifier.weight(1.6f).fillMaxWidth()
                         1 -> Modifier.weight(1f).fillMaxWidth()
                         else -> Modifier.fillMaxWidth().height(180.dp)
@@ -576,7 +585,7 @@ internal fun Dashboard(
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                 layout.cards.forEachIndexed { i, card ->
                     val rank = layout.rank(i)
-                    slot(card, if (rank == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), rank > 0)
+                    slot(layout, card, if (rank == 0) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxWidth().height(112.dp), rank > 0)
                 }
             }
         } else if (maxWidth > maxHeight * 2.1f) {
@@ -584,19 +593,19 @@ internal fun Dashboard(
             val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
                 layout.cards.forEachIndexed { i, card ->
-                    slot(card, Modifier.weight(when (layout.rank(i)) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
+                    slot(layout, card, Modifier.weight(when (layout.rank(i)) { 0 -> 1.6f; 1 -> 1f; else -> 0.9f }).fillMaxHeight(), false)
                 }
             }
         } else {
             // the big card, and the others stacked beside it, the first of them taller
             val layout = dashboardLayout(state.dashboardCards, 3, state.dashboardMapBig, shown)
             val cards = layout.cards
-            val bigSlot: @Composable RowScope.() -> Unit = { slot(cards[layout.big], Modifier.weight(1.65f).fillMaxHeight(), false) }
+            val bigSlot: @Composable RowScope.() -> Unit = { slot(layout, cards[layout.big], Modifier.weight(1.65f).fillMaxHeight(), false) }
             Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gutter)) {
                 if (layout.bigFirst) bigSlot()
                 if (cards.size > 1) Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(gutter)) {
                     cards.filterIndexed { i, _ -> i != layout.big }.forEachIndexed { i, card ->
-                        slot(card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
+                        slot(layout, card, Modifier.weight(if (i == 0 && cards.size > 2) 1.3f else 1f).fillMaxWidth(), false)
                     }
                 }
                 if (!layout.bigFirst) bigSlot()
@@ -608,7 +617,7 @@ internal fun Dashboard(
 /** One dashboard card in its slot ([modifier] sizes it); [compact] for a thin strip. */
 @Composable
 private fun DashSlot(
-    card: DashCard,
+    card: DashItem,
     state: CarUiState,
     actions: CarActions,
     navMap: @Composable (CarAppEntry, Modifier) -> Unit,
@@ -618,7 +627,11 @@ private fun DashSlot(
     when (card) {
         DashCard.MAP -> NavCard(state, actions, navMap, modifier)
         DashCard.MEDIA -> MediaCard(state, actions, compact = compact, modifier = modifier)
-        DashCard.CALENDAR -> state.nextEvents.takeIf { it.isNotEmpty() }?.let { events -> Card(modifier) { CalendarAgendaCard(events, actions::navigateTo, Modifier.fillMaxSize()) } }
+        DashCard.CALENDAR -> Card(modifier) {
+            if (state.nextEvents.isEmpty()) NoEventsCard() else CalendarAgendaCard(state.nextEvents, actions::navigateTo, Modifier.fillMaxSize())
+        }
+        DashCard.CLOCK -> Card(modifier) { state.clockFace?.let { FaceView(it, state, Modifier.fillMaxSize()) } }
+        is FaceCard -> Card(modifier) { state.faces[card.faceId]?.let { FaceView(it, state, Modifier.fillMaxSize()) } }
         DashCard.NOTIFICATION -> state.history.firstOrNull()?.let { latest ->
             Card(modifier, onClick = { state.apps.firstOrNull { it.kind == CarAppKind.NOTIFICATIONS }?.let(actions::openApp) }) {
                 LatestNotification(latest, state.drivingRestricted)

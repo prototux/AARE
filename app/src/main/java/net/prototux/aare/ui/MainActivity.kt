@@ -80,6 +80,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material.icons.rounded.SystemUpdate
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.material.icons.rounded.Warning
@@ -181,7 +182,9 @@ import net.prototux.aare.setup.ShizukuSetupClient
 import net.prototux.aare.transport.wireless.CarCompanion
 import net.prototux.aare.transport.wireless.HandshakeChoice
 import net.prototux.aare.ui.car.DashCard
+import net.prototux.aare.ui.car.DashItem
 import net.prototux.aare.ui.car.DashboardCardsEditor
+import net.prototux.aare.ui.car.rotateOptions
 import net.prototux.aare.ui.car.RailWidget
 import net.prototux.aare.ui.car.RailWidgetsEditor
 import net.prototux.aare.ui.car.StyleChoices
@@ -233,8 +236,9 @@ class MainActivity : ComponentActivity() {
 }
 
 /** The settings pages, Android Auto style: one per topic, opened from the home page. */
-private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: ImageVector) {
+private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: ImageVector, /** Opened from within another page, not from the home page. */ val parent: Page? = null) {
     CAR_SCREEN(R.string.setup_page_car_screen_title, R.string.setup_page_car_screen_subtitle, Icons.Rounded.Dashboard),
+    FACES(R.string.faces_page_title, R.string.faces_page_title, Icons.Rounded.Schedule, parent = CAR_SCREEN),
     APPS(R.string.setup_page_apps_title, R.string.setup_page_apps_subtitle, Icons.Rounded.Apps),
     ASSISTANT(R.string.assistant_settings_title, R.string.assistant_page_subtitle, Icons.Rounded.Mic),
     MESSAGES(R.string.msg_settings_title, R.string.msg_page_subtitle, Icons.Rounded.Forum),
@@ -265,7 +269,7 @@ private fun Home() {
         lifecycle.lifecycle.addObserver(observer)
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
-    BackHandler(enabled = page != null) { page = null }
+    BackHandler(enabled = page != null) { page = page?.parent }
     OldAndroidNotice(settings)
 
     key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
@@ -282,14 +286,14 @@ private fun Home() {
                 item { Setup(state, refresh, { refresh++ }) { page = it } }
                 item {
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)) {
-                        Page.entries.forEach { CategoryRow(it) { page = it } }
+                        Page.entries.filter { it.parent == null }.forEach { CategoryRow(it) { page = it } }
                     }
                 }
             }
         } else {
             Column(Modifier.fillMaxSize().systemBarsPadding()) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { page = null }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back)) }
+                    IconButton(onClick = { page = p.parent }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back)) }
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(p.titleRes), style = MaterialTheme.typography.titleLarge)
                 }
@@ -300,9 +304,10 @@ private fun Home() {
                 ) {
                     when (p) {
                         Page.CAR_SCREEN -> {
-                            item { CarScreenSettings(settings, refresh) }
+                            item { CarScreenSettings(settings, refresh) { page = Page.FACES } }
                             item { TouchCalibrationCard() }
                         }
+                        Page.FACES -> item { FacesSettings(settings) }
                         Page.APPS -> item { AppsCard(settings) }
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
@@ -1020,7 +1025,7 @@ internal fun Toggle(title: String, subtitle: String, checked: Boolean, onChange:
 }
 
 @Composable
-private fun CarScreenSettings(settings: Settings, refresh: Int) {
+private fun CarScreenSettings(settings: Settings, refresh: Int, openFaces: () -> Unit) {
     val ctx = LocalContext.current
     var theme by remember { mutableStateOf(settings.carTheme) }
     var nightSource by remember { mutableStateOf(settings.nightSource) }
@@ -1036,6 +1041,10 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
     var textSize by remember { mutableStateOf(settings.carTextSize) }
     var controlSize by remember { mutableStateOf(settings.carControlSize) }
     var cards by remember { mutableStateOf(DashCard.parse(settings.dashboardCards)) }
+    LaunchedEffect(Unit) { net.prototux.aare.faces.FaceStore.load(ctx) }
+    val faces by net.prototux.aare.faces.FaceStore.own.collectAsState()
+    var calendarAuto by remember { mutableStateOf(settings.calendarCardAuto) }
+    var rotate by remember { mutableIntStateOf(settings.dashboardRotateSeconds) }
     var mapBig by remember { mutableStateOf(settings.dashboardMapBig) }
     var passenger by remember { mutableStateOf(settings.ignoreDriving) }
     var weather by remember { mutableStateOf(settings.showWeather) }
@@ -1117,7 +1126,15 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
                 weather = it; settings.showWeather = it
             }
             Spacer(Modifier.height(8.dp))
-            DashboardCardsEditor(cards, 48.dp) { cards = it; settings.dashboardCards = it.map(DashCard::id) }
+            DashboardCardsEditor(cards, 48.dp, faces = faces.filter { it.spec != null }, mapBig = mapBig, calendarAuto = calendarAuto, onCalendarAuto = { calendarAuto = it; settings.calendarCardAuto = it }) {
+                cards = it; settings.dashboardCards = it.map(DashItem::id)
+            }
+            Row(Modifier.fillMaxWidth().clickable(onClick = openFaces).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.faces_page_title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(8.dp))
+            Select(stringResource(R.string.dash_rotate_title), rotateOptions(rotate), rotate.toString()) { rotate = it.toInt(); settings.dashboardRotateSeconds = rotate }
             Spacer(Modifier.height(12.dp))
             Choices(stringResource(R.string.setup_choice_map_inset), listOf("0" to stringResource(R.string.setup_map_inset_none), "24" to stringResource(R.string.setup_map_inset_small),
                 "40" to stringResource(R.string.setup_map_inset_medium), "56" to stringResource(R.string.setup_map_inset_large)), mapInset.toString()) {
@@ -1129,11 +1146,14 @@ private fun CarScreenSettings(settings: Settings, refresh: Int) {
             Toggle(stringResource(R.string.dash_map_big_title), stringResource(R.string.dash_map_big_subtitle), mapBig) {
                 mapBig = it; settings.dashboardMapBig = it
             }
-            Spacer(Modifier.height(12.dp))
-            Choices(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
-                agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
+            // Only says something about the calendar card.
+            if (DashCard.CALENDAR in cards) {
+                Spacer(Modifier.height(12.dp))
+                Choices(stringResource(R.string.setup_choice_agenda_count), (1..5).map { it.toString() to it.toString() }, agendaCount.toString()) {
+                    agendaCount = it.toInt(); settings.calendarAgendaCount = it.toInt()
+                }
+                Text(stringResource(R.string.setup_agenda_count_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(stringResource(R.string.setup_agenda_count_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Section(stringResource(R.string.setup_section_driving)) {
             Toggle(stringResource(R.string.setup_toggle_passenger_title), stringResource(R.string.setup_toggle_passenger_subtitle), passenger) {
