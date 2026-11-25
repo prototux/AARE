@@ -634,6 +634,7 @@
     <string name="browser_reload">Reload</string>
     <string name="browser_home">Home page</string>
     <string name="browser_address_hint">Search or type a web address</string>
+    <string name="browser_http_blocked">Plain http:// pages aren\'t allowed here. Use https://.</string>
 
     <!-- video: AARE's video player on the car screen -->
     <string name="video_paused_driving">The picture is hidden while driving. The sound carries on.</string>

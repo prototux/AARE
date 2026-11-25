@@ -5,6 +5,9 @@ import android.net.Uri
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -19,6 +22,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.KeyboardReturn
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.PauseCircle
 import androidx.compose.material.icons.rounded.Public
 import androidx.compose.material.icons.rounded.Refresh
@@ -47,6 +51,7 @@ import net.prototux.aare.host.templates.CarTextField
 import net.prototux.aare.host.templates.KeyboardMode
 import net.prototux.aare.host.templates.KeyboardSink
 import net.prototux.aare.media.Placeholder
+import java.io.ByteArrayInputStream
 
 /**
  * A plain web browser on the car screen: a [WebView] rendered inside AARE's own projection. A
@@ -54,6 +59,9 @@ import net.prototux.aare.media.Placeholder
  * phone's IME can't appear on the car's virtual display, the address field uses AARE's own
  * [CarKeyboard]. Typing a URL opens it; anything else is a DuckDuckGo search. Tapping a text
  * field in the page opens the same keyboard for that field ([PageInput]).
+ *
+ * Plain http:// pages are blocked (only https:// is loaded), because the app's network security
+ * config allows cleartext for Jellyfin on a user-chosen home network.
  *
  * AARE is not a certified Android Auto app, so this is a parked convenience: like the phone-screen
  * mirror it is paused while driving.
@@ -74,9 +82,21 @@ private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: Stri
     var editing by remember { mutableStateOf(false) }
     // The keyboard for the page's focused text field, or null (#148).
     var pageField by remember { mutableStateOf<KeyboardMode?>(null) }
+    var blockedUrl by remember { mutableStateOf<String?>(null) }
+
+    fun openUrl(url: String) {
+        if (isPlainHttpUrl(url)) {
+            blockedUrl = url
+            currentUrl = url
+            pageField = null
+        } else {
+            blockedUrl = null
+            web?.loadUrl(url)
+        }
+    }
 
     fun go(query: String) {
-        web?.loadUrl(toUrl(query))
+        openUrl(toUrl(query))
         editing = false
     }
 
@@ -93,13 +113,29 @@ private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: Stri
         }
     }
 
+    fun canDismissBlocked(): Boolean {
+        val loaded = web?.url
+        return blockedUrl != null && !loaded.isNullOrBlank() && !isPlainHttpUrl(loaded)
+    }
+
+    fun navigateBack() {
+        if (canDismissBlocked()) {
+            blockedUrl = null
+            currentUrl = web?.url ?: home
+        } else {
+            blockedUrl = null
+            web?.goBack()
+        }
+    }
+
     DisposableEffect(Unit) {
-        // Back closes a keyboard first, then walks the page history.
+        // Back closes a keyboard first, then dismisses a blocked-http overlay or walks page history.
         val back: () -> Boolean = {
             when {
                 editing -> { editing = false; true }
                 pageField != null -> { closePageField(); true }
-                web?.canGoBack() == true -> { web?.goBack(); true }
+                canDismissBlocked() -> { blockedUrl = null; currentUrl = web?.url ?: home; true }
+                web?.canGoBack() == true -> { blockedUrl = null; web?.goBack(); true }
                 else -> false
             }
         }
@@ -118,9 +154,13 @@ private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                 Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow).padding(horizontal = 6.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ToolButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), canBack) { web?.goBack() }
-                ToolButton(Icons.AutoMirrored.Rounded.ArrowForward, stringResource(R.string.browser_forward), canForward) { web?.goForward() }
-                ToolButton(Icons.Rounded.Refresh, stringResource(R.string.browser_reload)) { web?.reload() }
+                ToolButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), canBack || canDismissBlocked()) { navigateBack() }
+                ToolButton(Icons.AutoMirrored.Rounded.ArrowForward, stringResource(R.string.browser_forward), canForward) { blockedUrl = null; web?.goForward() }
+                ToolButton(Icons.Rounded.Refresh, stringResource(R.string.browser_reload)) {
+                    val u = blockedUrl
+                    if (u != null && (web?.url.isNullOrBlank() || isPlainHttpUrl(web?.url))) openUrl(u)
+                    else { blockedUrl = null; web?.reload() }
+                }
                 CarTextField(
                     value = if (editing) address else currentUrl,
                     hint = stringResource(R.string.browser_address_hint),
@@ -130,44 +170,82 @@ private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                     leadingIcon = Icons.Rounded.Public,
                     modifier = Modifier.weight(1f).padding(horizontal = 6.dp),
                 )
-                ToolButton(Icons.Rounded.Home, stringResource(R.string.browser_home)) { web?.loadUrl(home) }
+                ToolButton(Icons.Rounded.Home, stringResource(R.string.browser_home)) { openUrl(home) }
             }
             // The page
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        webChromeClient = WebChromeClient()
-                        webViewClient = object : WebViewClient() {
-                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
-                                url?.let { currentUrl = it }
-                                canBack = view.canGoBack(); canForward = view.canGoForward()
-                                pageField = null
-                            }
-                        }
-                        // Touching the page ends typing in the address bar; a tap (not a scroll)
-                        // then checks whether it focused a text field, once the page has handled it.
-                        val slop = ViewConfiguration.get(ctx).scaledTouchSlop
-                        var downX = 0f
-                        var downY = 0f
-                        @SuppressLint("ClickableViewAccessibility")
-                        setOnTouchListener { v, e ->
-                            when (e.actionMasked) {
-                                MotionEvent.ACTION_DOWN -> { editing = false; downX = e.x; downY = e.y }
-                                MotionEvent.ACTION_UP -> if (kotlin.math.hypot(e.x - downX, e.y - downY) <= slop) {
-                                    v.postDelayed({ checkPageField() }, FIELD_CHECK_DELAY_MS)
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                            webChromeClient = WebChromeClient()
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                                    val u = request.url?.toString()
+                                    if (isPlainHttpUrl(u)) {
+                                        if (request.isForMainFrame) {
+                                            blockedUrl = u
+                                            currentUrl = u!!
+                                            pageField = null
+                                        }
+                                        return true
+                                    }
+                                    if (request.isForMainFrame) blockedUrl = null
+                                    return false
+                                }
+
+                                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                                    val u = request.url?.toString()
+                                    if (isPlainHttpUrl(u)) {
+                                        if (request.isForMainFrame) {
+                                            view.post {
+                                                blockedUrl = u
+                                                currentUrl = u!!
+                                                pageField = null
+                                            }
+                                        }
+                                        return WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", emptyMap(), ByteArrayInputStream(ByteArray(0)))
+                                    }
+                                    return null
+                                }
+
+                                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                                    if (!isPlainHttpUrl(url)) blockedUrl = null
+                                    url?.let { currentUrl = it }
+                                    canBack = view.canGoBack(); canForward = view.canGoForward()
+                                    pageField = null
                                 }
                             }
-                            false
+                            // Touching the page ends typing in the address bar; a tap (not a scroll)
+                            // then checks whether it focused a text field, once the page has handled it.
+                            val slop = ViewConfiguration.get(ctx).scaledTouchSlop
+                            var downX = 0f
+                            var downY = 0f
+                            @SuppressLint("ClickableViewAccessibility")
+                            setOnTouchListener { v, e ->
+                                when (e.actionMasked) {
+                                    MotionEvent.ACTION_DOWN -> { editing = false; downX = e.x; downY = e.y }
+                                    MotionEvent.ACTION_UP -> if (kotlin.math.hypot(e.x - downX, e.y - downY) <= slop) {
+                                        v.postDelayed({ checkPageField() }, FIELD_CHECK_DELAY_MS)
+                                    }
+                                }
+                                false
+                            }
+                            web = this
+                            openUrl(home)
                         }
-                        loadUrl(home)
-                        web = this
+                    },
+                    onRelease = { it.destroy() },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (blockedUrl != null) {
+                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                        Placeholder(stringResource(R.string.browser_http_blocked), loading = false, icon = Icons.Rounded.Lock)
                     }
-                },
-                onRelease = { it.destroy() },
-                modifier = Modifier.fillMaxWidth().weight(1f),
-            )
+                }
+            }
             // Car keyboard for the address field or the page (the phone IME can't show on the car display).
             val field = pageField
             if (editing) {
@@ -204,11 +282,17 @@ private const val FIELD_CHECK_DELAY_MS = 150L
 /** Time for the keyboard to take its place before the field is scrolled back into view. */
 private const val SHOW_FIELD_DELAY_MS = 300L
 
+/** True when [url] uses plain cleartext http:// (blocked in the car browser). */
+internal fun isPlainHttpUrl(url: String?): Boolean {
+    val u = url?.trim() ?: return false
+    return u.startsWith("http://", ignoreCase = true)
+}
+
 /** A URL to open: an address as-is (adding https:// when it has no scheme), or a DuckDuckGo search. */
-private fun toUrl(query: String): String {
+internal fun toUrl(query: String): String {
     val q = query.trim()
     return when {
-        q.startsWith("http://") || q.startsWith("https://") -> q
+        q.startsWith("http://", ignoreCase = true) || q.startsWith("https://", ignoreCase = true) -> q
         q.isNotEmpty() && !q.contains(' ') && q.contains('.') -> "https://$q"
         else -> "https://duckduckgo.com/?q=" + Uri.encode(q)
     }

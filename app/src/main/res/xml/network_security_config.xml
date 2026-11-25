@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Jellyfin defaults to https://, and lets plain http:// work only when the user opts in for a
+  home-network address (checked in HomeNetwork before connecting). Because Android's network
+  security config can't restrict cleartext to user-entered LAN addresses, cleartext is allowed here
+  while the car Browser blocks plain http:// pages itself in WebViewClient. Only the system's
+  certificate authorities are trusted.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
