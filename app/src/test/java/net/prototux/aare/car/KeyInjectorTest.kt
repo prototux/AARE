@@ -205,4 +205,44 @@ class KeyInjectorTest {
         clock.advance(1000)
         assertEquals(1, keys.size)
     }
+
+    /** A Mazda CMU8's held voice button (#423): one down flagged as a long press, and never an up. */
+    @Test
+    fun aHoldTheCarOpensAsALongPressEndsByItselfWithoutAnUp() {
+        val search = KeyEvent.KEYCODE_SEARCH
+        injector.onKey(search, down = true, metaState = 0, carLongPress = true)
+        clock.advance(KeyInjector.LONG_ONLY_END_MS)
+        assertEquals(listOf(CarKey(search, true, repeat = 1, longPress = true), CarKey(search, false, longPress = true)), keys)
+        // The next hold is a press of its own.
+        keys.clear()
+        clock.advance(2000)
+        injector.onKey(search, down = true, metaState = 0, carLongPress = true)
+        clock.advance(KeyInjector.LONG_ONLY_END_MS)
+        assertEquals(listOf(true, false), keys.map { it.down })
+        assertEquals(0, clock.tasks.size)
+    }
+
+    @Test
+    fun aHoldOpenedAsALongPressStillEndsOnTheCarsUp() {
+        val search = KeyEvent.KEYCODE_SEARCH
+        injector.onKey(search, down = true, metaState = 0, carLongPress = true)
+        clock.advance(300)
+        injector.onKey(search, down = true, metaState = 0, carLongPress = true) // a repeat keeps it going
+        clock.advance(900)
+        injector.onKey(search, down = false, metaState = 0, carLongPress = false)
+        clock.advance(5000)
+        assertEquals(listOf(true, true, false), keys.map { it.down })
+        assertEquals(listOf(1, 2, 0), keys.map { it.repeat })
+        assertEquals("one long press per hold", 1, keys.count { it.down && it.longPress })
+        assertEquals(listOf(0L), keys.map { it.downTime }.distinct())
+    }
+
+    @Test
+    fun theCarsUpAfterAHoldEndedByItselfIsDropped() {
+        val search = KeyEvent.KEYCODE_SEARCH
+        injector.onKey(search, down = true, metaState = 0, carLongPress = true)
+        clock.advance(3000)
+        injector.onKey(search, down = false, metaState = 0, carLongPress = false)
+        assertEquals("a single up", 1, keys.count { !it.down })
+    }
 }
