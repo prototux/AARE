@@ -57,7 +57,7 @@ Services, no account.
 ## Will it work in my car?
 
 > [!NOTE]
-> **AARE has been tried in 58 cars so far** ([the list](#tested-on-real-head-units)): 25 work, 18
+> **AARE has been tried in 59 cars so far** ([the list](#tested-on-real-head-units)): 25 work, 19
 > work with issues and a few don't work yet. Most factory head units only accept Android Auto's
 > own certificate: AARE downloads it with one tap ([AA key extraction](#aa-key-extraction)).
 > Every car is a bit different, so try it **parked** first, and please
@@ -485,6 +485,7 @@ certificate ([one tap](#aa-key-extraction)).
 | GWM factory unit (AAP protocol 1.5), the factory unit of a 2024 GWM Haval Jolion Ultra (wired Android Auto / CarPlay only) | Oppo Find X9 Pro (CPH2791), Android 17 (ColorOS), not rooted, Shevery (a Shizuku fork), Google Play Services and Android Auto installed | USB | 1.6.0 | **Works after [AA key extraction](#aa-key-extraction)**, once Google's Android Auto is disabled ([#422](https://github.com/prototux/AARE/issues/422)): with it enabled, Android 17 hands the USB accessory to Google's Android Auto within ~0.2 s of the handshake, before AARE can open it, so every attempt fails with EIO or "encrypted before TLS is up"; disabling Android Auto (the same effect as *Stop Android Auto taking the car*) fixes it. Video and touch work; Waze and Spotify run through Shevery's app rules. |
 | Panasonic CMU8, the factory unit of a 2024 Mazda MX-5 Miata | Samsung Galaxy S24+, Android 17, One UI 9, not rooted, Shizuku | USB and wireless | 1.6.0 | **Works with issues** ([#423](https://github.com/prototux/AARE/issues/423)): media, the centre knob and Shizuku car audio all work, but the steering-wheel voice button's long press never sends a key-up, so AARE never opens the assistant (a short press opens the car's own phone screen instead). Fixed by [#429](https://github.com/prototux/AARE/pull/429), not in a release yet. |
 | Ford SYNC 3, the factory unit of a 2022 Ford Mustang Premium | OnePlus 15, Shizuku | USB and wireless (dongle) | 1.5.0 | **Rejected** ([#425](https://github.com/prototux/AARE/issues/425)): both the direct USB cable and a wireless dongle end with "no version request from head unit". |
+| Ford SYNC 3.4 (AARE reads it as SYNC 3.2), the factory unit of a 2019 Ford F-150 | Samsung Galaxy Note9 (SM-N960U1), Android 10, not rooted | not stated | 1.5.0 | **Works with issues** ([discussion #333](https://github.com/prototux/AARE/discussions/333), reported by a user): connects and projects with MapQuest as the navigation app, but the voice guidance plays on the phone instead of the car (pressing Play on the car's screen starts it). |
 
 **Open-source head units:** openauto/Crankshaft, Open Headunit (formerly Headunit Revived), LIVI
 and aa-proxy-rs accept AARE's own certificate. A user reports AARE working well with Open
