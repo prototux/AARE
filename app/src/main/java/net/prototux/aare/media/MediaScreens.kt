@@ -51,6 +51,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -91,8 +93,14 @@ internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolea
     }
     BackHandler(enabled = ui.canGoBack) { ui.back() }
 
-    Column(modifier.background(MaterialTheme.colorScheme.background)) {
-        TopBar(app, ui, status, source, onShowVideo)
+    // With a visualizer, now playing takes the whole screen: the bar's two buttons float over it.
+    @Suppress("UNUSED_EXPRESSION") hub.visualSettings // recompose when they change
+    val floating = ui.view == MediaView.NOW_PLAYING && NowPlayingVisuals.byId(hub.settings.nowPlayingVisual) != null
+    Box(modifier.background(MaterialTheme.colorScheme.background)) {
+    // First for the knob (a turn either way reaches the screen below), drawn on top.
+    if (floating) FloatingBar(ui, Modifier.zIndex(1f))
+    Column(Modifier.fillMaxSize()) {
+        if (!floating) TopBar(app, ui, status, source, onShowVideo)
         Box(Modifier.weight(1f).fillMaxWidth()) {
             AnimatedContent(
                 targetState = ui.view,
@@ -101,12 +109,24 @@ internal fun MediaAppScreen(hub: DefaultMediaHub, app: MediaApp, driving: Boolea
             ) { view ->
                 when (view) {
                     MediaView.BROWSE -> BrowseBody(hub, ui, status, source)
-                    MediaView.NOW_PLAYING -> NowPlayingView(hub, connection, source) { ui.view = it }
+                    MediaView.NOW_PLAYING -> NowPlayingView(hub, connection, source, driving, floatingBar = floating) { ui.view = it }
                     MediaView.QUEUE -> QueueView(connection, source) { ui.view = MediaView.NOW_PLAYING }
                     MediaView.SEARCH -> SearchView(ui, driving)
                 }
             }
         }
+    }
+    }
+}
+
+/** The top bar's back and library buttons, floating in the corners over now playing. */
+@Composable
+private fun FloatingBar(ui: MediaUi, modifier: Modifier) {
+    val scrim = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
+    Row(modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        CircleButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back), onClick = ui::back, modifier = scrim)
+        Spacer(Modifier.weight(1f))
+        CircleButton(Icons.Rounded.LibraryMusic, stringResource(R.string.media_action_browse), onClick = { ui.view = MediaView.BROWSE }, modifier = scrim)
     }
 }
 

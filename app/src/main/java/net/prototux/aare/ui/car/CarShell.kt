@@ -65,6 +65,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -767,6 +768,9 @@ fun AppIcon(app: CarAppEntry, sizeDp: Int) {
     }
 }
 
+/** What the host draws behind the dashboard's media card (the visualizer), or null for nothing. */
+val LocalMediaCardBackdrop = staticCompositionLocalOf<(@Composable (modifier: Modifier) -> Unit)?> { null }
+
 @Composable
 private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, modifier: Modifier) {
     val np = state.nowPlaying
@@ -775,6 +779,12 @@ private fun MediaCard(state: CarUiState, actions: CarActions, compact: Boolean, 
         if (np?.art != null && !compact) {
             Image(np.art.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.35f)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceContainer))))
+        }
+        // Behind the text and buttons: the lower half of a full card, the whole of a compact one.
+        LocalMediaCardBackdrop.current?.let { backdrop ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+                backdrop(if (compact) Modifier.fillMaxSize() else Modifier.fillMaxWidth().fillMaxHeight(0.5f))
+            }
         }
         val content: @Composable () -> Unit = {
             if (np != null) {

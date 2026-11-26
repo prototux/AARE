@@ -70,7 +70,7 @@ import rikka.shizuku.Shizuku
  * used, then the car microphone and the sound settings. Everything comes from CaptureStatus.
  */
 @Composable
-internal fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit) {
+internal fun AudioSettings(settings: Settings, state: ProjectionService.State, refresh: Int, recheck: () -> Unit, openVisuals: () -> Unit) {
     val ctx = LocalContext.current
     val live by CaptureStatus.live.collectAsState()
     var forced by remember { mutableStateOf(settings.forcedCaptureMethod) }
@@ -137,6 +137,7 @@ internal fun AudioSettings(settings: Settings, state: ProjectionService.State, r
         }
         CarMicSection(settings)
         SoundSection(settings)
+        VisualsEntry(settings, openVisuals)
     }
 }
 

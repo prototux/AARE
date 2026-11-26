@@ -1026,4 +1026,41 @@
     <string name="calibration_car_target">Touch the centre of target %1$d</string>
     <string name="calibration_car_target_retry">Touch target %1$d again</string>
     <string name="calibration_car_verify">Touch the green target to keep this calibration (%1$d s)</string>
+
+    <!-- Now-playing visualizer -->
+    <string name="visualizer_section">Visualizer</string>
+    <string name="visualizer_toggle_title">Spectrum visualizer</string>
+    <string name="visualizer_toggle_subtitle">Bars of the music\'s frequencies behind the title on the car\'s now-playing screen, from the sound AARE sends to the car. Needs phone audio in the car.</string>
+    <string name="visualizer_full_screen">Full-screen visualizer</string>
+    <string name="visualizer_full_screen_subtitle">A button on the album art shows it on the whole car screen, in stereo. Any tap, a knob press or Back closes it. While the car is moving, Passenger mode must be on too.</string>
+    <string name="visualizer_colors_title">Visualizer colors</string>
+    <string name="visualizer_colors_spectral">Spectral</string>
+    <string name="visualizer_colors_system">System color</string>
+    <string name="visualizer_delay_title">Visualizer delay</string>
+    <string name="visualizer_delay_value">%1$d ms</string>
+    <string name="visualizer_delay_hint">Shifts the bars to match what the car plays: up to 200 ms later, or a little (50 ms) earlier.</string>
+    <string name="visualizer_delay_less">Less delay</string>
+    <string name="visualizer_delay_more">More delay</string>
+    <string name="setup_switch_visualizer">Spectrum visualizer on now playing</string>
+    <string name="visuals_title">Visuals</string>
+    <string name="visuals_entry_on">On: %1$s</string>
+    <string name="visuals_entry_off">Off</string>
+    <string name="visualizer_bars_title">Bars</string>
+    <string name="visualizer_bars_rounded">Rounded</string>
+    <string name="visualizer_bars_square">Square</string>
+    <string name="visualizer_opacity_title">Opacity</string>
+    <string name="visualizer_opacity_value">%1$d%%</string>
+    <string name="visualizer_opacity_less">Less opaque</string>
+    <string name="visualizer_opacity_more">More opaque</string>
+    <string name="visualizer_on_card">Visualizer on the dashboard</string>
+    <string name="visualizer_on_card_subtitle">Bars behind the media card on the car\'s home screen.</string>
+    <string name="visualizer_peaks">Peak marks</string>
+    <string name="visualizer_peaks_subtitle">A mark over each bar holds its highest point for a moment, then falls.</string>
+    <string name="visualizer_fall_title">Fall speed</string>
+    <string name="visualizer_fall_slow">Slow</string>
+    <string name="visualizer_fall_normal">Normal</string>
+    <string name="visualizer_fall_fast">Fast</string>
+    <string name="visualizer_art_background">Album art in the background</string>
+    <string name="visualizer_art_background_subtitle">The album art, faded, behind now playing and the full-screen visualizer.</string>
+    <string name="setup_switch_visualizer_full_screen">Full-screen visualizer (while moving, needs Passenger mode)</string>
 </resources>

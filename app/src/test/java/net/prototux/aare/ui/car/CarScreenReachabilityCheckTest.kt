@@ -59,6 +59,11 @@ class CarScreenReachabilityCheckTest {
 
     private val allowlist = listOf(
         Allowed(
+            "src/main/java/net/prototux/aare/media/VisualizerFullScreen.kt",
+            ".clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { hub.exitFullScreen() },",
+            "A touch convenience: a tap anywhere leaves the full-screen visualizer. The knob's press and Back leave it too (CarRuntime.MediaFullScreen).",
+        ),
+        Allowed(
             "src/main/java/net/prototux/aare/ui/car/CarFocus.kt",
             "carFocusHighlight(shape).clickable(enabled = enabled, onClick = onClick)",
             "carClickable's own implementation: the one .clickable car-screen code should route through.",

@@ -80,7 +80,7 @@ class ProjectionDisplay(
 
     fun dispatchTouch(event: MotionEvent) {
         main.post {
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) CarFocusVisibility.keyInput = false
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) { CarFocusVisibility.keyInput = false; CarFocusVisibility.inputAt = SystemClock.elapsedRealtime() }
             presentation?.window?.decorView?.dispatchTouchEvent(event)
             event.recycle()
         }
@@ -104,6 +104,7 @@ class ProjectionDisplay(
     /** Main thread. True when the car screen used the key (or leaving touch mode used it up). */
     private fun dispatchKeyNow(event: KeyEvent): Boolean {
         val decor = presentation?.window?.decorView ?: return false
+        if (event.action == KeyEvent.ACTION_DOWN) CarFocusVisibility.inputAt = SystemClock.elapsedRealtime()
         // Injected keys skip the view root's input stages, which is where a navigation key
         // normally takes a window out of touch mode. Left in it, Compose stays in touch input
         // mode, where clickables can't take focus: a rotary knob or D-pad would have nothing to
