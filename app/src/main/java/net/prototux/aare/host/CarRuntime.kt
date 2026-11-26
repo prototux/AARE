@@ -59,6 +59,7 @@ import net.prototux.aare.launch.isStandaloneNavigation
 import net.prototux.aare.launch.StandalonePlaybackGuard
 import net.prototux.aare.launch.standaloneDisplay
 import net.prototux.aare.notify.PhoneGuidance
+import net.prototux.aare.player.VideosScreen
 import net.prototux.aare.ui.car.BrowserScreen
 import net.prototux.aare.ui.car.CarActions
 import net.prototux.aare.ui.car.CarAppEntry
@@ -489,7 +490,7 @@ class CarRuntime(
             "wallpaper" -> main.post { ui.wallpaper = ""; applyScreenSettings() }
             // Apps shown or hidden from the phone: update the car's app list now.
             "hidden_apps", "phone_screen", "assistant_pkg", "app_order", "standalone_driving_rules",
-            "standalone_apps", "standalone_app_pkgs", "browser", "car_data_app" -> main.post { refreshApps() }
+            "standalone_apps", "standalone_app_pkgs", "browser", "car_data_app", "videos" -> main.post { refreshApps() }
         }
     }
 
@@ -667,6 +668,9 @@ class CarRuntime(
         }
         if (settings.carDataApp) {
             entries += CarAppEntry(CAR_DATA_ID, context.packageName, context.getString(R.string.car_data_app_label), builtinIcon(R.drawable.ic_car_data), CarAppKind.CAR_DATA)
+        }
+        if (settings.videos) {
+            entries += CarAppEntry(VIDEOS_ID, context.packageName, context.getString(R.string.videos_app_label), builtinIcon(R.drawable.ic_car_videos), CarAppKind.VIDEOS)
         }
         for (m in messaging) {
             if (m.packageName in hidden || entries.any { it.packageName == m.packageName }) continue
@@ -1073,6 +1077,20 @@ class CarRuntime(
      */
     private val screenBacks = HashMap<String, () -> Boolean>()
 
+    /**
+     * Set by a screen that intercepts car keys before normal routing (the video player: waking
+     * hidden controls on the first knob press or turn, and taking the car's media keys). Main
+     * thread.
+     */
+    var screenInput: CarScreenInput? = null
+
+    interface CarScreenInput {
+        /** A car key went down or up; true if handled (the car screen's focus doesn't see it). */
+        fun onKey(code: Int, down: Boolean, longPress: Boolean): Boolean
+        /** The knob turned [delta] detents (positive: clockwise); true if handled. */
+        fun onRotary(delta: Int): Boolean
+    }
+
     fun registerScreenBack(appId: String, handler: () -> Boolean) { screenBacks[appId] = handler }
 
     fun unregisterScreenBack(appId: String, handler: () -> Boolean) {
@@ -1154,6 +1172,7 @@ class CarRuntime(
                             }
                             CarAppKind.BROWSER -> BrowserScreen(this, ui.drivingRestricted, settings.browserUrl, mod)
                             CarAppKind.CAR_DATA -> CarDataScreen(mod)
+                            CarAppKind.VIDEOS -> VideosScreen(this, ui.drivingRestricted, settings, mod)
                             CarAppKind.HOME -> HomeScreen(ui.home, actions, mod)
                             CarAppKind.OBD -> net.prototux.aare.ui.car.obd.ObdAppScreen(mod, ui.drivingRestricted, location = { carLocation })
                             CarAppKind.PHONE -> PhoneScreen(this, mod)
@@ -1202,6 +1221,7 @@ class CarRuntime(
         const val PHONE_SCREEN_ID = "phone-screen"
         const val BROWSER_ID = "browser"
         const val CAR_DATA_ID = "car-data"
+        const val VIDEOS_ID = "videos"
         const val HOME_ID = "home"
         const val OBD_ID = "obd"
         const val PHONE_ID = "phone"

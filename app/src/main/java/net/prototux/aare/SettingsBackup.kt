@@ -63,6 +63,11 @@ object SettingsBackup {
         "standalone_app_pkgs" to Type.STRING_SET,
         "browser" to Type.BOOLEAN,
         "browser_url" to Type.STRING,
+        "videos" to Type.BOOLEAN,
+        "video_sync_ms" to Type.INT,
+        "video_fit" to Type.STRING,
+        "video_zoom_pct" to Type.INT,
+        "jellyfin_max_kbps" to Type.INT,
         "car_data_app" to Type.BOOLEAN,
         "call_bar_x" to Type.FLOAT,
         "call_bar_y" to Type.FLOAT,
@@ -129,6 +134,7 @@ object SettingsBackup {
         "companion_wifi_shizuku",
         "standalone_driving_rules", // which phone apps show while driving
         "cert_auto_update", // a daily request to a third-party repository, replacing the certificate
+        "jellyfin_allow_lan_http", // permits plain unencrypted http:// on the home network: opt-in on this phone only
     )
 
     /**
@@ -152,6 +158,7 @@ object SettingsBackup {
         "obd_simulated", // debug builds only
         "developer_mode", // writes log files on this phone
         "home_actions", // home-automation entities: personal, and tied to the servers that stay out
+        "jellyfin_server", "jellyfin_user_id", "jellyfin_user_name", "jellyfin_token", // Jellyfin server address and sign-in credentials
         "update_latest_version", "update_latest_url", "update_last_check_ms", "update_dismissed_version",
         "cert_index", "cert_update_last_check_ms", "cert_expiry_notified", "cert_expiry_dismissed",
         "old_android_notice_dismissed",

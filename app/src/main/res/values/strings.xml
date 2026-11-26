@@ -634,6 +634,58 @@
     <string name="browser_reload">Reload</string>
     <string name="browser_home">Home page</string>
     <string name="browser_address_hint">Search or type a web address</string>
+    <string name="browser_http_blocked">Plain http:// pages aren\'t allowed here. Use https://.</string>
+
+    <!-- video: AARE's video player on the car screen -->
+    <string name="video_paused_driving">The picture is hidden while driving. The sound carries on.</string>
+    <string name="video_error">Can\'t play this video (%1$s)</string>
+    <string name="video_play">Play</string>
+    <string name="video_pause">Pause</string>
+    <string name="video_back_10">Back 10 seconds</string>
+    <string name="video_forward_10">Forward 10 seconds</string>
+    <string name="video_sync_label">Sound sync</string>
+    <string name="video_sync_earlier">Sound earlier</string>
+    <string name="video_sync_later">Sound later</string>
+    <string name="video_fit_label">Picture</string>
+    <string name="video_fit_change">Change the picture size</string>
+    <string name="video_fit_fit">Fit</string>
+    <string name="video_fit_zoom">Zoom</string>
+    <string name="video_fit_stretch">Stretch</string>
+    <string name="video_zoom_out">Zoom out</string>
+    <string name="video_zoom_in">Zoom in</string>
+    <string name="videos_app_label">Videos</string>
+    <string name="videos_app_row_subtitle">The phone\'s videos on the car screen, for when you\'re parked; the sound goes to the car</string>
+    <string name="videos_check_permission_title">Allow AARE to see your videos</string>
+    <string name="videos_check_permission_subtitle">To list the phone\'s videos in the car</string>
+    <string name="videos_recent">Recent</string>
+    <string name="videos_unnamed_folder">Videos</string>
+    <string name="videos_parked_only">Choose a video when you\'re parked. A playing video keeps its sound while driving.</string>
+    <string name="videos_load_failed">Can\'t load this list: %1$s</string>
+    <string name="videos_none">No videos here</string>
+    <string name="videos_no_permission">Allow AARE to see your videos on the phone (Apps settings)</string>
+    <string name="videos_jellyfin">Jellyfin</string>
+    <string name="videos_jellyfin_empty">Nothing to play here</string>
+    <string name="videos_jellyfin_not_set_up">Sign in to Jellyfin on the phone first</string>
+    <string name="jellyfin_title">Jellyfin</string>
+    <string name="jellyfin_server_label">Server address</string>
+    <string name="jellyfin_user_label">Username</string>
+    <string name="jellyfin_password_label">Password</string>
+    <string name="jellyfin_sign_in">Sign in</string>
+    <string name="jellyfin_signing_in">Signing in…</string>
+    <string name="jellyfin_sign_out">Sign out</string>
+    <string name="jellyfin_quality_title">Highest quality in the car</string>
+    <string name="jellyfin_quality_original">Original</string>
+    <string name="jellyfin_quality_hint">Videos above this are re-encoded by your Jellyfin server to fit, so they start quickly over mobile data. Original plays every file as it is.</string>
+    <string name="jellyfin_signed_in">Signed in as %1$s on %2$s</string>
+    <string name="jellyfin_http_lan_title">Allow plain http on my home network</string>
+    <string name="jellyfin_http_lan_subtitle">Off by default. Lets http:// addresses on your home network work (192.168.…, 10.…, name.local). Not encrypted: anyone on that network can read your password and videos. Other addresses always need https://.</string>
+    <string name="jellyfin_error_http_outside_home">Plain http:// only works on your home network: use https://</string>
+    <string name="jellyfin_error_http_lan_off">Plain http:// is off: turn on \"Allow plain http on my home network\"</string>
+    <string name="jellyfin_hint">Your Jellyfin server\'s libraries appear in the car\'s Videos app. The password isn\'t kept: AARE keeps the sign-in Jellyfin gives it.</string>
+    <plurals name="videos_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
 
     <!-- assistant: voice assistant settings and bar -->
     <string name="assistant_links_title">Links from the assistant</string>
