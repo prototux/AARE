@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.Fullscreen
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
@@ -57,17 +58,26 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 import net.prototux.aare.R
 import net.prototux.aare.ui.theme.LocalCarDimens
+import net.prototux.aare.ui.car.CarFocusVisibility
 import net.prototux.aare.ui.car.carClickable
 
 /**
  * Now playing: big art, title/artist/album, progress (seekable when the app allows it), transport
  * buttons, the app's extra buttons and a queue button. Side by side in landscape, stacked in portrait.
+ * With the visualizer on, its bars rise behind the title and progress, and a button on the art
+ * opens it on the whole screen (parked, or in passenger mode: [driving] is false then).
  */
 @Composable
-internal fun NowPlayingView(hub: DefaultMediaHub, source: PlaybackSource, state: SourceState, setView: (MediaView) -> Unit) {
+internal fun NowPlayingView(hub: DefaultMediaHub, source: PlaybackSource, state: SourceState, driving: Boolean, floatingBar: Boolean = false, setView: (MediaView) -> Unit) {
     val info = state.info
     if (info == null) {
         // right after a tap the app needs a moment to resolve the item: wait before saying "nothing"
@@ -89,45 +99,173 @@ internal fun NowPlayingView(hub: DefaultMediaHub, source: PlaybackSource, state:
     }
     Box(Modifier.fillMaxSize()) {
         // a soft backdrop of the art, fading into the background
-        if (info.art != null) {
+        if (info.art != null && (NowPlayingVisuals.byId(hub.settings.nowPlayingVisual) == null || hub.settings.visualizerArtBackground)) {
             Image(info.art.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop, alpha = 0.22f)
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.background))))
         }
         BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 12.dp)) {
             val portrait = maxHeight > maxWidth
+            val settings = hub.settings
+            @Suppress("UNUSED_EXPRESSION") hub.visualSettings // recompose when they change
+            val visual = NowPlayingVisuals.byId(settings.nowPlayingVisual)
+            // The bars behind the details, and the full-screen button once there's sound to show.
+            var frames by remember { mutableStateOf<SpectrumFrames?>(null) }
+            val strip: @Composable (Modifier) -> Unit = { mod ->
+                if (visual != null) BoxWithConstraints(mod) {
+                    val f = rememberSpectrumFrames(
+                        bandsFor(maxWidth), stereo = false, running = info.playing && !hub.visualFullScreen,
+                        delayMs = { settings.visualizerDelayMs }, verboseLog = settings.verboseProtocolLog, fallDbPerSec = fallDbPerSec(settings),
+                    )
+                    LaunchedEffect(f) { frames = f }
+                    if (f.hasSound) visual.Content(f, stereo = false, style = visualStyle(settings), modifier = Modifier.fillMaxSize())
+                }
+            }
+            // Without bars here to tell, the button shows while it plays.
+            val showFullScreen = settings.visualizerFullScreen && !driving && (if (visual != null) frames?.hasSound == true else info.playing)
+            val art: @Composable (Modifier) -> Unit = { mod ->
+                Box(mod) {
+                    ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.fillMaxSize(), MaterialTheme.shapes.large)
+                    if (showFullScreen) {
+                        CircleButton(Icons.Rounded.Fullscreen, stringResource(R.string.visualizer_full_screen), onClick = { hub.visualFullScreen = true },
+                            modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.35f), CircleShape))
+                    }
+                }
+            }
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (portrait) {
-                    ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.weight(1f, fill = false).sizeIn(maxWidth = 420.dp).aspectRatio(1f), MaterialTheme.shapes.large)
+                    art(Modifier.weight(1f, fill = false).sizeIn(maxWidth = 420.dp).aspectRatio(1f))
                     Spacer(Modifier.height(20.dp))
-                    Column(Modifier.fillMaxWidth()) { Details(state, info, source) }
+                    // matchParentSize: the bars take the details' height, without measuring them twice.
+                    Box(Modifier.fillMaxWidth()) {
+                        strip(Modifier.matchParentSize())
+                        Column(Modifier.fillMaxWidth()) { Details(state, info, source) }
+                    }
+                } else if (visual != null) {
+                    // The art a quarter smaller and the text level with its top; the bars fill the
+                    // room below the progress down to the bottom, under the floating controls.
+                    val wake = remember { IslandWake() }
+                    BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().wakes(wake)) {
+                        val artTop = maxHeight * (1f - VISUAL_ART_HEIGHT) / 2
+                        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                            art(Modifier.fillMaxHeight(VISUAL_ART_HEIGHT).aspectRatio(1f))
+                            Spacer(Modifier.width(28.dp))
+                            Column(Modifier.weight(1f).fillMaxHeight().padding(top = artTop)) {
+                                // Room at the end of the text for the floating library button.
+                                Details(state, info, source, textEnd = if (floatingBar) LocalCarDimens.current.touchTarget + 8.dp else 0.dp)
+                                Spacer(Modifier.height(12.dp))
+                                strip(Modifier.weight(1f).fillMaxWidth())
+                            }
+                        }
+                        IslandControls(hub, source, state, setView, wake, wakeKey = info.title to info.playing, Modifier.align(Alignment.BottomCenter))
+                    }
                 } else {
                     Row(Modifier.weight(1f).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        ArtBox(info.art, Icons.Rounded.MusicNote, Modifier.fillMaxHeight().aspectRatio(1f), MaterialTheme.shapes.large)
+                        art(Modifier.fillMaxHeight().aspectRatio(1f))
                         Spacer(Modifier.width(28.dp))
                         Column(Modifier.weight(1f)) { Details(state, info, source) }
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                Controls(hub, source, state, setView)
+                if (portrait || visual == null) {
+                    Spacer(Modifier.height(12.dp))
+                    Controls(hub, source, state, setView)
+                }
             }
         }
     }
 }
 
+/** When the player was last touched, or the knob or a key used on it. */
+private class IslandWake {
+    var at by mutableLongStateOf(SystemClock.elapsedRealtime())
+    fun now() { at = SystemClock.elapsedRealtime() }
+}
+
+/** Any touch, knob turn or key in this area wakes [wake]; nothing is consumed. */
+private fun Modifier.wakes(wake: IslandWake): Modifier = this
+    .onPreviewKeyEvent { wake.now(); false }
+    .pointerInput(wake) {
+        awaitPointerEventScope {
+            while (true) {
+                awaitPointerEvent(PointerEventPass.Initial)
+                wake.now()
+            }
+        }
+    }
+
+/**
+ * The transport buttons as an island floating over the bars: the play button in the middle, bigger
+ * than the pill around the others. A few seconds after [wake] (or [wakeKey] changing: a new track,
+ * play or pause) the others fold into the play button and it drops away off the bottom; on the next
+ * input it rises back and they unfold. Hidden, it's off the screen, so touches can't hit it.
+ */
 @Composable
-private fun Details(state: SourceState, info: PlaybackInfo, source: PlaybackSource) {
-    state.error?.let {
-        ErrorCard(it, Modifier.fillMaxWidth())
-        Spacer(Modifier.height(12.dp))
+private fun IslandControls(
+    hub: DefaultMediaHub, source: PlaybackSource, state: SourceState, setView: (MediaView) -> Unit,
+    wake: IslandWake, wakeKey: Any?, modifier: Modifier,
+) {
+    val touch = LocalCarDimens.current.touchTarget
+    var awake by remember { mutableStateOf(true) }
+    LaunchedEffect(wakeKey) { wake.now() }
+    // Any input anywhere on the car screen, also a knob turn or touch that lands outside the player.
+    LaunchedEffect(CarFocusVisibility.inputAt) { if (CarFocusVisibility.inputAt != 0L) wake.now() }
+    LaunchedEffect(wake.at) {
+        awake = true
+        delay(ISLAND_FADE_MS)
+        awake = false
     }
-    Text(info.title, style = MaterialTheme.typography.headlineMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    if (info.artist.isNotEmpty()) {
-        Text(info.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
+    val unfold = remember { Animatable(1f) }
+    val rise = remember { Animatable(1f) }
+    LaunchedEffect(awake) {
+        if (awake) islandShow(rise, unfold) else islandHide(rise, unfold)
     }
-    if (info.album.isNotEmpty()) {
-        Text(info.album, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
+    BoxWithConstraints(modifier) {
+        val hasQueue = state.queue.isNotEmpty()
+        val slots = ((maxWidth - ISLAND_PLAY_SIZE - touch * 2) / touch).toInt() - (if (hasQueue) 1 else 0)
+        val row = transportRow(state.actions, slots, state.canPrevious, state.canNext, state.reservePrevious, state.reserveNext)
+        Island(
+            unfold = { unfold.value }, rise = { rise.value }, fromTop = false,
+            modifier = Modifier.padding(bottom = 4.dp), pillHeight = touch + 8.dp, centerSize = ISLAND_PLAY_SIZE,
+            pillColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.85f),
+            start = {
+                row.left.forEach { ActionButton(hub, it) }
+                row.previous?.let { ActionButton(hub, it) }
+                    ?: CircleButton(Icons.Rounded.SkipPrevious, stringResource(R.string.media_action_previous), onClick = source::previous, enabled = state.canPrevious)
+            },
+            center = {
+                CircleButton(
+                    if (state.showPause) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, stringResource(if (state.showPause) R.string.media_action_pause else R.string.media_action_play),
+                    onClick = source::playPause, filled = true, size = ISLAND_PLAY_SIZE,
+                )
+            },
+            end = {
+                row.next?.let { ActionButton(hub, it) }
+                    ?: CircleButton(Icons.Rounded.SkipNext, stringResource(R.string.media_action_next), onClick = source::next, enabled = state.canNext)
+                row.right.forEach { ActionButton(hub, it) }
+                if (hasQueue) CircleButton(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.media_queue_title), onClick = { setView(MediaView.QUEUE) })
+            },
+        )
+    }
+}
+
+private const val ISLAND_FADE_MS = 4_000L
+
+/** Title, artist, album and progress. [textEnd]: room kept at the end of the text only (the progress runs the full width). */
+@Composable
+private fun Details(state: SourceState, info: PlaybackInfo, source: PlaybackSource, textEnd: Dp = 0.dp) {
+    Column(Modifier.padding(end = textEnd)) {
+        state.error?.let {
+            ErrorCard(it, Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+        }
+        Text(info.title, style = MaterialTheme.typography.headlineMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        if (info.artist.isNotEmpty()) {
+            Text(info.artist, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (info.album.isNotEmpty()) {
+            Text(info.album, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
     Spacer(Modifier.height(16.dp))
     Progress(info, state.canSeek, source::seekTo)
@@ -162,6 +300,7 @@ private fun Controls(hub: DefaultMediaHub, source: PlaybackSource, state: Source
 }
 
 private val PLAY_SIZE = 96.dp
+private val ISLAND_PLAY_SIZE = 100.dp
 
 /** Position extrapolated from the last sample while playing; a slider when seeking is allowed. */
 @Composable
@@ -254,3 +393,6 @@ internal fun QueueView(source: PlaybackSource, state: SourceState, done: () -> U
         }
     }
 }
+
+/** The art's share of the height with a visual. */
+private const val VISUAL_ART_HEIGHT = 0.75f

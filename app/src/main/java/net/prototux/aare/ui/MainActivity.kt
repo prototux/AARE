@@ -65,6 +65,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -233,7 +234,7 @@ class MainActivity : ComponentActivity() {
 }
 
 /** The settings pages, Android Auto style: one per topic, opened from the home page. */
-private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: ImageVector) {
+private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: ImageVector, val parent: Page? = null) {
     CAR_SCREEN(R.string.setup_page_car_screen_title, R.string.setup_page_car_screen_subtitle, Icons.Rounded.Dashboard),
     APPS(R.string.setup_page_apps_title, R.string.setup_page_apps_subtitle, Icons.Rounded.Apps),
     ASSISTANT(R.string.assistant_settings_title, R.string.assistant_page_subtitle, Icons.Rounded.Mic),
@@ -244,6 +245,8 @@ private enum class Page(val titleRes: Int, val subtitleRes: Int, val icon: Image
     HOME_ACTIONS(R.string.home_page_title, R.string.home_page_subtitle, Icons.Rounded.Home),
     ADVANCED(R.string.setup_page_advanced_title, R.string.setup_page_advanced_subtitle, Icons.Rounded.Tune),
     ABOUT(R.string.setup_page_about_title, R.string.setup_page_about_subtitle, Icons.Rounded.Info),
+    /** Opened from [AUDIO], not listed on the home screen. */
+    VISUALS(R.string.visuals_title, R.string.visualizer_toggle_subtitle, Icons.Rounded.GraphicEq, parent = AUDIO),
 }
 
 @Composable
@@ -265,7 +268,7 @@ private fun Home() {
         lifecycle.lifecycle.addObserver(observer)
         onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
-    BackHandler(enabled = page != null) { page = null }
+    BackHandler(enabled = page != null) { page = page?.parent }
     OldAndroidNotice(settings)
 
     key(settingsGeneration) { AnimatedContent(page, label = "page", transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(100)) }) { p ->
@@ -282,14 +285,14 @@ private fun Home() {
                 item { Setup(state, refresh, { refresh++ }) { page = it } }
                 item {
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)) {
-                        Page.entries.forEach { CategoryRow(it) { page = it } }
+                        Page.entries.filter { it.parent == null }.forEach { CategoryRow(it) { page = it } }
                     }
                 }
             }
         } else {
             Column(Modifier.fillMaxSize().systemBarsPadding()) {
                 Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { page = null }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back)) }
+                    IconButton(onClick = { page = p.parent }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.common_back)) }
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(p.titleRes), style = MaterialTheme.typography.titleLarge)
                 }
@@ -306,7 +309,8 @@ private fun Home() {
                         Page.APPS -> item { AppsCard(settings) }
                         Page.ASSISTANT -> item { AssistantCard(settings) }
                         Page.MESSAGES -> item { MessageSettings(settings, refresh) }
-                        Page.AUDIO -> item { AudioSettings(settings, state, refresh) { refresh++ } }
+                        Page.AUDIO -> item { AudioSettings(settings, state, refresh, { refresh++ }) { page = Page.VISUALS } }
+                        Page.VISUALS -> item { VisualizerSection(settings) }
                         Page.CONNECTION -> item { ConnectionSettings(settings, refresh) }
                         Page.CAR_DATA -> item { CarDataCard() }
                         Page.HOME_ACTIONS -> item { HomeActionsSettings() }

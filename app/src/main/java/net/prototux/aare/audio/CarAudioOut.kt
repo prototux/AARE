@@ -46,7 +46,8 @@ class CarAudioOut(
     private val queueLimit = chunksFor(MAX_QUEUED_MS)
     private val primeChunks = chunksFor(PRIME_MS)
     private val underflowBacklog = chunksFor(UNDERFLOW_BACKLOG_MS)
-    private val baseBacklog = if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) queueLimit else chunksFor(LIVE_BACKLOG_MS)
+    private val guidance = channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE
+    private val baseBacklog = if (guidance) queueLimit else chunksFor(LIVE_BACKLOG_MS)
     /** Until when (elapsedRealtime) to keep the larger backlog after the car reported an underflow. */
     @Volatile private var underflowUntil = 0L
     /** Whether we're actually feeding the car sound right now (read from [onUnderflow], written by the capture thread). */
@@ -110,6 +111,12 @@ class CarAudioOut(
             queued.addLast(buf.copyOf() to ts)
             while (queued.size > queueLimit) queued.removeFirst()
         }
+        // The visualizer's copy of the music (see PcmTap): only what the car got, when it got it.
+        if (!guidance) PcmTap.open(this, PcmTap.Format(rate, channels))
+        fun send(b: ByteArray, ts: Long) {
+            if (!channel.sendPcm(b, 10, chunk, ts)) return
+            if (!guidance) PcmTap.ring?.write(b, 10, chunk, clock())
+        }
         try {
             while (running) {
                 var got = 0
@@ -136,6 +143,7 @@ class CarAudioOut(
                     playing = false
                     stoppedAtMs = now
                     queued.clear()
+                    if (!guidance) PcmTap.ring?.clear()
                 }
                 if (!playing) continue
                 if (!channel.started) {
@@ -168,6 +176,7 @@ class CarAudioOut(
                     channel.stopPlayback()
                     stoppedAtMs = now
                     queued.clear()
+                    if (!guidance) PcmTap.ring?.clear()
                     continue
                 }
                 if (priming) {
@@ -175,21 +184,21 @@ class CarAudioOut(
                     if (queued.size < primeChunks) continue
                     priming = false
                     if (queued.size > maxQueued) maxQueued = queued.size
-                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                    while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> send(b, t) }
                     continue
                 }
                 if (queued.isEmpty() && channel.hasRoom) {
                     // A copy: the writer thread sends the array later, and buf is refilled meanwhile.
-                    channel.sendPcm(buf.copyOf(), 10, chunk, ts)
+                    send(buf.copyOf(), ts)
                     continue
                 }
                 // Catching up: send the backlog in order, as fast as the car's ack window allows.
                 queue(ts)
                 if (queued.size > maxQueued) maxQueued = queued.size
-                while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> send(b, t) }
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
                 // through sendPcm so dropped chunks still count towards ack-less detection.
-                while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> send(b, t) }
             }
         } catch (e: Exception) {
             Log.w(TAG, "audio capture stopped", e)
@@ -197,6 +206,7 @@ class CarAudioOut(
             if (playing) { runCatching { noteStream(clock()); channel.stopPlayback() }; focus.request(false); stoppedAtMs = clock() }
             playing = false
             queued.clear()
+            if (!guidance) PcmTap.close(this)
             source.release()
             if (died) onFailed()
         }

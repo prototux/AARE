@@ -2,6 +2,10 @@ package net.prototux.aare.media
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,7 +126,30 @@ class DefaultMediaHub(context: Context, scope: CoroutineScope) : MediaHub {
     override fun Screen(app: MediaApp, driving: Boolean, modifier: Modifier, onShowVideo: (() -> Unit)?) =
         MediaAppScreen(this, app, driving, modifier, onShowVideo)
 
+    internal val settings = net.prototux.aare.Settings(this.context)
+
+    /** Bumped when a visualizer setting changes (from the phone too): read it to redraw with the new ones. */
+    internal var visualSettings by mutableIntStateOf(0)
+        private set
+    private val prefs = this.context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val prefsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "now_playing_visual" || key?.startsWith("visualizer_") == true) visualSettings++
+    }
+    init { prefs.registerOnSharedPreferenceChangeListener(prefsListener) }
+
+    /** The visualizer is open on the whole car screen (see [FullScreen]). */
+    internal var visualFullScreen by mutableStateOf(false)
+    override val fullScreen: Boolean get() = visualFullScreen
+    override fun exitFullScreen() { visualFullScreen = false }
+
+    @Composable
+    override fun CardVisual(modifier: Modifier) = MediaCardVisual(this, modifier)
+
+    @Composable
+    override fun FullScreen(driving: Boolean, modifier: Modifier) = VisualizerFullScreen(this, driving, modifier)
+
     override fun release() {
+        prefs.unregisterOnSharedPreferenceChangeListener(prefsListener)
         discovery.release()
         tracker.release()
         _connection.value?.release()

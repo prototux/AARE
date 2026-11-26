@@ -98,6 +98,17 @@ object SettingsBackup {
         "wireless_compatibility" to Type.STRING,
         "obd_adapter" to Type.BOOLEAN,
         "developer_log_privacy" to Type.BOOLEAN,
+        // The visualizer: where it shows and how it looks.
+        "now_playing_visual" to Type.STRING,
+        "visualizer_full_screen" to Type.BOOLEAN,
+        "visualizer_colors" to Type.STRING,
+        "visualizer_bars" to Type.STRING,
+        "visualizer_opacity_pct" to Type.INT,
+        "visualizer_on_card" to Type.BOOLEAN,
+        "visualizer_peaks" to Type.BOOLEAN,
+        "visualizer_fall" to Type.STRING,
+        "visualizer_art_background" to Type.BOOLEAN,
+        "visualizer_delay_ms" to Type.INT,
     )
 
     /**

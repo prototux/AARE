@@ -7,6 +7,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -128,4 +129,7 @@ internal fun carAdjustKey(keyCode: Int, shift: Boolean, vertical: Boolean, adjus
  */
 object CarFocusVisibility {
     var keyInput by mutableStateOf(false)
+
+    /** When the car screen was last touched, or a knob or key used (elapsedRealtime), for things that wake on any input. */
+    var inputAt by mutableLongStateOf(0L)
 }

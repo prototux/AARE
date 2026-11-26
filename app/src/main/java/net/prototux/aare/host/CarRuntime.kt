@@ -18,6 +18,9 @@ import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.model.Alert
 import androidx.car.app.navigation.model.Trip
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +32,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -70,6 +82,7 @@ import net.prototux.aare.ui.car.CarPane
 import net.prototux.aare.ui.car.CarScreen
 import net.prototux.aare.ui.car.CarSettingsScreen
 import net.prototux.aare.ui.car.CarShell
+import net.prototux.aare.ui.car.LocalMediaCardBackdrop
 import net.prototux.aare.ui.car.CarUiState
 import net.prototux.aare.ui.car.DashCard
 import net.prototux.aare.ui.car.HomeButton
@@ -1092,6 +1105,33 @@ class CarRuntime(
         ui.assistantAppId = null
     }
 
+    /**
+     * A media view on the whole screen (the full-screen visualizer), over the rail too. Back and a
+     * knob press leave it. It holds the focus and keeps the knob's turns and the D-pad, so they
+     * can't move the focus on the screen hidden under it. Leaving the screen it was opened from closes it.
+     */
+    @Composable
+    private fun MediaFullScreen(modifier: Modifier) {
+        val openedOn = remember { ui.screen }
+        // The car's Back reaches Compose's handlers first (CarSession.back), and the media screen
+        // under this one has its own (now playing -> browse): this one, composed later, comes first.
+        androidx.activity.compose.BackHandler { media.exitFullScreen() }
+        LaunchedEffect(ui.screen) { if (ui.screen != openedOn) media.exitFullScreen() }
+        val focus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
+        media.FullScreen(ui.drivingRestricted, modifier.fillMaxSize()
+            .focusRequester(focus)
+            .onPreviewKeyEvent { e ->
+                when (e.key) {
+                    Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> { if (e.type == KeyEventType.KeyUp) media.exitFullScreen(); true }
+                    // The knob's turns (Tab) and the D-pad: nothing to move to here.
+                    Key.Tab, Key.DirectionLeft, Key.DirectionRight, Key.DirectionUp, Key.DirectionDown -> true
+                    else -> false
+                }
+            }
+            .focusable())
+    }
+
     /** Back key from the car: applies to the focused pane while split, the one app otherwise. */
     fun back() {
         if (ui.assistantStandalonePkg != null) { ui.assistantStandalonePkg = null; return }
@@ -1128,9 +1168,11 @@ class CarRuntime(
         val mediaApps by media.apps.collectAsState()
         // Ambient, not reset by a nested CarTheme (the dark-bar rail calls it again): see LocalCarControlScale.
         val baseDensity = LocalDensity.current
+        val cardBackdrop = remember<@Composable (Modifier) -> Unit> { { mod -> media.CardVisual(mod) } }
         CompositionLocalProvider(
             LocalDensity provides Density(baseDensity.density, baseDensity.fontScale * ui.textScale),
             LocalCarControlScale provides ui.controlScale,
+            LocalMediaCardBackdrop provides cardBackdrop,
         ) {
             CarTheme(night = ui.night, theme = ui.theme) {
                 CarShell(
@@ -1171,7 +1213,9 @@ class CarRuntime(
                         }
                     },
                     // The assistant bar can sit over a navigation app's map: solid in a glass theme.
-                    overlay = { mod -> OverMap {
+                    overlay = { mod ->
+                        if (media.fullScreen) MediaFullScreen(mod)
+                        OverMap {
                         val entry = ui.app(ui.assistantAppId)
                         val conn = entry?.let { shownConnection(it.id) }
                         val standalonePkg = ui.assistantStandalonePkg
