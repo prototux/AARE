@@ -73,6 +73,18 @@ class CarAudioOut(
         if (!quiet) Log.i(TAG,"car audio underflow on ${channel.streamType} (${channel.underflows} so far), keeping up to $underflowBacklog chunks")
     }
 
+    /**
+     * The link to the car stalled (the car's ack window is full and sound piles up here): keep
+     * more for a while, so a few seconds of slow Wi-Fi delays the music instead of cutting it.
+     * Only for media: a prompt's own backlog is already [MAX_QUEUED_MS].
+     */
+    private fun onCongested(now: Long) {
+        if (channel.streamType == AudioStreamType.AUDIO_STREAM_GUIDANCE) return
+        val quiet = now < underflowUntil
+        underflowUntil = now + UNDERFLOW_HOLD_MS
+        if (!quiet) DiagLog.add("car audio ($label): the link to the car is slow, holding up to $UNDERFLOW_BACKLOG_MS ms (${channel.droppedChunks} chunks lost so far)")
+    }
+
     fun start() {
         val cfg = channel.config ?: return
         running = true
@@ -187,6 +199,7 @@ class CarAudioOut(
                 queue(ts)
                 if (queued.size > maxQueued) maxQueued = queued.size
                 while (queued.isNotEmpty() && channel.hasRoom) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
+                if (queued.size >= baseBacklog) onCongested(now)
                 // The car stays behind (or never acks): stay close to real time. The oldest goes
                 // through sendPcm so dropped chunks still count towards ack-less detection.
                 while (queued.size > maxBacklog) queued.removeFirst().let { (b, t) -> channel.sendPcm(b, 10, chunk, t) }
@@ -261,8 +274,12 @@ class CarAudioOut(
          * (the Ford answers at once) or for music after one.
          */
         private const val PRIME_MS = 200
-        /** Backlog after an underflow: more latency, fewer gaps. Bounded by [MAX_QUEUED_MS]. */
-        private const val UNDERFLOW_BACKLOG_MS = 500
+        /**
+         * Backlog after an underflow or a stalled link: more latency, fewer gaps. A Wi-Fi stall
+         * seen in the car held the car's acks for up to 350 ms several times in a row. Bounded by
+         * [MAX_QUEUED_MS].
+         */
+        private const val UNDERFLOW_BACKLOG_MS = MAX_QUEUED_MS
         private const val UNDERFLOW_HOLD_MS = 30_000L
         /** A head unit's end-of-stream underflow lands within this long of us stopping: not a real gap. */
         private const val IGNORE_UNDERFLOW_AFTER_STOP_MS = 1_000L
