@@ -319,6 +319,12 @@ class VideoChannel(
     val codec: MediaCodecType = MediaCodecType.MEDIA_CODEC_VIDEO_H264_BP,
     /** Allow drop overflow mode on this head unit (see [dropsOverflow]); off by default. */
     private val allowDropOverflow: Boolean = false,
+    /**
+     * Start the stream only once the head unit grants focus, as Android Auto does, instead of right
+     * after the Config (vehicles.json `videoAfterFocus`; off by default). A VW Play (Visteon MIB
+     * Regio) shows nothing and acks nothing when the stream starts before (#162).
+     */
+    private val startOnFocus: Boolean = false,
 ) : MediaSinkChannel(service, "video", codec) {
 
     interface Listener {
@@ -352,6 +358,8 @@ class VideoChannel(
     /** The head unit has sent a focus notification or request since the stream started. */
     @Volatile var focusHeard = false
         private set
+    /** [Listener.onVideoStart] was called for the chosen configuration (with [startOnFocus], only at the first focus). */
+    @Volatile private var encoderStarted = false
 
     private class Pending(val buf: ByteArray, val offset: Int, val length: Int, val ptsUs: Long, val key: Boolean, val recycle: (ByteArray) -> Unit)
     private val pending = ArrayDeque<Pending>()
@@ -417,11 +425,15 @@ class VideoChannel(
         startIndex = index
         focusHeard = false
         synchronized(lock) { sentAt.clear() }
-        startStream(index)
-        listener.onVideoStart(index, configs[index])
+        if (!startOnFocus) {
+            startStream(index)
+            encoderStarted = true
+            listener.onVideoStart(index, configs[index])
+        }
         earlyUiRequest?.let { earlyUiRequest = null; onUiConfigRequest(it) }
         // Ask to be shown; head units answer with a focus notification. At the data priority so
         // it follows START: the head unit must not be asked to show a stream it hasn't started.
+        // With [startOnFocus], the stream starts on that answer ([setFocus]).
         send(MediaMsg.VIDEO_FOCUS_REQUEST, VideoFocusRequestNotification.newBuilder()
             .setMode(VideoFocusMode.VIDEO_FOCUS_PROJECTED).setReason(VideoFocusReason.UNKNOWN).build(), dataPriority)
     }
@@ -477,6 +489,18 @@ class VideoChannel(
     private fun sendUiConfigReply(config: UiConfig) =
         send(MediaMsg.UPDATE_UI_CONFIG_REPLY, UpdateUiConfigReply.newBuilder().setUiConfig(config).build(), dataPriority)
 
+    /**
+     * With [startOnFocus], for a head unit that never answers the focus request: starts the stream
+     * as if focus had been granted, since it may be waiting for video before it shows anything. An
+     * answer, even a refusal, always wins. Returns whether it applied.
+     */
+    fun assumeProjectedIfUnanswered(): Boolean {
+        if (!startOnFocus || focusHeard || chosen == null) return false
+        setFocus(VideoFocusMode.VIDEO_FOCUS_PROJECTED)
+        return true
+    }
+
+    @Synchronized
     private fun setFocus(mode: VideoFocusMode) {
         focusHeard = true
         val projected = isProjected(mode)
@@ -487,6 +511,8 @@ class VideoChannel(
             // reverse camera on LG GEN5, #109) and only build a new one on a START: if we stopped
             // the stream for a full native focus, start a fresh session now so the picture returns.
             if (!started) startStream(startIndex)
+            // With [startOnFocus], the first focus is when the encoder starts.
+            if (!encoderStarted) chosen?.let { encoderStarted = true; listener.onVideoStart(startIndex, it) }
             synchronized(lock) { needKeyFrame = true; while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) } }
             // Resend the codec config after the (re)start, the same as at connection.
             codecConfig?.let { sendCodecConfigData(it, 0, it.size, Priority.VIDEO) }
@@ -589,6 +615,7 @@ class VideoChannel(
         closingReport = report()
         super.onClosed()
         focused = false
+        encoderStarted = false
         configured = false; waitTimer = false; generation++
         uiReplies.clear(); earlyUiRequest = null
         synchronized(lock) { while (pending.isNotEmpty()) pending.removeFirst().let { it.recycle(it.buf) }; sentAt.clear(); pendingFrames = 0 }

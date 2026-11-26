@@ -64,6 +64,8 @@ data class VehicleOverride(
     val sensorChannelFirst: Boolean? = null,
     /** Send the video's SPS/PPS only in the codec config, not again before every key frame (AARE's default: every key frame). */
     val videoHeadersOnce: Boolean? = null,
+    /** Start the video stream only once the head unit grants focus, as Android Auto does (AARE's default: right away). */
+    val videoAfterFocus: Boolean? = null,
 ) {
     /** These overrides, with [base]'s for every field left unset: a user rule over a built-in one. */
     fun over(base: VehicleOverride?): VehicleOverride = if (base == null) this else VehicleOverride(
@@ -92,6 +94,7 @@ data class VehicleOverride(
         pairAgainWhenRunning = pairAgainWhenRunning ?: base.pairAgainWhenRunning,
         sensorChannelFirst = sensorChannelFirst ?: base.sensorChannelFirst,
         videoHeadersOnce = videoHeadersOnce ?: base.videoHeadersOnce,
+        videoAfterFocus = videoAfterFocus ?: base.videoAfterFocus,
     )
 
     fun skips(kind: String): Boolean = skipServices.orEmpty().any { matchesKind(it, kind) }
@@ -106,7 +109,7 @@ data class VehicleOverride(
         "forceElectric" to forceElectric, "wifiMediaStartSilence" to wifiMediaStartSilence,
         "wifiGuidanceStartSilence" to wifiGuidanceStartSilence, "mediaOnGainTransient" to mediaOnGainTransient,
         "pauseOnGuidanceOnly" to pauseOnGuidanceOnly, "wireless" to wireless, "exitToCar" to exitToCar, "exitLabel" to exitLabel,
-        "builtInFixes" to builtInFixes, "videoHeadersOnce" to videoHeadersOnce,
+        "builtInFixes" to builtInFixes, "videoHeadersOnce" to videoHeadersOnce, "videoAfterFocus" to videoAfterFocus,
     ).filter { it.second != null }.joinToString(prefix = "{", postfix = "}") { (k, v) -> "$k=$v" }
 
     companion object {
@@ -476,7 +479,7 @@ object VehicleOverrides {
                 wifiGuidanceStartSilence = int(a, "wifiGuidanceStartSilence"), mediaOnGainTransient = bool(a, "mediaOnGainTransient"),
                 pauseOnGuidanceOnly = bool(a, "pauseOnGuidanceOnly"), wireless = bool(a, "wireless"),
                 exitToCar = bool(a, "exitToCar"), exitLabel = str(a, "exitLabel"), builtInFixes = bool(a, "builtInFixes"),
-                videoHeadersOnce = bool(a, "videoHeadersOnce"),
+                videoHeadersOnce = bool(a, "videoHeadersOnce"), videoAfterFocus = bool(a, "videoAfterFocus"),
             ),
             optIn = r.optBoolean("optIn", false),
         )
@@ -493,7 +496,7 @@ object VehicleOverrides {
               "apply": {
                 "dpi": 160, "widthMargin": 0, "heightMargin": 0, "maxHeight": 1080, "prefer60fps": true,
                 "skipServices": [], "openServices": [], "micSetup": true, "dropOverflow": false,
-                "pairAgainWhenRunning": false, "sensorChannelFirst": false, "videoHeadersOnce": false
+                "pairAgainWhenRunning": false, "sensorChannelFirst": false, "videoHeadersOnce": false, "videoAfterFocus": false
               }
             }
           ]

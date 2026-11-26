@@ -2,9 +2,9 @@
   "_comment": "Rules AARE ships for head units known to need them, same format as the user's vehicles.json (docs/vehicles.md). Every matching rule here applies (the earlier one wins a key both set); a user rule for the same head unit wins, field by field. Some rules copy a known car list. An optIn rule is a fix for specific cars: it applies only with the \"Built-in car fixes\" setting on, or for a car whose user rule says \"builtInFixes\": true.",
   "rules": [
     {
-      "_comment": "VW Play (Visteon MIB Regio), e.g. the 2023 VW Polo GTS (#166): answers a SETUP on the microphone channel with 'unexpected message', then shows no video (#162). It also drops the phone's hands-free link when projection starts, and connects it again only on a pairing request sent once the session runs (#268).",
+      "_comment": "VW Play (Visteon MIB Regio), e.g. the 2023 VW Polo GTS (#166): answers a SETUP on the microphone channel with 'unexpected message', then shows no video (#162). It also drops the phone's hands-free link when projection starts, and connects it again only on a pairing request sent once the session runs (#268). And it shows no video when the stream starts before it grants focus (#162).",
       "match": { "make": "Volkswagen", "name": "MIB Regio" },
-      "apply": { "micSetup": false, "pairAgainWhenRunning": true }
+      "apply": { "micSetup": false, "pairAgainWhenRunning": true, "videoAfterFocus": true }
     },
 
     {

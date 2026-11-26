@@ -70,6 +70,8 @@ class VehicleOverridesTest {
         assertEquals(null, o.pairAgainWhenRunning)
         val again = VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"pairAgainWhenRunning":true}}]}""").single().override
         assertEquals(true, again.pairAgainWhenRunning)
+        assertEquals(null, o.videoAfterFocus)
+        assertEquals(true, VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{"videoAfterFocus":true}}]}""").single().override.videoAfterFocus)
         assertEquals(null, VehicleOverrides.parse("""{"rules":[{"match":{"make":"VW"},"apply":{}}]}""").single().override.sensorChannelFirst)
     }
 
@@ -187,6 +189,9 @@ class VehicleOverridesTest {
         val vwPlay = rules.single { it.matches("Volkswagen", "VW_7_A0_HATCHBACK", "Volkswagen VW_7_A0_HATCHBACK Visteon MIB Regio") }
         assertEquals(false, vwPlay.override.micSetup)
         assertEquals(true, vwPlay.override.pairAgainWhenRunning)
+        assertEquals(true, vwPlay.override.videoAfterFocus)
+        // Only that rule: every other head unit keeps the stream that starts right away.
+        assertEquals(listOf(vwPlay), rules.filter { it.override.videoAfterFocus == true })
     }
 
     private val builtIn by lazy { VehicleOverrides.parse(java.io.File("src/main/assets/vehicles.json").readText()) }

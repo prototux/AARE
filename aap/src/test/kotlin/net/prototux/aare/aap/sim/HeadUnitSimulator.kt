@@ -117,6 +117,8 @@ class HeadUnitSimulator(
     private val videoUiConfig: UiConfig? = null,
     /** Send the service discovery response in the clear after TLS, like an older Sony XAV (#418). */
     private val plaintextDiscovery: Boolean = false,
+    /** False: stays silent on video focus requests, like a car that waits for video first. */
+    private val answerVideoFocus: Boolean = true,
 ) {
     /** False when encoding like a proto3 head unit: fields set to 0 are not written. */
     private val writeZeros = !omitZeroFields
@@ -162,6 +164,8 @@ class HeadUnitSimulator(
     @Volatile var videoStart: Start? = null
     /** Every START the phone sent, by channel, latest last. */
     val starts = ConcurrentHashMap<Int, LinkedBlockingQueue<Start>>()
+    /** STOP messages on the video channel. */
+    val videoStops = AtomicInteger()
     /** UI configs the phone confirmed (UPDATE_UI_CONFIG_REPLY), in order. */
     val uiConfigReplies = LinkedBlockingQueue<UiConfig>()
     /** Video frames received when each UI config reply arrived. */
@@ -318,6 +322,7 @@ class HeadUnitSimulator(
                 sessionIds[m.channel] = start.sessionId
                 if (m.channel == video) videoStart = start
             }
+            MediaMsg.STOP -> if (m.channel == video) videoStops.incrementAndGet()
             MediaMsg.UPDATE_UI_CONFIG_REPLY -> {
                 framesAtUiConfigReply.add(videoFrames.get())
                 uiConfigReplies.add(UpdateUiConfigReply.parseFrom(m.bodyBytes()).uiConfig)
@@ -325,7 +330,7 @@ class HeadUnitSimulator(
             MediaMsg.VIDEO_FOCUS_REQUEST -> {
                 focusRequests.incrementAndGet()
                 val r = VideoFocusRequestNotification.parseFrom(m.bodyBytes())
-                send(video, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder()
+                if (answerVideoFocus) send(video, MediaMsg.VIDEO_FOCUS_NOTIFICATION, VideoFocusNotification.newBuilder()
                     .setFocus(if (r.mode == VideoFocusMode.VIDEO_FOCUS_NATIVE) VideoFocusMode.VIDEO_FOCUS_NATIVE else VideoFocusMode.VIDEO_FOCUS_PROJECTED)
                     .setUnsolicited(false).build())
             }
