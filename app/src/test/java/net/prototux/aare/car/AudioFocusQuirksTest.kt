@@ -30,6 +30,14 @@ class AudioFocusQuirksTest {
         assertFalse(CarSession.resumesAfterCarPause(unsolicited = false, pausedForGuidance = false))
     }
 
+    /** Voice typing paused the music just before the car took the audio: it still waits for the car's gain. */
+    @Test fun aLossDuringARecordingPauseStillWaitsForTheCar() {
+        assertTrue(CarSession.waitsForCarAfterLoss(transient = true, playing = false, pausedForRecording = true))
+        assertTrue(CarSession.waitsForCarAfterLoss(transient = true, playing = true, pausedForRecording = false))
+        assertFalse(CarSession.waitsForCarAfterLoss(transient = true, playing = false, pausedForRecording = false))
+        assertFalse(CarSession.waitsForCarAfterLoss(transient = false, playing = true, pausedForRecording = true))
+    }
+
     @Test fun theOtherStatesAreUnchanged() {
         for (s in listOf(AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN, AudioFocusStateType.AUDIO_FOCUS_STATE_GAIN_MEDIA_ONLY,
             AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT_CAN_DUCK)) assertTrue(s.name, CarAudioFocus.mediaAllowed(s, false))

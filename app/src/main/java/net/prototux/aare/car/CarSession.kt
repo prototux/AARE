@@ -476,7 +476,7 @@ class CarSession(
     /** Music or a video AARE paused because a phone app records: it plays on once the app is done. */
     private var pausedForRecording = false
     /** When a phone app records and when it is done, a moment's break (a recording moving to the car's mic) not counted. */
-    private val recordingPause = MicTakeover()
+    private val recordingPause = MicTakeover(holdMs = RECORDING_DONE_HOLD_MS)
     private val recordingDone = Runnable {
         if (closed) return@Runnable
         if (recordingPause.onTick(SystemClock.uptimeMillis()) == MicTakeover.Action.CLOSE) main.post(resumeAfterRecording)
@@ -539,7 +539,8 @@ class CarSession(
             // does, and play again when a transient loss ends.
             notification.unsolicited && (state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS || state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT) -> main.post {
                 val playing = media.playback.value?.playing == true
-                pausedByCar = state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT && playing
+                pausedByCar = waitsForCarAfterLoss(state == AudioFocusStateType.AUDIO_FOCUS_STATE_LOSS_TRANSIENT, playing, pausedForRecording)
+                if (pausedByCar && pausedForRecording) DiagLog.add("audio focus: the car took the audio while a recording paused the music, waiting for it back")
                 // A call on the phone, or an assistant listening over Bluetooth, which the car takes
                 // for one: it plays on once that ends (see modeChanged), if chosen.
                 pausedForCall = settings.resumeAfterCall && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && playing && phoneInCall()
@@ -557,7 +558,8 @@ class CarSession(
                     pausedByCar = false
                     pausedForCall = false
                     pausedForGuidance = false
-                    if (resume && media.playback.value?.playing != true) media.playPause()
+                    // Still recording (voice typing): the recording ending plays it instead.
+                    if (resume && !pausedForRecording && media.playback.value?.playing != true) media.playPause()
                 }
             }
         }
@@ -1507,6 +1509,8 @@ class CarSession(
         private const val STALL_CHECK_MS = 500L
         /** How often a paused resume looks again whether the phone's call or assistant answer ended. */
         private const val CALL_CHECK_MS = 1_000L
+        /** How long the phone's apps must stop recording before the music plays again: Claude's voice input reopens the mic within ~4 s. */
+        private const val RECORDING_DONE_HOLD_MS = 5_000L
         /** Encoder restarts allowed in [RESTART_WINDOW_MS], for this display and the cluster's. */
         internal const val MAX_RESTARTS = 3
         internal const val RESTART_WINDOW_MS = 10_000L
@@ -1545,6 +1549,14 @@ class CarSession(
          * its own does; a gain answering a request only after a pause for navigation voice.
          */
         fun resumesAfterCarPause(unsolicited: Boolean, pausedForGuidance: Boolean): Boolean = unsolicited || pausedForGuidance
+
+        /**
+         * Whether the car's loss leaves the music waiting for the car's gain. Voice typing over
+         * Bluetooth pauses the music a moment before the car takes the audio for the phone's mic:
+         * it was playing all the same, and without the wait the car never hands the audio back.
+         */
+        fun waitsForCarAfterLoss(transient: Boolean, playing: Boolean, pausedForRecording: Boolean): Boolean =
+            transient && (playing || pausedForRecording)
 
         /**
          * Picks the best configuration the phone can encode comfortably: the largest one within
