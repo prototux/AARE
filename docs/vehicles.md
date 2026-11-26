@@ -96,6 +96,7 @@ For example, a rule for every Ford head unit by Harman older than protocol 1.4:
 | `dropOverflow` | true/false | Stream video (head units 6.0 and later) and audio (5.0 and later) in drop overflow mode: the head unit drops what it can't take instead of pacing the phone with acks (default: false). Try it on a car whose picture or sound stalls because it stops acking. |
 | `pairAgainWhenRunning` | true/false | Send the Bluetooth pairing request again once the session runs, for a car that drops the phone's hands-free link when projection starts (default: false). |
 | `videoHeadersOnce` | true/false | Send the video's SPS/PPS only in the codec config, not again before every key frame (default: false). Try it on a car that plays the sound and acks every frame but shows no picture. |
+| `videoAfterFocus` | true/false | Start the video stream only once the car grants focus, as Android Auto does, and start it anyway if the car never answers the focus request (default: false, right after the car's video config). For a car that shows no picture and acks no frame when the stream starts first. |
 | `sensorChannelFirst` | true/false | Open the sensor channel first and the other channels once the car has answered it, or after 1 s (default: false, all at once). |
 
 Services are named as the connection log writes them after `services:`: `video`, `mic`,
