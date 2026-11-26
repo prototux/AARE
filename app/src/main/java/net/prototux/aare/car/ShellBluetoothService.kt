@@ -12,9 +12,10 @@ import kotlin.system.exitProcess
 
 /**
  * Runs in a process Shizuku starts with adb (shell) rights, which may answer a Bluetooth pairing
- * (setPairingConfirmation needs BLUETOOTH_PRIVILEGED, which apps can't hold). Used by
- * [BluetoothAutoPair] for the connected car only; every failure is returned, not thrown, and the
- * app then leaves the pairing to Android's dialog.
+ * (setPairingConfirmation needs BLUETOOTH_PRIVILEGED, which apps can't hold) and turn Bluetooth on
+ * without asking. Used by [BluetoothAutoPair] for the connected car only, and by
+ * [PhoneBluetoothPower] while a car is connected; every failure is returned, not thrown, and the
+ * app then leaves it to Android's own dialog.
  */
 class ShellBluetoothService : IShellBluetooth.Stub {
     constructor() : this(null)
@@ -33,6 +34,9 @@ class ShellBluetoothService : IShellBluetooth.Stub {
     override fun setPin(address: String, pin: String): String? = withDevice(address) { device ->
         if (device.setPin(pin.toByteArray(Charsets.UTF_8))) null else "Bluetooth refused the PIN"
     }
+
+    /** The same command as `adb shell` ([PhoneBluetoothPower.ENABLE_COMMAND]): fixed, no input from the app. */
+    override fun enableBluetooth(): String? = PhoneBluetoothPower.run(listOf("sh", "-c", PhoneBluetoothPower.ENABLE_COMMAND))
 
     override fun destroy() {
         exitProcess(0)

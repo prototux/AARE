@@ -160,6 +160,8 @@ class CarSession(
     @Volatile private var btPairing: BluetoothPairing? = null
     /** Moves calls to the phone's speaker while connected (Settings.callsOnPhoneSpeaker); null when off. */
     private var callSpeaker: CallSpeaker? = null
+    /** Keeps the phone's Bluetooth on while connected, as Android Auto does (main thread). */
+    private var bluetoothPower: PhoneBluetoothPower? = null
     private val audio = ArrayList<AudioChannel>()
 
     /**
@@ -376,6 +378,7 @@ class CarSession(
                         }
                         override fun onAuthenticationData(authData: String) { btPairing?.onAuthenticationData(authData) }
                     }).also { bluetooth = it; btPairing = BluetoothPairing(context, it, main).apply { start() } }
+                    main.post { if (!closed) bluetoothPower = PhoneBluetoothPower(context) { announceAgain() }.also { it.start() } }
                 }
             }
         }
@@ -1428,6 +1431,7 @@ class CarSession(
         phoneBridge?.stop(); phoneBridge = null
         btPairing?.stop(); btPairing = null
         callSpeaker?.stop(); callSpeaker = null
+        bluetoothPower?.stop(); bluetoothPower = null
         locationFeed.close()
         if (settings.locationOffAfterCar) locationSwitch.stop(always = settings.locationOffAlways)
         drivingMode.stop()
@@ -1473,6 +1477,14 @@ class CarSession(
                 context.getSystemService(android.bluetooth.BluetoothManager::class.java)?.adapter?.address else null
         }.getOrNull()
         return listOf(set, fromSecure, fromAdapter).firstOrNull(::isValidBtMac)
+    }
+
+    /**
+     * Bluetooth came on during the session (it was off when the car connected, or was switched off
+     * and on again): the car's hands-free link is down, so ask the car again to connect.
+     */
+    private fun announceAgain() {
+        if (!closed && bluetooth?.announceAgain() == true) DiagLog.add("car bluetooth: announcing the phone again, Bluetooth is on")
     }
 
     private fun isValidBtMac(s: String?): Boolean =
