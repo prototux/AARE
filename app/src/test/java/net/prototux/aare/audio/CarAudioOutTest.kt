@@ -37,14 +37,17 @@ class CarAudioOutTest {
         override val config: AudioConfiguration = AudioConfiguration.newBuilder()
             .setSamplingRate(16_000).setNumberOfBits(16).setNumberOfChannels(1).build()
         @Volatile override var started = false
-        override val hasRoom get() = started
+        /** A stalled link: the car's ack window stays full, and what's sent meanwhile is lost. */
+        @Volatile var stalled = false
+        override val hasRoom get() = started && !stalled
         /** "start", "stop", or the index of the sound sent ("-" for silence), in order. */
         val events: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
         val timestamps: MutableList<Long> = java.util.Collections.synchronizedList(mutableListOf())
         override fun startPlayback() { started = true; events += "start" }
         override fun stopPlayback() { started = false; events += "stop" }
         override fun sendPcm(buf: ByteArray, offset: Int, length: Int, timestampUs: Long): Boolean {
-            events += if (buf[offset] == 0.toByte()) "-" else (buf[offset + 2].toInt() and 0xff).toString()
+            if (stalled) return false
+            events +=  if (buf[offset] == 0.toByte()) "-" else (buf[offset + 2].toInt() and 0xff).toString()
             timestamps += timestampUs
             return true
         }
@@ -94,10 +97,10 @@ class CarAudioOutTest {
         stream: AudioStreamType = AudioStreamType.AUDIO_STREAM_MEDIA,
         granted: Boolean = true,
         starts: Boolean = true,
+        sink: FakeSink = FakeSink(stream),
         before: (FakeFocus, Int) -> Unit = { _, _ -> },
     ): Pair<Run, ScriptedSource> {
         val clock = AtomicLong(100_000)
-        val sink = FakeSink(stream)
         val focus = FakeFocus(granted)
         val failures = AtomicInteger()
         val failed = CountDownLatch(1)
@@ -135,6 +138,14 @@ class CarAudioOutTest {
     @Test fun aPromptWaitingForFocusKeepsItsWholeStart() {
         val (r, _) = run(sounds(0..19), stream = AudioStreamType.AUDIO_STREAM_GUIDANCE, granted = false) { f, i -> if (i == 10) f.granted = true }
         assertEquals((0..19).toList(), r.sink.sent)
+    }
+
+    @Test fun musicThroughAStalledLinkComesLateButWhole() {
+        // The link stalls from message 6 to 15 (640 ms), then catches up: without the bigger hold
+        // the live backlog (4) would lose 6 of them.
+        val sink = FakeSink(AudioStreamType.AUDIO_STREAM_MEDIA)
+        val (r, _) = run(sounds(0..29), sink = sink) { _, i -> sink.stalled = i in 6..15 }
+        assertEquals((0..29).toList(), r.sink.sent)
     }
 
     @Test fun threeSecondsOfSilenceCloseTheStream() {
