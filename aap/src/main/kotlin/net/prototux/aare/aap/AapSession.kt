@@ -612,6 +612,18 @@ class AapSession(
         }, 10, TimeUnit.SECONDS)
     }
 
+    /**
+     * What the head unit sent that our protos don't know (#274). A unit listing no services gets a
+     * line either way: none unknown means it waits for something from the phone instead.
+     */
+    private fun logUnknownDiscoveryFields(body: ByteArray, services: Int) {
+        // Only a log: a quirk in the walk mustn't end a session that parsed.
+        val unknown = runCatching { UnknownFields.inDiscoveryResponse(body) }
+            .getOrElse { log.w("couldn't list the discovery response's unknown fields", it); return }
+        unknown.forEach { log.i("head unit, unknown discovery field: $it") }
+        if (services == 0 && unknown.isEmpty()) log.i("head unit lists no services, and sends no unknown fields")
+    }
+
     private fun onServiceDiscovery(msg: AapMessage) {
         if (state != State.DISCOVERY) {
             fail("service discovery response in state $state", null)
@@ -626,6 +638,7 @@ class AapSession(
         }
         discovery = resp
         log.i("head unit: ${describe(resp)}")
+        logUnknownDiscoveryFields(msg.bodyBytes(), resp.channelsCount)
         if (resp.sessionConfiguration != 0) log.i("head unit UI chrome: ${UiChrome(resp.sessionConfiguration)}")
         resp.connectionConfiguration?.pingConfiguration?.let { pc ->
             if (pc.hasIntervalMs() && pc.intervalMs > 0) pingIntervalMs = pc.intervalMs.toLong().coerceIn(250, 5_000)
