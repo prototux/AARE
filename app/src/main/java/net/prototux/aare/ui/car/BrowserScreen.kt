@@ -132,42 +132,44 @@ private fun BrowserContent(runtime: CarRuntime, driving: Boolean, startUrl: Stri
                 )
                 ToolButton(Icons.Rounded.Home, stringResource(R.string.browser_home)) { web?.loadUrl(home) }
             }
-            // The page
-            AndroidView(
-                factory = { ctx ->
-                    WebView(ctx).apply {
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        webChromeClient = WebChromeClient()
-                        webViewClient = object : WebViewClient() {
-                            override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
-                                url?.let { currentUrl = it }
-                                canBack = view.canGoBack(); canForward = view.canGoForward()
-                                pageField = null
-                            }
-                        }
-                        // Touching the page ends typing in the address bar; a tap (not a scroll)
-                        // then checks whether it focused a text field, once the page has handled it.
-                        val slop = ViewConfiguration.get(ctx).scaledTouchSlop
-                        var downX = 0f
-                        var downY = 0f
-                        @SuppressLint("ClickableViewAccessibility")
-                        setOnTouchListener { v, e ->
-                            when (e.actionMasked) {
-                                MotionEvent.ACTION_DOWN -> { editing = false; downX = e.x; downY = e.y }
-                                MotionEvent.ACTION_UP -> if (kotlin.math.hypot(e.x - downX, e.y - downY) <= slop) {
-                                    v.postDelayed({ checkPageField() }, FIELD_CHECK_DELAY_MS)
+            // The page; on a car with a knob and no touch, a cursor stands in for the finger.
+            CursorPane(Modifier.fillMaxWidth().weight(1f)) {
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            webChromeClient = WebChromeClient()
+                            webViewClient = object : WebViewClient() {
+                                override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                                    url?.let { currentUrl = it }
+                                    canBack = view.canGoBack(); canForward = view.canGoForward()
+                                    pageField = null
                                 }
                             }
-                            false
+                            // Touching the page ends typing in the address bar; a tap (not a scroll)
+                            // then checks whether it focused a text field, once the page has handled it.
+                            val slop = ViewConfiguration.get(ctx).scaledTouchSlop
+                            var downX = 0f
+                            var downY = 0f
+                            @SuppressLint("ClickableViewAccessibility")
+                            setOnTouchListener { v, e ->
+                                when (e.actionMasked) {
+                                    MotionEvent.ACTION_DOWN -> { editing = false; downX = e.x; downY = e.y }
+                                    MotionEvent.ACTION_UP -> if (kotlin.math.hypot(e.x - downX, e.y - downY) <= slop) {
+                                        v.postDelayed({ checkPageField() }, FIELD_CHECK_DELAY_MS)
+                                    }
+                                }
+                                false
+                            }
+                            loadUrl(home)
+                            web = this
                         }
-                        loadUrl(home)
-                        web = this
-                    }
-                },
-                onRelease = { it.destroy() },
-                modifier = Modifier.fillMaxWidth().weight(1f),
-            )
+                    },
+                    onRelease = { it.destroy() },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             // Car keyboard for the address field or the page (the phone IME can't show on the car display).
             val field = pageField
             if (editing) {
